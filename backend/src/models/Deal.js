@@ -252,6 +252,7 @@ const sfrDetailsSchema = new mongoose.Schema({
       projectedSalePrice: Number,
       sellingCosts: Number,
       mortgagePayoff: Number,
+      principalPaidOff: Number,
       netProceedsFromSale: Number
     },
     returns: {

@@ -253,7 +253,14 @@ const AnalysisResults = ({ analysis }) => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
-                title="10-Year IRR"
+                title="DSCR"
+                value={formatPercent(annualAnalysis?.dscr || 0)}
+                subtitle="Debt Service Coverage Ratio"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title={`${longTermAnalysis?.projectionYears || 10}-Year IRR`}
                 value={formatPercent(longTermAnalysis?.returns?.irr || 0)}
                 subtitle="Internal Rate of Return"
               />
@@ -270,6 +277,27 @@ const AnalysisResults = ({ analysis }) => {
                 title="Cap Rate"
                 value={formatPercent(annualAnalysis?.capRate || 0)}
                 subtitle="Based on Purchase Price"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Price/SqFt at Purchase"
+                value={formatCurrency(analysis?.keyMetrics?.pricePerSqFtAtPurchase || 0)}
+                subtitle="Initial Purchase"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Price/SqFt at Sale"
+                value={formatCurrency(analysis?.keyMetrics?.pricePerSqFtAtSale || 0)}
+                subtitle="Year 10 Projection"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                title="Avg Rent/SqFt"
+                value={formatCurrency(analysis?.keyMetrics?.avgRentPerSqFt || 0)}
+                subtitle="Monthly Average"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -470,7 +498,8 @@ const AnalysisResults = ({ analysis }) => {
                                 backgroundColor: 'background.paper', 
                                 zIndex: 1,
                                 whiteSpace: 'normal',
-                                width: '80px'
+                                width: '80px',
+                                padding: '16px 8px'
                               }}
                             >
                               Year
@@ -479,7 +508,9 @@ const AnalysisResults = ({ analysis }) => {
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '120px'
+                                minWidth: '120px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               Property Value
@@ -488,7 +519,9 @@ const AnalysisResults = ({ analysis }) => {
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               Gross Rent
@@ -499,16 +532,25 @@ const AnalysisResults = ({ analysis }) => {
                               sx={{ 
                                 borderLeft: '1px solid rgba(224, 224, 224, 1)',
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Property Tax
+                              <span>Property</span>
+                              <span>Tax</span>
                             </TableCell>
                             <TableCell 
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               Insurance
@@ -517,7 +559,9 @@ const AnalysisResults = ({ analysis }) => {
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               Maintenance
@@ -526,16 +570,25 @@ const AnalysisResults = ({ analysis }) => {
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '120px'
+                                minWidth: '120px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Property Management
+                              <span>Property</span>
+                              <span>Management</span>
                             </TableCell>
                             <TableCell 
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               Vacancy
@@ -545,17 +598,26 @@ const AnalysisResults = ({ analysis }) => {
                               sx={{ 
                                 borderRight: '1px solid rgba(224, 224, 224, 1)',
                                 whiteSpace: 'normal',
-                                minWidth: '120px'
+                                minWidth: '120px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Total Expenses
+                              <span>Total</span>
+                              <span>Expenses</span>
                             </TableCell>
                             {/* Financial Metrics */}
                             <TableCell 
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2
                               }}
                             >
                               NOI
@@ -564,28 +626,49 @@ const AnalysisResults = ({ analysis }) => {
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '120px'
+                                minWidth: '120px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Debt Service
+                              <span>Debt</span>
+                              <span>Service</span>
                             </TableCell>
                             <TableCell 
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '100px'
+                                minWidth: '100px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Cash Flow
+                              <span>Cash</span>
+                              <span>Flow</span>
                             </TableCell>
                             <TableCell 
                               align="right"
                               sx={{ 
                                 whiteSpace: 'normal',
-                                minWidth: '120px'
+                                minWidth: '120px',
+                                padding: '16px 8px',
+                                lineHeight: 1.2,
+                                '& span': {
+                                  display: 'block',
+                                  textAlign: 'right'
+                                }
                               }}
                             >
-                              Cash on Cash Return
+                              <span>Cash on</span>
+                              <span>Cash Return</span>
                             </TableCell>
                           </TableRow>
                         </TableHead>
@@ -625,9 +708,11 @@ const AnalysisResults = ({ analysis }) => {
                           ))}
                           {/* Summary Row */}
                           <TableRow style={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
-                            <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: 'rgba(0, 0, 0, 0.04)' }}><strong>10-Year Total</strong></TableCell>
+                            <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
+                              <strong>{longTermAnalysis?.projectionYears || 10}-Year Total</strong>
+                            </TableCell>
                             <TableCell align="right">
-                              {formatCurrency(longTermAnalysis.yearlyProjections[9].propertyValue)}
+                              {formatCurrency(longTermAnalysis.yearlyProjections[longTermAnalysis.yearlyProjections.length - 1].propertyValue)}
                             </TableCell>
                             <TableCell align="right">
                               {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.grossRent, 0))}

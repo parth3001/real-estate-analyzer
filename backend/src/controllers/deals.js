@@ -198,6 +198,30 @@ exports.analyzeDeal = async (req, res) => {
       aiInsights
     };
 
+    // Validate long term assumptions
+    if (dealData.longTermAssumptions) {
+      const { annualRentIncrease, annualPropertyValueIncrease, sellingCostsPercentage, inflationRate, vacancyRate, projectionYears } = dealData.longTermAssumptions;
+
+      if (annualRentIncrease < 0 || annualRentIncrease > 100) {
+        return res.status(400).json({ error: 'Annual rent increase must be between 0 and 100%' });
+      }
+      if (annualPropertyValueIncrease < 0 || annualPropertyValueIncrease > 100) {
+        return res.status(400).json({ error: 'Annual property value increase must be between 0 and 100%' });
+      }
+      if (sellingCostsPercentage < 0 || sellingCostsPercentage > 100) {
+        return res.status(400).json({ error: 'Selling costs percentage must be between 0 and 100%' });
+      }
+      if (inflationRate < 0 || inflationRate > 100) {
+        return res.status(400).json({ error: 'Inflation rate must be between 0 and 100%' });
+      }
+      if (vacancyRate < 0 || vacancyRate > 100) {
+        return res.status(400).json({ error: 'Vacancy rate must be between 0 and 100%' });
+      }
+      if (projectionYears < 1 || projectionYears > 30) {
+        return res.status(400).json({ error: 'Projection years must be between 1 and 30' });
+      }
+    }
+
     res.json(fullAnalysis);
   } catch (error) {
     console.error('Error analyzing deal:', error);

@@ -110,7 +110,25 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
     }
   };
 
-  const handleChange = (field, value) => {
+  const handleChange = (fieldOrEvent, valueOrUndefined) => {
+    // Determine field and value based on arguments
+    let field, value;
+    
+    if (typeof fieldOrEvent === 'string') {
+      // Direct field/value call
+      field = fieldOrEvent;
+      value = valueOrUndefined;
+    } else if (fieldOrEvent?.target) {
+      // Event object from TextField
+      field = fieldOrEvent.target.name;
+      value = fieldOrEvent.target.type === 'checkbox' ? 
+        fieldOrEvent.target.checked : 
+        fieldOrEvent.target.value;
+    } else {
+      console.error('Invalid arguments to handleChange');
+      return;
+    }
+
     // Convert string values to numbers for numeric fields
     const numericFields = [
       'purchasePrice',
@@ -129,7 +147,8 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       'sfrDetails.longTermAssumptions.annualPropertyValueIncrease',
       'sfrDetails.longTermAssumptions.sellingCostsPercentage',
       'sfrDetails.longTermAssumptions.inflationRate',
-      'sfrDetails.longTermAssumptions.vacancyRate'
+      'sfrDetails.longTermAssumptions.vacancyRate',
+      'sfrDetails.longTermAssumptions.projectionYears'
     ];
     
     const processedValue = numericFields.includes(field) ? 
@@ -286,8 +305,14 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
   return (
     <Card>
       <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.primary'
+            }}
+          >
             Property Details
           </Typography>
           <Box>
@@ -312,7 +337,18 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
           <Grid container spacing={3}>
             {/* Property Address Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  mt: 2,
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1
+                }}
+              >
                 Property Address
               </Typography>
             </Grid>
@@ -324,6 +360,27 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('propertyAddress.street', e.target.value)}
                 error={!!errors['propertyAddress.street']}
                 helperText={errors['propertyAddress.street']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -334,6 +391,27 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('propertyAddress.city', e.target.value)}
                 error={!!errors['propertyAddress.city']}
                 helperText={errors['propertyAddress.city']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -344,6 +422,27 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('propertyAddress.state', e.target.value)}
                 error={!!errors['propertyAddress.state']}
                 helperText={errors['propertyAddress.state']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -354,12 +453,44 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
                 error={!!errors['propertyAddress.zipCode']}
                 helperText={errors['propertyAddress.zipCode']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  }
+                }}
               />
             </Grid>
 
             {/* Property Characteristics Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  mt: 2,
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1
+                }}
+              >
                 Property Characteristics
               </Typography>
             </Grid>
@@ -372,6 +503,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('purchasePrice', e.target.value)}
                 error={!!errors.purchasePrice}
                 helperText={errors.purchasePrice}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -383,6 +543,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('downPayment', e.target.value)}
                 error={!!errors.downPayment}
                 helperText={errors.downPayment}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -394,6 +583,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('interestRate', e.target.value)}
                 error={!!errors.interestRate}
                 helperText={errors.interestRate}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -405,6 +623,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('monthlyRent', e.target.value)}
                 error={!!errors.monthlyRent}
                 helperText={errors.monthlyRent}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -416,6 +663,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('propertyTaxRate', e.target.value)}
                 error={!!errors.propertyTaxRate}
                 helperText={errors.propertyTaxRate}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -427,6 +703,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('insuranceRate', e.target.value)}
                 error={!!errors.insuranceRate}
                 helperText={errors.insuranceRate}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -436,12 +741,52 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 label="Maintenance (monthly)"
                 value={dealData.maintenance}
                 onChange={(e) => handleChange('maintenance', e.target.value)}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
 
             {/* Property Details Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  mt: 2,
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1
+                }}
+              >
                 Property Details
               </Typography>
             </Grid>
@@ -454,6 +799,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('sfrDetails.bedrooms', e.target.value)}
                 error={!!errors['sfrDetails.bedrooms']}
                 helperText={errors['sfrDetails.bedrooms']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -465,6 +839,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('sfrDetails.bathrooms', e.target.value)}
                 error={!!errors['sfrDetails.bathrooms']}
                 helperText={errors['sfrDetails.bathrooms']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -476,6 +879,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('sfrDetails.squareFootage', e.target.value)}
                 error={!!errors['sfrDetails.squareFootage']}
                 helperText={errors['sfrDetails.squareFootage']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -487,12 +919,52 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('sfrDetails.yearBuilt', e.target.value)}
                 error={!!errors['sfrDetails.yearBuilt']}
                 helperText={errors['sfrDetails.yearBuilt']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
 
             {/* Property Management Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  mt: 2,
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1
+                }}
+              >
                 Property Management
               </Typography>
             </Grid>
@@ -505,6 +977,35 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                 onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', e.target.value)}
                 error={!!errors['sfrDetails.propertyManagement.feePercentage']}
                 helperText={errors['sfrDetails.propertyManagement.feePercentage']}
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                    marginBottom: '8px',
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                    '&.Mui-focused': {
+                      color: 'primary.main',
+                    }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'primary.light',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  },
+                  '& .MuiInputLabel-shrink': {
+                    transform: 'translate(14px, -8px) scale(0.75)',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    marginLeft: 0,
+                    marginTop: '4px',
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -523,74 +1024,111 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
 
             {/* Long Term Assumptions Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2,
+                  mt: 2,
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1
+                }}
+              >
                 Long Term Assumptions
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="number"
                 label="Annual Rent Increase (%)"
+                name="sfrDetails.longTermAssumptions.annualRentIncrease"
                 value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualRentIncrease', e.target.value)}
+                onChange={handleChange}
                 error={!!errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
                 helperText={errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
+                type="number"
+                inputProps={{ step: "0.1" }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="number"
                 label="Annual Property Value Increase (%)"
+                name="sfrDetails.longTermAssumptions.annualPropertyValueIncrease"
                 value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualPropertyValueIncrease', e.target.value)}
+                onChange={handleChange}
                 error={!!errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
                 helperText={errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
+                type="number"
+                inputProps={{ step: "0.1" }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="number"
                 label="Selling Costs (%)"
+                name="sfrDetails.longTermAssumptions.sellingCostsPercentage"
                 value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.sellingCostsPercentage', e.target.value)}
+                onChange={handleChange}
                 error={!!errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
                 helperText={errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
+                type="number"
+                inputProps={{ step: "0.1" }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="number"
                 label="Inflation Rate (%)"
+                name="sfrDetails.longTermAssumptions.inflationRate"
                 value={dealData.sfrDetails.longTermAssumptions.inflationRate}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.inflationRate', e.target.value)}
+                onChange={handleChange}
                 error={!!errors['sfrDetails.longTermAssumptions.inflationRate']}
                 helperText={errors['sfrDetails.longTermAssumptions.inflationRate']}
+                type="number"
+                inputProps={{ step: "0.1" }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="number"
                 label="Vacancy Rate (%)"
+                name="sfrDetails.longTermAssumptions.vacancyRate"
                 value={dealData.sfrDetails.longTermAssumptions.vacancyRate}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.vacancyRate', e.target.value)}
+                onChange={handleChange}
                 error={!!errors['sfrDetails.longTermAssumptions.vacancyRate']}
                 helperText={errors['sfrDetails.longTermAssumptions.vacancyRate']}
+                type="number"
+                inputProps={{ step: "0.1" }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Projection Years"
+                value={dealData.sfrDetails.longTermAssumptions.projectionYears}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.projectionYears', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.projectionYears']}
+                helperText={errors['sfrDetails.longTermAssumptions.projectionYears']}
+                type="number"
+                inputProps={{ min: "1", max: "30", step: "1" }}
               />
             </Grid>
 
             {/* Submit Button */}
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ mt: 2 }}>
               <Button
                 fullWidth
                 variant="contained"
                 color="primary"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
+                sx={{ 
+                  py: 1.5,
+                  mt: 2
+                }}
               >
                 {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
               </Button>

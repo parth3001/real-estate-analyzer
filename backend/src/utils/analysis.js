@@ -104,6 +104,7 @@ const calculateSFRMetrics = async (dealData) => {
     sellingCostsPercentage: 6,
     inflationRate: 2,
     vacancyRate: 5,
+    projectionYears: 10,
     ...sfrDetails?.longTermAssumptions
   };
 
@@ -163,7 +164,7 @@ const calculateSFRMetrics = async (dealData) => {
   const cashFlows = [initialInvestment];
   let cumulativeCashFlow = 0;
 
-  for (let year = 1; year <= 10; year++) {
+  for (let year = 1; year <= longTermAssumptions.projectionYears; year++) {
     // Property value appreciation using user-defined rate
     const appreciationFactor = 1 + (longTermAssumptions.annualPropertyValueIncrease / 100);
     currentPropertyValue *= appreciationFactor;
@@ -184,7 +185,7 @@ const calculateSFRMetrics = async (dealData) => {
     
     // Calculate other operating expenses with user-defined inflation rate
     const inflationFactor = 1 + (longTermAssumptions.inflationRate / 100);
-    const yearlyMaintenance = maintenance * Math.pow(inflationFactor, year - 1);
+    const yearlyMaintenance = maintenance * 12 * Math.pow(inflationFactor, year - 1);
     const yearlyPropertyManagement = (annualRent * (sfrDetails?.propertyManagement?.feePercentage || 0)) / 100;
     const yearlyVacancy = annualRent * (longTermAssumptions.vacancyRate / 100); // Use configurable vacancy rate
     
@@ -253,6 +254,16 @@ const calculateSFRMetrics = async (dealData) => {
   const netProceedsFromSale = finalPropertyValue - sellingCosts - currentMortgageBalance;
   cashFlows[cashFlows.length - 1] += netProceedsFromSale;
 
+  // Calculate exit analysis
+  const exitAnalysis = {
+    projectedSalePrice: finalPropertyValue,
+    sellingCosts,
+    mortgagePayoff: currentMortgageBalance,
+    principalPaidOff: loanAmount - currentMortgageBalance,
+    netProceedsFromSale,
+    totalInvestment: Math.abs(initialInvestment) + totalAdditionalInvestment
+  };
+
   // Calculate IRR using all cash flows
   const irr = calculateIRR(cashFlows);
 
@@ -276,7 +287,8 @@ const calculateSFRMetrics = async (dealData) => {
         }
       },
       noi: annualNOI / 12,
-      cashFlow: monthlyCashFlow
+      cashFlow: monthlyCashFlow,
+      projectionYears: longTermAssumptions.projectionYears
     },
     annualAnalysis: {
       grossRent: annualGrossRent,
@@ -287,26 +299,37 @@ const calculateSFRMetrics = async (dealData) => {
       cashFlow: annualCashFlow,
       capRate,
       cashOnCashReturn,
-      dscr: annualNOI / annualMortgagePayment
+      dscr: annualNOI / annualMortgagePayment,
+      projectionYears: longTermAssumptions.projectionYears
     },
     longTermAnalysis: {
       yearlyProjections,
       returns: {
         totalCashFlow,
-        totalAppreciation,
+        totalAppreciation: finalPropertyValue - purchasePrice,
         irr,
         totalAdditionalInvestment,
         totalInvestment: Math.abs(initialInvestment) + totalAdditionalInvestment,
-        totalReturn: totalCashFlow + netProceedsFromSale - initialInvestment - totalAdditionalInvestment,
-        cumulativeReturn: yearlyProjections[yearlyProjections.length - 1].cumulativeReturn
+        totalReturn: (
+          totalCashFlow +
+          netProceedsFromSale -
+          Math.abs(initialInvestment) -
+          totalAdditionalInvestment
+        ),
+        projectionYears: longTermAssumptions.projectionYears
       },
-      exitAnalysis: {
-        projectedSalePrice: finalPropertyValue,
-        sellingCosts,
-        mortgagePayoff: currentMortgageBalance,
-        netProceedsFromSale,
-        totalInvestment: Math.abs(initialInvestment) + totalAdditionalInvestment
-      }
+      exitAnalysis,
+      projectionYears: longTermAssumptions.projectionYears
+    },
+    keyMetrics: {
+      dscr: annualNOI / annualMortgagePayment,
+      pricePerSqFtAtPurchase: purchasePrice / sfrDetails.squareFootage,
+      pricePerSqFtAtSale: finalPropertyValue / sfrDetails.squareFootage,
+      avgRentPerSqFt: yearlyProjections.reduce((sum, year) => sum + (year.grossRent / 12 / sfrDetails.squareFootage), 0) / yearlyProjections.length,
+      irr,
+      cashOnCashReturn,
+      capRate,
+      projectionYears: longTermAssumptions.projectionYears
     }
   };
 };
