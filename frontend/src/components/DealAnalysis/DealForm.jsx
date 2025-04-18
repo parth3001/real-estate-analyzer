@@ -29,8 +29,8 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
     interestRate: '',
     loanTerm: 30,
     monthlyRent: '',
-    propertyTax: '',
-    insurance: '',
+    propertyTaxRate: '',
+    insuranceRate: '',
     maintenance: '',
     sfrDetails: {
       bedrooms: '',
@@ -49,9 +49,10 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       longTermAssumptions: {
         projectionYears: 10,
         annualRentIncrease: 2,
-        annualPropertyValueIncrease: 2,
-        sellingCostsPercentage: 3,
+        annualPropertyValueIncrease: 3,
+        sellingCostsPercentage: 6,
         inflationRate: 2,
+        vacancyRate: 5,
       },
       ...initialData,
     },
@@ -70,9 +71,11 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       case 'purchasePrice':
       case 'downPayment':
       case 'monthlyRent':
-      case 'propertyTax':
-      case 'insurance':
         return value > 0 ? '' : 'Must be greater than 0';
+      case 'propertyTaxRate':
+        return value > 0 && value < 10 ? '' : 'Must be between 0 and 10%';
+      case 'insuranceRate':
+        return value > 0 && value < 5 ? '' : 'Must be between 0 and 5%';
       case 'interestRate':
         return value > 0 && value < 30 ? '' : 'Must be between 0 and 30';
       case 'propertyAddress.street':
@@ -90,6 +93,18 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
         return value >= 100 ? '' : 'Must be at least 100 sq ft';
       case 'sfrDetails.yearBuilt':
         return value > 1800 && value <= new Date().getFullYear() ? '' : 'Invalid year';
+      case 'sfrDetails.propertyManagement.feePercentage':
+        return value >= 0 && value <= 15 ? '' : 'Must be between 0 and 15%';
+      case 'sfrDetails.longTermAssumptions.annualRentIncrease':
+        return value >= -5 && value <= 15 ? '' : 'Must be between -5% and 15%';
+      case 'sfrDetails.longTermAssumptions.annualPropertyValueIncrease':
+        return value >= -10 && value <= 15 ? '' : 'Must be between -10% and 15%';
+      case 'sfrDetails.longTermAssumptions.sellingCostsPercentage':
+        return value >= 0 && value <= 10 ? '' : 'Must be between 0 and 10%';
+      case 'sfrDetails.longTermAssumptions.inflationRate':
+        return value >= 0 && value <= 10 ? '' : 'Must be between 0 and 10%';
+      case 'sfrDetails.longTermAssumptions.vacancyRate':
+        return value >= 0 && value <= 20 ? '' : 'Must be between 0 and 20%';
       default:
         return '';
     }
@@ -102,33 +117,41 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       'downPayment',
       'interestRate',
       'monthlyRent',
-      'propertyTax',
-      'insurance',
+      'propertyTaxRate',
+      'insuranceRate',
+      'maintenance',
       'sfrDetails.bedrooms',
       'sfrDetails.bathrooms',
       'sfrDetails.squareFootage',
-      'sfrDetails.yearBuilt'
+      'sfrDetails.yearBuilt',
+      'sfrDetails.propertyManagement.feePercentage',
+      'sfrDetails.longTermAssumptions.annualRentIncrease',
+      'sfrDetails.longTermAssumptions.annualPropertyValueIncrease',
+      'sfrDetails.longTermAssumptions.sellingCostsPercentage',
+      'sfrDetails.longTermAssumptions.inflationRate',
+      'sfrDetails.longTermAssumptions.vacancyRate'
     ];
     
     const processedValue = numericFields.includes(field) ? 
       (value === '' ? '' : Number(value)) : 
       value;
 
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setDealData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: processedValue,
-        },
-      }));
-    } else {
-      setDealData(prev => ({
-        ...prev,
-        [field]: processedValue,
-      }));
-    }
+    // Handle nested properties
+    const parts = field.split('.');
+    setDealData(prev => {
+      let newData = { ...prev };
+      let current = newData;
+      
+      // Navigate through the object, creating nested objects if they don't exist
+      for (let i = 0; i < parts.length - 1; i++) {
+        current[parts[i]] = { ...current[parts[i]] };
+        current = current[parts[i]];
+      }
+      
+      // Set the final value
+      current[parts[parts.length - 1]] = processedValue;
+      return newData;
+    });
 
     const error = validateField(field, processedValue);
     setErrors(prev => ({
@@ -148,8 +171,8 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       'downPayment',
       'interestRate',
       'monthlyRent',
-      'propertyTax',
-      'insurance',
+      'propertyTaxRate',
+      'insuranceRate',
       'sfrDetails.bedrooms',
       'sfrDetails.bathrooms',
       'sfrDetails.squareFootage',
@@ -263,326 +286,327 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
   return (
     <Card>
       <CardContent>
-        <form onSubmit={handleSubmit}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h5">
-              Property Details
-            </Typography>
-            <Box>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={handleSave}
-                sx={{ mr: 1 }}
-              >
-                Save Deal
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={handleLoad}
-              >
-                Load Deal
-              </Button>
-            </Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h5">
+            Property Details
+          </Typography>
+          <Box>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleSave}
+              sx={{ mr: 1 }}
+            >
+              Save Deal
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleLoad}
+            >
+              Load Deal
+            </Button>
           </Box>
-          
+        </Box>
+        <Box component="form" noValidate>
           <Grid container spacing={3}>
-            {/* Property Address */}
+            {/* Property Address Section */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Address
+                Property Address
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    required
-                    label="Street Address"
-                    value={dealData.propertyAddress.street}
-                    onChange={(e) => handleChange('propertyAddress.street', e.target.value)}
-                    error={!!errors['propertyAddress.street']}
-                    helperText={errors['propertyAddress.street']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="City"
-                    value={dealData.propertyAddress.city}
-                    onChange={(e) => handleChange('propertyAddress.city', e.target.value)}
-                    error={!!errors['propertyAddress.city']}
-                    helperText={errors['propertyAddress.city']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="State"
-                    value={dealData.propertyAddress.state}
-                    onChange={(e) => handleChange('propertyAddress.state', e.target.value)}
-                    error={!!errors['propertyAddress.state']}
-                    helperText={errors['propertyAddress.state']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Zip Code"
-                    value={dealData.propertyAddress.zipCode}
-                    onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
-                    error={!!errors['propertyAddress.zipCode']}
-                    helperText={errors['propertyAddress.zipCode']}
-                  />
-                </Grid>
-              </Grid>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Street Address"
+                value={dealData.propertyAddress.street}
+                onChange={(e) => handleChange('propertyAddress.street', e.target.value)}
+                error={!!errors['propertyAddress.street']}
+                helperText={errors['propertyAddress.street']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="City"
+                value={dealData.propertyAddress.city}
+                onChange={(e) => handleChange('propertyAddress.city', e.target.value)}
+                error={!!errors['propertyAddress.city']}
+                helperText={errors['propertyAddress.city']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="State"
+                value={dealData.propertyAddress.state}
+                onChange={(e) => handleChange('propertyAddress.state', e.target.value)}
+                error={!!errors['propertyAddress.state']}
+                helperText={errors['propertyAddress.state']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Zip Code"
+                value={dealData.propertyAddress.zipCode}
+                onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
+                error={!!errors['propertyAddress.zipCode']}
+                helperText={errors['propertyAddress.zipCode']}
+              />
             </Grid>
 
-            <Grid item xs={12}>
-              <Divider />
-            </Grid>
-
-            {/* Property Characteristics */}
+            {/* Property Characteristics Section */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
                 Property Characteristics
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Bedrooms"
-                    value={dealData.sfrDetails.bedrooms}
-                    onChange={(e) => handleChange('sfrDetails.bedrooms', e.target.value)}
-                    error={!!errors['sfrDetails.bedrooms']}
-                    helperText={errors['sfrDetails.bedrooms']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Bathrooms"
-                    value={dealData.sfrDetails.bathrooms}
-                    onChange={(e) => handleChange('sfrDetails.bathrooms', e.target.value)}
-                    error={!!errors['sfrDetails.bathrooms']}
-                    helperText={errors['sfrDetails.bathrooms']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Square Footage"
-                    value={dealData.sfrDetails.squareFootage}
-                    onChange={(e) => handleChange('sfrDetails.squareFootage', e.target.value)}
-                    error={!!errors['sfrDetails.squareFootage']}
-                    helperText={errors['sfrDetails.squareFootage']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Year Built"
-                    value={dealData.sfrDetails.yearBuilt}
-                    onChange={(e) => handleChange('sfrDetails.yearBuilt', e.target.value)}
-                    error={!!errors['sfrDetails.yearBuilt']}
-                    helperText={errors['sfrDetails.yearBuilt']}
-                  />
-                </Grid>
-              </Grid>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Purchase Price"
+                value={dealData.purchasePrice}
+                onChange={(e) => handleChange('purchasePrice', e.target.value)}
+                error={!!errors.purchasePrice}
+                helperText={errors.purchasePrice}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Down Payment"
+                value={dealData.downPayment}
+                onChange={(e) => handleChange('downPayment', e.target.value)}
+                error={!!errors.downPayment}
+                helperText={errors.downPayment}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Interest Rate (%)"
+                value={dealData.interestRate}
+                onChange={(e) => handleChange('interestRate', e.target.value)}
+                error={!!errors.interestRate}
+                helperText={errors.interestRate}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Monthly Rent"
+                value={dealData.monthlyRent}
+                onChange={(e) => handleChange('monthlyRent', e.target.value)}
+                error={!!errors.monthlyRent}
+                helperText={errors.monthlyRent}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Property Tax Rate (%)"
+                value={dealData.propertyTaxRate}
+                onChange={(e) => handleChange('propertyTaxRate', e.target.value)}
+                error={!!errors.propertyTaxRate}
+                helperText={errors.propertyTaxRate}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Insurance Rate (%)"
+                value={dealData.insuranceRate}
+                onChange={(e) => handleChange('insuranceRate', e.target.value)}
+                error={!!errors.insuranceRate}
+                helperText={errors.insuranceRate}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Maintenance (monthly)"
+                value={dealData.maintenance}
+                onChange={(e) => handleChange('maintenance', e.target.value)}
+              />
             </Grid>
 
-            <Grid item xs={12}>
-              <Divider />
-            </Grid>
-
-            {/* Financial Details */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Financial Details
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Purchase Price ($)"
-                    value={dealData.purchasePrice}
-                    onChange={(e) => handleChange('purchasePrice', e.target.value)}
-                    error={!!errors['purchasePrice']}
-                    helperText={errors['purchasePrice']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Down Payment ($)"
-                    value={dealData.downPayment}
-                    onChange={(e) => handleChange('downPayment', e.target.value)}
-                    error={!!errors['downPayment']}
-                    helperText={errors['downPayment']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Interest Rate (%)"
-                    value={dealData.interestRate}
-                    onChange={(e) => handleChange('interestRate', e.target.value)}
-                    error={!!errors['interestRate']}
-                    helperText={errors['interestRate']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Monthly Rent ($)"
-                    value={dealData.monthlyRent}
-                    onChange={(e) => handleChange('monthlyRent', e.target.value)}
-                    error={!!errors['monthlyRent']}
-                    helperText={errors['monthlyRent']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Property Tax ($/year)"
-                    value={dealData.propertyTax}
-                    onChange={(e) => handleChange('propertyTax', e.target.value)}
-                    error={!!errors['propertyTax']}
-                    helperText={errors['propertyTax']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Insurance ($/year)"
-                    value={dealData.insurance}
-                    onChange={(e) => handleChange('insurance', e.target.value)}
-                    error={!!errors['insurance']}
-                    helperText={errors['insurance']}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Divider />
-            </Grid>
-
-            {/* Management & Turnover */}
+            {/* Property Details Section */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Management & Turnover
+                Property Details
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Management Fee (%)"
-                    value={dealData.sfrDetails.propertyManagement.feePercentage}
-                    onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', e.target.value)}
-                    error={!!errors['sfrDetails.propertyManagement.feePercentage']}
-                    helperText={errors['sfrDetails.propertyManagement.feePercentage']}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={dealData.sfrDetails.tenantTurnover.assumedAnnualTurnover}
-                        onChange={(e) => handleChange('sfrDetails.tenantTurnover.assumedAnnualTurnover', e.target.checked)}
-                      />
-                    }
-                    label="Assume Annual Tenant Turnover"
-                  />
-                </Grid>
-              </Grid>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Bedrooms"
+                value={dealData.sfrDetails.bedrooms}
+                onChange={(e) => handleChange('sfrDetails.bedrooms', e.target.value)}
+                error={!!errors['sfrDetails.bedrooms']}
+                helperText={errors['sfrDetails.bedrooms']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Bathrooms"
+                value={dealData.sfrDetails.bathrooms}
+                onChange={(e) => handleChange('sfrDetails.bathrooms', e.target.value)}
+                error={!!errors['sfrDetails.bathrooms']}
+                helperText={errors['sfrDetails.bathrooms']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Square Footage"
+                value={dealData.sfrDetails.squareFootage}
+                onChange={(e) => handleChange('sfrDetails.squareFootage', e.target.value)}
+                error={!!errors['sfrDetails.squareFootage']}
+                helperText={errors['sfrDetails.squareFootage']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Year Built"
+                value={dealData.sfrDetails.yearBuilt}
+                onChange={(e) => handleChange('sfrDetails.yearBuilt', e.target.value)}
+                error={!!errors['sfrDetails.yearBuilt']}
+                helperText={errors['sfrDetails.yearBuilt']}
+              />
             </Grid>
 
-            <Grid item xs={12}>
-              <Divider />
-            </Grid>
-
-            {/* Long-term Assumptions */}
+            {/* Property Management Section */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Long-term Assumptions
+                Property Management
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Annual Rent Increase (%)"
-                    value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualRentIncrease', e.target.value)}
-                    error={!!errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
-                    helperText={errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Annual Property Value Increase (%)"
-                    value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualPropertyValueIncrease', e.target.value)}
-                    error={!!errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
-                    helperText={errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Selling Costs (%)"
-                    value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.sellingCostsPercentage', e.target.value)}
-                    error={!!errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
-                    helperText={errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
-                  />
-                </Grid>
-              </Grid>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Management Fee (%)"
+                value={dealData.sfrDetails.propertyManagement.feePercentage}
+                onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', e.target.value)}
+                error={!!errors['sfrDetails.propertyManagement.feePercentage']}
+                helperText={errors['sfrDetails.propertyManagement.feePercentage']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={dealData.sfrDetails.tenantTurnover.assumedAnnualTurnover}
+                      onChange={(e) => handleChange('sfrDetails.tenantTurnover.assumedAnnualTurnover', e.target.checked)}
+                    />
+                  }
+                  label="Assume Annual Tenant Turnover"
+                />
+              </Box>
+            </Grid>
+
+            {/* Long Term Assumptions Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                Long Term Assumptions
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Annual Rent Increase (%)"
+                value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualRentIncrease', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
+                helperText={errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Annual Property Value Increase (%)"
+                value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualPropertyValueIncrease', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
+                helperText={errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Selling Costs (%)"
+                value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.sellingCostsPercentage', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
+                helperText={errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Inflation Rate (%)"
+                value={dealData.sfrDetails.longTermAssumptions.inflationRate}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.inflationRate', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.inflationRate']}
+                helperText={errors['sfrDetails.longTermAssumptions.inflationRate']}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Vacancy Rate (%)"
+                value={dealData.sfrDetails.longTermAssumptions.vacancyRate}
+                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.vacancyRate', e.target.value)}
+                error={!!errors['sfrDetails.longTermAssumptions.vacancyRate']}
+                helperText={errors['sfrDetails.longTermAssumptions.vacancyRate']}
+              />
+            </Grid>
+
+            {/* Submit Button */}
+            <Grid item xs={12}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
+              </Button>
             </Grid>
           </Grid>
-
-          <Box mt={3} display="flex" justifyContent="flex-end">
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              size="large"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
-            </Button>
-          </Box>
-        </form>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+        </Box>
       </CardContent>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };

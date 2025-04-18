@@ -73,37 +73,56 @@ const AnalysisResults = ({ analysis }) => {
   const [selectedChart, setSelectedChart] = useState('cashflow');
   const [selectedTab, setSelectedTab] = useState(0);
 
+  if (!analysis) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h6" color="textSecondary">
+          No analysis data available
+        </Typography>
+      </Box>
+    );
+  }
+
   const {
-    monthlyAnalysis,
-    annualAnalysis,
-    longTermAnalysis,
+    monthlyAnalysis = {},
+    annualAnalysis = {},
+    longTermAnalysis = { yearlyProjections: [] },
   } = analysis;
 
   // Prepare data for different charts
-  const cashFlowData = longTermAnalysis.yearlyProjections.map(year => ({
+  const cashFlowData = longTermAnalysis.yearlyProjections?.map(year => ({
     name: `Year ${year.year}`,
     'Monthly Cash Flow': year.cashFlow / 12,
     'Property Value': year.propertyValue,
     'Equity': year.equity,
-  }));
+  })) || [];
 
-  const monthlyExpensesData = Object.entries(monthlyAnalysis.expenses)
+  const monthlyExpensesData = Object.entries(monthlyAnalysis.expenses || {})
     .filter(([key]) => key !== 'total')
     .map(([key, value]) => ({
       name: key.charAt(0).toUpperCase() + key.slice(1),
       value,
     }));
 
-  const equityGrowthData = longTermAnalysis.yearlyProjections.map(year => ({
+  const equityGrowthData = longTermAnalysis.yearlyProjections?.map(year => ({
     name: `Year ${year.year}`,
     'Principal Paydown': year.propertyValue - year.mortgageBalance,
-    'Appreciation': year.propertyValue - analysis.purchasePrice,
-  }));
+    'Appreciation': year.propertyValue - (analysis.purchasePrice || 0),
+  })) || [];
 
   const returnMetricsData = [
-    { name: 'Cash Flow', value: longTermAnalysis.returns.totalCashFlow },
-    { name: 'Appreciation', value: longTermAnalysis.returns.totalAppreciation },
-    { name: 'Principal Paydown', value: longTermAnalysis.exitAnalysis.mortgagePayoff },
+    { 
+      name: 'Cash Flow', 
+      value: longTermAnalysis?.returns?.totalCashFlow || 0 
+    },
+    { 
+      name: 'Appreciation', 
+      value: longTermAnalysis?.returns?.totalAppreciation || 0 
+    },
+    { 
+      name: 'Principal Paydown', 
+      value: longTermAnalysis?.exitAnalysis?.mortgagePayoff || 0 
+    },
   ];
 
   const handleChartChange = (event, newChart) => {
@@ -235,28 +254,28 @@ const AnalysisResults = ({ analysis }) => {
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 title="10-Year IRR"
-                value={formatPercent(longTermAnalysis.returns.irr)}
+                value={formatPercent(longTermAnalysis?.returns?.irr || 0)}
                 subtitle="Internal Rate of Return"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 title="Cash on Cash Return"
-                value={formatPercent(annualAnalysis.cashOnCashReturn)}
+                value={formatPercent(annualAnalysis?.cashOnCashReturn || 0)}
                 subtitle="First Year"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 title="Cap Rate"
-                value={formatPercent(annualAnalysis.capRate)}
+                value={formatPercent(annualAnalysis?.capRate || 0)}
                 subtitle="Based on Purchase Price"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 title="Monthly Cash Flow"
-                value={formatCurrency(monthlyAnalysis.cashFlow)}
+                value={formatCurrency(monthlyAnalysis?.cashFlow || 0)}
                 subtitle="First Year Average"
               />
             </Grid>
@@ -301,6 +320,7 @@ const AnalysisResults = ({ analysis }) => {
                 <Tab label="Monthly Analysis" />
                 <Tab label="Annual Projections" />
                 <Tab label="Exit Analysis" />
+                <Tab label="AI Insights" />
               </Tabs>
               
               <Box mt={2}>
@@ -318,29 +338,69 @@ const AnalysisResults = ({ analysis }) => {
                         <TableRow>
                           <TableCell>Gross Rent</TableCell>
                           <TableCell align="right">
-                            {formatCurrency(monthlyAnalysis.income.baseRent)}
+                            {formatCurrency(monthlyAnalysis?.income?.baseRent || 0)}
                           </TableCell>
                           <TableCell align="right">100%</TableCell>
                         </TableRow>
-                        {Object.entries(monthlyAnalysis.expenses)
-                          .filter(([key]) => key !== 'total')
-                          .map(([key, value]) => (
-                            <TableRow key={key}>
-                              <TableCell>{key.charAt(0).toUpperCase() + key.slice(1)}</TableCell>
-                              <TableCell align="right">{formatCurrency(value)}</TableCell>
-                              <TableCell align="right">
-                                {formatPercent((value / monthlyAnalysis.income.baseRent) * 100)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                        
+                        {/* Property Operating Expenses */}
+                        <TableRow>
+                          <TableCell>PropertyTax</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(monthlyAnalysis?.expenses?.propertyTax || 0)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPercent((monthlyAnalysis?.expenses?.propertyTax || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Insurance</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(monthlyAnalysis?.expenses?.insurance || 0)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPercent((monthlyAnalysis?.expenses?.insurance || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Maintenance</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(monthlyAnalysis?.expenses?.maintenance || 0)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPercent((monthlyAnalysis?.expenses?.maintenance || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>PropertyManagement</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(monthlyAnalysis?.expenses?.propertyManagement || 0)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPercent((monthlyAnalysis?.expenses?.propertyManagement || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Mortgage Payment */}
+                        <TableRow>
+                          <TableCell>Principal & Interest</TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(monthlyAnalysis?.expenses?.mortgage?.total || 0)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPercent((monthlyAnalysis?.expenses?.mortgage?.total || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Net Cash Flow */}
                         <TableRow>
                           <TableCell><strong>Net Cash Flow</strong></TableCell>
                           <TableCell align="right">
-                            <strong>{formatCurrency(monthlyAnalysis.cashFlow)}</strong>
+                            <strong>{formatCurrency(monthlyAnalysis?.cashFlow || 0)}</strong>
                           </TableCell>
                           <TableCell align="right">
                             <strong>
-                              {formatPercent((monthlyAnalysis.cashFlow / monthlyAnalysis.income.baseRent) * 100)}
+                              {formatPercent((monthlyAnalysis?.cashFlow || 0) / (monthlyAnalysis?.income?.baseRent || 1) * 100)}
                             </strong>
                           </TableCell>
                         </TableRow>
@@ -350,36 +410,266 @@ const AnalysisResults = ({ analysis }) => {
                 )}
 
                 {selectedTab === 1 && (
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Year</TableCell>
-                          <TableCell align="right">Property Value</TableCell>
-                          <TableCell align="right">Annual Cash Flow</TableCell>
-                          <TableCell align="right">Equity</TableCell>
-                          <TableCell align="right">ROI</TableCell>
-                          <TableCell align="right">Cumulative Return</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {longTermAnalysis.yearlyProjections.map((year) => (
-                          <TableRow key={year.year}>
-                            <TableCell>{year.year}</TableCell>
-                            <TableCell align="right">{formatCurrency(year.propertyValue)}</TableCell>
-                            <TableCell align="right">{formatCurrency(year.cashFlow)}</TableCell>
-                            <TableCell align="right">{formatCurrency(year.equity)}</TableCell>
-                            <TableCell align="right">
-                              {formatPercent((year.cashFlow / year.equity) * 100)}
+                  <Box sx={{ 
+                    height: '500px', // Fixed height for the tab content
+                    position: 'relative',
+                    overflow: 'hidden' // Prevent outer scroll
+                  }}>
+                    <TableContainer 
+                      component={Paper} 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        overflowX: 'auto',
+                        overflowY: 'auto',
+                        '& table': {
+                          minWidth: 1400,
+                          tableLayout: 'fixed',
+                        },
+                        '& thead': {
+                          position: 'sticky',
+                          top: 0,
+                          backgroundColor: 'background.paper',
+                          zIndex: 2,
+                        },
+                        '& th, & td': {
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minWidth: 120,
+                        },
+                        '& th:first-of-type, & td:first-of-type': {
+                          position: 'sticky',
+                          left: 0,
+                          backgroundColor: 'background.paper',
+                          zIndex: 1,
+                          width: 80,
+                          minWidth: 80,
+                        },
+                        '& th:first-of-type': {
+                          zIndex: 3,
+                        },
+                        '& tr:last-child': {
+                          position: 'sticky',
+                          bottom: 0,
+                          backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                          zIndex: 1,
+                        },
+                      }}
+                    >
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell 
+                              sx={{ 
+                                position: 'sticky', 
+                                left: 0, 
+                                backgroundColor: 'background.paper', 
+                                zIndex: 1,
+                                whiteSpace: 'normal',
+                                width: '80px'
+                              }}
+                            >
+                              Year
                             </TableCell>
-                            <TableCell align="right">
-                              {formatPercent(((year.equity - analysis.purchasePrice + year.cashFlow) / analysis.purchasePrice) * 100)}
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '120px'
+                              }}
+                            >
+                              Property Value
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Gross Rent
+                            </TableCell>
+                            {/* Expense Breakdown */}
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                borderLeft: '1px solid rgba(224, 224, 224, 1)',
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Property Tax
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Insurance
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Maintenance
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '120px'
+                              }}
+                            >
+                              Property Management
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Vacancy
+                            </TableCell>
+                            <TableCell 
+                              align="right" 
+                              sx={{ 
+                                borderRight: '1px solid rgba(224, 224, 224, 1)',
+                                whiteSpace: 'normal',
+                                minWidth: '120px'
+                              }}
+                            >
+                              Total Expenses
+                            </TableCell>
+                            {/* Financial Metrics */}
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              NOI
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '120px'
+                              }}
+                            >
+                              Debt Service
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '100px'
+                              }}
+                            >
+                              Cash Flow
+                            </TableCell>
+                            <TableCell 
+                              align="right"
+                              sx={{ 
+                                whiteSpace: 'normal',
+                                minWidth: '120px'
+                              }}
+                            >
+                              Cash on Cash Return
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                          {longTermAnalysis.yearlyProjections.map((year) => (
+                            <TableRow key={year.year}>
+                              <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: 'background.paper' }}>{year.year}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.propertyValue)}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.grossRent)}</TableCell>
+                              {/* Expense Breakdown */}
+                              <TableCell align="right" style={{ borderLeft: '1px solid rgba(224, 224, 224, 1)' }}>
+                                {formatCurrency(year.propertyTax)}
+                              </TableCell>
+                              <TableCell align="right">{formatCurrency(year.insurance)}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.maintenance)}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.propertyManagement)}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.vacancy)}</TableCell>
+                              <TableCell align="right" style={{ borderRight: '1px solid rgba(224, 224, 224, 1)' }}>
+                                {formatCurrency(year.operatingExpenses)}
+                              </TableCell>
+                              {/* Financial Metrics */}
+                              <TableCell align="right">{formatCurrency(year.noi)}</TableCell>
+                              <TableCell align="right">{formatCurrency(year.debtService)}</TableCell>
+                              <TableCell align="right" style={{
+                                color: year.cashFlow >= 0 ? 'green' : 'red',
+                                fontWeight: 'bold'
+                              }}>
+                                {formatCurrency(year.cashFlow)}
+                              </TableCell>
+                              <TableCell align="right" style={{
+                                color: year.cashOnCash >= 0 ? 'green' : 'red',
+                                fontWeight: 'bold'
+                              }}>
+                                {formatPercent(year.cashOnCash)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {/* Summary Row */}
+                          <TableRow style={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
+                            <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: 'rgba(0, 0, 0, 0.04)' }}><strong>10-Year Total</strong></TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections[9].propertyValue)}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.grossRent, 0))}
+                            </TableCell>
+                            {/* Expense Totals */}
+                            <TableCell align="right" style={{ borderLeft: '1px solid rgba(224, 224, 224, 1)' }}>
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.propertyTax, 0))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.insurance, 0))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.maintenance, 0))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.propertyManagement, 0))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.vacancy, 0))}
+                            </TableCell>
+                            <TableCell align="right" style={{ borderRight: '1px solid rgba(224, 224, 224, 1)' }}>
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.operatingExpenses, 0))}
+                            </TableCell>
+                            {/* Financial Metric Totals */}
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.noi, 0))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(longTermAnalysis.yearlyProjections.reduce((sum, year) => sum + year.debtService, 0))}
+                            </TableCell>
+                            <TableCell align="right" style={{
+                              color: longTermAnalysis.returns.totalCashFlow >= 0 ? 'green' : 'red',
+                              fontWeight: 'bold'
+                            }}>
+                              {formatCurrency(longTermAnalysis.returns.totalCashFlow)}
+                            </TableCell>
+                            <TableCell align="right">-</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
                 )}
 
                 {selectedTab === 2 && (
@@ -425,6 +715,17 @@ const AnalysisResults = ({ analysis }) => {
                       </TableBody>
                     </Table>
                   </TableContainer>
+                )}
+
+                {selectedTab === 3 && (
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      AI Analysis
+                    </Typography>
+                    <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
+                      {analysis.aiInsights || 'AI insights are currently unavailable. This feature requires a valid OpenAI API key.'}
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </CardContent>

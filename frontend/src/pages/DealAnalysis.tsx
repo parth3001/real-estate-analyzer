@@ -2,32 +2,25 @@ import React, { useState } from 'react';
 import {
   Box,
   Container,
-  Paper,
-  Typography,
   Alert,
   Snackbar,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import DealForm from '../components/DealAnalysis/DealForm';
 import AnalysisResults from '../components/DealAnalysis/AnalysisResults';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-}));
-
 interface AnalysisResult {
-  // Add specific types based on your analysis result structure
-  [key: string]: any;
+  monthlyAnalysis?: any;
+  annualAnalysis?: any;
+  longTermAnalysis?: any;
 }
 
-const DealAnalysis = () => {
-  const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(null);
+const DealAnalysis: React.FC = () => {
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async (dealData: any) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/deals/analyze`, {
+      const response = await fetch('/api/deals/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,51 +29,66 @@ const DealAnalysis = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to analyze deal');
+        throw new Error('Failed to analyze deal');
       }
 
-      const results = await response.json();
-      setAnalysisResults(results);
+      const result = await response.json();
+      setAnalysisResult(result);
       setError(null);
-    } catch (error) {
-      console.error('Error analyzing deal:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      throw error; // Re-throw to be handled by the form
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
   return (
-    <Container maxWidth="lg">
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Real Estate Deal Analysis
-      </Typography>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <StyledPaper elevation={0}>
+    <Container maxWidth={false} sx={{ py: 3 }}>
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { 
+          xs: '1fr', // Full width on mobile
+          md: '50% 50%'  // Equal split on medium+ screens
+        }, 
+        gap: 3,
+        height: '100%'
+      }}>
+        {/* Input Form - Fixed width and sticky */}
+        <Box sx={{ 
+          position: 'sticky', 
+          top: 24, 
+          height: 'calc(100vh - 48px)', // Full height minus padding
+          overflowY: 'auto' // Add scroll to the form itself
+        }}>
           <DealForm onSubmit={handleAnalyze} />
-        </StyledPaper>
+        </Box>
 
-        {analysisResults && (
-          <StyledPaper elevation={0}>
-            <AnalysisResults analysis={analysisResults} />
-          </StyledPaper>
-        )}
-
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={() => setError(null)}
-        >
-          <Alert
-            onClose={() => setError(null)}
-            severity="error"
-            sx={{ width: '100%' }}
-          >
-            {error}
-          </Alert>
-        </Snackbar>
+        {/* Analysis Results - Flexible width with scroll */}
+        <Box sx={{ 
+          overflowY: 'auto',
+          height: 'calc(100vh - 48px)' // Match form height
+        }}>
+          {error ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          ) : null}
+          
+          {analysisResult && (
+            <Box>
+              <AnalysisResults analysis={analysisResult} />
+            </Box>
+          )}
+        </Box>
       </Box>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+      >
+        <Alert onClose={() => setError(null)} severity="error">
+          {error}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

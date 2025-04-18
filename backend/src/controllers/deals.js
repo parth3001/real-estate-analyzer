@@ -178,72 +178,30 @@ exports.analyzeDeal = async (req, res) => {
   try {
     const dealData = req.body;
     
-    // Validate required fields
-    const requiredFields = [
-      'purchasePrice',
-      'downPayment',
-      'interestRate',
-      'monthlyRent',
-      'propertyTax',
-      'insurance',
-      'sfrDetails'
-    ];
-
-    const missingFields = requiredFields.filter(field => {
-      if (field === 'sfrDetails') {
-        return !dealData[field] || !dealData[field].squareFootage;
-      }
-      return !dealData[field];
-    });
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      });
-    }
-
-    // Validate numeric fields
-    const numericFields = {
-      purchasePrice: 'Purchase Price',
-      downPayment: 'Down Payment',
-      interestRate: 'Interest Rate',
-      monthlyRent: 'Monthly Rent',
-      propertyTax: 'Property Tax',
-      insurance: 'Insurance',
-      'sfrDetails.squareFootage': 'Square Footage'
-    };
-
-    for (const [field, label] of Object.entries(numericFields)) {
-      const value = field.includes('.') ? 
-        dealData[field.split('.')[0]][field.split('.')[1]] : 
-        dealData[field];
-      
-      if (isNaN(value) || value <= 0) {
-        return res.status(400).json({
-          message: `${label} must be a positive number`
-        });
-      }
-    }
-
-    // Calculate basic metrics
+    // Perform core analysis
     const analysis = await calculateSFRMetrics(dealData);
-
-    // Get AI insights
-    const aiInsights = await getAIInsights(dealData, analysis);
-
+    
+    // Add AI insights if OpenAI API key is available
+    let aiInsights = 'AI insights currently unavailable';
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_ope************here') {
+      try {
+        aiInsights = await getAIInsights(dealData, analysis);
+      } catch (error) {
+        console.error('Error getting AI insights:', error);
+        aiInsights = 'AI insights currently unavailable';
+      }
+    }
+    
     // Combine analysis with AI insights
-    const completeAnalysis = {
+    const fullAnalysis = {
       ...analysis,
       aiInsights
     };
 
-    res.json(completeAnalysis);
+    res.json(fullAnalysis);
   } catch (error) {
-    console.error('Analysis error:', error);
-    res.status(500).json({
-      message: 'Error analyzing deal',
-      error: error.message
-    });
+    console.error('Error analyzing deal:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 

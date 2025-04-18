@@ -2,8 +2,14 @@
 const calculateMonthlyPayment = (principal, annualRate, years) => {
   const monthlyRate = annualRate / 12 / 100;
   const numPayments = years * 12;
+  if (monthlyRate === 0) return principal / numPayments;
   return (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
          (Math.pow(1 + monthlyRate, numPayments) - 1);
+};
+
+// Calculate monthly interest payment
+const calculateMonthlyInterest = (principal, annualRate) => {
+  return (principal * (annualRate / 100)) / 12;
 };
 
 // Calculate monthly cash flow
@@ -17,19 +23,20 @@ const calculateCapRate = (annualNOI, purchasePrice) => {
 };
 
 // Calculate cash on cash return
-const calculateCashOnCashReturn = (annualCashFlow, downPayment) => {
-  return (annualCashFlow / downPayment) * 100;
+const calculateCashOnCashReturn = (annualCashFlow, downPayment, closingCosts = 0) => {
+  const totalInvestment = downPayment + closingCosts;
+  return (annualCashFlow / totalInvestment) * 100;
 };
 
 // Calculate Internal Rate of Return (IRR)
-const calculateIRR = (cashFlows, initialInvestment) => {
+const calculateIRR = (cashFlows) => {
   const maxIterations = 1000;
   const tolerance = 0.000001;
 
   const npv = (rate) => {
     return cashFlows.reduce((acc, cf, i) => {
-      return acc + cf / Math.pow(1 + rate, i + 1);
-    }, -initialInvestment);
+      return acc + cf / Math.pow(1 + rate, i);
+    }, 0);
   };
 
   let lowerRate = -0.99;
@@ -83,80 +90,223 @@ const calculateSFRMetrics = async (dealData) => {
     interestRate,
     loanTerm = 30,
     monthlyRent,
-    propertyTax,
-    insurance,
+    propertyTaxRate,
+    insuranceRate,
     maintenance = 0,
-    sfrDetails
+    sfrDetails,
+    closingCosts = 0
   } = dealData;
 
-  // Calculate loan amount and monthly payment
+  // Get long term assumptions with defaults
+  const longTermAssumptions = {
+    annualRentIncrease: 2,
+    annualPropertyValueIncrease: 3,
+    sellingCostsPercentage: 6,
+    inflationRate: 2,
+    vacancyRate: 5,
+    ...sfrDetails?.longTermAssumptions
+  };
+
+  // Calculate loan amount and monthly payments
   const loanAmount = purchasePrice - downPayment;
   const monthlyMortgage = calculateMonthlyPayment(loanAmount, interestRate, loanTerm);
+  const monthlyInterest = calculateMonthlyInterest(loanAmount, interestRate);
+  const monthlyPrincipal = monthlyMortgage - monthlyInterest;
 
-  // Calculate monthly expenses
-  const monthlyExpenses = (propertyTax / 12) + (insurance / 12) + maintenance;
-  const monthlyPropertyManagement = monthlyRent * (sfrDetails.propertyManagement.feePercentage / 100);
-  const totalMonthlyExpenses = monthlyExpenses + monthlyPropertyManagement;
-
-  // Calculate monthly and annual cash flow
-  const monthlyCashFlow = calculateCashFlow(monthlyRent, totalMonthlyExpenses, monthlyMortgage);
-  const annualCashFlow = monthlyCashFlow * 12;
-
-  // Calculate NOI
-  const annualNOI = (monthlyRent * 12) - (totalMonthlyExpenses * 12);
-
-  // Calculate key metrics
-  const capRate = calculateCapRate(annualNOI, purchasePrice);
-  const cashOnCashReturn = calculateCashOnCashReturn(annualCashFlow, downPayment);
-  const pricePerSqFt = calculatePricePerSqFt(purchasePrice, sfrDetails.squareFootage);
-  const grm = calculateGRM(purchasePrice, monthlyRent * 12);
-  const dscr = calculateDSCR(annualNOI, monthlyMortgage * 12);
-
-  // Calculate 10-year projections
-  const projections = [];
-  let currentRent = monthlyRent;
+  // Initialize property value for year 0
   let currentPropertyValue = purchasePrice;
-  const { annualRentIncrease, annualPropertyValueIncrease, inflationRate } = sfrDetails.longTermAssumptions;
+  
+  // Calculate initial annual expenses based on percentages
+  const annualPropertyTax = (propertyTaxRate / 100) * currentPropertyValue;
+  const annualInsurance = (insuranceRate / 100) * currentPropertyValue;
+  
+  // Calculate monthly operating expenses
+  const monthlyPropertyTax = annualPropertyTax / 12;
+  const monthlyInsurance = annualInsurance / 12;
+  const monthlyMaintenance = maintenance / 12;
+  const monthlyPropertyManagement = monthlyRent * (sfrDetails?.propertyManagement?.feePercentage || 0) / 100;
+  const monthlyVacancy = monthlyRent * (longTermAssumptions.vacancyRate / 100); // Use configurable vacancy rate
+  
+  // Calculate total monthly operating expenses (excluding mortgage)
+  const monthlyOperatingExpenses = monthlyPropertyTax + monthlyInsurance + monthlyMaintenance + 
+                                 monthlyPropertyManagement + monthlyVacancy;
+
+  // Calculate monthly cash flow
+  const monthlyCashFlow = monthlyRent - monthlyOperatingExpenses - monthlyMortgage;
+
+  // Calculate annual metrics
+  const annualGrossRent = monthlyRent * 12;
+  const annualOperatingExpenses = monthlyOperatingExpenses * 12;
+  const annualMortgagePayment = monthlyMortgage * 12;
+  
+  // NOI is before debt service
+  const annualNOI = annualGrossRent - annualOperatingExpenses;
+  
+  // Cash flow is after debt service
+  const annualCashFlow = annualNOI - annualMortgagePayment;
+  
+  // Calculate cap rate (based on NOI before debt service)
+  const capRate = calculateCapRate(annualNOI, purchasePrice);
+  
+  // Calculate cash on cash return (based on cash flow after debt service)
+  const cashOnCashReturn = calculateCashOnCashReturn(annualCashFlow, downPayment, closingCosts);
+
+  // Calculate long-term projections
+  const yearlyProjections = [];
+  let currentMortgageBalance = loanAmount;
+  let totalCashFlow = 0;
+  let totalAppreciation = 0;
+  let totalAdditionalInvestment = 0;
+
+  // Initial investment (negative cash flow)
+  const initialInvestment = -(downPayment + closingCosts);
+  const cashFlows = [initialInvestment];
+  let cumulativeCashFlow = 0;
 
   for (let year = 1; year <= 10; year++) {
-    currentRent *= (1 + annualRentIncrease / 100);
-    currentPropertyValue *= (1 + annualPropertyValueIncrease / 100);
-    const yearlyExpenses = totalMonthlyExpenses * 12 * Math.pow(1 + inflationRate / 100, year);
-    const yearlyMortgage = monthlyMortgage * 12;
-    const yearlyCashFlow = (currentRent * 12) - yearlyExpenses - yearlyMortgage;
+    // Property value appreciation using user-defined rate
+    const appreciationFactor = 1 + (longTermAssumptions.annualPropertyValueIncrease / 100);
+    currentPropertyValue *= appreciationFactor;
+    
+    // Calculate mortgage balance and payment
+    const annualInterestPayment = currentMortgageBalance * (interestRate / 100);
+    const annualMortgagePayment = monthlyMortgage * 12;
+    const annualPrincipalPayment = annualMortgagePayment - annualInterestPayment;
+    currentMortgageBalance -= annualPrincipalPayment;
+    
+    // Calculate annual income with user-defined rent increase
+    const rentIncreaseFactor = 1 + (longTermAssumptions.annualRentIncrease / 100);
+    const annualRent = monthlyRent * 12 * Math.pow(rentIncreaseFactor, year - 1);
+    
+    // Calculate property tax and insurance based on current property value
+    const yearlyPropertyTax = (propertyTaxRate / 100) * currentPropertyValue;
+    const yearlyInsurance = (insuranceRate / 100) * currentPropertyValue;
+    
+    // Calculate other operating expenses with user-defined inflation rate
+    const inflationFactor = 1 + (longTermAssumptions.inflationRate / 100);
+    const yearlyMaintenance = maintenance * Math.pow(inflationFactor, year - 1);
+    const yearlyPropertyManagement = (annualRent * (sfrDetails?.propertyManagement?.feePercentage || 0)) / 100;
+    const yearlyVacancy = annualRent * (longTermAssumptions.vacancyRate / 100); // Use configurable vacancy rate
+    
+    // Total operating expenses for the year
+    const yearlyOperatingExpenses = yearlyPropertyTax + yearlyInsurance + yearlyMaintenance + 
+                                  yearlyPropertyManagement + yearlyVacancy;
+    
+    // NOI for this year
+    const yearNOI = annualRent - yearlyOperatingExpenses;
+    
+    // Cash flow after debt service
+    const yearCashFlow = yearNOI - annualMortgagePayment;
 
-    projections.push({
+    // Track additional investment needed for negative cash flows
+    if (yearCashFlow < 0) {
+      totalAdditionalInvestment += Math.abs(yearCashFlow);
+    }
+    
+    // Update cumulative values
+    cumulativeCashFlow += yearCashFlow;
+    totalCashFlow += yearCashFlow;
+    totalAppreciation = currentPropertyValue - purchasePrice;
+
+    // Calculate equity and appreciation
+    const currentEquity = currentPropertyValue - currentMortgageBalance;
+    const yearAppreciation = currentPropertyValue - purchasePrice;
+    
+    // Calculate returns considering additional investments
+    const totalInvestmentToDate = Math.abs(initialInvestment) + 
+                                 (cumulativeCashFlow < 0 ? Math.abs(cumulativeCashFlow) : 0);
+    const cashOnCash = (yearCashFlow / totalInvestmentToDate) * 100;
+    const totalReturn = yearCashFlow + yearAppreciation;
+    const cumulativeReturn = ((cumulativeCashFlow + yearAppreciation) / totalInvestmentToDate * 100);
+
+    // Add this year's cash flow to the array
+    cashFlows.push(yearCashFlow);
+
+    yearlyProjections.push({
       year,
-      rent: currentRent * 12,
       propertyValue: currentPropertyValue,
-      expenses: yearlyExpenses,
-      mortgage: yearlyMortgage,
-      cashFlow: yearlyCashFlow
+      mortgageBalance: currentMortgageBalance,
+      grossRent: annualRent,
+      operatingExpenses: yearlyOperatingExpenses,
+      propertyTax: yearlyPropertyTax,
+      insurance: yearlyInsurance,
+      maintenance: yearlyMaintenance,
+      propertyManagement: yearlyPropertyManagement,
+      vacancy: yearlyVacancy,
+      noi: yearNOI,
+      debtService: annualMortgagePayment,
+      cashFlow: yearCashFlow,
+      equity: currentEquity,
+      appreciation: yearAppreciation,
+      cumulativeCashFlow: cumulativeCashFlow,
+      cumulativeReturn: cumulativeReturn,
+      cashOnCash: cashOnCash,
+      totalReturn: totalReturn,
+      additionalInvestmentNeeded: yearCashFlow < 0 ? Math.abs(yearCashFlow) : 0,
+      totalInvestmentToDate: totalInvestmentToDate
     });
   }
 
-  // Calculate IRR
-  const cashFlows = projections.map(p => p.cashFlow);
-  const exitValue = currentPropertyValue * (1 - sfrDetails.longTermAssumptions.sellingCostsPercentage / 100);
-  cashFlows[cashFlows.length - 1] += exitValue;
-  const irr = calculateIRR(cashFlows, downPayment);
+  // Add final year's property sale proceeds
+  const finalPropertyValue = currentPropertyValue;
+  const sellingCosts = finalPropertyValue * (longTermAssumptions.sellingCostsPercentage / 100);
+  const netProceedsFromSale = finalPropertyValue - sellingCosts - currentMortgageBalance;
+  cashFlows[cashFlows.length - 1] += netProceedsFromSale;
+
+  // Calculate IRR using all cash flows
+  const irr = calculateIRR(cashFlows);
 
   return {
-    monthlyMortgage,
-    monthlyExpenses: totalMonthlyExpenses,
-    monthlyCashFlow,
-    annualCashFlow,
-    capRate,
-    cashOnCashReturn,
-    irr,
-    pricePerSqFt,
-    grm,
-    dscr,
-    projections,
-    metrics: {
-      pricePerSqFt,
-      rentPerSqFt: monthlyRent / sfrDetails.squareFootage,
-      grossRentMultiplier: purchasePrice / (monthlyRent * 12),
+    monthlyAnalysis: {
+      income: {
+        baseRent: monthlyRent,
+        effectiveGrossRent: monthlyRent - monthlyVacancy
+      },
+      expenses: {
+        propertyTax: monthlyPropertyTax,
+        insurance: monthlyInsurance,
+        maintenance: monthlyMaintenance,
+        propertyManagement: monthlyPropertyManagement,
+        vacancy: monthlyVacancy,
+        operatingExpenses: monthlyOperatingExpenses,
+        mortgage: {
+          total: monthlyMortgage,
+          principal: monthlyPrincipal,
+          interest: monthlyInterest
+        }
+      },
+      noi: annualNOI / 12,
+      cashFlow: monthlyCashFlow
+    },
+    annualAnalysis: {
+      grossRent: annualGrossRent,
+      effectiveGrossRent: annualGrossRent * 0.95,
+      operatingExpenses: annualOperatingExpenses,
+      noi: annualNOI,
+      debtService: annualMortgagePayment,
+      cashFlow: annualCashFlow,
+      capRate,
+      cashOnCashReturn,
+      dscr: annualNOI / annualMortgagePayment
+    },
+    longTermAnalysis: {
+      yearlyProjections,
+      returns: {
+        totalCashFlow,
+        totalAppreciation,
+        irr,
+        totalAdditionalInvestment,
+        totalInvestment: Math.abs(initialInvestment) + totalAdditionalInvestment,
+        totalReturn: totalCashFlow + netProceedsFromSale - initialInvestment - totalAdditionalInvestment,
+        cumulativeReturn: yearlyProjections[yearlyProjections.length - 1].cumulativeReturn
+      },
+      exitAnalysis: {
+        projectedSalePrice: finalPropertyValue,
+        sellingCosts,
+        mortgagePayoff: currentMortgageBalance,
+        netProceedsFromSale,
+        totalInvestment: Math.abs(initialInvestment) + totalAdditionalInvestment
+      }
     }
   };
 };
@@ -164,10 +314,11 @@ const calculateSFRMetrics = async (dealData) => {
 module.exports = {
   calculateSFRMetrics,
   calculateMonthlyPayment,
-  calculateCashFlow,
-  calculateCapRate,
+  calculateMonthlyInterest,
   calculateCashOnCashReturn,
   calculateIRR,
+  calculateCashFlow,
+  calculateCapRate,
   calculatePricePerSqFt,
   calculateGRM,
   calculateDSCR,
