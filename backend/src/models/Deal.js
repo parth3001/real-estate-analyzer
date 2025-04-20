@@ -300,13 +300,19 @@ const dealSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  propertyTax: {
+  propertyTaxRate: {
     type: Number,
     required: true,
+    min: 0,
+    max: 10,
+    description: 'Annual property tax rate as a percentage of property value'
   },
-  insurance: {
+  insuranceRate: {
     type: Number,
     required: true,
+    min: 0,
+    max: 5,
+    description: 'Annual insurance rate as a percentage of property value'
   },
   maintenance: {
     type: Number,

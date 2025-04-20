@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -13,7 +13,192 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Container,
+  InputAdornment,
+  FormControl,
 } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const theme = {
+  palette: {
+    primary: {
+      main: '#6366F1', // Modern indigo
+      light: '#818CF8',
+      dark: '#4F46E5'
+    },
+    secondary: {
+      main: '#10B981', // Modern emerald
+      light: '#34D399',
+      dark: '#059669'
+    },
+    background: {
+      default: '#F9FAFB',
+      paper: '#FFFFFF'
+    },
+    text: {
+      primary: '#111827',
+      secondary: '#4B5563'
+    },
+    error: {
+      main: '#EF4444'
+    },
+    success: {
+      main: '#10B981'
+    }
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontSize: '2.5rem',
+      fontWeight: 600,
+      lineHeight: 1.2
+    },
+    h2: {
+      fontSize: '2rem',
+      fontWeight: 600,
+      lineHeight: 1.3
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.5
+    }
+  },
+  shape: {
+    borderRadius: 12
+  },
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
+            backgroundColor: '#FFFFFF',
+            '&:hover fieldset': {
+              borderColor: '#6366F1',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#6366F1',
+            }
+          }
+        }
+      }
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 500,
+          padding: '10px 20px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+          }
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+        }
+      }
+    }
+  }
+};
+
+const CurrencyInput = ({ value, onChange, label, required = false }) => {
+  const [displayValue, setDisplayValue] = useState('');
+
+  useEffect(() => {
+    if (value) {
+      const formatted = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+      setDisplayValue(formatted);
+    }
+  }, [value]);
+
+  const handleChange = (event) => {
+    const rawValue = event.target.value.replace(/[^0-9]/g, '');
+    const numericValue = parseInt(rawValue, 10);
+    
+    if (!isNaN(numericValue)) {
+      onChange(numericValue);
+    } else {
+      onChange('');
+    }
+  };
+
+  return (
+    <TextField
+      fullWidth
+      label={label}
+      value={displayValue}
+      onChange={handleChange}
+      required={required}
+      InputProps={{
+        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          '&.Mui-focused': {
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+            },
+          },
+        },
+      }}
+    />
+  );
+};
+
+const PercentageInput = ({ value, onChange, label, required = false }) => {
+  const [displayValue, setDisplayValue] = useState('');
+
+  useEffect(() => {
+    if (value) {
+      setDisplayValue(value.toString());
+    }
+  }, [value]);
+
+  const handleChange = (event) => {
+    const rawValue = event.target.value.replace(/[^0-9.]/g, '');
+    const numericValue = parseFloat(rawValue);
+    
+    if (!isNaN(numericValue) && numericValue <= 100) {
+      onChange(numericValue);
+    } else {
+      onChange('');
+    }
+  };
+
+  return (
+    <TextField
+      fullWidth
+      label={label}
+      value={displayValue}
+      onChange={handleChange}
+      required={required}
+      InputProps={{
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          '&.Mui-focused': {
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+            },
+          },
+        },
+      }}
+    />
+  );
+};
 
 const DealForm = ({ onSubmit, initialData = {} }) => {
   const [dealData, setDealData] = useState({
@@ -29,8 +214,8 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
     interestRate: '',
     loanTerm: 30,
     monthlyRent: '',
-    propertyTaxRate: '',
-    insuranceRate: '',
+    propertyTaxRate: 1.2,
+    insuranceRate: 0.5,
     maintenance: '',
     sfrDetails: {
       bedrooms: '',
@@ -303,839 +488,338 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              fontWeight: 600,
-              color: 'text.primary'
-            }}
-          >
-            Property Details
-          </Typography>
-          <Box>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleSave}
-              sx={{ mr: 1 }}
-            >
-              Save Deal
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleLoad}
-            >
-              Load Deal
-            </Button>
-          </Box>
-        </Box>
-        <Box component="form" noValidate>
-          <Grid container spacing={3}>
-            {/* Property Address Section */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2,
-                  mt: 2,
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  pb: 1
-                }}
-              >
-                Property Address
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Street Address"
-                value={dealData.propertyAddress.street}
-                onChange={(e) => handleChange('propertyAddress.street', e.target.value)}
-                error={!!errors['propertyAddress.street']}
-                helperText={errors['propertyAddress.street']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="City"
-                value={dealData.propertyAddress.city}
-                onChange={(e) => handleChange('propertyAddress.city', e.target.value)}
-                error={!!errors['propertyAddress.city']}
-                helperText={errors['propertyAddress.city']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="State"
-                value={dealData.propertyAddress.state}
-                onChange={(e) => handleChange('propertyAddress.state', e.target.value)}
-                error={!!errors['propertyAddress.state']}
-                helperText={errors['propertyAddress.state']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Zip Code"
-                value={dealData.propertyAddress.zipCode}
-                onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
-                error={!!errors['propertyAddress.zipCode']}
-                helperText={errors['propertyAddress.zipCode']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Property Characteristics Section */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2,
-                  mt: 2,
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  pb: 1
-                }}
-              >
-                Property Characteristics
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Purchase Price"
-                value={dealData.purchasePrice}
-                onChange={(e) => handleChange('purchasePrice', e.target.value)}
-                error={!!errors.purchasePrice}
-                helperText={errors.purchasePrice}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Down Payment"
-                value={dealData.downPayment}
-                onChange={(e) => handleChange('downPayment', e.target.value)}
-                error={!!errors.downPayment}
-                helperText={errors.downPayment}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Interest Rate (%)"
-                value={dealData.interestRate}
-                onChange={(e) => handleChange('interestRate', e.target.value)}
-                error={!!errors.interestRate}
-                helperText={errors.interestRate}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Monthly Rent"
-                value={dealData.monthlyRent}
-                onChange={(e) => handleChange('monthlyRent', e.target.value)}
-                error={!!errors.monthlyRent}
-                helperText={errors.monthlyRent}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Property Tax Rate (%)"
-                value={dealData.propertyTaxRate}
-                onChange={(e) => handleChange('propertyTaxRate', e.target.value)}
-                error={!!errors.propertyTaxRate}
-                helperText={errors.propertyTaxRate}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Insurance Rate (%)"
-                value={dealData.insuranceRate}
-                onChange={(e) => handleChange('insuranceRate', e.target.value)}
-                error={!!errors.insuranceRate}
-                helperText={errors.insuranceRate}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Maintenance (monthly)"
-                value={dealData.maintenance}
-                onChange={(e) => handleChange('maintenance', e.target.value)}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Property Details Section */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2,
-                  mt: 2,
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  pb: 1
-                }}
-              >
-                Property Details
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Bedrooms"
-                value={dealData.sfrDetails.bedrooms}
-                onChange={(e) => handleChange('sfrDetails.bedrooms', e.target.value)}
-                error={!!errors['sfrDetails.bedrooms']}
-                helperText={errors['sfrDetails.bedrooms']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Bathrooms"
-                value={dealData.sfrDetails.bathrooms}
-                onChange={(e) => handleChange('sfrDetails.bathrooms', e.target.value)}
-                error={!!errors['sfrDetails.bathrooms']}
-                helperText={errors['sfrDetails.bathrooms']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Square Footage"
-                value={dealData.sfrDetails.squareFootage}
-                onChange={(e) => handleChange('sfrDetails.squareFootage', e.target.value)}
-                error={!!errors['sfrDetails.squareFootage']}
-                helperText={errors['sfrDetails.squareFootage']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Year Built"
-                value={dealData.sfrDetails.yearBuilt}
-                onChange={(e) => handleChange('sfrDetails.yearBuilt', e.target.value)}
-                error={!!errors['sfrDetails.yearBuilt']}
-                helperText={errors['sfrDetails.yearBuilt']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Property Management Section */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2,
-                  mt: 2,
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  pb: 1
-                }}
-              >
-                Property Management
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Management Fee (%)"
-                value={dealData.sfrDetails.propertyManagement.feePercentage}
-                onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', e.target.value)}
-                error={!!errors['sfrDetails.propertyManagement.feePercentage']}
-                helperText={errors['sfrDetails.propertyManagement.feePercentage']}
-                sx={{
-                  '& .MuiInputLabel-root': {
-                    color: 'text.secondary',
-                    marginBottom: '8px',
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                    '&.Mui-focused': {
-                      color: 'primary.main',
-                    }
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    '& fieldset': {
-                      borderColor: 'divider',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'primary.light',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'primary.main',
-                    }
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -8px) scale(0.75)',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginLeft: 0,
-                    marginTop: '4px',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={dealData.sfrDetails.tenantTurnover.assumedAnnualTurnover}
-                      onChange={(e) => handleChange('sfrDetails.tenantTurnover.assumedAnnualTurnover', e.target.checked)}
+    <ThemeProvider theme={createTheme(theme)}>
+      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+        <Container maxWidth="lg">
+          <Card sx={{ p: 4, mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, color: 'text.primary', fontWeight: 600 }}>
+              Property Analysis
+            </Typography>
+            
+            <Grid container spacing={4}>
+              {/* Property Information Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 3 }}>
+                  Property Information
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Property Address"
+                      required
+                      value={dealData.propertyAddress.street}
+                      onChange={(e) => handleChange('propertyAddress.street', e.target.value)}
                     />
-                  }
-                  label="Assume Annual Tenant Turnover"
-                />
-              </Box>
-            </Grid>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="City"
+                      value={dealData.propertyAddress.city}
+                      onChange={(e) => handleChange('propertyAddress.city', e.target.value)}
+                      error={!!errors['propertyAddress.city']}
+                      helperText={errors['propertyAddress.city']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="State"
+                      value={dealData.propertyAddress.state}
+                      onChange={(e) => handleChange('propertyAddress.state', e.target.value)}
+                      error={!!errors['propertyAddress.state']}
+                      helperText={errors['propertyAddress.state']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Zip Code"
+                      value={dealData.propertyAddress.zipCode}
+                      onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
+                      error={!!errors['propertyAddress.zipCode']}
+                      helperText={errors['propertyAddress.zipCode']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Bedrooms"
+                      type="number"
+                      value={dealData.sfrDetails.bedrooms}
+                      onChange={(e) => handleChange('sfrDetails.bedrooms', e.target.value)}
+                      error={!!errors['sfrDetails.bedrooms']}
+                      helperText={errors['sfrDetails.bedrooms']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Bathrooms"
+                      type="number"
+                      value={dealData.sfrDetails.bathrooms}
+                      onChange={(e) => handleChange('sfrDetails.bathrooms', e.target.value)}
+                      error={!!errors['sfrDetails.bathrooms']}
+                      helperText={errors['sfrDetails.bathrooms']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Square Footage"
+                      type="number"
+                      value={dealData.sfrDetails.squareFootage}
+                      onChange={(e) => handleChange('sfrDetails.squareFootage', e.target.value)}
+                      error={!!errors['sfrDetails.squareFootage']}
+                      helperText={errors['sfrDetails.squareFootage']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Year Built"
+                      type="number"
+                      value={dealData.sfrDetails.yearBuilt}
+                      onChange={(e) => handleChange('sfrDetails.yearBuilt', e.target.value)}
+                      error={!!errors['sfrDetails.yearBuilt']}
+                      helperText={errors['sfrDetails.yearBuilt']}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
 
-            {/* Long Term Assumptions Section */}
-            <Grid item xs={12}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2,
-                  mt: 2,
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  pb: 1
-                }}
-              >
-                Long Term Assumptions
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Annual Rent Increase (%)"
-                name="sfrDetails.longTermAssumptions.annualRentIncrease"
-                value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
-                onChange={handleChange}
-                error={!!errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
-                helperText={errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
-                type="number"
-                inputProps={{ step: "0.1" }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Annual Property Value Increase (%)"
-                name="sfrDetails.longTermAssumptions.annualPropertyValueIncrease"
-                value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
-                onChange={handleChange}
-                error={!!errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
-                helperText={errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
-                type="number"
-                inputProps={{ step: "0.1" }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Selling Costs (%)"
-                name="sfrDetails.longTermAssumptions.sellingCostsPercentage"
-                value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
-                onChange={handleChange}
-                error={!!errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
-                helperText={errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
-                type="number"
-                inputProps={{ step: "0.1" }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Inflation Rate (%)"
-                name="sfrDetails.longTermAssumptions.inflationRate"
-                value={dealData.sfrDetails.longTermAssumptions.inflationRate}
-                onChange={handleChange}
-                error={!!errors['sfrDetails.longTermAssumptions.inflationRate']}
-                helperText={errors['sfrDetails.longTermAssumptions.inflationRate']}
-                type="number"
-                inputProps={{ step: "0.1" }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Vacancy Rate (%)"
-                name="sfrDetails.longTermAssumptions.vacancyRate"
-                value={dealData.sfrDetails.longTermAssumptions.vacancyRate}
-                onChange={handleChange}
-                error={!!errors['sfrDetails.longTermAssumptions.vacancyRate']}
-                helperText={errors['sfrDetails.longTermAssumptions.vacancyRate']}
-                type="number"
-                inputProps={{ step: "0.1" }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Projection Years"
-                value={dealData.sfrDetails.longTermAssumptions.projectionYears}
-                onChange={(e) => handleChange('sfrDetails.longTermAssumptions.projectionYears', e.target.value)}
-                error={!!errors['sfrDetails.longTermAssumptions.projectionYears']}
-                helperText={errors['sfrDetails.longTermAssumptions.projectionYears']}
-                type="number"
-                inputProps={{ min: "1", max: "30", step: "1" }}
-              />
-            </Grid>
+              {/* Financial Details Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 3 }}>
+                  Financial Details
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <CurrencyInput
+                      label="Purchase Price"
+                      value={dealData.purchasePrice}
+                      onChange={(value) => handleChange('purchasePrice', value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <CurrencyInput
+                      label="Down Payment"
+                      value={dealData.downPayment}
+                      onChange={(value) => handleChange('downPayment', value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <CurrencyInput
+                      label="Monthly Rental Income"
+                      value={dealData.monthlyRent}
+                      onChange={(value) => handleChange('monthlyRent', value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <PercentageInput
+                      label="Interest Rate"
+                      value={dealData.interestRate}
+                      onChange={(value) => handleChange('interestRate', value)}
+                      required
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
 
-            {/* Submit Button */}
-            <Grid item xs={12} sx={{ mt: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                sx={{ 
-                  py: 1.5,
-                  mt: 2
-                }}
-              >
-                {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
-              </Button>
+              {/* Operating Expenses Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 3 }}>
+                  Operating Expenses
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth margin="normal">
+                      <TextField
+                        label="Property Tax Rate (%)"
+                        name="propertyTaxRate"
+                        type="number"
+                        value={dealData.propertyTaxRate}
+                        onChange={(e) => handleChange('propertyTaxRate', e.target.value)}
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                        }}
+                        helperText="Annual property tax rate as a percentage of property value"
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth margin="normal">
+                      <TextField
+                        label="Insurance Rate (%)"
+                        name="insuranceRate"
+                        type="number"
+                        value={dealData.insuranceRate}
+                        onChange={(e) => handleChange('insuranceRate', e.target.value)}
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                        }}
+                        helperText="Annual insurance rate as a percentage of property value"
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CurrencyInput
+                      label="Maintenance (Monthly)"
+                      value={dealData.maintenance}
+                      onChange={(value) => handleChange('maintenance', value)}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Property Management Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 3 }}>
+                  Property Management
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Management Fee (%)"
+                      type="number"
+                      value={dealData.sfrDetails.propertyManagement.feePercentage}
+                      onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', e.target.value)}
+                      error={!!errors['sfrDetails.propertyManagement.feePercentage']}
+                      helperText={errors['sfrDetails.propertyManagement.feePercentage']}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={dealData.sfrDetails.tenantTurnover.assumedAnnualTurnover}
+                            onChange={(e) => handleChange('sfrDetails.tenantTurnover.assumedAnnualTurnover', e.target.checked)}
+                          />
+                        }
+                        label="Assume Annual Tenant Turnover"
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Long Term Assumptions Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 3 }}>
+                  Long Term Assumptions
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Annual Rent Increase (%)"
+                      name="sfrDetails.longTermAssumptions.annualRentIncrease"
+                      value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
+                      onChange={handleChange}
+                      error={!!errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
+                      helperText={errors['sfrDetails.longTermAssumptions.annualRentIncrease']}
+                      type="number"
+                      inputProps={{ step: "0.1" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Annual Property Value Increase (%)"
+                      name="sfrDetails.longTermAssumptions.annualPropertyValueIncrease"
+                      value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
+                      onChange={handleChange}
+                      error={!!errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
+                      helperText={errors['sfrDetails.longTermAssumptions.annualPropertyValueIncrease']}
+                      type="number"
+                      inputProps={{ step: "0.1" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Selling Costs (%)"
+                      name="sfrDetails.longTermAssumptions.sellingCostsPercentage"
+                      value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
+                      onChange={handleChange}
+                      error={!!errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
+                      helperText={errors['sfrDetails.longTermAssumptions.sellingCostsPercentage']}
+                      type="number"
+                      inputProps={{ step: "0.1" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Inflation Rate (%)"
+                      name="sfrDetails.longTermAssumptions.inflationRate"
+                      value={dealData.sfrDetails.longTermAssumptions.inflationRate}
+                      onChange={handleChange}
+                      error={!!errors['sfrDetails.longTermAssumptions.inflationRate']}
+                      helperText={errors['sfrDetails.longTermAssumptions.inflationRate']}
+                      type="number"
+                      inputProps={{ step: "0.1" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Vacancy Rate (%)"
+                      name="sfrDetails.longTermAssumptions.vacancyRate"
+                      value={dealData.sfrDetails.longTermAssumptions.vacancyRate}
+                      onChange={handleChange}
+                      error={!!errors['sfrDetails.longTermAssumptions.vacancyRate']}
+                      helperText={errors['sfrDetails.longTermAssumptions.vacancyRate']}
+                      type="number"
+                      inputProps={{ step: "0.1" }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Projection Years"
+                      value={dealData.sfrDetails.longTermAssumptions.projectionYears}
+                      onChange={(e) => handleChange('sfrDetails.longTermAssumptions.projectionYears', e.target.value)}
+                      error={!!errors['sfrDetails.longTermAssumptions.projectionYears']}
+                      helperText={errors['sfrDetails.longTermAssumptions.projectionYears']}
+                      type="number"
+                      inputProps={{ min: "1", max: "30", step: "1" }}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Submit Button */}
+              <Grid item xs={12}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  onClick={handleSubmit}
+                  sx={{
+                    mt: 2,
+                    py: 1.5,
+                    px: 4,
+                    fontSize: '1.1rem',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 8px 16px -4px rgb(99 102 241 / 0.3)'
+                    }
+                  }}
+                >
+                  {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
+                </Button>
+              </Grid>
             </Grid>
-          </Grid>
-        </Box>
-      </CardContent>
+          </Card>
+        </Container>
+      </Box>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -1145,7 +829,7 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Card>
+    </ThemeProvider>
   );
 };
 

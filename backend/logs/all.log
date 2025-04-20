@@ -100,3 +100,12 @@
 2025-04-18 16:12:40:1240 [32minfo[39m: [32mServer running on port 3001[39m
 2025-04-18 16:12:55:1255 [35mhttp[39m: [35m::1 - - [18/Apr/2025:21:12:55 +0000] "POST /api/deals/analyze HTTP/1.1" 200 6142 "http://localhost:3000/analysis" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"[39m
 2025-04-18 16:13:10:1310 [35mhttp[39m: [35m::1 - - [18/Apr/2025:21:13:10 +0000] "POST /api/deals/analyze HTTP/1.1" 200 6048 "http://localhost:3000/analysis" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"[39m
+2025-04-20 09:49:17:4917 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:24:4924 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:25:4925 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:45:4945 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:46:4946 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:53:4953 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:49:54:4954 [32minfo[39m: [32mServer running on port 3001[39m
+2025-04-20 09:50:25:5025 [35mhttp[39m: [35m::1 - - [20/Apr/2025:14:50:25 +0000] "POST /api/deals/analyze HTTP/1.1" 200 8273 "http://localhost:3000/analysis" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"[39m
+2025-04-20 09:50:32:5032 [32minfo[39m: [32mServer running on port 3001[39m
