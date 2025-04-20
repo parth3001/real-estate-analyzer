@@ -89,6 +89,7 @@ const calculateSFRMetrics = async (dealData) => {
     downPayment,
     interestRate,
     loanTerm = 30,
+    capitalInvestment = 0,
     monthlyRent,
     propertyTaxRate,
     insuranceRate,
@@ -150,7 +151,8 @@ const calculateSFRMetrics = async (dealData) => {
   const capRate = calculateCapRate(annualNOI, purchasePrice);
   
   // Calculate cash on cash return (based on cash flow after debt service)
-  const cashOnCashReturn = calculateCashOnCashReturn(annualCashFlow, downPayment, closingCosts);
+  const totalInitialInvestment = downPayment + closingCosts + capitalInvestment;
+  const cashOnCashReturn = calculateCashOnCashReturn(annualCashFlow, totalInitialInvestment);
 
   // Calculate long-term projections
   const yearlyProjections = [];
@@ -160,7 +162,7 @@ const calculateSFRMetrics = async (dealData) => {
   let totalAdditionalInvestment = 0;
 
   // Initial investment (negative cash flow)
-  const initialInvestment = -(downPayment + closingCosts);
+  const initialInvestment = -(downPayment + closingCosts + capitalInvestment);
   const cashFlows = [initialInvestment];
   let cumulativeCashFlow = 0;
 

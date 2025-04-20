@@ -213,6 +213,7 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
     downPayment: '',
     interestRate: '',
     loanTerm: 30,
+    capitalInvestment: '',
     monthlyRent: '',
     propertyTaxRate: 1.2,
     insuranceRate: 0.5,
@@ -290,6 +291,10 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
         return value >= 0 && value <= 10 ? '' : 'Must be between 0 and 10%';
       case 'sfrDetails.longTermAssumptions.vacancyRate':
         return value >= 0 && value <= 20 ? '' : 'Must be between 0 and 20%';
+      case 'capitalInvestment':
+        return value >= 0 ? '' : 'Must be greater than or equal to 0';
+      case 'loanTerm':
+        return value >= 1 && value <= 30 ? '' : 'Must be between 1 and 30 years';
       default:
         return '';
     }
@@ -333,7 +338,9 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
       'sfrDetails.longTermAssumptions.sellingCostsPercentage',
       'sfrDetails.longTermAssumptions.inflationRate',
       'sfrDetails.longTermAssumptions.vacancyRate',
-      'sfrDetails.longTermAssumptions.projectionYears'
+      'sfrDetails.longTermAssumptions.projectionYears',
+      'loanTerm',
+      'capitalInvestment'
     ];
     
     const processedValue = numericFields.includes(field) ? 
@@ -609,6 +616,27 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
                       value={dealData.downPayment}
                       onChange={(value) => handleChange('downPayment', value)}
                       required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <CurrencyInput
+                      label="Capital Investment"
+                      value={dealData.capitalInvestment}
+                      onChange={(value) => handleChange('capitalInvestment', value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Loan Term (Years)"
+                      type="number"
+                      value={dealData.loanTerm}
+                      onChange={(e) => handleChange('loanTerm', e.target.value)}
+                      required
+                      inputProps={{ min: "1", max: "30", step: "1" }}
+                      error={!!errors['loanTerm']}
+                      helperText={errors['loanTerm']}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
