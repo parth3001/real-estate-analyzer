@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -17,6 +17,21 @@ interface AnalysisResult {
 const DealAnalysis: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [initialData, setInitialData] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const savedDeal = localStorage.getItem('currentDeal');
+      if (savedDeal) {
+        const deal = JSON.parse(savedDeal);
+        setInitialData(deal.data);
+        // Clear the currentDeal from localStorage after loading
+        localStorage.removeItem('currentDeal');
+      }
+    } catch (error) {
+      console.error('Error loading saved deal:', error);
+    }
+  }, []);
 
   const handleAnalyze = async (dealData: any) => {
     try {
@@ -43,28 +58,27 @@ const DealAnalysis: React.FC = () => {
   return (
     <Container maxWidth={false} sx={{ py: 3 }}>
       <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: { 
-          xs: '1fr', // Full width on mobile
-          md: '50% 50%'  // Equal split on medium+ screens
-        }, 
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
         gap: 3,
-        height: '100%'
+        minHeight: 'calc(100vh - 48px)', // Full viewport height minus padding
       }}>
-        {/* Input Form - Fixed width and sticky */}
+        {/* Input Form */}
         <Box sx={{ 
-          position: 'sticky', 
-          top: 24, 
-          height: 'calc(100vh - 48px)', // Full height minus padding
-          overflowY: 'auto' // Add scroll to the form itself
+          width: { xs: '100%', md: '50%' },
+          maxHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
+          overflowY: { xs: 'visible', md: 'auto' },
+          position: { xs: 'static', md: 'sticky' },
+          top: { md: 24 },
         }}>
-          <DealForm onSubmit={handleAnalyze} />
+          <DealForm onSubmit={handleAnalyze} initialData={initialData} />
         </Box>
 
-        {/* Analysis Results - Flexible width with scroll */}
+        {/* Analysis Results */}
         <Box sx={{ 
-          overflowY: 'auto',
-          height: 'calc(100vh - 48px)' // Match form height
+          width: { xs: '100%', md: '50%' },
+          maxHeight: { xs: 'none', md: 'calc(100vh - 48px)' },
+          overflowY: { xs: 'visible', md: 'auto' },
         }}>
           {error ? (
             <Alert severity="error" sx={{ mb: 2 }}>

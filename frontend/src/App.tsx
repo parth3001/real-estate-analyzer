@@ -21,7 +21,7 @@ const App = () => {
           <Box sx={{ flex: 1, p: 3 }}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/analysis" element={<DealAnalysis />} />
+              <Route path="/analyze" element={<DealAnalysis />} />
             </Routes>
           </Box>
         </Box>

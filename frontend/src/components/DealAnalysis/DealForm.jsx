@@ -201,48 +201,65 @@ const PercentageInput = ({ value, onChange, label, required = false }) => {
 };
 
 const DealForm = ({ onSubmit, initialData = {} }) => {
-  const [dealData, setDealData] = useState({
-    propertyAddress: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-    },
-    propertyType: 'single_family',
-    purchasePrice: '',
-    downPayment: '',
-    interestRate: '',
-    loanTerm: 30,
-    capitalInvestment: '',
-    monthlyRent: '',
-    propertyTaxRate: 1.2,
-    insuranceRate: 0.5,
-    maintenance: '',
-    sfrDetails: {
-      bedrooms: '',
-      bathrooms: '',
-      squareFootage: '',
-      yearBuilt: '',
-      condition: 'good',
-      propertyManagement: {
-        feePercentage: 4,
+  console.log('DealForm initialData:', initialData);
+  
+  const [dealData, setDealData] = useState(() => {
+    const initialState = {
+      propertyAddress: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
       },
-      tenantTurnover: {
-        assumedAnnualTurnover: true,
-        realtorCommissionMonths: 1,
-        prepFeesMonths: 1,
+      propertyType: 'single_family',
+      purchasePrice: '',
+      downPayment: '',
+      interestRate: '',
+      loanTerm: 30,
+      capitalInvestment: '',
+      monthlyRent: '',
+      propertyTaxRate: 1.2,
+      insuranceRate: 0.5,
+      maintenance: '',
+      sfrDetails: {
+        bedrooms: '',
+        bathrooms: '',
+        squareFootage: '',
+        yearBuilt: '',
+        condition: 'good',
+        propertyManagement: {
+          feePercentage: 4,
+        },
+        tenantTurnover: {
+          assumedAnnualTurnover: true,
+          realtorCommissionMonths: 1,
+          prepFeesMonths: 1,
+        },
+        longTermAssumptions: {
+          projectionYears: 10,
+          annualRentIncrease: 2,
+          annualPropertyValueIncrease: 3,
+          sellingCostsPercentage: 6,
+          inflationRate: 2,
+          vacancyRate: 5,
+        },
       },
-      longTermAssumptions: {
-        projectionYears: 10,
-        annualRentIncrease: 2,
-        annualPropertyValueIncrease: 3,
-        sellingCostsPercentage: 6,
-        inflationRate: 2,
-        vacancyRate: 5,
-      },
-      ...initialData,
-    },
+      ...initialData
+    };
+    console.log('DealForm initial state:', initialState);
+    return initialState;
   });
+
+  // Add useEffect to update dealData when initialData changes
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      console.log('Updating dealData with initialData:', initialData);
+      setDealData(prevData => ({
+        ...prevData,
+        ...initialData
+      }));
+    }
+  }, [initialData]);
 
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({
@@ -441,23 +458,40 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
 
   const handleSave = () => {
     try {
+      // Get existing deals or initialize empty array
       const savedDeals = JSON.parse(localStorage.getItem('savedDeals') || '[]');
-      const dealName = `${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}`;
-      savedDeals.push({
+      
+      // Create deal name from address
+      const dealName = dealData.propertyAddress.street && dealData.propertyAddress.city 
+        ? `${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}`
+        : `Deal ${savedDeals.length + 1}`;
+
+      // Create new deal object
+      const newDeal = {
         name: dealName,
         data: dealData,
         savedAt: new Date().toISOString()
-      });
+      };
+
+      // Add new deal to array
+      savedDeals.push(newDeal);
+
+      // Save back to localStorage
       localStorage.setItem('savedDeals', JSON.stringify(savedDeals));
+
+      // Show success message with deal name
       setSnackbar({
         open: true,
-        message: 'Deal saved successfully',
+        message: `Deal "${dealName}" saved successfully. Total deals: ${savedDeals.length}`,
         severity: 'success'
       });
+
+      console.log('Saved deals:', savedDeals); // Debug log
     } catch (error) {
+      console.error('Error saving deal:', error);
       setSnackbar({
         open: true,
-        message: 'Failed to save deal',
+        message: `Failed to save deal: ${error.message}`,
         severity: 'error'
       });
     }
@@ -825,24 +859,44 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
 
               {/* Submit Button */}
               <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  onClick={handleSubmit}
-                  sx={{
-                    mt: 2,
-                    py: 1.5,
-                    px: 4,
-                    fontSize: '1.1rem',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 8px 16px -4px rgb(99 102 241 / 0.3)'
-                    }
-                  }}
-                >
-                  {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    onClick={handleSubmit}
+                    sx={{
+                      mt: 2,
+                      py: 1.5,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 8px 16px -4px rgb(99 102 241 / 0.3)'
+                      }
+                    }}
+                  >
+                    {isSubmitting ? <CircularProgress size={24} /> : 'Analyze Deal'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    onClick={handleSave}
+                    sx={{
+                      mt: 2,
+                      py: 1.5,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 8px 16px -4px rgb(99 102 241 / 0.3)'
+                      }
+                    }}
+                  >
+                    Save Deal
+                  </Button>
+                </Box>
               </Grid>
             </Grid>
           </Card>
