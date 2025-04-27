@@ -18,6 +18,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import PropTypes from 'prop-types';
 
 const theme = {
   palette: {
@@ -200,7 +201,7 @@ const PercentageInput = ({ value, onChange, label, required = false }) => {
   );
 };
 
-const DealForm = ({ onSubmit, initialData = {} }) => {
+const DealForm = ({ onSubmit, initialData = {}, analysisResult = null }) => {
   console.log('DealForm initialData:', initialData);
   
   const [dealData, setDealData] = useState(() => {
@@ -466,10 +467,13 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
         ? `${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}`
         : `Deal ${savedDeals.length + 1}`;
 
-      // Create new deal object
+      // Create new deal object with analysis result if available
       const newDeal = {
         name: dealName,
-        data: dealData,
+        data: {
+          ...dealData,
+          analysisResult: analysisResult // Include analysis result if available
+        },
         savedAt: new Date().toISOString()
       };
 
@@ -915,4 +919,10 @@ const DealForm = ({ onSubmit, initialData = {} }) => {
   );
 };
 
-export default DealForm; 
+export default DealForm;
+
+DealForm.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+  initialData: PropTypes.object,
+  analysisResult: PropTypes.object
+}; 

@@ -12,6 +12,13 @@ interface AnalysisResult {
   monthlyAnalysis?: any;
   annualAnalysis?: any;
   longTermAnalysis?: any;
+  aiInsights?: {
+    investmentScore?: number;
+    summary?: string;
+    strengths?: string[];
+    weaknesses?: string[];
+    recommendations?: string[];
+  };
 }
 
 const DealAnalysis: React.FC = () => {
@@ -48,6 +55,7 @@ const DealAnalysis: React.FC = () => {
       }
 
       const result = await response.json();
+      console.log('Analysis result:', result); // Log the result to see what we're getting
       setAnalysisResult(result);
       setError(null);
     } catch (err) {
@@ -71,7 +79,12 @@ const DealAnalysis: React.FC = () => {
           position: { xs: 'static', md: 'sticky' },
           top: { md: 24 },
         }}>
-          <DealForm onSubmit={handleAnalyze} initialData={initialData} />
+          <DealForm 
+            onSubmit={handleAnalyze} 
+            initialData={initialData} 
+            // @ts-ignore - passing analysis result to the form for saving
+            analysisResult={analysisResult}
+          />
         </Box>
 
         {/* Analysis Results */}

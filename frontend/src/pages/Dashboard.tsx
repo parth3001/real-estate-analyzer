@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -26,7 +27,15 @@ interface DealData {
   purchasePrice: number;
   monthlyRent: number;
   downPayment: number;
-  analysisResult?: any;
+  analysisResult?: {
+    aiInsights?: {
+      investmentScore?: number;
+      summary?: string;
+      strengths?: string[];
+      weaknesses?: string[];
+      recommendations?: string[];
+    };
+  };
 }
 
 interface Deal {
@@ -88,6 +97,13 @@ const Dashboard = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount || 0);
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return theme.palette.success.main;
+    if (score >= 60) return theme.palette.info.main;
+    if (score >= 40) return theme.palette.warning.main;
+    return theme.palette.error.main;
   };
 
   const cardStyle = {
@@ -204,13 +220,36 @@ const Dashboard = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="h6" gutterBottom>
-                          {deal.name || 'Unnamed Deal'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Analyzed on {new Date(deal.savedAt).toLocaleDateString()}
-                        </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box>
+                          <Typography variant="h6" gutterBottom>
+                            {deal.name || 'Unnamed Deal'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            Analyzed on {new Date(deal.savedAt).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                        {deal.data?.analysisResult?.aiInsights?.investmentScore !== undefined && (
+                          <Tooltip title={`Investment Score: ${deal.data.analysisResult.aiInsights.investmentScore}/100`}>
+                            <Box sx={{ 
+                              ml: 1,
+                              width: 40, 
+                              height: 40, 
+                              borderRadius: '50%', 
+                              bgcolor: 'background.paper',
+                              border: '2px solid',
+                              borderColor: getScoreColor(deal.data.analysisResult.aiInsights.investmentScore),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              <Typography variant="body2" fontWeight="bold">
+                                {deal.data.analysisResult.aiInsights.investmentScore}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        )}
                       </Box>
                       <IconButton 
                         size="small" 

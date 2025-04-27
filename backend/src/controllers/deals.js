@@ -43,38 +43,98 @@ const openai = new OpenAI({
 // Utility function to get AI insights
 async function getAIInsights(dealData, analysis) {
   try {
-    const prompt = `Analyze this real estate deal:
-    Property: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state}
-    Type: Single Family Residential
-    Purchase Price: $${dealData.purchasePrice}
-    Monthly Rent: $${dealData.monthlyRent}
-    Key Metrics:
-    - IRR: ${analysis.irr}%
+    // If no OpenAI API key, return placeholder message
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_ope************here') {
+      return {
+        summary: "AI insights are not available. Please add your OpenAI API key to the .env file.",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: null
+      };
+    }
+
+    // Calculate some additional metrics to enrich the prompt
+    const downPaymentPercent = ((dealData.downPayment / dealData.purchasePrice) * 100).toFixed(2);
+    const grossRentMultiplier = (dealData.purchasePrice / (dealData.monthlyRent * 12)).toFixed(2);
+    const onePercentRule = ((dealData.monthlyRent / dealData.purchasePrice) * 100).toFixed(2);
+    
+    const prompt = `
+    Analyze this real estate investment deal with the following details:
+
+    PROPERTY DETAILS:
+    - Address: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode || ''}
+    - Type: Single Family Residential
+    - Bedrooms: ${dealData.bedrooms || 'N/A'}
+    - Bathrooms: ${dealData.bathrooms || 'N/A'}
+    - Square Feet: ${dealData.squareFeet || 'N/A'}
+    - Year Built: ${dealData.yearBuilt || 'N/A'}
+
+    FINANCIAL DETAILS:
+    - Purchase Price: $${dealData.purchasePrice}
+    - Down Payment: $${dealData.downPayment} (${downPaymentPercent}%)
+    - Monthly Rent: $${dealData.monthlyRent}
+    - Monthly Expenses: $${dealData.monthlyExpenses || 'N/A'}
+    - Loan Details: ${dealData.loanTerm || 30} years at ${dealData.interestRate || 'N/A'}% interest rate
+
+    KEY METRICS:
+    - Monthly Cash Flow: $${analysis.monthlyCashFlow}
+    - Annual Cash Flow: $${analysis.annualCashFlow}
     - Cash on Cash Return: ${analysis.cashOnCash}%
     - Cap Rate: ${analysis.capRate}%
-    - Monthly Cash Flow: $${analysis.monthlyCashFlow}
+    - IRR (5 Year): ${analysis.irr}%
+    - DSCR: ${analysis.dscr || 'N/A'}
+    - Gross Rent Multiplier: ${grossRentMultiplier}
+    - 1% Rule Percentage: ${onePercentRule}%
 
-    Provide a brief analysis of this deal's strengths, weaknesses, and recommendations. Focus on the financial viability and potential risks.`;
+    Please provide a detailed analysis in JSON format with the following structure:
+    {
+      "summary": "2-3 sentences overall summary of the investment",
+      "strengths": ["strength1", "strength2", "strength3"],
+      "weaknesses": ["weakness1", "weakness2", "weakness3"],
+      "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
+      "investmentScore": 0-100 score with 100 being excellent
+    }
+
+    The analysis should focus on the financial viability, potential risks, and opportunities for improvement. Be specific, data-driven, and actionable in your recommendations.
+    `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo", // You can use gpt-4 for better analysis if available
       messages: [
         {
           role: "system",
-          content: "You are a real estate investment expert. Analyze deals and provide concise, actionable insights."
+          content: "You are a real estate investment expert and financial analyst. Your job is to analyze real estate deals and provide concise, actionable insights to investors. Your analysis should be data-driven, honest, and include specific recommendations."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 500
+      response_format: { type: "json_object" },
+      max_tokens: 800
     });
 
-    return response.choices[0].message.content;
+    // Parse the JSON response
+    const aiResponse = JSON.parse(response.choices[0].message.content);
+    
+    // Ensure all required fields are present
+    return {
+      summary: aiResponse.summary || "No summary provided",
+      strengths: aiResponse.strengths || [],
+      weaknesses: aiResponse.weaknesses || [],
+      recommendations: aiResponse.recommendations || [],
+      investmentScore: aiResponse.investmentScore || null
+    };
   } catch (error) {
     console.error('Error getting AI insights:', error);
-    return 'AI insights currently unavailable';
+    return {
+      summary: "Error generating AI insights. Please try again later.",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+      investmentScore: null
+    };
   }
 }
 
@@ -182,14 +242,18 @@ exports.analyzeDeal = async (req, res) => {
     const analysis = await calculateSFRMetrics(dealData);
     
     // Add AI insights if OpenAI API key is available
-    let aiInsights = 'AI insights currently unavailable';
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_ope************here') {
-      try {
-        aiInsights = await getAIInsights(dealData, analysis);
-      } catch (error) {
-        console.error('Error getting AI insights:', error);
-        aiInsights = 'AI insights currently unavailable';
-      }
+    let aiInsights;
+    try {
+      aiInsights = await getAIInsights(dealData, analysis);
+    } catch (error) {
+      console.error('Error getting AI insights:', error);
+      aiInsights = {
+        summary: "Error generating AI insights. Please try again later.",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: null
+      };
     }
     
     // Combine analysis with AI insights

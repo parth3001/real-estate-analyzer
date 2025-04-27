@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { logger, stream } = require('./utils/logger');
 const dealsRouter = require('./routes/deals');
+const aiRouter = require('./routes/aiRoutes');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -21,6 +22,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/deals', dealsRouter);
+app.use('/api/ai', aiRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
