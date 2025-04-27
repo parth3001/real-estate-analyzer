@@ -59,33 +59,54 @@ async function getAIInsights(dealData, analysis) {
     const grossRentMultiplier = (dealData.purchasePrice / (dealData.monthlyRent * 12)).toFixed(2);
     const onePercentRule = ((dealData.monthlyRent / dealData.purchasePrice) * 100).toFixed(2);
     
+    // Access monthly expenses data from analysis instead of dealData
+    const monthlyExpenses = analysis.monthlyAnalysis?.expenses?.operatingExpenses || 'N/A';
+    
     const prompt = `
     Analyze this real estate investment deal with the following details:
 
     PROPERTY DETAILS:
     - Address: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode || ''}
     - Type: Single Family Residential
-    - Bedrooms: ${dealData.bedrooms || 'N/A'}
-    - Bathrooms: ${dealData.bathrooms || 'N/A'}
-    - Square Feet: ${dealData.squareFeet || 'N/A'}
-    - Year Built: ${dealData.yearBuilt || 'N/A'}
+    - Bedrooms: ${dealData.sfrDetails?.bedrooms || 'N/A'}
+    - Bathrooms: ${dealData.sfrDetails?.bathrooms || 'N/A'}
+    - Square Feet: ${dealData.sfrDetails?.squareFootage || 'N/A'}
+    - Year Built: ${dealData.sfrDetails?.yearBuilt || 'N/A'}
+    - Property Condition: ${dealData.sfrDetails?.condition || 'N/A'}
 
     FINANCIAL DETAILS:
     - Purchase Price: $${dealData.purchasePrice}
     - Down Payment: $${dealData.downPayment} (${downPaymentPercent}%)
     - Monthly Rent: $${dealData.monthlyRent}
-    - Monthly Expenses: $${dealData.monthlyExpenses || 'N/A'}
+    - Monthly Operating Expenses: $${monthlyExpenses}
+    - Property Tax Rate: ${dealData.propertyTaxRate}%
+    - Insurance Rate: ${dealData.insuranceRate}%
+    - Maintenance: $${dealData.maintenance || 'N/A'}
+    - Property Management Fee: ${dealData.sfrDetails?.propertyManagement?.feePercentage || 'N/A'}%
     - Loan Details: ${dealData.loanTerm || 30} years at ${dealData.interestRate || 'N/A'}% interest rate
 
-    KEY METRICS:
-    - Monthly Cash Flow: $${analysis.monthlyCashFlow}
-    - Annual Cash Flow: $${analysis.annualCashFlow}
-    - Cash on Cash Return: ${analysis.cashOnCash}%
-    - Cap Rate: ${analysis.capRate}%
-    - IRR (5 Year): ${analysis.irr}%
-    - DSCR: ${analysis.dscr || 'N/A'}
+    MONTHLY ANALYSIS:
+    - Monthly Income: $${analysis.monthlyAnalysis?.income?.baseRent || 'N/A'}
+    - Monthly Operating Expenses: $${analysis.monthlyAnalysis?.expenses?.operatingExpenses || 'N/A'}
+    - Monthly Mortgage Payment: $${analysis.monthlyAnalysis?.expenses?.mortgage?.total || 'N/A'}
+    - Monthly Cash Flow: $${analysis.monthlyAnalysis?.cashFlow || 'N/A'}
+
+    ANNUAL & LONG-TERM METRICS:
+    - Annual Cash Flow: $${analysis.annualAnalysis?.cashFlow || 'N/A'}
+    - Cash on Cash Return: ${analysis.annualAnalysis?.cashOnCashReturn?.toFixed(2) || 'N/A'}%
+    - Cap Rate: ${analysis.annualAnalysis?.capRate?.toFixed(2) || 'N/A'}%
+    - Total Return (${analysis.longTermAnalysis?.projectionYears || 10} years): ${analysis.longTermAnalysis?.returns?.totalReturn?.toFixed(2) || 'N/A'}
+    - IRR (${analysis.longTermAnalysis?.projectionYears || 10} years): ${analysis.longTermAnalysis?.returns?.irr?.toFixed(2) || 'N/A'}%
+    - DSCR: ${analysis.annualAnalysis?.dscr?.toFixed(2) || 'N/A'}
     - Gross Rent Multiplier: ${grossRentMultiplier}
     - 1% Rule Percentage: ${onePercentRule}%
+
+    ASSUMPTIONS:
+    - Annual Rent Increase: ${dealData.sfrDetails?.longTermAssumptions?.annualRentIncrease || 2}%
+    - Annual Property Value Increase: ${dealData.sfrDetails?.longTermAssumptions?.annualPropertyValueIncrease || 3}%
+    - Inflation Rate: ${dealData.sfrDetails?.longTermAssumptions?.inflationRate || 2}%
+    - Vacancy Rate: ${dealData.sfrDetails?.longTermAssumptions?.vacancyRate || 5}%
+    - Projection Period: ${dealData.sfrDetails?.longTermAssumptions?.projectionYears || 10} years
 
     Please provide a detailed analysis in JSON format with the following structure:
     {
@@ -96,7 +117,7 @@ async function getAIInsights(dealData, analysis) {
       "investmentScore": 0-100 score with 100 being excellent
     }
 
-    The analysis should focus on the financial viability, potential risks, and opportunities for improvement. Be specific, data-driven, and actionable in your recommendations.
+    The analysis should focus on the financial viability, potential risks, and opportunities for improvement. Be specific, data-driven, and actionable in your recommendations. Make sure your analysis takes into account all the provided metrics - do not mention any missing data as a weakness if the data is provided above.
     `;
 
     const response = await openai.chat.completions.create({
