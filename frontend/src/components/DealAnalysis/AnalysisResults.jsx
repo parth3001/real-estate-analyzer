@@ -17,6 +17,7 @@ import {
   ToggleButtonGroup,
   Tabs,
   Tab,
+  List,
 } from '@mui/material';
 import { 
   LineChart, 
@@ -35,6 +36,9 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-US', {
@@ -807,9 +811,101 @@ const AnalysisResults = ({ analysis }) => {
                     <Typography variant="h6" gutterBottom>
                       AI Analysis
                     </Typography>
-                    <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
-                      {analysis.aiInsights || 'AI insights are currently unavailable. This feature requires a valid OpenAI API key.'}
-                    </Typography>
+                    
+                    {!analysis.aiInsights ? (
+                      <Typography variant="body1">
+                        AI insights are currently unavailable. This feature requires a valid OpenAI API key.
+                      </Typography>
+                    ) : (
+                      <Box sx={{ mt: 2 }}>
+                        {/* Summary */}
+                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                          Summary
+                        </Typography>
+                        <Typography variant="body1" paragraph>
+                          {analysis.aiInsights.summary}
+                        </Typography>
+                        
+                        {/* Investment Score */}
+                        {analysis.aiInsights.investmentScore !== undefined && (
+                          <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                            <Typography variant="subtitle1" sx={{ mr: 2 }}>
+                              Investment Score:
+                            </Typography>
+                            <Box sx={{ 
+                              position: 'relative', 
+                              width: 60, 
+                              height: 60, 
+                              borderRadius: '50%', 
+                              bgcolor: 'background.paper',
+                              border: '3px solid',
+                              borderColor: 
+                                analysis.aiInsights.investmentScore >= 80 ? 'success.main' :
+                                analysis.aiInsights.investmentScore >= 60 ? 'info.main' :
+                                analysis.aiInsights.investmentScore >= 40 ? 'warning.main' : 'error.main',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Typography variant="h6" fontWeight="bold">
+                                {analysis.aiInsights.investmentScore}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                        
+                        {/* Strengths */}
+                        {analysis.aiInsights.strengths && analysis.aiInsights.strengths.length > 0 && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="success.main">
+                              Strengths
+                            </Typography>
+                            <List dense>
+                              {analysis.aiInsights.strengths.map((strength, index) => (
+                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
+                                  <CheckCircleOutlineIcon sx={{ color: 'success.main', mr: 1 }} />
+                                  <Typography variant="body1">{strength}</Typography>
+                                </Box>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                        
+                        {/* Weaknesses */}
+                        {analysis.aiInsights.weaknesses && analysis.aiInsights.weaknesses.length > 0 && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="error.main">
+                              Weaknesses
+                            </Typography>
+                            <List dense>
+                              {analysis.aiInsights.weaknesses.map((weakness, index) => (
+                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
+                                  <ErrorOutlineIcon sx={{ color: 'error.main', mr: 1 }} />
+                                  <Typography variant="body1">{weakness}</Typography>
+                                </Box>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                        
+                        {/* Recommendations */}
+                        {analysis.aiInsights.recommendations && analysis.aiInsights.recommendations.length > 0 && (
+                          <Box>
+                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="info.main">
+                              Recommendations
+                            </Typography>
+                            <List dense>
+                              {analysis.aiInsights.recommendations.map((recommendation, index) => (
+                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
+                                  <LightbulbOutlinedIcon sx={{ color: 'info.main', mr: 1 }} />
+                                  <Typography variant="body1">{recommendation}</Typography>
+                                </Box>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
                   </Box>
                 )}
               </Box>
