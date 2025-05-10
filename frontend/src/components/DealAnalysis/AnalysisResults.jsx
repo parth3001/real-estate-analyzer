@@ -18,6 +18,7 @@ import {
   Tabs,
   Tab,
   List,
+  Tooltip,
 } from '@mui/material';
 import { 
   LineChart, 
@@ -25,7 +26,7 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   Legend,
   ResponsiveContainer,
   BarChart,
@@ -53,22 +54,42 @@ const formatPercent = (value) => {
   return `${value.toFixed(2)}%`;
 };
 
+// Definitions for key metrics
+const metricDefinitions = {
+  DSCR: "Debt Service Coverage Ratio measures how well the property's income can cover its debt payments. A ratio above 1.0 means the property generates enough income to cover debt.",
+  IRR: "Internal Rate of Return is the annual rate of growth an investment is expected to generate. It accounts for all cash flows including the initial investment, rental income, and eventual sale.",
+  "Cash on Cash Return": "This measures the annual return on the cash invested in the property. It's calculated by dividing the annual pre-tax cash flow by the total cash invested.",
+  "Cap Rate": "Capitalization Rate measures the rate of return on a real estate investment property based on the income that the property is expected to generate. It's calculated by dividing the net operating income by the current market value.",
+  "Price/SqFt at Purchase": "The price per square foot at the time of purchase, calculated by dividing the purchase price by the total square footage.",
+  "Price/SqFt at Sale": "The projected price per square foot at the time of sale, calculated by dividing the projected sale price by the total square footage.",
+  "Avg Rent/SqFt": "The average monthly rental income per square foot, calculated by dividing the monthly rent by the total square footage.",
+  "Monthly Cash Flow": "The monthly income remaining after all operating expenses and mortgage payments are paid. A positive cash flow indicates the property is generating profit."
+};
+
 const MetricCard = ({ title, value, subtitle }) => (
-  <Card>
-    <CardContent>
-      <Typography variant="h6" color="textSecondary" gutterBottom>
-        {title}
-      </Typography>
-      <Typography variant="h4">
-        {value}
-      </Typography>
-      {subtitle && (
-        <Typography variant="body2" color="textSecondary">
-          {subtitle}
+  <Tooltip 
+    title={metricDefinitions[title] || ""}
+    arrow
+    placement="top"
+    enterTouchDelay={0}
+    leaveTouchDelay={3000}
+  >
+    <Card>
+      <CardContent>
+        <Typography variant="h6" color="textSecondary" gutterBottom>
+          {title}
         </Typography>
-      )}
-    </CardContent>
-  </Card>
+        <Typography variant="h4">
+          {value}
+        </Typography>
+        {subtitle && (
+          <Typography variant="body2" color="textSecondary">
+            {subtitle}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  </Tooltip>
 );
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -159,7 +180,7 @@ const AnalysisResults = ({ analysis }) => {
               <XAxis dataKey="name" />
               <YAxis yAxisId="left" />
               <YAxis yAxisId="right" orientation="right" />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <RechartsTooltip formatter={(value) => formatCurrency(value)} />
               <Legend />
               <Line
                 yAxisId="left"
@@ -200,7 +221,7 @@ const AnalysisResults = ({ analysis }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <RechartsTooltip formatter={(value) => formatCurrency(value)} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -213,7 +234,7 @@ const AnalysisResults = ({ analysis }) => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <RechartsTooltip formatter={(value) => formatCurrency(value)} />
               <Legend />
               <Area
                 type="monotone"
@@ -240,7 +261,7 @@ const AnalysisResults = ({ analysis }) => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <RechartsTooltip formatter={(value) => formatCurrency(value)} />
               <Legend />
               <Bar dataKey="value" fill="#8884d8">
                 {returnMetricsData.map((entry, index) => (
