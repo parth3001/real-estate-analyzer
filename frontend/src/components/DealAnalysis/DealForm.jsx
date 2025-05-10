@@ -112,27 +112,75 @@ const theme = {
 
 const CurrencyInput = ({ value, onChange, label, required = false }) => {
   const [displayValue, setDisplayValue] = useState('');
+  const [isUserEditing, setIsUserEditing] = useState(false);
 
   useEffect(() => {
-    if (value) {
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(value);
-      setDisplayValue(formatted);
+    if (!isUserEditing && value !== undefined && value !== null && value !== '') {
+      if (value === 0) {
+        setDisplayValue('');
+      } else {
+        setDisplayValue(
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value).replace('$', '')
+        );
+      }
+    } else if (!isUserEditing) {
+      setDisplayValue('');
     }
-  }, [value]);
+  }, [value, isUserEditing]);
 
   const handleChange = (event) => {
-    const rawValue = event.target.value.replace(/[^0-9]/g, '');
+    setIsUserEditing(true);
+    const inputValue = event.target.value;
+    
+    // Handle the case when user deletes the input entirely
+    if (inputValue === '' || inputValue === '$') {
+      setDisplayValue('');
+      onChange(0);
+      return;
+    }
+    
+    // Keep the input as is for display during editing
+    setDisplayValue(inputValue);
+    
+    // Extract numeric value for the actual state
+    const rawValue = inputValue.replace(/[^0-9]/g, '');
+    
+    // If the input is empty or only contains $ or other non-numeric characters
+    if (rawValue === '') {
+      onChange(0);
+      return;
+    }
+    
     const numericValue = parseInt(rawValue, 10);
     
     if (!isNaN(numericValue)) {
       onChange(numericValue);
     } else {
-      onChange('');
+      onChange(0);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsUserEditing(false);
+    // Reformat the value when the user finishes editing
+    if (value !== undefined && value !== null) {
+      if (value === 0) {
+        setDisplayValue('');
+      } else {
+        setDisplayValue(
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value).replace('$', '')
+        );
+      }
     }
   };
 
@@ -142,6 +190,7 @@ const CurrencyInput = ({ value, onChange, label, required = false }) => {
       label={label}
       value={displayValue}
       onChange={handleChange}
+      onBlur={handleBlur}
       required={required}
       InputProps={{
         startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -163,19 +212,27 @@ const PercentageInput = ({ value, onChange, label, required = false }) => {
   const [displayValue, setDisplayValue] = useState('');
 
   useEffect(() => {
-    if (value) {
+    if (value !== undefined && value !== null && value !== '') {
       setDisplayValue(value.toString());
+    } else {
+      setDisplayValue('');
     }
   }, [value]);
 
   const handleChange = (event) => {
     const rawValue = event.target.value.replace(/[^0-9.]/g, '');
+    
+    if (rawValue === '') {
+      onChange(0);
+      return;
+    }
+    
     const numericValue = parseFloat(rawValue);
     
     if (!isNaN(numericValue) && numericValue <= 100) {
       onChange(numericValue);
     } else {
-      onChange('');
+      onChange(0);
     }
   };
 
@@ -205,41 +262,96 @@ const PercentageInput = ({ value, onChange, label, required = false }) => {
 const DownPaymentInput = ({ purchasePrice, value, onChange, required = false }) => {
   const [percentage, setPercentage] = useState(20); // Default 20% down payment
   const [displayValue, setDisplayValue] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isUserEditing, setIsUserEditing] = useState(false);
 
+  // Effect to initialize based on initial props
   useEffect(() => {
-    if (purchasePrice && percentage) {
+    if (!isInitialized && purchasePrice) {
+      if (value !== undefined && value !== null && value !== '') {
+        // If we have both purchase price and value on initialization,
+        // calculate the percentage without triggering onChange
+        const initialPercentage = Math.round((value / purchasePrice) * 100);
+        setPercentage(initialPercentage);
+        
+        // Format the display value
+        setDisplayValue(value === 0 ? '' : 
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value).replace('$', ''));
+      } else {
+        // If we have purchase price but no value, initialize the value
+        const calculatedValue = Math.round(purchasePrice * (percentage / 100));
+        onChange(calculatedValue);
+      }
+      
+      setIsInitialized(true);
+    }
+  }, [purchasePrice, value, percentage, onChange, isInitialized]);
+
+  // When percentage changes, update the value
+  useEffect(() => {
+    if (isInitialized && purchasePrice && !isUserEditing) {
       const calculatedValue = Math.round(purchasePrice * (percentage / 100));
       onChange(calculatedValue);
     }
-  }, [purchasePrice, percentage, onChange]);
+  }, [percentage, purchasePrice, onChange, isInitialized, isUserEditing]);
 
+  // Format display value when value changes, but only if user is not currently editing
   useEffect(() => {
-    if (value) {
-      // Calculate percentage when value changes
-      if (purchasePrice) {
-        const calculatedPercentage = Math.round((value / purchasePrice) * 100);
-        if (calculatedPercentage !== percentage) {
-          setPercentage(calculatedPercentage);
-        }
+    if (!isUserEditing && value !== undefined && value !== null && value !== '') {
+      if (value === 0) {
+        setDisplayValue('');
+      } else {
+        setDisplayValue(
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value).replace('$', '')
+        );
       }
-      
-      // Format the display value
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(value);
-      setDisplayValue(formatted);
+    } else if (!isUserEditing) {
+      setDisplayValue('');
     }
-  }, [value, purchasePrice, percentage]);
+  }, [value, isUserEditing]);
 
   const handleSliderChange = (event, newValue) => {
     setPercentage(newValue);
+    setIsUserEditing(false);
   };
 
   const handleInputChange = (event) => {
-    const rawValue = event.target.value.replace(/[^0-9]/g, '');
+    setIsUserEditing(true);
+    const inputValue = event.target.value;
+    
+    // Handle the case when user deletes the input entirely
+    if (inputValue === '' || inputValue === '$') {
+      setDisplayValue('');
+      onChange(0);
+      if (purchasePrice) {
+        setPercentage(0);
+      }
+      return;
+    }
+    
+    // Remove non-numeric characters, but keep the current input for display
+    setDisplayValue(inputValue);
+    
+    // Extract numeric value for the actual state
+    const rawValue = inputValue.replace(/[^0-9]/g, '');
+    if (rawValue === '') {
+      onChange(0);
+      if (purchasePrice) {
+        setPercentage(0);
+      }
+      return;
+    }
+    
     const numericValue = parseInt(rawValue, 10);
     
     if (!isNaN(numericValue)) {
@@ -248,7 +360,29 @@ const DownPaymentInput = ({ purchasePrice, value, onChange, required = false }) 
         setPercentage(Math.round((numericValue / purchasePrice) * 100));
       }
     } else {
-      onChange('');
+      onChange(0);
+      if (purchasePrice) {
+        setPercentage(0);
+      }
+    }
+  };
+
+  const handleInputBlur = () => {
+    setIsUserEditing(false);
+    // Reformat the value when the user finishes editing
+    if (value !== undefined && value !== null) {
+      if (value === 0) {
+        setDisplayValue('');
+      } else {
+        setDisplayValue(
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value).replace('$', '')
+        );
+      }
     }
   };
 
@@ -259,6 +393,7 @@ const DownPaymentInput = ({ purchasePrice, value, onChange, required = false }) 
         label="Down Payment"
         value={displayValue}
         onChange={handleInputChange}
+        onBlur={handleInputBlur}
         required={required}
         InputProps={{
           startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -370,9 +505,10 @@ const DealForm = ({ onSubmit, initialData = {}, analysisResult = null }) => {
   const validateField = (field, value) => {
     switch (field) {
       case 'purchasePrice':
-      case 'downPayment':
       case 'monthlyRent':
         return value > 0 ? '' : 'Must be greater than 0';
+      case 'downPayment':
+        return value >= 0 ? '' : 'Must be greater than or equal to 0';
       case 'propertyTaxRate':
         return value > 0 && value < 10 ? '' : 'Must be between 0 and 10%';
       case 'insuranceRate':
