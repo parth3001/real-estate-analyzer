@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: real-estate-analyzer-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        fromService:
+          name: real-estate-analyzer-frontend
+          type: static_site
+          property: url
+      - key: OPENAI_API_KEY
+        sync: false
+    autoDeploy: true
+
+  - type: static_site
+    name: real-estate-analyzer-frontend
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: build
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          name: real-estate-analyzer-api
+          type: web
+          property: url
+    autoDeploy: true
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-store 

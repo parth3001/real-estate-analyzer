@@ -25,6 +25,7 @@ const DealAnalysis: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -41,25 +42,30 @@ const DealAnalysis: React.FC = () => {
   }, []);
 
   const handleAnalyze = async (dealData: any) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await fetch('/api/deals/analyze', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/deals/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(dealData),
       });
-
+      
       if (!response.ok) {
-        throw new Error('Failed to analyze deal');
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error: ${response.status} ${response.statusText}`);
       }
-
+      
       const result = await response.json();
-      console.log('Analysis result:', result); // Log the result to see what we're getting
       setAnalysisResult(result);
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Analysis error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred during analysis. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

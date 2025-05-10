@@ -5,24 +5,52 @@ const morgan = require('morgan');
 const { logger, stream } = require('./utils/logger');
 const dealsRouter = require('./routes/deals');
 const aiRouter = require('./routes/aiRoutes');
+const { OpenAI } = require('openai');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('combined', { stream }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  logger.info('Health check endpoint called');
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ status: 'ok', message: 'API is running' });
 });
 
 // Routes
 app.use('/api/deals', dealsRouter);
 app.use('/api/ai', aiRouter);
+
+// Validate OpenAI API key on startup
+const validateOpenAIKey = async () => {
+  if (!process.env.OPENAI_API_KEY) {
+    logger.warn('⚠️ OPENAI_API_KEY is not set! AI insights will not be available.');
+    return;
+  }
+  
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+    
+    // Simple test call to verify API key
+    await openai.models.list({ limit: 1 });
+    logger.info('✅ OpenAI API key is valid and working');
+  } catch (error) {
+    logger.error('❌ OpenAI API key validation failed:', error.message);
+    logger.error('AI insights will not be available until a valid key is provided');
+  }
+};
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -42,6 +70,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: errorMessage });
 });
 
-app.listen(port, () => {
+// Start the server
+app.listen(port, async () => {
   logger.info(`Server running on port ${port}`);
+  await validateOpenAIKey();
 }); 
