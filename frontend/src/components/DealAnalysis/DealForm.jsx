@@ -16,6 +16,7 @@ import {
   Container,
   InputAdornment,
   FormControl,
+  Slider,
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import PropTypes from 'prop-types';
@@ -198,6 +199,102 @@ const PercentageInput = ({ value, onChange, label, required = false }) => {
         },
       }}
     />
+  );
+};
+
+const DownPaymentInput = ({ purchasePrice, value, onChange, required = false }) => {
+  const [percentage, setPercentage] = useState(20); // Default 20% down payment
+  const [displayValue, setDisplayValue] = useState('');
+
+  useEffect(() => {
+    if (purchasePrice && percentage) {
+      const calculatedValue = Math.round(purchasePrice * (percentage / 100));
+      onChange(calculatedValue);
+    }
+  }, [purchasePrice, percentage, onChange]);
+
+  useEffect(() => {
+    if (value) {
+      // Calculate percentage when value changes
+      if (purchasePrice) {
+        const calculatedPercentage = Math.round((value / purchasePrice) * 100);
+        if (calculatedPercentage !== percentage) {
+          setPercentage(calculatedPercentage);
+        }
+      }
+      
+      // Format the display value
+      const formatted = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+      setDisplayValue(formatted);
+    }
+  }, [value, purchasePrice, percentage]);
+
+  const handleSliderChange = (event, newValue) => {
+    setPercentage(newValue);
+  };
+
+  const handleInputChange = (event) => {
+    const rawValue = event.target.value.replace(/[^0-9]/g, '');
+    const numericValue = parseInt(rawValue, 10);
+    
+    if (!isNaN(numericValue)) {
+      onChange(numericValue);
+      if (purchasePrice) {
+        setPercentage(Math.round((numericValue / purchasePrice) * 100));
+      }
+    } else {
+      onChange('');
+    }
+  };
+
+  return (
+    <Box>
+      <TextField
+        fullWidth
+        label="Down Payment"
+        value={displayValue}
+        onChange={handleInputChange}
+        required={required}
+        InputProps={{
+          startAdornment: <InputAdornment position="start">$</InputAdornment>,
+        }}
+        sx={{
+          mb: 1,
+          '& .MuiOutlinedInput-root': {
+            '&.Mui-focused': {
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.main,
+              },
+            },
+          },
+        }}
+      />
+      <Box display="flex" alignItems="center">
+        <Typography variant="body2" sx={{ minWidth: '40px' }}>
+          {`${percentage}%`}
+        </Typography>
+        <Slider
+          value={percentage}
+          onChange={handleSliderChange}
+          aria-labelledby="down-payment-slider"
+          valueLabelDisplay="auto"
+          step={1}
+          marks={[
+            { value: 0, label: '0%' },
+            { value: 20, label: '20%' },
+            { value: 50, label: '50%' },
+            { value: 100, label: '100%' }
+          ]}
+          min={0}
+          max={100}
+        />
+      </Box>
+    </Box>
   );
 };
 
@@ -649,8 +746,8 @@ const DealForm = ({ onSubmit, initialData = {}, analysisResult = null }) => {
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <CurrencyInput
-                      label="Down Payment"
+                    <DownPaymentInput
+                      purchasePrice={dealData.purchasePrice}
                       value={dealData.downPayment}
                       onChange={(value) => handleChange('downPayment', value)}
                       required
