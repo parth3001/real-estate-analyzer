@@ -103,10 +103,20 @@ const AnalysisResults = ({ analysis }) => {
 
   const monthlyExpensesData = Object.entries(monthlyAnalysis.expenses || {})
     .filter(([key]) => key !== 'total')
-    .map(([key, value]) => ({
-      name: key.charAt(0).toUpperCase() + key.slice(1),
-      value,
-    }));
+    .map(([key, value]) => {
+      // Handle the mortgage object which has a different structure
+      if (key === 'mortgage' && typeof value === 'object') {
+        return {
+          name: 'Mortgage',
+          value: value.total || 0
+        };
+      }
+      return {
+        name: key.charAt(0).toUpperCase() + key.slice(1),
+        value: isNaN(value) ? 0 : value,
+      };
+    })
+    .filter(item => item.value !== 0);
 
   const equityGrowthData = longTermAnalysis.yearlyProjections?.map(year => ({
     name: `Year ${year.year}`,
