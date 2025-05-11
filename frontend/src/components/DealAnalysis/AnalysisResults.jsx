@@ -882,6 +882,9 @@ const AnalysisResults = ({ analysis }) => {
                                 {analysis.aiInsights.investmentScore}
                               </Typography>
                             </Box>
+                            <Typography variant="subtitle2" sx={{ ml: 2, color: 'text.secondary' }}>
+                              out of 100 (best)
+                            </Typography>
                           </Box>
                         )}
                         

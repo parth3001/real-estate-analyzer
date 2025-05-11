@@ -164,6 +164,11 @@ A user-friendly web application that automates complex real estate investment ca
 - Client-side validation
 - Data visualization using Recharts
 - Offline capability for saved deals
+- UI Framework Details:
+  - Material-UI (MUI) components
+  - Custom theming with primary/secondary colors
+  - Responsive breakpoints (xs, sm, md, lg, xl)
+  - Interactive charts (Line, Pie, Bar, Area)
 
 ### Backend
 - Node.js/Express server
@@ -172,6 +177,12 @@ A user-friendly web application that automates complex real estate investment ca
 - Data persistence
 - Error handling & logging
 - Security measures
+- Calculation Algorithms:
+  - Monthly/Annual cash flow projections
+  - ROI and return metrics calculations
+  - Equity growth estimations
+  - Mortgage amortization
+  - Tax impact analysis
 
 ### Performance
 - Page load time < 2 seconds
@@ -326,6 +337,105 @@ A user-friendly web application that automates complex real estate investment ca
 - Financial data providers
 - Market data sources
 - Payment processing (future)
+
+## Implementation Details
+
+### System Architecture
+- Full-stack web application using React (frontend) and Node.js/Express (backend)
+- Client-server architecture with RESTful API communication
+- Browser localStorage for data persistence (Phase 1)
+- Future database integration with MongoDB (Phase 2+)
+
+### Data Flow Logic
+- User inputs deal data in frontend
+- Data is validated client-side
+- Backend receives data via API calls
+- Analysis is performed on the server
+- Results return to frontend for display
+- Deals are saved in localStorage
+
+### Financial Calculation Logic
+- Monthly Cash Flow: `income - expenses - mortgagePayment`
+- Cap Rate: `(noi * 12 / purchasePrice) * 100`
+- Cash on Cash Return: `(annualCashFlow / totalInvestment) * 100`
+- Net Operating Income: `(grossRent * (1 - vacancy)) - operatingExpenses`
+- DSCR: `noi / debtService`
+- IRR: Newton-Raphson method for calculating internal rate of return
+
+### OpenAI Integration Logic
+- Initialize OpenAI client with API key
+- Create system and user prompts from analysis data
+- Send prompts to OpenAI API via backend
+- Process and structure API response for display
+- Handle API errors gracefully
+
+### Data Persistence Logic
+- Format deal data
+- Store data in browser's localStorage
+- Retrieve stored deals when loading dashboard
+- Update localStorage when deals are modified or deleted
+
+### Frontend Component Architecture
+- State management for form data and analysis results
+- Responsive layout changes based on viewport size
+- Chart data preparation from analysis results
+- Material UI components with custom theming
+- Form validation and error handling
+
+### Backend API Architecture
+- Express routes for deal analysis and AI insights
+- Request validation middleware
+- Error handling middleware
+- CORS and security configuration
+- Logging via Winston
+
+## Deployment Strategy
+
+### Development Environment
+- Frontend: React development server (port 3000)
+- Backend: Node.js/Express server (port 3001)
+- Environment variables for configuration
+- Local development with hot reloading
+
+### Staging Environment
+- Containerized application using Docker
+- CI/CD pipeline for automated testing and deployment
+- Staging server for quality assurance
+
+### Production Environment
+- Frontend: Static files hosted on Netlify/Vercel
+  - Build optimization and code splitting
+  - CDN distribution for faster global access
+- Backend: Node.js/Express with PM2
+  - Cluster mode for multi-core utilization
+  - Load balancing for high availability
+  - Environment-specific configurations
+- Database: MongoDB (Future implementation)
+- Monitoring and logging infrastructure
+
+## Testing Strategy
+
+### Frontend Testing
+- Unit Tests: Jest + React Testing Library
+- Component Tests: Storybook
+- E2E Tests: Cypress
+- Accessibility testing
+- Cross-browser compatibility testing
+- Responsive design testing
+
+### Backend Testing
+- Unit Tests: Jest
+- Integration Tests: Supertest
+- API Tests: Postman Collections
+- Performance testing with load simulation
+- Security testing (vulnerability scanning)
+
+### Quality Assurance
+- Manual testing scripts
+- User acceptance testing
+- Regression testing
+- Error handling and edge cases
+- Data validation testing
 
 ## Risks & Mitigations
 

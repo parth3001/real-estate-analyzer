@@ -1,0 +1,23 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Build folders
+frontend/build
+frontend/dist
+backend/dist
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Other
+.git
+.gitignore
+.vscode
+README.md
+docker-compose.yml
+.dockerignore 

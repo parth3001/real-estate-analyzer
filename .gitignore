@@ -22,9 +22,26 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+backend/logs/
 
 # IDE
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Deployment and security
+*.pem
+*.ppk
+*.zip
+*.key
+*.crt
+
+# Build artifacts
+dist/
+build/ 
