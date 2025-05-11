@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -23,6 +23,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { SxProps } from '@mui/system';
 import { GridProps } from '@mui/material/Grid';
 
+// Add this flag outside the component to ensure it persists between renders
+let hasLoadedDeals = false;
+
 interface DealData {
   purchasePrice: number;
   monthlyRent: number;
@@ -45,24 +48,73 @@ interface Deal {
 }
 
 const Dashboard = () => {
+  console.log('Dashboard component rendering!', hasLoadedDeals);
   const theme = useTheme();
   const navigate = useNavigate();
   const [savedDeals, setSavedDeals] = useState<Deal[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const effectRan = useRef(false);
 
+  // Clear any potentially interfering localStorage items - only run once
   useEffect(() => {
+    console.log('Dashboard cleanup effect');
+    localStorage.removeItem('currentDeal');
+  }, []);
+
+  // Safe state setter that won't trigger infinite loops
+  const setSavedDealsIfChanged = useCallback((deals: Deal[]) => {
+    console.log('setSavedDealsIfChanged called');
+    setSavedDeals(prevDeals => {
+      // Only update if the data actually changed
+      if (JSON.stringify(prevDeals) !== JSON.stringify(deals)) {
+        console.log('Updating savedDeals state');
+        return deals;
+      }
+      console.log('Deals unchanged, skipping update');
+      return prevDeals;
+    });
+  }, []);
+
+  // Modified useEffect with static flag
+  useEffect(() => {
+    console.log('Dashboard main useEffect running, effectRan:', effectRan.current, 'hasLoadedDeals:', hasLoadedDeals);
+    
+    // Only run this effect once using static flag
+    if (!hasLoadedDeals) {
+      console.log('Loading deals from localStorage - first time only');
+      loadSavedDeals();
+      hasLoadedDeals = true;
+      effectRan.current = true;
+    }
+  }, [setSavedDealsIfChanged]);
+
+  const loadSavedDeals = () => {
     try {
-      const deals = JSON.parse(localStorage.getItem('savedDeals') || '[]') as Deal[];
-      console.log('Loading saved deals:', deals);
-      setSavedDeals(deals.sort((a, b) => 
+      console.log('loadSavedDeals function called');
+      let deals: Deal[] = [];
+      const savedDealsStr = localStorage.getItem('savedDeals');
+      console.log('Raw localStorage data:', savedDealsStr);
+      
+      if (savedDealsStr) {
+        deals = JSON.parse(savedDealsStr) as Deal[];
+      } else {
+        console.log('No saved deals found in localStorage');
+        deals = [];
+      }
+      
+      console.log('Loaded deals:', deals);
+      // Use the safe setter
+      setSavedDealsIfChanged(deals.sort((a, b) => 
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
       ));
     } catch (error) {
       console.error('Error loading saved deals:', error);
-      setSavedDeals([]);
+      setError('Error loading saved deals. Local storage may be corrupted.');
+      setSavedDealsIfChanged([]);
     }
-  }, []);
+  };
 
   const handleDeleteClick = (e: React.MouseEvent, deal: Deal) => {
     e.stopPropagation(); // Prevent card click event
@@ -84,10 +136,16 @@ const Dashboard = () => {
       const verifyDeals = JSON.parse(localStorage.getItem('savedDeals') || '[]');
       console.log('Verified deals in localStorage:', verifyDeals);
       
-      setSavedDeals(updatedDeals);
+      setSavedDealsIfChanged(updatedDeals);
     }
     setDeleteDialogOpen(false);
     setDealToDelete(null);
+  };
+
+  const handleViewDeal = (deal: Deal) => {
+    console.log('Viewing deal:', deal.name);
+    localStorage.setItem('currentDeal', JSON.stringify(deal));
+    navigate('/analyze');
   };
 
   const formatCurrency = (amount: number): string => {
@@ -123,6 +181,9 @@ const Dashboard = () => {
     mr: 2,
   };
 
+  // Re-render prevention check
+  console.log('Dashboard rendering UI with deals:', savedDeals.length);
+
   return (
     <Box sx={{ p: 3, backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -138,6 +199,31 @@ const Dashboard = () => {
           New Analysis
         </Button>
       </Box>
+
+      {error && (
+        <Box sx={{ 
+          mb: 3, 
+          p: 2, 
+          bgcolor: theme.palette.error.light,
+          color: theme.palette.error.dark,
+          borderRadius: 1,
+        }}>
+          <Typography variant="body1">{error}</Typography>
+          <Button 
+            sx={{ mt: 1 }} 
+            size="small" 
+            variant="outlined" 
+            color="error"
+            onClick={() => {
+              localStorage.setItem('savedDeals', JSON.stringify([]));
+              setError(null);
+              setSavedDealsIfChanged([]);
+            }}
+          >
+            Reset Saved Deals
+          </Button>
+        </Box>
+      )}
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -214,10 +300,7 @@ const Dashboard = () => {
                       },
                       transition: 'all 0.2s ease'
                     }}
-                    onClick={() => {
-                      localStorage.setItem('currentDeal', JSON.stringify(deal));
-                      navigate('/analyze');
-                    }}
+                    onClick={() => handleViewDeal(deal)}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -7,6 +7,9 @@ import {
 } from '@mui/material';
 import DealForm from '../components/DealAnalysis/DealForm';
 import AnalysisResults from '../components/DealAnalysis/AnalysisResults';
+
+// Add this flag outside the component to ensure it persists between renders
+let hasLoadedCurrentDeal = false;
 
 interface AnalysisResult {
   monthlyAnalysis?: any;
@@ -22,30 +25,86 @@ interface AnalysisResult {
 }
 
 const DealAnalysis: React.FC = () => {
+  console.log('DealAnalysis component rendering', hasLoadedCurrentDeal);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const effectRan = useRef(false);
 
-  useEffect(() => {
-    try {
-      const savedDeal = localStorage.getItem('currentDeal');
-      if (savedDeal) {
-        const deal = JSON.parse(savedDeal);
-        setInitialData(deal.data);
-        // Clear the currentDeal from localStorage after loading
-        localStorage.removeItem('currentDeal');
+  // Safe state setters to prevent infinite loops
+  const setInitialDataSafe = useCallback((data: any) => {
+    setInitialData((prevData: any | null) => {
+      if (!prevData || JSON.stringify(prevData) !== JSON.stringify(data)) {
+        console.log('Updating initialData state');
+        return data;
       }
-    } catch (error) {
-      console.error('Error loading saved deal:', error);
-    }
+      return prevData;
+    });
   }, []);
+
+  const setAnalysisResultSafe = useCallback((result: AnalysisResult | null) => {
+    setAnalysisResult(prevResult => {
+      if (JSON.stringify(prevResult) !== JSON.stringify(result)) {
+        console.log('Updating analysisResult state');
+        return result;
+      }
+      return prevResult;
+    });
+  }, []);
+
+  // Load the current deal from localStorage if it exists
+  useEffect(() => {
+    console.log('DealAnalysis useEffect running, effectRan:', effectRan.current, 'hasLoadedCurrentDeal:', hasLoadedCurrentDeal);
+    
+    // Only run this effect once using static flag
+    if (!hasLoadedCurrentDeal) {
+      try {
+        console.log('Loading current deal - first time only');
+        const savedDeal = localStorage.getItem('currentDeal');
+        console.log('Current deal from localStorage:', savedDeal);
+        
+        if (savedDeal) {
+          const deal = JSON.parse(savedDeal);
+          console.log('Parsed deal:', deal);
+          
+          // Check if we received the deal object directly or need to access its data property
+          if (deal.data) {
+            console.log('Setting initialData from deal.data');
+            setInitialDataSafe(deal.data);
+          } else {
+            console.log('Setting initialData directly from deal');
+            setInitialDataSafe(deal);
+          }
+          
+          // If the deal has analysis results, set them
+          if (deal.data?.analysisResult) {
+            console.log('Setting analysisResult from deal.data.analysisResult');
+            setAnalysisResultSafe(deal.data.analysisResult);
+          }
+          
+          // Clear the currentDeal from localStorage after loading to prevent issues with future navigation
+          localStorage.removeItem('currentDeal');
+          console.log('Removed currentDeal from localStorage');
+        } else {
+          console.log('No currentDeal found in localStorage');
+        }
+      } catch (error) {
+        console.error('Error loading saved deal:', error);
+        setError('Failed to load saved deal. Please try again.');
+      }
+      
+      hasLoadedCurrentDeal = true;
+      effectRan.current = true;
+    }
+  }, [setInitialDataSafe, setAnalysisResultSafe]);
 
   const handleAnalyze = async (dealData: any) => {
     setLoading(true);
     setError(null);
     
     try {
+      console.log('Submitting analysis request:', dealData);
       const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/deals/analyze`, {
         method: 'POST',
         headers: {
@@ -60,7 +119,8 @@ const DealAnalysis: React.FC = () => {
       }
       
       const result = await response.json();
-      setAnalysisResult(result);
+      console.log('Received analysis result:', result);
+      setAnalysisResultSafe(result);
     } catch (err) {
       console.error('Analysis error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during analysis. Please try again.');
@@ -68,6 +128,8 @@ const DealAnalysis: React.FC = () => {
       setLoading(false);
     }
   };
+
+  console.log('DealAnalysis rendering UI with initialData:', initialData ? 'present' : 'absent');
 
   return (
     <Container maxWidth={false} sx={{ py: 3 }}>
