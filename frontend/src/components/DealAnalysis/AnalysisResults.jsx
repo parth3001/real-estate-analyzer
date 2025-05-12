@@ -19,6 +19,10 @@ import {
   Tab,
   List,
   Tooltip,
+  CircularProgress,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { 
   LineChart, 
@@ -40,6 +44,12 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import RecommendIcon from '@mui/icons-material/Recommend';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-US', {
@@ -839,8 +849,9 @@ const AnalysisResults = ({ analysis }) => {
 
                 {selectedTab === 3 && (
                   <Box>
-                    <Typography variant="h6" gutterBottom>
-                      AI Analysis
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                      <LightbulbOutlinedIcon sx={{ mr: 1, color: 'primary.main' }} />
+                      AI Investment Analysis
                     </Typography>
                     
                     {!analysis.aiInsights ? (
@@ -848,97 +859,182 @@ const AnalysisResults = ({ analysis }) => {
                         AI insights are currently unavailable. This feature requires a valid OpenAI API key.
                       </Typography>
                     ) : (
-                      <Box sx={{ mt: 2 }}>
-                        {/* Summary */}
-                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                          Summary
-                        </Typography>
-                        <Typography variant="body1" paragraph>
-                          {analysis.aiInsights.summary}
-                        </Typography>
-                        
-                        {/* Investment Score */}
-                        {analysis.aiInsights.investmentScore !== undefined && (
-                          <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                              Investment Score:
-                            </Typography>
-                            <Box sx={{ 
-                              position: 'relative', 
-                              width: 60, 
-                              height: 60, 
-                              borderRadius: '50%', 
-                              bgcolor: 'background.paper',
-                              border: '3px solid',
-                              borderColor: 
-                                analysis.aiInsights.investmentScore >= 80 ? 'success.main' :
-                                analysis.aiInsights.investmentScore >= 60 ? 'info.main' :
-                                analysis.aiInsights.investmentScore >= 40 ? 'warning.main' : 'error.main',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <Typography variant="h6" fontWeight="bold">
-                                {analysis.aiInsights.investmentScore}
-                              </Typography>
+                      <Grid container spacing={3}>
+                        {/* Investment Score and Summary */}
+                        <Grid item xs={12} md={4}>
+                          <Box sx={{ 
+                            textAlign: 'center', 
+                            p: 2, 
+                            border: 1, 
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
+                            <Typography variant="subtitle1" gutterBottom>Investment Score</Typography>
+                            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                              <CircularProgress 
+                                variant="determinate" 
+                                value={analysis.aiInsights.investmentScore || 0} 
+                                size={100} 
+                                thickness={5}
+                                sx={{ 
+                                  color: 
+                                    analysis.aiInsights.investmentScore >= 80 ? 'success.main' :
+                                    analysis.aiInsights.investmentScore >= 60 ? 'warning.main' : 'error.main',
+                                  mb: 1
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  top: 0,
+                                  left: 0,
+                                  bottom: 0,
+                                  right: 0,
+                                  position: 'absolute',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Typography
+                                  variant="h4"
+                                  component="div"
+                                  color={
+                                    analysis.aiInsights.investmentScore >= 80 ? 'success.main' :
+                                    analysis.aiInsights.investmentScore >= 60 ? 'warning.main' : 'error.main'
+                                  }
+                                >
+                                  {analysis.aiInsights.investmentScore || 0}
+                                </Typography>
+                              </Box>
                             </Box>
-                            <Typography variant="subtitle2" sx={{ ml: 2, color: 'text.secondary' }}>
-                              out of 100 (best)
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                              {analysis.aiInsights.investmentScore >= 80 ? 'Excellent Investment' : 
+                               analysis.aiInsights.investmentScore >= 70 ? 'Very Good Investment' :
+                               analysis.aiInsights.investmentScore >= 60 ? 'Good Investment' :
+                               analysis.aiInsights.investmentScore >= 50 ? 'Average Investment' :
+                               'Below Average Investment'}
                             </Typography>
                           </Box>
-                        )}
+                        </Grid>
+                        
+                        {/* Summary */}
+                        <Grid item xs={12} md={8}>
+                          <Box sx={{ 
+                            p: 2, 
+                            border: 1, 
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}>
+                            <Typography variant="subtitle1" gutterBottom>
+                              Investment Summary
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                              {analysis.aiInsights.summary}
+                            </Typography>
+                          </Box>
+                        </Grid>
                         
                         {/* Strengths */}
-                        {analysis.aiInsights.strengths && analysis.aiInsights.strengths.length > 0 && (
-                          <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="success.main">
+                        <Grid item xs={12} md={4}>
+                          <Box sx={{ 
+                            p: 2, 
+                            border: 1, 
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            height: '100%',
+                            bgcolor: 'success.light',
+                            color: 'success.contrastText'
+                          }}>
+                            <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TrendingUpIcon sx={{ mr: 1 }} />
                               Strengths
                             </Typography>
-                            <List dense>
+                            <List dense disablePadding>
                               {analysis.aiInsights.strengths.map((strength, index) => (
-                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
-                                  <CheckCircleOutlineIcon sx={{ color: 'success.main', mr: 1 }} />
-                                  <Typography variant="body1">{strength}</Typography>
-                                </Box>
+                                <ListItem key={index} disableGutters>
+                                  <ListItemIcon sx={{ minWidth: 30 }}>
+                                    <AddCircleIcon fontSize="small" sx={{ color: 'success.main' }} />
+                                  </ListItemIcon>
+                                  <ListItemText 
+                                    primary={strength} 
+                                    primaryTypographyProps={{ variant: 'body2' }}
+                                  />
+                                </ListItem>
                               ))}
                             </List>
                           </Box>
-                        )}
+                        </Grid>
                         
                         {/* Weaknesses */}
-                        {analysis.aiInsights.weaknesses && analysis.aiInsights.weaknesses.length > 0 && (
-                          <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="error.main">
+                        <Grid item xs={12} md={4}>
+                          <Box sx={{ 
+                            p: 2, 
+                            border: 1, 
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            height: '100%',
+                            bgcolor: 'error.light',
+                            color: 'error.contrastText'
+                          }}>
+                            <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TrendingDownIcon sx={{ mr: 1 }} />
                               Weaknesses
                             </Typography>
-                            <List dense>
+                            <List dense disablePadding>
                               {analysis.aiInsights.weaknesses.map((weakness, index) => (
-                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
-                                  <ErrorOutlineIcon sx={{ color: 'error.main', mr: 1 }} />
-                                  <Typography variant="body1">{weakness}</Typography>
-                                </Box>
+                                <ListItem key={index} disableGutters>
+                                  <ListItemIcon sx={{ minWidth: 30 }}>
+                                    <RemoveCircleIcon fontSize="small" sx={{ color: 'error.main' }} />
+                                  </ListItemIcon>
+                                  <ListItemText 
+                                    primary={weakness} 
+                                    primaryTypographyProps={{ variant: 'body2' }}
+                                  />
+                                </ListItem>
                               ))}
                             </List>
                           </Box>
-                        )}
+                        </Grid>
                         
                         {/* Recommendations */}
-                        {analysis.aiInsights.recommendations && analysis.aiInsights.recommendations.length > 0 && (
-                          <Box>
-                            <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="info.main">
+                        <Grid item xs={12} md={4}>
+                          <Box sx={{ 
+                            p: 2, 
+                            border: 1, 
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            height: '100%',
+                            bgcolor: 'primary.light',
+                            color: 'primary.contrastText'
+                          }}>
+                            <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                              <RecommendIcon sx={{ mr: 1 }} />
                               Recommendations
                             </Typography>
-                            <List dense>
+                            <List dense disablePadding>
                               {analysis.aiInsights.recommendations.map((recommendation, index) => (
-                                <Box key={index} sx={{ display: 'flex', mb: 1 }}>
-                                  <LightbulbOutlinedIcon sx={{ color: 'info.main', mr: 1 }} />
-                                  <Typography variant="body1">{recommendation}</Typography>
-                                </Box>
+                                <ListItem key={index} disableGutters>
+                                  <ListItemIcon sx={{ minWidth: 30 }}>
+                                    <ScoreboardIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                                  </ListItemIcon>
+                                  <ListItemText 
+                                    primary={recommendation} 
+                                    primaryTypographyProps={{ variant: 'body2' }}
+                                  />
+                                </ListItem>
                               ))}
                             </List>
                           </Box>
-                        )}
-                      </Box>
+                        </Grid>
+                      </Grid>
                     )}
                   </Box>
                 )}

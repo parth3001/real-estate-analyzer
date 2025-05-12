@@ -30,6 +30,12 @@ interface DealData {
   purchasePrice: number;
   monthlyRent: number;
   downPayment: number;
+  unitTypes?: Array<{
+    type?: string;
+    count?: number;
+    monthlyRent?: number;
+    sqft?: number;
+  }>;
   analysisResult?: {
     aiInsights?: {
       investmentScore?: number;
@@ -37,6 +43,17 @@ interface DealData {
       strengths?: string[];
       weaknesses?: string[];
       recommendations?: string[];
+    };
+    aiAnalysis?: {
+      investmentScore?: number;
+      summary?: string;
+      strengths?: string[];
+      weaknesses?: string[];
+      recommendations?: string[];
+      unitMixAnalysis?: string;
+      marketPositionAnalysis?: string;
+      valueAddOpportunities?: string[];
+      recommendedHoldPeriod?: string;
     };
   };
 }
@@ -144,8 +161,17 @@ const Dashboard = () => {
 
   const handleViewDeal = (deal: Deal) => {
     console.log('Viewing deal:', deal.name);
-    localStorage.setItem('currentDeal', JSON.stringify(deal));
-    navigate('/analyze');
+    
+    // Determine if this is a multi-family deal by checking for unit types
+    const isMultiFamilyDeal = deal.data.unitTypes && Array.isArray(deal.data.unitTypes);
+    
+    if (isMultiFamilyDeal) {
+      localStorage.setItem('currentMultiFamilyDeal', JSON.stringify(deal));
+      navigate('/analyze-multifamily');
+    } else {
+      localStorage.setItem('currentDeal', JSON.stringify(deal));
+      navigate('/analyze');
+    }
   };
 
   const formatCurrency = (amount: number): string => {
@@ -155,6 +181,20 @@ const Dashboard = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount || 0);
+  };
+
+  // Get monthly rent for either property type
+  const getMonthlyRent = (deal: Deal): number => {
+    // For multi-family, sum all unit rents
+    if (deal.data.unitTypes && Array.isArray(deal.data.unitTypes)) {
+      return deal.data.unitTypes.reduce((total, unit) => {
+        const rent = typeof unit.monthlyRent === 'number' ? unit.monthlyRent : 0;
+        const count = typeof unit.count === 'number' ? unit.count : 0;
+        return total + (rent * count);
+      }, 0);
+    } 
+    // For single-family
+    return deal.data.monthlyRent || 0;
   };
 
   const getScoreColor = (score: number) => {
@@ -312,8 +352,12 @@ const Dashboard = () => {
                             Analyzed on {new Date(deal.savedAt).toLocaleDateString()}
                           </Typography>
                         </Box>
-                        {deal.data?.analysisResult?.aiInsights?.investmentScore !== undefined && (
-                          <Tooltip title={`Investment Score: ${deal.data.analysisResult.aiInsights.investmentScore}/100`}>
+                        {(deal.data?.analysisResult?.aiInsights?.investmentScore !== undefined || 
+                          deal.data?.analysisResult?.aiAnalysis?.investmentScore !== undefined) && (
+                          <Tooltip title={`Investment Score: ${
+                            deal.data.analysisResult.aiInsights?.investmentScore || 
+                            deal.data.analysisResult.aiAnalysis?.investmentScore
+                          }/100`}>
                             <Box sx={{ 
                               ml: 1,
                               width: 40, 
@@ -321,14 +365,18 @@ const Dashboard = () => {
                               borderRadius: '50%', 
                               bgcolor: 'background.paper',
                               border: '2px solid',
-                              borderColor: getScoreColor(deal.data.analysisResult.aiInsights.investmentScore),
+                              borderColor: getScoreColor(
+                                deal.data.analysisResult.aiInsights?.investmentScore || 
+                                deal.data.analysisResult.aiAnalysis?.investmentScore || 0
+                              ),
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               flexShrink: 0
                             }}>
                               <Typography variant="body2" fontWeight="bold">
-                                {deal.data.analysisResult.aiInsights.investmentScore}
+                                {deal.data.analysisResult.aiInsights?.investmentScore || 
+                                  deal.data.analysisResult.aiAnalysis?.investmentScore}
                               </Typography>
                             </Box>
                           </Tooltip>
@@ -354,7 +402,7 @@ const Dashboard = () => {
                           Purchase Price: {formatCurrency(deal.data.purchasePrice)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Monthly Rent: {formatCurrency(deal.data.monthlyRent)}
+                          Monthly Rent: {formatCurrency(getMonthlyRent(deal))}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Down Payment: {formatCurrency(deal.data.downPayment)}

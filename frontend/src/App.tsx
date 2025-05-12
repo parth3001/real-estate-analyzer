@@ -3,6 +3,7 @@ import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import DealAnalysis from './pages/DealAnalysis';
+import MultiFamilyAnalysis from './pages/MultiFamilyAnalysis';
 import Navbar from './components/Navbar';
 import theme from './theme';
 
@@ -34,6 +35,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/analyze" element={<DealAnalysis />} />
+              <Route path="/analyze-multifamily" element={<MultiFamilyAnalysis />} />
               <Route path="/test" element={<TestComponent />} />
             </Routes>
           </Box>

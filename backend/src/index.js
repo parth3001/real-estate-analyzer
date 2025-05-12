@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const { logger, stream } = require('./utils/logger');
 const dealsRouter = require('./routes/deals');
 const aiRouter = require('./routes/aiRoutes');
+const analyzeRouter = require('./routes/analyzeRoutes');
 const { OpenAI } = require('openai');
 
 const app = express();
@@ -30,6 +31,7 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api/deals', dealsRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api', analyzeRouter);
 
 // Validate OpenAI API key on startup
 const validateOpenAIKey = async () => {

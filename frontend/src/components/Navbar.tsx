@@ -10,6 +10,7 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 
 const Navbar = () => {
   console.log('Navbar component rendering');
@@ -19,7 +20,8 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <HomeIcon /> },
-    { path: '/analyze', label: 'Analyze Deal', icon: <AnalyticsIcon /> },
+    { path: '/analyze', label: 'Analyze SFR', icon: <AnalyticsIcon /> },
+    { path: '/analyze-multifamily', label: 'Multi-Family', icon: <ApartmentIcon /> },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -30,8 +32,9 @@ const Navbar = () => {
     
     // Clear any potentially interfering localStorage items
     if (path === '/') {
-      console.log('Clearing currentDeal from localStorage');
+      console.log('Clearing currentDeal and currentMultiFamilyDeal from localStorage');
       localStorage.removeItem('currentDeal');
+      localStorage.removeItem('currentMultiFamilyDeal');
       
       // For dashboard specifically, use a more direct approach to ensure navigation works
       window.location.href = window.location.origin + path;
