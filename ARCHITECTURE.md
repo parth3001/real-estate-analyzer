@@ -1,15 +1,77 @@
 # Real Estate Deal Analyzer - Architecture Documentation
 
 ## System Overview
-The Real Estate Deal Analyzer is a full-stack web application built using React (frontend) and Node.js/Express (backend). The application helps users analyze real estate investment opportunities by calculating key metrics and providing detailed financial projections.
+The Real Estate Deal Analyzer is a full-stack web application built using React (frontend) and Node.js/Express (backend). The application helps users analyze real estate investment opportunities by calculating key metrics and providing detailed financial projections for both Single Family (SFR) and Multi-Family (MF) properties.
+
+## Technical Stack
+
+### Frontend
+- **Framework:** React with TypeScript
+- **UI Library:** Material-UI (MUI) v7
+- **Data Visualization:** Recharts
+- **State Management:** React Hooks
+- **Type Checking:** TypeScript
+- **Data Persistence:** LocalStorage
+- **Build Tool:** Vite
+
+### Backend
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Type Safety:** TypeScript
+- **API Documentation:** OpenAPI/Swagger
+- **Logging:** Winston
+- **Error Handling:** Custom middleware
 
 ## Technical Decisions
 
 ### 1. Data Storage Strategy
-**Current Implementation:** Local File System
-- Deals and analysis data are currently stored in the local file system
-- User data persistence is handled through browser's localStorage
-- Simple file-based storage for rapid development and testing
+**Current Implementation:** Browser LocalStorage
+- Deals and analysis data stored in browser's localStorage
+- Structured data format for both SFR and MF properties
+- Unique ID generation for each deal
+- Data model:
+  ```typescript
+  interface Deal {
+    id: string;
+    name: string;
+    type: 'SFR' | 'MF';
+    propertyAddress: {
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
+    data: {
+      // Property details
+      purchasePrice: number;
+      propertyType: string;
+      yearBuilt: number;
+      squareFootage: number;
+      
+      // Financial details
+      downPayment: number;
+      interestRate: number;
+      loanTerm: number;
+      closingCosts: number;
+      repairCosts: number;
+      
+      // For MF properties
+      unitTypes?: Array<{
+        type: string;
+        count: number;
+        sqft: number;
+        monthlyRent: number;
+      }>;
+      
+      // Analysis results
+      monthlyAnalysis: MonthlyAnalysis;
+      annualAnalysis: AnnualAnalysis;
+      longTermAnalysis: LongTermAnalysis;
+    };
+    savedAt: string;
+    lastModified: string;
+  }
+  ```
 
 **Future Implementation:** MongoDB
 - Plan to migrate to MongoDB for scalable, document-based storage
@@ -42,7 +104,102 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
   - Built-in replication
   - Rich querying capabilities
 
-### 2. AI Integration Strategy
+### 2. Analysis Engine
+**Current Implementation:**
+- Comprehensive financial calculations:
+  ```typescript
+  interface MonthlyAnalysis {
+    expenses: {
+      rent?: number;
+      propertyTax?: number;
+      insurance?: number;
+      maintenance?: number;
+      propertyManagement?: number;
+      vacancy?: number;
+      mortgage?: {
+        total: number;
+        downPayment?: number;
+      };
+      closingCosts?: number;
+      repairCosts?: number;
+      total?: number;
+    };
+    cashFlow?: number;
+    cashFlowAfterTax?: number;
+  }
+
+  interface AnnualAnalysis {
+    dscr: number;
+    cashOnCashReturn: number;
+    capRate: number;
+    totalInvestment: number;
+    annualNOI: number;
+    annualDebtService: number;
+    effectiveGrossIncome: number;
+  }
+
+  interface LongTermAnalysis {
+    yearlyProjections: Array<{
+      year: number;
+      cashFlow: number;
+      propertyValue: number;
+      equity: number;
+      propertyTax: number;
+      insurance: number;
+      maintenance: number;
+      propertyManagement: number;
+      vacancy: number;
+      operatingExpenses: number;
+      noi: number;
+      debtService: number;
+      grossRent: number;
+      mortgageBalance: number;
+      appreciation: number;
+      totalReturn: number;
+    }>;
+    projectionYears: number;
+    returns: {
+      irr: number;
+      totalCashFlow: number;
+      totalAppreciation: number;
+      totalReturn: number;
+    };
+    exitAnalysis: {
+      projectedSalePrice: number;
+      sellingCosts: number;
+      mortgagePayoff: number;
+      netProceedsFromSale: number;
+    };
+  }
+  ```
+
+### 3. UI Components
+**Key Components:**
+1. **DealForm/MultiFamilyForm**
+   - Property details input
+   - Financial assumptions
+   - Unit mix builder (MF)
+   - Form validation
+   - Deal saving/loading
+
+2. **AnalysisResults**
+   - Key metrics display with tooltips
+   - Monthly analysis table
+   - Annual projections table
+   - Exit analysis
+   - Interactive charts:
+     - Cash flow trends
+     - Expense breakdown
+     - Equity growth
+     - Return components
+
+3. **SavedDeals**
+   - Deal list management
+   - Deal editing
+   - Deal comparison
+   - Timestamp tracking
+
+### 4. AI Integration Strategy
 **Current Implementation:** OpenAI API Placeholder
 - Basic integration structure is in place
 - Using placeholder API responses
