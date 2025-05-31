@@ -195,10 +195,12 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
   // Handle input changes for standard fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
+    const updatedFormData = {
       ...formData,
       [name]: value,
-    });
+    };
+    
+    setFormData(updatedFormData);
     
     // Clear error for this field if exists
     if (formErrors[name]) {
@@ -206,6 +208,13 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
         ...formErrors,
         [name]: null,
       });
+    }
+
+    // Auto-save form data after each change
+    try {
+      localStorage.setItem('multiFamilyFormData_temp', JSON.stringify(updatedFormData));
+    } catch (error) {
+      console.error('Error auto-saving form data:', error);
     }
   };
 
@@ -217,18 +226,23 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
       [field]: value,
     };
     
-    setFormData({
+    // Calculate total units
+    const totalUnits = updatedUnitTypes.reduce((sum, unit) => sum + (Number(unit.count) || 0), 0);
+    
+    const updatedFormData = {
       ...formData,
       unitTypes: updatedUnitTypes,
-    });
-    
-    // Recalculate total units
-    const totalUnits = updatedUnitTypes.reduce((sum, unit) => sum + (unit.count || 0), 0);
-    setFormData(prevData => ({
-      ...prevData,
       totalUnits,
-      unitTypes: updatedUnitTypes,
-    }));
+    };
+    
+    setFormData(updatedFormData);
+
+    // Auto-save form data after each change
+    try {
+      localStorage.setItem('multiFamilyFormData_temp', JSON.stringify(updatedFormData));
+    } catch (error) {
+      console.error('Error auto-saving form data:', error);
+    }
   };
 
   // Add a new unit type
@@ -340,6 +354,12 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
           0
         ),
       };
+
+      // Update the form data with the enhanced data
+      setFormData(enhancedFormData);
+      
+      // Save the current state to localStorage
+      localStorage.setItem('multiFamilyFormData_temp', JSON.stringify(enhancedFormData));
       
       onSubmit(enhancedFormData);
     } catch (error) {
@@ -361,14 +381,23 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
       const dealName = formData.propertyName || 
         `${formData.totalUnits}-Unit ${formData.propertyCity}, ${formData.propertyState}`;
       
-      // Create the deal object
+      // Create a complete deal object with all necessary data
       const deal = {
         name: dealName,
         data: {
-          ...formData,
-          analysisResult,
+          ...formData,  // Include all form data
+          unitTypes: formData.unitTypes.map(unit => ({  // Ensure unit types are properly structured
+            type: unit.type,
+            count: Number(unit.count),
+            sqft: Number(unit.sqft),
+            monthlyRent: Number(unit.monthlyRent)
+          })),
+          totalUnits: formData.totalUnits,
+          analysisResult: analysisResult,  // Include the latest analysis result
+          lastAnalyzed: new Date().toISOString()  // Add timestamp of last analysis
         },
         savedAt: new Date().toISOString(),
+        type: 'multifamily'  // Explicitly mark as multifamily
       };
       
       // Get existing saved deals
@@ -385,6 +414,13 @@ const MultiFamilyForm = ({ onSubmit, initialData, analysisResult }) => {
       
       // Save to localStorage
       localStorage.setItem('savedDeals', JSON.stringify(savedDeals));
+      
+      // Also update the auto-save data
+      localStorage.setItem('multiFamilyFormData_temp', JSON.stringify({
+        ...formData,
+        unitTypes: formData.unitTypes,  // Ensure unit types are included in auto-save
+        totalUnits: formData.totalUnits
+      }));
       
       setSnackbar({
         open: true,

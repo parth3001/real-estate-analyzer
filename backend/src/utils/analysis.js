@@ -148,11 +148,11 @@ const calculateSFRMetrics = async (dealData) => {
   const annualCashFlow = annualNOI - annualMortgagePayment;
   
   // Calculate cap rate (based on NOI before debt service)
-  const capRate = calculateCapRate(annualNOI, purchasePrice);
+  const capRate = (annualNOI / purchasePrice) * 100;
   
   // Calculate cash on cash return (based on cash flow after debt service)
   const totalInitialInvestment = downPayment + closingCosts + capitalInvestment;
-  const cashOnCashReturn = calculateCashOnCashReturn(annualCashFlow, totalInitialInvestment);
+  const cashOnCashReturn = (annualCashFlow / totalInitialInvestment) * 100;
 
   // Calculate long-term projections
   const yearlyProjections = [];

@@ -7,26 +7,15 @@ import {
 } from '@mui/material';
 import DealForm from '../components/DealAnalysis/DealForm';
 import AnalysisResults from '../components/DealAnalysis/AnalysisResults';
+import { Analysis } from '../types/analysis';
+import { sampleSFRData } from '../data/sampleSFRData';
 
 // Add this flag outside the component to ensure it persists between renders
 let hasLoadedCurrentDeal = false;
 
-interface AnalysisResult {
-  monthlyAnalysis?: any;
-  annualAnalysis?: any;
-  longTermAnalysis?: any;
-  aiInsights?: {
-    investmentScore?: number;
-    summary?: string;
-    strengths?: string[];
-    weaknesses?: string[];
-    recommendations?: string[];
-  };
-}
-
 const DealAnalysis: React.FC = () => {
   console.log('DealAnalysis component rendering', hasLoadedCurrentDeal);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<Analysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -43,7 +32,7 @@ const DealAnalysis: React.FC = () => {
     });
   }, []);
 
-  const setAnalysisResultSafe = useCallback((result: AnalysisResult | null) => {
+  const setAnalysisResultSafe = useCallback((result: Analysis | null) => {
     setAnalysisResult(prevResult => {
       if (JSON.stringify(prevResult) !== JSON.stringify(result)) {
         console.log('Updating analysisResult state');
@@ -53,7 +42,7 @@ const DealAnalysis: React.FC = () => {
     });
   }, []);
 
-  // Load the current deal from localStorage if it exists
+  // Load current deal from localStorage if it exists
   useEffect(() => {
     console.log('DealAnalysis useEffect running, effectRan:', effectRan.current, 'hasLoadedCurrentDeal:', hasLoadedCurrentDeal);
     
@@ -72,30 +61,34 @@ const DealAnalysis: React.FC = () => {
           if (deal.data) {
             console.log('Setting initialData from deal.data');
             setInitialDataSafe(deal.data);
+            if (deal.data.analysisResult) {
+              console.log('Setting analysisResult from deal.data');
+              setAnalysisResultSafe(deal.data.analysisResult);
+            }
           } else {
-            console.log('Setting initialData directly from deal');
+            console.log('Setting initialData from deal');
             setInitialDataSafe(deal);
+            if (deal.analysisResult) {
+              console.log('Setting analysisResult from deal');
+              setAnalysisResultSafe(deal.analysisResult);
+            }
           }
-          
-          // If the deal has analysis results, set them
-          if (deal.data?.analysisResult) {
-            console.log('Setting analysisResult from deal.data.analysisResult');
-            setAnalysisResultSafe(deal.data.analysisResult);
-          }
-          
-          // Clear the currentDeal from localStorage after loading to prevent issues with future navigation
-          localStorage.removeItem('currentDeal');
-          console.log('Removed currentDeal from localStorage');
         } else {
-          console.log('No currentDeal found in localStorage');
+          // If no saved deal, load sample data
+          console.log('No saved deal found, loading sample data');
+          setInitialDataSafe(sampleSFRData);
         }
+        
+        // Clear the current deal from localStorage
+        localStorage.removeItem('currentDeal');
+        
+        hasLoadedCurrentDeal = true;
       } catch (error) {
-        console.error('Error loading saved deal:', error);
-        setError('Failed to load saved deal. Please try again.');
+        console.error('Error loading current deal:', error);
+        // If there's an error, load sample data
+        setInitialDataSafe(sampleSFRData);
+        hasLoadedCurrentDeal = true;
       }
-      
-      hasLoadedCurrentDeal = true;
-      effectRan.current = true;
     }
   }, [setInitialDataSafe, setAnalysisResultSafe]);
 
@@ -132,49 +125,20 @@ const DealAnalysis: React.FC = () => {
   console.log('DealAnalysis rendering UI with initialData:', initialData ? 'present' : 'absent');
 
   return (
-    <Container maxWidth={false} sx={{ py: 3 }}>
-      <Box sx={{ 
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        gap: 3,
-        minHeight: 'calc(100vh - 48px)', // Full viewport height minus padding
-      }}>
-        {/* Input Form */}
-        <Box sx={{ 
-          width: { xs: '100%', md: '50%' },
-          maxHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
-          overflowY: { xs: 'visible', md: 'auto' },
-          position: { xs: 'static', md: 'sticky' },
-          top: { md: 24 },
-        }}>
-          <DealForm 
-            onSubmit={handleAnalyze} 
-            initialData={initialData} 
-            // @ts-ignore - passing analysis result to the form for saving
-            analysisResult={analysisResult}
-          />
-        </Box>
-
-        {/* Analysis Results */}
-        <Box sx={{ 
-          width: { xs: '100%', md: '50%' },
-          maxHeight: { xs: 'none', md: 'calc(100vh - 48px)' },
-          overflowY: { xs: 'visible', md: 'auto' },
-        }}>
-          {error ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          ) : null}
-          
-          {analysisResult && (
-            <Box>
-              <AnalysisResults analysis={analysisResult} />
-            </Box>
-          )}
-        </Box>
-      </Box>
-
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="lg">
+        <DealForm
+          onSubmit={handleAnalyze}
+          initialData={initialData}
+          // @ts-ignore - DealForm accepts Analysis | null as analysisResult
+          analysisResult={analysisResult}
+        />
+        {analysisResult && (
+          <Box sx={{ mt: 4 }}>
+            <AnalysisResults analysis={analysisResult} />
+          </Box>
+        )}
+      </Container>
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
@@ -184,7 +148,7 @@ const DealAnalysis: React.FC = () => {
           {error}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 

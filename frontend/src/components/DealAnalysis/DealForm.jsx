@@ -702,33 +702,49 @@ const DealForm = ({ onSubmit, initialData = {}, analysisResult = null }) => {
 
       // Create new deal object with analysis result if available
       const newDeal = {
+        id: dealData.id || Date.now().toString(), // Use existing ID or create new one
         name: dealName,
+        type: 'sfr', // Explicitly mark as single-family
         data: {
           ...dealData,
-          analysisResult: analysisResult // Include analysis result if available
+          analysisResult: {
+            ...analysisResult,
+            capRate: analysisResult?.annualAnalysis?.capRate || 0,
+            cashOnCashReturn: analysisResult?.annualAnalysis?.cashOnCashReturn || 0,
+            noi: analysisResult?.annualAnalysis?.noi || 0
+          }
         },
         savedAt: new Date().toISOString()
       };
 
-      // Add new deal to array
-      savedDeals.push(newDeal);
+      // Find existing deal by ID or name
+      const existingDealIndex = savedDeals.findIndex(d => 
+        (d.id && d.id === newDeal.id) || 
+        (d.name === dealName && d.type === 'sfr')
+      );
 
-      // Save back to localStorage
+      // If deal exists, update it, otherwise add new deal
+      if (existingDealIndex !== -1) {
+        savedDeals[existingDealIndex] = newDeal;
+      } else {
+        savedDeals.push(newDeal);
+      }
+
+      // Save updated deals array
       localStorage.setItem('savedDeals', JSON.stringify(savedDeals));
 
-      // Show success message with deal name
+      // Show success message
       setSnackbar({
         open: true,
-        message: `Deal "${dealName}" saved successfully. Total deals: ${savedDeals.length}`,
+        message: 'Deal saved successfully',
         severity: 'success'
       });
 
-      console.log('Saved deals:', savedDeals); // Debug log
     } catch (error) {
       console.error('Error saving deal:', error);
       setSnackbar({
         open: true,
-        message: `Failed to save deal: ${error.message}`,
+        message: error.message || 'Failed to save deal',
         severity: 'error'
       });
     }
@@ -1157,5 +1173,10 @@ export default DealForm;
 DealForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   initialData: PropTypes.object,
-  analysisResult: PropTypes.object
+  analysisResult: PropTypes.shape({
+    monthlyAnalysis: PropTypes.object,
+    annualAnalysis: PropTypes.object,
+    longTermAnalysis: PropTypes.object,
+    keyMetrics: PropTypes.object
+  })
 }; 

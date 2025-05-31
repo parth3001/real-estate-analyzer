@@ -11,6 +11,7 @@ import axios from 'axios';
 import { API_URL } from '../config';
 import MultiFamilyForm from '../components/MultiFamilyAnalysis/MultiFamilyForm';
 import MultiFamilyAnalysisResults from '../components/MultiFamilyAnalysis/MultiFamilyAnalysisResults';
+import { Analysis } from '../types/analysis';
 
 // Define the interface for analysis results
 interface MultiFamilyAnalysisResult {
@@ -78,7 +79,7 @@ interface MultiFamilyAnalysisResult {
 
 const MultiFamilyAnalysis: React.FC = () => {
   const [initialData, setInitialData] = useState<any>(null);
-  const [analysisResult, setAnalysisResult] = useState<MultiFamilyAnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,14 +126,12 @@ const MultiFamilyAnalysis: React.FC = () => {
     }
   }, []);
 
-  // Function to backup form data before analysis
+  // Helper function to backup form data before analysis
   const backupFormData = (formData: any) => {
     try {
-      // Back up the form data in case of error
       localStorage.setItem('multiFamilyFormData_backup', JSON.stringify(formData));
-      console.log('Form data backed up before analysis');
-    } catch (err) {
-      console.error('Error backing up form data:', err);
+    } catch (error) {
+      console.error('Failed to backup form data:', error);
     }
   };
 
@@ -158,29 +157,37 @@ const MultiFamilyAnalysis: React.FC = () => {
       
       // Set the analysis result
       setAnalysisResult(response.data);
-    } catch (err: any) {
-      console.error('Analysis error:', err);
+
+      // Update the initial data with the latest form data and analysis result
+      const updatedData = {
+        ...formData,
+        analysisResult: response.data,
+        lastAnalyzed: new Date().toISOString()
+      };
+      setInitialData(updatedData);
+
+      // Update the auto-save data
+      localStorage.setItem('multiFamilyFormData_temp', JSON.stringify(updatedData));
+    } catch (error: unknown) {
+      console.error('Analysis error:', error);
       
       // Extract the specific error message from the axios error response if available
       let errorMessage = 'Failed to analyze the property. Please check your inputs and try again.';
       
-      if (err.response) {
+      if (axios.isAxiosError(error)) {
         // Server responded with a non-2xx status
-        console.error('Server error response:', err.response);
+        console.error('Server error response:', error.response);
         
-        if (err.response.data && err.response.data.error) {
-          errorMessage = `Error: ${err.response.data.error}`;
-        } else if (err.response.status === 404) {
+        if (error.response?.data?.error) {
+          errorMessage = `Error: ${error.response.data.error}`;
+        } else if (error.response?.status === 404) {
           errorMessage = 'Error: API endpoint not found. The server may be misconfigured.';
-        } else if (err.response.status === 500) {
+        } else if (error.response?.status === 500) {
           errorMessage = 'Error: Server internal error. Please check your inputs for invalid values.';
         }
-      } else if (err.request) {
-        // Request was made but no response received
-        errorMessage = 'Error: No response from server. Please check your internet connection.';
-      } else if (err.message) {
+      } else if (error instanceof Error) {
         // Something else happened while setting up the request
-        errorMessage = `Error: ${err.message}`;
+        errorMessage = `Error: ${error.message}`;
       }
       
       setError(errorMessage);
@@ -192,8 +199,8 @@ const MultiFamilyAnalysis: React.FC = () => {
           if (backupData) {
             setInitialData(JSON.parse(backupData));
           }
-        } catch (backupErr) {
-          console.error('Failed to restore backup data:', backupErr);
+        } catch (backupError) {
+          console.error('Failed to restore backup data:', backupError);
         }
       }
     } finally {

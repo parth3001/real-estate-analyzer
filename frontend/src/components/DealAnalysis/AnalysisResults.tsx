@@ -53,92 +53,7 @@ import {
 import { TooltipProps } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { ContentType } from 'recharts/types/component/Tooltip';
-
-interface MonthlyAnalysis {
-  expenses: {
-    [key: string]: number | { 
-      total: number;
-      downPayment?: number;
-    } | undefined;
-    mortgage?: { 
-      total: number;
-      downPayment?: number;
-    };
-    total?: number;
-  };
-  cashFlow?: number;
-  cashFlowAfterTax?: number;
-}
-
-interface AnnualAnalysis {
-  dscr: number;
-  cashOnCashReturn: number;
-  capRate: number;
-  totalInvestment: number;
-  annualNOI: number;
-  annualDebtService: number;
-  effectiveGrossIncome: number;
-}
-
-interface LongTermAnalysis {
-  yearlyProjections: Array<{
-    year: number;
-    cashFlow: number;
-    propertyValue: number;
-    equity: number;
-    propertyTax: number;
-    insurance: number;
-    maintenance: number;
-    propertyManagement: number;
-    vacancy: number;
-    operatingExpenses: number;
-    noi: number;
-    debtService: number;
-    grossRent: number;
-    mortgageBalance: number;
-    appreciation: number;
-    totalReturn: number;
-  }>;
-  projectionYears: number;
-  returns: {
-    irr: number;
-    totalCashFlow: number;
-    totalAppreciation: number;
-    totalReturn: number;
-  };
-  exitAnalysis: {
-    projectedSalePrice: number;
-    sellingCosts: number;
-    mortgagePayoff: number;
-    netProceedsFromSale: number;
-  };
-}
-
-interface AIInsights {
-  investmentScore: number;
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  // Multi-family specific properties
-  unitMixAnalysis?: string;
-  marketPositionAnalysis?: string;
-  valueAddOpportunities?: string[];
-  recommendedHoldPeriod?: string;
-}
-
-interface Analysis {
-  monthlyAnalysis?: MonthlyAnalysis;
-  annualAnalysis?: AnnualAnalysis;
-  longTermAnalysis?: LongTermAnalysis;
-  aiInsights?: AIInsights;
-  keyMetrics?: {
-    pricePerSqFtAtPurchase: number;
-    pricePerSqFtAtSale: number;
-    avgRentPerSqFt: number;
-  };
-  purchasePrice?: number;
-}
+import { Analysis } from '../../types/analysis';
 
 interface AnalysisResultsProps {
   analysis?: Analysis;
@@ -172,8 +87,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
   const [chartTab, setChartTab] = useState(0);
 
   // Safely destructure and provide default values with proper typing
-  const monthlyAnalysis: MonthlyAnalysis = analysis?.monthlyAnalysis || { expenses: {} };
-  const annualAnalysis: AnnualAnalysis = analysis?.annualAnalysis || {
+  const monthlyAnalysis = analysis?.monthlyAnalysis || { expenses: {} };
+  const annualAnalysis = analysis?.annualAnalysis || {
     dscr: 0,
     cashOnCashReturn: 0,
     capRate: 0,
@@ -182,7 +97,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
     annualDebtService: 0,
     effectiveGrossIncome: 0
   };
-  const longTermAnalysis: LongTermAnalysis = analysis?.longTermAnalysis || {
+  const longTermAnalysis = analysis?.longTermAnalysis || {
     yearlyProjections: [],
     projectionYears: 0,
     returns: {

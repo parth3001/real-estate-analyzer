@@ -1,0 +1,41 @@
+export const sampleSFRData = {
+  propertyAddress: {
+    street: '123 Sample Street',
+    city: 'San Francisco',
+    state: 'CA',
+    zipCode: '94105',
+  },
+  propertyType: 'single_family',
+  purchasePrice: 750000,
+  downPayment: 150000,
+  interestRate: 6.5,
+  loanTerm: 30,
+  capitalInvestment: 25000,
+  monthlyRent: 4500,
+  propertyTaxRate: 1.2,
+  insuranceRate: 0.5,
+  maintenance: 300,
+  sfrDetails: {
+    bedrooms: 3,
+    bathrooms: 2,
+    squareFootage: 1800,
+    yearBuilt: 1985,
+    condition: 'good',
+    propertyManagement: {
+      feePercentage: 8,
+    },
+    tenantTurnover: {
+      assumedAnnualTurnover: true,
+      realtorCommissionMonths: 1,
+      prepFeesMonths: 1,
+    },
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 3,
+      annualPropertyValueIncrease: 4,
+      sellingCostsPercentage: 6,
+      inflationRate: 2.5,
+      vacancyRate: 5,
+    },
+  },
+}; 
