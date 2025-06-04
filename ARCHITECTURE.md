@@ -733,4 +733,22 @@ module.exports = {
 
 ### API Contract
 - All analysis responses include the required fields for both SFR and MF.
-- See `API.md` for full request/response structure. 
+- See `API.md` for full request/response structure.
+
+### AI Prompt Engineering (2025-06 Update)
+
+#### Multi-Family AI Analysis Prompt (mfAnalysisPrompt)
+- The `mfAnalysisPrompt` function generates a detailed prompt for OpenAI to analyze multi-family (MF) property investments.
+- **Context:**
+  - The prompt is constructed using metrics and data already calculated by the backend analysis engine (e.g., DSCR, Cap Rate, Cash on Cash, NOI, unit mix, price per unit, etc.).
+  - No financial metrics are recalculated in the prompt function; it only formats and summarizes the results for the AI.
+- **Prompt Content:**
+  - Property details (address, units, square footage, year built, price per unit/sqft)
+  - Unit mix breakdown
+  - Financial metrics (purchase price, down payment, interest rate, loan term, mortgage, NOI, DSCR, Cap Rate, Cash on Cash)
+  - Operating expenses (property management, vacancy, maintenance, utilities, common area)
+  - Long-term assumptions (rent/expense growth, value appreciation, projection years, selling costs)
+  - Requests a structured JSON response from the AI, including summary, strengths, weaknesses, recommendations, unit mix analysis, market position, value-add opportunities, investment score, and hold period.
+- **Best Practice:**
+  - All numbers and metrics in the prompt are sourced from the backend's analysis output, ensuring consistency and no redundant calculations.
+  - The prompt function is a formatter, not a calculator. 

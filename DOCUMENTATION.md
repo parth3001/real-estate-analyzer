@@ -249,6 +249,37 @@ class FinancialCalculations {
 }
 ```
 
+### AI Prompt Engineering
+
+#### mfAnalysisPrompt (Multi-Family AI Analysis)
+- **Purpose:**
+  - Generates a detailed prompt for OpenAI to analyze multi-family property investments.
+  - Uses only metrics and data already calculated by the backend analysis engine (e.g., DSCR, Cap Rate, Cash on Cash, NOI, unit mix, price per unit, etc.).
+  - Does not recalculate any financial metrics; it simply formats and summarizes the results for the AI.
+- **Prompt Content:**
+  - Property details (address, units, square footage, year built, price per unit/sqft)
+  - Unit mix breakdown
+  - Financial metrics (purchase price, down payment, interest rate, loan term, mortgage, NOI, DSCR, Cap Rate, Cash on Cash)
+  - Operating expenses (property management, vacancy, maintenance, utilities, common area)
+  - Long-term assumptions (rent/expense growth, value appreciation, projection years, selling costs)
+  - Requests a structured JSON response from the AI, including:
+    ```json
+    {
+      "summary": "2-3 sentence summary of the investment opportunity",
+      "strengths": ["strength1", "strength2", "strength3"],
+      "weaknesses": ["weakness1", "weakness2", "weakness3"],
+      "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
+      "unitMixAnalysis": "1-2 sentences analyzing if the unit mix is optimal",
+      "marketPositionAnalysis": "1-2 sentences about the property's positioning in the market",
+      "valueAddOpportunities": ["opportunity1", "opportunity2"],
+      "investmentScore": 0-100,
+      "recommendedHoldPeriod": "recommendation on how long to hold this property"
+    }
+    ```
+- **Best Practice:**
+  - All metrics in the prompt are sourced from the backend's analysis output, ensuring consistency and no redundant calculations.
+  - The prompt function is a formatter, not a calculator.
+
 ## API Routes
 
 ### Deal Analysis Routes
