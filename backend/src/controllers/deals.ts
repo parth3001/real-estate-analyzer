@@ -6,6 +6,7 @@ import { SFRAnalyzer } from '../analysis';
 import { getOpenAIClient } from '../services/openai';
 import { SFRData, DealData, MultiFamilyData } from '../types/propertyTypes';
 import { MultiFamilyAnalyzer } from '../analysis/MultiFamilyAnalyzer';
+import { sfrAnalysisPrompt, mfAnalysisPrompt } from '../prompts/aiPrompts';
 
 const DEALS_DIR = path.join(__dirname, '../../data/deals');
 const DEALS_FILE = path.join(DEALS_DIR, 'deals.json');
@@ -48,10 +49,9 @@ async function saveDeals(deals: Deal[]): Promise<void> {
 }
 
 // Utility function to get AI insights
-const getAIInsights = async (dealData: SFRData, analysis: any) => {
+const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
   try {
     const openai = getOpenAIClient();
-    // If no OpenAI client, return placeholder message
     if (!openai) {
       return {
         summary: "AI insights are not available. Please check your OpenAI API key.",
@@ -62,51 +62,46 @@ const getAIInsights = async (dealData: SFRData, analysis: any) => {
       };
     }
 
-    // Calculate some additional metrics to enrich the prompt
-    const downPaymentPercent = (dealData.downPayment / dealData.purchasePrice) * 100;
-    const monthlyMortgage = analysis?.monthlyAnalysis?.expenses?.mortgage?.total ?? 0;
-    const monthlyNOI = (analysis?.monthlyAnalysis?.cashFlow ?? 0) + monthlyMortgage;
-    const dscr = monthlyMortgage !== 0 ? monthlyNOI / monthlyMortgage : 0;
+    let prompt: string;
+    if (dealData.propertyType === 'SFR') {
+      prompt = sfrAnalysisPrompt(dealData, analysis);
+    } else if (dealData.propertyType === 'MF') {
+      // TODO: Use mfAnalysisPrompt when implemented
+      prompt = mfAnalysisPrompt(dealData, analysis);
+    } else {
+      throw new Error('Unsupported propertyType for AI analysis');
+    }
 
-    const prompt = `Analyze this single-family rental property investment:
-    Purchase Price: $${dealData.purchasePrice}
-    Down Payment: ${downPaymentPercent.toFixed(1)}%
-    Monthly Rent: $${dealData.monthlyRent}
-    Monthly NOI: $${monthlyNOI}
-    DSCR: ${dscr.toFixed(2)}
-    Cap Rate: ${analysis.annualAnalysis?.capRate?.toFixed(2) ?? 'N/A'}%
-    Cash on Cash Return: ${analysis.annualAnalysis?.cashOnCashReturn?.toFixed(2) ?? 'N/A'}%
-    
-    Provide a concise analysis with:
-    1. A 2-3 sentence summary
-    2. 3 key strengths
-    3. 3 potential weaknesses
-    4. 3 specific recommendations
-    5. An investment score from 0-100 based on the metrics`;
-
-    const completion = await openai.completions.create({
-      model: "text-davinci-003",
-      prompt,
-      max_tokens: 500,
-      temperature: 0.7
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are a real estate investment analysis expert. Provide concise, actionable insights in JSON format." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 800,
+      temperature: 0.7,
+      response_format: { type: "json_object" }
     });
-    const response = completion.choices[0].text?.trim() || '';
-    
-    // Parse the response
-    const sections = response.split('\n\n');
-    const summary = sections[0]?.replace('Summary:', '').trim();
-    const strengths = sections[1]?.split('\n').filter(s => s.startsWith('-')).map(s => s.replace('-', '').trim()) || [];
-    const weaknesses = sections[2]?.split('\n').filter(s => s.startsWith('-')).map(s => s.replace('-', '').trim()) || [];
-    const recommendations = sections[3]?.split('\n').filter(s => s.startsWith('-')).map(s => s.replace('-', '').trim()) || [];
-    const scoreMatch = sections[4]?.match(/\d+/);
-    const investmentScore = scoreMatch ? parseInt(scoreMatch[0]) : null;
-
+    const content = completion.choices[0].message.content;
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(content);
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      return {
+        summary: "Error parsing AI response. Please try again later.",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: null
+      };
+    }
     return {
-      summary,
-      strengths,
-      weaknesses,
-      recommendations,
-      investmentScore
+      summary: aiResponse.summary || "No summary provided",
+      strengths: aiResponse.strengths || [],
+      weaknesses: aiResponse.weaknesses || [],
+      recommendations: aiResponse.recommendations || [],
+      investmentScore: aiResponse.investmentScore || null
     };
   } catch (error) {
     console.error('Error getting AI insights:', error);
