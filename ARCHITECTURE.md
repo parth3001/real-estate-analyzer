@@ -700,4 +700,37 @@ module.exports = {
 
 7. Enhanced AI Features
    - Market Analysis
-   - Investment Recommendations 
+   - Investment Recommendations
+
+## 2025-06-03 Backend Update
+
+### TypeScript-First Workflow
+- The backend now runs directly from TypeScript source using `ts-node` and `nodemon`.
+- `.env` is loaded at the very top of `src/index.ts` to ensure all environment variables are available.
+- All old JS files in `src/` have been removed to prevent stale code from being loaded.
+
+### Unified Analysis Engine
+- The `/api/deals/analyze` endpoint now handles both SFR and MF analysis.
+- The backend branches on `propertyType` and uses the appropriate analyzer.
+- The response always includes: `monthlyAnalysis`, `annualAnalysis`, `longTermAnalysis`, `keyMetrics`, and `aiInsights`.
+
+### Sample Endpoints for Testing
+- `/api/deals/sample-sfr` and `/api/deals/sample-mf` return valid sample payloads for SFR and MF, respectively.
+
+### Automated Smoke Testing
+- On server startup, a script (`testApiOnStartup.ts`) runs and verifies:
+  - Sample endpoints return valid data.
+  - Analysis endpoint returns all required fields.
+- Logs `[PASS]` or `[FAIL]` for each check.
+
+### OpenAI Integration
+- Updated to use OpenAI v4+ SDK (`openai.completions.create`).
+- All property access is now safe to prevent runtime errors if analysis structure is missing fields.
+
+### Router and Controller Hygiene
+- Sample endpoints are registered before parameterized routes to avoid route shadowing.
+- Debug logs were used to confirm correct file loading and endpoint execution.
+
+### API Contract
+- All analysis responses include the required fields for both SFR and MF.
+- See `API.md` for full request/response structure. 

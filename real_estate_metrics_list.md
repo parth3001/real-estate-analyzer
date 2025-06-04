@@ -1,0 +1,215 @@
+# Real Estate Deal Analyzer - Complete Metrics List
+
+## Core Financial Metrics
+
+### Monthly Analysis
+- **Monthly Rental Income** - Base rental income per month
+- **Effective Monthly Rent** - Rental income minus vacancy allowance
+- **Monthly Operating Expenses** - Total monthly operational costs
+- **Monthly Mortgage Payment** - Principal and interest payment
+- **Monthly Principal Payment** - Principal portion of mortgage
+- **Monthly Interest Payment** - Interest portion of mortgage
+- **Monthly Cash Flow** - Net monthly income after all expenses
+- **Monthly NOI** - Net Operating Income per month
+
+### Annual Analysis
+- **Gross Rental Income** - Total annual rental income
+- **Effective Gross Income** - Annual income minus vacancy
+- **Annual Operating Expenses** - Total yearly operational costs
+- **Net Operating Income (NOI)** - Income after operating expenses
+- **Annual Debt Service** - Total yearly mortgage payments
+- **Annual Cash Flow** - Net yearly income after all expenses
+
+## Return on Investment Metrics
+
+### Primary Returns
+- **Cash on Cash Return** - Annual cash flow / total cash invested
+- **Cap Rate (Capitalization Rate)** - NOI / purchase price
+- **Internal Rate of Return (IRR)** - Time-weighted return over projection period
+- **Return on Investment (ROI)** - Total return including appreciation
+- **5-Year ROI** - Total return over 5-year period
+- **Annual ROI** - Annualized return percentage
+
+### Risk & Coverage Metrics
+- **Debt Service Coverage Ratio (DSCR)** - NOI / annual debt service
+- **Expense Ratio** - Operating expenses / effective gross income
+- **Break-Even Occupancy** - Minimum occupancy to cover expenses
+
+## Property Valuation Metrics
+
+### Price Analysis
+- **Price Per Square Foot** - Purchase price / total square footage
+- **Price Per Unit** - Purchase price / number of units (multi-family)
+- **Gross Rent Multiplier (GRM)** - Purchase price / annual gross rent
+- **Rent Per Square Foot** - Monthly rent / square footage
+
+### Appreciation Metrics
+- **Total Appreciation** - Property value increase over holding period
+- **Annual Property Value Growth** - Yearly appreciation percentage
+- **Projected Sale Price** - Estimated value at end of projection period
+- **Price Per SqFt at Sale** - Projected price per square foot at exit
+
+## Cash Flow Metrics
+
+### Cash Flow Analysis
+- **Cash Flow Per Unit** - Annual cash flow divided by number of units
+- **Cumulative Cash Flow** - Total cash flow over projection period
+- **Average Annual Cash Flow** - Mean yearly cash flow
+- **Monthly Cash Flow Projection** - Month-by-month cash flow forecast
+- **Yearly Cash Flow Projections** - Annual cash flow for each year
+
+### Investment Metrics
+- **Total Investment** - Down payment + closing costs + capital investment
+- **Total Cash Required** - All upfront cash needed
+- **Additional Investment Needed** - Extra cash for negative cash flows
+- **Total Investment to Date** - Cumulative investment over time
+
+## Expense Breakdown Metrics
+
+### Operating Expenses (Monthly & Annual)
+- **Property Tax** - Municipal property taxes
+- **Insurance** - Property insurance costs
+- **Property Management** - Management company fees
+- **Repairs & Maintenance** - Ongoing maintenance costs
+- **Capital Expenditures (CapEx)** - Major repairs and improvements
+- **Vacancy Reserve** - Allowance for vacant periods
+- **HOA Fees** - Homeowners association dues
+- **Utilities** - Owner-paid utility costs
+- **Landscaping** - Grounds maintenance
+- **Water & Sewer** - Water and sewer expenses
+- **Garbage Collection** - Waste management fees
+- **Common Area Electricity** - Shared electrical costs
+- **Marketing & Advertising** - Tenant acquisition costs
+- **Other Expenses** - Miscellaneous operational costs
+
+### Tenant Turnover Costs
+- **Realtor Commission** - Leasing agent fees
+- **Preparation Fees** - Unit prep between tenants
+- **Tenant Turnover Accrual** - Monthly reserve for turnover
+- **Annual Turnover Costs** - Yearly tenant replacement expenses
+
+## Loan & Financing Metrics
+
+### Mortgage Details
+- **Loan Amount** - Total financed amount
+- **Monthly Mortgage Payment** - Principal and interest
+- **Down Payment** - Initial cash payment
+- **Down Payment Percentage** - Down payment as % of purchase price
+- **Interest Rate** - Annual loan interest rate
+- **Loan Term** - Mortgage duration in years
+- **Loan-to-Value Ratio** - Loan amount / property value
+- **PMI (Private Mortgage Insurance)** - Required if down payment < 20%
+
+### Equity Metrics
+- **Initial Equity** - Down payment + appreciation
+- **Equity Growth** - Equity increase over time
+- **Projected Equity** - Estimated equity at projection end
+- **Equity Multiple** - Total return multiple on initial investment
+- **Principal Paid Off** - Mortgage principal reduction
+
+## Exit Analysis Metrics
+
+### Sale Projections
+- **Projected Sale Price** - Estimated property value at sale
+- **Selling Costs** - Real estate commissions and closing costs
+- **Mortgage Payoff** - Remaining loan balance at sale
+- **Net Proceeds from Sale** - Cash received after sale
+- **Total Return** - Cash flow + appreciation - total investment
+
+## Multi-Family Specific Metrics
+
+### Unit Analysis
+- **Total Units** - Number of rental units
+- **Unit Mix** - Breakdown by unit type (1BR, 2BR, etc.)
+- **Annual Income per Unit** - Average yearly income per unit
+- **Average Expense per Unit** - Average yearly cost per unit
+- **Rent per Unit Type** - Rental rates by unit configuration
+
+### Multi-Family Returns
+- **Cash Flow Per Unit** - Annual cash flow divided by unit count
+- **Income per Square Foot** - Annual income / total square footage
+- **Expense per Square Foot** - Annual expenses / total square footage
+
+## Market & Comparative Metrics
+
+### Market Analysis
+- **Comparable Sales** - Similar property sale prices
+- **Rental Comparables** - Market rental rates
+- **Price Competitiveness** - Relative to market pricing
+- **Rent Competitiveness** - Relative to market rents
+
+### Performance Benchmarks
+- **1% Rule Percentage** - Monthly rent as % of purchase price
+- **2% Rule Percentage** - Monthly rent as % of purchase price
+- **50% Rule Analysis** - Operating expenses as % of gross income
+
+## Long-Term Projection Metrics
+
+### Growth Assumptions
+- **Annual Rent Increase** - Yearly rental growth percentage
+- **Annual Property Value Increase** - Yearly appreciation rate
+- **Inflation Rate** - General inflation assumption
+- **Vacancy Rate** - Expected vacancy percentage
+- **Projection Years** - Analysis time horizon
+
+### Yearly Projections (10+ years)
+- **Year-by-Year Cash Flow** - Annual cash flow for each year
+- **Year-by-Year Property Value** - Property value each year
+- **Year-by-Year Equity** - Equity position each year
+- **Year-by-Year NOI** - Net operating income each year
+- **Year-by-Year Mortgage Balance** - Remaining loan balance
+- **Cumulative Return** - Total return through each year
+
+## AI-Powered Analysis Metrics
+
+### Investment Scoring
+- **Investment Score** - Overall deal quality (0-100)
+- **Cash Flow Score** - Cash flow quality rating
+- **Market Position Score** - Competitive positioning
+
+### Risk Assessment
+- **Overall Risk Level** - Investment risk classification
+- **Risk Factors** - Specific risk elements identified
+- **Risk-Adjusted Returns** - Returns considering risk level
+
+## Performance Tracking Metrics
+
+### Actual vs. Projected
+- **Actual Rent** - Real rental income received
+- **Actual Expenses** - Real operating expenses incurred
+- **Occupancy Rate** - Actual vacancy/occupancy percentage
+- **Performance Variance** - Difference from projections
+
+### Portfolio Metrics
+- **Deal Comparison** - Side-by-side deal analysis
+- **Portfolio Performance** - Multi-property tracking
+- **Best/Worst Performers** - Top and bottom performing deals
+
+## Specialized Calculation Metrics
+
+### Financial Ratios
+- **Rent-to-Income Ratio** - Rent as percentage of property value
+- **Operating Expense Ratio** - OpEx as percentage of income
+- **Debt-to-Income Ratio** - Debt service vs. income
+- **Cash Coverage Ratio** - Cash available vs. debt service
+
+### Sensitivity Analysis
+- **Best Case Scenario** - Optimistic projections
+- **Worst Case Scenario** - Conservative projections
+- **Break-Even Analysis** - Minimum performance required
+- **Scenario Modeling** - Multiple assumption sets
+
+## Document & Tracking Metrics
+
+### Deal Management
+- **Deal Status** - Current deal stage
+- **Analysis Date** - When analysis was performed
+- **Deal History** - Change tracking over time
+- **Notes & Comments** - Qualitative observations
+- **Document Attachments** - Supporting files and links
+
+---
+
+**Total Metrics Count: 100+ distinct financial and analytical metrics**
+
+This comprehensive list covers all metrics available in the Real Estate Deal Analyzer tool, spanning from basic cash flow calculations to sophisticated multi-year projections and AI-powered insights. The tool provides both quantitative financial metrics and qualitative analysis to support informed real estate investment decisions.

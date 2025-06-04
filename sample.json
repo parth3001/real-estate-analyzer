@@ -1,0 +1,31 @@
+{
+  "propertyType": "SFR",
+  "propertyName": "Sample Single Family Home",
+  "propertyAddress": {
+    "street": "123 Main Street",
+    "city": "Austin",
+    "state": "TX",
+    "zipCode": "78701"
+  },
+  "purchasePrice": 350000,
+  "downPayment": 70000,
+  "interestRate": 6.5,
+  "loanTerm": 30,
+  "propertyTaxRate": 1.25,
+  "insuranceRate": 0.5,
+  "maintenanceCost": 250,
+  "propertyManagementRate": 8,
+  "monthlyRent": 2800,
+  "squareFootage": 1800,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "yearBuilt": 2005,
+  "longTermAssumptions": {
+    "projectionYears": 10,
+    "annualRentIncrease": 3,
+    "annualPropertyValueIncrease": 4,
+    "inflationRate": 2,
+    "vacancyRate": 5,
+    "sellingCostsPercentage": 6
+  }
+} 

@@ -1,28 +1,30 @@
-const express = require('express');
-const router = express.Router();
-const dealsController = require('../controllers/deals');
+console.log('Deals router loaded from file:', __filename);
+import express, { Router } from 'express';
+import * as dealsController from '../controllers/deals';
+
+const router: Router = express.Router();
 
 // Utility functions for calculations
-const calculateMonthlyPayment = (principal, annualRate, years) => {
+const calculateMonthlyPayment = (principal: number, annualRate: number, years: number): number => {
   const monthlyRate = annualRate / 12 / 100;
   const numPayments = years * 12;
   return (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
          (Math.pow(1 + monthlyRate, numPayments) - 1);
 };
 
-const calculateCashFlow = (monthlyRent, monthlyExpenses, monthlyMortgage) => {
+const calculateCashFlow = (monthlyRent: number, monthlyExpenses: number, monthlyMortgage: number): number => {
   return monthlyRent - monthlyExpenses - monthlyMortgage;
 };
 
-const calculateCapRate = (annualNOI, purchasePrice) => {
+const calculateCapRate = (annualNOI: number, purchasePrice: number): number => {
   return (annualNOI / purchasePrice) * 100;
 };
 
-const calculateCashOnCashReturn = (annualCashFlow, downPayment) => {
+const calculateCashOnCashReturn = (annualCashFlow: number, downPayment: number): number => {
   return (annualCashFlow / downPayment) * 100;
 };
 
-const calculateIRR = (cashFlows, initialInvestment) => {
+const calculateIRR = (cashFlows: number[], initialInvestment: number): number => {
   // Simple IRR calculation - in real world, use a financial library
   const rate = 0.1; // 10% estimate
   const npv = cashFlows.reduce((acc, cf, i) => {
@@ -31,6 +33,10 @@ const calculateIRR = (cashFlows, initialInvestment) => {
   
   return rate * 100; // Return as percentage
 };
+
+// Sample SFR and MF endpoints
+router.get('/sample-sfr', dealsController.getSampleSFR);
+router.get('/sample-mf', dealsController.getSampleMF);
 
 // Get all deals with optional sorting
 router.get('/', dealsController.getAllDeals);
@@ -59,4 +65,4 @@ router.post('/:id/documents', dealsController.addDocument);
 // Add performance metrics to a deal
 router.post('/:id/performance', dealsController.addPerformanceMetrics);
 
-module.exports = router; 
+export default router; 

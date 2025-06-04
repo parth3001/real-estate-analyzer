@@ -1,0 +1,15 @@
+2025-06-03 20:28:29:2829 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:30:16:3016 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:31:51:3151 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:32:04:324 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:39:00:390 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m

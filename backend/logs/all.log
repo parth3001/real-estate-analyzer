@@ -278,3 +278,107 @@
 2025-05-30 21:41:34:4134 [32minfo[39m: [32mAI analysis completed for multi-family property[39m
 2025-05-30 21:41:34:4134 [32minfo[39m: [32mMulti-family analysis completed successfully[39m
 2025-05-30 21:41:34:4134 [35mhttp[39m: [35m::1 - - [31/May/2025:02:41:34 +0000] "POST /api/analyze/multifamily HTTP/1.1" 200 2705 "http://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"[39m
+2025-06-03 08:28:07:287 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 08:28:07:287 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 17:24:36:2436 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 17:24:37:2437 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 17:26:36:2636 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 17:26:37:2637 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 17:26:42:2642 [35mhttp[39m: [35m::1 - - [03/Jun/2025:22:26:42 +0000] "POST /api/deals/analyze HTTP/1.1" 200 8878 "http://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"[39m
+2025-06-03 17:27:05:275 [32minfo[39m: [32mReceived multi-family analysis request:[39m
+2025-06-03 17:27:08:278 [32minfo[39m: [32mAI analysis completed for multi-family property[39m
+2025-06-03 17:27:08:278 [32minfo[39m: [32mMulti-family analysis completed successfully[39m
+2025-06-03 17:27:08:278 [35mhttp[39m: [35m::1 - - [03/Jun/2025:22:27:08 +0000] "POST /api/analyze/multifamily HTTP/1.1" 200 2745 "http://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"[39m
+2025-06-03 20:10:01:101 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:10:01:101 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:11:58:1158 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:11:58:1158 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:17:25:1725 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:17:25:1725 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:28:29:2829 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:28:29:2829 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:28:29:2829 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:30:16:3016 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:30:16:3016 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:30:16:3016 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:31:51:3151 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:31:51:3151 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:31:51:3151 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:32:03:323 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:32:04:324 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:32:04:324 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 20:39:00:390 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 20:39:00:390 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 20:39:00:390 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
+[31mRequire stack:[39m
+[31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-03 21:12:52:1252 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 21:12:53:1253 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 21:12:53:1253 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:12:53 +0000] "GET /api/deals/sample-sfr HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:12:53:1253 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:12:53 +0000] "GET /api/deals/sample-mf HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:16:55:1655 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 21:16:55:1655 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 21:16:55:1655 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:16:55 +0000] "GET /api/deals/sample-sfr HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:16:55:1655 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:16:55 +0000] "GET /api/deals/sample-mf HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:21:11:2111 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 21:21:12:2112 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 21:21:12:2112 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:21:12 +0000] "GET /api/deals/sample-sfr HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:21:12:2112 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:21:12 +0000] "GET /api/deals/sample-mf HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:34:35:3435 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 21:34:36:3436 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 21:34:36:3436 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:34:36 +0000] "GET /api/deals/sample-sfr HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:34:36:3436 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:34:36 +0000] "GET /api/deals/sample-mf HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:35:03:353 [32minfo[39m: [32mServer running on port 3001[39m
+2025-06-03 21:35:03:353 [32minfo[39m: [32m✅ OpenAI API key is valid and working[39m
+2025-06-03 21:35:03:353 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:35:03 +0000] "GET /api/deals/sample-sfr HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:35:03:353 [35mhttp[39m: [35m::1 - - [04/Jun/2025:02:35:03 +0000] "GET /api/deals/sample-mf HTTP/1.1" 404 28 "-" "axios/1.9.0"[39m
+2025-06-03 21:39:08:398 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:39:08:398 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:39:08:398 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:39:08:398 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 21:40:36:4036 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:40:36:4036 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:40:36:4036 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:40:36:4036 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 21:50:17:5017 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:50:17:5017 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:50:17:5017 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:50:17:5017 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 21:51:28:5128 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:51:28:5128 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:51:28:5128 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:51:28:5128 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 21:54:17:5417 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:54:17:5417 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:54:17:5417 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:54:17:5417 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 21:56:06:566 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 21:56:06:566 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 21:56:06:566 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 21:56:06:566 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:01:03:13 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:01:03:13 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:01:03:13 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:01:03:13 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:01:14:114 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:01:14:114 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:01:14:114 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:01:14:114 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:02:21:221 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:02:21:221 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:02:21:221 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:02:21:221 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:02:21:221 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:08:38:838 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:08:38:838 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:08:38:838 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:08:38:838 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:08:38:838 [32minfo[39m: [32mOpenAI client initialized successfully[39m
