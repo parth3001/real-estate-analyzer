@@ -1,5 +1,6 @@
 import type { AnalysisResult, SFRMetrics } from './backendTypes';
 import type { MultiFamilyMetrics } from './metrics';
+import type { Analysis } from './analysis';
 
 export type PropertyType = 'SFR' | 'MF';
 
@@ -31,6 +32,7 @@ export interface BasePropertyData {
   insuranceRate: number;
   propertyManagementRate: number;
   yearBuilt: number;
+  closingCosts?: number;
 }
 
 export interface SFRDealData extends BasePropertyData {
@@ -41,7 +43,7 @@ export interface SFRDealData extends BasePropertyData {
   bathrooms: number;
   maintenanceCost: number;
   longTermAssumptions: LongTermAssumptions;
-  analysisResult?: AnalysisResult<SFRMetrics>;
+  analysisResult?: Analysis;
 }
 
 export interface UnitType {
@@ -72,7 +74,7 @@ export interface MultiFamilyDealData extends BasePropertyData {
   unitTypes: UnitType[];
   longTermAssumptions: MFLongTermAssumptions;
   commonAreaUtilities: CommonAreaUtilities;
-  analysisResult?: AnalysisResult<MultiFamilyMetrics>;
+  analysisResult?: Analysis;
 }
 
 export type DealData = SFRDealData | MultiFamilyDealData;
@@ -83,7 +85,7 @@ export interface SavedDeal {
   type: PropertyType;
   data: {
     id?: string;
-    analysisResult?: AnalysisResult<SFRMetrics>;
+    analysisResult?: Analysis;
     [key: string]: any;
   };
   savedAt: string;
@@ -105,6 +107,6 @@ export interface Deal {
       count: number;
       monthlyRent: number;
     }>;
-    analysisResult?: AnalysisResult<SFRMetrics>;
+    analysisResult?: Analysis;
   };
 } 

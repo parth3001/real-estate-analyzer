@@ -382,3 +382,186 @@
 2025-06-03 22:08:38:838 [32minfo[39m: [32mRaw environment variables:[39m
 2025-06-03 22:08:38:838 [32minfo[39m: [32m🚀 Server running on port 3001[39m
 2025-06-03 22:08:38:838 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:31:25:3125 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:31:25:3125 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:31:25:3125 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:31:25:3125 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:31:25:3125 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:39:57:3957 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:39:57:3957 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:39:57:3957 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:39:57:3957 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:39:57:3957 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:40:04:404 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:40:04:404 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:40:04:404 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:40:04:404 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:40:04:404 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:44:03:443 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:44:03:443 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:44:03:443 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:44:03:443 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:44:03:443 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:44:39:4439 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:44:39:4439 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:44:39:4439 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:44:39:4439 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:44:39:4439 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:45:40:4540 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:45:40:4540 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:45:40:4540 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:45:40:4540 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:45:40:4540 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-03 22:45:59:4559 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-03 22:45:59:4559 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-03 22:45:59:4559 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-03 22:45:59:4559 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-03 22:45:59:4559 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 21:37:08:378 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-04 21:37:08:378 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-04 21:37:08:378 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-04 21:37:08:378 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-04 21:37:09:379 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 21:58:59:5859 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:06:15:615 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:11:40:1140 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:25:45:2545 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:28:38:2838 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:30:19:3019 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:30:30:3030 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:36:41:3641 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:52:42:5242 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:53:46:5346 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-04 22:58:04:584 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:05:52:552 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:06:08:68 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:06:26:626 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:07:03:73 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:13:27:1327 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:16:09:169 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:18:21:1821 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:20:49:2049 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:23:58:2358 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:24:27:2427 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:25:29:2529 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:25:29:2529 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:25:29:2529 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:25:29:2529 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:25:29:2529 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:25:53:2553 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:30:30:3030 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:30:30:3030 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:30:30:3030 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:30:30:3030 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:30:30:3030 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:31:15:3115 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:31:15:3115 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:31:15:3115 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:31:15:3115 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:31:15:3115 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:31:37:3137 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:31:37:3137 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:31:37:3137 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:31:37:3137 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:31:37:3137 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:31:59:3159 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:33:41:3341 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:33:41:3341 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:33:41:3341 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:33:41:3341 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:34:03:343 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:34:03:343 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:34:03:343 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:34:03:343 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:34:03:343 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:55:26:5526 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:57:13:5713 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:57:13:5713 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:57:13:5713 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:57:13:5713 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:57:13:5713 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:57:38:5738 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 15:59:02:592 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 15:59:02:592 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 15:59:02:592 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 15:59:02:592 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 15:59:02:592 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:00:50:050 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:02:27:227 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:02:27:227 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:02:27:227 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:02:27:227 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:02:28:228 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:04:06:46 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:05:53:553 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:05:53:553 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:05:53:553 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:05:53:553 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:05:53:553 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:06:21:621 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:06:21:621 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:06:21:621 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:06:21:621 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:06:21:621 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:06:39:639 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:06:39:639 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:06:39:639 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:06:39:639 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:06:39:639 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:07:15:715 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:07:15:715 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:07:15:715 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:07:15:715 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:07:15:715 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:07:38:738 [32minfo[39m: [32mPrompt length: 1789 characters[39m
+2025-06-05 16:07:42:742 [32minfo[39m: [32mResponse length: 795 characters[39m
+2025-06-05 16:07:52:752 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:07:52:752 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:07:53:753 [32minfo[39m: [32mResponse length: 671 characters[39m
+2025-06-05 16:10:08:108 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:10:08:108 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:10:12:1012 [32minfo[39m: [32mResponse length: 1176 characters[39m
+2025-06-05 16:17:24:1724 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:17:24:1724 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:17:27:1727 [32minfo[39m: [32mResponse length: 763 characters[39m
+2025-06-05 16:19:46:1946 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:19:46:1946 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:19:49:1949 [32minfo[39m: [32mResponse length: 762 characters[39m
+2025-06-05 16:30:32:3032 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:30:32:3032 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:30:35:3035 [32minfo[39m: [32mResponse length: 703 characters[39m
+2025-06-05 16:40:39:4039 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:40:39:4039 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:40:42:4042 [32minfo[39m: [32mResponse length: 693 characters[39m
+2025-06-05 16:44:31:4431 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:44:31:4431 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:44:33:4433 [32minfo[39m: [32mResponse length: 742 characters[39m
+2025-06-05 16:44:59:4459 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:44:59:4459 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:45:01:451 [32minfo[39m: [32mResponse length: 662 characters[39m
+2025-06-05 16:45:09:459 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:45:09:459 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:45:11:4511 [32minfo[39m: [32mResponse length: 869 characters[39m
+2025-06-05 16:46:51:4651 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:46:51:4651 [32minfo[39m: [32mPrompt length: 1797 characters[39m
+2025-06-05 16:46:53:4653 [32minfo[39m: [32mResponse length: 816 characters[39m
+2025-06-05 16:50:01:501 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-05 16:50:01:501 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-05 16:50:01:501 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-05 16:50:01:501 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-05 16:50:02:502 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-05 16:50:02:502 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:50:02:502 [32minfo[39m: [32mPrompt length: 2609 characters[39m
+2025-06-05 16:50:04:504 [32minfo[39m: [32mResponse length: 693 characters[39m
+2025-06-05 16:50:38:5038 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:50:38:5038 [32minfo[39m: [32mPrompt length: 2618 characters[39m
+2025-06-05 16:50:40:5040 [32minfo[39m: [32mResponse length: 667 characters[39m
+2025-06-05 16:51:08:518 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-05 16:51:08:518 [32minfo[39m: [32mPrompt length: 2614 characters[39m
+2025-06-05 16:51:11:5111 [32minfo[39m: [32mResponse length: 852 characters[39m

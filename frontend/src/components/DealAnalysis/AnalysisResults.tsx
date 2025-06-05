@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Tabs,
   Tab,
@@ -25,13 +23,10 @@ import { Theme } from '@mui/material/styles';
 import { SxProps } from '@mui/system';
 import {
   AddCircleOutline,
-  CheckCircleOutline,
   ErrorOutline,
   LightbulbOutlined,
   TrendingUp,
-  AccountBalance,
-  Assessment,
-  Timeline
+  Assessment
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -50,13 +45,16 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { TooltipProps } from 'recharts';
-import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { ContentType } from 'recharts/types/component/Tooltip';
-import { Analysis } from '../../types/analysis';
+import { CompleteExtendedAnalysis } from '../../types/analysisExtended';
 
 interface AnalysisResultsProps {
-  analysis?: Analysis;
+  analysis?: CompleteExtendedAnalysis;
+}
+
+interface ChartData {
+  name: string;
+  value: number;
+  [key: string]: string | number;
 }
 
 const Grid = MuiGrid as React.ComponentType<{
@@ -70,24 +68,25 @@ const Grid = MuiGrid as React.ComponentType<{
   children?: React.ReactNode;
 }>;
 
-const StyledGrid = MuiGrid as React.ComponentType<{
-  container?: boolean;
-  item?: boolean;
-  xs?: number;
-  md?: number;
-  spacing?: number;
-  sx?: SxProps<Theme>;
-  children?: React.ReactNode;
-}>;
-
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
+const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} as CompleteExtendedAnalysis }) => {
   const [mainTab, setMainTab] = useState(0);
   const [chartTab, setChartTab] = useState(0);
 
   // Safely destructure and provide default values with proper typing
-  const monthlyAnalysis = analysis?.monthlyAnalysis || { expenses: {} };
+  const monthlyAnalysis = analysis?.monthlyAnalysis || { 
+    expenses: {
+      propertyTax: 0,
+      insurance: 0,
+      maintenance: 0,
+      propertyManagement: 0,
+      vacancy: 0,
+      total: 0
+    },
+    cashFlow: 0
+  };
+  
   const annualAnalysis = analysis?.annualAnalysis || {
     dscr: 0,
     cashOnCashReturn: 0,
@@ -97,6 +96,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
     annualDebtService: 0,
     effectiveGrossIncome: 0
   };
+  
   const longTermAnalysis = analysis?.longTermAnalysis || {
     yearlyProjections: [],
     projectionYears: 0,
@@ -113,6 +113,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
       netProceedsFromSale: 0
     }
   };
+  
   const aiInsights = analysis?.aiInsights;
   const purchasePrice = analysis?.purchasePrice || 0;
   const keyMetrics = analysis?.keyMetrics || {
@@ -120,17 +121,17 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
     pricePerSqFtAtSale: 0,
     avgRentPerSqFt: 0
   };
-
+  
   // Format currency
   const formatCurrency = (value: number | undefined): string => {
     if (!value && value !== 0) return '$0';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   // Format percentage
   const formatPercentage = (value: number | undefined): string => {
@@ -151,7 +152,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
   };
 
   // Update the expense breakdown chart data preparation
-  const getExpenseChartData = () => {
+  const getExpenseChartData = (): ChartData[] => {
     if (!monthlyAnalysis?.expenses) return [];
     
     return Object.entries(monthlyAnalysis.expenses)
@@ -179,59 +180,22 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
     return formatCurrency(totalReturn);
   };
 
-  // Calculate total investment
+  // Update calculateTotalInvestment to use safe expenses
   const calculateTotalInvestment = (): string => {
     // Get down payment from mortgage object
-    const mortgageData = monthlyAnalysis?.expenses?.mortgage;
+    const mortgageData = monthlyAnalysis.expenses.mortgage;
     const downPayment = typeof mortgageData === 'object' && mortgageData?.downPayment ? mortgageData.downPayment : 0;
     
     // Get closing costs - ensure it's a number
-    const closingCosts = typeof monthlyAnalysis?.expenses?.closingCosts === 'number' ? monthlyAnalysis.expenses.closingCosts : 0;
+    const closingCosts = typeof monthlyAnalysis.expenses.closingCosts === 'number' ? monthlyAnalysis.expenses.closingCosts : 0;
     
     // Get any repair/renovation costs - ensure it's a number
-    const repairCosts = typeof monthlyAnalysis?.expenses?.repairCosts === 'number' ? monthlyAnalysis.expenses.repairCosts : 0;
+    const repairCosts = typeof monthlyAnalysis.expenses.repairCosts === 'number' ? monthlyAnalysis.expenses.repairCosts : 0;
     
     // Sum all investment costs
     const totalInvestment = downPayment + closingCosts + repairCosts;
     
-    // Use the annualAnalysis.totalInvestment if available, otherwise use calculated value
-    const finalInvestment = annualAnalysis?.totalInvestment || totalInvestment;
-    
-    return formatCurrency(finalInvestment);
-  };
-
-  // Top Level Stats
-  const renderTopStats = () => {
-  return (
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Avg Rent/SqFt
-            </Typography>
-            <Typography variant="h4">
-              {formatCurrency(1)}
-                </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Monthly Average
-                </Typography>
-          </Paper>
-          </Grid>
-        <Grid item xs={12} sm={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              Monthly Cash Flow
-      </Typography>
-            <Typography variant="h4" color="error.main">
-              {formatCurrency(-567)}
-                </Typography>
-            <Typography variant="caption" color="text.secondary">
-              First Year Average
-                </Typography>
-          </Paper>
-          </Grid>
-      </Grid>
-    );
+    return formatCurrency(totalInvestment);
   };
 
   // Chart Tabs
@@ -364,7 +328,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
   const renderMainTabs = () => {
     return (
       <Box sx={{ width: '100%' }}>
-          <Tabs 
+        <Tabs 
           value={mainTab}
           onChange={(_, newValue) => setMainTab(newValue)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
@@ -373,23 +337,23 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
           <Tab label="ANNUAL PROJECTIONS" />
           <Tab label="EXIT ANALYSIS" />
           <Tab label="AI INSIGHTS" />
-          </Tabs>
+        </Tabs>
 
         {/* Monthly Analysis Tab */}
         <TabPanel value={mainTab} index={0}>
           <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
+            <Table>
+              <TableHead>
+                <TableRow>
                   <TableCell>Category</TableCell>
-                      <TableCell align="right">Amount</TableCell>
+                  <TableCell align="right">Amount</TableCell>
                   <TableCell align="right">% of Rent</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {/* Calculate total rent for percentage calculations */}
                 {(() => {
-                  const expenses = monthlyAnalysis?.expenses || {};
+                  const expenses = monthlyAnalysis.expenses;
                   const grossRent = typeof expenses.rent === 'number' ? expenses.rent : 0;
                   
                   // Helper function to calculate percentage
@@ -399,7 +363,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
                   };
 
                   // Helper function to safely get numeric value
-                  const getNumericValue = (value: any): number => {
+                  type NumericValue = number | { total: number } | undefined | null;
+
+                  const getNumericValue = (value: NumericValue): number => {
                     if (typeof value === 'number') return value;
                     if (typeof value === 'object' && value && 'total' in value) return value.total;
                     return 0;
@@ -492,33 +458,33 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
                     </>
                   );
                 })()}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              </TableBody>
+            </Table>
+          </TableContainer>
         </TabPanel>
 
         {/* Annual Projections Tab */}
         <TabPanel value={mainTab} index={1}>
           <TableContainer>
             <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Year</TableCell>
-                      <TableCell align="right">Property Value</TableCell>
-                      <TableCell align="right">Gross Rent</TableCell>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Year</TableCell>
+                  <TableCell align="right">Property Value</TableCell>
+                  <TableCell align="right">Gross Rent</TableCell>
                   <TableCell align="right">Property Tax</TableCell>
                   <TableCell align="right">Insurance</TableCell>
                   <TableCell align="right">Maintenance</TableCell>
                   <TableCell align="right">Property Management</TableCell>
                   <TableCell align="right">Vacancy</TableCell>
-                      <TableCell align="right">Total Expenses</TableCell>
-                      <TableCell align="right">NOI</TableCell>
-                      <TableCell align="right">Debt Service</TableCell>
-                      <TableCell align="right">Cash Flow</TableCell>
+                  <TableCell align="right">Total Expenses</TableCell>
+                  <TableCell align="right">NOI</TableCell>
+                  <TableCell align="right">Debt Service</TableCell>
+                  <TableCell align="right">Cash Flow</TableCell>
                   <TableCell align="right">Cash on Cash Return</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {longTermAnalysis?.yearlyProjections.map((year) => (
                   <TableRow key={year.year}>
                     <TableCell>{year.year}</TableCell>
@@ -534,21 +500,21 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
                     <TableCell align="right">{formatCurrency(year.debtService)}</TableCell>
                     <TableCell align="right" sx={{ color: year.cashFlow >= 0 ? 'success.main' : 'error.main' }}>
                       {formatCurrency(year.cashFlow)}
-                        </TableCell>
+                    </TableCell>
                     <TableCell align="right" sx={{ color: year.cashFlow >= 0 ? 'success.main' : 'error.main' }}>
                       {calculateCashOnCashReturn(year.cashFlow)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </TabPanel>
 
         {/* Exit Analysis Tab */}
         <TabPanel value={mainTab} index={2}>
           <TableContainer>
-                <Table>
+            <Table>
               <TableBody>
                 <TableRow>
                   <TableCell>Projected Sale Price</TableCell>
@@ -575,13 +541,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
                     {formatCurrency(longTermAnalysis.returns.totalReturn)}
                   </TableCell>
                 </TableRow>
-                    <TableRow>
+                <TableRow>
                   <TableCell>IRR</TableCell>
                   <TableCell align="right">{formatPercentage(longTermAnalysis.returns.irr)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
         </TabPanel>
 
         {/* AI Insights Tab */}
@@ -635,18 +601,18 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
               <Typography variant="subtitle1" gutterBottom>
                 Investment Summary
               </Typography>
-                      <Typography variant="body1">
+              <Typography variant="body1">
                 {aiInsights?.summary || 'AI insights are not available for this analysis.'}
-                      </Typography>
-                    </Paper>
+              </Typography>
+            </Paper>
 
             {/* Strengths */}
             {aiInsights?.strengths && aiInsights.strengths.length > 0 && (
               <Paper sx={{ p: 2, mb: 3, bgcolor: 'success.light' }}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'success.dark' }}>
                   <TrendingUp sx={{ mr: 1, verticalAlign: 'middle' }} />
-                          Strengths
-                        </Typography>
+                  Strengths
+                </Typography>
                 <List dense>
                   {aiInsights.strengths.map((strength, index) => (
                     <ListItem key={index}>
@@ -666,7 +632,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'error.dark' }}>
                   <ErrorOutline sx={{ mr: 1, verticalAlign: 'middle' }} />
                   Weaknesses
-                        </Typography>
+                </Typography>
                 <List dense>
                   {aiInsights.weaknesses.map((weakness, index) => (
                     <ListItem key={index}>
@@ -685,8 +651,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis = {} }) => {
               <Paper sx={{ p: 2, bgcolor: 'primary.light' }}>
                 <Typography variant="subtitle1" gutterBottom sx={{ color: 'primary.dark' }}>
                   <Assessment sx={{ mr: 1, verticalAlign: 'middle' }} />
-                          Recommendations
-                        </Typography>
+                  Recommendations
+                </Typography>
                 <List dense>
                   {aiInsights.recommendations.map((recommendation, index) => (
                     <ListItem key={index}>

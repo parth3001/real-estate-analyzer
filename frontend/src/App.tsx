@@ -1,46 +1,60 @@
-import React from 'react';
-import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import DealAnalysis from './pages/DealAnalysis';
-import MultiFamilyAnalysis from './pages/MultiFamilyAnalysis';
-import Navbar from './components/Navbar';
+import React, { useState } from 'react';
+import { Box, Container, AppBar, Toolbar, Typography, CssBaseline, Alert, Snackbar } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import PropertyForm from './components/PropertyForm';
+import PropertyResults from './components/PropertyResults';
+import { analyzeProperty, PropertyData } from './services/simpleApi';
+import { AnalysisResult } from './types/analysisTypes';
 import theme from './theme';
 
-// Simple test component to debug routing
-const TestComponent = () => (
-  <Box sx={{ p: 4, textAlign: 'center' }}>
-    <Typography variant="h4" gutterBottom>
-      Test Route Working!
-    </Typography>
-    <Typography variant="body1">
-      If you can see this, the router is functioning correctly.
-    </Typography>
-  </Box>
-);
+const App: React.FC = () => {
+  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-const App = () => {
+  const handleAnalyzeProperty = async (propertyData: PropertyData) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await analyzeProperty(propertyData);
+      setAnalysisData(result as AnalysisResult);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during analysis');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Box sx={{ 
-          minHeight: '100vh',
-          backgroundColor: theme.palette.background.default,
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <Navbar />
-          <Box sx={{ flex: 1, p: 3 }}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/analyze" element={<DealAnalysis />} />
-              <Route path="/analyze-multifamily" element={<MultiFamilyAnalysis />} />
-              <Route path="/test" element={<TestComponent />} />
-            </Routes>
-          </Box>
-        </Box>
-      </Router>
+      <Box sx={{ minHeight: '100vh', backgroundColor: theme.palette.background.default }}>
+        <AppBar position="static">
+          <Toolbar>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              Real Estate Analyzer
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <PropertyForm onSubmit={handleAnalyzeProperty} isLoading={isLoading} />
+          
+          {analysisData && <PropertyResults analysisData={analysisData} />}
+        </Container>
+        
+        <Snackbar 
+          open={error !== null} 
+          autoHideDuration={6000} 
+          onClose={() => setError(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setError(null)} severity="error">
+            {error}
+          </Alert>
+        </Snackbar>
+      </Box>
     </ThemeProvider>
   );
 };

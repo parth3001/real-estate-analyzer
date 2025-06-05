@@ -1,17 +1,19 @@
 export interface MonthlyAnalysis {
   expenses: {
-    [key: string]: number | { 
-      total: number;
-      downPayment?: number;
-    } | undefined;
-    mortgage?: { 
-      total: number;
-      downPayment?: number;
-    };
-    total?: number;
+    propertyTax: number;
+    insurance: number;
+    maintenance: number;
+    propertyManagement: number;
+    vacancy: number;
+    total: number;
+    [key: string]: any;
   };
-  cashFlow?: number;
-  cashFlowAfterTax?: number;
+  income?: {
+    gross: number;
+    effective: number;
+    [key: string]: any;
+  };
+  cashFlow: number;
 }
 
 export interface AnnualAnalysis {
@@ -24,25 +26,27 @@ export interface AnnualAnalysis {
   effectiveGrossIncome: number;
 }
 
+export interface YearlyProjection {
+  year: number;
+  cashFlow: number;
+  propertyValue: number;
+  equity: number;
+  propertyTax: number;
+  insurance: number;
+  maintenance: number;
+  propertyManagement: number;
+  vacancy: number;
+  operatingExpenses: number;
+  noi: number;
+  debtService: number;
+  grossRent: number;
+  mortgageBalance: number;
+  appreciation: number;
+  totalReturn: number;
+}
+
 export interface LongTermAnalysis {
-  yearlyProjections: Array<{
-    year: number;
-    cashFlow: number;
-    propertyValue: number;
-    equity: number;
-    propertyTax: number;
-    insurance: number;
-    maintenance: number;
-    propertyManagement: number;
-    vacancy: number;
-    operatingExpenses: number;
-    noi: number;
-    debtService: number;
-    grossRent: number;
-    mortgageBalance: number;
-    appreciation: number;
-    totalReturn: number;
-  }>;
+  yearlyProjections: YearlyProjection[];
   projectionYears: number;
   returns: {
     irr: number;
@@ -59,12 +63,12 @@ export interface LongTermAnalysis {
 }
 
 export interface AIInsights {
-  investmentScore?: number;
-  summary?: string;
-  strengths?: string[];
-  weaknesses?: string[];
-  recommendations?: string[];
-  // Multi-family specific properties
+  investmentScore: number;
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  // Multi-family specific properties (optional)
   unitMixAnalysis?: string;
   marketPositionAnalysis?: string;
   valueAddOpportunities?: string[];
@@ -78,10 +82,9 @@ export interface KeyMetrics {
 }
 
 export interface Analysis {
-  monthlyAnalysis?: MonthlyAnalysis;
-  annualAnalysis?: AnnualAnalysis;
-  longTermAnalysis?: LongTermAnalysis;
+  monthlyAnalysis: MonthlyAnalysis;
+  annualAnalysis: AnnualAnalysis;
+  longTermAnalysis: LongTermAnalysis;
+  keyMetrics: KeyMetrics;
   aiInsights?: AIInsights;
-  keyMetrics?: KeyMetrics;
-  purchasePrice?: number;
 } 

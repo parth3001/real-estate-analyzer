@@ -3,27 +3,19 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   TextField,
   Typography,
-  FormControlLabel,
-  Switch,
-  Divider,
   Alert,
   Snackbar,
   CircularProgress,
   Container,
   InputAdornment,
-  FormControl,
-  Slider,
-  Theme,
-  ThemeOptions,
   Tabs,
   Tab,
-  IconButton,
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Analysis } from '../../types/analysis';
+import type { DealData, SFRDealData } from '../../types/deal';
+import type { Analysis } from '../../types/analysis';
 import BusinessIcon from '@mui/icons-material/Business';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ReceiptIcon from '@mui/icons-material/Receipt';
@@ -42,12 +34,12 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`deal-tabpanel-${index}`}
+      aria-labelledby={`deal-tab-${index}`}
       {...other}
     >
       {value === index && (
-        <Box sx={{ py: 3 }}>
+        <Box sx={{ p: 3 }}>
           {children}
         </Box>
       )}
@@ -56,174 +48,41 @@ function TabPanel(props: TabPanelProps) {
 }
 
 interface DealFormProps {
-  onSubmit: (dealData: any) => Promise<void>;
-  initialData?: any;
+  onSubmit: (dealData: DealData) => Promise<void>;
+  initialData?: DealData;
   analysisResult?: Analysis | null;
 }
 
-interface DealData {
-  propertyAddress: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  propertyType: string;
-  purchasePrice: number;
-  downPayment: number;
-  interestRate: number;
-  loanTerm: number;
-  capitalInvestment: number;
-  monthlyRent: number;
-  propertyTaxRate: number;
-  insuranceRate: number;
-  maintenance: number;
-  sfrDetails: {
-    bedrooms: number;
-    bathrooms: number;
-    squareFootage: number;
-    yearBuilt: number;
-    condition: string;
-    propertyManagement: {
-      feePercentage: number;
-    };
-    tenantTurnover: {
-      assumedAnnualTurnover: boolean;
-      realtorCommissionMonths: number;
-      prepFeesMonths: number;
-    };
-    longTermAssumptions: {
-      projectionYears: number;
-      annualRentIncrease: number;
-      annualPropertyValueIncrease: number;
-      sellingCostsPercentage: number;
-      inflationRate: number;
-      vacancyRate: number;
-    };
-  };
-}
+const theme = createTheme();
 
-const theme: ThemeOptions = {
-  palette: {
-    primary: {
-      main: '#6366F1',
-      light: '#818CF8',
-      dark: '#4F46E5'
-    },
-    secondary: {
-      main: '#10B981',
-      light: '#34D399',
-      dark: '#059669'
-    },
-    background: {
-      default: '#F9FAFB',
-      paper: '#FFFFFF'
-    },
-    text: {
-      primary: '#111827',
-      secondary: '#4B5563'
-    },
-    error: {
-      main: '#EF4444'
-    },
-    success: {
-      main: '#10B981'
+const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResult }) => {
+  const [dealData, setDealData] = useState<DealData>(() => {
+    if (initialData) {
+      return initialData;
     }
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '2.5rem',
-      fontWeight: 600,
-      lineHeight: 1.2
-    },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 600,
-      lineHeight: 1.3
-    },
-    body1: {
-      fontSize: '1rem',
-      lineHeight: 1.5
-    }
-  },
-  shape: {
-    borderRadius: 12
-  },
-  components: {
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-            backgroundColor: '#FFFFFF',
-            '&:hover fieldset': {
-              borderColor: '#6366F1',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#6366F1',
-            }
-          }
-        }
-      }
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '8px',
-          textTransform: 'none' as const,
-          fontWeight: 500,
-          padding: '10px 20px',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-          }
-        }
-      }
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
-        }
-      }
-    }
-  }
-};
-
-const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysisResult = null }) => {
-  const [dealData, setDealData] = useState<DealData>(() => ({
-    propertyAddress: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-    },
-    propertyType: 'single_family',
-    purchasePrice: 0,
-    downPayment: 0,
-    interestRate: 0,
-    loanTerm: 30,
-    capitalInvestment: 0,
-    monthlyRent: 0,
-    propertyTaxRate: 1.2,
-    insuranceRate: 0.5,
-    maintenance: 0,
-    sfrDetails: {
+    // Default to SFR data
+    return {
+      propertyType: 'SFR',
+      propertyName: '',
+      propertyAddress: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+      },
+      purchasePrice: 0,
+      downPayment: 0,
+      interestRate: 0,
+      loanTerm: 30,
+      propertyTaxRate: 1.2,
+      insuranceRate: 0.5,
+      propertyManagementRate: 0,
+      yearBuilt: 0,
+      monthlyRent: 0,
+      squareFootage: 0,
       bedrooms: 0,
       bathrooms: 0,
-      squareFootage: 0,
-      yearBuilt: 0,
-      condition: 'good',
-      propertyManagement: {
-        feePercentage: 4,
-      },
-      tenantTurnover: {
-        assumedAnnualTurnover: true,
-        realtorCommissionMonths: 1,
-        prepFeesMonths: 1,
-      },
+      maintenanceCost: 0,
       longTermAssumptions: {
         projectionYears: 10,
         annualRentIncrease: 2,
@@ -232,12 +91,11 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
         inflationRate: 2,
         vacancyRate: 5,
       },
-    },
-    ...initialData
-  }));
+      analysisResult: analysisResult || undefined
+    } as SFRDealData;
+  });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -246,11 +104,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      setDealData(prevData => ({
-        ...prevData,
-        ...initialData
-      }));
+    if (initialData) {
+      setDealData(initialData);
     }
   }, [initialData]);
 
@@ -258,17 +113,15 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
     setActiveTab(newValue);
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setDealData(prev => {
       const newData = { ...prev };
       const fields = field.split('.');
-      let current: any = newData;
-      
+      let current: Record<string, unknown> = newData;
       for (let i = 0; i < fields.length - 1; i++) {
-        current[fields[i]] = { ...current[fields[i]] };
-        current = current[fields[i]];
+        current[fields[i]] = current[fields[i]] !== undefined ? { ...current[fields[i]] as Record<string, unknown> } : {};
+        current = current[fields[i]] as Record<string, unknown>;
       }
-      
       current[fields[fields.length - 1]] = value;
       return newData;
     });
@@ -277,18 +130,17 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
       await onSubmit(dealData);
       setSnackbar({
         open: true,
-        message: 'Analysis completed successfully',
+        message: 'Analysis completed successfully!',
         severity: 'success'
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : 'An error occurred',
+        message: error instanceof Error ? error.message : 'An error occurred during analysis',
         severity: 'error'
       });
     } finally {
@@ -296,8 +148,16 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const isSFRDeal = (data: DealData): data is SFRDealData => {
+    return data.propertyType === 'SFR';
+  };
+
   return (
-    <ThemeProvider theme={createTheme(theme)}>
+    <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
         <Container maxWidth="lg">
           <Card sx={{ p: 4, mb: 4 }}>
@@ -320,7 +180,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
             <form onSubmit={handleSubmit}>
               <TabPanel value={activeTab} index={0}>
                 {/* Property Information Section */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
                   <TextField
                     fullWidth
                     label="Street Address"
@@ -349,42 +209,44 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
                     required
                   />
-                </Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mt: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Bedrooms"
-                    type="number"
-                    value={dealData.sfrDetails.bedrooms}
-                    onChange={(e) => handleChange('sfrDetails.bedrooms', Number(e.target.value))}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Bathrooms"
-                    type="number"
-                    value={dealData.sfrDetails.bathrooms}
-                    onChange={(e) => handleChange('sfrDetails.bathrooms', Number(e.target.value))}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Square Footage"
-                    type="number"
-                    value={dealData.sfrDetails.squareFootage}
-                    onChange={(e) => handleChange('sfrDetails.squareFootage', Number(e.target.value))}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Year Built"
-                    type="number"
-                    value={dealData.sfrDetails.yearBuilt}
-                    onChange={(e) => handleChange('sfrDetails.yearBuilt', Number(e.target.value))}
-                  />
+                  {isSFRDeal(dealData) && (
+                    <>
+                      <TextField
+                        label="Bedrooms"
+                        type="number"
+                        value={dealData.bedrooms}
+                        onChange={(e) => handleChange('bedrooms', Number(e.target.value))}
+                        required
+                      />
+                      <TextField
+                        label="Bathrooms"
+                        type="number"
+                        value={dealData.bathrooms}
+                        onChange={(e) => handleChange('bathrooms', Number(e.target.value))}
+                        required
+                      />
+                      <TextField
+                        label="Square Footage"
+                        type="number"
+                        value={dealData.squareFootage}
+                        onChange={(e) => handleChange('squareFootage', Number(e.target.value))}
+                        required
+                      />
+                      <TextField
+                        label="Year Built"
+                        type="number"
+                        value={dealData.yearBuilt}
+                        onChange={(e) => handleChange('yearBuilt', Number(e.target.value))}
+                        required
+                      />
+                    </>
+                  )}
                 </Box>
               </TabPanel>
 
               <TabPanel value={activeTab} index={1}>
                 {/* Financial Details Section */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
                   <TextField
                     fullWidth
                     label="Purchase Price"
@@ -418,23 +280,24 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
                   />
-                  <TextField
-                    fullWidth
-                    label="Monthly Rent"
-                    type="number"
-                    value={dealData.monthlyRent}
-                    onChange={(e) => handleChange('monthlyRent', Number(e.target.value))}
-                    required
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
+                  {isSFRDeal(dealData) && (
+                    <TextField
+                      label="Monthly Rent"
+                      type="number"
+                      value={dealData.monthlyRent}
+                      onChange={(e) => handleChange('monthlyRent', Number(e.target.value))}
+                      required
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      }}
+                    />
+                  )}
                 </Box>
               </TabPanel>
 
               <TabPanel value={activeTab} index={2}>
                 {/* Operating Expenses Section */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
                   <TextField
                     fullWidth
                     label="Property Tax Rate"
@@ -457,34 +320,26 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     }}
                     helperText="Annual insurance rate as a percentage of property value"
                   />
-                  <TextField
-                    fullWidth
-                    label="Monthly Maintenance"
-                    type="number"
-                    value={dealData.maintenance}
-                    onChange={(e) => handleChange('maintenance', Number(e.target.value))}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
+                  {isSFRDeal(dealData) && (
+                    <TextField
+                      label="Monthly Maintenance"
+                      type="number"
+                      value={dealData.maintenanceCost}
+                      onChange={(e) => handleChange('maintenanceCost', Number(e.target.value))}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      }}
+                    />
+                  )}
                   <TextField
                     fullWidth
                     label="Management Fee"
                     type="number"
-                    value={dealData.sfrDetails.propertyManagement.feePercentage}
-                    onChange={(e) => handleChange('sfrDetails.propertyManagement.feePercentage', Number(e.target.value))}
+                    value={dealData.propertyManagementRate}
+                    onChange={(e) => handleChange('propertyManagementRate', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={dealData.sfrDetails.tenantTurnover.assumedAnnualTurnover}
-                        onChange={(e) => handleChange('sfrDetails.tenantTurnover.assumedAnnualTurnover', e.target.checked)}
-                      />
-                    }
-                    label="Assume Annual Tenant Turnover"
                   />
                 </Box>
               </TabPanel>
@@ -496,8 +351,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Annual Rent Increase"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.annualRentIncrease}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualRentIncrease', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.annualRentIncrease}
+                    onChange={(e) => handleChange('longTermAssumptions.annualRentIncrease', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
@@ -506,8 +361,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Annual Property Value Increase"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.annualPropertyValueIncrease}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.annualPropertyValueIncrease', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.annualPropertyValueIncrease}
+                    onChange={(e) => handleChange('longTermAssumptions.annualPropertyValueIncrease', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
@@ -516,8 +371,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Selling Costs"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.sellingCostsPercentage}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.sellingCostsPercentage', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.sellingCostsPercentage}
+                    onChange={(e) => handleChange('longTermAssumptions.sellingCostsPercentage', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
@@ -526,8 +381,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Inflation Rate"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.inflationRate}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.inflationRate', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.inflationRate}
+                    onChange={(e) => handleChange('longTermAssumptions.inflationRate', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
@@ -536,8 +391,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Vacancy Rate"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.vacancyRate}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.vacancyRate', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.vacancyRate}
+                    onChange={(e) => handleChange('longTermAssumptions.vacancyRate', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
@@ -546,8 +401,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
                     fullWidth
                     label="Projection Years"
                     type="number"
-                    value={dealData.sfrDetails.longTermAssumptions.projectionYears}
-                    onChange={(e) => handleChange('sfrDetails.longTermAssumptions.projectionYears', Number(e.target.value))}
+                    value={dealData.longTermAssumptions.projectionYears}
+                    onChange={(e) => handleChange('longTermAssumptions.projectionYears', Number(e.target.value))}
                   />
                 </Box>
               </TabPanel>
@@ -577,9 +432,14 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData = {}, analysi
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snackbar.severity}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

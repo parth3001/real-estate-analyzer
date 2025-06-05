@@ -22,6 +22,7 @@ const Navbar = () => {
     { path: '/', label: 'Dashboard', icon: <HomeIcon /> },
     { path: '/analyze', label: 'Analyze SFR', icon: <AnalyticsIcon /> },
     { path: '/analyze-multifamily', label: 'Multi-Family', icon: <ApartmentIcon /> },
+    { path: '/analyze-v2', label: 'New Analysis UI', icon: <AnalyticsIcon /> },
   ];
 
   const isActive = (path: string) => location.pathname === path;

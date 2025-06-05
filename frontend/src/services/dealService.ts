@@ -1,7 +1,8 @@
-import { SavedDeal, SFRDealData } from '../types/deal';
+import { SavedDeal, DealData, SFRDealData, MultiFamilyDealData, PropertyType } from '../types/deal';
 import { v4 as uuidv4 } from 'uuid';
-import type { AnalysisResult, SFRMetrics } from '../types/backendTypes';
+import type { AnalysisResult, CommonMetrics } from '../types/backendTypes';
 import { Logger } from '../utils/logger';
+import { Analysis } from '../types/analysis';
 
 // This will be replaced with actual API calls when we move to database
 const STORAGE_KEY = 'savedDeals';
@@ -21,8 +22,8 @@ export class DealService {
   }
 
   static async saveDeal(
-    dealData: SFRDealData, 
-    analysisResult: AnalysisResult<SFRMetrics> | null
+    dealData: DealData, 
+    analysisResult: Analysis | null
   ): Promise<SavedDeal | null> {
     try {
       const deals: SavedDeal[] = await this.getAllDeals();
@@ -39,7 +40,7 @@ export class DealService {
       const deal: SavedDeal = {
         id: dealData.id || uuidv4(),
         name: dealName,
-        type: 'SFR',
+        type: dealData.propertyType, 
         data: {
           ...dealData,
           id: dealData.id, // Preserve ID in data
@@ -64,6 +65,20 @@ export class DealService {
     }
   }
 
+  static async saveSFRDeal(
+    dealData: SFRDealData, 
+    analysisResult: Analysis | null
+  ): Promise<SavedDeal | null> {
+    return this.saveDeal(dealData, analysisResult);
+  }
+  
+  static async saveMFDeal(
+    dealData: MultiFamilyDealData, 
+    analysisResult: Analysis | null
+  ): Promise<SavedDeal | null> {
+    return this.saveDeal(dealData, analysisResult);
+  }
+
   static async getAllDeals(): Promise<SavedDeal[]> {
     try {
       // TODO: Will be replaced with API call
@@ -71,6 +86,16 @@ export class DealService {
       return dealsStr ? JSON.parse(dealsStr) : [];
     } catch (error) {
       Logger.error('Error getting all deals:', error);
+      return [];
+    }
+  }
+
+  static async getDealsByType(type: PropertyType): Promise<SavedDeal[]> {
+    try {
+      const deals = await this.getAllDeals();
+      return deals.filter(deal => deal.type === type);
+    } catch (error) {
+      Logger.error(`Error getting ${type} deals:`, error);
       return [];
     }
   }

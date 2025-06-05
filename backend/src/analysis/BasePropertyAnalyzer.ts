@@ -151,7 +151,22 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
 
-    return {
+    // Log the base calculations
+    console.log('==== BASE ANALYZER CALCULATIONS ====');
+    console.log('Monthly Mortgage:', monthlyMortgage);
+    console.log('Annual Debt Service:', annualDebtService);
+    console.log('Gross Income (Annual):', grossIncome);
+    console.log('Monthly Gross Income:', grossIncome / 12);
+    console.log('Operating Expenses (Annual):', operatingExpenses);
+    console.log('NOI:', noi);
+    console.log('Cash Flow (Annual):', cashFlow);
+    console.log('Cash Flow (Monthly):', cashFlow / 12);
+    console.log('Property Metrics:', this.calculatePropertySpecificMetrics());
+    console.log('Projections Count:', projections.length);
+    console.log('Exit Analysis:', exitAnalysis);
+    console.log('===================================');
+
+    const result: AnalysisResult<U> = {
       monthlyAnalysis: {
         income: {
           gross: grossIncome / 12,
@@ -176,6 +191,18 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       projections,
       exitAnalysis
     };
+
+    // Log the final result structure
+    console.log('==== FINAL ANALYSIS RESULT STRUCTURE ====');
+    console.log('Monthly Analysis Keys:', Object.keys(result.monthlyAnalysis));
+    console.log('Monthly Income:', result.monthlyAnalysis.income);
+    console.log('Monthly Expenses:', result.monthlyAnalysis.expenses);
+    console.log('Monthly Cash Flow:', result.monthlyAnalysis.cashFlow);
+    console.log('Annual Analysis Keys:', Object.keys(result.annualAnalysis));
+    console.log('Metrics Keys:', Object.keys(result.metrics));
+    console.log('========================================');
+
+    return result;
   }
 
   protected getExpenseBreakdown(grossIncome: number): ExpenseBreakdown {

@@ -32,6 +32,17 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
 
+    // Log calculation details
+    console.log('==== SFR CALCULATION DETAILS ====');
+    console.log('Monthly Mortgage:', monthlyMortgage);
+    console.log('Annual Debt Service:', annualDebtService);
+    console.log('Gross Income:', grossIncome);
+    console.log('Operating Expenses:', operatingExpenses);
+    console.log('NOI:', noi);
+    console.log('Cash Flow:', cashFlow);
+    console.log('Total Investment:', totalInvestment);
+    console.log('================================');
+
     const metrics: SFRMetrics = {
       noi,
       capRate: this.calculateCapRate(noi),
@@ -54,6 +65,16 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
         this.data.monthlyRent * 12
       )
     };
+
+    // Log calculated metrics
+    console.log('==== SFR METRICS ====');
+    console.log('NOI:', metrics.noi);
+    console.log('Cap Rate:', metrics.capRate);
+    console.log('Cash on Cash Return:', metrics.cashOnCashReturn);
+    console.log('DSCR:', metrics.dscr);
+    console.log('Price Per SqFt:', metrics.pricePerSqFt);
+    console.log('Rent Per SqFt:', metrics.rentPerSqFt);
+    console.log('=====================');
 
     // Add rehab metrics if applicable
     if (this.data.afterRepairValue && this.data.renovationCosts) {

@@ -10,6 +10,7 @@ export interface SFRMetrics extends KeyMetrics {
 
 export interface MultiFamilyMetrics extends KeyMetrics {
   pricePerUnit: number;
+  pricePerSqFt: number;
   rentPerUnit: number;
   grossRentMultiplier: number;
   occupancyRate: number;
