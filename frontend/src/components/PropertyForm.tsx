@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -7,13 +7,14 @@ import {
   Card,
   CardContent,
   Divider,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import { PropertyData } from '../services/simpleApi';
 
 interface PropertyFormProps {
   onSubmit: (propertyData: PropertyData) => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 // Default values for the form
@@ -49,8 +50,90 @@ const defaultPropertyData: PropertyData = {
   projectionYears: 10
 };
 
-const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
+const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading = false }) => {
   const [formData, setFormData] = useState<PropertyData>(defaultPropertyData);
+
+  useEffect(() => {
+    // Check if we're editing an existing analysis
+    const editAnalysisId = localStorage.getItem('currentEditAnalysisId');
+    if (!editAnalysisId) {
+      // Not editing - just use the default data which is already set in useState
+      return;
+    }
+    
+    try {
+      // Get all saved analyses
+      const savedAnalysesStr = localStorage.getItem('savedAnalyses');
+      if (!savedAnalysesStr) {
+        console.error('No saved analyses found in localStorage');
+        return;
+      }
+      
+      // Parse the saved analyses
+      const savedAnalyses = JSON.parse(savedAnalysesStr);
+      
+      // Find the analysis we want to edit
+      const analysisToEdit = savedAnalyses.find((analysis: Record<string, unknown>) => 
+        analysis.id === editAnalysisId
+      );
+      
+      if (!analysisToEdit) {
+        console.error('Analysis not found with ID:', editAnalysisId);
+        return;
+      }
+      
+      // Get data from the raw stored analysis if available
+      const rawAnalysisData = analysisToEdit.rawData || {};
+      const propertyDetails = rawAnalysisData.propertyDetails || {};
+      
+      // Start with default values, then override with saved values
+      const propertyData: PropertyData = {
+        ...defaultPropertyData,
+        
+        // Get the basic property info - use top-level properties first, then raw data
+        propertyName: analysisToEdit.propertyName || propertyDetails.propertyName || '',
+        propertyAddress: analysisToEdit.address || propertyDetails.propertyAddress || defaultPropertyData.propertyAddress,
+        purchasePrice: Number(analysisToEdit.purchasePrice) || Number(propertyDetails.purchasePrice) || 0,
+        downPayment: Number(analysisToEdit.downPayment) || Number(propertyDetails.downPayment) || 0,
+        monthlyRent: Number(analysisToEdit.monthlyRent) || Number(propertyDetails.monthlyRent) || 0,
+        
+        // Get detailed property info from raw data
+        interestRate: Number(propertyDetails.interestRate) || defaultPropertyData.interestRate,
+        loanTerm: Number(propertyDetails.loanTerm) || defaultPropertyData.loanTerm,
+        propertyTaxRate: Number(propertyDetails.propertyTaxRate) || defaultPropertyData.propertyTaxRate,
+        insuranceRate: Number(propertyDetails.insuranceRate) || defaultPropertyData.insuranceRate,
+        maintenanceCost: Number(propertyDetails.maintenanceCost) || defaultPropertyData.maintenanceCost,
+        propertyManagementRate: Number(propertyDetails.propertyManagementRate) || defaultPropertyData.propertyManagementRate,
+        vacancyRate: Number(propertyDetails.vacancyRate) || defaultPropertyData.vacancyRate,
+        closingCosts: Number(propertyDetails.closingCosts) || defaultPropertyData.closingCosts,
+        repairCosts: Number(propertyDetails.repairCosts) || defaultPropertyData.repairCosts,
+        
+        // Property characteristics
+        squareFootage: Number(propertyDetails.squareFootage) || defaultPropertyData.squareFootage,
+        bedrooms: Number(propertyDetails.bedrooms) || defaultPropertyData.bedrooms,
+        bathrooms: Number(propertyDetails.bathrooms) || defaultPropertyData.bathrooms,
+        yearBuilt: Number(propertyDetails.yearBuilt) || defaultPropertyData.yearBuilt,
+      };
+      
+      // Get long-term assumptions if available
+      const longTermAssumptions = propertyDetails.longTermAssumptions || rawAnalysisData.longTermAssumptions;
+      if (longTermAssumptions) {
+        propertyData.annualRentIncrease = Number(longTermAssumptions.annualRentIncrease) || defaultPropertyData.annualRentIncrease;
+        propertyData.annualPropertyValueIncrease = Number(longTermAssumptions.annualPropertyValueIncrease) || defaultPropertyData.annualPropertyValueIncrease;
+        propertyData.projectionYears = Number(longTermAssumptions.projectionYears) || defaultPropertyData.projectionYears;
+        propertyData.inflationRate = Number(longTermAssumptions.inflationRate) || defaultPropertyData.inflationRate;
+        propertyData.sellingCostsPercentage = Number(longTermAssumptions.sellingCostsPercentage) || defaultPropertyData.sellingCostsPercentage;
+      }
+      
+      // Set the form data with the loaded property data
+      setFormData(propertyData);
+    } catch (error) {
+      console.error('Error loading analysis for editing:', error);
+      // Clean up localStorage items to avoid future issues
+      localStorage.removeItem('currentEditAnalysisId');
+      localStorage.removeItem('currentEditAnalysisData');
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -84,6 +167,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear any edit-related localStorage items after submission
+    localStorage.removeItem('currentEditAnalysisId');
+    localStorage.removeItem('currentEditAnalysisData');
+    
+    // Submit the form data
     onSubmit(formData);
   };
 
@@ -102,34 +191,27 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
               Property Details
             </Typography>
             
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ flex: '1 1 45%', minWidth: '200px' }}>
-                <TextField
-                  fullWidth
-                  label="Property Name"
-                  name="propertyName"
-                  value={formData.propertyName}
-                  onChange={handleChange}
-                  required
-                />
-              </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Property Name"
+                name="propertyName"
+                value={formData.propertyName}
+                onChange={handleChange}
+                required
+              />
               
-              <Box sx={{ flex: '1 1 45%', minWidth: '200px' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   label="Street Address"
                   name="address.street"
                   value={formData.propertyAddress.street}
                   onChange={handleChange}
                   required
                 />
-              </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: '150px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   label="City"
                   name="address.city"
                   value={formData.propertyAddress.city}
@@ -138,20 +220,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   label="State"
                   name="address.state"
                   value={formData.propertyAddress.state}
                   onChange={handleChange}
                   required
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   label="Zip Code"
                   name="address.zipCode"
                   value={formData.propertyAddress.zipCode}
@@ -159,12 +238,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                   required
                 />
               </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Bedrooms"
                   name="bedrooms"
@@ -172,11 +249,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                   onChange={handleChange}
                   required
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Bathrooms"
                   name="bathrooms"
@@ -186,9 +260,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Square Footage"
                   name="squareFootage"
@@ -196,11 +270,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                   onChange={handleChange}
                   required
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Year Built"
                   name="yearBuilt"
@@ -218,10 +289,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
               Financial Details
             </Typography>
             
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ flex: '1 1 45%', minWidth: '200px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Purchase Price"
                   name="purchasePrice"
@@ -232,11 +303,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 45%', minWidth: '200px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Down Payment"
                   name="downPayment"
@@ -248,12 +316,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                   }}
                 />
               </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Interest Rate"
                   name="interestRate"
@@ -264,11 +330,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Loan Term (Years)"
                   name="loanTerm"
@@ -278,20 +341,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Monthly Rent"
-                  name="monthlyRent"
-                  value={formData.monthlyRent}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                />
-              </Box>
+              <TextField
+                sx={{ flex: '1 1 45%', minWidth: 200 }}
+                type="number"
+                label="Monthly Rent"
+                name="monthlyRent"
+                value={formData.monthlyRent}
+                onChange={handleChange}
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
             </Box>
           </Box>
           
@@ -301,10 +362,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
               Operating Expenses
             </Typography>
             
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Property Tax Rate"
                   name="propertyTaxRate"
@@ -315,11 +376,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Insurance Rate"
                   name="insuranceRate"
@@ -332,9 +390,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Monthly Maintenance"
                   name="maintenanceCost"
@@ -345,11 +403,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 22%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Property Management"
                   name="propertyManagementRate"
@@ -361,12 +416,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                   }}
                 />
               </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Vacancy Rate"
                   name="vacancyRate"
@@ -377,11 +430,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Closing Costs"
                   name="closingCosts"
@@ -394,20 +444,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Repair Costs"
-                  name="repairCosts"
-                  value={formData.repairCosts}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                />
-              </Box>
+              <TextField
+                type="number"
+                label="Repair Costs"
+                name="repairCosts"
+                value={formData.repairCosts}
+                onChange={handleChange}
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
             </Box>
           </Box>
           
@@ -417,10 +464,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
               Long Term Assumptions
             </Typography>
             
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Annual Rent Increase"
                   name="annualRentIncrease"
@@ -430,11 +477,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Box>
-              
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Annual Property Value Increase"
                   name="annualPropertyValueIncrease"
@@ -446,9 +490,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Selling Costs"
                   name="sellingCostsPercentage"
@@ -458,13 +502,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
                 <TextField
-                  fullWidth
+                  sx={{ flex: '1 1 45%', minWidth: 200 }}
                   type="number"
                   label="Inflation Rate"
                   name="inflationRate"
@@ -476,16 +515,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
                 />
               </Box>
               
-              <Box sx={{ flex: '1 1 30%', minWidth: '100px' }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Projection Years"
-                  name="projectionYears"
-                  value={formData.projectionYears || 10}
-                  onChange={handleChange}
-                />
-              </Box>
+              <TextField
+                sx={{ flex: '1 1 45%', minWidth: 200 }}
+                type="number"
+                label="Projection Years"
+                name="projectionYears"
+                value={formData.projectionYears || 10}
+                onChange={handleChange}
+              />
             </Box>
           </Box>
           
@@ -497,7 +534,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading }) => {
               disabled={isLoading}
               size="large"
             >
-              {isLoading ? 'Analyzing...' : 'Analyze Property'}
+              {isLoading ? (
+                <>
+                  <CircularProgress size={24} sx={{ mr: 1 }} />
+                  Analyzing...
+                </>
+              ) : (
+                'Analyze Property'
+              )}
             </Button>
           </Box>
         </Box>

@@ -12,9 +12,10 @@ import {
   TableRow,
   Paper,
   Tabs,
-  Tab
+  Tab,
+  Button
 } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { TrendingUp, TrendingDown, Save } from '@mui/icons-material';
 import { AnalysisResult } from '../types/analysisTypes';
 
 interface PropertyResultsProps {
@@ -64,9 +65,89 @@ const formatPercentage = (value: number): string => {
 
 const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
   const [tabValue, setTabValue] = useState(0);
+  const [saved, setSaved] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  // Function to save the analysis to localStorage
+  const saveAnalysis = () => {
+    try {
+      // Check if we're editing an existing property
+      const editingId = localStorage.getItem('currentEditAnalysisId');
+      
+      // Generate a unique ID for new analyses or use existing ID for edits
+      const id = editingId || `property-${Date.now()}`;
+      
+      // Extract essential data
+      const propertyDetails = analysisData.propertyDetails || {};
+      const annualAnalysis = analysisData.annualAnalysis || {};
+      const keyMetrics = analysisData.keyMetrics || {};
+      const aiInsights = analysisData.aiInsights || {};
+      
+      // Create a FLAT data structure for easy display on dashboard
+      const analysisToSave = {
+        id,
+        propertyName: propertyDetails.propertyName || 'Property Analysis',
+        propertyType: propertyDetails.propertyType === 'MF' ? 'MF' : 'SFR',
+        
+        // Financial data at the top level
+        purchasePrice: Number(propertyDetails.purchasePrice) || 0,
+        downPayment: Number(propertyDetails.downPayment) || 0,
+        monthlyRent: Number(propertyDetails.monthlyRent) || 0,
+        units: Number(propertyDetails.units || propertyDetails.totalUnits) || 1,
+        
+        // Address at the top level
+        address: propertyDetails.propertyAddress || { 
+          street: '', city: '', state: '', zipCode: '' 
+        },
+        
+        // Key metrics at the top level
+        capRate: Number(keyMetrics.capRate || annualAnalysis.capRate) || 0,
+        cashOnCash: Number(keyMetrics.cashOnCashReturn || annualAnalysis.cashOnCashReturn) || 0,
+        noi: Number(keyMetrics.annualNOI || annualAnalysis.annualNOI) || 0,
+        investmentScore: typeof aiInsights.investmentScore === 'number' ? aiInsights.investmentScore : 0,
+        
+        // Raw data for future reference
+        rawData: analysisData,
+        
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Get existing saved analyses
+      const existingSavedString = localStorage.getItem('savedAnalyses');
+      const existingSaved = existingSavedString ? JSON.parse(existingSavedString) : [];
+      
+      // If we're editing, update the existing analysis instead of adding a new one
+      let updatedSaved;
+      if (editingId) {
+        // Replace the existing analysis with the updated one
+        updatedSaved = existingSaved.map((analysis: Record<string, unknown>) => 
+          analysis.id === editingId ? analysisToSave : analysis
+        );
+        
+        // Show confirmation for update
+        alert('Analysis updated successfully!');
+      } else {
+        // Add as a new analysis
+        updatedSaved = [...existingSaved, analysisToSave];
+        alert('Analysis saved successfully!');
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('savedAnalyses', JSON.stringify(updatedSaved));
+      
+      // Clear the editing ID from localStorage
+      localStorage.removeItem('currentEditAnalysisId');
+      localStorage.removeItem('currentEditAnalysisData');
+      
+      // Update the UI to show it's been saved
+      setSaved(true);
+    } catch (error) {
+      console.error('Error saving analysis:', error);
+      alert('Failed to save analysis. Please try again.');
+    }
   };
 
   // If no data is available, show a message
@@ -84,12 +165,11 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
 
   // Extract key data from the analysis result
   const keyMetrics = analysisData.keyMetrics || {};
-  const monthlyAnalysis = analysisData.monthlyAnalysis || {};
   const annualAnalysis = analysisData.annualAnalysis || {};
   const longTermAnalysis = analysisData.longTermAnalysis || {};
   
   // Extract values for styling
-  const monthlyCashFlow = monthlyAnalysis.cashFlow || 0;
+  const monthlyCashFlow = analysisData.monthlyAnalysis?.cashFlow || 0;
   const firstYearCashOnCash = keyMetrics.cashOnCashReturn || annualAnalysis.cashOnCashReturn || 0;
   const isPositiveCashFlow = monthlyCashFlow >= 0;
   
@@ -115,9 +195,20 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
   
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Analysis Results
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">
+          Analysis Results
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          startIcon={<Save />}
+          onClick={saveAnalysis}
+          disabled={saved}
+        >
+          {saved ? 'Saved' : 'Save Analysis'}
+        </Button>
+      </Box>
       
       {/* Key Metrics Section with Investment Score */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, mb: 4 }}>
@@ -327,31 +418,31 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
               <TableBody>
                 <TableRow>
                   <TableCell>Gross Rental Income</TableCell>
-                  <TableCell align="right">{formatCurrency(monthlyAnalysis.income?.gross || 0)}</TableCell>
+                  <TableCell align="right">{formatCurrency(analysisData.monthlyAnalysis?.income?.gross || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Vacancy Loss</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.vacancy || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.vacancy || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Property Tax</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.propertyTax || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.propertyTax || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Insurance</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.insurance || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.insurance || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Maintenance</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.maintenance || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.maintenance || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Property Management</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.propertyManagement || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.propertyManagement || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Mortgage Payment</TableCell>
-                  <TableCell align="right">-{formatCurrency(monthlyAnalysis.expenses?.mortgage?.total || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.mortgage?.total || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ borderTop: '2px solid #ddd' }}><strong>Net Cash Flow</strong></TableCell>

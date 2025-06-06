@@ -1,6 +1,7 @@
 const Deal = require('../models/Deal');
 const OpenAI = require('openai');
 const logger = require('../utils/logger');
+const { sfrAnalysisPrompt, mfAnalysisPrompt } = require('../prompts/aiPrompts');
 
 class DealContext {
   constructor() {
@@ -242,70 +243,28 @@ class DealContext {
 
   async getSFRAIAnalysis(deal) {
     try {
-      const prompt = this.constructSFRAnalysisPrompt(deal);
-      
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are a single-family residential real estate investment expert. Analyze this property and provide detailed insights."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
+      // Use the standardized SFR prompt from aiPrompts.ts
+      const prompt = sfrAnalysisPrompt(deal, deal.sfrDetails);
+
+      const response = await this.openai.completions.create({
+        model: 'text-davinci-003',
+        prompt,
+        max_tokens: 1000,
+        temperature: 0.7
       });
 
-      return this.parseSFRAIResponse(completion.choices[0].message.content);
+      const responseText = response.choices[0].text.trim();
+      return this.parseSFRAIResponse(responseText);
     } catch (error) {
-      logger.error('Error in SFR AI analysis:', error);
-      throw error;
+      logger.error('Error getting AI analysis for SFR:', error);
+      return {
+        summary: 'Unable to generate AI analysis at this time.',
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: null
+      };
     }
-  }
-
-  constructSFRAnalysisPrompt(deal) {
-    const sfr = deal.sfrDetails;
-    const monthly = sfr.monthlyAnalysis;
-    const annual = sfr.annualAnalysis;
-    
-    return `
-      Analyze this single-family residential investment property:
-      
-      Property Details:
-      - Address: ${deal.propertyAddress.street}, ${deal.propertyAddress.city}, ${deal.propertyAddress.state}
-      - Bedrooms: ${sfr.bedrooms}
-      - Bathrooms: ${sfr.bathrooms}
-      - Square Footage: ${sfr.squareFootage}
-      - Year Built: ${sfr.yearBuilt}
-      - Condition: ${sfr.condition}
-      
-      Financial Metrics:
-      - Purchase Price: $${deal.purchasePrice}
-      - Monthly Rent: $${monthly.income.baseRent}
-      - Monthly Cash Flow: $${monthly.cashFlow}
-      - Cap Rate: ${annual.capRate}%
-      - Cash on Cash Return: ${annual.cashOnCashReturn}%
-      - ROI: ${annual.roi}%
-      
-      Market Analysis:
-      - Price per Sq Ft: $${deal.purchasePrice / sfr.squareFootage}
-      - Rent per Sq Ft: $${(monthly.income.baseRent / sfr.squareFootage).toFixed(2)}
-      - Number of Comparable Sales: ${sfr.comparables.length}
-      - Number of Rental Comps: ${sfr.rentalComps.length}
-      
-      Please provide:
-      1. Market position analysis
-      2. Rental demand assessment
-      3. Value-add opportunities
-      4. Risk factors
-      5. Improvement recommendations
-      6. Hold period recommendations
-      7. Exit strategy options
-      8. Overall investment rating (1-10)
-    `;
   }
 
   parseSFRAIResponse(response) {
@@ -495,60 +454,32 @@ class DealContext {
 
   async getAIAnalysis(dealData, metrics) {
     try {
-      const prompt = this.constructAnalysisPrompt(dealData, metrics);
-      
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are a real estate investment analysis expert. Analyze the deal and provide insights."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
+      // Use the standardized prompt based on property type
+      let prompt;
+      if (dealData.propertyType === 'single_family') {
+        prompt = sfrAnalysisPrompt(dealData, { metrics });
+      } else {
+        prompt = mfAnalysisPrompt(dealData, { metrics });
+      }
+
+      const response = await this.openai.completions.create({
+        model: 'text-davinci-003',
+        prompt,
+        max_tokens: 1000,
+        temperature: 0.7
       });
 
-      const analysis = this.parseAIResponse(completion.choices[0].message.content);
-      
-      return {
-        ...analysis,
-        lastAnalyzed: new Date(),
-      };
+      const responseText = response.choices[0].text.trim();
+      return this.parseAIResponse(responseText);
     } catch (error) {
-      logger.error('Error in AI analysis:', error);
-      throw error;
+      logger.error('Error getting AI analysis:', error);
+      return {
+        summary: 'Unable to generate AI analysis at this time.',
+        strengths: [],
+        weaknesses: [],
+        recommendations: []
+      };
     }
-  }
-
-  constructAnalysisPrompt(dealData, metrics) {
-    return `
-      Analyze this real estate investment opportunity:
-      
-      Property Details:
-      - Address: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state}
-      - Type: ${dealData.propertyType}
-      - Purchase Price: $${dealData.purchasePrice}
-      - Monthly Rent: $${dealData.monthlyRent}
-      
-      Key Metrics:
-      - Monthly Cash Flow: $${metrics.monthlyCashFlow.toFixed(2)}
-      - Cash on Cash ROI: ${metrics.cashOnCashROI.toFixed(2)}%
-      - Cap Rate: ${metrics.capRate.toFixed(2)}%
-      - Debt Service Coverage Ratio: ${metrics.debtServiceCoverageRatio.toFixed(2)}
-      - Total Monthly Expenses: $${metrics.totalMonthlyExpenses.toFixed(2)}
-      
-      Please provide:
-      1. A cash flow score (0-100)
-      2. Market trend analysis
-      3. Risk assessment
-      4. Investment recommendations
-      5. Potential value-add opportunities
-      6. Exit strategy suggestions
-    `;
   }
 
   parseAIResponse(response) {

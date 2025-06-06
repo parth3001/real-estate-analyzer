@@ -90,6 +90,9 @@
 3. [API Routes](#api-routes)
 4. [Data Models](#data-models)
 5. [Utility Functions](#utility-functions)
+6. [AI Integration Architecture](#ai-integration-architecture)
+7. [MongoDB Integration](#mongodb-integration)
+8. [TypeScript Type System](#typescript-type-system)
 
 ## Frontend Components
 
@@ -553,4 +556,326 @@ class ValidationError extends APIError {
 
 ## API Contract (Unified)
 - All analysis responses include the required fields for both SFR and MF.
-- See `API.md` for full request/response structure. 
+- See `API.md` for full request/response structure.
+
+## AI Integration Architecture
+
+### Model Context Protocol (MCP)
+The application uses a "Model Context Protocol" architecture for AI integration, which separates concerns between:
+- Context building (gathering and structuring input data)
+- Prompt engineering (crafting optimal prompts)
+- Service integration (handling API calls and responses)
+
+```typescript
+// Context builder for AI analysis (MCP architecture)
+export async function buildSFRContext(dealData: any, analysis: any) {
+  // Future integrations with external data sources
+  // const crexiData = await getCrexiData(dealData.propertyAddress);
+  // const censusData = await getCensusData(dealData.propertyAddress);
+  return {
+    ...dealData,
+    ...analysis,
+    // crexiData,
+    // censusData,
+  };
+}
+```
+
+### Prompt Engineering System
+The application centralizes all AI prompts in the `aiPrompts.ts` module, which contains specialized prompt templates for different property types:
+
+```typescript
+// aiPrompts.ts - Central repository for all AI prompts
+export function sfrAnalysisPrompt(dealData: any, analysis: any): string {
+  // Calculate metrics for the prompt
+  const downPaymentPercent = (dealData.downPayment / dealData.purchasePrice) * 100;
+  const monthlyMortgage = analysis?.monthlyAnalysis?.expenses?.mortgage?.total ?? 0;
+  const monthlyNOI = (analysis?.monthlyAnalysis?.cashFlow ?? 0) + monthlyMortgage;
+  
+  return `Analyze this single-family rental property investment:
+
+  PROPERTY DETAILS:
+  - Purchase Price: $${dealData.purchasePrice}
+  - Down Payment: $${dealData.downPayment} (${downPaymentPercent.toFixed(1)}%)
+  - Monthly Rent: $${dealData.monthlyRent}
+  ...
+  `;
+}
+
+export function mfAnalysisPrompt(dealData: any, analysis: any): string {
+  // Multi-family specific prompt logic
+  // ...
+}
+```
+
+All services that need to generate AI prompts import these specialized functions, ensuring consistency across the application:
+
+```typescript
+// aiService.ts - Using the centralized prompts
+import { sfrAnalysisPrompt, mfAnalysisPrompt } from '../prompts/aiPrompts';
+
+export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysis: any): Promise<AIInsights> {
+  // Generate prompt based on property type using specialized prompts
+  let prompt: string;
+  if (dealData.propertyType === 'SFR') {
+    prompt = sfrAnalysisPrompt(dealData, analysis);
+  } else {
+    prompt = mfAnalysisPrompt(dealData, analysis);
+  }
+  
+  // Make OpenAI API call with the prompt
+  // ...
+}
+```
+
+### OpenAI Integration
+OpenAI integration is managed through a dedicated service:
+
+```typescript
+// OpenAI client singleton pattern
+let openaiClient: OpenAI | null = null;
+
+export const getOpenAIClient = (): OpenAI | null => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      logger.warn('OpenAI API key not found in environment variables');
+      return null;
+    }
+
+    if (!openaiClient) {
+      openaiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      logger.info('OpenAI client initialized successfully');
+    }
+
+    return openaiClient;
+  } catch (error) {
+    logger.error('Error initializing OpenAI:', error);
+    return null;
+  }
+};
+```
+
+Key features:
+- Singleton pattern to prevent multiple client instances
+- Graceful handling of missing API keys
+- Detailed error logging
+- Response parsing and error handling
+- Support for both GPT-4 and GPT-3.5-turbo
+
+## MongoDB Integration
+
+### MongoDB Schema Design
+The application uses Mongoose schemas to define data models:
+
+```javascript
+// Deal.js - MongoDB Schema Definition
+const mongoose = require('mongoose');
+
+// Sub-schemas
+const historyEntrySchema = new mongoose.Schema({
+  changeType: {
+    type: String,
+    enum: ['creation', 'update', 'analysis', 'status_change', 'note_added', 'document_added'],
+    required: true
+  },
+  timestamp: { type: Date, default: Date.now },
+  changes: Object,
+  userId: String,
+  note: String
+});
+
+const analysisHistorySchema = new mongoose.Schema({
+  timestamp: { type: Date, default: Date.now },
+  metrics: {
+    monthlyMortgage: Number,
+    monthlyExpenses: Object,
+    totalMonthlyExpenses: Number,
+    monthlyCashFlow: Number,
+    annualCashFlow: Number,
+    cashOnCashROI: Number
+  },
+  aiAnalysis: {
+    cashFlowScore: Number,
+    marketTrends: Object,
+    riskAssessment: Object,
+    recommendations: [String]
+  },
+  marketConditions: {
+    interestRates: Number,
+    localMarketIndicators: Object,
+    economicIndicators: Object
+  }
+});
+
+// Main Deal schema (SFR and MF properties)
+const dealSchema = new mongoose.Schema({
+  // Common fields
+  propertyAddress: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zipCode: { type: String, required: true },
+    country: { type: String, default: 'USA' }
+  },
+  propertyType: { 
+    type: String, 
+    enum: ['single_family', 'multi_family', 'condo', 'townhouse', 'commercial', 'land'],
+    required: true 
+  },
+  // ... additional fields
+});
+```
+
+### MongoDB Data Access Patterns
+The application follows a layered architecture for MongoDB access:
+
+1. **Models Layer**: Mongoose schema definitions
+2. **Contexts Layer**: Business logic and data transformations  
+3. **Protocol Layer**: API routes and request handling
+4. **Storage Layer**: Data persistence operations
+
+```javascript
+// Storage service example
+const storage = {
+  async getAllDeals() {
+    return await Deal.find().sort({ createdAt: -1 });
+  },
+  
+  async getDealById(id) {
+    return await Deal.findById(id);
+  },
+  
+  async analyzeDeal(dealData) {
+    const dealContext = new DealContext();
+    return await dealContext.analyzeDeal(dealData);
+  },
+  
+  async updateDealPerformance(id, performanceData) {
+    const dealContext = new DealContext();
+    return await dealContext.updateDealPerformance(id, performanceData);
+  }
+};
+```
+
+## Financial Calculation Engine
+
+The application includes a comprehensive financial calculation engine implemented as a static TypeScript class:
+
+```typescript
+export class FinancialCalculations {
+  /**
+   * Calculate monthly mortgage payment
+   */
+  static calculateMortgage(principal: number, annualRate: number, years: number): number {
+    const monthlyRate = annualRate / 12 / 100;
+    const numPayments = years * 12;
+    if (monthlyRate === 0) return principal / numPayments;
+    return (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+           (Math.pow(1 + monthlyRate, numPayments) - 1);
+  }
+
+  /**
+   * Calculate Net Operating Income (NOI)
+   */
+  static calculateNOI(effectiveGrossIncome: number, operatingExpenses: number): number {
+    return effectiveGrossIncome - operatingExpenses;
+  }
+
+  /**
+   * Calculate Cap Rate
+   */
+  static calculateCapRate(noi: number, purchasePrice: number): number {
+    if (!purchasePrice) return 0;
+    return (noi / purchasePrice) * 100;
+  }
+
+  /**
+   * Calculate Internal Rate of Return (IRR)
+   */
+  static calculateIRR(cashFlows: number[]): number {
+    // Implementation using Newton-Raphson method
+  }
+  
+  // Additional financial calculations...
+}
+```
+
+Key features:
+- Well-documented methods with proper TypeScript types
+- Specialized calculations for real estate metrics
+- Support for both SFR and MF property types
+- Threshold values for performance benchmarking
+- Advanced calculations like IRR and DSCR
+
+## TypeScript Type System
+
+The application uses a comprehensive TypeScript type system for data validation and structure:
+
+```typescript
+// Core property types
+export type PropertyType = 'SFR' | 'MF';
+
+export interface BasePropertyData {
+  propertyType: PropertyType;
+  purchasePrice: number;
+  downPayment: number;
+  interestRate: number;
+  loanTerm: number;
+  propertyTaxRate: number;
+  insuranceRate: number;
+  maintenanceCost: number;
+  propertyManagementRate: number;
+  propertyAddress: PropertyAddress;
+  closingCosts?: number;
+}
+
+export interface SFRData extends BasePropertyData {
+  propertyType: 'SFR';
+  monthlyRent: number;
+  squareFootage: number;
+  bedrooms: number;
+  bathrooms: number;
+  yearBuilt: number;
+  // Additional SFR-specific fields
+}
+
+export interface MultiFamilyData extends BasePropertyData {
+  propertyType: 'MF';
+  totalUnits: number;
+  totalSqft: number;
+  unitTypes: Array<{
+    type: string;
+    count: number;
+    sqft: number;
+    monthlyRent: number;
+  }>;
+  // Additional MF-specific fields
+}
+
+// Analysis result types
+export interface AnalysisResult<T extends CommonMetrics> {
+  monthlyAnalysis: MonthlyAnalysis;
+  annualAnalysis: AnnualAnalysis;
+  metrics: T;
+  projections: YearlyProjection[];
+  exitAnalysis: ExitAnalysis;
+  aiInsights?: AIInsights;
+}
+
+export interface AIInsights {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  investmentScore: number | null;
+}
+```
+
+Key features:
+- Generic types for analysis results
+- Property-type specific interfaces
+- Comprehensive financial metrics types
+- AI analysis result structures
+- Shared base interfaces 

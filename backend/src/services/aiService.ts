@@ -2,6 +2,7 @@ import { getOpenAIClient } from './openai';
 import { logger } from '../utils/logger';
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { AIInsights } from '../types/analysis';
+import { sfrAnalysisPrompt, mfAnalysisPrompt } from '../prompts/aiPrompts';
 
 export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysis: any): Promise<AIInsights> {
   try {
@@ -16,8 +17,15 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       };
     }
 
-    // Generate prompt based on property type
-    const prompt = generatePrompt(dealData, analysis);
+    // Generate prompt based on property type using specialized prompts from aiPrompts.ts
+    let prompt: string;
+    if (dealData.propertyType === 'SFR') {
+      prompt = sfrAnalysisPrompt(dealData, analysis);
+    } else {
+      prompt = mfAnalysisPrompt(dealData, analysis);
+    }
+
+    logger.info(`Generated ${dealData.propertyType} analysis prompt (${prompt.length} chars)`);
 
     const completion = await openai.completions.create({
       model: "text-davinci-003",
@@ -56,105 +64,6 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       recommendations: [],
       investmentScore: null
     };
-  }
-}
-
-function generatePrompt(dealData: SFRData | MultiFamilyData, analysis: any): string {
-  // Calculate common metrics
-  const downPaymentPercent = ((dealData.downPayment / dealData.purchasePrice) * 100).toFixed(2);
-
-  // Base prompt with common fields
-  const basePrompt = `
-    PROPERTY DETAILS:
-    - Address: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode}
-    - Purchase Price: $${dealData.purchasePrice || 'N/A'}
-    - Down Payment: $${dealData.downPayment || 'N/A'} (${downPaymentPercent}%)
-    - Interest Rate: ${dealData.interestRate || 'N/A'}%
-    - Loan Term: ${dealData.loanTerm || 'N/A'} years
-
-    METRICS:
-    - Cap Rate: ${analysis.annualAnalysis?.capRate?.toFixed(2) || 'N/A'}%
-    - Cash on Cash Return: ${analysis.annualAnalysis?.cashOnCashReturn?.toFixed(2) || 'N/A'}%
-    - NOI: $${analysis.annualAnalysis?.noi?.toFixed(2) || 'N/A'}/year
-  `;
-
-  // Add property-specific details
-  if ('bedrooms' in dealData) {
-    // SFR-specific details
-    const sfrData = dealData as SFRData;
-    const grossRentMultiplier = (sfrData.purchasePrice / (sfrData.monthlyRent * 12)).toFixed(2);
-    const onePercentRule = ((sfrData.monthlyRent / sfrData.purchasePrice) * 100).toFixed(2);
-
-    return `
-    Analyze this single-family real estate investment deal with the following details:
-
-    ${basePrompt}
-    
-    ADDITIONAL PROPERTY DETAILS:
-    - Type: Single-Family Residence
-    - Square Feet: ${sfrData.squareFootage || 'N/A'}
-    - Year Built: ${sfrData.yearBuilt || 'N/A'}
-    - Bedrooms: ${sfrData.bedrooms || 'N/A'}
-    - Bathrooms: ${sfrData.bathrooms || 'N/A'}
-    - Monthly Rent: $${sfrData.monthlyRent || 'N/A'}
-
-    ADDITIONAL METRICS:
-    - Gross Rent Multiplier: ${grossRentMultiplier}
-    - 1% Rule: ${onePercentRule}%
-
-    Please provide a detailed analysis in JSON format with the following structure:
-    {
-      "summary": "2-3 sentences overall summary of the investment",
-      "strengths": ["strength1", "strength2", "strength3"],
-      "weaknesses": ["weakness1", "weakness2", "weakness3"],
-      "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
-      "investmentScore": 0-100 score with 100 being excellent
-    }
-
-    Focus on the financial viability, potential risks, and opportunities for improvement.
-    Consider the property's location, condition, and potential for appreciation.
-    Be specific, data-driven, and actionable in your recommendations.
-    `;
-  } else {
-    // Multi-family specific details
-    const mfData = dealData as MultiFamilyData;
-    const totalUnits = mfData.unitTypes.reduce((sum, unit) => sum + unit.count, 0);
-    const avgRentPerUnit = mfData.unitTypes.reduce((sum, unit) => sum + (unit.monthlyRent * unit.count), 0) / totalUnits;
-    const pricePerUnit = mfData.purchasePrice / totalUnits;
-
-    return `
-    Analyze this multi-family real estate investment deal with the following details:
-
-    ${basePrompt}
-
-    PROPERTY DETAILS:
-    - Type: Multi-Family Property
-    - Total Units: ${totalUnits}
-    - Average Rent Per Unit: $${avgRentPerUnit.toFixed(2)}
-    - Price Per Unit: $${pricePerUnit.toFixed(2)}
-
-    UNIT MIX:
-    ${mfData.unitTypes.map(unit => `- ${unit.count}x ${unit.type} @ $${unit.monthlyRent}/month`).join('\n')}
-
-    Please provide a detailed analysis in JSON format with the following structure:
-    {
-      "summary": "2-3 sentences overall summary of the investment",
-      "strengths": ["strength1", "strength2", "strength3"],
-      "weaknesses": ["weakness1", "weakness2", "weakness3"],
-      "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
-      "investmentScore": 0-100 score with 100 being excellent
-    }
-
-    Focus on:
-    1. Unit mix optimization and rental strategy
-    2. Operational efficiency and expense management
-    3. Value-add opportunities and renovation potential
-    4. Market positioning and competitive analysis
-    5. Risk factors specific to multi-family properties
-    
-    Be specific, data-driven, and actionable in your recommendations.
-    Consider local market conditions, tenant demographics, and management requirements.
-    `;
   }
 }
 
