@@ -1,4 +1,4 @@
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { logger } from '../utils/logger';
 
@@ -6,9 +6,9 @@ import { logger } from '../utils/logger';
 dotenv.config();
 
 // Create OpenAI client singleton
-let openaiClient: OpenAI | null = null;
+let openaiClient: any | null = null;
 
-export const getOpenAIClient = (): OpenAI | null => {
+export const getOpenAIClient = (): any | null => {
   try {
     if (!process.env.OPENAI_API_KEY) {
       logger.warn('OpenAI API key not found in environment variables');
@@ -21,9 +21,12 @@ export const getOpenAIClient = (): OpenAI | null => {
     }
 
     if (!openaiClient) {
-      openaiClient = new OpenAI({
+      // For OpenAI v3.x
+      const { Configuration, OpenAIApi } = require('openai');
+      const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY
       });
+      openaiClient = new OpenAIApi(configuration);
       logger.info('OpenAI client initialized successfully');
     }
 
@@ -48,7 +51,8 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
     logger.info(`Using OpenAI model: ${preferredModel}`);
     logger.info(`Prompt length: ${prompt.length} characters`);
     
-    const completion = await openai.chat.completions.create({
+    // For OpenAI v3.x
+    const completion = await openai.createChatCompletion({
       model: preferredModel,
       messages: [
         { 
@@ -65,7 +69,7 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
       response_format: { type: "json_object" }
     });
 
-    const content = completion.choices[0].message.content;
+    const content = completion.data.choices[0].message.content;
     logger.info(`Response length: ${content?.length || 0} characters`);
     
     if (!content) {

@@ -189,20 +189,13 @@ const Dashboard: React.FC = () => {
   };
 
   const handleEdit = (analysis: SavedAnalysis) => {
-    console.log('Setting up edit for analysis:', analysis.id);
+    console.log('Editing analysis:', analysis);
     
-    // Store the selected analysis ID in localStorage for tracking edits
+    // Store the ID of the analysis being edited in localStorage
     localStorage.setItem('currentEditAnalysisId', analysis.id);
     
-    // We don't need to store the full analysis data anymore since we're using
-    // a flatter structure and we'll load it directly from savedAnalyses
-    
-    // Navigate to the appropriate analysis page
-    if (analysis.propertyType === 'MF') {
-      navigate('/analyze-multifamily');
-    } else {
-      navigate('/analyze');
-    }
+    // Navigate to the analyze page
+    navigate('/analyze');
   };
 
   const formatCurrency = (value?: number) => {
@@ -311,8 +304,9 @@ const Dashboard: React.FC = () => {
                   <TableCell>{new Date(analysis.dateCreated).toLocaleDateString()}</TableCell>
                   <TableCell align="center">
                     <Tooltip title="Edit Analysis">
-                      <IconButton
-                        size="small"
+                      <IconButton 
+                        edge="end" 
+                        aria-label="edit"
                         onClick={() => handleEdit(analysis)}
                       >
                         <EditIcon />

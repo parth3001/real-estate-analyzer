@@ -116,12 +116,23 @@ export interface AIInsights {
   investmentScore: number | null;
 }
 
+export interface LongTermAnalysis {
+  projections: YearlyProjection[];
+  exitAnalysis: ExitAnalysis;
+  returns: {
+    irr: number;
+    totalCashFlow: number;
+    totalAppreciation: number;
+    totalReturn: number;
+  };
+  projectionYears: number;
+}
+
 export interface AnalysisResult<T extends CommonMetrics> {
   monthlyAnalysis: MonthlyAnalysis;
   annualAnalysis: AnnualAnalysis;
-  metrics: T;
-  projections: YearlyProjection[];
-  exitAnalysis: ExitAnalysis;
+  keyMetrics: T;
+  longTermAnalysis: LongTermAnalysis;
   aiInsights?: AIInsights;
 }
 

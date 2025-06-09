@@ -150,6 +150,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
+    const propertyMetrics = this.calculatePropertySpecificMetrics();
 
     // Log the base calculations
     console.log('==== BASE ANALYZER CALCULATIONS ====');
@@ -161,7 +162,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     console.log('NOI:', noi);
     console.log('Cash Flow (Annual):', cashFlow);
     console.log('Cash Flow (Monthly):', cashFlow / 12);
-    console.log('Property Metrics:', this.calculatePropertySpecificMetrics());
+    console.log('Property Metrics:', propertyMetrics);
     console.log('Projections Count:', projections.length);
     console.log('Exit Analysis:', exitAnalysis);
     console.log('===================================');
@@ -187,9 +188,18 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         debtService: annualDebtService,
         cashFlow
       },
-      metrics: this.calculatePropertySpecificMetrics(),
-      projections,
-      exitAnalysis
+      keyMetrics: propertyMetrics,
+      longTermAnalysis: {
+        projections: projections,
+        exitAnalysis: exitAnalysis,
+        returns: {
+          irr: propertyMetrics.irr || 0,
+          totalCashFlow: projections.reduce((sum, p) => sum + p.cashFlow, 0),
+          totalAppreciation: projections[projections.length - 1]?.appreciation || 0,
+          totalReturn: exitAnalysis.totalReturn || 0
+        },
+        projectionYears: this.assumptions.projectionYears
+      }
     };
 
     // Log the final result structure
@@ -199,7 +209,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     console.log('Monthly Expenses:', result.monthlyAnalysis.expenses);
     console.log('Monthly Cash Flow:', result.monthlyAnalysis.cashFlow);
     console.log('Annual Analysis Keys:', Object.keys(result.annualAnalysis));
-    console.log('Metrics Keys:', Object.keys(result.metrics));
+    console.log('Metrics Keys:', Object.keys(result.keyMetrics));
     console.log('========================================');
 
     return result;

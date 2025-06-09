@@ -13,3 +13,18 @@
 2025-06-03 20:39:00:390 [31merror[39m: [31mCould not import or run API smoke test module: Cannot find module './testApiOnStartup'[39m
 [31mRequire stack:[39m
 [31m- /Users/parthpatel/real-estate-analyzer/backend/src/index.js[39m
+2025-06-05 23:05:48:548 [31merror[39m: [31mFailed to connect to MongoDB: bad auth : authentication failed[39m
+2025-06-06 16:58:11:5811 [31merror[39m: [31mError getting AI insights: Cannot read properties of undefined (reading 'dscr')[39m
+2025-06-06 16:58:11:5811 [31merror[39m: [31mError getting AI insights: Cannot read properties of undefined (reading 'dscr')[39m
+2025-06-06 21:47:32:4732 [31merror[39m: [31mError finding all deals: Cannot read properties of undefined (reading 'find')[39m
+2025-06-06 21:47:32:4732 [31merror[39m: [31mError getting all deals: Cannot read properties of undefined (reading 'find')[39m
+2025-06-06 21:51:01:511 [31merror[39m: [31mError creating deal: Deal validation failed: category: Path `category` is required., maintenance: Path `maintenance` is required., propertyType: `SFR` is not a valid enum value for path `propertyType`.[39m
+2025-06-06 21:51:01:511 [31merror[39m: [31mError creating deal: Deal validation failed: category: Path `category` is required., maintenance: Path `maintenance` is required., propertyType: `SFR` is not a valid enum value for path `propertyType`.[39m
+2025-06-06 22:15:14:1514 [31merror[39m: [31mError getting AI insights: Cannot read properties of undefined (reading 'create')[39m
+2025-06-06 22:15:14:1514 [31merror[39m: [31mError getting AI insights: Cannot read properties of undefined (reading 'create')[39m
+2025-06-07 18:07:39:739 [31merror[39m: [31mError creating deal: Deal validation failed: propertyAddress.zipCode: Path `propertyAddress.zipCode` is required., propertyAddress.state: Path `propertyAddress.state` is required., propertyAddress.city: Path `propertyAddress.city` is required., propertyAddress.street: Path `propertyAddress.street` is required.[39m
+2025-06-07 18:07:39:739 [31merror[39m: [31mError creating deal: Deal validation failed: propertyAddress.zipCode: Path `propertyAddress.zipCode` is required., propertyAddress.state: Path `propertyAddress.state` is required., propertyAddress.city: Path `propertyAddress.city` is required., propertyAddress.street: Path `propertyAddress.street` is required.[39m
+2025-06-07 18:07:57:757 [31merror[39m: [31mError creating deal: Deal validation failed: propertyAddress.zipCode: Path `propertyAddress.zipCode` is required., propertyAddress.state: Path `propertyAddress.state` is required., propertyAddress.city: Path `propertyAddress.city` is required., propertyAddress.street: Path `propertyAddress.street` is required.[39m
+2025-06-07 18:07:57:757 [31merror[39m: [31mError creating deal: Deal validation failed: propertyAddress.zipCode: Path `propertyAddress.zipCode` is required., propertyAddress.state: Path `propertyAddress.state` is required., propertyAddress.city: Path `propertyAddress.city` is required., propertyAddress.street: Path `propertyAddress.street` is required.[39m
+2025-06-07 19:27:51:2751 [31merror[39m: [31mError calling OpenAI API: Request failed with status code 502[39m
+2025-06-07 19:27:51:2751 [31merror[39m: [31mError getting AI insights: Request failed with status code 502[39m

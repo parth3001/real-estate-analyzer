@@ -1,56 +1,20 @@
 console.log('Deals controller loaded from file:', __filename);
 import { Request, Response } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
 import { SFRAnalyzer } from '../analysis';
 import { getOpenAIClient } from '../services/openai';
-import { SFRData, DealData, MultiFamilyData } from '../types/propertyTypes';
+import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { MultiFamilyAnalyzer } from '../analysis/MultiFamilyAnalyzer';
 import { sfrAnalysisPrompt, mfAnalysisPrompt } from '../prompts/aiPrompts';
 import { generateAnalysis } from '../services/openai';
+import { DealService } from '../services/dealService';
+import { logger } from '../utils/logger';
+import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 
-const DEALS_DIR = path.join(__dirname, '../../data/deals');
-const DEALS_FILE = path.join(DEALS_DIR, 'deals.json');
-
-interface Deal {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: any;
-}
-
-// Ensure the deals directory exists
-async function ensureDealsDirectory(): Promise<void> {
-  try {
-    await fs.access(DEALS_DIR);
-  } catch {
-    await fs.mkdir(DEALS_DIR, { recursive: true });
-  }
-}
-
-// Load deals from file
-async function loadDeals(): Promise<Deal[]> {
-  try {
-    await ensureDealsDirectory();
-    const data = await fs.readFile(DEALS_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      // If file doesn't exist, return empty array
-      return [];
-    }
-    throw error;
-  }
-}
-
-// Save deals to file
-async function saveDeals(deals: Deal[]): Promise<void> {
-  await ensureDealsDirectory();
-  await fs.writeFile(DEALS_FILE, JSON.stringify(deals, null, 2));
-}
+// Initialize the deal service
+const dealService = new DealService();
 
 // Utility function to get AI insights
-const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
+const generateAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
   try {
     const openai = getOpenAIClient();
     if (!openai) {
@@ -67,16 +31,16 @@ const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any)
     const metrics = {
       cashFlow: analysis.monthlyAnalysis.cashFlow || 0,
       annualCashFlow: (analysis.monthlyAnalysis.cashFlow || 0) * 12,
-      dscr: analysis.metrics.dscr || 0,
-      capRate: analysis.metrics.capRate || 0,
-      cashOnCashReturn: analysis.metrics.cashOnCashReturn || 0,
-      irr: analysis.metrics.irr || 0,
+      dscr: analysis.keyMetrics.dscr || 0,
+      capRate: analysis.keyMetrics.capRate || 0,
+      cashOnCashReturn: analysis.keyMetrics.cashOnCashReturn || 0,
+      irr: analysis.keyMetrics.irr || 0,
       purchasePrice: dealData.purchasePrice || 0,
       monthlyRent: dealData.propertyType === 'SFR' ? (dealData as SFRData).monthlyRent || 0 : 0,
       propertyType: dealData.propertyType || 'SFR'
     };
 
-    console.log('Key metrics for AI analysis:', metrics);
+    logger.info('Key metrics for AI analysis:', metrics);
 
     // Get the appropriate prompt without adding anything to it
     let prompt: string;
@@ -88,11 +52,11 @@ const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any)
       throw new Error('Unsupported propertyType for AI analysis');
     }
 
-    console.log('Sending prompt to OpenAI:', prompt.substring(0, 200) + '...');
+    logger.info('Sending prompt to OpenAI:', prompt.substring(0, 200) + '...');
 
     // Use the generateAnalysis function from the openai service
     const aiResponse = await generateAnalysis(prompt);
-    console.log('AI response parsed successfully:', Object.keys(aiResponse));
+    logger.info('AI response parsed successfully:', Object.keys(aiResponse));
     
     // Ensure investmentScore is included and is a number
     const investmentScore = typeof aiResponse.investmentScore === 'number' 
@@ -112,7 +76,7 @@ const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any)
       ...(aiResponse.recommendedHoldPeriod && { recommendedHoldPeriod: aiResponse.recommendedHoldPeriod })
     };
   } catch (error) {
-    console.error('Error getting AI insights:', error);
+    logger.error('Error getting AI insights:', error);
     return {
       summary: "Error generating AI insights. Please try again later.",
       strengths: [],
@@ -126,95 +90,97 @@ const getAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any)
 // Get all deals
 export const getAllDeals = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-    const deals = await loadDeals();
-    
-    // Sort deals
-    deals.sort((a: Deal, b: Deal) => {
-      const aValue = a[sortBy as string];
-      const bValue = b[sortBy as string];
-      return sortOrder === 'desc' ? 
-        (bValue > aValue ? 1 : -1) : 
-        (aValue > bValue ? 1 : -1);
-    });
-
+    const deals = await dealService.getAllDeals();
     res.json(deals);
   } catch (error) {
+    logger.error('Error getting all deals:', error);
     if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ error: error.message });
     } else {
-      res.status(500).json({ message: 'An unknown error occurred' });
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
   }
 };
 
-// Get a single deal
-export const getDeal = async (req: Request, res: Response): Promise<void> => {
+// Get a single deal by ID
+export const getDealById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const deal = deals.find(d => d.id === req.params.id);
-    
-    if (!deal) {
-      res.status(404).json({ message: 'Deal not found' });
-      return;
-    }
+    const { id } = req.params;
+    const deal = await dealService.getDealById(id);
     res.json(deal);
   } catch (error) {
+    logger.error(`Error getting deal ${req.params.id}:`, error);
     if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
+      res.status(404).json({ error: error.message });
     } else {
-      res.status(500).json({ message: 'An unknown error occurred' });
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
   }
 };
 
-// Create a deal
+// Create a new deal
 export const createDeal = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const newDeal: Deal = {
-      id: Date.now().toString(),
-      ...req.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const dealData = req.body;
+    logger.info('Creating deal with data:', {
+      propertyName: dealData.propertyName,
+      propertyType: dealData.propertyType,
+      hasAnalysis: !!dealData.analysis,
+      bodyKeys: Object.keys(dealData)
+    });
     
-    deals.push(newDeal);
-    await saveDeals(deals);
+    // Log the full data for debugging
+    logger.info('Full deal data:', JSON.stringify(dealData));
+    
+    const newDeal = await dealService.saveDeal(dealData);
+    logger.info('Deal created successfully:', {
+      id: newDeal._id,
+      propertyName: newDeal.propertyName
+    });
+    
     res.status(201).json(newDeal);
   } catch (error) {
+    logger.error('Error creating deal:', error);
     if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ message: 'An unknown error occurred' });
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
   }
 };
 
-// Update a deal
+// Update an existing deal
 export const updateDeal = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const index = deals.findIndex(d => d.id === req.params.id);
+    const { id } = req.params;
+    const dealData = req.body;
     
-    if (index === -1) {
-      res.status(404).json({ message: 'Deal not found' });
-      return;
-    }
-
-    deals[index] = {
-      ...deals[index],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-
-    await saveDeals(deals);
-    res.json(deals[index]);
+    logger.info(`Updating deal ${id} with data:`, {
+      propertyName: dealData.propertyName,
+      propertyType: dealData.propertyType,
+      hasAnalysis: !!dealData.analysis,
+      bodyKeys: Object.keys(dealData)
+    });
+    
+    // Log the full data for debugging
+    logger.info('Full update data:', JSON.stringify(dealData));
+    
+    // Add id to the deal data
+    dealData._id = id;
+    const updatedDeal = await dealService.saveDeal(dealData);
+    
+    logger.info('Deal updated successfully:', {
+      id: updatedDeal._id,
+      propertyName: updatedDeal.propertyName
+    });
+    
+    res.json(updatedDeal);
   } catch (error) {
+    logger.error(`Error updating deal ${req.params.id}:`, error);
     if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ message: 'An unknown error occurred' });
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -222,21 +188,15 @@ export const updateDeal = async (req: Request, res: Response): Promise<void> => 
 // Delete a deal
 export const deleteDeal = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const filteredDeals = deals.filter(d => d.id !== req.params.id);
-    
-    if (filteredDeals.length === deals.length) {
-      res.status(404).json({ message: 'Deal not found' });
-      return;
-    }
-
-    await saveDeals(filteredDeals);
-    res.json({ message: 'Deal deleted successfully' });
+    const { id } = req.params;
+    await dealService.deleteDeal(id);
+    res.status(204).end();
   } catch (error) {
+    logger.error(`Error deleting deal ${req.params.id}:`, error);
     if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
+      res.status(404).json({ error: error.message });
     } else {
-      res.status(500).json({ message: 'An unknown error occurred' });
+      res.status(500).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -245,150 +205,59 @@ export const deleteDeal = async (req: Request, res: Response): Promise<void> => 
 export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
   try {
     const dealData = req.body;
-    console.log('Analyzing deal with data:', JSON.stringify(dealData, null, 2));
+    logger.info('Analyzing deal with data:', dealData.propertyName || 'Unnamed property');
 
+    // Extract assumptions from the dealData
+    const assumptions: AnalysisAssumptions = {
+      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease || 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+    };
+    
+    // Use the appropriate analysis service directly
     let analysis;
-    let aiInsights;
-
-    if (!dealData.propertyType || !dealData.propertyData) {
-      res.status(400).json({ message: 'Missing required fields: propertyType and propertyData' });
-      return;
-    }
-
-    // Extract the property data from the request
-    const propertyData = {
-      ...dealData.propertyData,
-      propertyType: dealData.propertyType // Ensure propertyType is at the top level
-    };
-
-    console.log('Extracted property data:', JSON.stringify(propertyData, null, 2));
-
     if (dealData.propertyType === 'SFR') {
-      // SFR analysis logic
-      const analyzer = new SFRAnalyzer(propertyData, {
-        projectionYears: propertyData.longTermAssumptions?.projectionYears || 10,
-        annualRentIncrease: propertyData.longTermAssumptions?.annualRentIncrease || 2,
-        annualExpenseIncrease: propertyData.longTermAssumptions?.inflationRate || 2,
-        annualPropertyValueIncrease: propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3,
-        sellingCosts: propertyData.longTermAssumptions?.sellingCostsPercentage || 6,
-        vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5
-      });
+      logger.info('Analyzing SFR property');
+      const analyzer = new SFRAnalyzer(dealData, assumptions);
       analysis = analyzer.analyze();
-      try {
-        aiInsights = await getAIInsights(propertyData, analysis);
-      } catch (error) {
-        aiInsights = {
-          summary: "Error generating AI insights. Please try again later.",
-          strengths: [],
-          weaknesses: [],
-          recommendations: [],
-          investmentScore: null
-        };
-      }
     } else if (dealData.propertyType === 'MF') {
-      // MF analysis logic
-      const analyzer = new MultiFamilyAnalyzer(propertyData, {
-        projectionYears: propertyData.longTermAssumptions?.projectionYears || 10,
-        annualRentIncrease: propertyData.longTermAssumptions?.annualRentIncrease || 2,
-        annualExpenseIncrease: propertyData.longTermAssumptions?.inflationRate || 2,
-        annualPropertyValueIncrease: propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3,
-        sellingCosts: propertyData.longTermAssumptions?.sellingCostsPercentage || 6,
-        vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5
-      });
+      logger.info('Analyzing Multi-Family property');
+      const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);
       analysis = analyzer.analyze();
-      aiInsights = null; // Optionally add MF AI logic here
     } else {
-      res.status(400).json({ message: 'Invalid propertyType' });
-      return;
+      throw new Error(`Unsupported property type: ${dealData.propertyType}`);
     }
-
-    // Create a proper response structure that the frontend expects
-    const monthlyAnalysis = {
-      income: {
-        gross: propertyData.monthlyRent || 0,
-        effective: (propertyData.monthlyRent || 0) * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100)
-      },
-      expenses: {
-        propertyTax: analysis.monthlyAnalysis.expenses.breakdown.propertyTax || 0,
-        insurance: analysis.monthlyAnalysis.expenses.breakdown.insurance || 0,
-        maintenance: analysis.monthlyAnalysis.expenses.breakdown.maintenance || 0,
-        propertyManagement: analysis.monthlyAnalysis.expenses.breakdown.propertyManagement || 0,
-        vacancy: analysis.monthlyAnalysis.expenses.breakdown.vacancy || 0,
-        mortgage: {
-          total: analysis.monthlyAnalysis.expenses.debt || 0,
-          principal: 0, // Placeholder as this might not be in the analysis
-          interest: 0, // Placeholder as this might not be in the analysis
-        },
-        total: analysis.monthlyAnalysis.expenses.total || 0
-      },
-      grossRentalIncome: propertyData.monthlyRent || 0,
-      cashFlow: analysis.monthlyAnalysis.cashFlow || 0,
-      cashFlowAfterTax: analysis.monthlyAnalysis.cashFlow || 0 // Placeholder as this might not be calculated
-    };
-
-    const annualAnalysis = {
-      dscr: analysis.metrics.dscr || 0,
-      cashOnCashReturn: analysis.metrics.cashOnCashReturn || 0,
-      capRate: analysis.metrics.capRate || 0,
-      totalInvestment: propertyData.downPayment + (propertyData.closingCosts || 0),
-      annualNOI: analysis.annualAnalysis.noi || 0,
-      noi: analysis.annualAnalysis.noi || 0,
-      annualDebtService: analysis.annualAnalysis.debtService || 0,
-      effectiveGrossIncome: analysis.annualAnalysis.income * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100) || 0,
-      income: analysis.annualAnalysis.income || 0
-    };
-
-    const longTermAnalysis = {
-      yearlyProjections: analysis.projections || [],
-      projectionYears: propertyData.longTermAssumptions?.projectionYears || 10,
-      returns: {
-        irr: analysis.metrics.irr || 0,
-        totalCashFlow: analysis.projections?.reduce((sum, year) => sum + year.cashFlow, 0) || 0,
-        totalAppreciation: analysis.projections?.[analysis.projections.length - 1]?.appreciation || 0,
-        totalReturn: analysis.projections?.[analysis.projections.length - 1]?.totalReturn || 0
-      },
-      exitAnalysis: analysis.exitAnalysis || {
-        projectedSalePrice: 0,
-        sellingCosts: 0,
-        mortgagePayoff: 0,
-        netProceedsFromSale: 0
-      }
-    };
-
-    // Include other key metrics from the analysis
-    const keyMetrics = {
-      pricePerSqFtAtPurchase: analysis.metrics.pricePerSqFt || 0,
-      pricePerSqFtAtSale: analysis.exitAnalysis?.projectedSalePrice / propertyData.squareFootage || 0,
-      avgRentPerSqFt: analysis.metrics.rentPerSqFt || 0,
-      operatingExpenseRatio: analysis.metrics.operatingExpenseRatio || 0,
-      grossRentMultiplier: analysis.metrics.grossRentMultiplier || 0,
-      // Add any other metrics the frontend might expect
-    };
-
-    // Final response object
-    const fullAnalysis = {
-      monthlyAnalysis,
-      annualAnalysis,
-      longTermAnalysis,
-      keyMetrics,
-      aiInsights
-    };
-
-    // Log the analysis details before sending response
-    console.log('==== ANALYSIS RESPONSE DETAILS ====');
-    console.log('Monthly Analysis:', JSON.stringify(fullAnalysis.monthlyAnalysis, null, 2));
-    console.log('Annual Analysis:', JSON.stringify(fullAnalysis.annualAnalysis, null, 2));
-    console.log('Key Metrics:', JSON.stringify(fullAnalysis.keyMetrics, null, 2));
-    console.log('Response Size:', JSON.stringify(fullAnalysis).length, 'bytes');
-    console.log('=================================');
-
-    res.json(fullAnalysis);
+    
+    if (!analysis) {
+      throw new Error('Analysis failed to produce results');
+    }
+    
+    // Add AI insights if possible
+    try {
+      analysis.aiInsights = await generateAIInsights(dealData, analysis);
+    } catch (aiError) {
+      logger.error('Error getting AI insights:', aiError);
+      // Continue without AI insights
+      analysis.aiInsights = {
+        summary: "AI insights are not available at this time.",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: 0
+      };
+    }
+    
+    logger.info('Analysis completed successfully');
+    res.json(analysis);
   } catch (error) {
-    console.error('Error in analyzeDeal:', error);
+    logger.error('Error analyzing deal:', error);
     if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(500).json({ message: 'An unknown error occurred' });
+      res.status(400).json({ error: 'An unknown error occurred during analysis' });
     }
   }
 };
@@ -396,26 +265,33 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
 // Add a note to a deal
 export const addNote = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const deal = deals.find(d => d.id === req.params.id);
+    const { dealId } = req.params;
+    const { note } = req.body;
     
+    // Get the current deal
+    const deal = await dealService.getDealById(dealId);
     if (!deal) {
       res.status(404).json({ message: 'Deal not found' });
       return;
     }
-
-    const note = {
-      id: Date.now().toString(),
-      content: req.body.note,
-      createdAt: new Date().toISOString()
-    };
-
-    if (!deal.notes) deal.notes = [];
-    deal.notes.push(note);
     
-    await saveDeals(deals);
-    res.status(201).json(note);
+    // Prepare updated data - with correct typing
+    const updatedData = {
+      ...deal.toObject(),
+      _id: dealId,
+      notes: [...(deal.notes || []), {
+        text: note.text,
+        createdAt: new Date(),
+        author: note.author || 'Anonymous'
+      }]
+    };
+    
+    // Update deal with new notes
+    const updatedDeal = await dealService.saveDeal(updatedData);
+    
+    res.json(updatedDeal);
   } catch (error) {
+    logger.error('Error adding note to deal:', error);
     if (error instanceof Error) {
       res.status(400).json({ message: error.message });
     } else {
@@ -427,28 +303,34 @@ export const addNote = async (req: Request, res: Response): Promise<void> => {
 // Add a document to a deal
 export const addDocument = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const deal = deals.find(d => d.id === req.params.id);
+    const { dealId } = req.params;
+    const { document } = req.body;
     
+    // Get the current deal
+    const deal = await dealService.getDealById(dealId);
     if (!deal) {
       res.status(404).json({ message: 'Deal not found' });
       return;
     }
-
-    const document = {
-      id: Date.now().toString(),
-      title: req.body.title,
-      url: req.body.url,
-      type: req.body.type,
-      uploadedAt: new Date().toISOString()
-    };
-
-    if (!deal.documents) deal.documents = [];
-    deal.documents.push(document);
     
-    await saveDeals(deals);
-    res.status(201).json(document);
+    // Prepare updated data - with correct typing
+    const updatedData = {
+      ...deal.toObject(),
+      _id: dealId,
+      documents: [...(deal.documents || []), {
+        name: document.name,
+        url: document.url,
+        type: document.type,
+        uploadedAt: new Date()
+      }]
+    };
+    
+    // Update deal with new documents
+    const updatedDeal = await dealService.saveDeal(updatedData);
+    
+    res.json(updatedDeal);
   } catch (error) {
+    logger.error('Error adding document to deal:', error);
     if (error instanceof Error) {
       res.status(400).json({ message: error.message });
     } else {
@@ -460,23 +342,33 @@ export const addDocument = async (req: Request, res: Response): Promise<void> =>
 // Add performance metrics to a deal
 export const addPerformanceMetrics = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deals = await loadDeals();
-    const deal = deals.find(d => d.id === req.params.id);
+    const { dealId } = req.params;
+    const { metrics } = req.body;
     
+    // Get the current deal
+    const deal = await dealService.getDealById(dealId);
     if (!deal) {
       res.status(404).json({ message: 'Deal not found' });
       return;
     }
-
-    if (!deal.performanceMetrics) deal.performanceMetrics = [];
-    deal.performanceMetrics.push({
-      ...req.body,
-      recordedAt: new Date()
-    });
-
-    await saveDeals(deals);
-    res.json(deal.performanceMetrics[deal.performanceMetrics.length - 1]);
+    
+    // Prepare updated data - with correct typing
+    const updatedData = {
+      ...deal.toObject(),
+      _id: dealId,
+      performanceMetrics: {
+        ...(deal.performanceMetrics || {}),
+        ...metrics,
+        updatedAt: new Date()
+      }
+    };
+    
+    // Update deal with new metrics
+    const updatedDeal = await dealService.saveDeal(updatedData);
+    
+    res.json(updatedDeal);
   } catch (error) {
+    logger.error('Error adding performance metrics to deal:', error);
     if (error instanceof Error) {
       res.status(400).json({ message: error.message });
     } else {
@@ -485,91 +377,97 @@ export const addPerformanceMetrics = async (req: Request, res: Response): Promis
   }
 };
 
-// Sample SFR endpoint
-export const getSampleSFR = async (req: Request, res: Response): Promise<void> => {
-  console.log('getSampleSFR endpoint hit from file:', __filename);
+// Sample SFR data
+export const getSampleSFR = (req: Request, res: Response): void => {
   const sampleSFR = {
+    propertyName: 'Sample SFR Property',
     propertyType: 'SFR',
-    propertyData: {
-      propertyType: 'SFR',
-      propertyAddress: {
-        street: '123 Main St',
-        city: 'Sample City',
-        state: 'CA',
-        zipCode: '12345'
-      },
-      purchasePrice: 300000,
-      downPayment: 60000,
-      interestRate: 3.5,
-      loanTerm: 30,
-      monthlyRent: 2000,
-      propertyTaxRate: 1.2,
-      insuranceRate: 0.5,
-      squareFootage: 1500,
-      bedrooms: 3,
-      bathrooms: 2,
-      yearBuilt: 2000,
-      propertyManagementRate: 8,
-      maintenanceCost: 100,
-      longTermAssumptions: {
-        projectionYears: 10,
-        annualRentIncrease: 2,
-        annualPropertyValueIncrease: 3,
-        sellingCostsPercentage: 6,
-        inflationRate: 2,
-        vacancyRate: 5
-      }
+    propertyAddress: {
+      street: '123 Main St',
+      city: 'Anytown',
+      state: 'CA',
+      zipCode: '12345'
+    },
+    purchasePrice: 300000,
+    downPayment: 60000,
+    interestRate: 4.5,
+    loanTerm: 30,
+    monthlyRent: 2500,
+    squareFootage: 1500,
+    bedrooms: 3,
+    bathrooms: 2,
+    yearBuilt: 1995,
+    propertyTaxRate: 1.2,
+    insuranceRate: 0.5,
+    maintenanceCost: 150,
+    propertyManagementRate: 8,
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 2,
+      annualPropertyValueIncrease: 3,
+      sellingCostsPercentage: 6,
+      inflationRate: 2,
+      vacancyRate: 5
     }
   };
+  
   res.json(sampleSFR);
 };
 
-// Sample MF endpoint
-export const getSampleMF = async (req: Request, res: Response): Promise<void> => {
-  console.log('getSampleMF endpoint hit from file:', __filename);
+// Sample Multi-Family data
+export const getSampleMF = (req: Request, res: Response): void => {
   const sampleMF = {
+    propertyName: 'Sample Multi-Family Property',
     propertyType: 'MF',
-    propertyData: {
-      propertyType: 'MF',
-      propertyAddress: {
-        street: '456 Oak Ave',
-        city: 'Sample City',
-        state: 'CA',
-        zipCode: '12345'
+    propertyAddress: {
+      street: '456 Apartment Blvd',
+      city: 'Metroville',
+      state: 'NY',
+      zipCode: '54321'
+    },
+    purchasePrice: 1200000,
+    downPayment: 240000,
+    interestRate: 5,
+    loanTerm: 30,
+    totalUnits: 8,
+    totalSqft: 7500,
+    yearBuilt: 1980,
+    propertyTaxRate: 1.5,
+    insuranceRate: 0.6,
+    maintenanceCost: 800,
+    maintenanceCostPerUnit: 100,
+    propertyManagementRate: 10,
+    unitTypes: [
+      {
+        type: '1 bed, 1 bath',
+        count: 4,
+        sqft: 650,
+        monthlyRent: 1100,
+        occupied: 4
       },
-      purchasePrice: 1000000,
-      downPayment: 200000,
-      interestRate: 3.5,
-      loanTerm: 30,
-      propertyTaxRate: 1.2,
-      insuranceRate: 0.5,
-      totalUnits: 8,
-      totalSqft: 8000,
-      unitTypes: [
-        { type: '1B1B', count: 4, sqft: 800, monthlyRent: 1200 },
-        { type: '2B1B', count: 4, sqft: 1200, monthlyRent: 1800 }
-      ],
-      yearBuilt: 2000,
-      propertyManagementRate: 8,
-      utilities: 500,
-      commonAreaElectricity: 100,
-      landscaping: 50,
-      propertyManagement: 200,
-      waterSewer: 150,
-      garbage: 50,
-      marketingAndAdvertising: 100,
-      repairsAndMaintenance: 200,
-      capEx: 100,
-      maintenanceCost: 300,
-      longTermAssumptions: {
-        projectionYears: 10,
-        annualRentIncrease: 2,
-        annualPropertyValueIncrease: 3,
-        sellingCostsPercentage: 6,
-        inflationRate: 2,
-        vacancyRate: 5
+      {
+        type: '2 bed, 2 bath',
+        count: 4,
+        sqft: 950,
+        monthlyRent: 1500,
+        occupied: 3
       }
+    ],
+    commonAreaUtilities: {
+      electric: 350,
+      water: 250,
+      gas: 200,
+      trash: 150
+    },
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 2.5,
+      annualPropertyValueIncrease: 3,
+      sellingCostsPercentage: 6,
+      inflationRate: 2,
+      vacancyRate: 7
     }
   };
+  
   res.json(sampleMF);
 }; 

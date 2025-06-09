@@ -71,6 +71,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading = false
       
       // Parse the saved analyses
       const savedAnalyses = JSON.parse(savedAnalysesStr);
+      console.log('All saved analyses:', savedAnalyses);
       
       // Find the analysis we want to edit
       const analysisToEdit = savedAnalyses.find((analysis: Record<string, unknown>) => 
@@ -82,29 +83,55 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading = false
         return;
       }
       
-      // Get data from the raw stored analysis if available
-      const rawAnalysisData = analysisToEdit.rawData || {};
-      const propertyDetails = rawAnalysisData.propertyDetails || {};
+      console.log('Found analysis to edit:', analysisToEdit);
       
-      // Start with default values, then override with saved values
+      // Get data from the raw stored analysis if available
+      const rawData = analysisToEdit.rawData || {};
+      console.log('Raw analysis data:', rawData);
+      
+      // Extract property details from raw data or top-level fields
+      const propertyDetails = rawData.propertyDetails || {};
+      console.log('Property details:', propertyDetails);
+      
+      // Extract property address
+      let propertyAddress = analysisToEdit.address || propertyDetails.propertyAddress || {};
+      if (typeof propertyAddress !== 'object') {
+        propertyAddress = {}; // Fallback if address is not an object
+      }
+      
+      // Create a new property data object with data from saved analysis
       const propertyData: PropertyData = {
+        // Start with defaults to ensure all fields have values
         ...defaultPropertyData,
         
-        // Get the basic property info - use top-level properties first, then raw data
-        propertyName: analysisToEdit.propertyName || propertyDetails.propertyName || '',
-        propertyAddress: analysisToEdit.address || propertyDetails.propertyAddress || defaultPropertyData.propertyAddress,
-        purchasePrice: Number(analysisToEdit.purchasePrice) || Number(propertyDetails.purchasePrice) || 0,
-        downPayment: Number(analysisToEdit.downPayment) || Number(propertyDetails.downPayment) || 0,
-        monthlyRent: Number(analysisToEdit.monthlyRent) || Number(propertyDetails.monthlyRent) || 0,
+        // Basic property info
+        propertyName: analysisToEdit.propertyName || propertyDetails.propertyName || defaultPropertyData.propertyName,
         
-        // Get detailed property info from raw data
+        // Address info
+        propertyAddress: {
+          street: propertyAddress.street || defaultPropertyData.propertyAddress.street,
+          city: propertyAddress.city || defaultPropertyData.propertyAddress.city,
+          state: propertyAddress.state || defaultPropertyData.propertyAddress.state,
+          zipCode: propertyAddress.zipCode || defaultPropertyData.propertyAddress.zipCode
+        },
+        
+        // Financial info - try both locations
+        purchasePrice: Number(analysisToEdit.purchasePrice) || Number(propertyDetails.purchasePrice) || defaultPropertyData.purchasePrice,
+        downPayment: Number(analysisToEdit.downPayment) || Number(propertyDetails.downPayment) || defaultPropertyData.downPayment,
+        monthlyRent: Number(analysisToEdit.monthlyRent) || Number(propertyDetails.monthlyRent) || defaultPropertyData.monthlyRent,
+        
+        // Loan details
         interestRate: Number(propertyDetails.interestRate) || defaultPropertyData.interestRate,
         loanTerm: Number(propertyDetails.loanTerm) || defaultPropertyData.loanTerm,
+        
+        // Expense ratios
         propertyTaxRate: Number(propertyDetails.propertyTaxRate) || defaultPropertyData.propertyTaxRate,
         insuranceRate: Number(propertyDetails.insuranceRate) || defaultPropertyData.insuranceRate,
         maintenanceCost: Number(propertyDetails.maintenanceCost) || defaultPropertyData.maintenanceCost,
         propertyManagementRate: Number(propertyDetails.propertyManagementRate) || defaultPropertyData.propertyManagementRate,
         vacancyRate: Number(propertyDetails.vacancyRate) || defaultPropertyData.vacancyRate,
+        
+        // Additional costs
         closingCosts: Number(propertyDetails.closingCosts) || defaultPropertyData.closingCosts,
         repairCosts: Number(propertyDetails.repairCosts) || defaultPropertyData.repairCosts,
         
@@ -116,7 +143,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading = false
       };
       
       // Get long-term assumptions if available
-      const longTermAssumptions = propertyDetails.longTermAssumptions || rawAnalysisData.longTermAssumptions;
+      const longTermAssumptions = propertyDetails.longTermAssumptions || rawData.longTermAssumptions;
       if (longTermAssumptions) {
         propertyData.annualRentIncrease = Number(longTermAssumptions.annualRentIncrease) || defaultPropertyData.annualRentIncrease;
         propertyData.annualPropertyValueIncrease = Number(longTermAssumptions.annualPropertyValueIncrease) || defaultPropertyData.annualPropertyValueIncrease;
@@ -125,13 +152,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSubmit, isLoading = false
         propertyData.sellingCostsPercentage = Number(longTermAssumptions.sellingCostsPercentage) || defaultPropertyData.sellingCostsPercentage;
       }
       
-      // Set the form data with the loaded property data
+      console.log('Loaded property data for editing:', propertyData);
+      
+      // Update the form with the loaded data
       setFormData(propertyData);
     } catch (error) {
       console.error('Error loading analysis for editing:', error);
       // Clean up localStorage items to avoid future issues
       localStorage.removeItem('currentEditAnalysisId');
-      localStorage.removeItem('currentEditAnalysisData');
     }
   }, []);
 

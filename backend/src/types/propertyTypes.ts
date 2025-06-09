@@ -68,15 +68,13 @@ export interface MultiFamilyData extends BasePropertyData {
     sqft: number;
     monthlyRent: number;
   }>;
-  propertyManagement: number; // percentage
-  utilities: number;
-  commonAreaElectricity: number;
-  landscaping: number;
-  waterSewer: number;
-  garbage: number;
-  marketingAndAdvertising: number;
-  repairsAndMaintenance: number;
-  capEx: number;
+  maintenanceCostPerUnit: number;
+  commonAreaUtilities: {
+    electric: number;
+    water: number;
+    gas: number;
+    trash: number;
+  };
   yearBuilt: number;
   longTermAssumptions?: {
     projectionYears: number;

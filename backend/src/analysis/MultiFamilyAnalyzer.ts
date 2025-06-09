@@ -12,31 +12,32 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
   }
 
   protected calculateOperatingExpenses(grossIncome: number): number {
-    const { purchasePrice, propertyTaxRate, insuranceRate } = this.data;
+    const { purchasePrice, propertyTaxRate, insuranceRate, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
     
     // Calculate base expenses
     const propertyTax = purchasePrice * (propertyTaxRate / 100);
     const insurance = purchasePrice * (insuranceRate / 100);
-    const propertyManagement = grossIncome * (this.data.propertyManagement / 100);
+    const propertyManagement = grossIncome * (propertyManagementRate / 100);
     const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
     
-    // Common area expenses - sum up all common area related expenses
-    const commonAreaTotal = (
-      (this.data.utilities || 0) +
-      (this.data.commonAreaElectricity || 0) +
-      (this.data.landscaping || 0) +
-      (this.data.waterSewer || 0) +
-      (this.data.garbage || 0) +
-      (this.data.marketingAndAdvertising || 0)
-    );
+    // Calculate maintenance based on per-unit cost
+    const maintenance = (maintenanceCostPerUnit || 100) * totalUnits * 12;
     
-    // Repairs and maintenance
-    const repairsAndMaintenance = this.data.repairsAndMaintenance || 0;
+    // Common area expenses from commonAreaUtilities if present
+    let commonAreaTotal = 0;
+    if (this.data.commonAreaUtilities) {
+      commonAreaTotal = 
+        (this.data.commonAreaUtilities.electric || 0) +
+        (this.data.commonAreaUtilities.water || 0) +
+        (this.data.commonAreaUtilities.gas || 0) +
+        (this.data.commonAreaUtilities.trash || 0);
+    }
     
-    // Capital expenditures
-    const capEx = this.data.capEx || grossIncome * 0.07; // Use provided capEx or default to 7% of gross income
+    // Use a default cap expenditure rate if not provided
+    const capExRate = 0.05; // 5% of gross income as default
+    const capEx = grossIncome * capExRate;
 
-    return propertyTax + insurance + propertyManagement + vacancy + commonAreaTotal + repairsAndMaintenance + capEx;
+    return propertyTax + insurance + propertyManagement + vacancy + maintenance + commonAreaTotal + capEx;
   }
 
   protected calculatePropertySpecificMetrics(): MultiFamilyMetrics {
@@ -48,11 +49,19 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
 
+    // Calculate IRR or use a default if calculation fails
+    let irr = -99;
+    try {
+      irr = FinancialCalculations.calculateIRR(this.getIRRCashFlows());
+    } catch (error) {
+      console.error('Error calculating IRR:', error);
+    }
+
     const metrics: MultiFamilyMetrics = {
       noi,
       capRate: this.calculateCapRate(noi),
       cashOnCashReturn: this.calculateCashOnCashReturn(cashFlow, totalInvestment),
-      irr: FinancialCalculations.calculateIRR(this.getIRRCashFlows()),
+      irr: irr,
       dscr: this.calculateDSCR(noi, annualDebtService),
       operatingExpenseRatio: FinancialCalculations.calculateOperatingExpenseRatio(
         operatingExpenses,
@@ -77,42 +86,75 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
   }
 
   protected getExpenseBreakdown(grossIncome: number): ExpenseBreakdown {
-    const baseExpenses = super.getExpenseBreakdown(grossIncome);
+    const { purchasePrice, propertyTaxRate, insuranceRate, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
+    
+    // Calculate monthly expenses
+    const propertyTax = (purchasePrice * (propertyTaxRate / 100)) / 12;
+    const insurance = (purchasePrice * (insuranceRate / 100)) / 12;
+    const propertyManagement = (grossIncome * (propertyManagementRate / 100)) / 12;
+    const vacancy = (grossIncome * (this.assumptions.vacancyRate / 100)) / 12;
+    const maintenance = ((maintenanceCostPerUnit || 100) * totalUnits);
+    
+    // Common area utilities
+    let utilities = 0;
+    let commonAreaElectricity = 0;
+    let waterSewer = 0;
+    let garbage = 0;
+    
+    if (this.data.commonAreaUtilities) {
+      commonAreaElectricity = this.data.commonAreaUtilities.electric || 0;
+      waterSewer = this.data.commonAreaUtilities.water || 0;
+      utilities = this.data.commonAreaUtilities.gas || 0;
+      garbage = this.data.commonAreaUtilities.trash || 0;
+    }
+    
+    // CapEx - default to 5% of monthly gross income
+    const capEx = (grossIncome / 12) * 0.05;
+    
     return {
-      ...baseExpenses,
-      utilities: (this.data.utilities || 0) / 12,
-      commonAreaElectricity: (this.data.commonAreaElectricity || 0) / 12,
-      landscaping: (this.data.landscaping || 0) / 12,
-      waterSewer: (this.data.waterSewer || 0) / 12,
-      garbage: (this.data.garbage || 0) / 12,
-      marketingAndAdvertising: (this.data.marketingAndAdvertising || 0) / 12,
-      repairsAndMaintenance: (this.data.repairsAndMaintenance || 0) / 12,
-      capEx: (this.data.capEx || 0) / 12
+      propertyTax,
+      insurance,
+      maintenance,
+      propertyManagement,
+      vacancy,
+      utilities,
+      commonAreaElectricity,
+      landscaping: 0,
+      waterSewer,
+      garbage,
+      marketingAndAdvertising: 0,
+      repairsAndMaintenance: maintenance,
+      capEx,
+      other: 0
     };
   }
 
   private calculateCommonAreaExpenseRatio(): number {
+    if (!this.data.commonAreaUtilities || !this.data.totalSqft) return 0;
+    
     const commonAreaExpenses = 
-      (this.data.utilities || 0) +
-      (this.data.commonAreaElectricity || 0) +
-      (this.data.landscaping || 0) +
-      (this.data.waterSewer || 0) +
-      (this.data.garbage || 0);
-    return (commonAreaExpenses / this.data.totalSqft) * 100;
+      (this.data.commonAreaUtilities.electric || 0) +
+      (this.data.commonAreaUtilities.water || 0) +
+      (this.data.commonAreaUtilities.gas || 0) +
+      (this.data.commonAreaUtilities.trash || 0);
+      
+    return this.data.totalSqft > 0 ? (commonAreaExpenses / this.data.totalSqft) * 100 : 0;
   }
 
   private calculateUnitMixEfficiency(): number {
     const totalRentPotential = this.data.unitTypes.reduce((total, unit) => {
       return total + (unit.monthlyRent * unit.count * 12);
     }, 0);
-    return (totalRentPotential / this.data.totalSqft) * 100;
+    
+    return this.data.totalSqft > 0 ? (totalRentPotential / this.data.totalSqft) * 100 : 0;
   }
 
   private calculateEconomicVacancyRate(grossIncome: number): number {
     const potentialIncome = this.data.unitTypes.reduce((total, unit) => {
       return total + (unit.monthlyRent * unit.count * 12);
     }, 0);
-    return ((potentialIncome - grossIncome) / potentialIncome) * 100;
+    
+    return potentialIncome > 0 ? ((potentialIncome - grossIncome) / potentialIncome) * 100 : 0;
   }
 
   private getIRRCashFlows(): number[] {

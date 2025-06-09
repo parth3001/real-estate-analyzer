@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import { TrendingUp, TrendingDown, Save } from '@mui/icons-material';
 import { AnalysisResult } from '../types/analysisTypes';
+import { dealDAO } from '../services/dao/DealDAO';
+import { DealData } from '../types/deal';
 
 interface PropertyResultsProps {
   analysisData: AnalysisResult;
@@ -48,6 +50,63 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Add an interface for the saved analysis structure
+interface SavedAnalysis {
+  id: string;
+  propertyName: string;
+  propertyType: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  purchasePrice: number;
+  downPayment: number;
+  monthlyRent: number;
+  units: number;
+  capRate: number;
+  cashOnCash: number;
+  noi: number;
+  investmentScore?: number;
+  dateCreated: string;
+  rawData: Record<string, unknown>;
+}
+
+// Add an proper interface for the deal data being sent to the backend
+interface DealDataForBackend {
+  _id?: string;
+  propertyName: string;
+  propertyType: string;
+  propertyAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  purchasePrice: number;
+  downPayment: number;
+  interestRate: number;
+  loanTerm: number;
+  monthlyRent: number;
+  squareFootage: number;
+  bedrooms: number;
+  bathrooms: number;
+  yearBuilt: number;
+  propertyTaxRate: number;
+  insuranceRate: number;
+  maintenanceCost: number;
+  propertyManagementRate: number;
+  analysis: {
+    monthlyAnalysis: Record<string, unknown>;
+    annualAnalysis: Record<string, unknown>;
+    longTermAnalysis: Record<string, unknown>;
+    keyMetrics: Record<string, unknown>;
+    aiInsights: Record<string, unknown>;
+  };
+  longTermAssumptions: Record<string, unknown>;
+}
+
 // Helper function to format currency values
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -71,82 +130,108 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
     setTabValue(newValue);
   };
 
-  // Function to save the analysis to localStorage
-  const saveAnalysis = () => {
+  // Use useEffect for logging
+  useEffect(() => {
+    console.log('Analysis Data:', analysisData);
+    if (analysisData.longTermAnalysis) {
+      console.log('Long Term Analysis:', analysisData.longTermAnalysis);
+    }
+  }, [analysisData]);
+
+  // Function to save the analysis to MongoDB using the DAO
+  const saveAnalysis = async () => {
     try {
-      // Check if we're editing an existing property
-      const editingId = localStorage.getItem('currentEditAnalysisId');
-      
-      // Generate a unique ID for new analyses or use existing ID for edits
-      const id = editingId || `property-${Date.now()}`;
-      
       // Extract essential data
       const propertyDetails = analysisData.propertyDetails || {};
-      const annualAnalysis = analysisData.annualAnalysis || {};
-      const keyMetrics = analysisData.keyMetrics || {};
-      const aiInsights = analysisData.aiInsights || {};
       
-      // Create a FLAT data structure for easy display on dashboard
-      const analysisToSave = {
-        id,
-        propertyName: propertyDetails.propertyName || 'Property Analysis',
-        propertyType: propertyDetails.propertyType === 'MF' ? 'MF' : 'SFR',
-        
-        // Financial data at the top level
-        purchasePrice: Number(propertyDetails.purchasePrice) || 0,
-        downPayment: Number(propertyDetails.downPayment) || 0,
-        monthlyRent: Number(propertyDetails.monthlyRent) || 0,
-        units: Number(propertyDetails.units || propertyDetails.totalUnits) || 1,
-        
-        // Address at the top level
-        address: propertyDetails.propertyAddress || { 
-          street: '', city: '', state: '', zipCode: '' 
-        },
-        
-        // Key metrics at the top level
-        capRate: Number(keyMetrics.capRate || annualAnalysis.capRate) || 0,
-        cashOnCash: Number(keyMetrics.cashOnCashReturn || annualAnalysis.cashOnCashReturn) || 0,
-        noi: Number(keyMetrics.annualNOI || annualAnalysis.annualNOI) || 0,
-        investmentScore: typeof aiInsights.investmentScore === 'number' ? aiInsights.investmentScore : 0,
-        
-        // Raw data for future reference
-        rawData: analysisData,
-        
-        dateCreated: new Date().toISOString()
+      // Check if we're editing an existing deal
+      const editingDealId = localStorage.getItem('currentEditAnalysisId');
+      console.log('Editing deal ID:', editingDealId);
+      
+      // Ensure property address has all required fields
+      const propertyAddress = {
+        street: propertyDetails.propertyAddress?.street || '123 Main St',
+        city: propertyDetails.propertyAddress?.city || 'San Francisco',
+        state: propertyDetails.propertyAddress?.state || 'CA',
+        zipCode: propertyDetails.propertyAddress?.zipCode || '94103'
       };
       
-      // Get existing saved analyses
-      const existingSavedString = localStorage.getItem('savedAnalyses');
-      const existingSaved = existingSavedString ? JSON.parse(existingSavedString) : [];
-      
-      // If we're editing, update the existing analysis instead of adding a new one
-      let updatedSaved;
-      if (editingId) {
-        // Replace the existing analysis with the updated one
-        updatedSaved = existingSaved.map((analysis: Record<string, unknown>) => 
-          analysis.id === editingId ? analysisToSave : analysis
-        );
+      // Format data for the DAO
+      const dealData: DealData = {
+        id: editingDealId || undefined,
+        propertyName: propertyDetails.propertyName || 'Property Analysis',
+        propertyType: propertyDetails.propertyType === 'MF' ? 'MF' : 'SFR',
+        propertyAddress: propertyAddress,
+        purchasePrice: Number(propertyDetails.purchasePrice) || 0,
+        downPayment: Number(propertyDetails.downPayment) || 0,
+        interestRate: Number(propertyDetails.interestRate) || 0,
+        loanTerm: Number(propertyDetails.loanTerm) || 0,
+        propertyTaxRate: Number(propertyDetails.propertyTaxRate) || 0,
+        insuranceRate: Number(propertyDetails.insuranceRate) || 0,
+        propertyManagementRate: Number(propertyDetails.propertyManagementRate) || 0,
+        yearBuilt: Number(propertyDetails.yearBuilt) || 0,
         
-        // Show confirmation for update
-        alert('Analysis updated successfully!');
-      } else {
-        // Add as a new analysis
-        updatedSaved = [...existingSaved, analysisToSave];
-        alert('Analysis saved successfully!');
+        // Add property type specific fields
+        ...(propertyDetails.propertyType === 'MF' ? {
+          totalUnits: Number(propertyDetails.totalUnits) || 0,
+          totalSqft: Number(propertyDetails.totalSqft) || 0,
+          maintenanceCostPerUnit: Number(propertyDetails.maintenanceCostPerUnit) || 0,
+          unitTypes: propertyDetails.unitTypes || [],
+          commonAreaUtilities: propertyDetails.commonAreaUtilities || {
+            electric: 0,
+            water: 0,
+            gas: 0,
+            trash: 0
+          },
+          longTermAssumptions: {
+            projectionYears: Number(propertyDetails.longTermAssumptions?.projectionYears) || 10,
+            annualRentIncrease: Number(propertyDetails.longTermAssumptions?.annualRentIncrease) || 2,
+            annualPropertyValueIncrease: Number(propertyDetails.longTermAssumptions?.annualPropertyValueIncrease) || 3,
+            sellingCostsPercentage: Number(propertyDetails.longTermAssumptions?.sellingCostsPercentage) || 6,
+            inflationRate: Number(propertyDetails.longTermAssumptions?.inflationRate) || 2,
+            vacancyRate: Number(propertyDetails.longTermAssumptions?.vacancyRate) || 5,
+            capitalExpenditureRate: Number(propertyDetails.longTermAssumptions?.capitalExpenditureRate) || 0,
+            commonAreaMaintenanceRate: Number(propertyDetails.longTermAssumptions?.commonAreaMaintenanceRate) || 0
+          }
+        } : {
+          monthlyRent: Number(propertyDetails.monthlyRent) || 0,
+          squareFootage: Number(propertyDetails.squareFootage) || 0,
+          bedrooms: Number(propertyDetails.bedrooms) || 0,
+          bathrooms: Number(propertyDetails.bathrooms) || 0,
+          maintenanceCost: Number(propertyDetails.maintenanceCost) || 0,
+          longTermAssumptions: {
+            projectionYears: Number(propertyDetails.longTermAssumptions?.projectionYears) || 10,
+            annualRentIncrease: Number(propertyDetails.longTermAssumptions?.annualRentIncrease) || 2,
+            annualPropertyValueIncrease: Number(propertyDetails.longTermAssumptions?.annualPropertyValueIncrease) || 3,
+            sellingCostsPercentage: Number(propertyDetails.longTermAssumptions?.sellingCostsPercentage) || 6,
+            inflationRate: Number(propertyDetails.longTermAssumptions?.inflationRate) || 2,
+            vacancyRate: Number(propertyDetails.longTermAssumptions?.vacancyRate) || 5
+          }
+        })
+      } as DealData;
+      
+      console.log('Saving deal via DAO:', dealData);
+      
+      // Use the DAO to save the deal
+      const savedDeal = await dealDAO.saveDeal(
+        dealData, 
+        analysisData as unknown as import('../types/analysis').Analysis
+      );
+      
+      if (!savedDeal) {
+        throw new Error('Failed to save deal - no response from server');
       }
       
-      // Save back to localStorage
-      localStorage.setItem('savedAnalyses', JSON.stringify(updatedSaved));
+      console.log('Deal saved successfully:', savedDeal);
       
-      // Clear the editing ID from localStorage
-      localStorage.removeItem('currentEditAnalysisId');
-      localStorage.removeItem('currentEditAnalysisData');
+      // Show success message
+      alert(editingDealId ? 'Analysis updated successfully!' : 'Analysis saved successfully to database!');
       
       // Update the UI to show it's been saved
       setSaved(true);
     } catch (error) {
       console.error('Error saving analysis:', error);
-      alert('Failed to save analysis. Please try again.');
+      alert(`Failed to save analysis: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -167,6 +252,7 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
   const keyMetrics = analysisData.keyMetrics || {};
   const annualAnalysis = analysisData.annualAnalysis || {};
   const longTermAnalysis = analysisData.longTermAnalysis || {};
+  const propertyDetails = analysisData.propertyDetails || {};
   
   // Extract values for styling
   const monthlyCashFlow = analysisData.monthlyAnalysis?.cashFlow || 0;
@@ -179,12 +265,43 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
   const irr = longTermAnalysis.returns?.irr || 0;
   const projectionYears = longTermAnalysis.projectionYears || 10;
 
-  // Additional metrics from screenshot
-  const pricePerSqFtPurchase = keyMetrics.pricePerSqFtAtPurchase || 0;
-  const pricePerSqFtSale = keyMetrics.pricePerSqFtAtSale || 0;
-  const avgRentPerSqFt = keyMetrics.avgRentPerSqFt || 0;
+  // Calculate missing metrics if they're not provided
+  const calculatePricePerSqFt = (price: number, sqft: number) => sqft > 0 ? price / sqft : 0;
+  const calculateRentPerSqFt = (rent: number, sqft: number) => sqft > 0 ? rent / sqft : 0;
+  
+  // Additional metrics with proper fallback calculations
+  const purchasePrice = propertyDetails.purchasePrice || 0;
+  const squareFootage = propertyDetails.squareFootage || 0;
+  const monthlyRent = propertyDetails.monthlyRent || 0;
+  const downPayment = propertyDetails.downPayment || 0;
+  const closingCosts = propertyDetails.closingCosts || 0;
+  
+  // Calculate if not available in metrics
+  const pricePerSqFtPurchase = keyMetrics.pricePerSqFtAtPurchase || 
+                              (squareFootage > 0 ? calculatePricePerSqFt(purchasePrice, squareFootage) : 0);
+  
+  const projectedSalePrice = longTermAnalysis.exitAnalysis?.projectedSalePrice || 0;
+  const pricePerSqFtSale = keyMetrics.pricePerSqFtAtSale || 
+                           (squareFootage > 0 ? calculatePricePerSqFt(projectedSalePrice, squareFootage) : 0);
+  
+  const avgRentPerSqFt = keyMetrics.avgRentPerSqFt || 
+                         (squareFootage > 0 ? calculateRentPerSqFt(monthlyRent * 12, squareFootage) : 0);
+  
   const totalReturn = longTermAnalysis.returns?.totalReturn || 0;
-  const totalInvestment = annualAnalysis.totalInvestment || 0;
+  const totalInvestment = annualAnalysis.totalInvestment || downPayment + closingCosts;
+  
+  // Log extracted metrics to debug
+  console.log('Extracted metrics:', {
+    purchasePrice,
+    squareFootage,
+    monthlyRent,
+    downPayment,
+    closingCosts,
+    pricePerSqFtPurchase,
+    pricePerSqFtSale,
+    avgRentPerSqFt,
+    totalInvestment
+  });
   
   // Investment score
   const investmentScore = analysisData.aiInsights?.investmentScore || 0;
@@ -422,27 +539,27 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
                 </TableRow>
                 <TableRow>
                   <TableCell>Vacancy Loss</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.vacancy || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.breakdown?.vacancy || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Property Tax</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.propertyTax || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.breakdown?.propertyTax || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Insurance</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.insurance || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.breakdown?.insurance || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Maintenance</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.maintenance || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.breakdown?.maintenance || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Property Management</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.propertyManagement || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.breakdown?.propertyManagement || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Mortgage Payment</TableCell>
-                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.mortgage?.total || 0)}</TableCell>
+                  <TableCell align="right">-{formatCurrency(analysisData.monthlyAnalysis?.expenses?.debt || 0)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ borderTop: '2px solid #ddd' }}><strong>Net Cash Flow</strong></TableCell>
@@ -483,29 +600,35 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({ analysisData }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(longTermAnalysis.yearlyProjections || []).map((yearData, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{yearData.year}</TableCell>
-                    <TableCell>{formatCurrency(yearData.propertyValue || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.grossRent || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.propertyTax || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.insurance || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.maintenance || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.propertyManagement || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.vacancy || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.operatingExpenses || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.noi || 0)}</TableCell>
-                    <TableCell>{formatCurrency(yearData.debtService || 0)}</TableCell>
-                    <TableCell 
-                      sx={{ 
-                        color: (yearData.cashFlow || 0) >= 0 ? 'success.main' : 'error.main',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {formatCurrency(yearData.cashFlow || 0)}
-                    </TableCell>
+                {!longTermAnalysis.yearlyProjections || longTermAnalysis.yearlyProjections.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} align="center">No annual projections data available</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  longTermAnalysis.yearlyProjections.map((yearData, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{yearData.year}</TableCell>
+                      <TableCell>{formatCurrency(yearData.propertyValue || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.grossRent || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.propertyTax || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.insurance || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.maintenance || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.propertyManagement || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.vacancy || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.operatingExpenses || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.noi || 0)}</TableCell>
+                      <TableCell>{formatCurrency(yearData.debtService || 0)}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          color: (yearData.cashFlow || 0) >= 0 ? 'success.main' : 'error.main',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {formatCurrency(yearData.cashFlow || 0)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

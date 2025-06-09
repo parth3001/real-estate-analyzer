@@ -49,34 +49,35 @@ export const analyzeProperty = async (propertyData: PropertyData): Promise<Analy
     const formattedData = {
       propertyType: 'SFR',
       propertyAddress: propertyData.propertyAddress,
-      purchasePrice: propertyData.purchasePrice,
-      downPayment: propertyData.downPayment,
-      interestRate: propertyData.interestRate,
-      loanTerm: propertyData.loanTerm,
-      monthlyRent: propertyData.monthlyRent,
-      propertyTaxRate: propertyData.propertyTaxRate,
-      insuranceRate: propertyData.insuranceRate,
-      propertyManagementRate: propertyData.propertyManagementRate,
-      squareFootage: propertyData.squareFootage,
-      bedrooms: propertyData.bedrooms,
-      bathrooms: propertyData.bathrooms,
-      yearBuilt: propertyData.yearBuilt,
-      maintenanceCost: propertyData.maintenanceCost,
+      purchasePrice: Number(propertyData.purchasePrice) || 0,
+      downPayment: Number(propertyData.downPayment) || 0,
+      interestRate: Number(propertyData.interestRate) || 0,
+      loanTerm: Number(propertyData.loanTerm) || 0,
+      monthlyRent: Number(propertyData.monthlyRent) || 0,
+      propertyTaxRate: Number(propertyData.propertyTaxRate) || 0,
+      insuranceRate: Number(propertyData.insuranceRate) || 0,
+      propertyManagementRate: Number(propertyData.propertyManagementRate) || 0,
+      squareFootage: Number(propertyData.squareFootage) || 0,
+      bedrooms: Number(propertyData.bedrooms) || 0,
+      bathrooms: Number(propertyData.bathrooms) || 0,
+      yearBuilt: Number(propertyData.yearBuilt) || 0,
+      // Convert monthly maintenance to annual
+      maintenanceCost: Number(propertyData.maintenanceCost) * 12 || 0,
       propertyName: propertyData.propertyName,
       longTermAssumptions: {
-        projectionYears: propertyData.projectionYears || 10,
-        annualRentIncrease: propertyData.annualRentIncrease || 2,
-        annualPropertyValueIncrease: propertyData.annualPropertyValueIncrease || 3,
-        sellingCostsPercentage: propertyData.sellingCostsPercentage || 6,
-        inflationRate: propertyData.inflationRate || 2,
-        vacancyRate: propertyData.vacancyRate || 5
+        projectionYears: Number(propertyData.projectionYears) || 10,
+        annualRentIncrease: Number(propertyData.annualRentIncrease) || 2,
+        annualPropertyValueIncrease: Number(propertyData.annualPropertyValueIncrease) || 3,
+        sellingCostsPercentage: Number(propertyData.sellingCostsPercentage) || 6,
+        inflationRate: Number(propertyData.inflationRate) || 2,
+        vacancyRate: Number(propertyData.vacancyRate) || 5
       }
     };
 
-    const response = await api.post('/deals/analyze', {
-      propertyType: 'SFR',
-      propertyData: formattedData
-    });
+    console.log('Sending analysis request with data:', formattedData);
+
+    // Send the formatted data directly in the request body
+    const response = await api.post('/deals/analyze', formattedData);
     
     return response.data as AnalysisResult;
   } catch (error) {

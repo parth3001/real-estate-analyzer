@@ -7,6 +7,8 @@ import path from 'path';
 import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
+import { connectToDatabase } from './config/database';
+import { checkModels, checkCollections } from './utils/modelCheck';
 
 const envPath = path.resolve(__dirname, '../.env');
 const result = dotenv.config({ path: envPath });
@@ -23,7 +25,8 @@ if (result.error) {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'exists' : 'missing',
     OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
     OPENAI_API_KEY_START: process.env.OPENAI_API_KEY?.substring(0, 10),
-    CORS_ORIGIN: process.env.CORS_ORIGIN
+    CORS_ORIGIN: process.env.CORS_ORIGIN,
+    MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing'
   });
 }
 
@@ -48,7 +51,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
       PORT: process.env.PORT,
       OPENAI_API_KEY_EXISTS: !!process.env.OPENAI_API_KEY,
       OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
-      CORS_ORIGIN: process.env.CORS_ORIGIN
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+      MONGODB_URI_EXISTS: !!process.env.MONGODB_URI
     }
   });
 });
@@ -59,15 +63,28 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(port, () => {
-  logger.info(`🚀 Server running on port ${port}`);
-  // Run API smoke tests after server starts
-  import('./testApiOnStartup').then(mod => {
-    mod.runApiSmokeTests().catch((err: any) => {
-      logger.error('API smoke tests failed:', err);
+// Connect to MongoDB and start server
+connectToDatabase()
+  .then(async () => {
+    // Check if models are properly loaded
+    checkModels();
+    
+    // Check if collections exist
+    await checkCollections();
+    
+    app.listen(port, () => {
+      logger.info(`🚀 Server running on port ${port}`);
+      // Run API smoke tests after server starts
+      import('./testApiOnStartup').then(mod => {
+        mod.runApiSmokeTests().catch((err: any) => {
+          logger.error('API smoke tests failed:', err);
+        });
+      }).catch((err: any) => {
+        logger.error('Could not import API smoke test module:', err);
+      });
     });
-  }).catch((err: any) => {
-    logger.error('Could not import API smoke test module:', err);
-  });
-}); 
+  })
+  .catch(err => {
+    logger.error('Failed to connect to MongoDB. Server not started:', err);
+    process.exit(1);
+  }); 

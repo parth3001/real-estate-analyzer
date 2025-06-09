@@ -7,8 +7,14 @@
 
 import { Analysis } from '../types/analysis';
 
-// Base API URL from environment or default
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+// Fix environment variable access to be compatible with both CRA and Vite
+const API_URL = 
+  // Try Vite style env vars
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 
+  // Try CRA style env vars
+  (typeof process !== 'undefined' && process.env?.REACT_APP_API_URL) || 
+  // Fallback
+  'http://localhost:3001';
 
 /**
  * Analyze a property deal

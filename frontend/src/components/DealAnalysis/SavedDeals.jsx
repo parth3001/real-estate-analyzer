@@ -14,38 +14,82 @@ import {
   Chip,
   Tooltip,
   ButtonGroup,
+  CircularProgress
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Home as HomeIcon, Apartment as ApartmentIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { DealService } from '../../services/dealService';
 
 const SavedDeals = () => {
   const [savedDeals, setSavedDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const deals = JSON.parse(localStorage.getItem('savedDeals') || '[]');
-    setSavedDeals(deals);
-  }, []);
-
-  const handleDelete = (index) => {
-    const updatedDeals = savedDeals.filter((_, i) => i !== index);
-    localStorage.setItem('savedDeals', JSON.stringify(updatedDeals));
-    setSavedDeals(updatedDeals);
+  // Load deals from API/localStorage
+  const loadDeals = async () => {
+    setLoading(true);
+    try {
+      console.log("Loading deals from service");
+      const savedDeals = await DealService.getAllDeals();
+      console.log("Loaded deals:", savedDeals);
+      setSavedDeals(savedDeals);
+    } catch (error) {
+      console.error('Error loading deals:', error);
+      setError('Failed to load deals. ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (deal) => {
-    // Determine if this is a multi-family deal by checking for unit types
-    const isMultiFamilyDeal = deal.data.unitTypes && Array.isArray(deal.data.unitTypes);
-    
-    if (isMultiFamilyDeal) {
-      localStorage.setItem('currentMultiFamilyDeal', JSON.stringify({
-        name: deal.name,
-        data: deal.data
-      }));
-      navigate('/analyze-multifamily');
-    } else {
-      localStorage.setItem('currentDeal', JSON.stringify(deal));
-      navigate('/analyze');
+  // Handle deal deletion
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this deal?')) {
+      try {
+        console.log("Deleting deal:", id);
+        const success = await DealService.deleteDeal(id);
+        
+        if (success) {
+          // Update local state after successful deletion
+          setSavedDeals((prevDeals) => prevDeals.filter((deal) => deal.id !== id));
+          setError('Deal deleted successfully');
+        } else {
+          throw new Error('Failed to delete deal');
+        }
+      } catch (error) {
+        console.error('Error deleting deal:', error);
+        setError('Failed to delete deal. ' + error.message);
+      }
+    }
+  };
+
+  // Handle edit deal
+  const handleEdit = async (deal) => {
+    try {
+      console.log("Editing deal:", deal);
+      // First, make sure we have the full deal data from the service
+      const fullDeal = await DealService.getDealById(deal.id);
+      
+      if (!fullDeal) {
+        throw new Error('Could not find deal');
+      }
+      
+      console.log("Full deal data:", fullDeal);
+      
+      // Set this deal as current deal in the service
+      await DealService.setCurrentDeal(fullDeal);
+      
+      // Navigate to the appropriate form based on property type
+      if (fullDeal.type === 'SFR') {
+        navigate('/sfr-analysis?id=' + fullDeal.id);
+      } else if (fullDeal.type === 'MF') {
+        navigate('/multi-family-analysis?id=' + fullDeal.id);
+      } else {
+        navigate('/deal-analysis?id=' + fullDeal.id);
+      }
+    } catch (error) {
+      console.error('Error editing deal:', error);
+      setError('Failed to edit deal. ' + error.message);
     }
   };
 
@@ -59,14 +103,17 @@ const SavedDeals = () => {
   };
 
   const getDealType = (deal) => {
-    if (deal.data.unitTypes && Array.isArray(deal.data.unitTypes)) {
-      return 'multifamily';
+    if (deal.type) {
+      return deal.type.toLowerCase();
+    }
+    if (deal.data && deal.data.unitTypes && Array.isArray(deal.data.unitTypes)) {
+      return 'mf';
     }
     return 'sfr';
   };
 
   const getTotalUnits = (deal) => {
-    if (getDealType(deal) === 'multifamily' && deal.data.totalUnits) {
+    if (getDealType(deal) === 'mf' && deal.data && deal.data.totalUnits) {
       return deal.data.totalUnits;
     }
     return 1; // Single-family is 1 unit
@@ -74,7 +121,9 @@ const SavedDeals = () => {
 
   // Get monthly rent for either property type
   const getMonthlyRent = (deal) => {
-    if (getDealType(deal) === 'multifamily') {
+    if (!deal.data) return 0;
+    
+    if (getDealType(deal) === 'mf') {
       // For multi-family, sum all unit rents
       if (deal.data.unitTypes && Array.isArray(deal.data.unitTypes)) {
         return deal.data.unitTypes.reduce((total, unit) => {
@@ -89,12 +138,41 @@ const SavedDeals = () => {
   };
 
   const createNewDeal = (type) => {
-    if (type === 'multifamily') {
+    if (type === 'mf') {
       navigate('/analyze-multifamily');
     } else {
       navigate('/analyze');
     }
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+        <CircularProgress />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading saved deals...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Saved Deals
+        </Typography>
+        <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
+          <Typography variant="h6" color="error.dark">
+            Error: {error}
+          </Typography>
+          <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
+            Retry
+          </Button>
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -116,7 +194,7 @@ const SavedDeals = () => {
             </Button>
             <Button
               startIcon={<ApartmentIcon />}
-              onClick={() => createNewDeal('multifamily')}
+              onClick={() => createNewDeal('mf')}
             >
               Create Multi-Family Deal
             </Button>
@@ -138,20 +216,20 @@ const SavedDeals = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {savedDeals.map((deal, index) => (
-                <TableRow key={index}>
+              {savedDeals.map((deal) => (
+                <TableRow key={deal.id}>
                   <TableCell>{deal.name}</TableCell>
                   <TableCell>
                     <Chip 
-                      icon={getDealType(deal) === 'multifamily' ? <ApartmentIcon /> : <HomeIcon />}
-                      label={getDealType(deal) === 'multifamily' ? 'Multi-Family' : 'Single Family'} 
+                      icon={getDealType(deal) === 'mf' ? <ApartmentIcon /> : <HomeIcon />}
+                      label={getDealType(deal) === 'mf' ? 'Multi-Family' : 'Single Family'} 
                       size="small" 
-                      color={getDealType(deal) === 'multifamily' ? 'primary' : 'default'}
+                      color={getDealType(deal) === 'mf' ? 'primary' : 'default'}
                     />
                   </TableCell>
                   <TableCell>{getTotalUnits(deal)}</TableCell>
-                  <TableCell>{formatCurrency(deal.data.purchasePrice || 0)}</TableCell>
-                  <TableCell>{formatCurrency(deal.data.downPayment || 0)}</TableCell>
+                  <TableCell>{formatCurrency(deal.data?.purchasePrice || 0)}</TableCell>
+                  <TableCell>{formatCurrency(deal.data?.downPayment || 0)}</TableCell>
                   <TableCell>{formatCurrency(getMonthlyRent(deal))}</TableCell>
                   <TableCell>{new Date(deal.savedAt).toLocaleDateString()}</TableCell>
                   <TableCell>
@@ -166,7 +244,7 @@ const SavedDeals = () => {
                     <Tooltip title="Delete Deal">
                       <IconButton
                         color="error"
-                        onClick={() => handleDelete(index)}
+                        onClick={() => handleDelete(deal.id)}
                       >
                         <DeleteIcon />
                       </IconButton>

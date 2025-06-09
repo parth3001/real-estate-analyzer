@@ -10,12 +10,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   }
 
   protected calculateOperatingExpenses(grossIncome: number): number {
-    const { purchasePrice, propertyTaxRate, insuranceRate } = this.data;
+    const { purchasePrice, propertyTaxRate, insuranceRate, maintenanceCost } = this.data;
     
     // Calculate base expenses
     const propertyTax = purchasePrice * (propertyTaxRate / 100);
     const insurance = purchasePrice * (insuranceRate / 100);
-    const maintenance = grossIncome * 0.05; // 5% of gross income for maintenance
+    const maintenance = maintenanceCost || grossIncome * 0.05; // Use provided maintenanceCost or default to 5% of gross income
     const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
     const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
     const capEx = grossIncome * 0.05; // 5% for capital expenditures

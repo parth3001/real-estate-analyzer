@@ -529,34 +529,43 @@ class ValidationError extends APIError {
 - `.env` is loaded at the very top of `src/index.ts` to ensure environment variables are available for all modules.
 - All old JS files in `src/` have been removed to prevent stale code from being loaded.
 
-## Unified Analysis API
-- The `/api/deals/analyze` endpoint now handles both SFR and MF property analysis.
-- The request payload must include a `propertyType` field (`'SFR'` or `'MF'`).
-- The backend branches on `propertyType` and uses the appropriate analyzer.
-- The response always includes:
-  - `monthlyAnalysis`
-  - `annualAnalysis`
-  - `longTermAnalysis`
-  - `keyMetrics`
-  - `aiInsights`
+## Backend Architecture
 
-## Sample Endpoints
-- `/api/deals/sample-sfr`: Returns a valid sample SFR payload.
-- `/api/deals/sample-mf`: Returns a valid sample MF payload.
+### Controller-Service Pattern
+The application follows a modern controller-service pattern:
 
-## Automated Smoke Testing
-- On server startup, a script (`testApiOnStartup.ts`) runs and verifies:
-  - Sample endpoints return valid data.
-  - Analysis endpoint returns all required fields.
-- Logs `[PASS]` or `[FAIL]` for each check.
+```typescript
+// Example: deals.ts controller
+import { Request, Response } from 'express';
+import { analyzeSFRProperty, analyzeMFProperty } from '../services/analysisService';
+import { PropertyType } from '../types/propertyTypes';
 
-## OpenAI Integration
-- Updated to use OpenAI v4+ SDK (`openai.completions.create`).
-- All property access is now safe to prevent runtime errors if analysis structure is missing fields.
+export const analyzeDeal = async (req: Request, res: Response) => {
+  try {
+    const { propertyType, propertyData } = req.body;
+    
+    if (propertyType === 'SFR') {
+      const analysis = await analyzeSFRProperty(propertyData);
+      return res.json(analysis);
+    } else if (propertyType === 'MF') {
+      const analysis = await analyzeMFProperty(propertyData);
+      return res.json(analysis);
+    }
+    
+    return res.status(400).json({ error: 'Invalid property type' });
+  } catch (error) {
+    logger.error('Error analyzing deal:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+```
 
-## API Contract (Unified)
-- All analysis responses include the required fields for both SFR and MF.
-- See `API.md` for full request/response structure.
+Key components:
+- **Controllers**: Handle HTTP requests/responses and parameter validation
+- **Services**: Contain business logic and coordinate between different utilities
+- **Utilities**: Provide reusable functions and calculations
+- **Types**: Define TypeScript interfaces and types for the application
+- **Routes**: Map endpoints to controller methods
 
 ## AI Integration Architecture
 
@@ -666,98 +675,153 @@ Key features:
 
 ## MongoDB Integration
 
-### MongoDB Schema Design
-The application uses Mongoose schemas to define data models:
+The application now uses MongoDB for data persistence instead of the file-based storage system. This provides several benefits:
 
-```javascript
-// Deal.js - MongoDB Schema Definition
-const mongoose = require('mongoose');
+1. **Improved Scalability**: MongoDB can handle large amounts of data and concurrent users.
+2. **Better Query Performance**: MongoDB's query capabilities allow for more complex and efficient data retrieval.
+3. **Schema Flexibility**: The document-based nature of MongoDB works well with the varied property types in the application.
+4. **Data Integrity**: MongoDB's ACID transactions ensure data integrity.
+5. **Replication and Failover**: MongoDB provides built-in replication for high availability.
 
-// Sub-schemas
-const historyEntrySchema = new mongoose.Schema({
-  changeType: {
-    type: String,
-    enum: ['creation', 'update', 'analysis', 'status_change', 'note_added', 'document_added'],
-    required: true
-  },
-  timestamp: { type: Date, default: Date.now },
-  changes: Object,
-  userId: String,
-  note: String
-});
+### MongoDB Schema
 
-const analysisHistorySchema = new mongoose.Schema({
-  timestamp: { type: Date, default: Date.now },
-  metrics: {
-    monthlyMortgage: Number,
-    monthlyExpenses: Object,
-    totalMonthlyExpenses: Number,
-    monthlyCashFlow: Number,
-    annualCashFlow: Number,
-    cashOnCashROI: Number
-  },
-  aiAnalysis: {
-    cashFlowScore: Number,
-    marketTrends: Object,
-    riskAssessment: Object,
-    recommendations: [String]
-  },
-  marketConditions: {
-    interestRates: Number,
-    localMarketIndicators: Object,
-    economicIndicators: Object
-  }
-});
+The application uses a comprehensive MongoDB schema for deal data:
 
-// Main Deal schema (SFR and MF properties)
-const dealSchema = new mongoose.Schema({
-  // Common fields
+```typescript
+const DealSchema = new Schema({
+  propertyName: { type: String, required: true },
+  propertyType: { type: String, enum: ['SFR', 'MF'], required: true },
   propertyAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    zipCode: { type: String, required: true },
-    country: { type: String, default: 'USA' }
+    zipCode: { type: String, required: true }
   },
-  propertyType: { 
-    type: String, 
-    enum: ['single_family', 'multi_family', 'condo', 'townhouse', 'commercial', 'land'],
-    required: true 
+  purchasePrice: { type: Number, required: true },
+  // Additional property fields...
+  
+  // Analysis results
+  analysis: {
+    monthlyAnalysis: { /* Monthly analysis fields */ },
+    annualAnalysis: { /* Annual analysis fields */ },
+    longTermAnalysis: { /* Long-term analysis fields */ },
+    keyMetrics: { /* Key metrics fields */ },
+    aiInsights: { /* AI insights fields */ }
   },
-  // ... additional fields
+  
+  // Metadata
+  userId: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 ```
 
-### MongoDB Data Access Patterns
-The application follows a layered architecture for MongoDB access:
+### Repository Pattern
 
-1. **Models Layer**: Mongoose schema definitions
-2. **Contexts Layer**: Business logic and data transformations  
-3. **Protocol Layer**: API routes and request handling
-4. **Storage Layer**: Data persistence operations
+The application uses a repository pattern to interact with MongoDB:
 
-```javascript
-// Storage service example
-const storage = {
-  async getAllDeals() {
-    return await Deal.find().sort({ createdAt: -1 });
-  },
-  
-  async getDealById(id) {
+```typescript
+// Repository example
+export class DealRepository {
+  async findById(id: string): Promise<IDeal | null> {
     return await Deal.findById(id);
-  },
+  }
   
-  async analyzeDeal(dealData) {
-    const dealContext = new DealContext();
-    return await dealContext.analyzeDeal(dealData);
-  },
+  async findAll(userId?: string): Promise<IDeal[]> {
+    const query = userId ? { userId } : {};
+    return await Deal.find(query).sort({ updatedAt: -1 });
+  }
   
-  async updateDealPerformance(id, performanceData) {
-    const dealContext = new DealContext();
-    return await dealContext.updateDealPerformance(id, performanceData);
+  async create(dealData: SFRData | MultiFamilyData, analysis: AnalysisResult<CommonMetrics>, userId?: string): Promise<IDeal> {
+    const newDeal = new Deal({
+      ...dealData,
+      analysis,
+      userId,
+    });
+    return await newDeal.save();
+  }
+  
+  // Additional repository methods...
+}
+```
+
+### Service Layer
+
+The service layer uses the repository to implement business logic:
+
+```typescript
+export class DealService {
+  private dealRepository: DealRepository;
+
+  constructor() {
+    this.dealRepository = new DealRepository();
+  }
+
+  async getDealById(id: string): Promise<IDeal | null> {
+    return await this.dealRepository.findById(id);
+  }
+  
+  async saveDeal(dealData: SFRData | MultiFamilyData, analysis: AnalysisResult<CommonMetrics>, userId?: string): Promise<IDeal> {
+    // If the deal has an ID, update it, otherwise create a new one
+    if (dealData.id) {
+      const updatedDeal = await this.dealRepository.update(dealData.id, dealData, analysis);
+      if (!updatedDeal) {
+        throw new Error(`Deal with ID ${dealData.id} not found`);
+      }
+      return updatedDeal;
+    }
+    
+    return await this.dealRepository.create(dealData, analysis, userId);
+  }
+  
+  // Additional service methods...
+}
+```
+
+### MongoDB Connection Configuration
+
+The application connects to MongoDB using the following configuration:
+
+```typescript
+export const connectToDatabase = async (): Promise<void> => {
+  try {
+    const mongoUri = process.env.MONGODB_URI;
+    
+    // Connection options
+    const options = {
+      autoIndex: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+    
+    // Connect to MongoDB
+    await mongoose.connect(mongoUri, options);
+    logger.info('✅ Connected to MongoDB successfully');
+    
+    // Additional event handlers...
+  } catch (error) {
+    logger.error('Failed to connect to MongoDB:', error);
+    throw error;
   }
 };
 ```
+
+### Setting Up MongoDB
+
+To use MongoDB with the application:
+
+1. Install MongoDB locally or use MongoDB Atlas (cloud-hosted solution).
+2. Create a `.env` file with your MongoDB connection string:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/real-estate-analyzer
+   ```
+   
+   For MongoDB Atlas, use:
+   ```
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/real-estate-analyzer?retryWrites=true&w=majority
+   ```
+
+3. The application will automatically connect to MongoDB on startup.
 
 ## Financial Calculation Engine
 

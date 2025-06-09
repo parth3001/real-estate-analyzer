@@ -14,7 +14,7 @@ import {
   Tab,
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import type { DealData, SFRDealData } from '../../types/deal';
+import type { DealData, SFRDealData, LongTermAssumptions } from '../../types/deal';
 import type { Analysis } from '../../types/analysis';
 import BusinessIcon from '@mui/icons-material/Business';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
@@ -55,10 +55,26 @@ interface DealFormProps {
 
 const theme = createTheme();
 
+// Default long term assumptions for SFR properties
+const DEFAULT_SFR_ASSUMPTIONS: LongTermAssumptions = {
+  projectionYears: 10,
+  annualRentIncrease: 2,
+  annualPropertyValueIncrease: 3,
+  sellingCostsPercentage: 6,
+  inflationRate: 2,
+  vacancyRate: 5,
+};
+
 const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResult }) => {
-  const [dealData, setDealData] = useState<DealData>(() => {
-    if (initialData) {
-      return initialData;
+  const [dealData, setDealData] = useState<SFRDealData>(() => {
+    if (initialData && initialData.propertyType === 'SFR') {
+      // Ensure initialData has longTermAssumptions
+      return {
+        ...initialData,
+        longTermAssumptions: initialData.longTermAssumptions 
+          ? { ...initialData.longTermAssumptions } 
+          : { ...DEFAULT_SFR_ASSUMPTIONS }
+      };
     }
     // Default to SFR data
     return {
@@ -83,16 +99,9 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
       bedrooms: 0,
       bathrooms: 0,
       maintenanceCost: 0,
-      longTermAssumptions: {
-        projectionYears: 10,
-        annualRentIncrease: 2,
-        annualPropertyValueIncrease: 3,
-        sellingCostsPercentage: 6,
-        inflationRate: 2,
-        vacancyRate: 5,
-      },
+      longTermAssumptions: { ...DEFAULT_SFR_ASSUMPTIONS },
       analysisResult: analysisResult || undefined
-    } as SFRDealData;
+    };
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -104,8 +113,26 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setDealData(initialData);
+    // Always ensure dealData has longTermAssumptions
+    setDealData(prev => {
+      // If we already have longTermAssumptions defined, no need to change
+      if (prev.longTermAssumptions) {
+        return prev;
+      }
+      
+      // Otherwise, initialize with default values
+      return {
+        ...prev,
+        longTermAssumptions: DEFAULT_SFR_ASSUMPTIONS
+      };
+    });
+    
+    // If initialData is provided and it's an SFR, update with that data
+    if (initialData && initialData.propertyType === 'SFR') {
+      setDealData({
+        ...initialData,
+        longTermAssumptions: initialData.longTermAssumptions || DEFAULT_SFR_ASSUMPTIONS
+      } as SFRDealData);
     }
   }, [initialData]);
 
@@ -117,6 +144,12 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
     setDealData(prev => {
       const newData = { ...prev };
       const fields = field.split('.');
+      
+      // Special handling for longTermAssumptions
+      if (fields[0] === 'longTermAssumptions' && !newData.longTermAssumptions) {
+        newData.longTermAssumptions = { ...DEFAULT_SFR_ASSUMPTIONS };
+      }
+      
       let current: Record<string, unknown> = newData;
       for (let i = 0; i < fields.length - 1; i++) {
         current[fields[i]] = current[fields[i]] !== undefined ? { ...current[fields[i]] as Record<string, unknown> } : {};
@@ -131,13 +164,54 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(dealData);
+      // Make a deep copy of the dealData to avoid modifying the original state
+      const preparedData = { ...dealData };
+      
+      // Ensure all numeric values are properly converted to numbers for API
+      preparedData.purchasePrice = Number(preparedData.purchasePrice) || 0;
+      preparedData.downPayment = Number(preparedData.downPayment) || 0;
+      preparedData.interestRate = Number(preparedData.interestRate) || 0;
+      preparedData.loanTerm = Number(preparedData.loanTerm) || 30;
+      preparedData.propertyTaxRate = Number(preparedData.propertyTaxRate) || 0;
+      preparedData.insuranceRate = Number(preparedData.insuranceRate) || 0;
+      preparedData.propertyManagementRate = Number(preparedData.propertyManagementRate) || 0;
+      preparedData.yearBuilt = Number(preparedData.yearBuilt) || 0;
+      
+      // Ensure longTermAssumptions is defined
+      preparedData.longTermAssumptions = preparedData.longTermAssumptions 
+        ? { ...preparedData.longTermAssumptions } 
+        : { ...DEFAULT_SFR_ASSUMPTIONS };
+      
+      // Property type specific fields
+      preparedData.monthlyRent = Number(preparedData.monthlyRent) || 0;
+      preparedData.squareFootage = Number(preparedData.squareFootage) || 0;
+      preparedData.bedrooms = Number(preparedData.bedrooms) || 0;
+      preparedData.bathrooms = Number(preparedData.bathrooms) || 0;
+      
+      // Convert monthly maintenanceCost to annual value - this is crucial
+      // First ensure it's a valid number, then multiply by 12
+      const monthlyMaintenance = Number(preparedData.maintenanceCost) || 0;
+      preparedData.maintenanceCost = monthlyMaintenance * 12;
+      console.log(`Converting maintenance: Monthly $${monthlyMaintenance} → Annual $${preparedData.maintenanceCost}`);
+      
+      // Handle long term assumptions
+      preparedData.longTermAssumptions.projectionYears = Number(preparedData.longTermAssumptions.projectionYears) || 10;
+      preparedData.longTermAssumptions.annualRentIncrease = Number(preparedData.longTermAssumptions.annualRentIncrease) || 2;
+      preparedData.longTermAssumptions.annualPropertyValueIncrease = Number(preparedData.longTermAssumptions.annualPropertyValueIncrease) || 3;
+      preparedData.longTermAssumptions.sellingCostsPercentage = Number(preparedData.longTermAssumptions.sellingCostsPercentage) || 6;
+      preparedData.longTermAssumptions.inflationRate = Number(preparedData.longTermAssumptions.inflationRate) || 2;
+      preparedData.longTermAssumptions.vacancyRate = Number(preparedData.longTermAssumptions.vacancyRate) || 5;
+      
+      console.log('Submitting analysis with data:', preparedData);
+      await onSubmit(preparedData);
+      
       setSnackbar({
         open: true,
-        message: 'Analysis completed successfully!',
+        message: 'Analysis completed successfully',
         severity: 'success'
       });
     } catch (error) {
+      console.error('Analysis error:', error);
       setSnackbar({
         open: true,
         message: error instanceof Error ? error.message : 'An error occurred during analysis',
@@ -148,12 +222,106 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
     }
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+  const handleSave = async () => {
+    try {
+      console.log("Saving deal with data:", dealData);
+      
+      // Only save if we have analysis results
+      if (!analysisResult) {
+        setSnackbar({
+          open: true,
+          message: 'Please analyze the deal before saving',
+          severity: 'warning'
+        });
+        return;
+      }
+      
+      // Make a deep copy of the dealData to avoid modifying the original state
+      const preparedData = { ...dealData };
+      
+      // Ensure all numeric values are properly converted to numbers for API
+      preparedData.purchasePrice = Number(preparedData.purchasePrice) || 0;
+      preparedData.downPayment = Number(preparedData.downPayment) || 0;
+      preparedData.interestRate = Number(preparedData.interestRate) || 0;
+      preparedData.loanTerm = Number(preparedData.loanTerm) || 30;
+      preparedData.propertyTaxRate = Number(preparedData.propertyTaxRate) || 0;
+      preparedData.insuranceRate = Number(preparedData.insuranceRate) || 0;
+      preparedData.propertyManagementRate = Number(preparedData.propertyManagementRate) || 0;
+      preparedData.yearBuilt = Number(preparedData.yearBuilt) || 0;
+      
+      // SFR specific fields
+      preparedData.monthlyRent = Number(preparedData.monthlyRent) || 0;
+      preparedData.squareFootage = Number(preparedData.squareFootage) || 0;
+      preparedData.bedrooms = Number(preparedData.bedrooms) || 0;
+      preparedData.bathrooms = Number(preparedData.bathrooms) || 0;
+      
+      // Convert monthly maintenanceCost to annual value - this is crucial
+      // First ensure it's a valid number, then multiply by 12
+      const monthlyMaintenance = Number(preparedData.maintenanceCost) || 0;
+      preparedData.maintenanceCost = monthlyMaintenance * 12;
+      console.log(`Converting maintenance: Monthly $${monthlyMaintenance} → Annual $${preparedData.maintenanceCost}`);
+      
+      // Ensure longTermAssumptions is defined
+      if (!preparedData.longTermAssumptions) {
+        preparedData.longTermAssumptions = { ...DEFAULT_SFR_ASSUMPTIONS };
+      } else {
+        // Create a new object to avoid modifying the existing one
+        preparedData.longTermAssumptions = { ...preparedData.longTermAssumptions };
+        
+        // Handle long term assumptions
+        preparedData.longTermAssumptions.projectionYears = Number(preparedData.longTermAssumptions.projectionYears) || 10;
+        preparedData.longTermAssumptions.annualRentIncrease = Number(preparedData.longTermAssumptions.annualRentIncrease) || 2;
+        preparedData.longTermAssumptions.annualPropertyValueIncrease = Number(preparedData.longTermAssumptions.annualPropertyValueIncrease) || 3;
+        preparedData.longTermAssumptions.sellingCostsPercentage = Number(preparedData.longTermAssumptions.sellingCostsPercentage) || 6;
+        preparedData.longTermAssumptions.inflationRate = Number(preparedData.longTermAssumptions.inflationRate) || 2;
+        preparedData.longTermAssumptions.vacancyRate = Number(preparedData.longTermAssumptions.vacancyRate) || 5;
+      }
+      
+      console.log("Saving prepared data:", preparedData);
+      
+      // Import the DealService
+      const { DealService } = await import('../../services/dealService');
+      
+      // Save the deal using the service
+      const savedDeal = await DealService.saveSFRDeal(preparedData, analysisResult);
+      
+      if (savedDeal) {
+        console.log("Deal saved successfully:", savedDeal);
+        setSnackbar({
+          open: true,
+          message: 'Deal saved successfully to database',
+          severity: 'success'
+        });
+        
+        // Force a refresh of the form with the saved data
+        // This ensures we have the MongoDB ID for future updates
+        if (!dealData.id && savedDeal.id) {
+          console.log("New deal created with ID:", savedDeal.id);
+          // Update form data with the new ID
+          setDealData(prevData => ({
+            ...prevData,
+            id: savedDeal.id
+          }));
+        }
+      } else {
+        throw new Error('Failed to save deal');
+      }
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to save deal',
+        severity: 'error'
+      });
+    }
   };
 
-  const isSFRDeal = (data: DealData): data is SFRDealData => {
-    return data.propertyType === 'SFR';
+  // Function to close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({
+      ...prev,
+      open: false
+    }));
   };
 
   return (
@@ -209,7 +377,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     onChange={(e) => handleChange('propertyAddress.zipCode', e.target.value)}
                     required
                   />
-                  {isSFRDeal(dealData) && (
+                  {dealData.propertyType === 'SFR' && (
                     <>
                       <TextField
                         label="Bedrooms"
@@ -280,7 +448,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
                   />
-                  {isSFRDeal(dealData) && (
+                  {dealData.propertyType === 'SFR' && (
                     <TextField
                       label="Monthly Rent"
                       type="number"
@@ -320,7 +488,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     }}
                     helperText="Annual insurance rate as a percentage of property value"
                   />
-                  {isSFRDeal(dealData) && (
+                  {dealData.propertyType === 'SFR' && (
                     <TextField
                       label="Monthly Maintenance"
                       type="number"
@@ -351,7 +519,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Annual Rent Increase"
                     type="number"
-                    value={dealData.longTermAssumptions.annualRentIncrease}
+                    value={dealData.longTermAssumptions?.annualRentIncrease || 0}
                     onChange={(e) => handleChange('longTermAssumptions.annualRentIncrease', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -361,7 +529,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Annual Property Value Increase"
                     type="number"
-                    value={dealData.longTermAssumptions.annualPropertyValueIncrease}
+                    value={dealData.longTermAssumptions?.annualPropertyValueIncrease || 0}
                     onChange={(e) => handleChange('longTermAssumptions.annualPropertyValueIncrease', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -371,7 +539,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Selling Costs"
                     type="number"
-                    value={dealData.longTermAssumptions.sellingCostsPercentage}
+                    value={dealData.longTermAssumptions?.sellingCostsPercentage || 0}
                     onChange={(e) => handleChange('longTermAssumptions.sellingCostsPercentage', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -381,7 +549,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Inflation Rate"
                     type="number"
-                    value={dealData.longTermAssumptions.inflationRate}
+                    value={dealData.longTermAssumptions?.inflationRate || 0}
                     onChange={(e) => handleChange('longTermAssumptions.inflationRate', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -391,7 +559,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Vacancy Rate"
                     type="number"
-                    value={dealData.longTermAssumptions.vacancyRate}
+                    value={dealData.longTermAssumptions?.vacancyRate || 0}
                     onChange={(e) => handleChange('longTermAssumptions.vacancyRate', Number(e.target.value))}
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -401,7 +569,7 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                     fullWidth
                     label="Projection Years"
                     type="number"
-                    value={dealData.longTermAssumptions.projectionYears}
+                    value={dealData.longTermAssumptions?.projectionYears || 10}
                     onChange={(e) => handleChange('longTermAssumptions.projectionYears', Number(e.target.value))}
                   />
                 </Box>
@@ -412,7 +580,8 @@ const DealForm: React.FC<DealFormProps> = ({ onSubmit, initialData, analysisResu
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => handleChange('savedDeal', true)}
+                  onClick={handleSave}
+                  disabled={isSubmitting}
                 >
                   Save Deal
                 </Button>
