@@ -22,23 +22,32 @@ interface Analysis {
 Represents monthly financial metrics:
 ```typescript
 interface MonthlyAnalysis {
+  income: {
+    gross: number;
+    effective: number;
+  };
   expenses: {
-    rent?: number;
-    propertyTax?: number;
-    insurance?: number;
-    maintenance?: number;
-    propertyManagement?: number;
-    vacancy?: number;
-    realtorBrokerageFee?: number;
-    mortgage?: {
-      total: number;
-      principal: number;
-      interest: number;
+    operating: number;
+    debt: number;
+    total: number;
+    breakdown: {
+      propertyTax: number;
+      insurance: number;
+      maintenance: number;
+      propertyManagement: number;
+      vacancy: number;
+      utilities: number;
+      commonAreaElectricity: number;
+      landscaping: number;
+      waterSewer: number;
+      garbage: number;
+      marketingAndAdvertising: number;
+      repairsAndMaintenance: number;
+      capEx: number;
+      other?: number;
     };
-    total?: number;
   };
   cashFlow: number;
-  cashFlowAfterTax: number;
 }
 ```
 
@@ -46,13 +55,11 @@ interface MonthlyAnalysis {
 Represents annual financial metrics:
 ```typescript
 interface AnnualAnalysis {
-  dscr: number;              // Debt Service Coverage Ratio
-  cashOnCashReturn: number;  // Cash on Cash Return (%)
-  capRate: number;           // Capitalization Rate (%)
-  totalInvestment: number;   // Total Investment Amount
-  annualNOI: number;        // Net Operating Income
-  annualDebtService: number; // Annual Mortgage Payment
-  effectiveGrossIncome: number; // Gross Income after Vacancy
+  income: number;
+  expenses: number;
+  noi: number;
+  debtService: number;
+  cashFlow: number;
 }
 ```
 
@@ -60,20 +67,15 @@ interface AnnualAnalysis {
 Represents long-term projections and returns:
 ```typescript
 interface LongTermAnalysis {
-  yearlyProjections: YearlyProjection[];
-  projectionYears: number;
+  projections: YearlyProjection[];
+  exitAnalysis: ExitAnalysis;
   returns: {
-    irr: number;             // Internal Rate of Return
-    totalCashFlow: number;   // Total Cash Flow over Hold Period
-    totalAppreciation: number; // Total Property Value Appreciation
-    totalReturn: number;     // Total Return on Investment
+    irr: number;
+    totalCashFlow: number;
+    totalAppreciation: number;
+    totalReturn: number;
   };
-  exitAnalysis: {
-    projectedSalePrice: number;
-    sellingCosts: number;
-    mortgagePayoff: number;
-    netProceedsFromSale: number;
-  };
+  projectionYears: number;
 }
 ```
 
@@ -82,23 +84,84 @@ Individual year metrics in long-term analysis:
 ```typescript
 interface YearlyProjection {
   year: number;
-  cashFlow: number;
   propertyValue: number;
+  grossIncome: number;
+  operatingExpenses: number;
+  noi: number;
+  debtService: number;
+  cashFlow: number;
   equity: number;
+  mortgageBalance: number;
+  totalReturn: number;
   propertyTax: number;
   insurance: number;
   maintenance: number;
   propertyManagement: number;
   vacancy: number;
   realtorBrokerageFee: number;
-  operatingExpenses: number;
-  noi: number;
-  debtService: number;
   grossRent: number;
-  mortgageBalance: number;
   appreciation: number;
+}
+```
+
+### Exit Analysis
+```typescript
+interface ExitAnalysis {
+  projectedSalePrice: number;
+  sellingCosts: number;
+  mortgagePayoff: number;
+  netProceedsFromSale: number;
   totalReturn: number;
-  capitalInvestment?: number;
+}
+```
+
+### Common Metrics
+```typescript
+interface CommonMetrics {
+  noi: number;
+  capRate: number;
+  cashOnCashReturn: number;
+  irr: number;
+  dscr: number;
+  operatingExpenseRatio: number;
+}
+```
+
+### Property-Specific Metrics
+
+#### SFR Metrics
+```typescript
+interface SFRMetrics extends CommonMetrics {
+  pricePerSqFt: number;
+  rentPerSqFt: number;
+  grossRentMultiplier: number;
+  afterRepairValueRatio?: number;
+  rehabROI?: number;
+}
+```
+
+#### Multi-Family Metrics
+```typescript
+interface MultiFamilyMetrics extends CommonMetrics {
+  pricePerUnit: number;
+  pricePerSqft: number;
+  noiPerUnit: number;
+  averageRentPerUnit: number;
+  operatingExpensePerUnit: number;
+  commonAreaExpenseRatio: number;
+  unitMixEfficiency: number;
+  economicVacancyRate: number;
+}
+```
+
+### AI Insights
+```typescript
+interface AIInsights {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  investmentScore: number | null;
 }
 ```
 
@@ -124,7 +187,15 @@ interface YearlyProjection {
      maintenance + 
      propertyManagement + 
      vacancy + 
-     realtorBrokerageFee;
+     utilities +
+     // Property-specific expenses
+     commonAreaElectricity +
+     landscaping +
+     waterSewer +
+     garbage +
+     marketingAndAdvertising +
+     repairsAndMaintenance +
+     capEx;
    ```
 
 ### Annual Calculations
@@ -178,7 +249,9 @@ POST /api/deals/analyze
 
 Request Body:
 ```typescript
-interface DealData {
+interface AnalyzeRequest {
+  propertyType: 'SFR' | 'MF';  // Required
+  // Property-specific data
   propertyName: string;
   propertyAddress: {
     street: string;
@@ -190,39 +263,109 @@ interface DealData {
   downPayment: number;
   interestRate: number;
   loanTerm: number;
-  capitalInvestment: number;
-  monthlyRent: number;
-  propertyTaxRate: number;
-  insuranceRate: number;
-  maintenance: number;
-  realtorBrokerageFee: number;
-  sfrDetails: {
-    bedrooms: number;
-    bathrooms: number;
-    squareFootage: number;
-    yearBuilt: number;
-    propertyManagement: {
-      feePercentage: number;
-    };
-    longTermAssumptions: {
-      projectionYears: number;
-      annualRentIncrease: number;
-      annualPropertyValueIncrease: number;
-      sellingCostsPercentage: number;
-      inflationRate: number;
-      vacancyRate: number;
-    };
-  };
+  // Property-type specific fields
+  // For SFR:
+  monthlyRent?: number;
+  squareFootage?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  // For MF:
+  totalUnits?: number;
+  totalSqft?: number;
+  unitTypes?: Array<{
+    type: string;
+    count: number;
+    sqft: number;
+    monthlyRent: number;
+    occupied: number;
+  }>;
+  // Other fields...
 }
 ```
 
 Response: Analysis object (as defined above)
+
+#### Get Sample SFR Data
+```
+GET /api/deals/sample-sfr
+```
+
+Response: Sample single-family property data that can be used for analysis testing
+
+#### Get Sample MF Data
+```
+GET /api/deals/sample-mf
+```
+
+Response: Sample multi-family property data that can be used for analysis testing
+
+### Deal Management
+
+#### Get All Deals
+```
+GET /api/deals
+```
+
+Response: Array of saved deals
+
+#### Get Deal by ID
+```
+GET /api/deals/:id
+```
+
+Parameters:
+- `id`: Deal ID
+
+Response: Complete deal data including analysis
+
+#### Create Deal
+```
+POST /api/deals
+```
+
+Request Body:
+```typescript
+interface SaveDealRequest {
+  dealData: SFRDealData | MultiFamilyDealData;
+  analysisResult: AnalysisResult<KeyMetrics>;
+}
+```
+
+Response: Saved deal with ID
+
+#### Update Deal
+```
+PUT /api/deals/:id
+```
+
+Parameters:
+- `id`: Deal ID
+
+Request Body: Updated deal data
+
+Response: Updated deal
+
+#### Delete Deal
+```
+DELETE /api/deals/:id
+```
+
+Parameters:
+- `id`: Deal ID
+
+Response:
+```typescript
+interface DeleteDealResponse {
+  success: boolean;
+}
+```
 
 ## Error Handling
 
 ### HTTP Status Codes
 - 200: Successful analysis
 - 400: Invalid input data
+- 404: Resource not found
 - 500: Server error during calculation
 
 ### Error Response Format
@@ -237,176 +380,9 @@ interface ErrorResponse {
 }
 ```
 
-## Best Practices
+## Property Data Types
 
-1. **Input Validation**
-   - All monetary values should be positive numbers
-   - Percentages should be between 0 and 100
-   - Required fields must not be null or undefined
-
-2. **Calculation Accuracy**
-   - All monetary calculations should be rounded to 2 decimal places
-   - Percentages should be rounded to 2 decimal places
-   - IRR calculations should use the Newton-Raphson method for accuracy
-
-3. **Default Values**
-   - Vacancy Rate: 5%
-   - Property Management Fee: 8%
-   - Realtor Brokerage Fee: 8.33% (one month's rent)
-   - Loan Term: 30 years
-   - Inflation Rate: 2%
-
-## Component Integration
-
-### AnalysisResults Component
-```typescript
-interface AnalysisResultsProps {
-  analysis: Analysis;
-}
-```
-
-Default values for Analysis object:
-```typescript
-const defaultAnalysis: Analysis = {
-  monthlyAnalysis: {
-    expenses: {},
-    cashFlow: 0,
-    cashFlowAfterTax: 0
-  },
-  annualAnalysis: {
-    dscr: 0,
-    cashOnCashReturn: 0,
-    capRate: 0,
-    totalInvestment: 0,
-    annualNOI: 0,
-    annualDebtService: 0,
-    effectiveGrossIncome: 0
-  },
-  longTermAnalysis: {
-    yearlyProjections: [],
-    projectionYears: 0,
-    returns: {
-      irr: 0,
-      totalCashFlow: 0,
-      totalAppreciation: 0,
-      totalReturn: 0
-    },
-    exitAnalysis: {
-      projectedSalePrice: 0,
-      sellingCosts: 0,
-      mortgagePayoff: 0,
-      netProceedsFromSale: 0
-    }
-  },
-  keyMetrics: {
-    pricePerSqFtAtPurchase: 0,
-    pricePerSqFtAtSale: 0,
-    avgRentPerSqFt: 0
-  }
-};
-```
-
-## AI Integration
-
-### OpenAI Configuration
-```typescript
-interface AIInsights {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  investmentScore: number | null;
-}
-
-// OpenAI client initialization
-const getOpenAIClient = (): OpenAI | null => {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      return null;
-    }
-    return new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
-  } catch (error) {
-    console.error('Error initializing OpenAI:', error);
-    return null;
-  }
-};
-
-// AI Insights Response Format
-interface AIResponse {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  investmentScore: number | null;
-}
-```
-
-### Error Handling Updates
-```typescript
-interface ErrorResponse {
-  error: string;
-  details?: {
-    field: string;
-    message: string;
-  }[];
-  code?: string; // Added for more specific error identification
-}
-
-// Example error responses:
-const aiUnavailableError = {
-  error: 'AI Insights Unavailable',
-  code: 'AI_UNAVAILABLE',
-  details: [{
-    field: 'aiInsights',
-    message: 'AI insights are not available. Please check your OpenAI API key.'
-  }]
-};
-
-const validationError = {
-  error: 'Validation Error',
-  code: 'VALIDATION_ERROR',
-  details: [{
-    field: 'propertyPrice',
-    message: 'Property price must be a positive number'
-  }]
-};
-```
-
-### Deal Analysis Routes
-```typescript
-// POST /api/deals/analyze
-interface AnalyzeRequest {
-  propertyType: 'SFR' | 'MF';
-  propertyData: SFRDealData | MultiFamilyDealData;
-  assumptions: LongTermAssumptions;
-}
-
-// GET /api/deals/:id
-interface GetDealResponse {
-  deal: SavedDeal;
-}
-
-// POST /api/deals/save
-interface SaveDealRequest {
-  dealData: SFRDealData | MultiFamilyDealData;
-  analysisResult: AnalysisResult<KeyMetrics>;
-}
-
-// GET /api/deals
-interface GetDealsResponse {
-  deals: SavedDeal[];
-  total: number;
-}
-
-// DELETE /api/deals/:id
-interface DeleteDealResponse {
-  success: boolean;
-}
-```
-
-### Property Data Types
+### Base Property Data
 ```typescript
 interface BasePropertyData {
   propertyName: string;
@@ -428,7 +404,10 @@ interface PropertyAddress {
   state: string;
   zipCode: string;
 }
+```
 
+### Single-Family Residential (SFR) Data
+```typescript
 interface SFRDealData extends BasePropertyData {
   propertyType: 'SFR';
   monthlyRent: number;
@@ -438,7 +417,10 @@ interface SFRDealData extends BasePropertyData {
   maintenanceCost: number;
   longTermAssumptions: LongTermAssumptions;
 }
+```
 
+### Multi-Family (MF) Data
+```typescript
 interface MultiFamilyDealData extends BasePropertyData {
   propertyType: 'MF';
   totalUnits: number;
@@ -479,92 +461,88 @@ interface CommonAreaUtilities {
 }
 ```
 
-### Analysis Results
+## Best Practices
+
+1. **Input Validation**
+   - All monetary values should be positive numbers
+   - Percentages should be between 0 and 100
+   - Required fields must not be null or undefined
+
+2. **Calculation Accuracy**
+   - All monetary calculations should be rounded to 2 decimal places
+   - Percentages should be rounded to 2 decimal places
+   - IRR calculations should use the Newton-Raphson method for accuracy
+
+3. **Default Values**
+   - Vacancy Rate: 5%
+   - Property Management Fee: 8%
+   - Realtor Brokerage Fee: 8.33% (one month's rent)
+   - Loan Term: 30 years
+   - Inflation Rate: 2%
+   - Projection Years: 10
+   - Property Value Appreciation: 3%
+   - Annual Rent Increase: 3%
+   - Selling Costs: 6%
+
+## AI Integration
+
+### OpenAI Configuration
 ```typescript
-interface AnalysisResult<T extends CommonMetrics> {
-  monthlyAnalysis: MonthlyAnalysis;
-  annualAnalysis: AnnualAnalysis;
-  metrics: T;
-  projections: YearlyProjection[];
-  exitAnalysis: ExitAnalysis;
-  aiInsights?: AIInsights;
-}
+// OpenAI client initialization
+const getOpenAIClient = (): OpenAI | null => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return null;
+    }
+    return new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  } catch (error) {
+    console.error('Error initializing OpenAI:', error);
+    return null;
+  }
+};
+```
 
-interface MonthlyAnalysis {
-  expenses: {
-    propertyTax: number;
-    insurance: number;
-    maintenance: number;
-    propertyManagement: number;
-    vacancy: number;
-    mortgage: {
-      total: number;
-      principal: number;
-      interest: number;
-    };
-    total: number;
-  };
-  cashFlow: number;
-  cashFlowAfterTax: number;
-}
+### AI Prompts
+The application uses specialized prompts for different property types:
 
-interface AnnualAnalysis {
-  dscr: number;
-  cashOnCashReturn: number;
-  capRate: number;
-  totalInvestment: number;
-  annualNOI: number;
-  annualDebtService: number;
-  effectiveGrossIncome: number;
-}
+1. **SFR Analysis Prompt**
+   - Generates a prompt analyzing single-family properties
+   - Includes key metrics like NOI, Cap Rate, Cash on Cash Return, etc.
+   - Requests a structured JSON response with insights
 
-interface YearlyProjection {
-  year: number;
-  cashFlow: number;
-  propertyValue: number;
-  equity: number;
-  noi: number;
-  debtService: number;
-  grossRent: number;
-  mortgageBalance: number;
-  appreciation: number;
-  totalReturn: number;
-}
+2. **MF Analysis Prompt**
+   - Generates a prompt specifically for multi-family properties
+   - Includes unit mix analysis, NOI per unit, and MF-specific metrics
+   - Requests a structured JSON response with insights
 
-interface ExitAnalysis {
-  projectedSalePrice: number;
-  sellingCosts: number;
-  mortgagePayoff: number;
-  netProceedsFromSale: number;
-}
-
-interface AIInsights {
+### AI Response Format
+```typescript
+interface AIResponse {
   summary: string;
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
-  investmentScore: number;
+  investmentScore: number | null;
+  // Optional MF-specific fields
+  unitMixAnalysis?: string;
+  marketPositionAnalysis?: string;
+  valueAddOpportunities?: string[];
+  recommendedHoldPeriod?: string;
 }
 ```
 
-### Error Responses
+### Error Handling for AI
 ```typescript
-interface ErrorResponse {
-  error: string;
-  code: string;
-  details?: {
-    field: string;
-    message: string;
-  }[];
-}
-
-// Common error codes
-type ErrorCode = 
-  | 'VALIDATION_ERROR'
-  | 'NOT_FOUND'
-  | 'UNAUTHORIZED'
-  | 'INTERNAL_ERROR'
-  | 'AI_UNAVAILABLE';
+// Example AI unavailable response:
+const aiUnavailableResponse = {
+  summary: "AI insights are not available. Please check your OpenAI API key.",
+  strengths: [],
+  weaknesses: [],
+  recommendations: [],
+  investmentScore: null
+};
 ```
 
 ## 2025-06-03 Backend Update
@@ -585,28 +563,46 @@ type ErrorCode =
   - `keyMetrics`
   - `aiInsights`
 
-#### Example Request
+#### Example Request for Unified Endpoint
 ```json
 {
   "propertyType": "SFR",
-  ... // SFR or MF property fields
-}
-```
-
-#### Example Response
-```json
-{
-  "monthlyAnalysis": { ... },
-  "annualAnalysis": { ... },
-  "longTermAnalysis": { ... },
-  "keyMetrics": { ... },
-  "aiInsights": { ... }
+  "propertyName": "123 Main St",
+  "propertyAddress": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "state": "CA",
+    "zipCode": "12345"
+  },
+  "purchasePrice": 300000,
+  "downPayment": 60000,
+  "interestRate": 5.5,
+  "loanTerm": 30,
+  "monthlyRent": 2500,
+  "squareFootage": 1500,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "yearBuilt": 1985,
+  "propertyTaxRate": 1.2,
+  "insuranceRate": 0.5,
+  "propertyManagementRate": 8,
+  "maintenanceCost": 200,
+  "longTermAssumptions": {
+    "projectionYears": 10,
+    "annualRentIncrease": 3,
+    "annualPropertyValueIncrease": 3,
+    "sellingCostsPercentage": 6,
+    "inflationRate": 2,
+    "vacancyRate": 5
+  }
 }
 ```
 
 ### Sample Endpoints
 - `GET /api/deals/sample-sfr`: Returns a valid sample SFR payload.
 - `GET /api/deals/sample-mf`: Returns a valid sample MF payload.
+
+These endpoints are useful for testing the analysis functionality without having to create your own data structure.
 
 ### Automated Smoke Testing
 - On server startup, a script (`testApiOnStartup.ts`) runs and verifies:
@@ -616,4 +612,55 @@ type ErrorCode =
 
 ### OpenAI Integration
 - Uses OpenAI v4+ SDK (`openai.completions.create`).
-- All property access is now safe to prevent runtime errors if analysis structure is missing fields. 
+- All property access is now safe to prevent runtime errors if analysis structure is missing fields.
+
+## Example API Usage
+
+### Analyze a Single-Family Property
+```javascript
+// Request
+fetch('/api/deals/analyze', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    propertyType: 'SFR',
+    propertyName: '123 Main St',
+    propertyAddress: {
+      street: '123 Main St',
+      city: 'Anytown',
+      state: 'CA',
+      zipCode: '12345'
+    },
+    purchasePrice: 300000,
+    downPayment: 60000,
+    interestRate: 5.5,
+    loanTerm: 30,
+    monthlyRent: 2500,
+    squareFootage: 1500,
+    // Other required fields
+  })
+})
+.then(response => response.json())
+.then(analysis => console.log(analysis));
+```
+
+### Get Sample Multi-Family Data and Analyze
+```javascript
+// Request
+fetch('/api/deals/sample-mf')
+.then(response => response.json())
+.then(sampleData => {
+  // Use sample data to test analysis
+  fetch('/api/deals/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(sampleData)
+  })
+  .then(response => response.json())
+  .then(analysis => console.log(analysis));
+});
+``` 

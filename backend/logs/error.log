@@ -28,3 +28,15 @@
 2025-06-07 18:07:57:757 [31merror[39m: [31mError creating deal: Deal validation failed: propertyAddress.zipCode: Path `propertyAddress.zipCode` is required., propertyAddress.state: Path `propertyAddress.state` is required., propertyAddress.city: Path `propertyAddress.city` is required., propertyAddress.street: Path `propertyAddress.street` is required.[39m
 2025-06-07 19:27:51:2751 [31merror[39m: [31mError calling OpenAI API: Request failed with status code 502[39m
 2025-06-07 19:27:51:2751 [31merror[39m: [31mError getting AI insights: Request failed with status code 502[39m
+2025-06-08 19:50:20:5020 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 19:50:22:5022 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 19:50:38:5038 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 19:50:41:5041 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 19:58:11:5811 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:01:36:136 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:05:58:558 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:10:38:1038 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:15:50:1550 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:15:53:1553 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:17:12:1712 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m
+2025-06-08 20:19:47:1947 [31merror[39m: [31myearlyProjections is missing, adding empty array[39m

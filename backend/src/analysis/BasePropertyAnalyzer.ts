@@ -75,25 +75,31 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
     for (let year = 1; year <= this.assumptions.projectionYears; year++) {
       const grossIncome = this.calculateGrossIncome(year);
-      const operatingExpenses = FinancialCalculations.calculateOperatingExpenses(
-        this.calculateOperatingExpenses(grossIncome),
-        this.assumptions.annualExpenseIncrease,
-        year
-      );
+      
+      // Calculate property tax and insurance based on CURRENT property value (not purchase price)
+      const propertyTax = currentPropertyValue * (this.data.propertyTaxRate / 100);
+      const insurance = currentPropertyValue * (this.data.insuranceRate / 100);
+      
+      // Convert monthly maintenance to annual and apply inflation factor for each year
+      const annualMaintenanceCost = this.data.maintenanceCost * 12;
+      const maintenance = annualMaintenanceCost * Math.pow(1 + this.assumptions.annualExpenseIncrease / 100, year - 1);
+      
+      const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
+      const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
+      
+      // Total operating expenses for this year
+      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy;
+      
       const noi = this.calculateNOI(grossIncome, operatingExpenses);
       const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
 
+      // Update property value for this year
       currentPropertyValue *= (1 + this.assumptions.annualPropertyValueIncrease / 100);
 
       const interestPaid = currentLoanBalance * (this.data.interestRate / 100);
       const principalPaid = annualDebtService - interestPaid;
       currentLoanBalance = Math.max(0, currentLoanBalance - principalPaid);
 
-      const propertyTax = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
-      const insurance = this.data.purchasePrice * (this.data.insuranceRate / 100);
-      const maintenance = this.data.maintenanceCost;
-      const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
-      const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
       const realtorBrokerageFee = grossIncome * 0.0833; // One month's rent
       const appreciation = currentPropertyValue - this.data.purchasePrice;
 

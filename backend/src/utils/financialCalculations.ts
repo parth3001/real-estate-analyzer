@@ -120,13 +120,17 @@ export class FinancialCalculations {
     const sellingCostsAmount = propertyValue * (sellingCosts / 100);
     const netProceedsFromSale = projectedEquity - sellingCostsAmount;
     const totalReturn = cumulativeCashFlow + netProceedsFromSale - totalInvestment;
+    
+    // Calculate ROI as a percentage of total investment
+    const returnOnInvestment = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
     return {
       projectedSalePrice: propertyValue,
       sellingCosts: sellingCostsAmount,
       mortgagePayoff: loanBalance,
       netProceedsFromSale,
-      totalReturn
+      totalReturn,
+      returnOnInvestment
     };
   }
 

@@ -1,46 +1,75 @@
-# Getting Started with Create React App
+# Real Estate Analyzer - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
+A comprehensive web application for analyzing real estate investments. This frontend provides a user-friendly interface for evaluating both single-family and multi-family property investments with detailed financial analysis and AI-powered insights.
+
+## Features
+- **Single-Family Analysis**: Analyze SFR properties with detailed financial projections
+- **Multi-Family Analysis**: Evaluate multi-family properties with unit mix optimization
+- **Saved Properties**: Manage and compare saved property analyses
+- **Comprehensive Metrics**: Calculate key investment metrics like Cap Rate, Cash on Cash Return, IRR, and more
+- **AI Insights**: Receive AI-powered investment recommendations and risk analysis
+
+## Tech Stack
+- **React**: UI framework
+- **TypeScript**: Type-safe JavaScript
+- **Material-UI**: UI component library
+- **React Router**: Routing solution
+- **React Query**: Data fetching and caching
+- **Recharts**: Data visualization
+- **Axios**: API client
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18.x or later
+- npm 9.x or later
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/real-estate-analyzer.git
+cd real-estate-analyzer/frontend
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Start the development server
+```bash
+npm run dev
+```
+
+## Project Structure
+```
+frontend/
+├── public/             # Static assets
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── hooks/          # Custom React hooks
+│   ├── pages/          # Page components
+│   ├── services/       # API services
+│   ├── theme/          # UI theme configuration
+│   ├── types/          # TypeScript type definitions
+│   ├── utils/          # Utility functions
+│   ├── App.tsx         # Application root component
+│   └── main.tsx        # Application entry point
+├── package.json        # Project dependencies
+└── vite.config.ts      # Vite configuration
+```
 
 ## Available Scripts
+- `npm run dev`: Start the development server
+- `npm run build`: Build the application for production
+- `npm run preview`: Preview the production build locally
+- `npm run lint`: Lint the codebase
+- `npm run test`: Run tests (when implemented)
 
-In the project directory, you can run:
+## Backend Integration
+The frontend is designed to work with the Real Estate Analyzer backend API. The API endpoints are proxied through the `/api` path in development mode.
 
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.

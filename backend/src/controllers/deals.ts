@@ -250,6 +250,67 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       };
     }
     
+    // Debug log the final analysis structure
+    logger.info('Final analysis structure check:');
+    logger.info('- monthlyAnalysis present:', !!analysis.monthlyAnalysis);
+    logger.info('- annualAnalysis present:', !!analysis.annualAnalysis);
+    logger.info('- longTermAnalysis present:', !!analysis.longTermAnalysis);
+    
+    if (analysis.longTermAnalysis) {
+      logger.info('- longTermAnalysis keys:', Object.keys(analysis.longTermAnalysis));
+      logger.info('- projections present:', !!analysis.longTermAnalysis.projections);
+      logger.info('- projections is array:', Array.isArray(analysis.longTermAnalysis.projections));
+      logger.info('- projections length:', analysis.longTermAnalysis.projections?.length || 0);
+      
+      // Ensure the structure is correct
+      if (!analysis.longTermAnalysis.projections) {
+        logger.error('projections is missing, adding empty array');
+        analysis.longTermAnalysis.projections = [];
+      }
+      
+      if (!analysis.longTermAnalysis.returns) {
+        logger.error('returns is missing, adding default object');
+        analysis.longTermAnalysis.returns = {
+          irr: 0,
+          totalCashFlow: 0,
+          totalAppreciation: 0,
+          totalReturn: 0
+        };
+      }
+      
+      if (!analysis.longTermAnalysis.exitAnalysis) {
+        logger.error('exitAnalysis is missing, adding default object');
+        analysis.longTermAnalysis.exitAnalysis = {
+          projectedSalePrice: 0,
+          sellingCosts: 0,
+          mortgagePayoff: 0,
+          netProceedsFromSale: 0,
+          totalProfit: 0,
+          returnOnInvestment: 0
+        };
+      }
+    } else {
+      logger.error('longTermAnalysis is missing, creating with default values');
+      analysis.longTermAnalysis = {
+        projections: [],
+        projectionYears: 10,
+        returns: {
+          irr: 0,
+          totalCashFlow: 0,
+          totalAppreciation: 0,
+          totalReturn: 0
+        },
+        exitAnalysis: {
+          projectedSalePrice: 0,
+          sellingCosts: 0,
+          mortgagePayoff: 0,
+          netProceedsFromSale: 0,
+          totalProfit: 0,
+          returnOnInvestment: 0
+        }
+      };
+    }
+    
     logger.info('Analysis completed successfully');
     res.json(analysis);
   } catch (error) {
