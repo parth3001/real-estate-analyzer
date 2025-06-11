@@ -10,16 +10,16 @@ const api = axios.create({
   },
 });
 
-export interface ApiResponse<T> {
-  data: T;
+export interface ApiResponse<T = any> {
   status: number;
+  data: T;
   message?: string;
 }
 
 // Property-related API calls
 export const propertyApi = {
   // Get all properties
-  getAllProperties: async (): Promise<ApiResponse<PropertyData[]>> => {
+  getAllProperties: async (): Promise<ApiResponse<any[]>> => {
     try {
       const response = await api.get('/deals');
       return {
@@ -27,23 +27,13 @@ export const propertyApi = {
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: [],
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: [],
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error fetching properties:', error);
+      throw error;
     }
   },
 
   // Get a property by ID
-  getPropertyById: async (id: string): Promise<ApiResponse<PropertyData>> => {
+  getProperty: async (id: string): Promise<ApiResponse<any>> => {
     try {
       const response = await api.get(`/deals/${id}`);
       return {
@@ -51,23 +41,13 @@ export const propertyApi = {
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: {} as PropertyData,
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: {} as PropertyData,
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error fetching property:', error);
+      throw error;
     }
   },
 
-  // Create a new property
-  createProperty: async (propertyData: PropertyData): Promise<ApiResponse<PropertyData>> => {
+  // Create or save a property
+  saveProperty: async (propertyData: PropertyData): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post('/deals', propertyData);
       return {
@@ -75,23 +55,13 @@ export const propertyApi = {
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: {} as PropertyData,
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: {} as PropertyData,
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error saving property:', error);
+      throw error;
     }
   },
 
   // Update a property
-  updateProperty: async (id: string, propertyData: PropertyData): Promise<ApiResponse<PropertyData>> => {
+  updateProperty: async (id: string, propertyData: PropertyData): Promise<ApiResponse<any>> => {
     try {
       const response = await api.put(`/deals/${id}`, propertyData);
       return {
@@ -99,47 +69,28 @@ export const propertyApi = {
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: {} as PropertyData,
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: {} as PropertyData,
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error updating property:', error);
+      throw error;
     }
   },
 
   // Delete a property
-  deleteProperty: async (id: string): Promise<ApiResponse<void>> => {
+  deleteProperty: async (id: string): Promise<ApiResponse<any>> => {
     try {
       const response = await api.delete(`/deals/${id}`);
+      
       return {
-        data: undefined,
+        data: response.data || {},
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: undefined,
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: undefined,
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error deleting property:', error);
+      throw error;
     }
   },
 
   // Analyze a property
-  analyzeProperty: async (propertyData: PropertyData): Promise<ApiResponse<Analysis>> => {
+  analyzeProperty: async (propertyData: PropertyData): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post('/deals/analyze', propertyData);
       return {
@@ -147,18 +98,8 @@ export const propertyApi = {
         status: response.status,
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          data: {} as Analysis,
-          status: error.response?.status || 500,
-          message: error.response?.data?.error || error.message,
-        };
-      }
-      return {
-        data: {} as Analysis,
-        status: 500,
-        message: 'An unknown error occurred',
-      };
+      console.error('Error analyzing property:', error);
+      throw error;
     }
   },
 

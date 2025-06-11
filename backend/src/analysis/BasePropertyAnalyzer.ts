@@ -73,34 +73,48 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     let currentPropertyValue = this.data.purchasePrice;
     let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
 
+    console.log('\n\n========== SFR PROJECTIONS CALCULATION ==========');
+    console.log('Annual expense increase rate:', this.assumptions.annualExpenseIncrease, '%');
+    
+    const basePropertyTaxForYear1 = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
+    const baseInsuranceForYear1 = this.data.purchasePrice * (this.data.insuranceRate / 100);
+    
+    console.log('Base expenses (Year 1):', {
+      basePropertyTaxForYear1,
+      baseInsuranceForYear1
+    });
+
     for (let year = 1; year <= this.assumptions.projectionYears; year++) {
       const grossIncome = this.calculateGrossIncome(year);
       
-      // Calculate property tax and insurance based on CURRENT property value (not purchase price)
-      const propertyTax = currentPropertyValue * (this.data.propertyTaxRate / 100);
-      const insurance = currentPropertyValue * (this.data.insuranceRate / 100);
+      const expenseInflationFactor = Math.pow(1 + this.assumptions.annualExpenseIncrease / 100, year - 1);
       
-      // Convert monthly maintenance to annual and apply inflation factor for each year
-      const annualMaintenanceCost = this.data.maintenanceCost * 12;
-      const maintenance = annualMaintenanceCost * Math.pow(1 + this.assumptions.annualExpenseIncrease / 100, year - 1);
+      const propertyTax = basePropertyTaxForYear1 * expenseInflationFactor;
+      const insurance = baseInsuranceForYear1 * expenseInflationFactor;
+      const maintenance = this.data.maintenanceCost * expenseInflationFactor;
+      
+      console.log(`CRITICAL DEBUG - Year ${year} expenses:`, {
+        basePropertyTaxForYear1,
+        propertyTax,
+        expenseInflationFactor,
+        annualExpenseIncrease: this.assumptions.annualExpenseIncrease
+      });
       
       const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
       const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
       
-      // Total operating expenses for this year
       const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy;
       
       const noi = this.calculateNOI(grossIncome, operatingExpenses);
       const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
 
-      // Update property value for this year
       currentPropertyValue *= (1 + this.assumptions.annualPropertyValueIncrease / 100);
 
       const interestPaid = currentLoanBalance * (this.data.interestRate / 100);
       const principalPaid = annualDebtService - interestPaid;
       currentLoanBalance = Math.max(0, currentLoanBalance - principalPaid);
 
-      const realtorBrokerageFee = grossIncome * 0.0833; // One month's rent
+      const realtorBrokerageFee = grossIncome * 0.0833;
       const appreciation = currentPropertyValue - this.data.purchasePrice;
 
       projections.push({
@@ -158,7 +172,6 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const propertyMetrics = this.calculatePropertySpecificMetrics();
 
-    // Log the base calculations
     console.log('==== BASE ANALYZER CALCULATIONS ====');
     console.log('Monthly Mortgage:', monthlyMortgage);
     console.log('Annual Debt Service:', annualDebtService);
@@ -208,7 +221,6 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       }
     };
 
-    // Log the final result structure
     console.log('==== FINAL ANALYSIS RESULT STRUCTURE ====');
     console.log('Monthly Analysis Keys:', Object.keys(result.monthlyAnalysis));
     console.log('Monthly Income:', result.monthlyAnalysis.income);

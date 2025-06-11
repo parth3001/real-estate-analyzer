@@ -1,7 +1,7 @@
 import { BasePropertyAnalyzer, AnalysisAssumptions } from './BasePropertyAnalyzer';
 import { FinancialCalculations } from '../utils/financialCalculations';
 import { SFRData, SFRMetrics } from '../types/propertyTypes';
-import { ExpenseBreakdown } from '../types/analysis';
+import { ExpenseBreakdown, AnalysisResult, MonthlyAnalysis, ExitAnalysis } from '../types/analysis';
 
 export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   protected calculateGrossIncome(year: number): number {
@@ -115,5 +115,97 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       ...projections.map(year => year.cashFlow),
       exitAnalysis.netProceedsFromSale
     ];
+  }
+
+  // Add a new method to normalize the output structure to match frontend expectations
+  private normalizeOutput(result: AnalysisResult<SFRMetrics>): AnalysisResult<SFRMetrics> {
+    // First, create a copy of the result to avoid modifying the original
+    const normalized = JSON.parse(JSON.stringify(result)) as AnalysisResult<SFRMetrics>;
+
+    // Move expense breakdown items to the expenses object directly for monthly analysis
+    if (normalized.monthlyAnalysis?.expenses?.breakdown) {
+      const breakdown = normalized.monthlyAnalysis.expenses.breakdown;
+      
+      // Use type assertion to allow adding properties to expenses object
+      normalized.monthlyAnalysis.expenses = {
+        ...normalized.monthlyAnalysis.expenses,
+        propertyTax: breakdown.propertyTax,
+        insurance: breakdown.insurance,
+        maintenance: breakdown.maintenance,
+        propertyManagement: breakdown.propertyManagement,
+        vacancy: breakdown.vacancy,
+        mortgage: normalized.monthlyAnalysis.expenses.debt 
+          ? { total: normalized.monthlyAnalysis.expenses.debt }
+          : (normalized.monthlyAnalysis.expenses as any).mortgage || { total: 0 }
+      } as any; // Type assertion to avoid TypeScript errors
+    }
+
+    // Ensure key metrics are directly accessible
+    if ((normalized as any).metrics && !normalized.keyMetrics) {
+      normalized.keyMetrics = (normalized as any).metrics;
+      delete (normalized as any).metrics;
+    }
+
+    // Ensure monthly expenses total is calculated
+    if (normalized.monthlyAnalysis?.expenses) {
+      const expenses = normalized.monthlyAnalysis.expenses as any; // Type assertion
+      const mortgage = expenses.mortgage?.total || 0;
+      const propertyTax = expenses.propertyTax || 0;
+      const insurance = expenses.insurance || 0;
+      const maintenance = expenses.maintenance || 0;
+      const propertyManagement = expenses.propertyManagement || 0;
+      const vacancy = expenses.vacancy || 0;
+      
+      normalized.monthlyAnalysis.expenses.total = 
+        mortgage + propertyTax + insurance + maintenance + propertyManagement + vacancy;
+    }
+
+    // Convert monthly income if needed
+    if (normalized.monthlyAnalysis?.income) {
+      if (typeof normalized.monthlyAnalysis.income === 'number') {
+        normalized.monthlyAnalysis.income = {
+          gross: normalized.monthlyAnalysis.income,
+          effective: normalized.monthlyAnalysis.income * (1 - (this.assumptions.vacancyRate / 100))
+        };
+      }
+    }
+
+    // Ensure all required properties exist
+    if (!normalized.longTermAnalysis) {
+      normalized.longTermAnalysis = {
+        projections: [],
+        projectionYears: this.assumptions.projectionYears,
+        returns: {
+          irr: 0,
+          totalCashFlow: 0,
+          totalAppreciation: 0,
+          totalReturn: 0
+        },
+        exitAnalysis: {
+          projectedSalePrice: 0,
+          sellingCosts: 0,
+          mortgagePayoff: 0,
+          netProceedsFromSale: 0
+        } as any // Type assertion for additional properties
+      };
+    }
+
+    // Log the normalized structure
+    console.log('Normalized analysis structure for frontend:', {
+      hasMonthlyExpenses: !!normalized.monthlyAnalysis?.expenses,
+      hasExpenseBreakdown: !!normalized.monthlyAnalysis?.expenses?.breakdown,
+      hasPropertyTax: !!(normalized.monthlyAnalysis?.expenses as any)?.propertyTax,
+      hasAnnualAnalysis: !!normalized.annualAnalysis,
+      hasLongTermAnalysis: !!normalized.longTermAnalysis,
+      hasKeyMetrics: !!normalized.keyMetrics
+    });
+
+    return normalized;
+  }
+
+  // Modify the analyze method to normalize the output
+  public analyze(): AnalysisResult<SFRMetrics> {
+    const result = super.analyze();
+    return this.normalizeOutput(result);
   }
 } 

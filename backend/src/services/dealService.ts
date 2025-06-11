@@ -15,7 +15,10 @@ export class DealService {
   async getDealById(id: string): Promise<IDeal | null> {
     try {
       logger.info(`[DealService] Getting deal with ID: ${id}`);
-      return await this.repository.findById(id);
+      const deal = await this.repository.findById(id);
+      
+      // Always return the raw document to let the controller handle recalculation
+      return deal;
     } catch (error) {
       logger.error('[DealService] Error getting deal by ID:', error);
       throw error;

@@ -479,6 +479,77 @@ const logger = winston.createLogger({
 });
 ```
 
+## Data Adapter Architecture
+
+### Storage vs. Calculation Rules
+
+The application uses a clear set of rules to determine what data is stored in the database versus what is calculated on-demand. These rules are implemented in the `analysisAdapter.ts` module that handles data normalization between the backend and frontend.
+
+#### Stored Data (Database)
+The following data is preserved from the database:
+1. **Core Property Data**:
+   - Purchase price, rent, loan details, tax rates, etc.
+   - Property characteristics (bedrooms, square footage, etc.)
+   - Address and metadata
+
+2. **Monthly Analysis Base Values**:
+   - Monthly income/rent
+   - Monthly expense breakdown (mortgage, tax, insurance, etc.)
+   - Monthly cash flow
+
+3. **AI Insights**:
+   - Stored as-is when generated
+   - Not recalculated unless explicitly requested
+
+#### Calculated Data (On-Demand)
+The following data is always recalculated when a deal is loaded:
+1. **Year-by-Year Projections**:
+   - Future property values with appreciation
+   - Future rental income with growth
+   - Future expenses with inflation
+   - Mortgage balance and equity over time
+   - Cash flow for each year
+
+2. **Exit Analysis**:
+   - Projected sale price
+   - Selling costs
+   - Mortgage payoff
+   - Net proceeds from sale
+   - Total return on investment
+
+3. **Annual Totals** (if missing):
+   - Annual income (derived from monthly × 12)
+   - Annual expenses (derived from monthly × 12)
+   - Annual cash flow
+
+#### Adapter Rules Implementation
+```typescript
+/**
+ * Adapter Rules:
+ * 1. Core property data is preserved from the stored deal
+ * 2. Monthly analysis is preserved with normalization to ensure consistent structure
+ * 3. All projections are ALWAYS recalculated to ensure consistency
+ * 4. Exit analysis is always recalculated based on the projections
+ * 5. Annual analysis is derived from monthly values if missing
+ * 6. AI Insights are preserved as-is from the stored deal
+ */
+export function adaptAnalysisForFrontend(analysis: any): any {
+  // Implementation follows these rules
+}
+```
+
+### Benefits of this Approach
+1. **Consistency**: All derived values use the same calculation logic, regardless of when they were created
+2. **Storage Efficiency**: Only core data is stored, reducing database size
+3. **Flexibility**: Calculation logic can be updated without migrating existing data
+4. **Resilience**: Missing or incomplete data is handled gracefully with recalculation
+
+### AI Analysis Handling
+Unlike numerical projections, AI analysis:
+1. Is preserved as-is when loaded from the database
+2. Is expensive to regenerate (requires API calls)
+3. Represents a point-in-time assessment that doesn't need automatic recalculation
+
 ## Calculation Algorithms
 
 ### Financial Metrics

@@ -73,12 +73,87 @@ export interface MultiFamilyPropertyData extends BasePropertyData {
 
 export type PropertyData = SFRPropertyData | MultiFamilyPropertyData;
 
+/**
+ * Represents a saved property from the backend
+ */
 export interface SavedProperty {
-  id: string;
-  name: string;
-  type: PropertyType;
-  address: string;
-  price: number;
+  _id: string;
+  propertyName: string;
+  propertyType: 'SFR' | 'MF';
+  propertyAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  purchasePrice: number;
+  downPayment: number;
+  interestRate: number;
+  loanTerm: number;
+  propertyTax: number;
+  insurance: number;
+  // SFR specific
+  monthlyRent?: number;
+  squareFootage?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  // MF specific
+  totalUnits?: number;
+  totalSqft?: number;
+  unitTypes?: Array<{
+    type: string;
+    count: number;
+    sqft: number;
+    monthlyRent: number;
+  }>;
+  analysis: {
+    monthlyAnalysis: {
+      expenses: {
+        mortgage?: {
+          total: number;
+        };
+        propertyTax?: number;
+        insurance?: number;
+        maintenance?: number;
+        propertyManagement?: number;
+        vacancy?: number;
+        total?: number;
+      };
+      income?: number;
+      cashFlow?: number;
+    };
+    annualAnalysis?: {
+      dscr?: number;
+      cashOnCashReturn?: number;
+      capRate?: number;
+      totalInvestment?: number;
+      annualNOI?: number;
+    };
+    longTermAnalysis?: {
+      projections?: Array<any>;
+      exitAnalysis?: {
+        projectedSalePrice?: number;
+        sellingCosts?: number;
+        mortgagePayoff?: number;
+        netProceedsFromSale?: number;
+      };
+    };
+    keyMetrics?: {
+      capRate?: number;
+      cashOnCashReturn?: number;
+      dscr?: number;
+      grossRentMultiplier?: number;
+      netOperatingIncome?: number;
+      totalInvestment?: number;
+    };
+    aiInsights?: {
+      summary?: string;
+      strengths?: string[];
+      weaknesses?: string[];
+      recommendations?: string[];
+      investmentScore?: number | null;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 } 
