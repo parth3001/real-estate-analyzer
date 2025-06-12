@@ -14,7 +14,13 @@ import {
   DialogActions,
   Card,
   CardContent,
-  Chip
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -214,95 +220,6 @@ const SavedProperties: React.FC = () => {
     return true;
   };
 
-  // Add a CardErrorBoundary component
-  const PropertyCard: React.FC<{ property: SavedProperty, onDelete: (id: string) => void, onView: (id: string) => void }> = ({ 
-    property, 
-    onDelete, 
-    onView 
-  }) => {
-    try {
-      return (
-        <Card variant="outlined">
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-              <Typography variant="h6" component="div" sx={{ mb: 1 }}>
-                {property.propertyName || 'Unnamed Property'}
-              </Typography>
-              <Chip 
-                label={property.propertyType || 'Unknown'} 
-                color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
-                size="small" 
-              />
-            </Box>
-            
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {property.propertyAddress ? 
-                `${property.propertyAddress.street || ''}, ${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}` : 
-                'Address not available'
-              }
-            </Typography>
-            
-            <Typography variant="h6" color="text.primary" sx={{ mt: 2 }}>
-              {formatCurrency(property.purchasePrice)}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-              {property.analysis && property.analysis.keyMetrics?.capRate && (
-                <Chip 
-                  label={`Cap Rate: ${formatPercent(property.analysis.keyMetrics.capRate)}`} 
-                  variant="outlined" 
-                  size="small" 
-                />
-              )}
-              
-              {property.analysis && property.analysis.keyMetrics?.cashOnCashReturn && (
-                <Chip 
-                  label={`CoC: ${formatPercent(property.analysis.keyMetrics.cashOnCashReturn)}`} 
-                  variant="outlined" 
-                  size="small" 
-                />
-              )}
-            </Box>
-            
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-              Last updated: {formatDate(property.updatedAt)}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <IconButton 
-                edge="end" 
-                aria-label="view"
-                onClick={() => onView(property._id)}
-                sx={{ mr: 1 }}
-              >
-                <VisibilityIcon />
-              </IconButton>
-              <IconButton 
-                edge="end" 
-                aria-label="delete"
-                onClick={() => onDelete(property._id)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </CardContent>
-        </Card>
-      );
-    } catch (error) {
-      console.error('Error rendering property card:', error, property);
-      return (
-        <Card variant="outlined">
-          <CardContent>
-            <Typography color="error">Error displaying property</Typography>
-            <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-              {JSON.stringify({ id: property._id, error: String(error) }, null, 2)}
-            </Typography>
-          </CardContent>
-        </Card>
-      );
-    }
-  };
-
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -356,47 +273,105 @@ const SavedProperties: React.FC = () => {
             </Button>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            {properties.map(property => {
-              if (!isValidProperty(property)) {
-                console.error('Invalid property structure:', property);
-                return (
-                  <Box 
-                    key={property._id || 'invalid-' + Math.random()}
-                    sx={{ 
-                      width: { xs: '100%', md: 'calc(50% - 16px)', lg: 'calc(33.333% - 16px)' },
-                      minWidth: '280px',
-                      flexGrow: 1
-                    }}
-                  >
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography color="error">Invalid property data</Typography>
-                        <pre>{JSON.stringify(property, null, 2).substring(0, 200) + '...'}</pre>
-                      </CardContent>
-                    </Card>
-                  </Box>
-                );
-              }
+          <TableContainer>
+            <Table sx={{ minWidth: 650 }} aria-label="properties table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Property Name</TableCell>
+                  <TableCell>Address</TableCell>
+                  <TableCell align="right">Price</TableCell>
+                  <TableCell align="right">Cap Rate</TableCell>
+                  <TableCell align="right">CoC Return</TableCell>
+                  <TableCell align="right">IRR</TableCell>
+                  <TableCell align="right">AI Score</TableCell>
+                  <TableCell>Last Updated</TableCell>
+                  <TableCell align="center">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {properties.map((property) => {
+                  if (!isValidProperty(property)) {
+                    return (
+                      <TableRow key={property._id || 'invalid-' + Math.random()}>
+                        <TableCell colSpan={9}>
+                          <Typography color="error">Invalid property data</Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
 
-              return (
-                <Box 
-                  key={property._id}
-                  sx={{ 
-                    width: { xs: '100%', md: 'calc(50% - 16px)', lg: 'calc(33.333% - 16px)' },
-                    minWidth: '280px',
-                    flexGrow: 1
-                  }}
-                >
-                  <PropertyCard 
-                    property={property} 
-                    onDelete={openDeleteDialog} 
-                    onView={viewPropertyDetails} 
-                  />
-                </Box>
-              );
-            })}
-          </Box>
+                  return (
+                    <TableRow 
+                      key={property._id}
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {property.propertyName || 'Unnamed Property'}
+                        <Chip 
+                          label={property.propertyType || 'Unknown'} 
+                          color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
+                          size="small" 
+                          sx={{ ml: 1 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {property.propertyAddress ? 
+                          `${property.propertyAddress.street || ''}, ${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}` : 
+                          'Address not available'
+                        }
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(property.purchasePrice)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {property.analysis?.keyMetrics?.capRate ? 
+                          formatPercent(property.analysis.keyMetrics.capRate) : 
+                          'N/A'
+                        }
+                      </TableCell>
+                      <TableCell align="right">
+                        {property.analysis?.keyMetrics?.cashOnCashReturn ? 
+                          formatPercent(property.analysis.keyMetrics.cashOnCashReturn) : 
+                          'N/A'
+                        }
+                      </TableCell>
+                      <TableCell align="right">
+                        {property.analysis?.longTermAnalysis?.returns?.irr ? 
+                          formatPercent(property.analysis.longTermAnalysis.returns.irr) : 
+                          '0.00%'
+                        }
+                      </TableCell>
+                      <TableCell align="right">
+                        {property.analysis?.aiInsights?.investmentScore ? 
+                          `${property.analysis.aiInsights.investmentScore}/100` : 
+                          'N/A'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(property.updatedAt)}
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton 
+                          aria-label="view"
+                          onClick={() => viewPropertyDetails(property._id)}
+                          size="small"
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                        <IconButton 
+                          aria-label="delete"
+                          onClick={() => openDeleteDialog(property._id)}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Paper>
 
@@ -436,7 +411,7 @@ const SavedProperties: React.FC = () => {
           propertyData={selectedDeal.propertyData}
           setAnalysis={(updatedAnalysis) => {
             // Update the selected deal with the new analysis
-            setSelectedDeal(prev => {
+            setSelectedDeal((prev: SavedProperty | null) => {
               if (!prev) return prev;
               return {
                 ...prev,
