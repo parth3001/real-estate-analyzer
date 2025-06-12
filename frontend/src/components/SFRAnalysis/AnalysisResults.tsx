@@ -48,6 +48,7 @@ interface ExtendedAnalysis extends Analysis {
 interface AnalysisResultsProps {
   analysis: Analysis;
   propertyData: SFRPropertyData;
+  setAnalysis?: (analysis: Analysis) => void;
 }
 
 // Format number as currency
@@ -338,7 +339,7 @@ const fixLongTermReturns = (analysis: ExtendedAnalysis, propertyData: SFRPropert
   }
 };
 
-const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData }) => {
+const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData, setAnalysis = () => {} }) => {
   // Cast analysis to ExtendedAnalysis to use the extended properties
   const extendedAnalysis = analysis as ExtendedAnalysis;
   const [tabIndex, setTabIndex] = React.useState(0);
@@ -490,6 +491,59 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       setError('Error processing analysis data: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   }, [analysis, propertyData]);
+  
+  // After the main validation useEffect, add this new useLayoutEffect
+  React.useLayoutEffect(() => {
+    // Skip if there's an error or missing data
+    if (error || !analysis || !propertyData) return;
+
+    // If mortgage payment is missing or zero, fix it immediately
+    if (!analysis.monthlyAnalysis?.expenses?.mortgage?.total || analysis.monthlyAnalysis.expenses.mortgage.total === 0) {
+      console.log("LAYOUT EFFECT: Fixing missing mortgage payment for immediate render");
+      
+      // Calculate mortgage payment
+      const principal = propertyData.purchasePrice * (1 - propertyData.downPayment / propertyData.purchasePrice);
+      const monthlyRate = propertyData.interestRate / 12 / 100;
+      const payments = propertyData.loanTerm * 12;
+      let monthlyMortgage = 0;
+      
+      if (monthlyRate > 0 && payments > 0) {
+        monthlyMortgage = (principal * monthlyRate * Math.pow(1 + monthlyRate, payments)) / 
+                        (Math.pow(1 + monthlyRate, payments) - 1);
+      }
+      
+      // Ensure expenses object exists
+      if (!analysis.monthlyAnalysis) {
+        analysis.monthlyAnalysis = {
+          grossIncome: propertyData.monthlyRent,
+          expenses: {},
+          cashFlow: 0
+        };
+      }
+      
+      if (!analysis.monthlyAnalysis.expenses) {
+        analysis.monthlyAnalysis.expenses = {};
+      }
+      
+      // Create mortgage object if it doesn't exist
+      if (!analysis.monthlyAnalysis.expenses.mortgage) {
+        analysis.monthlyAnalysis.expenses.mortgage = { 
+          principal: principal / payments,
+          interest: monthlyMortgage - (principal / payments),
+          total: monthlyMortgage 
+        };
+      } else {
+        // Update existing mortgage object
+        analysis.monthlyAnalysis.expenses.mortgage.total = monthlyMortgage;
+        analysis.monthlyAnalysis.expenses.mortgage.principal = principal / payments;
+        analysis.monthlyAnalysis.expenses.mortgage.interest = monthlyMortgage - (principal / payments);
+      }
+      
+      // Force a re-render by making a shallow copy of the analysis object
+      // This is important to ensure the component re-renders with the updated values
+      setAnalysis({...analysis});
+    }
+  }, [analysis, propertyData, error, setAnalysis]);
   
   // Safely prepare expense breakdown data
   let expenseBreakdownData: Array<{ name: string; value: number }> = [];

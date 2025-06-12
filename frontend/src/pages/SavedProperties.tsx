@@ -21,6 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
+import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 
 interface SavedProperty {
   _id: string;
@@ -57,6 +58,7 @@ const SavedProperties: React.FC = () => {
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<any>(null);
 
   // Fetch saved properties on component mount
   useEffect(() => {
@@ -427,6 +429,23 @@ const SavedProperties: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {selectedDeal && (
+        <AnalysisResults 
+          analysis={selectedDeal.analysis} 
+          propertyData={selectedDeal.propertyData}
+          setAnalysis={(updatedAnalysis) => {
+            // Update the selected deal with the new analysis
+            setSelectedDeal(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                analysis: updatedAnalysis
+              };
+            });
+          }}
+        />
+      )}
     </Box>
   );
 };

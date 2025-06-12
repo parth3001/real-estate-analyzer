@@ -8989,3 +8989,202 @@
 2025-06-10 23:01:38:138 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
 2025-06-10 23:01:38:138 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
 2025-06-10 23:07:12:712 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-10 23:23:56:2356 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 00:44:29:4429 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 02:32:33:3233 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 04:09:38:938 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 05:40:40:4040 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 07:05:35:535 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 07:14:30:1430 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 07:32:52:3252 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 07:46:56:4656 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 08:09:59:959 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 08:18:55:1855 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 08:37:51:3751 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 08:50:08:508 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 08:54:39:5439 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 09:03:42:342 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 09:07:07:77 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 09:14:11:1411 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 09:37:20:3720 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 10:26:33:2633 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 11:19:34:1934 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 11:35:27:3527 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 12:00:25:025 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 12:22:35:2235 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 12:45:50:4550 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 12:50:09:509 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 13:41:42:4142 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 14:31:11:3111 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 14:45:41:4541 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 14:59:57:5957 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 15:20:18:2018 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 15:46:39:4639 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 16:11:09:119 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 16:27:24:2724 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 17:04:27:427 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 17:31:59:3159 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 17:52:56:5256 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 18:19:20:1920 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 18:29:51:2951 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 18:50:23:5023 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 19:03:03:33 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 19:17:39:1739 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 19:20:07:207 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 19:20:08:208 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 19:20:09:209 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 19:20:09:209 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 19:42:12:4212 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 21:03:21:321 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 21:03:23:323 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 21:05:53:553 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 21:05:53:553 [32minfo[39m: [32m[DealService] Getting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 21:05:57:557 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:05:57:557 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:05:59:559 [32minfo[39m: [32m[DealService] Deleting deal with ID: 6848fea7c4b762e9d75f2eb0[39m
+2025-06-11 21:06:01:61 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:06:20:620 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32mResponse length: 777 characters[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:06:24:624 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32mFull deal data:[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 7[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-11 21:06:51:651 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-11 21:06:55:655 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:06:55:655 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:06:57:657 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-11 21:06:57:657 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:07:47:747 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32mResponse length: 628 characters[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:07:49:749 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:08:35:835 [32minfo[39m: [32mPrompt length: 2621 characters[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32mResponse length: 613 characters[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:08:37:837 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:09:09:99 [32minfo[39m: [32mPrompt length: 2619 characters[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32mResponse length: 729 characters[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:09:11:911 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:09:46:946 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-11 21:09:46:946 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:09:59:959 [32minfo[39m: [32mPrompt length: 2627 characters[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32mResponse length: 939 characters[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:10:04:104 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:11:06:116 [32minfo[39m: [32mPrompt length: 2623 characters[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32mResponse length: 814 characters[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:11:10:1110 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:12:33:1233 [32minfo[39m: [32mPrompt length: 2623 characters[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32mResponse length: 821 characters[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:12:35:1235 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:13:09:139 [32minfo[39m: [32mPUT /api/deals/684a363bc4b762e9d75f2ed0 - Request Body:[39m
+2025-06-11 21:13:09:139 [32minfo[39m: [32mUpdating deal 684a363bc4b762e9d75f2ed0 with data:[39m
+2025-06-11 21:13:09:139 [32minfo[39m: [32mFull update data:[39m
+2025-06-11 21:13:09:139 [32minfo[39m: [32m[DealService] Updating deal: Princeont[39m
+2025-06-11 21:13:09:139 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-11 21:13:12:1312 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:13:12:1312 [32minfo[39m: [32m[DealService] Getting all deals[39m

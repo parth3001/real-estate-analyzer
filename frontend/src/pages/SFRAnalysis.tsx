@@ -284,7 +284,11 @@ const SFRAnalysis: React.FC = () => {
                   {isSaving ? 'Saving...' : 'Save Deal'}
                 </Button>
               </Box>
-              <AnalysisResults analysis={analysis} propertyData={propertyData} />
+              <AnalysisResults 
+                analysis={analysis} 
+                propertyData={propertyData} 
+                setAnalysis={setAnalysis}
+              />
             </>
           )}
         </React.Fragment>
