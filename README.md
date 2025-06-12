@@ -1,13 +1,32 @@
 # Real Estate Deal Analyzer
 
-A web application for analyzing real estate investment opportunities. Built with React (frontend) and Node.js (backend).
+A comprehensive web application for analyzing real estate investment opportunities. Built with React (frontend) and Node.js (backend).
+
+## Current Status
+
+✅ **Single-Family Rental Analysis**: Complete and fully functional  
+🔄 **Multi-Family Analysis**: In development  
+✅ **Property Saving & Management**: Complete with table view  
+✅ **Financial Metrics**: Cap Rate, Cash on Cash Return, IRR, Cash Flow, etc.  
+🔄 **AI Investment Analysis**: Basic integration in place  
 
 ## Features
 
-- Property deal analysis
-- Investment metrics calculation
-- User-friendly interface
-- Responsive design for mobile and desktop
+- **Property Analysis**
+  - Comprehensive SFR (Single-Family Rental) analysis
+  - Monthly, annual, and long-term (10-year) projections
+  - Key investment metrics calculation
+  - Interactive charts and visualizations
+
+- **Deal Management**
+  - Save and manage property analyses
+  - Professional table view for comparing properties
+  - Loading/editing of saved deals
+
+- **User Interface**
+  - Responsive design for mobile and desktop
+  - Material UI components with modern styling
+  - Data visualization with Recharts
 
 ## Documentation
 
@@ -70,21 +89,31 @@ real-estate-analyzer/
 
 3. Start the frontend development server:
    ```bash
-   npm start
+   npm run dev
    ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:5173`
 
 ## Development
 
-- Frontend runs on port 3000
+- Frontend runs on port 5173 (Vite default)
 - Backend runs on port 3001
 - API endpoints are prefixed with `/api`
 
+## Recent Improvements
+
+- Converted saved properties view from cards to a professional table layout
+- Added IRR and AI investment score columns to property list
+- Fixed mortgage/debt service calculation issues
+- Improved maintenance cost calculations
+- Enhanced year-over-year projections with inflation adjustment
+- Fixed ROI and IRR calculations for 10-year projections
+
 ## Future Enhancements
 
+- Complete Multi-Family property analysis
+- Enhanced AI investment insights
 - User authentication
-- Save and compare multiple deals
 - Generate detailed PDF reports
 - Docker containerization
 - AWS deployment

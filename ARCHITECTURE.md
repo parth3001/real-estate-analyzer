@@ -11,7 +11,7 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 - **Data Visualization:** Recharts
 - **State Management:** React Hooks
 - **Type Checking:** TypeScript
-- **Data Persistence:** LocalStorage
+- **Data Persistence:** LocalStorage & Backend API
 - **Build Tool:** Vite
 
 ### Backend
@@ -22,11 +22,96 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 - **Logging:** Winston
 - **Error Handling:** Custom middleware
 
+## Single-Family Rental (SFR) Analysis Implementation
+
+### Core Components
+
+1. **SFRPropertyForm** (`/frontend/src/components/SFRAnalysis/SFRPropertyForm.tsx`)
+   - Collects all property data inputs including:
+     - Property details (price, address, bedrooms, etc.)
+     - Financial data (down payment, interest rate, loan term)
+     - Monthly income and expenses
+     - Long-term assumptions (appreciation, inflation, etc.)
+   - Performs client-side validation
+   - Submits data to analysis engine
+
+2. **AnalysisResults** (`/frontend/src/components/SFRAnalysis/AnalysisResults.tsx`)
+   - Tabbed interface for different analysis views:
+     - Summary: Key metrics and investment indicators
+     - Monthly Analysis: Detailed income and expense breakdown
+     - Annual Analysis: Year 1 financial metrics
+     - Long-Term Analysis: 10-year projections with charts
+   - Visualization components:
+     - Cash flow trend line chart
+     - Expense breakdown pie chart
+     - Equity growth area chart
+     - Return components bar chart
+   - Interactive tables for detailed metrics
+
+3. **SFRAnalysis Page** (`/frontend/src/pages/SFRAnalysis.tsx`)
+   - Coordinates between form and results components
+   - Manages API calls for property analysis
+   - Handles loading, saving, and error states
+   - Provides sample data loading functionality
+
+### Key Calculations
+
+1. **Monthly Analysis**
+   - **Monthly Mortgage Payment**: 
+     ```typescript
+     const monthlyMortgage = (principal, rate, term) => {
+       const monthlyRate = rate / 12 / 100;
+       const payments = term * 12;
+       return (principal * monthlyRate * Math.pow(1 + monthlyRate, payments)) / 
+              (Math.pow(1 + monthlyRate, payments) - 1);
+     }
+     ```
+   - **Operating Expenses**: Sum of property tax, insurance, maintenance, property management, vacancy
+   - **Cash Flow**: Effective Gross Income - Operating Expenses - Mortgage Payment
+
+2. **Annual Analysis**
+   - **Net Operating Income (NOI)**: Annual Effective Gross Income - Annual Operating Expenses
+   - **Cap Rate**: (NOI / Purchase Price) * 100
+   - **Cash on Cash Return**: (Annual Cash Flow / Total Investment) * 100
+   - **Debt Service Coverage Ratio (DSCR)**: NOI / Annual Debt Service
+
+3. **Long-Term Analysis**
+   - **Year-over-Year Projections**:
+     - Income growth based on rent increase percentage
+     - Expense inflation adjustment
+     - Property value appreciation
+     - Mortgage balance reduction
+     - Equity accumulation
+   - **Return Calculations**:
+     - IRR (Internal Rate of Return)
+     - ROI (Return on Investment)
+     - Total appreciation
+     - Total cash flow
+     - Total return
+
+### Data Flow
+
+1. User inputs property data into SFRPropertyForm
+2. Form data is validated and sent to backend via API
+3. Backend calculates all metrics and projections
+4. Results are returned to frontend and displayed in AnalysisResults
+5. User can save the analysis to the database
+6. Saved deals can be loaded and viewed from SavedProperties page
+
+### Validation & Error Handling
+
+- Client-side form validation ensures required fields
+- Backend validation confirms data integrity
+- Error boundaries catch and display rendering errors
+- Network error handling with user-friendly messages
+- Edge case handling for zero values and missing data
+
 ## Technical Decisions
 
 ### 1. Data Storage Strategy
-**Current Implementation:** Browser LocalStorage
-- Deals and analysis data stored in browser's localStorage
+**Current Implementation:** Hybrid approach
+- MongoDB for persistent storage (planned)
+- Browser LocalStorage for temporary data
 - Structured data format for both SFR and MF properties
 - Unique ID generation for each deal
 - Data model:
@@ -72,37 +157,6 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
     lastModified: string;
   }
   ```
-
-**Future Implementation:** MongoDB
-- Plan to migrate to MongoDB for scalable, document-based storage
-- Rationale for MongoDB:
-  ```javascript
-  // Example future data model
-  const dealSchema = {
-    _id: ObjectId,
-    propertyDetails: {
-      address: String,
-      characteristics: Object,
-      financials: Object
-    },
-    analysis: {
-      monthly: Object,
-      annual: Object,
-      longTerm: Object
-    },
-    metadata: {
-      createdAt: Date,
-      updatedAt: Date,
-      userId: ObjectId
-    }
-  }
-  ```
-- Benefits of planned migration:
-  - Better query performance
-  - Schema flexibility
-  - Horizontal scaling
-  - Built-in replication
-  - Rich querying capabilities
 
 ### 2. Analysis Engine
 **Current Implementation:**
@@ -175,10 +229,9 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 
 ### 3. UI Components
 **Key Components:**
-1. **DealForm/MultiFamilyForm**
+1. **SFRPropertyForm**
    - Property details input
    - Financial assumptions
-   - Unit mix builder (MF)
    - Form validation
    - Deal saving/loading
 
@@ -193,11 +246,11 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
      - Equity growth
      - Return components
 
-3. **SavedDeals**
-   - Deal list management
-   - Deal editing
-   - Deal comparison
-   - Timestamp tracking
+3. **SavedProperties**
+   - Professional table view of all properties
+   - Metrics comparison columns
+   - Sorting and filtering options
+   - Property management actions
 
 ### 4. AI Integration Strategy
 **Current Implementation:** OpenAI API Placeholder
@@ -296,14 +349,23 @@ sequenceDiagram
 sequenceDiagram
     participant U as User
     participant F as Frontend
-    participant LS as LocalStorage
+    participant BE as Backend
+    participant DB as Database
 
     U->>F: Save Deal
     F->>F: Format Data
-    F->>LS: Store Deal Data
+    F->>BE: POST /api/deals
+    BE->>DB: Store Deal Data
+    DB-->>BE: Confirmation
+    BE-->>F: Deal ID
+    F-->>U: Success Message
+    
     U->>F: Load Deal
-    F->>LS: Retrieve Deal
-    F->>F: Populate Form
+    F->>BE: GET /api/deals/:id
+    BE->>DB: Retrieve Deal
+    DB-->>BE: Deal Data
+    BE-->>F: Deal Data
+    F->>F: Populate Form/Results
     F-->>U: Display Data
 ```
 
@@ -311,42 +373,44 @@ sequenceDiagram
 
 ### Core Components
 
-1. **DealAnalysis** (`/frontend/src/pages/DealAnalysis.tsx`)
+1. **SFRAnalysis** (`/frontend/src/pages/SFRAnalysis.tsx`)
    ```typescript
    interface AnalysisResult {
      monthlyAnalysis: MonthlyAnalysis;
      annualAnalysis: AnnualAnalysis;
      longTermAnalysis: LongTermAnalysis;
+     keyMetrics: KeyMetrics;
    }
    ```
    - State Management:
-     - `analysisResult`: Stores analysis data
+     - `propertyData`: Stores property input data
+     - `analysis`: Stores analysis results
      - `error`: Handles error states
    - Key Methods:
-     - `handleAnalyze`: Processes form submission
-     - `handleError`: Error handling logic
+     - `handleAnalyzeProperty`: Processes form submission
+     - `handleSaveDeal`: Saves deal to database
+     - `loadDealData`: Loads existing deal
 
-2. **DealForm** (`/frontend/src/components/DealAnalysis/DealForm.jsx`)
+2. **SFRPropertyForm** (`/frontend/src/components/SFRAnalysis/SFRPropertyForm.tsx`)
    - Form Sections:
      - Property Information
      - Financial Details
-     - Assumptions
+     - Monthly Income/Expenses
+     - Long-term Assumptions
    - Validation Rules:
-     ```javascript
-     const validateForm = () => {
-       // Required fields
-       // Numeric validation
-       // Range checks
-     };
-     ```
-   - Local Storage Integration:
-     ```javascript
-     const handleSave = () => {
-       localStorage.setItem('savedDeals', JSON.stringify(deals));
+     ```typescript
+     const validateForm = (): boolean => {
+       // Required fields check
+       if (!formData.purchasePrice) {
+         setError('Purchase price is required');
+         return false;
+       }
+       // Additional validation rules...
+       return true;
      };
      ```
 
-3. **AnalysisResults** (`/frontend/src/components/DealAnalysis/AnalysisResults.jsx`)
+3. **AnalysisResults** (`/frontend/src/components/SFRAnalysis/AnalysisResults.tsx`)
    - Display Components:
      - MetricCards: Key financial indicators
      - Charts: Data visualization
@@ -544,88 +608,7 @@ export function adaptAnalysisForFrontend(analysis: any): any {
 3. **Flexibility**: Calculation logic can be updated without migrating existing data
 4. **Resilience**: Missing or incomplete data is handled gracefully with recalculation
 
-### AI Analysis Handling
-Unlike numerical projections, AI analysis:
-1. Is preserved as-is when loaded from the database
-2. Is expensive to regenerate (requires API calls)
-3. Represents a point-in-time assessment that doesn't need automatic recalculation
-
-## Calculation Algorithms
-
-### Financial Metrics
-
-1. **Debt Service Coverage Ratio (DSCR)**
-   ```javascript
-   const calculateDSCR = (noi, debtService) => {
-     return noi / debtService;
-   };
-   ```
-
-2. **Net Operating Income (NOI)**
-   ```javascript
-   const calculateNOI = (
-     grossRent,
-     vacancy,
-     operatingExpenses
-   ) => {
-     const effectiveGrossIncome = grossRent * (1 - vacancy);
-     return effectiveGrossIncome - operatingExpenses;
-   };
-   ```
-
-3. **Internal Rate of Return (IRR)**
-   ```javascript
-   const calculateIRR = (cashFlows, guess = 0.1) => {
-     const maxIterations = 1000;
-     const tolerance = 0.000001;
-     
-     for (let i = 0; i < maxIterations; i++) {
-       const npv = cashFlows.reduce((sum, cf, t) => 
-         sum + cf / Math.pow(1 + guess, t), 0
-       );
-       
-       if (Math.abs(npv) < tolerance) return guess;
-       
-       const derivativeNPV = cashFlows.reduce((sum, cf, t) =>
-         sum - t * cf / Math.pow(1 + guess, t + 1), 0
-       );
-       
-       guess = guess - npv / derivativeNPV;
-     }
-     
-     return null; // No solution found
-   };
-   ```
-
-## Development Environment
-
-### Frontend Setup
-```bash
-cd frontend
-npm install
-npm start  # Runs on port 3000
-```
-
-### Backend Setup
-```bash
-cd backend
-npm install
-npm run dev  # Runs on port 3001
-```
-
-### Environment Variables
-```env
-# Backend (.env)
-PORT=3001
-NODE_ENV=development
-OPENAI_API_KEY=your_openai_api_key
-CORS_ORIGIN=http://localhost:3000
-
-# Frontend (.env)
-REACT_APP_API_URL=http://localhost:3001
-```
-
-## Testing Strategy
+## Test Strategy
 
 ### Frontend Tests
 - Unit Tests: Jest + React Testing Library
@@ -650,67 +633,6 @@ REACT_APP_API_URL=http://localhost:3001
 2. Query Optimization
 3. Rate Limiting
 4. Compression
-
-## Error Handling
-
-### Frontend
-```javascript
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-  
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  
-  render() {
-    if (this.state.hasError) {
-      return <ErrorDisplay error={this.state.error} />;
-    }
-    return this.props.children;
-  }
-}
-```
-
-### Backend
-```javascript
-const handleError = (error, res) => {
-  logger.error(error.stack);
-  
-  if (error instanceof ValidationError) {
-    return res.status(400).json({
-      error: 'Validation Error',
-      details: error.details
-    });
-  }
-  
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: error.message
-  });
-};
-```
-
-## Monitoring and Logging
-
-### Frontend
-- Error Tracking: Sentry
-- Performance Monitoring: Google Analytics
-- Console Logging: Custom Logger
-
-### Backend
-- Application Logs: Winston
-- Request Logging: Morgan
-- Performance Metrics: Express Status Monitor
-
-## Security Measures
-
-1. Input Validation
-2. XSS Protection
-3. CSRF Protection
-4. Rate Limiting
-5. Secure Headers
-6. API Key Protection
-7. Error Sanitization
 
 ## Deployment
 
@@ -745,81 +667,29 @@ module.exports = {
 
 ## Future Enhancements
 
-1. User Authentication
+1. **Multi-Family Analysis**
+   - Unit mix optimization
+   - Building-specific expenses
+   - Unit-by-unit analysis
+
+2. **User Authentication**
    - JWT Implementation
    - Role-based Access Control
 
-2. Deal Comparison
-   - Side-by-side Analysis
-   - Metric Comparison Charts
+3. **Enhanced AI Features**
+   - Market Analysis
+   - Investment Recommendations
+   - Risk Assessment
 
-3. PDF Reports
+4. **PDF Reports**
    - Custom Templates
    - Dynamic Generation
 
-4. Mobile Application
-   - React Native
-   - Offline Support
-
-5. Market Data Integration
+5. **Market Data Integration**
    - Real Estate APIs
    - Market Trends
 
-6. Data Persistence
-   - MongoDB Integration
-   - Data Migration
-
-7. Enhanced AI Features
-   - Market Analysis
-   - Investment Recommendations
-
-## 2025-06-03 Backend Update
-
-### TypeScript-First Workflow
-- The backend now runs directly from TypeScript source using `ts-node` and `nodemon`.
-- `.env` is loaded at the very top of `src/index.ts` to ensure all environment variables are available.
-- All old JS files in `src/` have been removed to prevent stale code from being loaded.
-
-### Unified Analysis Engine
-- The `/api/deals/analyze` endpoint now handles both SFR and MF analysis.
-- The backend branches on `propertyType` and uses the appropriate analyzer.
-- The response always includes: `monthlyAnalysis`, `annualAnalysis`, `longTermAnalysis`, `keyMetrics`, and `aiInsights`.
-
-### Sample Endpoints for Testing
-- `/api/deals/sample-sfr` and `/api/deals/sample-mf` return valid sample payloads for SFR and MF, respectively.
-
-### Automated Smoke Testing
-- On server startup, a script (`testApiOnStartup.ts`) runs and verifies:
-  - Sample endpoints return valid data.
-  - Analysis endpoint returns all required fields.
-- Logs `[PASS]` or `[FAIL]` for each check.
-
-### OpenAI Integration
-- Updated to use OpenAI v4+ SDK (`openai.completions.create`).
-- All property access is now safe to prevent runtime errors if analysis structure is missing fields.
-
-### Router and Controller Hygiene
-- Sample endpoints are registered before parameterized routes to avoid route shadowing.
-- Debug logs were used to confirm correct file loading and endpoint execution.
-
-### API Contract
-- All analysis responses include the required fields for both SFR and MF.
-- See `API.md` for full request/response structure.
-
-### AI Prompt Engineering (2025-06 Update)
-
-#### Multi-Family AI Analysis Prompt (mfAnalysisPrompt)
-- The `mfAnalysisPrompt` function generates a detailed prompt for OpenAI to analyze multi-family (MF) property investments.
-- **Context:**
-  - The prompt is constructed using metrics and data already calculated by the backend analysis engine (e.g., DSCR, Cap Rate, Cash on Cash, NOI, unit mix, price per unit, etc.).
-  - No financial metrics are recalculated in the prompt function; it only formats and summarizes the results for the AI.
-- **Prompt Content:**
-  - Property details (address, units, square footage, year built, price per unit/sqft)
-  - Unit mix breakdown
-  - Financial metrics (purchase price, down payment, interest rate, loan term, mortgage, NOI, DSCR, Cap Rate, Cash on Cash)
-  - Operating expenses (property management, vacancy, maintenance, utilities, common area)
-  - Long-term assumptions (rent/expense growth, value appreciation, projection years, selling costs)
-  - Requests a structured JSON response from the AI, including summary, strengths, weaknesses, recommendations, unit mix analysis, market position, value-add opportunities, investment score, and hold period.
-- **Best Practice:**
-  - All numbers and metrics in the prompt are sourced from the backend's analysis output, ensuring consistency and no redundant calculations.
-  - The prompt function is a formatter, not a calculator. 
+6. **Portfolio Analysis**
+   - Aggregate metrics
+   - Portfolio diversification
+   - Performance comparison
