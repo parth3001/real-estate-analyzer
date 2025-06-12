@@ -3,6 +3,8 @@
 ## Overview
 This document outlines the API interfaces, calculations, and data structures used in the Real Estate Analyzer application.
 
+For a comprehensive listing of all data fields, their types, and usage, please refer to the [Data Dictionary](DATA_DICTIONARY.md).
+
 ## API Endpoints
 
 ### Property Analysis

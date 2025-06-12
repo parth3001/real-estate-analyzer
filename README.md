@@ -30,9 +30,13 @@ A comprehensive web application for analyzing real estate investment opportuniti
 
 ## Documentation
 
-- [Architecture Documentation](ARCHITECTURE.md) - Detailed system architecture and technical decisions
-- [API Documentation](backend/README.md) - Backend API endpoints and usage
+- [Architecture Documentation](docs/ARCHITECTURE.md) - Detailed system architecture and technical decisions
+- [API Documentation](docs/API.md) - Backend API endpoints and usage
 - [Frontend Documentation](frontend/README.md) - Frontend components and setup
+- [Data Dictionary](docs/DATA_DICTIONARY.md) - Comprehensive field definitions and data structure
+- [Data Mapping](docs/DATA_MAPPING.md) - How data flows between frontend, backend, and database
+- [TypeScript Rules](docs/TYPESCRIPT_RULES.md) - TypeScript coding standards and best practices
+- [Deployment Guide](docs/README-EC2-DEPLOYMENT.md) - AWS EC2 deployment instructions
 
 ## Prerequisites
 
@@ -45,9 +49,10 @@ A comprehensive web application for analyzing real estate investment opportuniti
 real-estate-analyzer/
 ├── frontend/          # React frontend application
 ├── backend/           # Node.js backend application
-├── .gitignore        # Git ignore file
-├── ARCHITECTURE.md   # System architecture documentation
-└── README.md         # Project documentation
+├── docs/              # Project documentation
+├── deployment/        # Deployment configuration
+├── scripts/           # Utility scripts
+└── README.md          # Project overview
 ```
 
 ## Setup Instructions
@@ -108,6 +113,7 @@ The application will be available at `http://localhost:5173`
 - Improved maintenance cost calculations
 - Enhanced year-over-year projections with inflation adjustment
 - Fixed ROI and IRR calculations for 10-year projections
+- Added comprehensive data dictionary for field tracking
 
 ## Future Enhancements
 
@@ -117,6 +123,14 @@ The application will be available at `http://localhost:5173`
 - Generate detailed PDF reports
 - Docker containerization
 - AWS deployment
+
+## Contributing
+
+When adding new fields or features:
+1. Update the Data Dictionary (docs/DATA_DICTIONARY.md)
+2. Follow TypeScript typing conventions
+3. Document calculations and assumptions
+4. Ensure backward compatibility with existing data
 
 ## License
 
