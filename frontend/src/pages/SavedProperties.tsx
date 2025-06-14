@@ -20,9 +20,10 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Tooltip
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { propertyApi } from '../services/api';
@@ -40,6 +41,7 @@ interface SavedProperty {
     zipCode?: string;
   };
   purchasePrice?: number;
+  monthlyRent?: number;
   createdAt: string;
   updatedAt: string;
   analysis?: {
@@ -240,7 +242,8 @@ const SavedProperties: React.FC = () => {
           <Button 
             variant="contained" 
             color="primary" 
-            onClick={() => navigate('/sfr-analysis')}
+            component={Link}
+            to="/sfr-analysis"
           >
             Add New Property
           </Button>
@@ -266,7 +269,8 @@ const SavedProperties: React.FC = () => {
             <Button 
               variant="contained" 
               color="primary" 
-              onClick={() => navigate('/sfr-analysis')}
+              component={Link}
+              to="/sfr-analysis"
               sx={{ mt: 2 }}
             >
               Analyze New Property
@@ -308,7 +312,7 @@ const SavedProperties: React.FC = () => {
                       <TableCell component="th" scope="row">
                         {property.propertyName || 'Unnamed Property'}
                         <Chip 
-                          label={property.propertyType || 'Unknown'} 
+                          label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
                           color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
                           size="small" 
                           sx={{ ml: 1 }}
@@ -351,20 +355,23 @@ const SavedProperties: React.FC = () => {
                         {formatDate(property.updatedAt)}
                       </TableCell>
                       <TableCell align="center">
-                        <IconButton 
-                          aria-label="view"
-                          onClick={() => viewPropertyDetails(property._id)}
-                          size="small"
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                        <IconButton 
-                          aria-label="delete"
-                          onClick={() => openDeleteDialog(property._id)}
-                          size="small"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Tooltip title="View Details">
+                          <IconButton 
+                            color="primary"
+                            component={Link}
+                            to={`/${property.propertyType.toLowerCase()}-analysis?id=${property._id}`}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton 
+                            color="error" 
+                            onClick={() => openDeleteDialog(property._id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );

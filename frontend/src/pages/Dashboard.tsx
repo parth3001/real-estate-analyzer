@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import SavedSearchIcon from '@mui/icons-material/SavedSearch';
@@ -13,21 +13,21 @@ const Dashboard: React.FC = () => {
       title: 'Single-Family Analysis',
       description: 'Analyze single-family rental properties with detailed financial projections.',
       icon: <AnalyticsIcon fontSize="large" color="primary" />,
-      action: () => navigate('/sfr-analysis'),
+      path: '/sfr-analysis',
       buttonText: 'Start SFR Analysis',
     },
     {
       title: 'Multi-Family Analysis',
       description: 'Evaluate multi-family properties with unit mix optimization and detailed metrics.',
       icon: <ApartmentIcon fontSize="large" color="primary" />,
-      action: () => navigate('/mf-analysis'),
+      path: '/mf-analysis',
       buttonText: 'Start MF Analysis',
     },
     {
       title: 'Saved Properties',
       description: 'View and manage your saved property analyses and comparisons.',
       icon: <SavedSearchIcon fontSize="large" color="primary" />,
-      action: () => navigate('/saved-properties'),
+      path: '/saved-properties',
       buttonText: 'View Saved Properties',
     },
   ];
@@ -86,7 +86,8 @@ const Dashboard: React.FC = () => {
                     variant="contained" 
                     color="primary" 
                     fullWidth 
-                    onClick={card.action}
+                    component={Link}
+                    to={card.path}
                   >
                     {card.buttonText}
                   </Button>

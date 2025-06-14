@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Tabs, Tab, Alert, CircularProgress, Button, Snackbar } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
 import { propertyApi } from '../services/api';
 import type { SFRPropertyData } from '../types/property';
@@ -236,7 +236,11 @@ const SFRAnalysis: React.FC = () => {
           <Button 
             variant="outlined" 
             color="inherit" 
-            onClick={() => navigate('/')}
+            onClick={() => {
+              console.log('Navigating to dashboard using window.location');
+              window.location.href = '/';
+            }}
+            sx={{ textDecoration: 'none' }}
           >
             Back to Dashboard
           </Button>

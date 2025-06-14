@@ -290,6 +290,82 @@ export function adaptAnalysisForFrontend(analysis: any): any {
       }
     }
     
+    // RULE 5: Normalize annual analysis fields
+    if (adaptedAnalysis.annualAnalysis) {
+      // Map fields to frontend expected names
+      if (adaptedAnalysis.annualAnalysis.grossRent && !adaptedAnalysis.annualAnalysis.income) {
+        adaptedAnalysis.annualAnalysis.income = adaptedAnalysis.annualAnalysis.grossRent;
+      }
+      
+      if (adaptedAnalysis.annualAnalysis.operatingExpenses && !adaptedAnalysis.annualAnalysis.expenses) {
+        adaptedAnalysis.annualAnalysis.expenses = adaptedAnalysis.annualAnalysis.operatingExpenses;
+      }
+      
+      // Make sure cashFlow exists
+      if (!adaptedAnalysis.annualAnalysis.cashFlow && adaptedAnalysis.annualAnalysis.noi) {
+        adaptedAnalysis.annualAnalysis.cashFlow = adaptedAnalysis.annualAnalysis.noi - 
+          (adaptedAnalysis.annualAnalysis.debtService || adaptedAnalysis.monthlyAnalysis?.expenses?.mortgage?.total * 12 || 0);
+      }
+      
+      // Delete redundant fields
+      delete adaptedAnalysis.annualAnalysis.grossRent;
+      delete adaptedAnalysis.annualAnalysis.operatingExpenses;
+    } else {
+      // Create annual analysis from monthly data if missing
+      if (adaptedAnalysis.monthlyAnalysis) {
+        const monthlyRent = adaptedAnalysis.monthlyAnalysis.income?.gross || 
+                          adaptedAnalysis.propertyData.monthlyRent || 0;
+        const monthlyExpenses = adaptedAnalysis.monthlyAnalysis.expenses?.total || 0;
+        const mortgagePayment = adaptedAnalysis.monthlyAnalysis.expenses?.mortgage?.total || 0;
+        
+        adaptedAnalysis.annualAnalysis = {
+          income: monthlyRent * 12,
+          expenses: (monthlyExpenses - mortgagePayment) * 12, // Operating expenses without mortgage
+          noi: (monthlyRent - (monthlyExpenses - mortgagePayment)) * 12,
+          debtService: mortgagePayment * 12,
+          cashFlow: (monthlyRent - monthlyExpenses) * 12
+        };
+        
+        logger.info('Created annual analysis from monthly data');
+      }
+    }
+    
+    // RULE 6: Ensure keyMetrics are properly preserved and updated
+    if (!adaptedAnalysis.keyMetrics) {
+      adaptedAnalysis.keyMetrics = {};
+    }
+    
+    // Ensure IRR is preserved from longTermAnalysis.returns if available
+    if (adaptedAnalysis.longTermAnalysis?.returns?.irr && 
+        (!adaptedAnalysis.keyMetrics.irr || adaptedAnalysis.keyMetrics.irr === 0)) {
+      console.log('Preserving IRR from longTermAnalysis.returns:', adaptedAnalysis.longTermAnalysis.returns.irr);
+      adaptedAnalysis.keyMetrics.irr = adaptedAnalysis.longTermAnalysis.returns.irr;
+    }
+    
+    // Calculate Operating Expense Ratio if missing
+    if (!adaptedAnalysis.keyMetrics.operatingExpenseRatio || adaptedAnalysis.keyMetrics.operatingExpenseRatio === 0) {
+      console.log('Calculating Operating Expense Ratio for saved deal');
+      
+      // Get annual operating expenses and income
+      const annualOperatingExpenses = adaptedAnalysis.annualAnalysis?.expenses || 0;
+      const annualIncome = adaptedAnalysis.annualAnalysis?.income || 0;
+      
+      // Calculate the ratio
+      if (annualIncome > 0) {
+        adaptedAnalysis.keyMetrics.operatingExpenseRatio = (annualOperatingExpenses / annualIncome) * 100;
+        console.log('Calculated Operating Expense Ratio:', adaptedAnalysis.keyMetrics.operatingExpenseRatio);
+      }
+    }
+    
+    // Ensure all key metrics are properly set
+    console.log('Final keyMetrics:', {
+      irr: adaptedAnalysis.keyMetrics.irr,
+      operatingExpenseRatio: adaptedAnalysis.keyMetrics.operatingExpenseRatio,
+      capRate: adaptedAnalysis.keyMetrics.capRate,
+      cashOnCashReturn: adaptedAnalysis.keyMetrics.cashOnCashReturn,
+      dscr: adaptedAnalysis.keyMetrics.dscr
+    });
+    
     // Log the adapted structure
     logger.debug('Adapted analysis structure for frontend', {
       hasMonthlyExpenses: !!adaptedAnalysis.monthlyAnalysis?.expenses,
@@ -613,48 +689,33 @@ function updateExitAnalysisAndReturns(adaptedAnalysis: any): void {
       totalReturn
     };
     
+    // Calculate IRR using cash flows
+    const cashFlows = [
+      -totalInvestment,
+      ...projections.map(year => year.cashFlow),
+      netProceedsFromSale
+    ];
+    
+    // Make sure we preserve the IRR value in longTermAnalysis.returns
+    if (!adaptedAnalysis.longTermAnalysis.returns.irr || adaptedAnalysis.longTermAnalysis.returns.irr === 0) {
+      console.log('Calculating IRR from cash flows for saved deal');
+      // Import FinancialCalculations if needed
+      try {
+        const { FinancialCalculations } = require('../utils/financialCalculations');
+        adaptedAnalysis.longTermAnalysis.returns.irr = FinancialCalculations.calculateIRR(cashFlows);
+        console.log('Calculated IRR:', adaptedAnalysis.longTermAnalysis.returns.irr);
+      } catch (error) {
+        console.error('Error calculating IRR:', error);
+        // If we can't calculate it, try to preserve the original value
+        if (adaptedAnalysis.keyMetrics && adaptedAnalysis.keyMetrics.irr) {
+          adaptedAnalysis.longTermAnalysis.returns.irr = adaptedAnalysis.keyMetrics.irr;
+          console.log('Preserved original IRR value:', adaptedAnalysis.keyMetrics.irr);
+        }
+      }
+    }
+    
     logger.info('Updated exit analysis and returns based on projections');
   } catch (error) {
     logger.error('Error updating exit analysis and returns:', error);
-  }
-}
-
-// RULE 5: Normalize annual analysis fields
-if (adaptedAnalysis.annualAnalysis) {
-  // Map fields to frontend expected names
-  if (adaptedAnalysis.annualAnalysis.grossRent && !adaptedAnalysis.annualAnalysis.income) {
-    adaptedAnalysis.annualAnalysis.income = adaptedAnalysis.annualAnalysis.grossRent;
-  }
-  
-  if (adaptedAnalysis.annualAnalysis.operatingExpenses && !adaptedAnalysis.annualAnalysis.expenses) {
-    adaptedAnalysis.annualAnalysis.expenses = adaptedAnalysis.annualAnalysis.operatingExpenses;
-  }
-  
-  // Make sure cashFlow exists
-  if (!adaptedAnalysis.annualAnalysis.cashFlow && adaptedAnalysis.annualAnalysis.noi) {
-    adaptedAnalysis.annualAnalysis.cashFlow = adaptedAnalysis.annualAnalysis.noi - 
-      (adaptedAnalysis.annualAnalysis.debtService || adaptedAnalysis.monthlyAnalysis?.expenses?.mortgage?.total * 12 || 0);
-  }
-  
-  // Delete redundant fields
-  delete adaptedAnalysis.annualAnalysis.grossRent;
-  delete adaptedAnalysis.annualAnalysis.operatingExpenses;
-} else {
-  // Create annual analysis from monthly data if missing
-  if (adaptedAnalysis.monthlyAnalysis) {
-    const monthlyRent = adaptedAnalysis.monthlyAnalysis.income?.gross || 
-                       adaptedAnalysis.propertyData.monthlyRent || 0;
-    const monthlyExpenses = adaptedAnalysis.monthlyAnalysis.expenses?.total || 0;
-    const mortgagePayment = adaptedAnalysis.monthlyAnalysis.expenses?.mortgage?.total || 0;
-    
-    adaptedAnalysis.annualAnalysis = {
-      income: monthlyRent * 12,
-      expenses: (monthlyExpenses - mortgagePayment) * 12, // Operating expenses without mortgage
-      noi: (monthlyRent - (monthlyExpenses - mortgagePayment)) * 12,
-      debtService: mortgagePayment * 12,
-      cashFlow: (monthlyRent - monthlyExpenses) * 12
-    };
-    
-    logger.info('Created annual analysis from monthly data');
   }
 } 

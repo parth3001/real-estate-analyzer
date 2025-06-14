@@ -29,16 +29,16 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <MainLayout>
-            <Routes>
+          <Routes>
+            <Route element={<MainLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/sfr-analysis" element={<SFRAnalysis />} />
               <Route path="/mf-analysis" element={<MFAnalysis />} />
               <Route path="/saved-properties" element={<SavedProperties />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MainLayout>
+            </Route>
+          </Routes>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const MFAnalysis: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +19,13 @@ const MFAnalysis: React.FC = () => {
           The Multi-Family Property analysis feature is currently being rebuilt. 
           Please check back soon for a comprehensive multi-family analysis tool with unit mix optimization and detailed metrics.
         </Typography>
-        <Button variant="contained" color="primary" onClick={() => navigate('/')}>
+        <Button 
+          variant="outlined" 
+          color="inherit" 
+          component={Link}
+          to="/"
+          sx={{ textDecoration: 'none' }}
+        >
           Back to Dashboard
         </Button>
       </Paper>

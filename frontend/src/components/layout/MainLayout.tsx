@@ -17,7 +17,7 @@ import {
   Divider
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -27,11 +27,9 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const DRAWER_WIDTH = 240;
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
+interface MainLayoutProps {}
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC<MainLayoutProps> = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,8 +63,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {navigationItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
+              component={Link}
+              to={item.path}
               onClick={() => {
-                navigate(item.path);
+                console.log(`Navigating to ${item.path}`);
                 if (isMobile) {
                   setMobileOpen(false);
                 }
@@ -100,7 +100,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => navigate('/help')}>
+          <ListItemButton 
+            component={Link}
+            to="/help"
+          >
             <ListItemIcon>
               <HelpOutlineIcon />
             </ListItemIcon>
@@ -183,7 +186,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         }}
       >
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          {children}
+          <Outlet />
         </Container>
       </Box>
     </Box>

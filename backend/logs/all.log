@@ -9188,3 +9188,1759 @@
 2025-06-11 21:13:09:139 [32minfo[39m: [32mDeal updated successfully:[39m
 2025-06-11 21:13:12:1312 [32minfo[39m: [32m[DealService] Getting all deals[39m
 2025-06-11 21:13:12:1312 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:16:04:164 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32mResponse length: 880 characters[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:16:08:168 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32mFull deal data:[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 6[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-11 21:16:14:1614 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a386ec4b762e9d75f2ee0[39m
+2025-06-11 21:16:17:1617 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:16:17:1617 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:14:4014 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:14:4014 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:39:4039 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:39:4039 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 21:40:50:4050 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32mResponse length: 935 characters[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 21:40:52:4052 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32mFull deal data:[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 7[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-11 21:40:55:4055 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a3e37c4b762e9d75f2eeb[39m
+2025-06-11 21:40:59:4059 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:40:59:4059 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:45:38:4538 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:45:38:4538 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 21:46:31:4631 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 22:24:55:2455 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 22:24:56:2456 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 22:27:59:2759 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 22:45:17:4517 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-11 22:45:18:4518 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32mResponse length: 724 characters[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- projections present:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- projections is array:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32m- projections length:[39m
+2025-06-11 22:45:21:4521 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-11 22:46:10:4610 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-11 22:46:10:4610 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-11 22:46:10:4610 [32minfo[39m: [32mFull deal data:[39m
+2025-06-11 22:46:10:4610 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property[39m
+2025-06-11 22:46:11:4611 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-11 22:46:11:4611 [32minfo[39m: [32m[DealService] Getting deal with ID: 684a4d82c4b762e9d75f2ef6[39m
+2025-06-11 22:46:20:4620 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 22:46:21:4621 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-11 22:59:19:5919 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-11 23:50:16:5016 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 00:07:12:712 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 01:32:18:3218 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 03:27:32:2732 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 05:12:13:1213 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 06:56:34:5634 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 07:31:01:311 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 07:55:18:5518 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 08:09:44:944 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 08:27:17:2717 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 08:32:21:3221 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 08:51:37:5137 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 08:57:31:5731 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:30:35:3035 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:46:28:4628 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:48:31:4831 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:51:33:5133 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:54:02:542 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 09:55:07:557 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 10:10:35:1035 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 10:48:01:481 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 11:14:11:1411 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 11:45:14:4514 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 12:22:22:2222 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 12:34:06:346 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 12:41:43:4143 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 12:59:11:5911 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 13:04:42:442 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 13:17:19:1719 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 13:41:41:4141 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:04:40:440 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:13:59:1359 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:21:27:2127 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:35:14:3514 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:43:24:4324 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:48:52:4852 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 14:53:39:5339 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 15:01:49:149 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 15:42:23:4223 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 16:22:35:2235 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 17:09:18:918 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 17:32:19:3219 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 17:44:19:4419 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:00:30:030 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:13:27:1327 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:14:58:1458 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:19:56:1956 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:32:43:3243 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 18:50:01:501 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 19:01:12:112 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 19:22:15:2215 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:22:15:2215 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:22:15:2215 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:22:15:2215 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:22:16:2216 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mResponse length: 759 characters[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:22:20:2220 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32mResponse length: 1440 characters[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:22:24:2224 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:23:10:2310 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:23:10:2310 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:23:10:2310 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:23:10:2310 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:23:11:2311 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mResponse length: 680 characters[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:23:13:2313 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32mResponse length: 1535 characters[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:23:16:2316 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:25:30:2530 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:25:30:2530 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:25:30:2530 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:25:30:2530 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:25:31:2531 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mResponse length: 775 characters[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:25:34:2534 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32mResponse length: 1369 characters[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:25:38:2538 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:26:33:2633 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:26:33:2633 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:26:33:2633 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:26:33:2633 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:26:34:2634 [32minfo[39m: [32mPrompt length: 2620 characters[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mResponse length: 671 characters[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:26:36:2636 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32mResponse length: 1328 characters[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:26:39:2639 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:27:55:2755 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:27:55:2755 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:27:55:2755 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:27:55:2755 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:27:56:2756 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mResponse length: 972 characters[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:28:00:280 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32mResponse length: 1360 characters[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:28:03:283 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:30:59:3059 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:30:59:3059 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:31:20:3120 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32mResponse length: 1035 characters[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:31:24:3124 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:31:50:3150 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 19:31:50:3150 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 19:31:50:3150 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 19:31:50:3150 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 5[39m
+2025-06-12 19:31:50:3150 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 19:31:51:3151 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b71768e017b9c5f180fa7[39m
+2025-06-12 19:31:54:3154 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:31:54:3154 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:35:31:3531 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:35:31:3531 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:35:31:3531 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:35:31:3531 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:35:32:3532 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:35:33:3533 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mResponse length: 1018 characters[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:35:35:3535 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32mResponse length: 1620 characters[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:35:40:3540 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:36:03:363 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:36:03:363 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:36:03:363 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:36:03:363 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:36:04:364 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:36:05:365 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mResponse length: 986 characters[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:36:07:367 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32mResponse length: 1415 characters[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:36:11:3611 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:36:45:3645 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:36:45:3645 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:36:46:3646 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:36:50:3650 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:36:50:3650 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:36:51:3651 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mResponse length: 1143 characters[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:36:55:3655 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32mResponse length: 1265 characters[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:36:58:3658 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:38:15:3815 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:38:15:3815 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:38:15:3815 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:38:15:3815 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:38:16:3816 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mResponse length: 1034 characters[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:38:20:3820 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32mResponse length: 1249 characters[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:38:24:3824 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:43:28:4328 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:43:28:4328 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:43:28:4328 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:43:28:4328 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:43:29:4329 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:43:29:4329 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:43:29:4329 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:43:30:4330 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mResponse length: 1175 characters[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:43:32:4332 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32mResponse length: 1665 characters[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:43:36:4336 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:43:50:4350 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:43:50:4350 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mResponse length: 1172 characters[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:43:54:4354 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:43:58:4358 [32minfo[39m: [32mResponse length: 1284 characters[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:43:59:4359 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:53:11:5311 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:53:11:5311 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:56:03:563 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:56:03:563 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 19:56:51:5651 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 19:57:35:5735 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:57:35:5735 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:57:35:5735 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:57:35:5735 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:57:36:5736 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:57:37:5737 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mResponse length: 1100 characters[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:57:40:5740 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32mResponse length: 1401 characters[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:57:43:5743 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:58:33:5833 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:58:33:5833 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:58:34:5834 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mResponse length: 1001 characters[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:58:38:5838 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32mResponse length: 1280 characters[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:58:43:5843 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:59:40:5940 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 19:59:40:5940 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 19:59:40:5940 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 19:59:40:5940 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 19:59:41:5941 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:59:42:5942 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mResponse length: 1119 characters[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 19:59:47:5947 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32mResponse length: 1390 characters[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 19:59:49:5949 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:00:35:035 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 20:00:35:035 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 20:00:35:035 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 20:00:35:035 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:00:36:036 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mResponse length: 1010 characters[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:00:39:039 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32mResponse length: 1493 characters[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:00:44:044 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:03:30:330 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 20:03:30:330 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 20:03:30:330 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 20:03:30:330 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 20:03:31:331 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:03:32:332 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mResponse length: 930 characters[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:03:35:335 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32mResponse length: 1369 characters[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:03:38:338 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:04:45:445 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 20:04:45:445 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 20:04:45:445 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 20:04:45:445 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:04:46:446 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mResponse length: 928 characters[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:04:49:449 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32mResponse length: 1274 characters[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:04:54:454 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:07:09:79 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:07:09:79 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:13:33:1333 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 20:16:12:1612 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:16:13:1613 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:29:26:2926 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 20:33:17:3317 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:33:18:3318 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:38:19:3819 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-12 20:39:27:3927 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:39:28:3928 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 20:39:31:3931 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b71768e017b9c5f180fa7[39m
+2025-06-12 20:39:33:3933 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684a4d82c4b762e9d75f2ef6[39m
+2025-06-12 20:39:36:3936 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684a3e37c4b762e9d75f2eeb[39m
+2025-06-12 20:39:38:3938 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684a386ec4b762e9d75f2ee0[39m
+2025-06-12 20:39:40:3940 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684a363bc4b762e9d75f2ed0[39m
+2025-06-12 20:39:50:3950 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 20:39:51:3951 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32mResponse length: 982 characters[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 20:39:54:3954 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 20:41:13:4113 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 20:41:13:4113 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 20:41:13:4113 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 20:41:13:4113 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property[39m
+2025-06-12 20:41:14:4114 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 20:41:14:4114 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b81b988871bab9fd08bf7[39m
+2025-06-12 21:11:57:1157 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:11:57:1157 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:11:58:1158 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mResponse length: 1279 characters[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:12:02:122 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32mResponse length: 1623 characters[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:12:06:126 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:12:33:1233 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:12:33:1233 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:12:34:1234 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mResponse length: 1217 characters[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:12:36:1236 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32mResponse length: 1380 characters[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:12:40:1240 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:13:23:1323 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:13:23:1323 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:13:23:1323 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:13:23:1323 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:13:24:1324 [32minfo[39m: [32mPrompt length: 3437 characters[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mResponse length: 1023 characters[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:13:29:1329 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32mResponse length: 1558 characters[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:13:32:1332 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:15:26:1526 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:15:26:1526 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:15:26:1526 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:15:26:1526 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:15:27:1527 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mResponse length: 1255 characters[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:15:32:1532 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32mResponse length: 1271 characters[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:15:36:1536 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:17:23:1723 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b81b988871bab9fd08bf7[39m
+2025-06-12 21:17:23:1723 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b81b988871bab9fd08bf7[39m
+2025-06-12 21:17:29:1729 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:17:30:1730 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:17:33:1733 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b81b988871bab9fd08bf7[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:17:41:1741 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32mResponse length: 1110 characters[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:17:44:1744 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:18:07:187 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:18:07:187 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:18:21:1821 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32mResponse length: 958 characters[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:18:23:1823 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 5[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 21:18:45:1845 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:18:48:1848 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:18:48:1848 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:18:51:1851 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:18:51:1851 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:27:45:2745 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:27:45:2745 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:27:45:2745 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:27:45:2745 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:27:46:2746 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mResponse length: 1285 characters[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:27:49:2749 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32mResponse length: 1221 characters[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:27:54:2754 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:30:08:308 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:30:08:308 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:30:08:308 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:30:08:308 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:30:09:309 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mResponse length: 1001 characters[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:30:12:3012 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32mResponse length: 1231 characters[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:30:15:3015 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:36:21:3621 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:36:23:3623 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:36:26:3626 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:36:26:3626 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:36:34:3634 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:36:34:3634 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:36:36:3636 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b8a85deb0fe2bdea8baf6[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:41:31:4131 [32minfo[39m: [32mPrompt length: 3436 characters[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32mResponse length: 1114 characters[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:41:34:4134 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 4[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 21:41:42:4142 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8fe697012741b3b68a4d[39m
+2025-06-12 21:41:45:4145 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:41:46:4146 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 21:41:48:4148 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8fe697012741b3b68a4d[39m
+2025-06-12 21:41:48:4148 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b8fe697012741b3b68a4d[39m
+2025-06-12 21:58:33:5833 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mRegistered models:[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mCollections in database:[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-12 21:58:34:5834 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:58:35:5835 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mResponse length: 1227 characters[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 21:58:37:5837 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-12 21:58:38:5838 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 21:58:38:5838 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 21:58:38:5838 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 21:58:38:5838 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32mResponse length: 1268 characters[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 21:58:42:5842 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 22:07:58:758 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:07:58:758 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:08:02:82 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b8fe697012741b3b68a4d[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 22:08:30:830 [32minfo[39m: [32mPrompt length: 3443 characters[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32mResponse length: 860 characters[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 22:08:32:832 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 22:08:47:847 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 22:08:47:847 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 22:08:47:847 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 22:08:47:847 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 3[39m
+2025-06-12 22:08:47:847 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 22:09:18:918 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:09:18:918 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:09:22:922 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b963f2d8fb96860e97beb[39m
+2025-06-12 22:09:22:922 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b963f2d8fb96860e97beb[39m
+2025-06-12 22:09:45:945 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:09:46:946 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:10:48:1048 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:10:50:1050 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b963f2d8fb96860e97beb[39m
+2025-06-12 22:10:51:1051 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b963f2d8fb96860e97beb[39m
+2025-06-12 22:30:15:3015 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:30:15:3015 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:30:20:3020 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b963f2d8fb96860e97beb[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-12 22:30:30:3030 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32mResponse length: 946 characters[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- projections present:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- projections is array:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32m- projections length:[39m
+2025-06-12 22:30:34:3034 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-12 22:30:40:3040 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-12 22:30:40:3040 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-12 22:30:40:3040 [32minfo[39m: [32mFull deal data:[39m
+2025-06-12 22:30:40:3040 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 6[39m
+2025-06-12 22:30:40:3040 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-12 22:48:48:4848 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:48:49:4849 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-12 22:48:51:4851 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-12 22:48:51:4851 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 16:18:19:1819 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mRegistered models:[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mCollections in database:[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-13 16:18:19:1819 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 16:18:20:1820 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mResponse length: 979 characters[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 16:18:22:1822 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32mResponse length: 1370 characters[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 16:18:25:1825 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 16:19:15:1915 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:19:15:1915 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:19:20:1920 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 16:19:20:1920 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 16:23:08:238 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 16:23:08:238 [32minfo[39m: [32m[DealService] Getting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 16:23:41:2341 [32minfo[39m: [32mPUT /api/deals/684b9b602d8fb96860e97bfb - Request Body:[39m
+2025-06-13 16:23:41:2341 [32minfo[39m: [32mUpdating deal 684b9b602d8fb96860e97bfb with data:[39m
+2025-06-13 16:23:41:2341 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 16:23:41:2341 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 6[39m
+2025-06-13 16:23:41:2341 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 16:25:15:2515 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32mResponse length: 1145 characters[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 16:25:18:2518 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 16:25:26:2526 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-13 16:25:26:2526 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-13 16:25:26:2526 [32minfo[39m: [32mFull deal data:[39m
+2025-06-13 16:25:26:2526 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 5[39m
+2025-06-13 16:25:26:2526 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-13 16:35:36:3536 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:35:36:3536 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:35:37:3537 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 16:35:38:3538 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 16:37:38:3738 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:37:38:3738 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 16:37:39:3739 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 16:37:39:3739 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:02:15:215 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:02:15:215 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:03:16:316 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:07:42:742 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:09:55:955 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:12:00:120 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:15:05:155 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:19:12:1912 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 17:21:43:2143 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:21:44:2144 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:23:32:2332 [33mwarn[39m: [33mOpenAI API key not configured. AI insights will not be available.[39m
+2025-06-13 17:23:32:2332 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-06-13 17:23:32:2332 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-06-13 17:23:32:2332 [32minfo[39m: [32mRaw environment variables:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mConnected to MongoDB successfully[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mRegistered models:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mAll required models are registered[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mCollections in database:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 17:23:33:2333 [32minfo[39m: [32mPrompt length: 3439 characters[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mResponse length: 1364 characters[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 17:23:37:2337 [32minfo[39m: [32mPrompt length: 2746 characters[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32mResponse length: 1597 characters[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 17:23:41:2341 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 17:39:25:3925 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:39:27:3927 [32minfo[39m: [32m[DealService] Getting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mPUT /api/deals/684c974689e3e992556e8168 - Request Body:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mUpdating deal 684c974689e3e992556e8168 with data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 5[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mPUT /api/deals/684c974689e3e992556e8168 - Request Body:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mUpdating deal 684c974689e3e992556e8168 with data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 5[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mPUT /api/deals/684c974689e3e992556e8168 - Request Body:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mUpdating deal 684c974689e3e992556e8168 with data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 5[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mPUT /api/deals/684c974689e3e992556e8168 - Request Body:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mUpdating deal 684c974689e3e992556e8168 with data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 5[39m
+2025-06-13 17:39:44:3944 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 17:40:01:401 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:40:02:402 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:40:05:405 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684c974689e3e992556e8168[39m
+2025-06-13 17:40:07:407 [32minfo[39m: [32m[DealService] Deleting deal with ID: 684b9b602d8fb96860e97bfb[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mAnalyzing deal with data:[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mAnalyzing SFR property[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mKey metrics for AI analysis:[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mSending prompt to OpenAI:[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mUsing OpenAI model: gpt-3.5-turbo[39m
+2025-06-13 17:40:41:4041 [32minfo[39m: [32mPrompt length: 3443 characters[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32mResponse length: 897 characters[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32mAI response parsed successfully:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32mFinal analysis structure check:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- monthlyAnalysis present:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- annualAnalysis present:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- longTermAnalysis present:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- longTermAnalysis keys:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- projections present:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- projections is array:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32m- projections length:[39m
+2025-06-13 17:40:43:4043 [32minfo[39m: [32mAnalysis completed successfully[39m
+2025-06-13 17:40:54:4054 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-06-13 17:40:54:4054 [32minfo[39m: [32mCreating deal with data:[39m
+2025-06-13 17:40:54:4054 [32minfo[39m: [32mFull deal data:[39m
+2025-06-13 17:40:54:4054 [32minfo[39m: [32m[DealService] Creating deal: Sample SFR Property 5[39m
+2025-06-13 17:40:54:4054 [32minfo[39m: [32mDeal created successfully:[39m
+2025-06-13 17:45:33:4533 [32minfo[39m: [32mPUT /api/deals/684ca8f6fa16c9dbf3de62a3 - Request Body:[39m
+2025-06-13 17:45:33:4533 [32minfo[39m: [32mUpdating deal 684ca8f6fa16c9dbf3de62a3 with data:[39m
+2025-06-13 17:45:33:4533 [32minfo[39m: [32mFull update data:[39m
+2025-06-13 17:45:33:4533 [32minfo[39m: [32m[DealService] Updating deal: Sample SFR Property 5[39m
+2025-06-13 17:45:33:4533 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-06-13 17:45:37:4537 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:55:09:559 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:56:12:5612 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:58:07:587 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 17:58:10:5810 [32minfo[39m: [32m[DealService] Getting deal with ID: 684ca8f6fa16c9dbf3de62a3[39m
+2025-06-13 18:00:54:054 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 18:02:20:220 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:10:42:1042 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 18:12:04:124 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:14:55:1455 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:17:02:172 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:20:21:2021 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:23:48:2348 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:26:05:265 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:28:22:2822 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:32:12:3212 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:38:01:381 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:40:03:403 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:45:28:4528 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:48:49:4849 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:50:56:5056 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:56:48:5648 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 18:57:56:5756 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:00:40:040 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:04:20:420 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:07:12:712 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:10:36:1036 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:15:04:154 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:21:03:213 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:24:52:2452 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:29:42:2942 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:37:44:3744 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:43:44:4344 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:48:58:4858 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 19:56:24:5624 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 20:05:51:551 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 20:11:46:1146 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 20:19:13:1913 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 20:32:02:322 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 21:08:28:828 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 21:46:20:4620 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 21:55:15:5515 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 21:57:34:5734 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-06-13 21:57:59:5759 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-06-13 21:58:02:582 [32minfo[39m: [32m[DealService] Getting deal with ID: 684ca8f6fa16c9dbf3de62a3[39m

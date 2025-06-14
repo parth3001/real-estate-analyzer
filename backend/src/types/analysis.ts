@@ -54,6 +54,15 @@ export interface SFRMetrics extends CommonMetrics {
   grossRentMultiplier: number;
   afterRepairValueRatio?: number;
   rehabROI?: number;
+  
+  // New metrics
+  breakEvenOccupancy: number;
+  equityMultiple: number;
+  onePercentRuleValue: number;
+  fiftyRuleAnalysis: boolean;
+  rentToPriceRatio: number;
+  pricePerBedroom: number;
+  debtToIncomeRatio: number;
 }
 
 export interface MultiFamilyMetrics extends CommonMetrics {
@@ -86,6 +95,12 @@ export interface YearlyProjection {
   realtorBrokerageFee: number;
   grossRent: number;
   appreciation: number;
+  
+  // New projection fields
+  principalPaidThisYear?: number;
+  totalPrincipalPaidToDate?: number;
+  cashOnCashReturnThisYear?: number;
+  pricePerSqFtAtThisPoint?: number;
 }
 
 export interface ExitAnalysis {
@@ -128,12 +143,36 @@ export interface LongTermAnalysis {
   projectionYears: number;
 }
 
+export interface SensitivityAnalysis {
+  bestCase: {
+    cashFlow: number;
+    cashOnCashReturn: number;
+    totalReturn: number;
+    noi: number;
+    dscr: number;
+    vacancyRate: number;
+    interestRate: number;
+    appreciationRate: number;
+  };
+  worstCase: {
+    cashFlow: number;
+    cashOnCashReturn: number;
+    totalReturn: number;
+    noi: number;
+    dscr: number;
+    vacancyRate: number;
+    interestRate: number;
+    appreciationRate: number;
+  };
+}
+
 export interface AnalysisResult<T extends CommonMetrics> {
   monthlyAnalysis: MonthlyAnalysis;
   annualAnalysis: AnnualAnalysis;
   keyMetrics: T;
   longTermAnalysis: LongTermAnalysis;
   aiInsights?: AIInsights;
+  sensitivityAnalysis?: SensitivityAnalysis;
 }
 
 export type { SFRData, MultiFamilyData, PropertyType }; 

@@ -80,6 +80,10 @@ export interface Analysis {
       mortgageBalance: number;
       appreciation: number;
       totalReturn: number;
+      principalPaidThisYear?: number;
+      totalPrincipalPaidToDate?: number;
+      cashOnCashReturnThisYear?: number;
+      pricePerSqFtAtThisPoint?: number;
     }>;
     projectionYears?: number;
     returns?: {
@@ -102,6 +106,15 @@ export interface Analysis {
     pricePerSqFtAtPurchase?: number;
     pricePerSqFtAtSale?: number;
     avgRentPerSqFt?: number;
+    expenseRatio?: number;
+    breakEvenOccupancy?: number;
+    equityMultiple?: number;
+    onePercentRuleValue?: number;
+    fiftyRuleAnalysis?: boolean;
+    rentToPriceRatio?: number;
+    pricePerBedroom?: number;
+    debtToIncomeRatio?: number;
+    grossRentMultiplier?: number;
   };
   aiInsights?: {
     summary?: string;
@@ -109,6 +122,19 @@ export interface Analysis {
     weaknesses?: string[];
     recommendations?: string[];
     investmentScore?: number;
+    riskAssessment?: string;
+  };
+  sensitivityAnalysis?: {
+    bestCase?: {
+      cashFlow?: number;
+      cashOnCashReturn?: number;
+      totalReturn?: number;
+    };
+    worstCase?: {
+      cashFlow?: number;
+      cashOnCashReturn?: number;
+      totalReturn?: number;
+    };
   };
 }
 
@@ -226,14 +252,36 @@ const AnalysisSchema = new Schema({
     dscr: Number,
     pricePerSqFtAtPurchase: Number,
     pricePerSqFtAtSale: Number,
-    avgRentPerSqFt: Number
+    avgRentPerSqFt: Number,
+    expenseRatio: Number,
+    breakEvenOccupancy: Number,
+    equityMultiple: Number,
+    onePercentRuleValue: Number,
+    fiftyRuleAnalysis: Boolean,
+    rentToPriceRatio: Number,
+    pricePerBedroom: Number,
+    debtToIncomeRatio: Number,
+    grossRentMultiplier: Number
   },
   aiInsights: {
     summary: String,
     strengths: [String],
     weaknesses: [String],
     recommendations: [String],
-    investmentScore: Number
+    investmentScore: Number,
+    riskAssessment: String
+  },
+  sensitivityAnalysis: {
+    bestCase: {
+      cashFlow: Number,
+      cashOnCashReturn: Number,
+      totalReturn: Number
+    },
+    worstCase: {
+      cashFlow: Number,
+      cashOnCashReturn: Number,
+      totalReturn: Number
+    }
   }
 });
 

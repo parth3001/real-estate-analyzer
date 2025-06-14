@@ -16,6 +16,22 @@ export function sfrAnalysisPrompt(dealData: any, analysis: any): string {
   const maintenance = analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0;
   const propertyManagement = analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0;
 
+  // Get new metrics with fallbacks
+  const breakEvenOccupancy = analysis?.keyMetrics?.breakEvenOccupancy ?? 0;
+  const equityMultiple = analysis?.keyMetrics?.equityMultiple ?? 0;
+  const onePercentRuleValue = analysis?.keyMetrics?.onePercentRuleValue ?? 0;
+  const fiftyRuleAnalysis = analysis?.keyMetrics?.fiftyRuleAnalysis ?? false;
+  const rentToPriceRatio = analysis?.keyMetrics?.rentToPriceRatio ?? 0;
+  const pricePerBedroom = analysis?.keyMetrics?.pricePerBedroom ?? 0;
+  const grossRentMultiplier = analysis?.keyMetrics?.grossRentMultiplier ?? 0;
+  const operatingExpenseRatio = analysis?.keyMetrics?.operatingExpenseRatio ?? 0;
+  
+  // Get sensitivity analysis with fallbacks
+  const bestCaseCashFlow = analysis?.sensitivityAnalysis?.bestCase?.cashFlow ?? 0;
+  const bestCaseCoCR = analysis?.sensitivityAnalysis?.bestCase?.cashOnCashReturn ?? 0;
+  const worstCaseCashFlow = analysis?.sensitivityAnalysis?.worstCase?.cashFlow ?? 0;
+  const worstCaseCoCR = analysis?.sensitivityAnalysis?.worstCase?.cashOnCashReturn ?? 0;
+
   return `Analyze this single-family rental property investment:
 
 PROPERTY DETAILS:
@@ -38,6 +54,22 @@ FINANCIAL METRICS:
 - Cash on Cash Return: ${cashOnCashReturn.toFixed(2)}%
 - IRR (if available): ${analysis?.metrics?.irr ? analysis.metrics.irr.toFixed(2) + '%' : 'N/A'}
 
+ADVANCED METRICS:
+- Gross Rent Multiplier: ${grossRentMultiplier.toFixed(2)}
+- Operating Expense Ratio: ${operatingExpenseRatio.toFixed(2)}%
+- Break-Even Occupancy: ${breakEvenOccupancy.toFixed(2)}%
+- Equity Multiple: ${equityMultiple.toFixed(2)}x
+- One Percent Rule Value: ${onePercentRuleValue.toFixed(2)}% (>1% is favorable)
+- Fifty Percent Rule Analysis: ${fiftyRuleAnalysis ? 'Pass' : 'Fail'}
+- Rent-to-Price Ratio: ${rentToPriceRatio.toFixed(4)}%
+- Price Per Bedroom: $${pricePerBedroom.toFixed(2)}
+
+SENSITIVITY ANALYSIS:
+- Best Case Annual Cash Flow: $${bestCaseCashFlow.toFixed(2)}
+- Best Case Cash-on-Cash Return: ${bestCaseCoCR.toFixed(2)}%
+- Worst Case Annual Cash Flow: $${worstCaseCashFlow.toFixed(2)}
+- Worst Case Cash-on-Cash Return: ${worstCaseCoCR.toFixed(2)}%
+
 MONTHLY EXPENSES:
 - Mortgage: $${monthlyMortgage.toFixed(2)}
 - Property Tax: $${propertyTax.toFixed(2)}
@@ -52,6 +84,7 @@ IMPORTANT SCORING GUIDELINES:
 3. DO NOT penalize a property for having an attractive purchase price. A below-market price is a POSITIVE attribute, not a reason for suspicion.
 4. Cash flow is the most important metric - positive cash flow should significantly increase the investment score.
 5. The 1% Rule and GRM are useful guidelines but should NOT override actual financial performance metrics.
+6. Consider the risk profile using the sensitivity analysis - a smaller gap between best and worst case scenarios indicates lower risk.
 
 Please provide your analysis in the following JSON format:
 {
@@ -59,6 +92,7 @@ Please provide your analysis in the following JSON format:
   "strengths": ["strength1", "strength2", "strength3"],
   "weaknesses": ["weakness1", "weakness2", "weakness3"],
   "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
+  "riskAssessment": "1-2 sentences analyzing the risk profile based on sensitivity analysis",
   "investmentScore": 0-100
 }
 
@@ -74,7 +108,8 @@ SCORING PRIORITIES (from highest to lowest importance):
 2. Cap rate and Cash on Cash Return
 3. IRR and appreciation potential
 4. Property condition and market factors
-5. Other considerations
+5. Risk profile from sensitivity analysis
+6. Rule-based metrics (1% rule, 50% rule, etc.)
 
 Focus your analysis on:
 1. Cash flow potential and financial stability
@@ -82,6 +117,7 @@ Focus your analysis on:
 3. Risk factors and mitigations
 4. Value-add opportunities
 5. Long-term appreciation potential
+6. Risk assessment based on sensitivity analysis
 
 Only return valid JSON.`;
 }
