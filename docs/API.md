@@ -41,6 +41,11 @@ POST /api/deals/analyze
   "bathrooms": 2,
   "yearBuilt": 2010,
   "closingCosts": 5000,
+  "capitalInvestments": 5000,
+  "tenantTurnoverFees": {
+    "prepFees": 750,
+    "realtorCommission": 0.5
+  },
   "longTermAssumptions": {
     "annualRentIncrease": 3,
     "annualExpenseIncrease": 2,
@@ -66,12 +71,13 @@ POST /api/deals/analyze
       "maintenance": 150,
       "propertyManagement": 200,
       "vacancy": 125,
+      "tenantTurnover": 52,
       "mortgage": {
         "total": 1216,
         "principal": 182,
         "interest": 1034
       },
-      "total": 2116
+      "total": 2168
     },
     "cashFlow": 259
   },
@@ -99,6 +105,8 @@ POST /api/deals/analyze
         "maintenance": 1800,
         "propertyManagement": 2400,
         "vacancy": 1500,
+        "turnoverCosts": 625,
+        "capitalImprovements": 5000,
         "appreciation": 9000,
         "totalReturn": 12108
       },
@@ -124,6 +132,8 @@ POST /api/deals/analyze
     "cashOnCashReturn": 4.78,
     "dscr": 1.21,
     "totalInvestment": 65000,
+    "returnOnImprovements": 8.5,
+    "turnoverCostImpact": 1.2,
     "pricePerSqFt": 200,
     "rentPerSqFt": 1.67,
     "grossRentMultiplier": 10
@@ -284,6 +294,7 @@ interface MonthlyAnalysis {
       maintenance: number;
       propertyManagement: number;
       vacancy: number;
+      tenantTurnover: number;
       utilities?: number;
       commonAreaElectricity?: number;
       landscaping?: number;
@@ -348,6 +359,8 @@ interface YearlyProjection {
   maintenance: number;
   propertyManagement: number;
   vacancy: number;
+  turnoverCosts: number;
+  capitalImprovements: number;
   realtorBrokerageFee?: number;
   grossRent: number;
   appreciation: number;
@@ -372,6 +385,8 @@ interface KeyMetrics {
   cashOnCashReturn: number;
   dscr: number;
   totalInvestment: number;
+  returnOnImprovements?: number;
+  turnoverCostImpact?: number;
 }
 ```
 
@@ -436,6 +451,11 @@ interface BasePropertyData {
   insuranceRate: number;
   maintenanceCost: number;
   propertyManagementRate: number;
+  capitalInvestments?: number;
+  tenantTurnoverFees?: {
+    prepFees: number;
+    realtorCommission: number;
+  };
   longTermAssumptions: LongTermAssumptions;
 }
 ```
@@ -513,6 +533,25 @@ interface LongTermAssumptions {
    ```javascript
    const dscr = (annualNOI, annualDebtService) => {
      return annualNOI / annualDebtService;
+   };
+   ```
+
+4. **Return on Improvements**
+   ```javascript
+   const returnOnImprovements = (noiWithImprovements, noiWithoutImprovements, capitalInvestments) => {
+     // If we have before/after NOI data
+     if (noiWithoutImprovements > 0) {
+       return ((noiWithImprovements - noiWithoutImprovements) / capitalInvestments) * 100;
+     }
+     // Otherwise use estimated 8% return
+     return 8.0;
+   };
+   ```
+
+5. **Turnover Cost Impact**
+   ```javascript
+   const turnoverCostImpact = (annualTurnoverCosts, grossIncome) => {
+     return (annualTurnoverCosts / grossIncome) * 100;
    };
    ```
 

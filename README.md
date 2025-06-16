@@ -8,6 +8,7 @@ A comprehensive web application for analyzing real estate investment opportuniti
 🔄 **Multi-Family Analysis**: In development  
 ✅ **Property Saving & Management**: Complete with table view  
 ✅ **Financial Metrics**: Cap Rate, Cash on Cash Return, IRR, Cash Flow, etc.  
+✅ **Advanced Investment Metrics**: Return on Improvements, Turnover Cost Impact  
 🔄 **AI Investment Analysis**: Basic integration in place  
 
 ## Features
@@ -17,6 +18,7 @@ A comprehensive web application for analyzing real estate investment opportuniti
   - Monthly, annual, and long-term (10-year) projections
   - Key investment metrics calculation
   - Interactive charts and visualizations
+  - Capital improvement and tenant turnover analysis
 
 - **Deal Management**
   - Save and manage property analyses
@@ -107,6 +109,10 @@ The application will be available at `http://localhost:5173`
 
 ## Recent Improvements
 
+- Added Return on Improvements and Turnover Cost Impact metrics
+- Fixed calculation inconsistencies in the real estate analyzer
+- Added proper handling of capital investments in total investment calculations
+- Fixed total cash flow calculation in exit analysis
 - Converted saved properties view from cards to a professional table layout
 - Added IRR and AI investment score columns to property list
 - Fixed mortgage/debt service calculation issues

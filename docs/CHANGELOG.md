@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2023-09-25
+
+### Added
+- Capital Investments and Tenant Turnover Fees implementation:
+  - Added fields to property form for capital improvements and tenant turnover costs
+  - Updated analysis calculations to include these costs in financial metrics
+  - Added new metrics: Return on Improvements and Turnover Cost Impact
+  - Enhanced expense breakdown chart to include tenant turnover costs
+  - Updated yearly projections to show turnover costs and capital improvements
+  - Updated documentation (API, Data Dictionary, Data Mapping)
+
 ### Fixed
 - Fixed TypeScript errors in AnalysisResults component
 - Corrected property access and type definitions in analysis interfaces
@@ -54,6 +65,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cap rate indicator
   - Cash on cash return display
   - DSCR calculation
+
+## [1.8.1] - 2023-09-16
+
+### Fixed
+- Improved Return on Improvements metric calculation:
+  - Added estimated 8% return for capital investments when before/after NOI comparison is not available
+  - Enhanced logging for better diagnostics
+  - Updated documentation to reflect the dual calculation approach
+
+## [1.8.0] - 2023-09-15
+
+### Fixed
+- Fixed calculation inconsistencies in the real estate analyzer:
+  - Added proper handling of capital investments in total investment calculations
+  - Fixed total cash flow calculation in exit analysis
+  - Ensured capital improvements are correctly accounted for in year 1 cash flow
+  - Added detailed logging for cash flow calculations
+  - Added validation function to ensure consistency between calculated values
+  - Modified the frontend `fixLongTermReturns` function to be a minimal fallback for legacy saved deals
+  - Added clear comments that all new calculations should be done in the backend
+  - Fixed total return calculation to correctly subtract the total investment
+
+### Added
+- Added comprehensive logging to help diagnose calculation issues
+- Added validation checks to ensure consistency between different parts of the analysis
+- Implemented Return on Improvements metric to measure the effectiveness of capital investments
+- Implemented Turnover Cost Impact metric to show the impact of tenant turnover on property income
+- Added documentation for new metrics in DATA_DICTIONARY.md 
 
 ## [1.0.0] - 2025-06-01
 
