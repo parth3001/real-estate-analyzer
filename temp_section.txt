@@ -1,0 +1,76 @@
+        <Divider sx={{ my: 3 }} />
+        
+        <Typography variant="h6" gutterBottom>Additional Investment & Fees</Typography>
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Capital Investments"
+              name="capitalInvestments"
+              type="number"
+              value={formData.capitalInvestments || 0}
+              onChange={handleChange}
+              fullWidth
+              error={formData.capitalInvestments < 0}
+              helperText={formData.capitalInvestments < 0 ? "Capital investments cannot be negative" : "One-time capital improvements or major upgrades"}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>
+              }}
+              inputProps={{ step: 100 }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" gutterBottom>Tenant Turnover Fees</Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Preparation Fees"
+              name="prepFees"
+              type="number"
+              value={formData.tenantTurnoverFees?.prepFees || 500}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                setFormData({
+                  ...formData,
+                  tenantTurnoverFees: {
+                    ...formData.tenantTurnoverFees,
+                    prepFees: value
+                  }
+                });
+              }}
+              fullWidth
+              error={formData.tenantTurnoverFees?.prepFees < 0}
+              helperText={formData.tenantTurnoverFees?.prepFees < 0 ? "Prep fees cannot be negative" : "Costs to prepare property between tenants"}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>
+              }}
+              inputProps={{ step: 50 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Realtor Commission"
+              name="realtorCommission"
+              type="number"
+              value={formData.tenantTurnoverFees?.realtorCommission || 0.5}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                setFormData({
+                  ...formData,
+                  tenantTurnoverFees: {
+                    ...formData.tenantTurnoverFees,
+                    realtorCommission: value
+                  }
+                });
+              }}
+              fullWidth
+              error={formData.tenantTurnoverFees?.realtorCommission < 0}
+              helperText={formData.tenantTurnoverFees?.realtorCommission < 0 ? "Commission cannot be negative" : "Commission as a multiplier of monthly rent (e.g., 0.5 = half month's rent)"}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">× monthly rent</InputAdornment>
+              }}
+              inputProps={{ step: 0.1 }}
+            />
+          </Grid>
+        </Grid>
+        
+        <Divider sx={{ my: 3 }} /> 

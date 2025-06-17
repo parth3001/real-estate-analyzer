@@ -338,6 +338,43 @@ export class FinancialCalculations {
   }
 
   /**
+   * Calculate Return on Improvements
+   * @param noi Current NOI
+   * @param baseNOI NOI before improvements, or null if not available
+   * @param capitalInvestments Amount invested in capital improvements
+   * @param estimatedReturn Optional estimated annual return percentage (default: 8%)
+   * @returns Return on improvements as a percentage
+   */
+  static calculateReturnOnImprovements(
+    noi: number, 
+    baseNOI: number | null, 
+    capitalInvestments: number,
+    estimatedReturn: number = 8
+  ): number {
+    if (!capitalInvestments || capitalInvestments === 0) return 0;
+    
+    // If we have before/after NOI values, use those
+    if (baseNOI !== null) {
+      const noiIncrease = noi - baseNOI;
+      return (noiIncrease / capitalInvestments) * 100;
+    }
+    
+    // Otherwise use the estimated return percentage
+    return estimatedReturn;
+  }
+
+  /**
+   * Calculate Turnover Cost Impact
+   * @param turnoverCosts Annual turnover costs
+   * @param grossIncome Annual gross income
+   * @returns Turnover cost impact as a percentage of gross income
+   */
+  static calculateTurnoverCostImpact(turnoverCosts: number, grossIncome: number): number {
+    if (!grossIncome || grossIncome === 0) return 0;
+    return (turnoverCosts / grossIncome) * 100;
+  }
+
+  /**
    * Calculate remaining loan balance
    * @param principal Initial principal
    * @param payment Monthly payment

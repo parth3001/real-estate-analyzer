@@ -387,162 +387,156 @@ export function adaptAnalysisForFrontend(analysis: any): any {
 // Helper function to generate projections
 function generateProjections(originalAnalysis: any, adaptedAnalysis: any): any[] {
   try {
-    console.log('\n\n========== ADAPTER PROJECTIONS DEBUG START ==========');
-    console.log('Adapter is regenerating projections');
+    console.log('\n\n========== ADAPTER PROJECTIONS CALCULATION ==========');
     
-    // For saved deals, the property data might be at the top level
-    // Extract property data from wherever it exists
-    let propertyData: any = {};
+    // Extract property data
+    const propertyData = adaptedAnalysis.propertyData || {};
     
-    // Check several possible locations for property data
-    if (originalAnalysis.propertyData) {
-      // New analyses have propertyData as a nested object
-      propertyData = originalAnalysis.propertyData;
-    } else if (adaptedAnalysis.propertyData) {
-      // We might have created propertyData in the adapter
-      propertyData = adaptedAnalysis.propertyData;
-    } else {
-      // Extract from the top level fields
-      propertyData = {
-        purchasePrice: originalAnalysis.purchasePrice || 0,
-        monthlyRent: originalAnalysis.monthlyRent || 0,
-        downPayment: originalAnalysis.downPayment || 0,
-        interestRate: originalAnalysis.interestRate || 4.5,
-        loanTerm: originalAnalysis.loanTerm || 30,
-        propertyTaxRate: originalAnalysis.propertyTaxRate || 1.5,
-        insuranceRate: originalAnalysis.insuranceRate || 0.5,
-        maintenanceCost: originalAnalysis.maintenanceCost || 0,
-        propertyManagementRate: originalAnalysis.propertyManagementRate || 8,
-        squareFootage: originalAnalysis.squareFootage || 0,
-        closingCosts: originalAnalysis.closingCosts || 0,
-        longTermAssumptions: originalAnalysis.longTermAssumptions || {
-          projectionYears: 10,
-          annualRentIncrease: 2,
-          annualPropertyValueIncrease: 3,
-          inflationRate: 2,
-          vacancyRate: 5,
-          sellingCostsPercentage: 6
-        }
-      };
-    }
-    
-    // Log the property data we're using
-    logger.info('Generating projections with property data:', {
-      purchasePrice: propertyData.purchasePrice,
-      monthlyRent: propertyData.monthlyRent,
-      downPayment: propertyData.downPayment,
-      hasLongTermAssumptions: !!propertyData.longTermAssumptions
-    });
-    
-    // Get base values for calculations
+    // Extract key values with defaults
     const purchasePrice = propertyData.purchasePrice || 0;
     const monthlyRent = propertyData.monthlyRent || 0;
-    const baseRent = monthlyRent * 12;
+    const downPayment = propertyData.downPayment || 0;
+    const interestRate = propertyData.interestRate || 0;
+    const loanTermYears = propertyData.loanTerm || 30;
+    const propertyTaxRate = propertyData.propertyTaxRate || 1.2;
+    const insuranceRate = propertyData.insuranceRate || 0.5;
+    const maintenanceCost = propertyData.maintenanceCost || (monthlyRent * 0.1 * 12); // Default to 10% of rent
+    const propertyManagementRate = propertyData.propertyManagementRate || 8;
+    const capitalInvestments = propertyData.capitalInvestments || 0;
     
-    // Get expense values from monthly analysis if available
-    const monthlyExpenses = adaptedAnalysis.monthlyAnalysis?.expenses || {};
-    const mortgagePayment = monthlyExpenses.mortgage?.total || 0;
+    // Extract long term assumptions
+    const longTermAssumptions = propertyData.longTermAssumptions || {};
+    const years = longTermAssumptions.projectionYears || 10;
+    const annualRentIncrease = longTermAssumptions.annualRentIncrease || 2;
+    const annualPropertyValueIncrease = longTermAssumptions.annualPropertyValueIncrease || 3;
+    const annualExpenseGrowth = longTermAssumptions.inflationRate || 2;
+    const vacancyRate = longTermAssumptions.vacancyRate || 5;
+    
+    // Calculate loan amount and monthly payment
+    const loanAmount = purchasePrice - downPayment;
+    const monthlyInterestRate = interestRate / 12 / 100;
+    let mortgagePayment = 0;
+    
+    if (monthlyInterestRate > 0) {
+      const numPayments = loanTermYears * 12;
+      mortgagePayment = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numPayments)) / 
+                       (Math.pow(1 + monthlyInterestRate, numPayments) - 1);
+    } else {
+      mortgagePayment = loanAmount / (loanTermYears * 12);
+    }
+    
     const annualMortgage = mortgagePayment * 12;
     
-    // Extract assumption values with defaults
-    const years = propertyData.longTermAssumptions?.projectionYears || 10;
-    const annualAppreciationRate = propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3; // Default 3%
-    const annualRentGrowth = propertyData.longTermAssumptions?.annualRentIncrease || 2; // Default 2%
-    const annualExpenseGrowth = propertyData.longTermAssumptions?.inflationRate || 2; // Default 2%
-    const vacancyRate = propertyData.longTermAssumptions?.vacancyRate || 5; // Default 5%
-    
-    // Log assumption values for debugging
-    console.log('PROJECTION ASSUMPTIONS:', {
-      years,
-      annualAppreciationRate,
-      annualRentGrowth,
+    console.log('ADAPTER PROJECTIONS - Base Values:', {
+      purchasePrice,
+      monthlyRent,
+      annualRent: monthlyRent * 12,
+      downPayment,
+      interestRate,
+      loanTermYears,
+      loanAmount,
+      monthlyMortgage: mortgagePayment,
+      annualMortgage,
+      propertyTaxRate,
+      insuranceRate,
+      maintenanceCost,
+      propertyManagementRate,
+      capitalInvestments,
+      annualRentIncrease,
+      annualPropertyValueIncrease,
       annualExpenseGrowth,
       vacancyRate
     });
     
-    // Get expense values
-    const basePropertyTax = monthlyExpenses.propertyTax ? monthlyExpenses.propertyTax * 12 : 
-                           (propertyData.propertyTaxRate ? (propertyData.propertyTaxRate / 100) * purchasePrice : purchasePrice * 0.015); // Default 1.5%
-    
-    const baseInsurance = monthlyExpenses.insurance ? monthlyExpenses.insurance * 12 : 
-                         (propertyData.insuranceRate ? (propertyData.insuranceRate / 100) * purchasePrice : purchasePrice * 0.005); // Default 0.5%
-    
-    const baseMaintenanceCost = monthlyExpenses.maintenance ? monthlyExpenses.maintenance * 12 : 
-                               (propertyData.maintenanceCost ? propertyData.maintenanceCost * 12 : baseRent * 0.05); // FIXED: Ensure monthly maintenance is annualized
-    
-    const basePropertyManagement = monthlyExpenses.propertyManagement ? monthlyExpenses.propertyManagement * 12 : 
-                                  (baseRent * (propertyData.propertyManagementRate || 8) / 100); // Default 8% of rent
-    
-    const baseVacancy = baseRent * (vacancyRate / 100);
-    
-    // Log base expense values for debugging
-    console.log('BASE EXPENSE VALUES (ANNUAL):', {
-      basePropertyTax,
-      baseInsurance,
-      baseMaintenanceCost,
-      basePropertyManagement,
-      baseVacancy
-    });
-    
-    // Calculate loan details
-    const loanAmount = purchasePrice - (propertyData.downPayment || purchasePrice * 0.2); // Default 20% down
-    const loanTermYears = propertyData.loanTerm || 30; // Default 30 years
-    const interestRate = propertyData.interestRate || 4.5; // Default 4.5%
-    
-    // Generate projections with actual financial data and proper inflation
+    // Generate projections for each year
     const projections = Array.from({length: years}, (_, i) => {
-      // Calculate year values with growth rates
       const year = i + 1;
-      const appreciationFactor = Math.pow(1 + annualAppreciationRate / 100, i);
-      const rentGrowthFactor = Math.pow(1 + annualRentGrowth / 100, i);
+      
+      // Calculate property value with appreciation
+      const propertyValue = purchasePrice * Math.pow(1 + annualPropertyValueIncrease / 100, i);
+      
+      // Calculate rent with annual increase
+      const rentGrowthFactor = Math.pow(1 + annualRentIncrease / 100, i);
+      const grossRent = monthlyRent * 12 * rentGrowthFactor;
+      
+      // Calculate expenses with inflation
       const expenseGrowthFactor = Math.pow(1 + annualExpenseGrowth / 100, i);
       
-      // Calculate actual values for this year with inflation
-      const propertyValue = purchasePrice * appreciationFactor;
-      const grossRent = baseRent * rentGrowthFactor;
+      // Calculate property tax (based on property value)
+      const propertyTax = propertyValue * (propertyTaxRate / 100);
       
-      // DIRECT FIX: EXPLICITLY APPLY INFLATION TO ALL EXPENSES
-      // This is the most direct way to fix the issue - explicitly calculate expenses with inflation
-      let propertyTax = basePropertyTax;  // Base value for year 1
-      let insurance = baseInsurance;      // Base value for year 1
-      let maintenance = baseMaintenanceCost; // Base value for year 1
+      // Calculate insurance (based on property value)
+      const insurance = propertyValue * (insuranceRate / 100);
       
-      // IMPORTANT: For years after year 1, apply inflation factor
-      if (year > 1) {
-        // Explicitly calculate with inflation
-        propertyTax = basePropertyTax * expenseGrowthFactor;
-        insurance = baseInsurance * expenseGrowthFactor;
-        maintenance = baseMaintenanceCost * expenseGrowthFactor;
-        
-        // Debug output showing forced inflation
-        console.log(`FORCING INFLATION: Year ${year}`, {
-          basePropertyTax,
-          propertyTaxWithInflation: propertyTax,
-          expenseGrowthFactor,
-          inflationRate: annualExpenseGrowth
-        });
-      }
+      // Calculate maintenance (with inflation)
+      const maintenance = maintenanceCost * expenseGrowthFactor;
       
-      // Property management scales with rent since it's a percentage of rent
-      const propertyManagement = grossRent * (propertyData.propertyManagementRate || 8) / 100;
+      // Calculate property management (based on rent)
+      const propertyManagement = grossRent * (propertyManagementRate / 100);
       
-      // Vacancy scales with rent since it's a percentage of rent
+      // Calculate vacancy (based on rent)
       const vacancy = grossRent * (vacancyRate / 100);
+      
+      // Calculate tenant turnover costs based on a more realistic turnover model
+      // Industry standard: Average tenant stays 2-3 years, so annual turnover probability is 33-50%
+      // We'll use the configured turnoverFrequency or default to 2 years (50% annual turnover)
+      const prepFees = propertyData.tenantTurnoverFees?.prepFees || 500;
+      const realtorCommission = propertyData.tenantTurnoverFees?.realtorCommission || 0.5;
+      const monthlyRentForYear = grossRent / 12;
+      const inflatedPrepFees = prepFees * expenseGrowthFactor;
+      
+      // Get turnover frequency in years (default: 2 years)
+      const turnoverFrequency = propertyData.longTermAssumptions?.turnoverFrequency || 2;
+      // Calculate base turnover rate as 1/frequency (e.g., 1/2 = 50% annual turnover)
+      const baseTurnoverRate = 1 / turnoverFrequency;
+      
+      // Adjust based on vacancy rate: higher vacancy = higher turnover
+      // Vacancy rate adjustment factor: normalize around 5% vacancy
+      const vacancyAdjustment = vacancyRate / 5;
+      const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
+      
+      // Calculate total turnover costs for the year
+      // Each turnover costs: prep fees + (monthly rent * realtor commission)
+      const turnoverCosts = (inflatedPrepFees + (monthlyRentForYear * realtorCommission)) * turnoverRate;
+      
+      // Capital improvements (only in year 1)
+      const capitalImprovements = year === 1 ? capitalInvestments : 0;
       
       // Calculate effective gross income (rent minus vacancy)
       const effectiveGrossIncome = grossRent - vacancy;
       
       // Calculate operating expenses (total of all expenses except mortgage)
-      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy;
+      // Note: Capital improvements are NOT included in operating expenses
+      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy + turnoverCosts;
       
       // Calculate NOI (effective gross income minus operating expenses except vacancy)
-      const noi = effectiveGrossIncome - (propertyTax + insurance + maintenance + propertyManagement);
+      const noi = effectiveGrossIncome - (propertyTax + insurance + maintenance + propertyManagement + turnoverCosts);
       
       // Debt service stays constant for fixed-rate mortgage
-      const debtService = annualMortgage; 
+      const debtService = annualMortgage;
       
-      // Calculate cash flow
-      const cashFlow = noi - debtService;
+      // Calculate cash flow (NOI minus debt service)
+      // Note: Capital improvements are treated as a separate cash outflow, not part of NOI
+      const cashFlow = noi - debtService - capitalImprovements;
+      
+      console.log(`Year ${year} Detailed Calculation:`, {
+        propertyValue: propertyValue.toFixed(2),
+        grossRent: grossRent.toFixed(2),
+        effectiveGrossIncome: effectiveGrossIncome.toFixed(2),
+        expenses: {
+          propertyTax: propertyTax.toFixed(2),
+          insurance: insurance.toFixed(2),
+          maintenance: maintenance.toFixed(2),
+          propertyManagement: propertyManagement.toFixed(2),
+          vacancy: vacancy.toFixed(2),
+          turnoverCosts: turnoverCosts.toFixed(2),
+          capitalImprovements: capitalImprovements.toFixed(2)
+        },
+        operatingExpenses: operatingExpenses.toFixed(2),
+        noi: noi.toFixed(2),
+        debtService: debtService.toFixed(2),
+        cashFlow: cashFlow.toFixed(2)
+      });
       
       // Calculate mortgage balance (simplified)
       const remainingTermMonths = (loanTermYears * 12) - (i * 12);
@@ -558,7 +552,7 @@ function generateProjections(originalAnalysis: any, adaptedAnalysis: any): any[]
       
       // Calculate equity
       const equity = propertyValue - mortgageBalance;
-      const appreciation = i === 0 ? 0 : propertyValue - (purchasePrice * Math.pow(1 + annualAppreciationRate / 100, i-1));
+      const appreciation = i === 0 ? 0 : propertyValue - (purchasePrice * Math.pow(1 + annualPropertyValueIncrease / 100, i-1));
       const totalReturn = cashFlow + appreciation;
       
       return {
@@ -571,6 +565,8 @@ function generateProjections(originalAnalysis: any, adaptedAnalysis: any): any[]
         maintenance,
         propertyManagement,
         vacancy,
+        turnoverCosts,
+        capitalImprovements,
         operatingExpenses,
         noi,
         debtService,
@@ -606,6 +602,8 @@ function generateProjections(originalAnalysis: any, adaptedAnalysis: any): any[]
       maintenance: 0,
       propertyManagement: 0,
       vacancy: 0,
+      turnoverCosts: 0,
+      capitalImprovements: i === 0 ? 0 : 0,
       operatingExpenses: 0,
       noi: 0,
       debtService: 0,
@@ -637,6 +635,7 @@ function updateExitAnalysisAndReturns(adaptedAnalysis: any): void {
         purchasePrice: adaptedAnalysis.purchasePrice || 0,
         downPayment: adaptedAnalysis.downPayment || 0,
         closingCosts: adaptedAnalysis.closingCosts || 0,
+        capitalInvestments: adaptedAnalysis.capitalInvestments || 0,
         longTermAssumptions: adaptedAnalysis.longTermAssumptions || {
           sellingCostsPercentage: 6
         }
@@ -647,6 +646,8 @@ function updateExitAnalysisAndReturns(adaptedAnalysis: any): void {
     logger.info('Updating exit analysis with property data:', {
       purchasePrice: propertyData.purchasePrice,
       downPayment: propertyData.downPayment,
+      closingCosts: propertyData.closingCosts || 0,
+      capitalInvestments: propertyData.capitalInvestments || 0,
       hasLongTermAssumptions: !!propertyData.longTermAssumptions
     });
     
@@ -663,12 +664,38 @@ function updateExitAnalysisAndReturns(adaptedAnalysis: any): void {
     const netProceedsFromSale = projectedSalePrice - sellingCosts - mortgagePayoff;
     
     // Calculate returns
-    const totalInvestment = propertyData.downPayment + (propertyData.closingCosts || 0);
-    const totalCashFlow = projections.reduce((sum, year) => sum + year.cashFlow, 0);
+    const totalInvestment = propertyData.downPayment + 
+                          (propertyData.closingCosts || 0) + 
+                          (propertyData.capitalInvestments || 0);
+    
+    console.log('Total Investment Components:', {
+      downPayment: propertyData.downPayment,
+      closingCosts: propertyData.closingCosts || 0,
+      capitalInvestments: propertyData.capitalInvestments || 0,
+      total: totalInvestment
+    });
+    
+    // Calculate total cash flow with detailed logging
+    let totalCashFlow = 0;
+    console.log('Year-by-Year Cash Flow Breakdown:');
+    projections.forEach((year, index) => {
+      console.log(`Year ${year.year}: Cash Flow = ${year.cashFlow} (includes turnover: ${year.turnoverCosts || 0}, capex: ${year.capitalImprovements || 0})`);
+      totalCashFlow += year.cashFlow;
+    });
+    console.log('Total Cash Flow (sum of all years):', totalCashFlow);
+    
     const totalAppreciation = finalYear.propertyValue - propertyData.purchasePrice;
     const totalProfit = netProceedsFromSale;
     const returnOnInvestment = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
-    const totalReturn = totalCashFlow + netProceedsFromSale;
+    const totalReturn = totalCashFlow + netProceedsFromSale - totalInvestment;
+    
+    console.log('Final Return Calculations:', {
+      totalCashFlow,
+      netProceedsFromSale,
+      totalInvestment,
+      totalReturn,
+      returnOnInvestment
+    });
     
     // Update exit analysis
     adaptedAnalysis.longTermAnalysis.exitAnalysis = {
@@ -714,8 +741,104 @@ function updateExitAnalysisAndReturns(adaptedAnalysis: any): void {
       }
     }
     
+    // Validate consistency between calculated values
+    validateAnalysisConsistency(adaptedAnalysis);
+    
     logger.info('Updated exit analysis and returns based on projections');
   } catch (error) {
     logger.error('Error updating exit analysis and returns:', error);
+  }
+}
+
+/**
+ * Validates consistency between calculated values in the analysis
+ * and fixes any inconsistencies found
+ */
+function validateAnalysisConsistency(analysis: any): void {
+  try {
+    if (!analysis.longTermAnalysis?.projections || 
+        !Array.isArray(analysis.longTermAnalysis.projections) || 
+        analysis.longTermAnalysis.projections.length === 0) {
+      logger.warn('Cannot validate analysis consistency: projections missing or empty');
+      return;
+    }
+
+    // Validate total cash flow
+    const sumOfYearlyCashFlows = analysis.longTermAnalysis.projections.reduce(
+      (sum: number, year: any) => sum + (year.cashFlow || 0), 0
+    );
+    
+    if (analysis.longTermAnalysis.returns) {
+      const totalCashFlowDiff = Math.abs(
+        sumOfYearlyCashFlows - (analysis.longTermAnalysis.returns.totalCashFlow || 0)
+      );
+      
+      if (totalCashFlowDiff > 1) { // Allow for small rounding differences
+        logger.warn('Total cash flow inconsistency detected:', {
+          sumOfYearlyCashFlows,
+          reportedTotalCashFlow: analysis.longTermAnalysis.returns.totalCashFlow,
+          difference: totalCashFlowDiff
+        });
+        
+        // Fix the inconsistency
+        analysis.longTermAnalysis.returns.totalCashFlow = sumOfYearlyCashFlows;
+        logger.info('Fixed total cash flow inconsistency');
+      }
+    }
+
+    // Validate property value appreciation
+    const firstYear = analysis.longTermAnalysis.projections[0];
+    const lastYear = analysis.longTermAnalysis.projections[analysis.longTermAnalysis.projections.length - 1];
+    
+    if (firstYear && lastYear && analysis.longTermAnalysis.returns) {
+      const calculatedAppreciation = (lastYear.propertyValue || 0) - (firstYear.propertyValue || 0);
+      const reportedAppreciation = analysis.longTermAnalysis.returns.totalAppreciation || 0;
+      const appreciationDiff = Math.abs(calculatedAppreciation - reportedAppreciation);
+      
+      if (appreciationDiff > 1) { // Allow for small rounding differences
+        logger.warn('Total appreciation inconsistency detected:', {
+          calculatedAppreciation,
+          reportedAppreciation,
+          difference: appreciationDiff
+        });
+        
+        // Fix the inconsistency
+        analysis.longTermAnalysis.returns.totalAppreciation = calculatedAppreciation;
+        logger.info('Fixed total appreciation inconsistency');
+      }
+    }
+    
+    // Validate total return calculation
+    if (analysis.longTermAnalysis.returns && analysis.longTermAnalysis.exitAnalysis) {
+      const propertyData = analysis.propertyData || {};
+      const totalInvestment = (propertyData.downPayment || 0) + 
+                             (propertyData.closingCosts || 0) + 
+                             (propertyData.capitalInvestments || 0);
+                             
+      const totalCashFlow = analysis.longTermAnalysis.returns.totalCashFlow || 0;
+      const netProceedsFromSale = analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 0;
+      const calculatedTotalReturn = totalCashFlow + netProceedsFromSale - totalInvestment;
+      const reportedTotalReturn = analysis.longTermAnalysis.returns.totalReturn || 0;
+      const totalReturnDiff = Math.abs(calculatedTotalReturn - reportedTotalReturn);
+      
+      if (totalReturnDiff > 1) { // Allow for small rounding differences
+        logger.warn('Total return inconsistency detected:', {
+          calculatedTotalReturn,
+          reportedTotalReturn,
+          difference: totalReturnDiff,
+          components: {
+            totalCashFlow,
+            netProceedsFromSale,
+            totalInvestment
+          }
+        });
+        
+        // Fix the inconsistency
+        analysis.longTermAnalysis.returns.totalReturn = calculatedTotalReturn;
+        logger.info('Fixed total return inconsistency');
+      }
+    }
+  } catch (error) {
+    logger.error('Error validating analysis consistency:', error);
   }
 } 

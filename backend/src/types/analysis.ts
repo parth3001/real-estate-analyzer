@@ -20,6 +20,7 @@ export interface ExpenseBreakdown {
   maintenance: number;
   propertyManagement: number;
   vacancy: number;
+  tenantTurnover?: number;
   utilities: number;
   commonAreaElectricity: number;
   landscaping: number;
@@ -63,6 +64,8 @@ export interface SFRMetrics extends CommonMetrics {
   rentToPriceRatio: number;
   pricePerBedroom: number;
   debtToIncomeRatio: number;
+  returnOnImprovements: number; // Return on capital improvements as percentage
+  turnoverCostImpact: number;   // Turnover costs as percentage of gross income
 }
 
 export interface MultiFamilyMetrics extends CommonMetrics {
@@ -101,6 +104,8 @@ export interface YearlyProjection {
   totalPrincipalPaidToDate?: number;
   cashOnCashReturnThisYear?: number;
   pricePerSqFtAtThisPoint?: number;
+  turnoverCosts?: number; // Annual tenant turnover costs
+  capitalImprovements?: number; // Capital investments (only in year 1)
 }
 
 export interface ExitAnalysis {
@@ -129,6 +134,11 @@ export interface AIInsights {
   weaknesses: string[];
   recommendations: string[];
   investmentScore: number | null;
+  riskAssessment?: string;
+  marketPositionAnalysis?: string;
+  valueAddOpportunities?: string[];
+  recommendedHoldPeriod?: string;
+  unitMixAnalysis?: string;
 }
 
 export interface LongTermAnalysis {

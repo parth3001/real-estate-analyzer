@@ -30,7 +30,7 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
     const noi = this.calculateNOI(grossIncome, operatingExpenses);
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
-    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
+    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
     // Log calculation details
     console.log('==== SFR CALCULATION DETAILS ====');
@@ -41,6 +41,7 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     console.log('NOI:', noi);
     console.log('Cash Flow:', cashFlow);
     console.log('Total Investment:', totalInvestment);
+    console.log('Capital Investments:', this.data.capitalInvestments || 0);
     console.log('================================');
 
     // Calculate long-term returns for equity multiple
@@ -48,6 +49,29 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const totalCashFlow = projections.reduce((sum, year) => sum + year.cashFlow, 0);
     const totalReturn = totalCashFlow + exitAnalysis.netProceedsFromSale - totalInvestment;
+
+    // Calculate NOI without capital improvements
+    // Estimate the impact of capital improvements on NOI (typically 8-10% return)
+    const capitalInvestments = this.data.capitalInvestments || 0;
+    const estimatedNOIBoost = capitalInvestments * 0.08; // Assume 8% return on capital improvements
+    const baseNOI = noi - estimatedNOIBoost;
+    
+    // Calculate turnover costs for the first year
+    const prepFees = this.data.tenantTurnoverFees?.prepFees || 500;
+    const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
+    const monthlyRentForYear = grossIncome / 12;
+    
+    // Get turnover frequency in years (default: 2 years)
+    const turnoverFrequency = this.assumptions.turnoverFrequency || 2;
+    // Calculate base turnover rate as 1/frequency (e.g., 1/2 = 50% annual turnover)
+    const baseTurnoverRate = 1 / turnoverFrequency;
+    
+    // Adjust based on vacancy rate: higher vacancy = higher turnover
+    const vacancyAdjustment = this.assumptions.vacancyRate / 5;
+    const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
+    
+    // Calculate total turnover costs for the year
+    const turnoverCosts = (prepFees + (monthlyRentForYear * realtorCommission)) * turnoverRate;
 
     // Debug operating expense ratio calculation
     console.log('==== OPERATING EXPENSE RATIO DEBUG ====');
@@ -62,6 +86,29 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       propertyManagement: grossIncome * (this.data.propertyManagementRate / 100),
       vacancy: grossIncome * (this.assumptions.vacancyRate / 100)
     });
+    
+    // Debug return on improvements and turnover cost impact calculations
+    console.log('==== RETURN ON IMPROVEMENTS DEBUG ====');
+    console.log('Capital Investments:', capitalInvestments);
+    console.log('Estimated NOI Boost from Improvements:', estimatedNOIBoost);
+    console.log('Base NOI (without improvements):', baseNOI);
+    console.log('NOI (with improvements):', noi);
+    console.log('NOI Increase:', estimatedNOIBoost);
+    
+    // Calculate return on improvements
+    const returnOnImprovements = capitalInvestments > 0 ? 
+      (estimatedNOIBoost / capitalInvestments) * 100 : 0;
+    
+    console.log('Return on Improvements Calculation:', {
+      estimatedNOIBoost,
+      capitalInvestments,
+      returnOnImprovements: returnOnImprovements + '%'
+    });
+    
+    console.log('==== TURNOVER COST IMPACT DEBUG ====');
+    console.log('Turnover Costs:', turnoverCosts);
+    console.log('Gross Income:', grossIncome);
+    console.log('Turnover Cost Impact:', (turnoverCosts / grossIncome) * 100);
     console.log('=====================================');
 
     const metrics: SFRMetrics = {
@@ -115,6 +162,15 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       debtToIncomeRatio: FinancialCalculations.calculateDebtToIncomeRatio(
         annualDebtService,
         grossIncome
+      ),
+      
+      // Add return on improvements metric
+      returnOnImprovements: returnOnImprovements,
+      
+      // Add turnover cost impact metric
+      turnoverCostImpact: FinancialCalculations.calculateTurnoverCostImpact(
+        turnoverCosts,
+        grossIncome
       )
     };
 
@@ -133,6 +189,8 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     console.log('Rent-to-Price Ratio:', metrics.rentToPriceRatio);
     console.log('Price Per Bedroom:', metrics.pricePerBedroom);
     console.log('Debt-to-Income Ratio:', metrics.debtToIncomeRatio);
+    console.log('Return on Improvements:', metrics.returnOnImprovements);
+    console.log('Turnover Cost Impact:', metrics.turnoverCostImpact);
     console.log('=====================');
 
     // Add rehab metrics if applicable

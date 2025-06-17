@@ -14,6 +14,7 @@ export interface LongTermAssumptions {
   sellingCostsPercentage: number;
   inflationRate: number;
   vacancyRate: number;
+  turnoverFrequency?: number; // Average tenant stay in years (default: 2)
 }
 
 export interface BasePropertyData {
@@ -29,6 +30,11 @@ export interface BasePropertyData {
   propertyManagementRate: number;
   yearBuilt: number;
   closingCosts?: number;
+  capitalInvestments?: number;
+  tenantTurnoverFees?: {
+    prepFees: number;
+    realtorCommission: number;
+  };
 }
 
 export interface SFRPropertyData extends BasePropertyData {

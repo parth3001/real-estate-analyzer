@@ -19,6 +19,11 @@ export interface BasePropertyData {
   propertyManagementRate: number;
   propertyAddress: PropertyAddress;
   closingCosts?: number;
+  capitalInvestments?: number;
+  tenantTurnoverFees?: {
+    prepFees: number;
+    realtorCommission: number;
+  };
 }
 
 export interface CommonMetrics {
@@ -47,6 +52,7 @@ export interface SFRData extends BasePropertyData {
     inflationRate: number;
     vacancyRate: number;
     sellingCostsPercentage: number;
+    turnoverFrequency?: number;
   };
 }
 
@@ -83,6 +89,7 @@ export interface MultiFamilyData extends BasePropertyData {
     inflationRate: number;
     vacancyRate: number;
     sellingCostsPercentage: number;
+    turnoverFrequency?: number;
   };
 }
 
@@ -117,6 +124,8 @@ export interface YearlyProjection {
   equity: number;
   mortgageBalance: number;
   totalReturn: number;
+  turnoverCosts?: number;
+  capitalImprovements?: number;
 }
 
 export interface ExitAnalysis {

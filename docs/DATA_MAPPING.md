@@ -32,6 +32,9 @@ When a user submits property data for analysis:
 | `insuranceRate` | `insuranceRate` | None |
 | `maintenanceCost` | `maintenanceCost` | None |
 | `propertyManagementRate` | `propertyManagementRate` | None |
+| `capitalInvestments` | `capitalInvestments` | Default to 0 if undefined |
+| `tenantTurnoverFees.prepFees` | `tenantTurnoverFees.prepFees` | Default to 500 if undefined |
+| `tenantTurnoverFees.realtorCommission` | `tenantTurnoverFees.realtorCommission` | Default to 0.5 if undefined |
 | `monthlyRent` (SFR) | `monthlyRent` | None |
 | `squareFootage` (SFR) | `squareFootage` | None |
 | `bedrooms` (SFR) | `bedrooms` | None |

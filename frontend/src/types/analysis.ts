@@ -55,6 +55,8 @@ export interface YearlyProjection {
   propertyManagement: number;
   vacancy: number;
   realtorBrokerageFee?: number;
+  turnoverCosts?: number;
+  capitalImprovements?: number;
 }
 
 export interface ExitAnalysis {

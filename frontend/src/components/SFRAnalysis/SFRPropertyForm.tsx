@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Grid,
   TextField,
   Button,
+  Grid,
   Typography,
-  Paper,
+  Box,
   Divider,
   Alert,
-  CircularProgress,
   InputAdornment,
-  FormControl,
-  FormHelperText
+  Paper,
+  CircularProgress
 } from '@mui/material';
-import type { SFRPropertyData, LongTermAssumptions } from '../../types/property';
+import type { SFRPropertyData } from '../../types/property';
 import type { Analysis } from '../../types/analysis';
 
 interface SFRPropertyFormProps {
@@ -52,9 +50,15 @@ const defaultFormValues: SFRPropertyData = {
     annualPropertyValueIncrease: 3,
     sellingCostsPercentage: 6,
     inflationRate: 2,
-    vacancyRate: 5
+    vacancyRate: 5,
+    turnoverFrequency: 2
   },
-  closingCosts: 0
+  closingCosts: 0,
+  capitalInvestments: 0,
+  tenantTurnoverFees: {
+    prepFees: 500,
+    realtorCommission: 0.5
+  }
 };
 
 // Validation rules
@@ -71,6 +75,8 @@ type ValidationErrors = {
   'longTermAssumptions.sellingCostsPercentage'?: string;
   'longTermAssumptions.inflationRate'?: string;
   'longTermAssumptions.vacancyRate'?: string;
+  'tenantTurnoverFees.prepFees'?: string;
+  'tenantTurnoverFees.realtorCommission'?: string;
 };
 
 const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
@@ -88,7 +94,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Watch for changes in initialData
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('initialData changed:', initialData);
     if (initialData) {
       console.log('Updating form data with initialData');
@@ -125,6 +131,17 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
     if (formData.propertyTaxRate < 0) newErrors.propertyTaxRate = 'Property tax rate cannot be negative';
     if (formData.insuranceRate < 0) newErrors.insuranceRate = 'Insurance rate cannot be negative';
     if (formData.maintenanceCost < 0) newErrors.maintenanceCost = 'Maintenance cost cannot be negative';
+    
+    // Additional Investment & Fees validation
+    if (formData.capitalInvestments !== undefined && formData.capitalInvestments < 0) {
+      newErrors.capitalInvestments = 'Capital investments cannot be negative';
+    }
+    if (formData.tenantTurnoverFees?.prepFees !== undefined && formData.tenantTurnoverFees.prepFees < 0) {
+      newErrors['tenantTurnoverFees.prepFees'] = 'Preparation fees cannot be negative';
+    }
+    if (formData.tenantTurnoverFees?.realtorCommission !== undefined && formData.tenantTurnoverFees.realtorCommission < 0) {
+      newErrors['tenantTurnoverFees.realtorCommission'] = 'Realtor commission cannot be negative';
+    }
     
     // Long term assumptions validation
     if (formData.longTermAssumptions.projectionYears <= 0) {
@@ -187,7 +204,8 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
       // Handle numeric fields
       if (['purchasePrice', 'downPayment', 'interestRate', 'loanTerm', 'monthlyRent', 
            'squareFootage', 'bedrooms', 'bathrooms', 'yearBuilt', 'propertyTaxRate', 
-           'insuranceRate', 'propertyManagementRate', 'maintenanceCost', 'closingCosts'].includes(name)) {
+           'insuranceRate', 'propertyManagementRate', 'maintenanceCost', 'closingCosts',
+           'capitalInvestments'].includes(name)) {
         setFormData({
           ...formData,
           [name]: parseFloat(value) || 0
@@ -207,8 +225,8 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         
         <Typography variant="h6" gutterBottom>Property Information</Typography>
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Property Name"
               name="propertyName"
@@ -220,7 +238,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors.propertyName}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Year Built"
               name="yearBuilt"
@@ -232,7 +250,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors.yearBuilt}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Street Address"
               name="street"
@@ -244,7 +262,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors['propertyAddress.street']}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="City"
               name="city"
@@ -256,7 +274,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors['propertyAddress.city']}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="State"
               name="state"
@@ -268,7 +286,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors['propertyAddress.state']}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="ZIP Code"
               name="zipCode"
@@ -285,8 +303,8 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
         <Divider sx={{ my: 3 }} />
         
         <Typography variant="h6" gutterBottom>Property Details</Typography>
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Bedrooms"
               name="bedrooms"
@@ -299,7 +317,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               helperText={formSubmitted && errors.bedrooms}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Bathrooms"
               name="bathrooms"
@@ -313,7 +331,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.5 }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Square Footage"
               name="squareFootage"
@@ -331,8 +349,8 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
         <Divider sx={{ my: 3 }} />
         
         <Typography variant="h6" gutterBottom>Financial Details</Typography>
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Purchase Price"
               name="purchasePrice"
@@ -348,7 +366,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Down Payment"
               name="downPayment"
@@ -364,7 +382,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Closing Costs"
               name="closingCosts"
@@ -379,7 +397,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Monthly Rent"
               name="monthlyRent"
@@ -395,7 +413,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Interest Rate"
               name="interestRate"
@@ -412,7 +430,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Loan Term"
               name="loanTerm"
@@ -428,7 +446,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Maintenance Cost"
               name="maintenanceCost"
@@ -449,8 +467,8 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
         <Divider sx={{ my: 3 }} />
         
         <Typography variant="h6" gutterBottom>Expenses</Typography>
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Property Tax Rate"
               name="propertyTaxRate"
@@ -467,7 +485,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Insurance Rate"
               name="insuranceRate"
@@ -484,7 +502,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Property Management Rate"
               name="propertyManagementRate"
@@ -505,9 +523,54 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
         
         <Divider sx={{ my: 3 }} />
         
+        <Typography variant="h6" gutterBottom>Additional Investment & Fees</Typography>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Capital Investments ($)"
+              name="capitalInvestments"
+              type="number"
+              value={formData.capitalInvestments || 0}
+              onChange={handleChange}
+              error={formData.capitalInvestments !== undefined && formData.capitalInvestments < 0}
+              helperText={formData.capitalInvestments !== undefined && formData.capitalInvestments < 0 ? "Capital investments cannot be negative" : "One-time capital improvements or major upgrades"}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle2" gutterBottom>Tenant Turnover Fees</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Preparation Fees ($)"
+              name="tenantTurnoverFees.prepFees"
+              type="number"
+              value={formData.tenantTurnoverFees?.prepFees || 0}
+              onChange={handleChange}
+              error={formData.tenantTurnoverFees?.prepFees !== undefined && formData.tenantTurnoverFees.prepFees < 0}
+              helperText={formData.tenantTurnoverFees?.prepFees !== undefined && formData.tenantTurnoverFees.prepFees < 0 ? "Prep fees cannot be negative" : "Costs to prepare property between tenants"}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Realtor Commission (as multiplier)"
+              name="tenantTurnoverFees.realtorCommission"
+              type="number"
+              value={formData.tenantTurnoverFees?.realtorCommission || 0}
+              onChange={handleChange}
+              error={formData.tenantTurnoverFees?.realtorCommission !== undefined && formData.tenantTurnoverFees.realtorCommission < 0}
+              helperText={formData.tenantTurnoverFees?.realtorCommission !== undefined && formData.tenantTurnoverFees.realtorCommission < 0 ? "Commission cannot be negative" : "Commission as a multiplier of monthly rent (e.g., 0.5 = half month's rent)"}
+            />
+          </Grid>
+        </Grid>
+        
+        <Divider sx={{ my: 3 }} />
+        
         <Typography variant="h6" gutterBottom>Long-Term Assumptions</Typography>
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={4}>
+        <Grid container spacing={3} sx={{ mb: 3, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Projection Years"
               name="projectionYears"
@@ -523,7 +586,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Annual Rent Increase"
               name="annualRentIncrease"
@@ -540,7 +603,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Annual Property Value Increase"
               name="annualPropertyValueIncrease"
@@ -557,7 +620,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Selling Costs Percentage"
               name="sellingCostsPercentage"
@@ -574,7 +637,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Inflation Rate"
               name="inflationRate"
@@ -591,7 +654,7 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
               inputProps={{ step: 0.1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <TextField
               label="Vacancy Rate"
               name="vacancyRate"
@@ -606,6 +669,18 @@ const SFRPropertyForm: React.FC<SFRPropertyFormProps> = ({
                 endAdornment: <InputAdornment position="end">%</InputAdornment>
               }}
               inputProps={{ step: 0.1 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Tenant Turnover Frequency (years)"
+              name="longTermAssumptions.turnoverFrequency"
+              type="number"
+              value={formData.longTermAssumptions?.turnoverFrequency || 2}
+              onChange={handleChange}
+              error={!!errors['longTermAssumptions.turnoverFrequency'] && formSubmitted}
+              helperText={formSubmitted && errors['longTermAssumptions.turnoverFrequency'] || "Average tenant stay in years (e.g., 2 = tenant changes every 2 years)"}
             />
           </Grid>
         </Grid>

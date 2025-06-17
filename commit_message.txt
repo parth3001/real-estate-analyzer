@@ -1,0 +1,18 @@
+Release v1.9.0: Advanced Metrics Implementation Complete
+
+This release completes the implementation of advanced metrics and calculation fixes:
+
+- Added Return on Improvements metric to measure capital investment effectiveness
+- Added Turnover Cost Impact metric to analyze tenant turnover costs
+- Fixed calculation inconsistencies in exit analysis
+- Properly accounted for capital investments in total investment calculations
+- Fixed total cash flow calculation in exit analysis
+- Enhanced year-over-year projections with capital investments
+- Added validation checks to ensure data integrity
+- Enhanced logging for better diagnostics
+- Updated documentation (CHANGELOG, README, MILESTONE)
+
+All planned implementations for this milestone are now complete. The application 
+is ready for deployment with the new metrics and calculation fixes.
+
+Branch: frontend-rebuild 

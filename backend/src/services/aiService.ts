@@ -1,4 +1,4 @@
-import { getOpenAIClient } from './openai';
+import { getOpenAIClient, generateAnalysis } from './openai';
 import { logger } from '../utils/logger';
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { AIInsights } from '../types/analysis';
@@ -27,28 +27,27 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
 
     logger.info(`Generated ${dealData.propertyType} analysis prompt (${prompt.length} chars)`);
 
-    const completion = await openai.completions.create({
-      model: "text-davinci-003",
-      prompt,
-      max_tokens: 800,
-      temperature: 0.7
-    });
-
-    const response = completion.choices[0].text?.trim() || '';
-    
     try {
-      const aiResponse = JSON.parse(response);
+      // Use the updated generateAnalysis function from openai.ts
+      const aiResponse = await generateAnalysis(prompt);
+      
       return {
         summary: aiResponse.summary || "No summary provided",
         strengths: aiResponse.strengths || [],
         weaknesses: aiResponse.weaknesses || [],
         recommendations: aiResponse.recommendations || [],
-        investmentScore: aiResponse.investmentScore || null
+        riskAssessment: aiResponse.riskAssessment,
+        investmentScore: aiResponse.investmentScore || null,
+        // For MF properties, include additional fields if they exist
+        unitMixAnalysis: aiResponse.unitMixAnalysis,
+        marketPositionAnalysis: aiResponse.marketPositionAnalysis,
+        valueAddOpportunities: aiResponse.valueAddOpportunities,
+        recommendedHoldPeriod: aiResponse.recommendedHoldPeriod
       };
-    } catch (parseError) {
-      logger.error('Error parsing AI response:', parseError);
+    } catch (error) {
+      logger.error('Error generating AI insights:', error);
       return {
-        summary: "Error parsing AI response. Please try again later.",
+        summary: "Error generating AI insights. Please try again later.",
         strengths: [],
         weaknesses: [],
         recommendations: [],
@@ -56,9 +55,9 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       };
     }
   } catch (error) {
-    logger.error('Error getting AI insights:', error);
+    logger.error('Unexpected error in getAIInsights:', error);
     return {
-      summary: "Error generating AI analysis. Please try again later.",
+      summary: "An unexpected error occurred during AI analysis.",
       strengths: [],
       weaknesses: [],
       recommendations: [],
@@ -75,14 +74,18 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
       return 'AI service is not available';
     }
 
-    const completion = await openai.completions.create({
-      model: 'text-davinci-003',
-      prompt,
+    // Use the v3 API format for chat completions
+    const completion = await openai.createChatCompletion({
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant for real estate analysis.' },
+        { role: 'user', content: prompt }
+      ],
       max_tokens: 500,
       temperature: 0.7
     });
 
-    return completion.choices[0].text?.trim() || 'No response generated';
+    return completion.data.choices[0].message?.content?.trim() || 'No response generated';
   } catch (error) {
     logger.error('Error generating AI response:', error);
     return 'Error generating AI response';

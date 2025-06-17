@@ -15,6 +15,7 @@ export interface AnalysisAssumptions {
   annualPropertyValueIncrease: number;
   sellingCosts: number;
   vacancyRate: number;
+  turnoverFrequency?: number; // Average tenant stay in years (default: 2)
 }
 
 export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends CommonMetrics> {
@@ -73,40 +74,127 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     let currentPropertyValue = this.data.purchasePrice;
     let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
 
-    console.log('\n\n========== SFR PROJECTIONS CALCULATION ==========');
-    console.log('Annual expense increase rate:', this.assumptions.annualExpenseIncrease, '%');
+    console.log('\n\n========== PROJECTIONS CALCULATION ==========');
+    console.log('Initial Values:', {
+      purchasePrice: this.data.purchasePrice,
+      downPayment: this.data.downPayment,
+      closingCosts: this.data.closingCosts || 0,
+      capitalInvestments: this.data.capitalInvestments || 0,
+      propertyTaxRate: this.data.propertyTaxRate,
+      insuranceRate: this.data.insuranceRate,
+      maintenanceCost: this.data.maintenanceCost,
+      propertyManagementRate: this.data.propertyManagementRate
+    });
+    
+    console.log('Assumptions:', {
+      projectionYears: this.assumptions.projectionYears,
+      annualRentIncrease: this.assumptions.annualRentIncrease,
+      annualExpenseIncrease: this.assumptions.annualExpenseIncrease,
+      annualPropertyValueIncrease: this.assumptions.annualPropertyValueIncrease,
+      vacancyRate: this.assumptions.vacancyRate,
+      turnoverFrequency: this.assumptions.turnoverFrequency || 2,
+      sellingCosts: this.assumptions.sellingCosts
+    });
+    
+    console.log('Mortgage Details:', {
+      monthlyMortgage,
+      annualDebtService,
+      interestRate: this.data.interestRate,
+      loanTerm: this.data.loanTerm,
+      initialLoanBalance: currentLoanBalance
+    });
     
     const basePropertyTaxForYear1 = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
     const baseInsuranceForYear1 = this.data.purchasePrice * (this.data.insuranceRate / 100);
     
     console.log('Base expenses (Year 1):', {
       basePropertyTaxForYear1,
-      baseInsuranceForYear1
+      baseInsuranceForYear1,
+      maintenanceCost: this.data.maintenanceCost
+    });
+
+    // Log tenant turnover parameters
+    const prepFees = this.data.tenantTurnoverFees?.prepFees || 500;
+    const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
+    const turnoverFrequency = this.assumptions.turnoverFrequency || 2;
+    const baseTurnoverRate = 1 / turnoverFrequency;
+    
+    console.log('Tenant Turnover Parameters:', {
+      prepFees,
+      realtorCommission,
+      turnoverFrequency,
+      baseTurnoverRate
     });
 
     for (let year = 1; year <= this.assumptions.projectionYears; year++) {
+      console.log(`\n--- YEAR ${year} CALCULATION ---`);
+      
       const grossIncome = this.calculateGrossIncome(year);
+      console.log(`Year ${year} Gross Income:`, grossIncome);
       
       const expenseInflationFactor = Math.pow(1 + this.assumptions.annualExpenseIncrease / 100, year - 1);
+      console.log(`Year ${year} Expense Inflation Factor:`, expenseInflationFactor);
       
       const propertyTax = basePropertyTaxForYear1 * expenseInflationFactor;
       const insurance = baseInsuranceForYear1 * expenseInflationFactor;
       const maintenance = this.data.maintenanceCost * expenseInflationFactor;
       
-      console.log(`CRITICAL DEBUG - Year ${year} expenses:`, {
-        basePropertyTaxForYear1,
+      console.log(`Year ${year} Basic Expenses:`, {
         propertyTax,
-        expenseInflationFactor,
-        annualExpenseIncrease: this.assumptions.annualExpenseIncrease
+        insurance,
+        maintenance
       });
       
       const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
       const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
       
-      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy;
+      console.log(`Year ${year} Income-Based Expenses:`, {
+        propertyManagement,
+        vacancy
+      });
+      
+      // Calculate tenant turnover costs
+      const monthlyRentForYear = grossIncome / 12;
+      const inflatedPrepFees = prepFees * expenseInflationFactor;
+      
+      // Adjust based on vacancy rate: higher vacancy = higher turnover
+      const vacancyAdjustment = this.assumptions.vacancyRate / 5;
+      const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
+      
+      // Calculate total turnover costs for the year
+      const turnoverCosts = (inflatedPrepFees + (monthlyRentForYear * realtorCommission)) * turnoverRate;
+      
+      console.log(`Year ${year} Turnover Calculation:`, {
+        monthlyRentForYear,
+        inflatedPrepFees,
+        vacancyAdjustment,
+        turnoverRate,
+        turnoverCosts,
+        calculation: {
+          prepFeesPart: inflatedPrepFees * turnoverRate,
+          commissionPart: (monthlyRentForYear * realtorCommission) * turnoverRate
+        }
+      });
+      
+      // Capital improvements (only in year 1)
+      const capitalImprovements = year === 1 ? (this.data.capitalInvestments || 0) : 0;
+      
+      console.log(`Year ${year} Capital Improvements:`, capitalImprovements);
+      
+      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy + turnoverCosts;
       
       const noi = this.calculateNOI(grossIncome, operatingExpenses);
-      const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
+      const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService) - capitalImprovements;
+
+      console.log(`Year ${year} Cash Flow Calculation:`, {
+        grossIncome,
+        operatingExpenses,
+        noi,
+        annualDebtService,
+        capitalImprovements,
+        cashFlow,
+        formula: `${noi} - ${annualDebtService} - ${capitalImprovements} = ${cashFlow}`
+      });
 
       currentPropertyValue *= (1 + this.assumptions.annualPropertyValueIncrease / 100);
 
@@ -116,6 +204,14 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
       const realtorBrokerageFee = grossIncome * 0.0833;
       const appreciation = currentPropertyValue - this.data.purchasePrice;
+
+      console.log(`Year ${year} Property Value & Mortgage:`, {
+        currentPropertyValue,
+        appreciation,
+        interestPaid,
+        principalPaid,
+        currentLoanBalance
+      });
 
       projections.push({
         year,
@@ -135,7 +231,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         vacancy,
         realtorBrokerageFee,
         grossRent: grossIncome,
-        appreciation
+        appreciation,
+        turnoverCosts,
+        capitalImprovements
       });
     }
 
@@ -144,8 +242,26 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
   protected calculateExitAnalysis(projections: YearlyProjection[]): ExitAnalysis {
     const lastProjection = projections[projections.length - 1];
-    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
+    const totalInvestment = this.data.downPayment + 
+                           (this.data.closingCosts || 0) + 
+                           (this.data.capitalInvestments || 0);
+    
+    // Calculate total cash flow from projections
+    // Note: Cash flow already includes capital improvements as an expense in year 1
     const cumulativeCashFlow = projections.reduce((sum, p) => sum + p.cashFlow, 0);
+
+    console.log('Exit Analysis Calculation:', {
+      propertyValue: lastProjection.propertyValue,
+      loanBalance: lastProjection.mortgageBalance,
+      sellingCosts: this.assumptions.sellingCosts,
+      totalInvestment,
+      cumulativeCashFlow,
+      components: {
+        downPayment: this.data.downPayment,
+        closingCosts: this.data.closingCosts || 0,
+        capitalInvestments: this.data.capitalInvestments || 0
+      }
+    });
 
     return FinancialCalculations.calculateExitAnalysis({
       propertyValue: lastProjection.propertyValue,
@@ -168,6 +284,11 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const noi = this.calculateNOI(grossIncome, operatingExpenses);
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
 
+    // Calculate total investment including capital investments
+    const totalInvestment = this.data.downPayment + 
+                           (this.data.closingCosts || 0) + 
+                           (this.data.capitalInvestments || 0);
+
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const propertyMetrics = this.calculatePropertySpecificMetrics();
@@ -181,10 +302,31 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     console.log('NOI:', noi);
     console.log('Cash Flow (Annual):', cashFlow);
     console.log('Cash Flow (Monthly):', cashFlow / 12);
+    console.log('Total Investment:', totalInvestment, {
+      downPayment: this.data.downPayment,
+      closingCosts: this.data.closingCosts || 0,
+      capitalInvestments: this.data.capitalInvestments || 0
+    });
     console.log('Property Metrics:', propertyMetrics);
     console.log('Projections Count:', projections.length);
     console.log('Exit Analysis:', exitAnalysis);
     console.log('===================================');
+
+    // Calculate total cash flow from projections
+    const totalCashFlow = projections.reduce((sum, p) => sum + p.cashFlow, 0);
+    
+    // Calculate total appreciation (final property value - purchase price)
+    const totalAppreciation = projections[projections.length - 1]?.propertyValue - this.data.purchasePrice;
+    
+    // Calculate total return (cash flow + net proceeds from sale - total investment)
+    const totalReturn = totalCashFlow + exitAnalysis.netProceedsFromSale - totalInvestment;
+
+    console.log('==== RETURNS CALCULATION ====');
+    console.log('Total Cash Flow:', totalCashFlow);
+    console.log('Total Appreciation:', totalAppreciation);
+    console.log('Net Proceeds from Sale:', exitAnalysis.netProceedsFromSale);
+    console.log('Total Return:', totalReturn);
+    console.log('============================');
 
     const result: AnalysisResult<U> = {
       monthlyAnalysis: {
@@ -213,9 +355,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         exitAnalysis: exitAnalysis,
         returns: {
           irr: propertyMetrics.irr || 0,
-          totalCashFlow: projections.reduce((sum, p) => sum + p.cashFlow, 0),
-          totalAppreciation: projections[projections.length - 1]?.appreciation || 0,
-          totalReturn: exitAnalysis.totalReturn || 0
+          totalCashFlow: totalCashFlow,
+          totalAppreciation: totalAppreciation,
+          totalReturn: totalReturn
         },
         projectionYears: this.assumptions.projectionYears
       }
@@ -228,18 +370,38 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     console.log('Monthly Cash Flow:', result.monthlyAnalysis.cashFlow);
     console.log('Annual Analysis Keys:', Object.keys(result.annualAnalysis));
     console.log('Metrics Keys:', Object.keys(result.keyMetrics));
+    console.log('Long Term Returns:', result.longTermAnalysis.returns);
     console.log('========================================');
 
     return result;
   }
 
   protected getExpenseBreakdown(grossIncome: number): ExpenseBreakdown {
+    // Calculate tenant turnover costs using the same model as in calculateProjections
+    const prepFees = this.data.tenantTurnoverFees?.prepFees || 500;
+    const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
+    const monthlyRent = grossIncome / 12;
+    
+    // Get turnover frequency in years (default: 2 years)
+    const turnoverFrequency = this.assumptions.turnoverFrequency || 2;
+    // Calculate base turnover rate as 1/frequency (e.g., 1/2 = 50% annual turnover)
+    const baseTurnoverRate = 1 / turnoverFrequency;
+    
+    // Adjust based on vacancy rate: higher vacancy = higher turnover
+    const vacancyAdjustment = this.assumptions.vacancyRate / 5;
+    const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
+    
+    // Calculate annual turnover cost and convert to monthly
+    const annualTurnoverCost = (prepFees + (monthlyRent * realtorCommission)) * turnoverRate;
+    const monthlyTurnoverCost = annualTurnoverCost / 12;
+
     return {
       propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100) / 12,
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100) / 12,
       maintenance: this.data.maintenanceCost / 12,
       propertyManagement: grossIncome * (this.data.propertyManagementRate / 100) / 12,
       vacancy: grossIncome * (this.assumptions.vacancyRate / 100) / 12,
+      tenantTurnover: monthlyTurnoverCost,
       utilities: 0,
       commonAreaElectricity: 0,
       landscaping: 0,

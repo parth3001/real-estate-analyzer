@@ -462,6 +462,11 @@ export const getSampleSFR = (req: Request, res: Response): void => {
     insuranceRate: 0.5,
     maintenanceCost: 150,
     propertyManagementRate: 8,
+    capitalInvestments: 5000,
+    tenantTurnoverFees: {
+      prepFees: 750,
+      realtorCommission: 0.5
+    },
     longTermAssumptions: {
       projectionYears: 10,
       annualRentIncrease: 2,

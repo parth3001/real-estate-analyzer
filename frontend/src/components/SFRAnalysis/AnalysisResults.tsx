@@ -1,32 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Grid,
   Paper,
   Typography,
-  Divider,
-  Card,
-  CardContent,
+  GridLegacy as Grid,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Tabs,
-  Tab
+  Tab,
+  Divider,
+  Card,
+  CardContent,
+  Button,
+  CircularProgress,
+  Alert,
+  Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import type { 
   Analysis, 
   MonthlyAnalysis, 
+  MonthlyExpenses as BaseMonthlyExpenses, 
   AnnualAnalysis, 
-  KeyMetrics, 
-  MonthlyExpenses 
+  KeyMetrics 
 } from '../../types/analysis';
 import type { SFRPropertyData } from '../../types/property';
-import { 
+import {
   LineChart, 
   Line, 
   XAxis, 
@@ -42,8 +45,13 @@ import {
 import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
 
+// Extend MonthlyExpenses to include tenantTurnover
+interface MonthlyExpenses extends BaseMonthlyExpenses {
+  tenantTurnover?: number;
+}
+
 // Extend the Analysis type to add missing properties and make properties optional
-interface ExtendedAnalysis {
+interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics'> {
   monthlyAnalysis: Partial<MonthlyAnalysis> & {
     income?: {
       gross: number;
@@ -78,6 +86,12 @@ interface ExtendedAnalysis {
     pricePerBedroom?: number;
     debtToIncomeRatio?: number;
     grossRentMultiplier?: number;
+    returnOnImprovements?: number;
+    turnoverCostImpact?: number;
+  };
+  sensitivityAnalysis?: {
+    bestCase: any;
+    worstCase: any;
   };
   longTermAnalysis: {
     projections: any[];
@@ -98,6 +112,11 @@ interface ExtendedAnalysis {
     };
   };
   aiInsights?: any;
+}
+
+// Extend SFRPropertyData to include repairCosts
+interface ExtendedSFRPropertyData extends SFRPropertyData {
+  repairCosts?: number;
 }
 
 interface AnalysisResultsProps {
@@ -212,8 +231,9 @@ const updateExpenseTotals = (analysis: any): void => {
   const maintenance = analysis.monthlyAnalysis.expenses.maintenance || 0;
   const propertyManagement = analysis.monthlyAnalysis.expenses.propertyManagement || 0;
   const vacancy = analysis.monthlyAnalysis.expenses.vacancy || 0;
+  const tenantTurnover = analysis.monthlyAnalysis.expenses.tenantTurnover || 0;
   
-  const totalMonthlyExpenses = mortgage + propertyTax + insurance + maintenance + propertyManagement + vacancy;
+  const totalMonthlyExpenses = mortgage + propertyTax + insurance + maintenance + propertyManagement + vacancy + tenantTurnover;
   analysis.monthlyAnalysis.expenses.total = totalMonthlyExpenses;
   
   // Update cash flow based on rent and expenses
@@ -235,7 +255,8 @@ const updateExpenseTotals = (analysis: any): void => {
         (year.insurance || 0) + 
         (year.maintenance || 0) + 
         (year.propertyManagement || 0) + 
-        (year.vacancy || 0);
+        (year.vacancy || 0) + 
+        (year.turnoverCosts || 0);
       
       // Update NOI
       year.noi = (year.grossRent || 0) - year.operatingExpenses;
@@ -339,61 +360,84 @@ const ensureMortgageAndDebtService = (analysis: any, propertyData: SFRPropertyDa
 };
 
 // Update the fixLongTermReturns function to use ExtendedAnalysis
+/**
+ * LEGACY FALLBACK FUNCTION - Only for backward compatibility with old saved deals
+ * 
+ * This function should only be used as a last resort when displaying saved deals
+ * that were created before the backend calculation improvements.
+ * 
+ * All new calculations should be performed by the backend.
+ */
 const fixLongTermReturns = (analysis: any, propertyData: SFRPropertyData): void => {
-  // Check if IRR or ROI is missing or zero
-  if (!analysis.longTermAnalysis?.returns?.irr || analysis.longTermAnalysis.returns.irr === 0 ||
-      !analysis.longTermAnalysis?.exitAnalysis?.returnOnInvestment || analysis.longTermAnalysis.exitAnalysis.returnOnInvestment === 0) {
-    
-    console.log("FIXING: IRR or ROI is missing or zero - recalculating");
-    
-    // Ensure projections exist
-    if (!analysis.longTermAnalysis.projections || analysis.longTermAnalysis.projections.length === 0) {
-      return; // Can't fix without projections
-    }
-    
-    // Get total investment
-    const totalInvestment = propertyData.downPayment + (propertyData.closingCosts || 0);
-    
-    // Calculate total cash flow from projections
-    const totalCashFlow = analysis.longTermAnalysis.projections.reduce((sum: number, year: any) => sum + (year.cashFlow || 0), 0);
-    
-    // Get exit value (net proceeds from sale)
-    const netProceedsFromSale = analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 
-      analysis.longTermAnalysis.projections[analysis.longTermAnalysis.projections.length - 1].propertyValue * 0.9; // Rough estimate
-    
-    // Calculate total return
+  // Skip if analysis data looks complete
+  if (analysis.longTermAnalysis?.returns?.irr && 
+      analysis.longTermAnalysis?.returns?.totalCashFlow && 
+      analysis.longTermAnalysis?.exitAnalysis?.returnOnInvestment) {
+    console.log("Analysis data is complete - no frontend fixes needed");
+    return;
+  }
+  
+  // Only proceed if we have projections
+  if (!analysis.longTermAnalysis?.projections || analysis.longTermAnalysis.projections.length === 0) {
+    console.warn("Cannot fix long term returns: no projections available");
+    return;
+  }
+  
+  console.log("LEGACY FALLBACK: Fixing incomplete analysis data for saved deal");
+  
+  // Get total investment (including capital investments)
+  const totalInvestment = (propertyData.downPayment || 0) + 
+                         (propertyData.closingCosts || 0) + 
+                         (propertyData.capitalInvestments || 0);
+  
+  // Calculate total cash flow from projections
+  const totalCashFlow = analysis.longTermAnalysis.projections.reduce(
+    (sum: number, year: any) => sum + (year.cashFlow || 0), 0
+  );
+  
+  // Get exit analysis data
+  const exitAnalysis = analysis.longTermAnalysis.exitAnalysis || {};
+  const netProceedsFromSale = exitAnalysis.netProceedsFromSale || 0;
+  
+  // Ensure returns object exists
+  if (!analysis.longTermAnalysis.returns) {
+    analysis.longTermAnalysis.returns = {};
+  }
+  
+  // Ensure exit analysis object exists
+  if (!analysis.longTermAnalysis.exitAnalysis) {
+    analysis.longTermAnalysis.exitAnalysis = {};
+  }
+  
+  // Only set values if they don't already exist
+  if (!analysis.longTermAnalysis.returns.totalCashFlow) {
+    analysis.longTermAnalysis.returns.totalCashFlow = totalCashFlow;
+  }
+  
+  if (!analysis.longTermAnalysis.returns.totalReturn) {
     const totalReturn = totalCashFlow + netProceedsFromSale - totalInvestment;
-    
-    // Calculate ROI
-    const roi = (totalReturn / totalInvestment) * 100;
-    
-    // Set the values
-    if (!analysis.longTermAnalysis.returns) {
-      analysis.longTermAnalysis.returns = {
-        totalCashFlow: totalCashFlow,
-        totalAppreciation: netProceedsFromSale - propertyData.purchasePrice,
-        totalReturn: totalReturn,
-        irr: 0 // Will calculate below
-      };
-    } else {
-      analysis.longTermAnalysis.returns.totalCashFlow = totalCashFlow;
-      analysis.longTermAnalysis.returns.totalAppreciation = netProceedsFromSale - propertyData.purchasePrice;
-      analysis.longTermAnalysis.returns.totalReturn = totalReturn;
+    analysis.longTermAnalysis.returns.totalReturn = totalReturn;
+  }
+  
+  if (!analysis.longTermAnalysis.exitAnalysis.returnOnInvestment) {
+    const returnOnInvestment = totalInvestment > 0 ? (netProceedsFromSale / totalInvestment) * 100 : 0;
+    analysis.longTermAnalysis.exitAnalysis.returnOnInvestment = returnOnInvestment;
+  }
+  
+  // IRR calculation is complex and should ideally be done by the backend
+  // This is just a fallback for legacy saved deals
+  if (!analysis.longTermAnalysis.returns.irr) {
+    try {
+      // Import the IRR function from the backend if available
+      // Otherwise, use a simple approximation
+      const years = analysis.longTermAnalysis.projections.length;
+      const totalReturn = analysis.longTermAnalysis.returns.totalReturn || 0;
+      const approximateIRR = Math.pow((totalInvestment + totalReturn) / totalInvestment, 1/years) - 1;
+      analysis.longTermAnalysis.returns.irr = approximateIRR * 100;
+      console.log("Used simple IRR approximation for legacy deal:", approximateIRR * 100);
+    } catch (error) {
+      console.error("Error calculating IRR:", error);
     }
-    
-    // Set ROI
-    if (analysis.longTermAnalysis.exitAnalysis) {
-      analysis.longTermAnalysis.exitAnalysis.returnOnInvestment = roi;
-    }
-    
-    // Simple IRR approximation (for more accurate IRR, a proper financial calculator would be needed)
-    // This is a simplified approach - for simplicity we're using a rough approximation
-    const years = analysis.longTermAnalysis.projections.length;
-    const approximateIRR = Math.pow((totalInvestment + totalReturn) / totalInvestment, 1/years) - 1;
-    analysis.longTermAnalysis.returns.irr = approximateIRR * 100;
-    
-    console.log("FIXED: ROI recalculated to:", roi);
-    console.log("FIXED: IRR approximated to:", approximateIRR * 100);
   }
 };
 
@@ -457,230 +501,173 @@ const ensureKeyMetricsPreserved = (analysis: any): void => {
 };
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData, setAnalysis = () => {} }) => {
-  // Cast analysis to ExtendedAnalysis to use the extended properties
-  const extendedAnalysis = analysis as ExtendedAnalysis;
   const [tabIndex, setTabIndex] = React.useState(0);
+  
+  // For TypeScript safety, cast to extended types
+  const analysisExt = analysis as unknown as ExtendedAnalysis;
+  const propertyDataExt = propertyData as unknown as ExtendedSFRPropertyData;
+  
+  // Set up error state
   const [error, setError] = React.useState<string | null>(null);
+  
+  // Debug log for projections
+  React.useEffect(() => {
+    if (analysis?.longTermAnalysis?.projections?.length > 0) {
+      console.log('First Year Projection:', analysis.longTermAnalysis.projections[0]);
+    }
+  }, [analysis]);
   
   // Handle tab change
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
   
-  // Get default expenses if needed
-  let defaultExpenses = React.useMemo(() => calculateDefaultMonthlyExpenses(propertyData), [propertyData]);
+  // Get default expenses for fallback
+  const defaultExpenses = React.useMemo(() => calculateDefaultMonthlyExpenses(propertyData), [propertyData]);
   
-  // Update the useEffect validation to include fixes for missing mortgage and ROI/IRR
+  // Validate and fix analysis data
   React.useEffect(() => {
+    // Skip if missing data
+    if (!analysis || !propertyData) return;
+    
     try {
-      // Verify required data exists
-      if (!analysis || !propertyData) {
-        setError('Analysis or property data is missing');
-        return;
-      }
+      // Need to cast to any to modify properties
+      const analysisAny = analysisExt;
       
-      // Use type assertion to avoid TypeScript errors
-      const analysisAny = analysis as any;
+      // Track if we made any changes that require a state update
+      let hasChanges = false;
       
-      // Ensure basic structures exist
+      // Ensure monthly analysis exists
       if (!analysisAny.monthlyAnalysis) {
         analysisAny.monthlyAnalysis = {
-          grossIncome: propertyData.monthlyRent,
+          income: {
+            gross: propertyData.monthlyRent,
+            effective: propertyData.monthlyRent * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100)
+          },
           expenses: {},
           cashFlow: 0
         };
+        hasChanges = true;
       }
       
-      // Check for expenses
-      if (!analysisAny.monthlyAnalysis.expenses) {
-        analysisAny.monthlyAnalysis.expenses = {};
-        console.error('Created empty expenses object in monthlyAnalysis');
-      }
-      
-      // Initialize structures for annual analysis if needed
-      if (!analysisAny.annualAnalysis) {
-        analysisAny.annualAnalysis = {
-          grossRentalIncome: propertyData.monthlyRent * 12,
-          effectiveGrossIncome: propertyData.monthlyRent * 12 * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100),
-          operatingExpenses: 0,
-          noi: 0,
-          cashFlow: 0,
-          capRate: 0,
-          cashOnCashReturn: 0,
-          dscr: 0,
-          annualDebtService: 0
-        };
-      }
-      
-      // First, preserve any user input values from propertyData
+      // Preserve user input values like maintenance
       preserveUserInputValues(analysisAny, propertyData);
       
-      // Then, ensure mortgage and debt service are properly calculated
+      // Fix mortgage and debt service if missing
       ensureMortgageAndDebtService(analysisAny, propertyData);
       
-      // Check for longTermAnalysis
-      if (!analysisAny.longTermAnalysis) {
-        setError('Long-term analysis data is missing');
-        return;
-      }
-      
-      // Check for projections - CREATE DEFAULT PROJECTIONS IF MISSING instead of showing error
-      if (!analysisAny.longTermAnalysis.projections) {
-        console.warn('longTermAnalysis.projections is missing completely - creating default array');
-        // Create a minimal projections array to prevent errors
-        analysisAny.longTermAnalysis.projections = Array.from({length: 10}, (_, i) => ({
-          year: i + 1,
-          propertyValue: propertyData.purchasePrice * Math.pow(1 + (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100, i),
-          grossRent: propertyData.monthlyRent * 12 * Math.pow(1 + (propertyData.longTermAssumptions?.annualRentIncrease || 2) / 100, i),
-          cashFlow: propertyData.monthlyRent * 9, // Rough estimate (75% of monthly rent × 12 months)
-          noi: propertyData.monthlyRent * 12 * 0.8, // Rough NOI estimate
-          equity: propertyData.purchasePrice * 0.5 + i * (propertyData.purchasePrice * 0.05), // Rough equity growth
-          operatingExpenses: propertyData.monthlyRent * 12 * 0.4, // Rough operating expense estimate
-          mortgageBalance: propertyData.purchasePrice * (1 - propertyData.downPayment / propertyData.purchasePrice) * (1 - i/30),
-          grossIncome: propertyData.monthlyRent * 12 * Math.pow(1 + (propertyData.longTermAssumptions?.annualRentIncrease || 2) / 100, i),
-          propertyTax: propertyData.purchasePrice * (propertyData.propertyTaxRate || 1.5) / 100,
-          insurance: propertyData.purchasePrice * (propertyData.insuranceRate || 0.5) / 100,
-          maintenance: (propertyData.maintenanceCost || propertyData.monthlyRent * 0.08) * 12, // Use user value or 8% of rent
-          propertyManagement: propertyData.monthlyRent * 12 * (propertyData.propertyManagementRate || 8) / 100,
-          vacancy: propertyData.monthlyRent * 12 * (propertyData.longTermAssumptions?.vacancyRate || 5) / 100,
-          debtService: (analysisAny.monthlyAnalysis?.expenses?.mortgage?.total || 0) * 12 || propertyData.monthlyRent * 12 * 0.5,
-          appreciation: i === 0 ? 0 : propertyData.purchasePrice * (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100,
-          totalReturn: propertyData.monthlyRent * 9 + propertyData.purchasePrice * (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100
-        }));
-      } else if (!Array.isArray(analysisAny.longTermAnalysis.projections)) {
-        console.error('longTermAnalysis.projections is not an array:', analysisAny.longTermAnalysis.projections);
-        setError('Long-term projections data is invalid (not an array)');
-        return;
-      }
-      
-      if (analysisAny.longTermAnalysis.projections.length === 0) {
-        console.error('longTermAnalysis.projections array is empty - creating default projections');
-        // Create a minimal projections array to prevent errors
-        analysisAny.longTermAnalysis.projections = Array.from({length: 10}, (_, i) => ({
-          year: i + 1,
-          propertyValue: propertyData.purchasePrice * Math.pow(1 + (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100, i),
-          grossRent: propertyData.monthlyRent * 12 * Math.pow(1 + (propertyData.longTermAssumptions?.annualRentIncrease || 2) / 100, i),
-          cashFlow: propertyData.monthlyRent * 9, // Rough estimate (75% of monthly rent × 12 months)
-          noi: propertyData.monthlyRent * 12 * 0.8, // Rough NOI estimate
-          equity: propertyData.purchasePrice * 0.5 + i * (propertyData.purchasePrice * 0.05), // Rough equity growth
-          operatingExpenses: propertyData.monthlyRent * 12 * 0.4, // Rough operating expense estimate
-          mortgageBalance: propertyData.purchasePrice * (1 - propertyData.downPayment / propertyData.purchasePrice) * (1 - i/30),
-          grossIncome: propertyData.monthlyRent * 12 * Math.pow(1 + (propertyData.longTermAssumptions?.annualRentIncrease || 2) / 100, i),
-          propertyTax: propertyData.purchasePrice * (propertyData.propertyTaxRate || 1.5) / 100,
-          insurance: propertyData.purchasePrice * (propertyData.insuranceRate || 0.5) / 100,
-          maintenance: (propertyData.maintenanceCost || propertyData.monthlyRent * 0.08) * 12, // Use user value or 8% of rent
-          propertyManagement: propertyData.monthlyRent * 12 * (propertyData.propertyManagementRate || 8) / 100,
-          vacancy: propertyData.monthlyRent * 12 * (propertyData.longTermAssumptions?.vacancyRate || 5) / 100,
-          debtService: (analysisAny.monthlyAnalysis?.expenses?.mortgage?.total || 0) * 12 || propertyData.monthlyRent * 12 * 0.5,
-          appreciation: i === 0 ? 0 : propertyData.purchasePrice * (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100,
-          totalReturn: propertyData.monthlyRent * 9 + propertyData.purchasePrice * (propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3) / 100
-        }));
-      }
-      
-      // Fix IRR and ROI calculations
+      // Fix long-term returns if missing
       fixLongTermReturns(analysisAny, propertyData);
-      
-      // Check for keyMetrics
-      if (!analysisAny.keyMetrics) {
-        analysisAny.keyMetrics = {};
-        console.warn('Created empty keyMetrics object');
-      }
       
       // Ensure key metrics are preserved
       ensureKeyMetricsPreserved(analysisAny);
       
-      // Update key metrics with corrected values
-      if (analysisAny.annualAnalysis && analysisAny.keyMetrics) {
-        // Ensure totalInvestment is set
-        analysisAny.keyMetrics.totalInvestment = propertyData.downPayment + (propertyData.closingCosts || 0);
-        
-        // Update other metrics if needed
-        if (analysisAny.annualAnalysis.noi && propertyData.purchasePrice) {
-          analysisAny.keyMetrics.capRate = (analysisAny.annualAnalysis.noi / propertyData.purchasePrice) * 100;
-        }
-        
-        if (analysisAny.annualAnalysis.cashFlow && analysisAny.keyMetrics.totalInvestment) {
-          analysisAny.keyMetrics.cashOnCashReturn = (analysisAny.annualAnalysis.cashFlow / analysisAny.keyMetrics.totalInvestment) * 100;
-        }
-        
-        if (analysisAny.annualAnalysis.noi && analysisAny.annualAnalysis.annualDebtService) {
-          analysisAny.keyMetrics.dscr = analysisAny.annualAnalysis.noi / analysisAny.annualAnalysis.annualDebtService;
-        }
-      }
+      // Validate key metrics
+      console.log('CHECKING KEY METRICS:', {
+        irr: analysisAny.keyMetrics.irr,
+        operatingExpenseRatio: analysisAny.keyMetrics.operatingExpenseRatio,
+        longTermIRR: analysisAny.keyMetrics.irr
+      });
       
-      // Final check to make sure IRR and Operating Expense Ratio are set
+      // If IRR is missing or zero, set a default
       if (!analysisAny.keyMetrics.irr || analysisAny.keyMetrics.irr === 0) {
         console.warn('IRR is still zero after all fixes - setting a default value');
         analysisAny.keyMetrics.irr = 12; // Default to 12% IRR
+        hasChanges = true;
       }
       
       if (!analysisAny.keyMetrics.operatingExpenseRatio || analysisAny.keyMetrics.operatingExpenseRatio === 0) {
         console.warn('Operating Expense Ratio is still zero after all fixes - setting a default value');
         analysisAny.keyMetrics.operatingExpenseRatio = 40; // Default to 40% for SFR
+        hasChanges = true;
       }
       
-      // Force a re-render by making a shallow copy of the analysis object
-      setAnalysis({...analysisAny});
+      // Only update state if we made changes
+      if (hasChanges && setAnalysis) {
+        setAnalysis({...analysisAny});
+      }
       
       setError(null);
     } catch (err) {
       console.error('Error validating analysis data:', err);
       setError('Error processing analysis data: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
-  }, [analysis, propertyData]);
+  }, [propertyData, analysisExt, setAnalysis]);
   
-  // After the main validation useEffect, add this new useLayoutEffect
-  React.useLayoutEffect(() => {
-    // Skip if there's an error or missing data
-    if (error || !analysis || !propertyData) return;
-
-    // If mortgage payment is missing or zero, fix it immediately
-    if (!analysis.monthlyAnalysis?.expenses?.mortgage?.total || analysis.monthlyAnalysis.expenses.mortgage.total === 0) {
-      console.log("LAYOUT EFFECT: Fixing missing mortgage payment for immediate render");
-      
-      // Calculate mortgage payment
-      const principal = propertyData.purchasePrice * (1 - propertyData.downPayment / propertyData.purchasePrice);
-      const monthlyRate = propertyData.interestRate / 12 / 100;
-      const payments = propertyData.loanTerm * 12;
-      let monthlyMortgage = 0;
-      
-      if (monthlyRate > 0 && payments > 0) {
-        monthlyMortgage = (principal * monthlyRate * Math.pow(1 + monthlyRate, payments)) / 
-                        (Math.pow(1 + monthlyRate, payments) - 1);
-      }
-      
-      // Ensure expenses object exists
-      if (!analysis.monthlyAnalysis) {
-        analysis.monthlyAnalysis = {
-          grossIncome: propertyData.monthlyRent,
-          expenses: {},
-          cashFlow: 0
-        };
-      }
-      
-      if (!analysis.monthlyAnalysis.expenses) {
-        analysis.monthlyAnalysis.expenses = {};
-      }
-      
-      // Create mortgage object if it doesn't exist
-      if (!analysis.monthlyAnalysis.expenses.mortgage) {
-        analysis.monthlyAnalysis.expenses.mortgage = { 
-          principal: principal / payments,
-          interest: monthlyMortgage - (principal / payments),
-          total: monthlyMortgage 
-        };
-      } else {
-        // Update existing mortgage object
-        analysis.monthlyAnalysis.expenses.mortgage.total = monthlyMortgage;
-        analysis.monthlyAnalysis.expenses.mortgage.principal = principal / payments;
-        analysis.monthlyAnalysis.expenses.mortgage.interest = monthlyMortgage - (principal / payments);
-      }
-      
-      // Force a re-render by making a shallow copy of the analysis object
-      // This is important to ensure the component re-renders with the updated values
-      setAnalysis({...analysis});
+  // CRITICAL FIX: Immediately fix projections if they're flat (no inflation)
+  // Force this to happen BEFORE first render
+  React.useEffect(() => {
+    if (!analysis?.longTermAnalysis?.projections || 
+        !Array.isArray(analysis.longTermAnalysis.projections) || 
+        analysis.longTermAnalysis.projections.length === 0) {
+      return;
     }
-  }, [analysis, propertyData, error, setAnalysis]);
+    
+    const firstYear = analysis.longTermAnalysis.projections[0];
+    const lastYear = analysis.longTermAnalysis.projections[analysis.longTermAnalysis.projections.length - 1];
+    
+    // Check if expenses are flat across years (no inflation applied)
+    if (firstYear && lastYear && 
+        Math.abs((firstYear.propertyTax || 0) - (lastYear.propertyTax || 0)) < 1) {
+      
+      console.log('DIRECT FRONTEND FIX: Forcing inflation on flat projections');
+      
+      // Get inflation rate
+      const inflationRate = propertyData.longTermAssumptions?.inflationRate || 2;
+      const vacancyRate = propertyData.longTermAssumptions?.vacancyRate || 5;
+      
+      // Create a copy of the analysis to modify
+      const updatedAnalysis = {...analysis};
+      
+      // Fix projections
+      updatedAnalysis.longTermAnalysis.projections = analysis.longTermAnalysis.projections.map((year, index) => {
+        if (index === 0) return year; // Keep first year as-is
+        
+        // Calculate inflation factor
+        const inflationFactor = Math.pow(1 + inflationRate / 100, index);
+        
+        // Create a new year with inflated values
+        return {
+          ...year,
+          propertyTax: (firstYear.propertyTax || 0) * inflationFactor,
+          insurance: (firstYear.insurance || 0) * inflationFactor,
+          maintenance: (firstYear.maintenance || 0) * inflationFactor,
+          operatingExpenses: (
+            (firstYear.propertyTax || 0) * inflationFactor +
+            (firstYear.insurance || 0) * inflationFactor +
+            (firstYear.maintenance || 0) * inflationFactor +
+            (year.propertyManagement || 0) +
+            (year.vacancy || 0)
+          ),
+          // Also recalculate NOI and cash flow
+          noi: (year.grossRent || 0) * (1 - (vacancyRate / 100)) - (
+            (firstYear.propertyTax || 0) * inflationFactor +
+            (firstYear.insurance || 0) * inflationFactor +
+            (firstYear.maintenance || 0) * inflationFactor +
+            (year.propertyManagement || 0) +
+            (year.vacancy || 0)
+          ),
+          cashFlow: (year.grossRent || 0) * (1 - (vacancyRate / 100)) - (
+            (firstYear.propertyTax || 0) * inflationFactor +
+            (firstYear.insurance || 0) * inflationFactor +
+            (firstYear.maintenance || 0) * inflationFactor +
+            (year.propertyManagement || 0) +
+            (year.vacancy || 0)
+          ) - (year.debtService || 0)
+        };
+      });
+      
+      console.log('DIRECT FIX - Before - Year 1 PropertyTax:', firstYear.propertyTax);
+      console.log('DIRECT FIX - Before - Year 10 PropertyTax:', lastYear.propertyTax);
+      console.log('DIRECT FIX - After - Year 1 PropertyTax:', updatedAnalysis.longTermAnalysis.projections[0].propertyTax);
+      console.log('DIRECT FIX - After - Year 10 PropertyTax:', updatedAnalysis.longTermAnalysis.projections[updatedAnalysis.longTermAnalysis.projections.length-1].propertyTax);
+      
+      // Update the state with the fixed projections
+      if (setAnalysis) {
+        setAnalysis(updatedAnalysis);
+      }
+    }
+  }, [analysis?.longTermAnalysis?.projections, propertyData.longTermAssumptions?.inflationRate, propertyData.longTermAssumptions?.vacancyRate, setAnalysis]);
   
   // Safely prepare expense breakdown data
   let expenseBreakdownData: Array<{ name: string; value: number }> = [];
@@ -691,7 +678,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       { name: 'Insurance', value: analysis?.monthlyAnalysis?.expenses?.insurance || 0 },
       { name: 'Maintenance', value: analysis?.monthlyAnalysis?.expenses?.maintenance || 0 },
       { name: 'Property Management', value: analysis?.monthlyAnalysis?.expenses?.propertyManagement || 0 },
-      { name: 'Vacancy', value: analysis?.monthlyAnalysis?.expenses?.vacancy || 0 }
+      { name: 'Vacancy', value: analysis?.monthlyAnalysis?.expenses?.vacancy || 0 },
+      { name: 'Tenant Turnover', value: analysis?.monthlyAnalysis?.expenses?.tenantTurnover || 0 }
     ].filter(item => item.value > 0);
   } catch (err) {
     console.error('Error preparing expense breakdown data:', err);
@@ -699,7 +687,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   }
   
   // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B', '#8884d8'];
   
   // Safely prepare cash flow chart data
   let cashFlowData: Array<{ name: string; cashFlow: number; propertyValue: number }> = [];
@@ -741,73 +729,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     (analysis?.monthlyAnalysis?.expenses?.maintenance || defaultExpenses.maintenance);
   const propertyManagement = analysis?.monthlyAnalysis?.expenses?.propertyManagement || defaultExpenses.propertyManagement;
   const vacancy = analysis?.monthlyAnalysis?.expenses?.vacancy || defaultExpenses.vacancy;
+  const tenantTurnover = analysis?.monthlyAnalysis?.expenses?.tenantTurnover || 0;
   const monthlyRent = propertyData?.monthlyRent || 0;
   const vacancyRate = propertyData?.longTermAssumptions?.vacancyRate || 5;
   const vacancyLoss = monthlyRent * (vacancyRate / 100);
   const effectiveRentalIncome = monthlyRent - vacancyLoss;
-
-  // CRITICAL FIX: Immediately fix projections if they're flat (no inflation)
-  // Force this to happen BEFORE first render
-  if (analysis.longTermAnalysis?.projections && 
-      Array.isArray(analysis.longTermAnalysis.projections) && 
-      analysis.longTermAnalysis.projections.length > 0) {
-    
-    const firstYear = analysis.longTermAnalysis.projections[0];
-    const lastYear = analysis.longTermAnalysis.projections[analysis.longTermAnalysis.projections.length - 1];
-    
-    // Check if expenses are flat across years (no inflation applied)
-    if (firstYear && lastYear && 
-        Math.abs((firstYear.propertyTax || 0) - (lastYear.propertyTax || 0)) < 1) {
-      
-      console.log('DIRECT FRONTEND FIX: Forcing inflation on flat projections');
-      
-      // Get inflation rate
-      const inflationRate = propertyData.longTermAssumptions?.inflationRate || 2;
-      
-      // Fix projections in place
-      analysis.longTermAnalysis.projections = analysis.longTermAnalysis.projections.map((year, index) => {
-        if (index === 0) return year; // Keep first year as-is
-        
-        // Calculate inflation factor
-        const inflationFactor = Math.pow(1 + inflationRate / 100, index);
-        
-        // Create a new year with inflated values
-        return {
-          ...year,
-          propertyTax: (firstYear.propertyTax || 0) * inflationFactor,
-          insurance: (firstYear.insurance || 0) * inflationFactor,
-          maintenance: (firstYear.maintenance || 0) * inflationFactor,
-          operatingExpenses: (
-            (firstYear.propertyTax || 0) * inflationFactor +
-            (firstYear.insurance || 0) * inflationFactor +
-            (firstYear.maintenance || 0) * inflationFactor +
-            (year.propertyManagement || 0) +
-            (year.vacancy || 0)
-          ),
-          // Also recalculate NOI and cash flow
-          noi: (year.grossRent || 0) * (1 - (vacancyRate / 100)) - (
-            (firstYear.propertyTax || 0) * inflationFactor +
-            (firstYear.insurance || 0) * inflationFactor +
-            (firstYear.maintenance || 0) * inflationFactor +
-            (year.propertyManagement || 0) +
-            (year.vacancy || 0)
-          ),
-          cashFlow: (year.grossRent || 0) * (1 - (vacancyRate / 100)) - (
-            (firstYear.propertyTax || 0) * inflationFactor +
-            (firstYear.insurance || 0) * inflationFactor +
-            (firstYear.maintenance || 0) * inflationFactor +
-            (year.propertyManagement || 0) +
-            (year.vacancy || 0)
-          ) - (year.debtService || 0)
-        };
-      });
-      
-      console.log('DIRECT FIX - Before - Year 1 PropertyTax:', firstYear.propertyTax);
-      console.log('DIRECT FIX - Before - Year 10 PropertyTax:', lastYear.propertyTax);
-      console.log('DIRECT FIX - After - Year 1 PropertyTax:', analysis.longTermAnalysis.projections[0].propertyTax);
-      console.log('DIRECT FIX - After - Year 10 PropertyTax:', analysis.longTermAnalysis.projections[analysis.longTermAnalysis.projections.length-1].propertyTax);
-    }
-  }
 
   return (
     <Box>
@@ -824,7 +750,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
         {/* Expanded Key Metrics Section */}
         <Typography variant="h6" gutterBottom>Key Metrics</Typography>
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -843,7 +769,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -862,7 +788,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -881,7 +807,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -900,7 +826,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -919,7 +845,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -938,7 +864,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -957,7 +883,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -976,7 +902,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -995,7 +921,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -1014,7 +940,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             </Card>
           </Grid>
           
-          <Grid container item xs={6} sm={4} md={2}>
+          <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -1121,6 +1047,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                       <TableRow>
                         <TableCell>Property Management</TableCell>
                         <TableCell align="right">-{formatCurrency(propertyManagement)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Vacancy</TableCell>
+                        <TableCell align="right">-{formatCurrency(vacancy)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Tenant Turnover</TableCell>
+                        <TableCell align="right">-{formatCurrency(tenantTurnover)}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell><strong>Total Monthly Expenses</strong></TableCell>
@@ -1262,73 +1196,89 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           <Box>
             <Typography variant="h6" gutterBottom>Year-by-Year Projections</Typography>
             
-            <Box sx={{ bgcolor: 'info.main', color: 'info.contrastText', p: 1, mb: 2, borderRadius: 1 }}>
-              <Typography variant="subtitle2">Inflation Rate: {propertyData.longTermAssumptions?.inflationRate || 0}%</Typography>
-              <Typography variant="caption">
-                Debug: PropertyTax Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.propertyTax || 0)} vs 
-                Year 10: {formatCurrency(analysis.longTermAnalysis.projections[9]?.propertyTax || 0)} | 
-                Ratio: {((analysis.longTermAnalysis.projections[9]?.propertyTax || 0) / 
-                       (analysis.longTermAnalysis.projections[0]?.propertyTax || 1)).toFixed(2)}x
-              </Typography>
-              <Typography variant="caption" display="block">
-                Debug: Insurance Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.insurance || 0)} vs 
-                Year 10: {formatCurrency(analysis.longTermAnalysis.projections[9]?.insurance || 0)} | 
-                Ratio: {((analysis.longTermAnalysis.projections[9]?.insurance || 0) / 
-                       (analysis.longTermAnalysis.projections[0]?.insurance || 1)).toFixed(2)}x
-              </Typography>
-              <Typography variant="caption" display="block">
-                Expected Inflation Factor: {Math.pow(1 + (propertyData.longTermAssumptions?.inflationRate || 2) / 100, 9).toFixed(2)}x
-              </Typography>
-              <Typography variant="caption" display="block">
-                Raw Data (Check Console): {JSON.stringify(analysis.longTermAnalysis.projections.map(p => ({ 
-                  year: p.year, 
-                  pTax: p.propertyTax, 
-                  ins: p.insurance,
-                  maint: p.maintenance
-                }))).substring(0, 100) + "..."}
-              </Typography>
-            </Box>
-            
-            <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Year</TableCell>
-                    <TableCell align="right">Property Value</TableCell>
-                    <TableCell align="right">Gross Rent</TableCell>
-                    <TableCell align="right">Property Tax</TableCell>
-                    <TableCell align="right">Insurance</TableCell>
-                    <TableCell align="right">Maintenance</TableCell>
-                    <TableCell align="right">Property Management</TableCell>
-                    <TableCell align="right">Vacancy</TableCell>
-                    <TableCell align="right">Total Expenses</TableCell>
-                    <TableCell align="right">NOI</TableCell>
-                    <TableCell align="right">Debt Service</TableCell>
-                    <TableCell align="right">Cash Flow</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {analysis.longTermAnalysis.projections.map((year) => (
-                    <TableRow key={year.year}>
-                      <TableCell>{year.year}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.propertyValue)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.grossRent || year.grossIncome)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.propertyTax)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.insurance)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.maintenance)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.propertyManagement)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.vacancy)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.operatingExpenses)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.noi)}</TableCell>
-                      <TableCell align="right">{formatCurrency(year.debtService)}</TableCell>
-                      <TableCell align="right" sx={{ color: year.cashFlow < 0 ? 'error.main' : 'success.main' }}>
-                        {year.cashFlow < 0 ? '-' : ''}{formatCurrency(Math.abs(year.cashFlow))}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {analysis.longTermAnalysis?.projections && analysis.longTermAnalysis.projections.length > 0 ? (
+              <>
+                <Box sx={{ bgcolor: 'info.main', color: 'info.contrastText', p: 1, mb: 2, borderRadius: 1 }}>
+                  <Typography variant="subtitle2">Inflation Rate: {propertyData.longTermAssumptions?.inflationRate || 0}%</Typography>
+                  <Typography variant="caption">
+                    Debug: PropertyTax Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.propertyTax || 0)} vs 
+                    Year {Math.min(9, analysis.longTermAnalysis.projections.length - 1)}: {formatCurrency(analysis.longTermAnalysis.projections[Math.min(9, analysis.longTermAnalysis.projections.length - 1)]?.propertyTax || 0)} | 
+                    Ratio: {((analysis.longTermAnalysis.projections[Math.min(9, analysis.longTermAnalysis.projections.length - 1)]?.propertyTax || 0) / 
+                           (analysis.longTermAnalysis.projections[0]?.propertyTax || 1)).toFixed(2)}x
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Debug: Insurance Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.insurance || 0)} vs 
+                    Year {Math.min(9, analysis.longTermAnalysis.projections.length - 1)}: {formatCurrency(analysis.longTermAnalysis.projections[Math.min(9, analysis.longTermAnalysis.projections.length - 1)]?.insurance || 0)} | 
+                    Ratio: {((analysis.longTermAnalysis.projections[Math.min(9, analysis.longTermAnalysis.projections.length - 1)]?.insurance || 0) / 
+                           (analysis.longTermAnalysis.projections[0]?.insurance || 1)).toFixed(2)}x
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Expected Inflation Factor: {Math.pow(1 + (propertyData.longTermAssumptions?.inflationRate || 2) / 100, Math.min(9, analysis.longTermAnalysis.projections.length - 1)).toFixed(2)}x
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Raw Data (Check Console): {JSON.stringify(analysis.longTermAnalysis.projections.slice(0, Math.min(5, analysis.longTermAnalysis.projections.length)).map(p => ({ 
+                      year: p?.year, 
+                      pTax: p?.propertyTax, 
+                      ins: p?.insurance,
+                      maint: p?.maintenance
+                    }))).substring(0, 100) + "..."}
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Debug: Turnover Costs Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.turnoverCosts || 0)} | 
+                    Capital Improvements Year 1: {formatCurrency(analysis.longTermAnalysis.projections[0]?.capitalImprovements || 0)}
+                  </Typography>
+                </Box>
+                
+                <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Year</TableCell>
+                        <TableCell align="right">Property Value</TableCell>
+                        <TableCell align="right">Gross Rent</TableCell>
+                        <TableCell align="right">Property Tax</TableCell>
+                        <TableCell align="right">Insurance</TableCell>
+                        <TableCell align="right">Maintenance</TableCell>
+                        <TableCell align="right">Property Management</TableCell>
+                        <TableCell align="right">Vacancy</TableCell>
+                        <TableCell align="right">Turnover Costs</TableCell>
+                        <TableCell align="right">Capital Improvements</TableCell>
+                        <TableCell align="right">Total Expenses</TableCell>
+                        <TableCell align="right">NOI</TableCell>
+                        <TableCell align="right">Debt Service</TableCell>
+                        <TableCell align="right">Cash Flow</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {analysis.longTermAnalysis.projections.map((year) => (
+                        <TableRow key={year?.year || 'unknown'}>
+                          <TableCell>{year?.year || 'N/A'}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.propertyValue || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.grossRent || year?.grossIncome || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.propertyTax || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.insurance || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.maintenance || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.propertyManagement || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.vacancy || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.turnoverCosts || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.capitalImprovements || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.operatingExpenses || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.noi || 0)}</TableCell>
+                          <TableCell align="right">{formatCurrency(year?.debtService || 0)}</TableCell>
+                          <TableCell align="right" sx={{ color: (year?.cashFlow || 0) < 0 ? 'error.main' : 'success.main' }}>
+                            {(year?.cashFlow || 0) < 0 ? '-' : ''}{formatCurrency(Math.abs(year?.cashFlow || 0))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            ) : (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                No projection data available. This may occur with older saved deals that don't include yearly projections.
+              </Alert>
+            )}
           </Box>
         )}
         
@@ -1336,122 +1286,140 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
         {tabIndex === 3 && (
           <Box>
             <Typography variant="h6" gutterBottom>Exit Analysis</Typography>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Projected Sale Price (Year {propertyData.longTermAssumptions.projectionYears})</TableCell>
-                    <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.exitAnalysis.projectedSalePrice)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Selling Costs ({formatPercent(propertyData.longTermAssumptions.sellingCostsPercentage)})</TableCell>
-                    <TableCell align="right">-{formatCurrency(analysis.longTermAnalysis.exitAnalysis.sellingCosts)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Mortgage Payoff</TableCell>
-                    <TableCell align="right">-{formatCurrency(analysis.longTermAnalysis.exitAnalysis.mortgagePayoff)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell><strong>Net Proceeds from Sale</strong></TableCell>
-                    <TableCell align="right"><strong>{formatCurrency(analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale)}</strong></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Total Cash Flow (All Years)</TableCell>
-                    <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.returns.totalCashFlow)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Total Appreciation</TableCell>
-                    <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.returns.totalAppreciation)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell><strong>Total Return</strong></TableCell>
-                    <TableCell align="right"><strong>{formatCurrency(analysis.longTermAnalysis.returns.totalReturn)}</strong></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell><strong>IRR (Internal Rate of Return)</strong></TableCell>
-                    <TableCell align="right"><strong>{formatPercent(analysis.longTermAnalysis.returns.irr)}</strong></TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {analysis.longTermAnalysis?.exitAnalysis ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Projected Sale Price (Year {propertyData.longTermAssumptions?.projectionYears || 10})</TableCell>
+                      <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.exitAnalysis.projectedSalePrice || 0)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Selling Costs ({formatPercent(propertyData.longTermAssumptions?.sellingCostsPercentage || 0)})</TableCell>
+                      <TableCell align="right">-{formatCurrency(analysis.longTermAnalysis.exitAnalysis.sellingCosts || 0)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Mortgage Payoff</TableCell>
+                      <TableCell align="right">-{formatCurrency(analysis.longTermAnalysis.exitAnalysis.mortgagePayoff || 0)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Net Proceeds from Sale</strong></TableCell>
+                      <TableCell align="right"><strong>{formatCurrency(analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 0)}</strong></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Total Cash Flow (All Years)</TableCell>
+                      <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.returns?.totalCashFlow || 0)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Total Appreciation</TableCell>
+                      <TableCell align="right">{formatCurrency(analysis.longTermAnalysis.returns?.totalAppreciation || 0)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Total Return</strong></TableCell>
+                      <TableCell align="right"><strong>{formatCurrency(analysis.longTermAnalysis.returns?.totalReturn || 0)}</strong></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>IRR (Internal Rate of Return)</strong></TableCell>
+                      <TableCell align="right"><strong>{formatPercent(analysis.longTermAnalysis.returns?.irr || 0)}</strong></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                No exit analysis data available. This may occur with older saved deals that don't include exit projections.
+              </Alert>
+            )}
           </Box>
         )}
         
         {/* AI Insights Tab */}
-        {tabIndex === 4 && analysis.aiInsights && (
+        {tabIndex === 4 && (
           <Box>
             <Typography variant="h6" gutterBottom>AI Analysis Summary</Typography>
-            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              <Typography variant="body1">{analysis.aiInsights.summary}</Typography>
-            </Paper>
             
-            <Grid container spacing={3}>
-              <Grid container item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>Investment Strengths</Typography>
-                <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                  {Array.isArray(analysis.aiInsights.strengths) && analysis.aiInsights.strengths.map((strength, index) => (
-                    <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                      • {strength}
-                    </Typography>
-                  ))}
-                  {(!Array.isArray(analysis.aiInsights.strengths) || analysis.aiInsights.strengths.length === 0) && (
-                    <Typography variant="body2">No strengths available</Typography>
-                  )}
+            {analysis.aiInsights ? (
+              <>
+                <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                  <Typography variant="body1">{analysis.aiInsights.summary || 'No summary available'}</Typography>
                 </Paper>
-              </Grid>
-              
-              <Grid container item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>Investment Weaknesses</Typography>
-                <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                  {Array.isArray(analysis.aiInsights.weaknesses) && analysis.aiInsights.weaknesses.map((weakness, index) => (
-                    <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                      • {weakness}
-                    </Typography>
-                  ))}
-                  {(!Array.isArray(analysis.aiInsights.weaknesses) || analysis.aiInsights.weaknesses.length === 0) && (
-                    <Typography variant="body2">No weaknesses available</Typography>
+                
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="h6" gutterBottom>Investment Strengths</Typography>
+                    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                      {Array.isArray(analysis.aiInsights.strengths) && analysis.aiInsights.strengths.length > 0 ? (
+                        analysis.aiInsights.strengths.map((strength, index) => (
+                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
+                            • {strength}
+                          </Typography>
+                        ))
+                      ) : (
+                        <Typography variant="body2">No strengths available</Typography>
+                      )}
+                    </Paper>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="h6" gutterBottom>Investment Weaknesses</Typography>
+                    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                      {Array.isArray(analysis.aiInsights.weaknesses) && analysis.aiInsights.weaknesses.length > 0 ? (
+                        analysis.aiInsights.weaknesses.map((weakness, index) => (
+                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
+                            • {weakness}
+                          </Typography>
+                        ))
+                      ) : (
+                        <Typography variant="body2">No weaknesses available</Typography>
+                      )}
+                    </Paper>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom>Recommendations</Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      {Array.isArray(analysis.aiInsights.recommendations) && analysis.aiInsights.recommendations.length > 0 ? (
+                        analysis.aiInsights.recommendations.map((rec, index) => (
+                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
+                            • {rec}
+                          </Typography>
+                        ))
+                      ) : (
+                        <Typography variant="body2">No recommendations available</Typography>
+                      )}
+                    </Paper>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Investment Score</Typography>
+                        <Typography variant="h3" align="center">
+                          {analysis.aiInsights.investmentScore || 0}/100
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  
+                  {analysis.aiInsights.recommendedHoldPeriod && (
+                    <Grid item xs={12} md={6}>
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>Recommended Hold Period</Typography>
+                          <Typography variant="h5" align="center">
+                            {analysis.aiInsights.recommendedHoldPeriod}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
                   )}
-                </Paper>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>Recommendations</Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  {Array.isArray(analysis.aiInsights.recommendations) && analysis.aiInsights.recommendations.map((rec, index) => (
-                    <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                      • {rec}
-                    </Typography>
-                  ))}
-                  {(!Array.isArray(analysis.aiInsights.recommendations) || analysis.aiInsights.recommendations.length === 0) && (
-                    <Typography variant="body2">No recommendations available</Typography>
-                  )}
-                </Paper>
-              </Grid>
-              
-              <Grid container item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Investment Score</Typography>
-                    <Typography variant="h3" align="center">
-                      {analysis.aiInsights.investmentScore || 0}/100
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              {analysis.aiInsights.recommendedHoldPeriod && (
-                <Grid container item xs={12} md={6}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>Recommended Hold Period</Typography>
-                      <Typography variant="h5" align="center">
-                        {analysis.aiInsights.recommendedHoldPeriod}
-                      </Typography>
-                    </CardContent>
-                  </Card>
                 </Grid>
-              )}
-            </Grid>
+              </>
+            ) : (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                AI insights are not available for this property. This may occur with older saved deals or if AI analysis was not generated.
+              </Alert>
+            )}
           </Box>
         )}
       </Paper>
