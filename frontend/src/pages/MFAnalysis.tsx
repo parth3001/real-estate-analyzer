@@ -1,10 +1,8 @@
 import React from 'react';
-import { Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
+import { Box, Typography, Paper, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const MFAnalysis: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>

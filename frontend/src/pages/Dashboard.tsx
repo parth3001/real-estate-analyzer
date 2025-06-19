@@ -1,13 +1,11 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Button } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import SavedSearchIcon from '@mui/icons-material/SavedSearch';
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
-
   const actionCards = [
     {
       title: 'Single-Family Analysis',

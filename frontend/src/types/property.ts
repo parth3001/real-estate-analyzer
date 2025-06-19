@@ -32,8 +32,8 @@ export interface BasePropertyData {
   closingCosts?: number;
   capitalInvestments?: number;
   tenantTurnoverFees?: {
-    prepFees: number;
-    realtorCommission: number;
+    prepFees?: number;
+    realtorCommission?: number;
   };
 }
 
@@ -44,6 +44,7 @@ export interface SFRPropertyData extends BasePropertyData {
   bedrooms: number;
   bathrooms: number;
   maintenanceCost: number;
+  repairCosts?: number;
   longTermAssumptions: LongTermAssumptions;
 }
 

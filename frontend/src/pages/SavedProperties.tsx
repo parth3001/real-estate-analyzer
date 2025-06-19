@@ -12,8 +12,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Card,
-  CardContent,
   Chip,
   Table,
   TableBody,
@@ -23,7 +21,7 @@ import {
   TableRow,
   Tooltip
 } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { propertyApi } from '../services/api';
@@ -58,7 +56,6 @@ interface SavedProperty {
 }
 
 const SavedProperties: React.FC = () => {
-  const navigate = useNavigate();
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,28 +186,6 @@ const SavedProperties: React.FC = () => {
   const closeDeleteDialog = () => {
     setDeleteDialogOpen(false);
     setPropertyToDelete(null);
-  };
-
-  // Navigate to property details
-  const viewPropertyDetails = (id: string) => {
-    // Find the property in our current state
-    const property = properties.find(p => p._id === id);
-    
-    if (!property) {
-      console.error('Property not found:', id);
-      return;
-    }
-    
-    console.log('Viewing property details for:', property.propertyName);
-    
-    // Navigate to the appropriate analysis page based on property type
-    if (property.propertyType === 'SFR') {
-      navigate(`/sfr-analysis?id=${id}`);
-    } else if (property.propertyType === 'MF') {
-      navigate(`/mf-analysis?id=${id}`);
-    } else {
-      console.error('Unknown property type:', property.propertyType);
-    }
   };
 
   // Add a function to check if property has valid structure

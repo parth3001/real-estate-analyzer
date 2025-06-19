@@ -4,7 +4,6 @@ import {
   Box, 
   Toolbar, 
   Typography, 
-  Button, 
   Container, 
   Drawer, 
   List, 
@@ -17,7 +16,7 @@ import {
   Divider
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
+import { useLocation, Outlet, Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -31,7 +30,6 @@ interface MainLayoutProps {}
 
 const MainLayout: React.FC<MainLayoutProps> = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);

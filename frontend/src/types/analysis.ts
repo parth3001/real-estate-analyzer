@@ -8,6 +8,7 @@ export interface MonthlyExpenses {
     principal: number;
     interest: number;
     total: number;
+  tenantTurnover?: number;
   };
   total: number;
 }
@@ -18,21 +19,21 @@ export interface MonthlyAnalysis {
     effective: number;
   };
   expenses: MonthlyExpenses;
-  cashFlow: number;
+  cashFlow?: number;
   cashFlowAfterTax?: number;
 }
 
 export interface AnnualAnalysis {
-  grossRentalIncome: number;
-  effectiveGrossIncome: number;
-  operatingExpenses: number;
-  noi: number;
-  annualDebtService: number;
-  cashFlow: number;
-  dscr: number;
-  capRate: number;
-  cashOnCashReturn: number;
-  totalInvestment: number;
+  grossRentalIncome?: number;
+  effectiveGrossIncome?: number;
+  operatingExpenses?: number;
+  noi?: number;
+  annualDebtService?: number;
+  cashFlow?: number;
+  dscr?: number;
+  capRate?: number;
+  cashOnCashReturn?: number;
+  totalInvestment?: number;
 }
 
 export interface YearlyProjection {
@@ -40,10 +41,10 @@ export interface YearlyProjection {
   grossRent: number;
   grossIncome: number;
   effectiveIncome?: number;
-  operatingExpenses: number;
-  noi: number;
+  operatingExpenses?: number;
+  noi?: number;
   debtService: number;
-  cashFlow: number;
+  cashFlow?: number;
   propertyValue: number;
   equity: number;
   mortgageBalance: number;
@@ -81,9 +82,9 @@ export interface AIInsights {
 }
 
 export interface KeyMetrics {
-  dscr: number;
-  capRate: number;
-  cashOnCashReturn: number;
+  dscr?: number;
+  capRate?: number;
+  cashOnCashReturn?: number;
   irr: number;
   totalROI: number;
   paybackPeriod: number;
@@ -91,6 +92,18 @@ export interface KeyMetrics {
   pricePerUnit?: number;
   pricePerSqft: number;
   rentToValue: number;
+  totalInvestment?: number;
+  operatingExpenseRatio?: number;
+  breakEvenOccupancy?: number;
+  equityMultiple?: number;
+  onePercentRuleValue?: number;
+  fiftyRuleAnalysis?: boolean;
+  rentToPriceRatio?: number;
+  pricePerBedroom?: number;
+  debtToIncomeRatio?: number;
+  grossRentMultiplier?: number;
+  returnOnImprovements?: number;
+  turnoverCostImpact?: number;
 }
 
 export interface Analysis {
@@ -109,4 +122,8 @@ export interface Analysis {
   };
   keyMetrics: KeyMetrics;
   aiInsights?: AIInsights;
+  sensitivityAnalysis?: {
+    bestCase: any;
+    worstCase: any;
+  };
 } 

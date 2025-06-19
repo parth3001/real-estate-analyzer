@@ -15,6 +15,7 @@ export interface LongTermAssumptions {
   sellingCostsPercentage: number;
   inflationRate: number;
   vacancyRate: number;
+  turnoverFrequency?: number; // Average tenant stay in years (default: 2)
 }
 
 export interface MFLongTermAssumptions extends LongTermAssumptions {
@@ -45,6 +46,7 @@ export interface Analysis {
       maintenance?: number;
       propertyManagement?: number;
       vacancy?: number;
+      tenantTurnover?: number;
       total?: number;
     };
     income?: {
@@ -73,6 +75,8 @@ export interface Analysis {
       maintenance: number;
       propertyManagement: number;
       vacancy: number;
+      turnoverCosts: number;
+      capitalImprovements: number;
       operatingExpenses: number;
       noi: number;
       debtService: number;
@@ -115,6 +119,8 @@ export interface Analysis {
     pricePerBedroom?: number;
     debtToIncomeRatio?: number;
     grossRentMultiplier?: number;
+    returnOnImprovements?: number;
+    turnoverCostImpact?: number;
   };
   aiInsights?: {
     summary?: string;
@@ -152,6 +158,12 @@ export interface IDeal extends Document {
   propertyManagementRate: number;
   yearBuilt: number;
   closingCosts?: number;
+  repairCosts?: number;
+  capitalInvestments?: number;
+  tenantTurnoverFees?: {
+    prepFees: number;
+    realtorCommission: number;
+  };
   analysis: Analysis;
   notes?: Array<{
     text: string;
@@ -213,6 +225,7 @@ const AnalysisSchema = new Schema({
       maintenance: Number,
       propertyManagement: Number,
       vacancy: Number,
+      tenantTurnover: Number,
       total: Number
     },
     income: {
@@ -231,7 +244,30 @@ const AnalysisSchema = new Schema({
     effectiveGrossIncome: Number
   },
   longTermAnalysis: {
-    yearlyProjections: [Schema.Types.Mixed],
+    yearlyProjections: [{
+      year: Number,
+      cashFlow: Number,
+      propertyValue: Number,
+      equity: Number,
+      propertyTax: Number,
+      insurance: Number,
+      maintenance: Number,
+      propertyManagement: Number,
+      vacancy: Number,
+      turnoverCosts: Number,
+      capitalImprovements: Number,
+      operatingExpenses: Number,
+      noi: Number,
+      debtService: Number,
+      grossRent: Number,
+      mortgageBalance: Number,
+      appreciation: Number,
+      totalReturn: Number,
+      principalPaidThisYear: Number,
+      totalPrincipalPaidToDate: Number,
+      cashOnCashReturnThisYear: Number,
+      pricePerSqFtAtThisPoint: Number
+    }],
     projectionYears: Number,
     returns: {
       irr: Number,
@@ -261,7 +297,9 @@ const AnalysisSchema = new Schema({
     rentToPriceRatio: Number,
     pricePerBedroom: Number,
     debtToIncomeRatio: Number,
-    grossRentMultiplier: Number
+    grossRentMultiplier: Number,
+    returnOnImprovements: Number,
+    turnoverCostImpact: Number
   },
   aiInsights: {
     summary: String,
@@ -299,6 +337,12 @@ const DealSchema = new Schema({
   propertyManagementRate: { type: Number, required: true },
   yearBuilt: { type: Number, required: true },
   closingCosts: { type: Number },
+  repairCosts: { type: Number },
+  capitalInvestments: { type: Number, default: 0 },
+  tenantTurnoverFees: {
+    prepFees: { type: Number, default: 500 },
+    realtorCommission: { type: Number, default: 0.5 }
+  },
   
   // SFR specific fields with conditional validation
   monthlyRent: { 

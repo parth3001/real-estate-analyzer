@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -15,32 +15,23 @@ import {
   Divider,
   Card,
   CardContent,
-  Button,
-  CircularProgress,
   Alert,
   Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import type { 
   Analysis, 
-  MonthlyAnalysis, 
   MonthlyExpenses as BaseMonthlyExpenses, 
   AnnualAnalysis, 
   KeyMetrics 
 } from '../../types/analysis';
 import type { SFRPropertyData } from '../../types/property';
 import {
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Tooltip as RechartsTooltip
 } from 'recharts';
 import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
@@ -51,29 +42,14 @@ interface MonthlyExpenses extends BaseMonthlyExpenses {
 }
 
 // Extend the Analysis type to add missing properties and make properties optional
-interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics'> {
-  monthlyAnalysis: Partial<MonthlyAnalysis> & {
-    income?: {
+interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics' | 'monthlyAnalysis'> {
+  monthlyAnalysis: {
+    income: {
       gross: number;
       effective: number;
     };
-    expenses?: Partial<MonthlyExpenses> & {
-      [key: string]: any;
-    };
-    cashFlow?: number;
-  };
-  annualAnalysis: Partial<AnnualAnalysis> & {
-    effectiveGrossIncome?: number;
-    operatingExpenses?: number;
-    noi?: number;
-    debtService?: number;
-    cashFlow?: number;
-    grossRentalIncome?: number;
-    annualDebtService?: number;
-    dscr?: number;
-    capRate?: number;
-    cashOnCashReturn?: number;
-    totalInvestment?: number;
+    expenses: MonthlyExpenses;
+    cashFlow: number;
   };
   keyMetrics: Partial<KeyMetrics> & {
     totalInvestment?: number;
@@ -92,6 +68,19 @@ interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics'> {
   sensitivityAnalysis?: {
     bestCase: any;
     worstCase: any;
+  };
+  annualAnalysis: Partial<AnnualAnalysis> & {
+    effectiveGrossIncome?: number;
+    operatingExpenses?: number;
+    noi?: number;
+    debtService?: number;
+    cashFlow?: number;
+    grossRentalIncome?: number;
+    annualDebtService?: number;
+    dscr?: number;
+    capRate?: number;
+    cashOnCashReturn?: number;
+    totalInvestment?: number;
   };
   longTermAnalysis: {
     projections: any[];
@@ -112,11 +101,6 @@ interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics'> {
     };
   };
   aiInsights?: any;
-}
-
-// Extend SFRPropertyData to include repairCosts
-interface ExtendedSFRPropertyData extends SFRPropertyData {
-  repairCosts?: number;
 }
 
 interface AnalysisResultsProps {
@@ -500,12 +484,320 @@ const ensureKeyMetricsPreserved = (analysis: any): void => {
   }
 };
 
+// Add a new function to ensure backwards compatibility with older saved properties
+const ensureBackwardsCompatibility = (analysis: any, propertyData: SFRPropertyData): void => {
+  console.log('Ensuring backwards compatibility for saved properties');
+  
+  // Check if longTermAnalysis.projections is missing or empty
+  if (!analysis.longTermAnalysis?.projections || 
+      !Array.isArray(analysis.longTermAnalysis.projections) || 
+      analysis.longTermAnalysis.projections.length === 0) {
+    
+    console.log('Generating missing projections for older saved property');
+    
+    // Initialize projections array
+    const projectionYears = propertyData.longTermAssumptions?.projectionYears || 10;
+    const projections = [];
+    
+    // Get base values for calculations
+    const purchasePrice = propertyData.purchasePrice;
+    const monthlyRent = propertyData.monthlyRent;
+    const annualRent = monthlyRent * 12;
+    
+    // Get rates for projections
+    const appreciationRate = propertyData.longTermAssumptions?.annualPropertyValueIncrease || 3;
+    const rentGrowthRate = propertyData.longTermAssumptions?.annualRentIncrease || 3;
+    const inflationRate = propertyData.longTermAssumptions?.inflationRate || 2;
+    
+    // Calculate mortgage details
+    const loanAmount = purchasePrice - propertyData.downPayment;
+    const monthlyInterestRate = (propertyData.interestRate / 100) / 12;
+    const totalPayments = propertyData.loanTerm * 12;
+    const monthlyPayment = loanAmount * 
+      (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, totalPayments)) / 
+      (Math.pow(1 + monthlyInterestRate, totalPayments) - 1);
+    const annualDebtService = monthlyPayment * 12;
+    
+    // Calculate base expenses
+    const basePropertyTax = purchasePrice * (propertyData.propertyTaxRate / 100);
+    const baseInsurance = purchasePrice * (propertyData.insuranceRate / 100);
+    const baseMaintenanceCost = propertyData.maintenanceCost * 12;
+    const basePropertyManagement = monthlyRent * (propertyData.propertyManagementRate / 100) * 12;
+    
+    // Get turnover frequency and fees
+    const turnoverFrequency = propertyData.longTermAssumptions?.turnoverFrequency || 2; // Default 2 years
+    const prepFees = propertyData.tenantTurnoverFees?.prepFees || 500; // Default $500
+    const realtorCommission = propertyData.tenantTurnoverFees?.realtorCommission || 0.5; // Default 0.5 month's rent
+    
+    // Get capital investments
+    const capitalInvestments = propertyData.capitalInvestments || 0;
+    
+    // Generate projections
+    for (let year = 1; year <= projectionYears; year++) {
+      // Calculate growth factors
+      const propertyValueGrowthFactor = Math.pow(1 + appreciationRate / 100, year - 1);
+      const rentGrowthFactor = Math.pow(1 + rentGrowthRate / 100, year - 1);
+      const expenseGrowthFactor = Math.pow(1 + inflationRate / 100, year - 1);
+      
+      // Calculate values for this year
+      const propertyValue = purchasePrice * propertyValueGrowthFactor;
+      const yearlyRent = annualRent * rentGrowthFactor;
+      
+      // Calculate expenses with inflation
+      const propertyTax = basePropertyTax * expenseGrowthFactor;
+      const insurance = baseInsurance * expenseGrowthFactor;
+      const maintenance = baseMaintenanceCost * expenseGrowthFactor;
+      const propertyManagement = basePropertyManagement * rentGrowthFactor; // Scales with rent
+      const vacancy = yearlyRent * (propertyData.longTermAssumptions?.vacancyRate || 5) / 100;
+      
+      // Calculate turnover costs
+      const baseTurnoverRate = 1 / turnoverFrequency; // e.g., 1/2 = 50% annual turnover
+      const vacancyRate = propertyData.longTermAssumptions?.vacancyRate || 5;
+      const vacancyAdjustment = vacancyRate / 5; // Normalize around standard 5% vacancy
+      const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
+      
+      // Apply inflation to prep fees
+      const inflatedPrepFees = prepFees * expenseGrowthFactor;
+      
+      // Calculate turnover costs
+      const turnoverCosts = (inflatedPrepFees + (yearlyRent / 12 * realtorCommission)) * turnoverRate;
+      
+      // Capital improvements only in year 1
+      const yearlyCapitalImprovements = year === 1 ? capitalInvestments : 0;
+      
+      // Calculate remaining mortgage balance
+      const remainingPayments = totalPayments - (year * 12);
+      const mortgageBalance = remainingPayments > 0 ? 
+        (monthlyPayment / monthlyInterestRate) * (1 - Math.pow(1 + monthlyInterestRate, -remainingPayments)) : 0;
+      
+      // Calculate operating expenses and NOI
+      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy + turnoverCosts;
+      const effectiveGrossIncome = yearlyRent * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100);
+      const noi = effectiveGrossIncome - (operatingExpenses - vacancy); // Add back vacancy as it's already deducted
+      
+      // Calculate cash flow
+      const cashFlow = noi - annualDebtService;
+      
+      // Calculate equity and appreciation
+      const equity = propertyValue - mortgageBalance;
+      const appreciation = year > 1 ? propertyValue - (purchasePrice * Math.pow(1 + appreciationRate / 100, year - 2)) : 0;
+      
+      // Create projection object
+      const projection = {
+        year,
+        propertyValue,
+        grossRent: yearlyRent,
+        grossIncome: yearlyRent,
+        operatingExpenses,
+        noi,
+        debtService: annualDebtService,
+        cashFlow,
+        equity,
+        mortgageBalance,
+        propertyTax,
+        insurance,
+        maintenance,
+        propertyManagement,
+        vacancy,
+        turnoverCosts,
+        capitalImprovements: yearlyCapitalImprovements,
+        appreciation,
+        totalReturn: cashFlow + appreciation
+      };
+      
+      projections.push(projection);
+    }
+    
+    // Calculate returns
+    const totalCashFlow = projections.reduce((sum, year) => sum + year.cashFlow, 0);
+    const totalAppreciation = projections.reduce((sum, year) => sum + year.appreciation, 0);
+    const totalReturn = totalCashFlow + totalAppreciation;
+    
+    // Calculate exit analysis
+    const finalYear = projections[projections.length - 1];
+    const sellingCosts = finalYear.propertyValue * (propertyData.longTermAssumptions?.sellingCostsPercentage || 6) / 100;
+    const netProceedsFromSale = finalYear.propertyValue - sellingCosts - finalYear.mortgageBalance;
+    const totalInvestment = propertyData.downPayment + (propertyData.closingCosts || 0) + (propertyData.repairCosts || 0) + (propertyData.capitalInvestments || 0);
+    const returnOnInvestment = (netProceedsFromSale / totalInvestment) * 100;
+    
+    // Update analysis with generated projections
+    analysis.longTermAnalysis = {
+      projections,
+      projectionYears,
+      returns: {
+        irr: analysis.keyMetrics?.irr || 12, // Use existing IRR if available or default to 12%
+        totalCashFlow,
+        totalAppreciation,
+        totalReturn
+      },
+      exitAnalysis: {
+        projectedSalePrice: finalYear.propertyValue,
+        sellingCosts,
+        mortgagePayoff: finalYear.mortgageBalance,
+        netProceedsFromSale,
+        totalProfit: netProceedsFromSale - totalInvestment,
+        returnOnInvestment
+      }
+    };
+    
+    console.log('Generated projections for older saved property:', projections.length);
+  }
+  
+  // Ensure all key metrics exist
+  if (!analysis.keyMetrics) {
+    analysis.keyMetrics = {};
+  }
+  
+  // Calculate missing key metrics
+  const totalInvestment = propertyData.downPayment + (propertyData.closingCosts || 0) + (propertyData.repairCosts || 0) + (propertyData.capitalInvestments || 0);
+  
+  // Set missing key metrics with reasonable defaults
+  if (!analysis.keyMetrics.dscr || analysis.keyMetrics.dscr === 0) {
+    const noi = analysis.annualAnalysis?.noi || ((propertyData.monthlyRent * 12) * 0.65); // Estimate NOI as 65% of gross rent
+    const debtService = analysis.annualAnalysis?.annualDebtService || 
+      (analysis.monthlyAnalysis?.expenses?.mortgage?.total || 0) * 12;
+    
+    analysis.keyMetrics.dscr = debtService > 0 ? noi / debtService : 0;
+  }
+  
+  if (!analysis.keyMetrics.capRate || analysis.keyMetrics.capRate === 0) {
+    const noi = analysis.annualAnalysis?.noi || ((propertyData.monthlyRent * 12) * 0.65);
+    analysis.keyMetrics.capRate = (noi / propertyData.purchasePrice) * 100;
+  }
+  
+  if (!analysis.keyMetrics.cashOnCashReturn || analysis.keyMetrics.cashOnCashReturn === 0) {
+    const annualCashFlow = analysis.annualAnalysis?.cashFlow || 
+      (analysis.monthlyAnalysis?.cashFlow || 0) * 12;
+    
+    analysis.keyMetrics.cashOnCashReturn = totalInvestment > 0 ? 
+      (annualCashFlow / totalInvestment) * 100 : 0;
+  }
+  
+  if (!analysis.keyMetrics.irr || analysis.keyMetrics.irr === 0) {
+    analysis.keyMetrics.irr = 12; // Default to 12%
+  }
+  
+  if (!analysis.keyMetrics.totalROI || analysis.keyMetrics.totalROI === 0) {
+    const totalReturn = analysis.longTermAnalysis?.returns?.totalReturn || 0;
+    analysis.keyMetrics.totalROI = totalInvestment > 0 ? 
+      (totalReturn / totalInvestment) * 100 : 0;
+  }
+  
+  if (!analysis.keyMetrics.paybackPeriod || analysis.keyMetrics.paybackPeriod === 0) {
+    const annualCashFlow = analysis.annualAnalysis?.cashFlow || 
+      (analysis.monthlyAnalysis?.cashFlow || 0) * 12;
+    
+    analysis.keyMetrics.paybackPeriod = annualCashFlow > 0 ? 
+      totalInvestment / annualCashFlow : 30;
+  }
+  
+  if (!analysis.keyMetrics.pricePerSqft || analysis.keyMetrics.pricePerSqft === 0) {
+    analysis.keyMetrics.pricePerSqft = propertyData.squareFootage > 0 ? 
+      propertyData.purchasePrice / propertyData.squareFootage : 0;
+  }
+  
+  if (!analysis.keyMetrics.rentToValue || analysis.keyMetrics.rentToValue === 0) {
+    analysis.keyMetrics.rentToValue = (propertyData.monthlyRent * 12) / propertyData.purchasePrice * 100;
+  }
+  
+  // Add missing advanced metrics
+  if (!analysis.keyMetrics.operatingExpenseRatio || analysis.keyMetrics.operatingExpenseRatio === 0) {
+    const operatingExpenses = analysis.annualAnalysis?.operatingExpenses || 0;
+    const grossIncome = propertyData.monthlyRent * 12;
+    
+    analysis.keyMetrics.operatingExpenseRatio = grossIncome > 0 ? 
+      (operatingExpenses / grossIncome) * 100 : 40; // Default to 40%
+  }
+  
+  if (!analysis.keyMetrics.breakEvenOccupancy) {
+    const operatingExpenses = analysis.annualAnalysis?.operatingExpenses || 0;
+    const debtService = analysis.annualAnalysis?.annualDebtService || 
+      (analysis.monthlyAnalysis?.expenses?.mortgage?.total || 0) * 12;
+    const grossPotentialRent = propertyData.monthlyRent * 12;
+    
+    analysis.keyMetrics.breakEvenOccupancy = grossPotentialRent > 0 ? 
+      ((operatingExpenses + debtService) / grossPotentialRent) * 100 : 85; // Default to 85%
+  }
+  
+  if (!analysis.keyMetrics.equityMultiple) {
+    const totalReturn = analysis.longTermAnalysis?.returns?.totalReturn || 0;
+    
+    analysis.keyMetrics.equityMultiple = totalInvestment > 0 ? 
+      (totalInvestment + totalReturn) / totalInvestment : 2; // Default to 2x
+  }
+  
+  if (!analysis.keyMetrics.onePercentRuleValue) {
+    analysis.keyMetrics.onePercentRuleValue = 
+      (propertyData.monthlyRent / propertyData.purchasePrice) * 100;
+  }
+  
+  if (!analysis.keyMetrics.fiftyRuleAnalysis) {
+    const operatingExpenses = analysis.annualAnalysis?.operatingExpenses || 0;
+    const grossRent = propertyData.monthlyRent * 12;
+    
+    analysis.keyMetrics.fiftyRuleAnalysis = operatingExpenses <= (grossRent * 0.5);
+  }
+  
+  if (!analysis.keyMetrics.rentToPriceRatio) {
+    analysis.keyMetrics.rentToPriceRatio = 
+      (propertyData.monthlyRent / propertyData.purchasePrice) * 100;
+  }
+  
+  if (!analysis.keyMetrics.pricePerBedroom) {
+    analysis.keyMetrics.pricePerBedroom = propertyData.bedrooms > 0 ? 
+      propertyData.purchasePrice / propertyData.bedrooms : 0;
+  }
+  
+  if (!analysis.keyMetrics.debtToIncomeRatio) {
+    const debtService = analysis.annualAnalysis?.annualDebtService || 
+      (analysis.monthlyAnalysis?.expenses?.mortgage?.total || 0) * 12;
+    const income = propertyData.monthlyRent * 12;
+    
+    analysis.keyMetrics.debtToIncomeRatio = income > 0 ? 
+      (debtService / income) * 100 : 0;
+  }
+  
+  if (!analysis.keyMetrics.grossRentMultiplier) {
+    const annualRent = propertyData.monthlyRent * 12;
+    
+    analysis.keyMetrics.grossRentMultiplier = annualRent > 0 ? 
+      propertyData.purchasePrice / annualRent : 0;
+  }
+  
+  // Add sensitivity analysis if missing
+  if (!analysis.sensitivityAnalysis) {
+    // Create simple sensitivity analysis with best and worst case
+    const bestCaseCashFlow = (analysis.monthlyAnalysis?.cashFlow || 0) * 1.2 * 12; // 20% better
+    const worstCaseCashFlow = (analysis.monthlyAnalysis?.cashFlow || 0) * 0.8 * 12; // 20% worse
+    
+    const bestCaseCapRate = (analysis.keyMetrics?.capRate || 0) * 1.15; // 15% better
+    const worstCaseCapRate = (analysis.keyMetrics?.capRate || 0) * 0.85; // 15% worse
+    
+    const bestCaseCoCReturn = (analysis.keyMetrics?.cashOnCashReturn || 0) * 1.2; // 20% better
+    const worstCaseCoCReturn = (analysis.keyMetrics?.cashOnCashReturn || 0) * 0.8; // 20% worse
+    
+    analysis.sensitivityAnalysis = {
+      bestCase: {
+        annualCashFlow: bestCaseCashFlow,
+        cashOnCashReturn: bestCaseCoCReturn,
+        capRate: bestCaseCapRate,
+        totalReturn: analysis.longTermAnalysis?.returns?.totalReturn * 1.3 || 0 // 30% better
+      },
+      worstCase: {
+        annualCashFlow: worstCaseCashFlow,
+        cashOnCashReturn: worstCaseCoCReturn,
+        capRate: worstCaseCapRate,
+        totalReturn: analysis.longTermAnalysis?.returns?.totalReturn * 0.7 || 0 // 30% worse
+      }
+    };
+  }
+};
+
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData, setAnalysis = () => {} }) => {
   const [tabIndex, setTabIndex] = React.useState(0);
   
   // For TypeScript safety, cast to extended types
   const analysisExt = analysis as unknown as ExtendedAnalysis;
-  const propertyDataExt = propertyData as unknown as ExtendedSFRPropertyData;
   
   // Set up error state
   const [error, setError] = React.useState<string | null>(null);
@@ -544,7 +836,19 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             gross: propertyData.monthlyRent,
             effective: propertyData.monthlyRent * (1 - (propertyData.longTermAssumptions?.vacancyRate || 5) / 100)
           },
-          expenses: {},
+          expenses: {
+            propertyTax: 0,
+            insurance: 0,
+            maintenance: 0,
+            propertyManagement: 0,
+            vacancy: 0,
+            mortgage: {
+              principal: 0,
+              interest: 0,
+              total: 0
+            },
+            total: 0
+          },
           cashFlow: 0
         };
         hasChanges = true;
@@ -561,6 +865,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       
       // Ensure key metrics are preserved
       ensureKeyMetricsPreserved(analysisAny);
+      
+      // NEW: Ensure backwards compatibility with older saved properties
+      ensureBackwardsCompatibility(analysisAny, propertyData);
       
       // Validate key metrics
       console.log('CHECKING KEY METRICS:', {
@@ -584,7 +891,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       
       // Only update state if we made changes
       if (hasChanges && setAnalysis) {
-        setAnalysis({...analysisAny});
+        setAnalysis({...analysisAny} as Analysis);
       }
       
       setError(null);
@@ -664,7 +971,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       
       // Update the state with the fixed projections
       if (setAnalysis) {
-        setAnalysis(updatedAnalysis);
+        setAnalysis(updatedAnalysis as Analysis);
       }
     }
   }, [analysis?.longTermAnalysis?.projections, propertyData.longTermAssumptions?.inflationRate, propertyData.longTermAssumptions?.vacancyRate, setAnalysis]);
@@ -679,7 +986,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       { name: 'Maintenance', value: analysis?.monthlyAnalysis?.expenses?.maintenance || 0 },
       { name: 'Property Management', value: analysis?.monthlyAnalysis?.expenses?.propertyManagement || 0 },
       { name: 'Vacancy', value: analysis?.monthlyAnalysis?.expenses?.vacancy || 0 },
-      { name: 'Tenant Turnover', value: analysis?.monthlyAnalysis?.expenses?.tenantTurnover || 0 }
+      { name: 'Tenant Turnover', value: (analysis as any)?.monthlyAnalysis?.expenses?.tenantTurnover || 0 }
     ].filter(item => item.value > 0);
   } catch (err) {
     console.error('Error preparing expense breakdown data:', err);
@@ -688,21 +995,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   
   // Colors for pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B', '#8884d8'];
-  
-  // Safely prepare cash flow chart data
-  let cashFlowData: Array<{ name: string; cashFlow: number; propertyValue: number }> = [];
-  try {
-    if (Array.isArray(analysis.longTermAnalysis.projections)) {
-      cashFlowData = analysis.longTermAnalysis.projections.map(year => ({
-        name: `Year ${year.year}`,
-        cashFlow: year.cashFlow,
-        propertyValue: year.propertyValue
-      }));
-    }
-  } catch (err) {
-    console.error('Error preparing cash flow data:', err);
-    cashFlowData = [];
-  }
 
   // Display error if validation failed
   if (error) {
@@ -729,7 +1021,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     (analysis?.monthlyAnalysis?.expenses?.maintenance || defaultExpenses.maintenance);
   const propertyManagement = analysis?.monthlyAnalysis?.expenses?.propertyManagement || defaultExpenses.propertyManagement;
   const vacancy = analysis?.monthlyAnalysis?.expenses?.vacancy || defaultExpenses.vacancy;
-  const tenantTurnover = analysis?.monthlyAnalysis?.expenses?.tenantTurnover || 0;
+  const tenantTurnover = (analysis as any)?.monthlyAnalysis?.expenses?.tenantTurnover || 0;
   const monthlyRent = propertyData?.monthlyRent || 0;
   const vacancyRate = propertyData?.longTermAssumptions?.vacancyRate || 5;
   const vacancyLoss = monthlyRent * (vacancyRate / 100);
@@ -983,11 +1275,25 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
         
         {/* Advanced Metrics Section */}
         <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Advanced Metrics</Typography>
-        <AdvancedMetricsSection metrics={analysis.keyMetrics} />
+        <AdvancedMetricsSection metrics={{
+          breakEvenOccupancy: analysis.keyMetrics?.breakEvenOccupancy,
+          equityMultiple: analysis.keyMetrics?.equityMultiple,
+          onePercentRuleValue: analysis.keyMetrics?.onePercentRuleValue,
+          fiftyRuleAnalysis: analysis.keyMetrics?.fiftyRuleAnalysis,
+          rentToPriceRatio: analysis.keyMetrics?.rentToPriceRatio,
+          pricePerBedroom: analysis.keyMetrics?.pricePerBedroom,
+          debtToIncomeRatio: analysis.keyMetrics?.debtToIncomeRatio,
+          grossRentMultiplier: analysis.keyMetrics?.grossRentMultiplier,
+          operatingExpenseRatio: analysis.keyMetrics?.operatingExpenseRatio,
+          returnOnImprovements: analysis.keyMetrics?.returnOnImprovements,
+          turnoverCostImpact: analysis.keyMetrics?.turnoverCostImpact
+        }} />
         
         {/* Sensitivity Analysis Section */}
         <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Sensitivity Analysis</Typography>
-        <SensitivityAnalysisSection sensitivityAnalysis={analysis.sensitivityAnalysis} />
+        {analysis.sensitivityAnalysis && (
+          <SensitivityAnalysisSection sensitivityAnalysis={analysis.sensitivityAnalysis} />
+        )}
         
         {/* Tabs for different sections */}
         <Box sx={{ mb: 2 }}>
@@ -1087,7 +1393,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {expenseBreakdownData.map((entry, index) => (
+                        {expenseBreakdownData.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -1130,7 +1436,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                   <TableRow sx={{ fontWeight: 'bold' }}>
                     <TableCell><strong>Net Operating Income (NOI)</strong></TableCell>
                     <TableCell align="right"><strong>{formatCurrency(analysis?.annualAnalysis?.noi || 
-                      analysis?.annualAnalysis?.effectiveGrossIncome - analysis?.annualAnalysis?.operatingExpenses ||
+                      ((analysis?.annualAnalysis?.effectiveGrossIncome || 0) - (analysis?.annualAnalysis?.operatingExpenses || 0)) ||
                       ((monthlyRent * (1 - (vacancyRate / 100)) - propertyTax - insurance - maintenance - propertyManagement) * 12) || 0)}</strong></TableCell>
                   </TableRow>
                   <TableRow>
@@ -1139,7 +1445,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                   </TableRow>
                   <TableRow sx={{ fontWeight: 'bold' }}>
                     <TableCell><strong>Annual Cash Flow</strong></TableCell>
-                    <TableCell align="right"><strong>{formatCurrency(analysis?.annualAnalysis?.cashFlow || analysis?.monthlyAnalysis?.cashFlow * 12 || 0)}</strong></TableCell>
+                    <TableCell align="right"><strong>{formatCurrency(analysis?.annualAnalysis?.cashFlow || (analysis?.monthlyAnalysis?.cashFlow || 0) * 12 || 0)}</strong></TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={2}><Divider /></TableCell>

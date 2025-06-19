@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type { PropertyData } from '../types/property';
-import type { Analysis } from '../types/analysis';
 
 // Create an axios instance with default config
 const api = axios.create({
