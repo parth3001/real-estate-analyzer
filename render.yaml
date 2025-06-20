@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: chmod +x ./build.sh && ./build.sh
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
