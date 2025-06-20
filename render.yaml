@@ -19,6 +19,8 @@ services:
           property: url
       - key: OPENAI_API_KEY
         sync: false
+      - key: MONGODB_URI
+        sync: false
     autoDeploy: true
 
   - type: static_site
