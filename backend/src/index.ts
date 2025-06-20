@@ -86,5 +86,12 @@ connectToDatabase()
   })
   .catch(err => {
     logger.error('Failed to connect to MongoDB. Server not started:', err);
-    process.exit(1);
+    // Print more detailed error information
+    console.error('MongoDB connection error details:', err);
+    
+    // Start server anyway to handle health checks
+    app.listen(port, () => {
+      logger.info(`🚀 Server running in limited mode on port ${port} (without database connection)`);
+      logger.warn('Database connection failed, only health check endpoint will work');
+    });
   }); 
