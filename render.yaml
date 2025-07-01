@@ -32,10 +32,7 @@ services:
     publishDir: build
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: real-estate-analyzer-api
-          type: web
-          property: url
+        value: ${real-estate-analyzer-api.url}/api
     autoDeploy: true
     headers:
       - path: /*
