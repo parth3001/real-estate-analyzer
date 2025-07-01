@@ -31,7 +31,7 @@ services:
     buildCommand: npm install && npm run build && mkdir -p build && cp -r dist/* build/
     publishDir: build
     envVars:
-      - key: REACT_APP_API_URL
+      - key: VITE_API_URL
         fromService:
           name: real-estate-analyzer-api
           type: web
