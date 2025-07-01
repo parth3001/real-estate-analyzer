@@ -28,8 +28,8 @@ services:
     runtime: static
     plan: free
     rootDir: frontend
-    buildCommand: chmod +x ./build.sh && ./build.sh
-    publishDir: dist
+    buildCommand: npm install && npm run build && mkdir -p build && cp -r dist/* build/
+    publishDir: build
     envVars:
       - key: REACT_APP_API_URL
         fromService:
