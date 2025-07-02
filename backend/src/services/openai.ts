@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-import { logger } from '../utils/logger';
 import { Configuration, OpenAIApi } from 'openai';
+import { logger } from '../utils/logger';
 
 // Load environment variables
 dotenv.config();
@@ -53,7 +53,7 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
       messages: [
         { 
           role: "system", 
-          content: "You are a real estate investment analysis expert. Provide detailed, actionable insights in JSON format. Be precise with your numbers and analytics." 
+          content: "You are a real estate investment analysis expert. Provide detailed, actionable insights in JSON format. Be precise with your numbers and analytics. Return ONLY the raw JSON without any markdown formatting, code blocks, or explanations."
         },
         { 
           role: "user", 
@@ -72,8 +72,18 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
     }
 
     try {
+      // Clean the response to handle markdown code blocks
+      let cleanedContent = content;
+      
+      // Remove markdown code blocks if present
+      if (content.includes('```json')) {
+        cleanedContent = content.replace(/```json\n|\n```/g, '');
+      } else if (content.includes('```')) {
+        cleanedContent = content.replace(/```\n|\n```/g, '');
+      }
+      
       // Parse JSON response
-      return JSON.parse(content);
+      return JSON.parse(cleanedContent);
     } catch (parseError) {
       logger.error('Error parsing OpenAI response as JSON:', parseError);
       logger.error('Raw response:', content);

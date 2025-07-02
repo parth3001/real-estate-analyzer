@@ -27,6 +27,24 @@ export function sfrAnalysisPrompt(dealData: any, analysis: any): string {
   const bestCaseCashFlow = analysis?.sensitivityAnalysis?.bestCase?.cashFlow ?? (annualCashFlow * 1.1);
   const worstCaseCashFlow = analysis?.sensitivityAnalysis?.worstCase?.cashFlow ?? (annualCashFlow * 0.9);
   
+  // Extract exit analysis data
+  const exitAnalysis = analysis?.longTermAnalysis?.exitAnalysis || {};
+  const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
+  const projectedSalePrice = exitAnalysis.projectedSalePrice || 0;
+  const sellingCosts = exitAnalysis.sellingCosts || 0;
+  const mortgagePayoff = exitAnalysis.mortgagePayoff || 0;
+  const netProceedsFromSale = exitAnalysis.netProceedsFromSale || 0;
+  const totalReturn = exitAnalysis.totalReturn || 0;
+  const returnOnInvestment = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
+  
+  // Calculate property age
+  const currentYear = new Date().getFullYear();
+  const propertyAge = dealData.yearBuilt ? currentYear - dealData.yearBuilt : null;
+  
+  // Calculate potential value-add metrics
+  const avgPricePerSqFt = dealData.squareFootage > 0 ? dealData.purchasePrice / dealData.squareFootage : 0;
+  const potentialRentIncrease = dealData.monthlyRent * 0.1; // Assume 10% potential increase with improvements
+  
   return `Analyze this single-family rental property investment:
 
 PROPERTY DETAILS:
@@ -34,11 +52,13 @@ PROPERTY DETAILS:
 - Down Payment: $${dealData.downPayment} (${downPaymentPercent.toFixed(1)}%)
 - Monthly Rent: $${dealData.monthlyRent}
 - Property Type: Single Family Residential
-- Year Built: ${dealData.yearBuilt || 'N/A'}
+- Year Built: ${dealData.yearBuilt || 'N/A'} ${propertyAge ? `(${propertyAge} years old)` : ''}
 - Square Footage: ${dealData.squareFootage || 'N/A'}
 - Bedrooms: ${dealData.bedrooms || 'N/A'}
 - Bathrooms: ${dealData.bathrooms || 'N/A'}
 - Price per Bedroom: $${pricePerBedroom.toFixed(2)}
+- Price per Square Foot: $${avgPricePerSqFt.toFixed(2)}
+- Location: ${dealData.propertyAddress?.city || 'N/A'}, ${dealData.propertyAddress?.state || 'N/A'}
 
 FINANCIAL METRICS:
 - Monthly NOI: $${monthlyNOI.toFixed(2)}
@@ -64,6 +84,14 @@ INVESTMENT RULES OF THUMB:
 - Rent-to-Price Ratio: ${rentToPriceRatio.toFixed(2)}%
 - Equity Multiple: ${equityMultiple.toFixed(2)}x (total return / initial investment)
 
+EXIT STRATEGY (Year ${projectionYears}):
+- Projected Sale Price: $${projectedSalePrice.toFixed(2)}
+- Selling Costs: $${sellingCosts.toFixed(2)}
+- Mortgage Payoff: $${mortgagePayoff.toFixed(2)}
+- Net Proceeds From Sale: $${netProceedsFromSale.toFixed(2)}
+- Total Return: $${totalReturn.toFixed(2)}
+- Return on Investment: ${returnOnInvestment.toFixed(2)}%
+
 MONTHLY EXPENSES:
 - Mortgage: $${monthlyMortgage.toFixed(2)}
 - Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toFixed(2)}
@@ -71,6 +99,12 @@ MONTHLY EXPENSES:
 - Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toFixed(2)}
 - Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toFixed(2)}
 - Vacancy Loss: $${(dealData.monthlyRent * (dealData.longTermAssumptions?.vacancyRate ?? 5) / 100).toFixed(2)}
+
+LONG-TERM ASSUMPTIONS:
+- Annual Rent Growth: ${dealData.longTermAssumptions?.annualRentIncrease ?? 2}%
+- Annual Expense Growth: ${dealData.longTermAssumptions?.inflationRate ?? 2}%
+- Annual Property Value Growth: ${dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3}%
+- Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
 
 IMPORTANT SCORING GUIDELINES:
 1. Financial metrics should be the PRIMARY factor in determining the investment score.
@@ -80,6 +114,7 @@ IMPORTANT SCORING GUIDELINES:
 5. The 1% Rule and 50% Rule are useful guidelines but should NOT override actual financial performance metrics.
 6. Assess the risk profile using the expense ratio and break-even occupancy metrics.
 7. Consider both best and worst case scenarios when evaluating the investment's resilience.
+8. Evaluate the exit strategy and long-term potential based on projected sale price and total return.
 
 Please provide your analysis in the following JSON format:
 {
@@ -88,7 +123,19 @@ Please provide your analysis in the following JSON format:
   "weaknesses": ["weakness1", "weakness2", "weakness3"],
   "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
   "riskAssessment": "1-2 sentences analyzing the risk profile of this investment",
-  "investmentScore": 0-100
+  "investmentScore": 0-100,
+  "recommendedHoldPeriod": "recommendation on how long to hold this property based on exit analysis",
+  "marketTrendPrediction": "2-3 sentences predicting future market trends for this property based on location, property type, and current metrics",
+  "optimalExitStrategy": "detailed analysis of the optimal exit timing and strategy, considering projected appreciation, mortgage payoff, and market cycles",
+  "valueAddOpportunities": [
+    {
+      "improvement": "name of potential improvement",
+      "estimatedCost": "estimated cost range",
+      "potentialRoiPercent": "estimated ROI percentage",
+      "rentIncreasePotential": "potential monthly rent increase",
+      "valueIncreasePotential": "potential property value increase"
+    }
+  ]
 }
 
 Your investmentScore should be on a scale from 0-100, where:
@@ -105,15 +152,38 @@ SCORING PRIORITIES (from highest to lowest importance):
 4. Risk metrics (Expense Ratio, Break-Even Occupancy)
 5. Investment rules of thumb (1% Rule, 50% Rule, GRM)
 6. Property condition and market factors
+7. Exit strategy and total return potential
+
+PREDICTIVE ANALYSIS GUIDELINES:
+1. Market Trend Prediction:
+   - Consider the property's location, age, and type
+   - Analyze how the property might perform relative to market averages
+   - Consider demographic trends that could impact future value
+   - Predict whether the area is likely to appreciate faster or slower than average
+
+2. Optimal Exit Strategy:
+   - Identify the mathematical sweet spot for exit timing
+   - Consider mortgage payoff trajectory vs. appreciation
+   - Analyze when equity position would be maximized
+   - Consider potential market cycles and their impact on exit timing
+
+3. Value-Add Opportunities:
+   - Based on property age, condition, and type, suggest specific improvements
+   - For each improvement, estimate cost range, ROI percentage, and impact on rent/value
+   - Prioritize improvements by ROI potential
+   - Consider which improvements would be most appealing to the local rental market
 
 Focus your analysis on:
 1. Cash flow potential and financial stability
 2. Return metrics compared to market averages
 3. Risk factors and mitigations
-4. Value-add opportunities
-5. Long-term appreciation potential
+4. Value-add opportunities with specific ROI estimates
+5. Long-term appreciation potential with market-specific factors
 6. Resilience to market downturns (based on Break-Even Occupancy and sensitivity analysis)
+7. Exit strategy and optimal hold period
+8. Predictive insights on future performance
 
+IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
 }
 
@@ -136,6 +206,16 @@ export function mfAnalysisPrompt(dealData: any, analysis: any): string {
   const avgRentPerUnit = dealData.unitTypes.reduce((sum: number, unit: any) => sum + (unit.monthlyRent * unit.count), 0) / totalUnits;
   const pricePerUnit = dealData.purchasePrice / totalUnits;
   const pricePerSqft = dealData.purchasePrice / dealData.totalSqft;
+
+  // Extract exit analysis data
+  const exitAnalysis = analysis?.longTermAnalysis?.exitAnalysis || {};
+  const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
+  const projectedSalePrice = exitAnalysis.projectedSalePrice || 0;
+  const sellingCosts = exitAnalysis.sellingCosts || 0;
+  const mortgagePayoff = exitAnalysis.mortgagePayoff || 0;
+  const netProceedsFromSale = exitAnalysis.netProceedsFromSale || 0;
+  const totalReturn = exitAnalysis.totalReturn || 0;
+  const returnOnInvestment = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
   return `Analyze this multi-family property investment:
 
@@ -181,7 +261,15 @@ LONG-TERM ASSUMPTIONS:
 - Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
 - Selling Costs: ${dealData.longTermAssumptions?.sellingCostsPercentage ?? 6}%
 
-IMPORTANT: Based on these metrics, provide a comprehensive analysis of this multi-family investment opportunity. Pay special attention to the DSCR value, unit mix optimization, and economies of scale.
+EXIT STRATEGY (Year ${projectionYears}):
+- Projected Sale Price: $${projectedSalePrice.toFixed(2)}
+- Selling Costs: $${sellingCosts.toFixed(2)}
+- Mortgage Payoff: $${mortgagePayoff.toFixed(2)}
+- Net Proceeds From Sale: $${netProceedsFromSale.toFixed(2)}
+- Total Return: $${totalReturn.toFixed(2)}
+- Return on Investment: ${returnOnInvestment.toFixed(2)}%
+
+IMPORTANT: Based on these metrics, provide a comprehensive analysis of this multi-family investment opportunity. Pay special attention to the DSCR value, unit mix optimization, economies of scale, and exit strategy.
 
 Please provide your analysis in the following JSON format:
 {
@@ -193,7 +281,7 @@ Please provide your analysis in the following JSON format:
   "marketPositionAnalysis": "1-2 sentences about the property's positioning in the market",
   "valueAddOpportunities": ["opportunity1", "opportunity2"],
   "investmentScore": 0-100,
-  "recommendedHoldPeriod": "recommendation on how long to hold this property"
+  "recommendedHoldPeriod": "recommendation on how long to hold this property based on exit analysis"
 }
 
 Your investmentScore should be on a scale from 0-100, where:
@@ -211,8 +299,10 @@ Focus your analysis on:
 5. Risk factors specific to multi-family properties
 6. Property management considerations
 7. Economies of scale and efficiency metrics
+8. Exit strategy and optimal hold period based on projected returns
 
 Be specific, data-driven, and actionable in your recommendations.
 Consider local market conditions, tenant demographics, and management requirements.
+IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
 } 

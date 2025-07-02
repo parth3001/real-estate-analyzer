@@ -8,8 +8,8 @@ export interface MonthlyExpenses {
     principal: number;
     interest: number;
     total: number;
-  tenantTurnover?: number;
   };
+  tenantTurnover?: number;
   total: number;
 }
 
@@ -77,8 +77,20 @@ export interface AIInsights {
   investmentScore: number;
   unitMixAnalysis?: string;
   marketPositionAnalysis?: string;
-  valueAddOpportunities?: string[];
+  valueAddOpportunities?: string[] | ValueAddOpportunity[];
   recommendedHoldPeriod?: string;
+  // New predictive analysis fields
+  marketTrendPrediction?: string;
+  optimalExitStrategy?: string;
+  riskAssessment?: string;
+}
+
+export interface ValueAddOpportunity {
+  improvement: string;
+  estimatedCost: string;
+  potentialRoiPercent: string;
+  rentIncreasePotential: string;
+  valueIncreasePotential: string;
 }
 
 export interface KeyMetrics {

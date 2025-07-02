@@ -133,12 +133,24 @@ export interface AIInsights {
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
-  investmentScore: number | null;
   riskAssessment?: string;
-  marketPositionAnalysis?: string;
-  valueAddOpportunities?: string[];
-  recommendedHoldPeriod?: string;
+  investmentScore: number | null;
+  // For MF properties
   unitMixAnalysis?: string;
+  marketPositionAnalysis?: string;
+  valueAddOpportunities?: string[] | ValueAddOpportunity[];
+  recommendedHoldPeriod?: string;  // Now available for both SFR and MF properties
+  // New predictive analysis fields
+  marketTrendPrediction?: string;
+  optimalExitStrategy?: string;
+}
+
+export interface ValueAddOpportunity {
+  improvement: string;
+  estimatedCost: string;
+  potentialRoiPercent: string;
+  rentIncreasePotential: string;
+  valueIncreasePotential: string;
 }
 
 export interface LongTermAnalysis {
