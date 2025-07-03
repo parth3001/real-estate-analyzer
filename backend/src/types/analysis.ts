@@ -143,6 +143,7 @@ export interface AIInsights {
   // New predictive analysis fields
   marketTrendPrediction?: string;
   optimalExitStrategy?: string;
+  notes?: string;  // Free-form additional insights
 }
 
 export interface ValueAddOpportunity {

@@ -45,6 +45,23 @@ export function sfrAnalysisPrompt(dealData: any, analysis: any): string {
   const avgPricePerSqFt = dealData.squareFootage > 0 ? dealData.purchasePrice / dealData.squareFootage : 0;
   const potentialRentIncrease = dealData.monthlyRent * 0.1; // Assume 10% potential increase with improvements
   
+  // Extract Census data if available
+  const censusData = dealData.censusData || {};
+  const censusInsights = dealData.censusInsights || {};
+  
+  // Census data metrics
+  const medianHomeValue = censusData.housing?.medianHomeValue;
+  const medianRent = censusData.housing?.medianRent;
+  const medianIncome = censusData.income?.medianHouseholdIncome;
+  const vacancyRate = censusData.housing?.vacancyRate;
+  const totalPopulation = censusData.demographics?.totalPopulation;
+  
+  // Census insights
+  const valueComparison = censusInsights.valueComparison;
+  const rentComparison = censusInsights.rentComparison;
+  const affordabilityIndex = censusInsights.affordabilityIndex;
+  const investmentContext = censusInsights.investmentContext;
+
   return `Analyze this single-family rental property investment:
 
 PROPERTY DETAILS:
@@ -84,6 +101,23 @@ INVESTMENT RULES OF THUMB:
 - Rent-to-Price Ratio: ${rentToPriceRatio.toFixed(2)}%
 - Equity Multiple: ${equityMultiple.toFixed(2)}x (total return / initial investment)
 
+${medianHomeValue || medianRent || medianIncome ? `
+CENSUS DATA (MARKET CONTEXT):
+${medianHomeValue ? `- Area Median Home Value: $${medianHomeValue.toLocaleString()}` : ''}
+${medianRent ? `- Area Median Monthly Rent: $${medianRent.toLocaleString()}` : ''}
+${medianIncome ? `- Area Median Household Income: $${medianIncome.toLocaleString()}` : ''}
+${vacancyRate ? `- Area Vacancy Rate: ${(vacancyRate * 100).toFixed(1)}%` : ''}
+${totalPopulation ? `- Area Population: ${totalPopulation.toLocaleString()}` : ''}
+` : ''}
+
+${valueComparison || rentComparison || affordabilityIndex ? `
+MARKET COMPARISONS:
+${valueComparison ? `- Property Value vs. Area Median: ${valueComparison.relativeToMedian ? (valueComparison.relativeToMedian * 100).toFixed(1) + '%' : 'N/A'} (${valueComparison.percentageDifference ? (valueComparison.percentageDifference > 0 ? '+' : '') + valueComparison.percentageDifference.toFixed(1) + '%' : 'N/A'})` : ''}
+${rentComparison ? `- Rent vs. Area Median: ${rentComparison.relativeToMedian ? (rentComparison.relativeToMedian * 100).toFixed(1) + '%' : 'N/A'} (${rentComparison.percentageDifference ? (rentComparison.percentageDifference > 0 ? '+' : '') + rentComparison.percentageDifference.toFixed(1) + '%' : 'N/A'})` : ''}
+${affordabilityIndex ? `- Rent as % of Area Median Income: ${affordabilityIndex.percentOfMedianIncome ? affordabilityIndex.percentOfMedianIncome.toFixed(1) + '%' : 'N/A'} (${affordabilityIndex.isAffordable ? 'Affordable' : 'Less Affordable'})` : ''}
+${investmentContext?.rentToValueRatio && investmentContext?.areaRentToValueRatio ? `- Rent-to-Value Ratio vs. Area: ${(investmentContext.rentToValueRatio * 100).toFixed(2)}% vs. ${(investmentContext.areaRentToValueRatio * 100).toFixed(2)}%` : ''}
+` : ''}
+
 EXIT STRATEGY (Year ${projectionYears}):
 - Projected Sale Price: $${projectedSalePrice.toFixed(2)}
 - Selling Costs: $${sellingCosts.toFixed(2)}
@@ -115,6 +149,14 @@ IMPORTANT SCORING GUIDELINES:
 6. Assess the risk profile using the expense ratio and break-even occupancy metrics.
 7. Consider both best and worst case scenarios when evaluating the investment's resilience.
 8. Evaluate the exit strategy and long-term potential based on projected sale price and total return.
+${medianHomeValue || medianRent || medianIncome ? '9. Consider how the property compares to area averages - properties priced below market with above-market rents should receive higher scores.' : ''}
+
+CENSUS DATA ANALYSIS INSTRUCTIONS:
+1. If census data is provided, INCLUDE AT LEAST ONE STRENGTH OR WEAKNESS related to how the property compares to local market averages.
+2. For properties priced below local median with above-average rents, highlight this as a STRENGTH.
+3. For properties priced above local median with below-average rents, highlight this as a WEAKNESS.
+4. Consider affordability metrics and how they might affect tenant stability and rental demand.
+5. Use the "notes" field to provide additional insights about the local market that don't fit into strengths or weaknesses.
 
 Please provide your analysis in the following JSON format:
 {
@@ -127,6 +169,7 @@ Please provide your analysis in the following JSON format:
   "recommendedHoldPeriod": "recommendation on how long to hold this property based on exit analysis",
   "marketTrendPrediction": "2-3 sentences predicting future market trends for this property based on location, property type, and current metrics",
   "optimalExitStrategy": "detailed analysis of the optimal exit timing and strategy, considering projected appreciation, mortgage payoff, and market cycles",
+  "notes": "Free-form additional insights about the property and local market context that don't fit into other categories",
   "valueAddOpportunities": [
     {
       "improvement": "name of potential improvement",
@@ -153,6 +196,7 @@ SCORING PRIORITIES (from highest to lowest importance):
 5. Investment rules of thumb (1% Rule, 50% Rule, GRM)
 6. Property condition and market factors
 7. Exit strategy and total return potential
+${medianHomeValue || medianRent || medianIncome ? '8. Market positioning (how the property compares to area averages)' : ''}
 
 PREDICTIVE ANALYSIS GUIDELINES:
 1. Market Trend Prediction:
@@ -182,6 +226,7 @@ Focus your analysis on:
 6. Resilience to market downturns (based on Break-Even Occupancy and sensitivity analysis)
 7. Exit strategy and optimal hold period
 8. Predictive insights on future performance
+${medianHomeValue || medianRent || medianIncome ? '9. How the property compares to local market metrics and what that means for the investment' : ''}
 
 IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
@@ -217,6 +262,25 @@ export function mfAnalysisPrompt(dealData: any, analysis: any): string {
   const totalReturn = exitAnalysis.totalReturn || 0;
   const returnOnInvestment = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
+  // Extract Census data if available
+  const censusData = dealData.censusData || {};
+  const censusInsights = dealData.censusInsights || {};
+  
+  // Census data metrics
+  const medianHomeValue = censusData.housing?.medianHomeValue;
+  const medianRent = censusData.housing?.medianRent;
+  const medianIncome = censusData.income?.medianHouseholdIncome;
+  const vacancyRate = censusData.housing?.vacancyRate;
+  const totalPopulation = censusData.demographics?.totalPopulation;
+  const ownerOccupied = censusData.housing?.ownerOccupied;
+  const renterOccupied = censusData.housing?.renterOccupied;
+  
+  // Census insights
+  const valueComparison = censusInsights.valueComparison;
+  const rentComparison = censusInsights.rentComparison;
+  const affordabilityIndex = censusInsights.affordabilityIndex;
+  const investmentContext = censusInsights.investmentContext;
+
   return `Analyze this multi-family property investment:
 
 PROPERTY DETAILS:
@@ -247,19 +311,32 @@ FINANCIAL METRICS:
 - Cash on Cash Return: ${cashOnCashReturn.toFixed(2)}%
 - IRR (if available): ${irr ? irr.toFixed(2) + '%' : 'N/A'}
 
-OPERATING EXPENSES:
-- Property Management: ${dealData.propertyManagementRate}%
-- Vacancy Rate: ${dealData.longTermAssumptions?.vacancyRate ?? 5}%
-- Maintenance: $${dealData.maintenanceCost}/month
-- Utilities: $${dealData.utilities || 0}/month
-- Common Area Expenses: $${(dealData.commonAreaElectricity || 0) + (dealData.landscaping || 0)}/month
+${medianHomeValue || medianRent || medianIncome ? `
+CENSUS DATA (MARKET CONTEXT):
+${medianHomeValue ? `- Area Median Home Value: $${medianHomeValue.toLocaleString()}` : ''}
+${medianRent ? `- Area Median Monthly Rent: $${medianRent.toLocaleString()}` : ''}
+${medianIncome ? `- Area Median Household Income: $${medianIncome.toLocaleString()}` : ''}
+${vacancyRate ? `- Area Vacancy Rate: ${(vacancyRate * 100).toFixed(1)}%` : ''}
+${totalPopulation ? `- Area Population: ${totalPopulation.toLocaleString()}` : ''}
+${ownerOccupied && renterOccupied ? `- Owner/Renter Ratio: ${Math.round((ownerOccupied / (ownerOccupied + renterOccupied)) * 100)}% / ${Math.round((renterOccupied / (ownerOccupied + renterOccupied)) * 100)}%` : ''}
+` : ''}
 
-LONG-TERM ASSUMPTIONS:
-- Annual Rent Growth: ${dealData.longTermAssumptions?.annualRentIncrease ?? 2}%
-- Annual Expense Growth: ${dealData.longTermAssumptions?.inflationRate ?? 2}%
-- Annual Property Value Growth: ${dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3}%
-- Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
-- Selling Costs: ${dealData.longTermAssumptions?.sellingCostsPercentage ?? 6}%
+${valueComparison || rentComparison || affordabilityIndex ? `
+MARKET COMPARISONS:
+${valueComparison ? `- Property Value vs. Area Median: ${valueComparison.relativeToMedian ? (valueComparison.relativeToMedian * 100).toFixed(1) + '%' : 'N/A'} (${valueComparison.percentageDifference ? (valueComparison.percentageDifference > 0 ? '+' : '') + valueComparison.percentageDifference.toFixed(1) + '%' : 'N/A'})` : ''}
+${rentComparison ? `- Rent vs. Area Median: ${rentComparison.relativeToMedian ? (rentComparison.relativeToMedian * 100).toFixed(1) + '%' : 'N/A'} (${rentComparison.percentageDifference ? (rentComparison.percentageDifference > 0 ? '+' : '') + rentComparison.percentageDifference.toFixed(1) + '%' : 'N/A'})` : ''}
+${affordabilityIndex ? `- Rent as % of Area Median Income: ${affordabilityIndex.percentOfMedianIncome ? affordabilityIndex.percentOfMedianIncome.toFixed(1) + '%' : 'N/A'} (${affordabilityIndex.isAffordable ? 'Affordable' : 'Less Affordable'})` : ''}
+${investmentContext?.rentToValueRatio && investmentContext?.areaRentToValueRatio ? `- Rent-to-Value Ratio vs. Area: ${(investmentContext.rentToValueRatio * 100).toFixed(2)}% vs. ${(investmentContext.areaRentToValueRatio * 100).toFixed(2)}%` : ''}
+` : ''}
+
+OPERATING EXPENSES:
+- Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toFixed(2)}/month
+- Insurance: $${(analysis?.monthlyAnalysis?.expenses?.insurance ?? 0).toFixed(2)}/month
+- Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toFixed(2)}/month
+- Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toFixed(2)}/month
+- Vacancy: $${(analysis?.monthlyAnalysis?.expenses?.vacancy ?? 0).toFixed(2)}/month
+- Utilities: $${(analysis?.monthlyAnalysis?.expenses?.utilities ?? 0).toFixed(2)}/month
+- Total Monthly Operating Expenses: $${(analysis?.monthlyAnalysis?.expenses?.total ?? 0).toFixed(2)}
 
 EXIT STRATEGY (Year ${projectionYears}):
 - Projected Sale Price: $${projectedSalePrice.toFixed(2)}
@@ -269,7 +346,12 @@ EXIT STRATEGY (Year ${projectionYears}):
 - Total Return: $${totalReturn.toFixed(2)}
 - Return on Investment: ${returnOnInvestment.toFixed(2)}%
 
-IMPORTANT: Based on these metrics, provide a comprehensive analysis of this multi-family investment opportunity. Pay special attention to the DSCR value, unit mix optimization, economies of scale, and exit strategy.
+LONG-TERM ASSUMPTIONS:
+- Annual Rent Increase: ${dealData.longTermAssumptions?.annualRentIncrease ?? 2}%
+- Annual Expense Increase: ${dealData.longTermAssumptions?.inflationRate ?? 2}%
+- Annual Property Value Increase: ${dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3}%
+- Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
+- Vacancy Rate: ${dealData.longTermAssumptions?.vacancyRate ?? 5}%
 
 Please provide your analysis in the following JSON format:
 {
@@ -277,11 +359,20 @@ Please provide your analysis in the following JSON format:
   "strengths": ["strength1", "strength2", "strength3"],
   "weaknesses": ["weakness1", "weakness2", "weakness3"],
   "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
-  "unitMixAnalysis": "1-2 sentences analyzing if the unit mix is optimal",
-  "marketPositionAnalysis": "1-2 sentences about the property's positioning in the market",
-  "valueAddOpportunities": ["opportunity1", "opportunity2"],
+  "riskAssessment": "1-2 sentences analyzing the risk profile of this investment",
   "investmentScore": 0-100,
-  "recommendedHoldPeriod": "recommendation on how long to hold this property based on exit analysis"
+  "unitMixAnalysis": "analysis of the property's unit mix and how it affects the investment",
+  "marketPositionAnalysis": "analysis of how this property is positioned in the local market",
+  "valueAddOpportunities": [
+    {
+      "improvement": "name of potential improvement",
+      "estimatedCost": "estimated cost range",
+      "potentialRoiPercent": "estimated ROI percentage",
+      "rentIncreasePotential": "potential monthly rent increase",
+      "valueIncreasePotential": "potential property value increase"
+    }
+  ],
+  "recommendedHoldPeriod": "recommendation on how long to hold this property"
 }
 
 Your investmentScore should be on a scale from 0-100, where:
@@ -291,18 +382,25 @@ Your investmentScore should be on a scale from 0-100, where:
 - 61-80: Good investment with some minor concerns
 - 81-100: Excellent investment opportunity
 
-Focus your analysis on:
-1. Unit mix optimization and rental strategy
-2. Operational efficiency and expense management
-3. Value-add opportunities and renovation potential
-4. Market positioning and competitive analysis
-5. Risk factors specific to multi-family properties
-6. Property management considerations
-7. Economies of scale and efficiency metrics
-8. Exit strategy and optimal hold period based on projected returns
+SCORING PRIORITIES (from highest to lowest importance):
+1. Cash flow and DSCR
+2. Cap rate and Cash on Cash Return
+3. IRR and appreciation potential
+4. Unit mix and occupancy potential
+5. Location and market factors
+6. Value-add opportunities
+7. Exit strategy and total return potential
+${medianHomeValue || medianRent || medianIncome ? '8. Market positioning compared to area averages' : ''}
 
-Be specific, data-driven, and actionable in your recommendations.
-Consider local market conditions, tenant demographics, and management requirements.
+IMPORTANT CONSIDERATIONS:
+1. Multi-family properties should be evaluated primarily on their income potential and operational efficiency
+2. Unit mix should be analyzed for market fit and potential for rent increases
+3. Value-add opportunities should be identified and quantified
+4. Local market conditions, including supply/demand dynamics, should be considered
+5. Management efficiency and potential for operational improvements should be assessed
+${medianHomeValue || medianRent || medianIncome ? '6. How the property compares to area averages in terms of value and rent' : ''}
+${ownerOccupied && renterOccupied ? '7. The owner/renter ratio in the area and what it means for rental demand' : ''}
+
 IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
 } 

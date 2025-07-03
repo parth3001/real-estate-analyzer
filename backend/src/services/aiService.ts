@@ -38,6 +38,7 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         recommendations: aiResponse.recommendations || [],
         riskAssessment: aiResponse.riskAssessment,
         investmentScore: aiResponse.investmentScore || null,
+        notes: aiResponse.notes,
         // For MF properties, include additional fields if they exist
         unitMixAnalysis: aiResponse.unitMixAnalysis,
         marketPositionAnalysis: aiResponse.marketPositionAnalysis,
@@ -74,18 +75,15 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
       return 'AI service is not available';
     }
 
-    // Use the v3 API format for chat completions
-    const completion = await openai.createChatCompletion({
-      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant for real estate analysis.' },
-        { role: 'user', content: prompt }
-      ],
+    // Use the v3.2.1 OpenAI API format
+    const completion = await openai.createCompletion({
+      model: 'text-davinci-003',
+      prompt,
       max_tokens: 500,
       temperature: 0.7
     });
 
-    return completion.data.choices[0].message?.content?.trim() || 'No response generated';
+    return completion.data.choices[0].text?.trim() || 'No response generated';
   } catch (error) {
     logger.error('Error generating AI response:', error);
     return 'Error generating AI response';
