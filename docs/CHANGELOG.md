@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Enhanced AI analysis with strategic insights beyond basic metrics
+- New AI analysis fields: investor fit, strategic insights, competitive advantage, wealth building potential, market cycle analysis, financing recommendations, portfolio fit analysis, opportunity cost analysis
+- Improved value-add opportunities with implementation difficulty and strategic priority ratings
+- Updated frontend component to display enhanced AI analysis
+- Updated documentation in AI_PROMPT_ENHANCEMENT.md
+
+### Improved
+- Significantly enhanced AI prompt specificity and detail level
+- Added expert positioning for more authoritative analysis
+- Required concrete numbers, percentages, and dollar amounts in AI analysis
+- Improved numerical formatting with locale-aware thousands separators
+- Enhanced comparative context against industry benchmarks
+- Required detailed, actionable recommendations with quantified impact
+- Added sophisticated risk assessment with quantified downside scenarios
+
 ## [1.9.0] - 2023-09-25
 
 ### Added

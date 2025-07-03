@@ -144,6 +144,15 @@ export interface AIInsights {
   marketTrendPrediction?: string;
   optimalExitStrategy?: string;
   notes?: string;  // Free-form additional insights
+  // Enhanced strategic analysis fields
+  investorFit?: string;
+  strategicInsights?: string;
+  competitiveAdvantage?: string;
+  wealthBuildingPotential?: string;
+  marketCycleAnalysis?: string;
+  financingRecommendations?: string;
+  portfolioFitAnalysis?: string;
+  opportunityCostAnalysis?: string;
 }
 
 export interface ValueAddOpportunity {
@@ -152,6 +161,8 @@ export interface ValueAddOpportunity {
   potentialRoiPercent: string;
   rentIncreasePotential: string;
   valueIncreasePotential: string;
+  implementationDifficulty?: string; // 'easy', 'medium', or 'hard'
+  strategicPriority?: string; // 'high', 'medium', or 'low'
 }
 
 export interface LongTermAnalysis {

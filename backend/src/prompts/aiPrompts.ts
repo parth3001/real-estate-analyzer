@@ -62,26 +62,28 @@ export function sfrAnalysisPrompt(dealData: any, analysis: any): string {
   const affordabilityIndex = censusInsights.affordabilityIndex;
   const investmentContext = censusInsights.investmentContext;
 
-  return `Analyze this single-family rental property investment:
+  return `You are a world-class real estate investment analyst with 25+ years of experience advising institutional investors, private equity firms, and high-net-worth individuals. You have deep expertise in single-family rental investments, market analysis, and financial optimization. Your analysis is known for being data-driven, nuanced, and highly strategic.
+
+I need you to provide an in-depth, sophisticated analysis of this single-family rental property investment opportunity. Your analysis should be detailed, specific, and go far beyond basic metrics to provide truly valuable strategic insights.
 
 PROPERTY DETAILS:
-- Purchase Price: $${dealData.purchasePrice}
-- Down Payment: $${dealData.downPayment} (${downPaymentPercent.toFixed(1)}%)
-- Monthly Rent: $${dealData.monthlyRent}
+- Purchase Price: $${dealData.purchasePrice.toLocaleString()}
+- Down Payment: $${dealData.downPayment.toLocaleString()} (${downPaymentPercent.toFixed(1)}%)
+- Monthly Rent: $${dealData.monthlyRent.toLocaleString()}
 - Property Type: Single Family Residential
 - Year Built: ${dealData.yearBuilt || 'N/A'} ${propertyAge ? `(${propertyAge} years old)` : ''}
-- Square Footage: ${dealData.squareFootage || 'N/A'}
+- Square Footage: ${dealData.squareFootage ? dealData.squareFootage.toLocaleString() : 'N/A'}
 - Bedrooms: ${dealData.bedrooms || 'N/A'}
 - Bathrooms: ${dealData.bathrooms || 'N/A'}
-- Price per Bedroom: $${pricePerBedroom.toFixed(2)}
-- Price per Square Foot: $${avgPricePerSqFt.toFixed(2)}
+- Price per Bedroom: $${pricePerBedroom.toLocaleString(undefined, {maximumFractionDigits: 0})}
+- Price per Square Foot: $${avgPricePerSqFt.toLocaleString(undefined, {maximumFractionDigits: 2})}
 - Location: ${dealData.propertyAddress?.city || 'N/A'}, ${dealData.propertyAddress?.state || 'N/A'}
 
 FINANCIAL METRICS:
-- Monthly NOI: $${monthlyNOI.toFixed(2)}
-- Monthly Cash Flow: $${(analysis?.monthlyAnalysis?.cashFlow ?? 0).toFixed(2)}
-- Annual Cash Flow: $${annualCashFlow.toFixed(2)}
-- Total Investment: $${totalInvestment.toFixed(2)}
+- Monthly NOI: $${monthlyNOI.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Monthly Cash Flow: $${(analysis?.monthlyAnalysis?.cashFlow ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Annual Cash Flow: $${annualCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Total Investment: $${totalInvestment.toLocaleString(undefined, {maximumFractionDigits: 2})}
 - DSCR (Debt Service Coverage Ratio): ${dscr.toFixed(2)}
 - Cap Rate: ${capRate.toFixed(2)}%
 - Cash on Cash Return: ${cashOnCashReturn.toFixed(2)}%
@@ -91,24 +93,15 @@ RISK METRICS:
 - Expense Ratio: ${expenseRatio.toFixed(2)}% (operating expenses as % of income)
 - Break-Even Occupancy: ${breakEvenOccupancy.toFixed(2)}% (min. occupancy needed to break even)
 - Debt-to-Income Ratio: ${debtToIncomeRatio.toFixed(2)}%
-- Best Case Annual Cash Flow: $${bestCaseCashFlow.toFixed(2)}
-- Worst Case Annual Cash Flow: $${worstCaseCashFlow.toFixed(2)}
+- Best Case Annual Cash Flow: $${bestCaseCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Worst Case Annual Cash Flow: $${worstCaseCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
 
 INVESTMENT RULES OF THUMB:
 - 1% Rule: ${onePercentRuleValue.toFixed(2)}% (goal: 1% or higher)
 - 50% Rule Analysis: ${fiftyRuleAnalysis ? 'PASS' : 'FAIL'} (expenses ≤ 50% of income)
 - Gross Rent Multiplier: ${grossRentMultiplier.toFixed(2)} (lower is better)
 - Rent-to-Price Ratio: ${rentToPriceRatio.toFixed(2)}%
-- Equity Multiple: ${equityMultiple.toFixed(2)}x (total return / initial investment)
-
-${medianHomeValue || medianRent || medianIncome ? `
-CENSUS DATA (MARKET CONTEXT):
-${medianHomeValue ? `- Area Median Home Value: $${medianHomeValue.toLocaleString()}` : ''}
-${medianRent ? `- Area Median Monthly Rent: $${medianRent.toLocaleString()}` : ''}
-${medianIncome ? `- Area Median Household Income: $${medianIncome.toLocaleString()}` : ''}
-${vacancyRate ? `- Area Vacancy Rate: ${(vacancyRate * 100).toFixed(1)}%` : ''}
-${totalPopulation ? `- Area Population: ${totalPopulation.toLocaleString()}` : ''}
-` : ''}
+- Equity Multiple: ${equityMultiple.toFixed(2)}
 
 ${valueComparison || rentComparison || affordabilityIndex ? `
 MARKET COMPARISONS:
@@ -118,65 +111,85 @@ ${affordabilityIndex ? `- Rent as % of Area Median Income: ${affordabilityIndex.
 ${investmentContext?.rentToValueRatio && investmentContext?.areaRentToValueRatio ? `- Rent-to-Value Ratio vs. Area: ${(investmentContext.rentToValueRatio * 100).toFixed(2)}% vs. ${(investmentContext.areaRentToValueRatio * 100).toFixed(2)}%` : ''}
 ` : ''}
 
+OPERATING EXPENSES:
+- Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Insurance: $${(analysis?.monthlyAnalysis?.expenses?.insurance ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Vacancy: $${(analysis?.monthlyAnalysis?.expenses?.vacancy ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Utilities: $${(analysis?.monthlyAnalysis?.expenses?.utilities ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Total Monthly Operating Expenses: $${(analysis?.monthlyAnalysis?.expenses?.total ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}
+
 EXIT STRATEGY (Year ${projectionYears}):
-- Projected Sale Price: $${projectedSalePrice.toFixed(2)}
-- Selling Costs: $${sellingCosts.toFixed(2)}
-- Mortgage Payoff: $${mortgagePayoff.toFixed(2)}
-- Net Proceeds From Sale: $${netProceedsFromSale.toFixed(2)}
-- Total Return: $${totalReturn.toFixed(2)}
+- Projected Sale Price: $${projectedSalePrice.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Selling Costs: $${sellingCosts.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Mortgage Payoff: $${mortgagePayoff.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Net Proceeds From Sale: $${netProceedsFromSale.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Total Return: $${totalReturn.toLocaleString(undefined, {maximumFractionDigits: 2})}
 - Return on Investment: ${returnOnInvestment.toFixed(2)}%
 
-MONTHLY EXPENSES:
-- Mortgage: $${monthlyMortgage.toFixed(2)}
-- Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toFixed(2)}
-- Insurance: $${(analysis?.monthlyAnalysis?.expenses?.insurance ?? 0).toFixed(2)}
-- Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toFixed(2)}
-- Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toFixed(2)}
-- Vacancy Loss: $${(dealData.monthlyRent * (dealData.longTermAssumptions?.vacancyRate ?? 5) / 100).toFixed(2)}
-
 LONG-TERM ASSUMPTIONS:
-- Annual Rent Growth: ${dealData.longTermAssumptions?.annualRentIncrease ?? 2}%
-- Annual Expense Growth: ${dealData.longTermAssumptions?.inflationRate ?? 2}%
-- Annual Property Value Growth: ${dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3}%
+- Annual Rent Increase: ${dealData.longTermAssumptions?.annualRentIncrease ?? 2}%
+- Annual Expense Increase: ${dealData.longTermAssumptions?.inflationRate ?? 2}%
+- Annual Property Value Increase: ${dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3}%
 - Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
+- Vacancy Rate: ${dealData.longTermAssumptions?.vacancyRate ?? 5}%
 
-IMPORTANT SCORING GUIDELINES:
-1. Financial metrics should be the PRIMARY factor in determining the investment score.
-2. Higher financial returns (Cap Rate, Cash on Cash Return, DSCR, IRR) should ALWAYS result in a higher investment score.
-3. DO NOT penalize a property for having an attractive purchase price. A below-market price is a POSITIVE attribute, not a reason for suspicion.
-4. Cash flow is the most important metric - positive cash flow should significantly increase the investment score.
-5. The 1% Rule and 50% Rule are useful guidelines but should NOT override actual financial performance metrics.
-6. Assess the risk profile using the expense ratio and break-even occupancy metrics.
-7. Consider both best and worst case scenarios when evaluating the investment's resilience.
-8. Evaluate the exit strategy and long-term potential based on projected sale price and total return.
-${medianHomeValue || medianRent || medianIncome ? '9. Consider how the property compares to area averages - properties priced below market with above-market rents should receive higher scores.' : ''}
+ANALYSIS INSTRUCTIONS:
 
-CENSUS DATA ANALYSIS INSTRUCTIONS:
-1. If census data is provided, INCLUDE AT LEAST ONE STRENGTH OR WEAKNESS related to how the property compares to local market averages.
-2. For properties priced below local median with above-average rents, highlight this as a STRENGTH.
-3. For properties priced above local median with below-average rents, highlight this as a WEAKNESS.
-4. Consider affordability metrics and how they might affect tenant stability and rental demand.
-5. Use the "notes" field to provide additional insights about the local market that don't fit into strengths or weaknesses.
+As a sophisticated real estate investment analyst, I need you to provide an exceptionally detailed, nuanced, and actionable analysis. Your analysis should:
+
+1. BE EXTREMELY SPECIFIC AND DETAILED: Include specific numbers, percentages, and dollar amounts in your analysis. Avoid vague statements like "strong cash flow" - instead say "$350 monthly cash flow representing a 7.2% cash-on-cash return."
+
+2. PROVIDE DEEP COMPARATIVE CONTEXT: Don't just state metrics - contextualize them against industry benchmarks, similar markets, and alternative investments. For example, "The 5.8% cap rate is 0.7% above the market average for similar properties in this submarket."
+
+3. IDENTIFY SPECIFIC OPTIMIZATION OPPORTUNITIES: Provide detailed, actionable recommendations with quantified potential impact. For example, "Refinancing at current market rates could reduce the monthly payment by $175, increasing cash flow by 24%."
+
+4. ANALYZE RISK-ADJUSTED RETURNS: Provide a sophisticated risk assessment that considers both property-specific factors and broader market dynamics. Quantify downside scenarios.
+
+5. EVALUATE MARKET POSITIONING: Analyze how this property is positioned relative to market trends, tenant demographics, and economic indicators. Identify specific competitive advantages or vulnerabilities.
+
+6. PROVIDE DETAILED VALUE-ADD STRATEGIES: Go beyond basic recommendations to provide specific, implementable strategies with ROI estimates, difficulty ratings, and priority levels.
+
+7. DELIVER ACTIONABLE FINANCING INSIGHTS: Analyze the current financing structure and provide specific optimization recommendations with quantified impact on returns.
+
+8. INCLUDE PRECISE INVESTOR PROFILE MATCHING: Identify exactly what type of investor would be best suited for this property and why, with specific reference to investment goals and risk tolerance.
+
+9. OFFER DETAILED EXIT STRATEGY ANALYSIS: Provide specific timing recommendations based on equity buildup, market cycle projections, and tax considerations.
+
+10. INCLUDE PORTFOLIO CONTEXT: Analyze how this property would fit within different portfolio strategies, considering diversification benefits, correlation with other assets, and overall risk-return profile.
+
+${medianHomeValue || medianRent || medianIncome ? '11. PROVIDE DETAILED MARKET ANALYSIS: Use the census data to provide specific insights about how this property compares to local market metrics and what that means for future performance.' : ''}
 
 Please provide your analysis in the following JSON format:
 {
-  "summary": "2-3 sentence summary of the investment opportunity",
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2", "weakness3"],
-  "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
-  "riskAssessment": "1-2 sentences analyzing the risk profile of this investment",
+  "summary": "3-4 sentence summary of the investment opportunity that captures the most important strategic insights with specific numbers and percentages",
+  "investorFit": "Detailed description of what type of investor this property is best suited for and why, with specific reference to investment goals and risk tolerance",
+  "strengths": ["strength1 with specific metrics and comparisons", "strength2 with specific metrics and comparisons", "strength3 with specific metrics and comparisons", "strength4 with specific metrics and comparisons"],
+  "weaknesses": ["weakness1 with specific metrics and comparisons", "weakness2 with specific metrics and comparisons", "weakness3 with specific metrics and comparisons", "weakness4 with specific metrics and comparisons"],
+  "recommendations": ["detailed recommendation1 with specific action steps and quantified impact", "detailed recommendation2 with specific action steps and quantified impact", "detailed recommendation3 with specific action steps and quantified impact", "detailed recommendation4 with specific action steps and quantified impact"],
+  "riskAssessment": "Detailed risk profile analysis including quantified downside scenarios and specific risk mitigation strategies",
   "investmentScore": 0-100,
-  "recommendedHoldPeriod": "recommendation on how long to hold this property based on exit analysis",
-  "marketTrendPrediction": "2-3 sentences predicting future market trends for this property based on location, property type, and current metrics",
-  "optimalExitStrategy": "detailed analysis of the optimal exit timing and strategy, considering projected appreciation, mortgage payoff, and market cycles",
-  "notes": "Free-form additional insights about the property and local market context that don't fit into other categories",
+  "strategicInsights": "4-5 sentences providing deeper strategic context about this investment opportunity with specific metrics, market comparisons, and actionable insights",
+  "competitiveAdvantage": "Detailed analysis of this property's competitive advantages or disadvantages in its specific market with quantified comparisons",
+  "wealthBuildingPotential": "Specific analysis of how this property contributes to long-term wealth building beyond just cash flow, including equity accumulation projections and tax advantages",
+  "marketCycleAnalysis": "Detailed assessment of where this market is in the real estate cycle with specific indicators and implications for the investment strategy",
+  "recommendedHoldPeriod": "Data-driven recommendation on optimal hold period with specific reasoning tied to equity buildup, market cycle projections, and tax considerations",
+  "marketTrendPrediction": "Detailed prediction of future market trends for this property based on specific economic indicators, demographic shifts, and supply-demand dynamics",
+  "optimalExitStrategy": "Comprehensive analysis of exit timing and strategy options with quantified returns under different scenarios",
+  "financingRecommendations": "Specific recommendations for optimizing the financing structure with quantified impact on cash flow, returns, and risk profile",
+  "portfolioFitAnalysis": "Detailed analysis of how this property would complement different investment portfolio strategies, with specific diversification benefits and risk-return considerations",
+  "opportunityCostAnalysis": "Quantified comparison to alternative investments in the current economic environment, including stocks, bonds, REITs, and other real estate opportunities",
+  "notes": "Additional specific insights about the property and local market context that don't fit into other categories",
   "valueAddOpportunities": [
     {
-      "improvement": "name of potential improvement",
-      "estimatedCost": "estimated cost range",
-      "potentialRoiPercent": "estimated ROI percentage",
-      "rentIncreasePotential": "potential monthly rent increase",
-      "valueIncreasePotential": "potential property value increase"
+      "improvement": "Specific improvement opportunity",
+      "estimatedCost": "Precise cost range with supporting details",
+      "potentialRoiPercent": "Specific ROI percentage with calculation basis",
+      "rentIncreasePotential": "Specific monthly rent increase with market justification",
+      "valueIncreasePotential": "Specific property value increase with comparable evidence",
+      "implementationDifficulty": "easy/medium/hard with specific considerations",
+      "strategicPriority": "high/medium/low with specific reasoning"
     }
   ]
 }
@@ -198,60 +211,72 @@ SCORING PRIORITIES (from highest to lowest importance):
 7. Exit strategy and total return potential
 ${medianHomeValue || medianRent || medianIncome ? '8. Market positioning (how the property compares to area averages)' : ''}
 
-PREDICTIVE ANALYSIS GUIDELINES:
-1. Market Trend Prediction:
-   - Consider the property's location, age, and type
-   - Analyze how the property might perform relative to market averages
-   - Consider demographic trends that could impact future value
-   - Predict whether the area is likely to appreciate faster or slower than average
+STRATEGIC ANALYSIS GUIDELINES:
 
-2. Optimal Exit Strategy:
-   - Identify the mathematical sweet spot for exit timing
-   - Consider mortgage payoff trajectory vs. appreciation
-   - Analyze when equity position would be maximized
-   - Consider potential market cycles and their impact on exit timing
+1. Investor Fit Analysis:
+   - Provide a detailed investor profile with specific investment goals, risk tolerance, and experience level
+   - Quantify how this property aligns with different investment strategies (cash flow vs. appreciation)
+   - Specify how this property complements different portfolio compositions
 
-3. Value-Add Opportunities:
-   - Based on property age, condition, and type, suggest specific improvements
-   - For each improvement, estimate cost range, ROI percentage, and impact on rent/value
-   - Prioritize improvements by ROI potential
-   - Consider which improvements would be most appealing to the local rental market
+2. Market Cycle Analysis:
+   - Identify specific indicators of the current market cycle position
+   - Provide quantified projections for different cycle phases
+   - Specify how cycle position affects optimal hold period and exit strategy
 
-Focus your analysis on:
-1. Cash flow potential and financial stability
-2. Return metrics compared to market averages
-3. Risk factors and mitigations
-4. Value-add opportunities with specific ROI estimates
-5. Long-term appreciation potential with market-specific factors
-6. Resilience to market downturns (based on Break-Even Occupancy and sensitivity analysis)
-7. Exit strategy and optimal hold period
-8. Predictive insights on future performance
-${medianHomeValue || medianRent || medianIncome ? '9. How the property compares to local market metrics and what that means for the investment' : ''}
+3. Competitive Advantage Analysis:
+   - Quantify specific advantages in terms of rent-to-value ratio, location premium, or property features
+   - Compare to specific competing properties or submarkets
+   - Assess the durability of competitive advantages with specific timeframes
+
+4. Wealth Building Analysis:
+   - Provide specific equity accumulation projections by year
+   - Quantify tax advantages with specific dollar amounts
+   - Calculate total wealth impact over different holding periods
+
+5. Value-Add Opportunity Analysis:
+   - Provide detailed cost estimates with specific ranges
+   - Calculate precise ROI for each improvement
+   - Prioritize improvements based on quantified impact and implementation difficulty
+
+6. Financing Optimization:
+   - Analyze current loan terms against market alternatives
+   - Calculate specific impact of refinancing or restructuring
+   - Recommend optimal debt strategy with quantified benefits
+
+7. Portfolio Fit Analysis:
+   - Specify correlation with other asset classes
+   - Quantify diversification benefits
+   - Recommend specific portfolio allocation percentages
 
 IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
 }
 
 export function mfAnalysisPrompt(dealData: any, analysis: any): string {
-  // Calculate key metrics
+  // Existing metric calculations
   const downPaymentPercent = (dealData.downPayment / dealData.purchasePrice) * 100;
   const monthlyMortgage = analysis?.monthlyAnalysis?.expenses?.mortgage?.total ?? 0;
   const monthlyNOI = (analysis?.monthlyAnalysis?.cashFlow ?? 0) + monthlyMortgage;
   const dscr = monthlyMortgage !== 0 ? monthlyNOI / monthlyMortgage : 0;
   
-  // Extract metrics from analysis object with fallbacks
-  const capRate = analysis?.annualAnalysis?.capRate ?? (analysis?.metrics?.capRate ?? 0);
-  const cashOnCashReturn = analysis?.annualAnalysis?.cashOnCashReturn ?? (analysis?.metrics?.cashOnCashReturn ?? 0);
-  const irr = analysis?.metrics?.irr ?? 0;
   const annualCashFlow = (analysis?.monthlyAnalysis?.cashFlow ?? 0) * 12;
   const totalInvestment = dealData.downPayment + (dealData.closingCosts || 0);
+  const capRate = analysis?.annualAnalysis?.capRate ?? 0;
+  const cashOnCashReturn = analysis?.annualAnalysis?.cashOnCashReturn ?? 0;
   
-  // Calculate unit mix metrics
-  const totalUnits = dealData.unitTypes.reduce((sum: number, unit: any) => sum + unit.count, 0);
-  const avgRentPerUnit = dealData.unitTypes.reduce((sum: number, unit: any) => sum + (unit.monthlyRent * unit.count), 0) / totalUnits;
-  const pricePerUnit = dealData.purchasePrice / totalUnits;
-  const pricePerSqft = dealData.purchasePrice / dealData.totalSqft;
-
+  // Add new metrics to the prompt
+  const expenseRatio = analysis?.keyMetrics?.operatingExpenseRatio ?? 0;
+  const breakEvenOccupancy = analysis?.keyMetrics?.breakEvenOccupancy ?? 0;
+  const pricePerUnit = analysis?.keyMetrics?.pricePerUnit ?? 0;
+  const noiPerUnit = analysis?.keyMetrics?.noiPerUnit ?? 0;
+  const averageRentPerUnit = analysis?.keyMetrics?.averageRentPerUnit ?? 0;
+  const operatingExpensePerUnit = analysis?.keyMetrics?.operatingExpensePerUnit ?? 0;
+  const economicVacancyRate = analysis?.keyMetrics?.economicVacancyRate ?? 0;
+  
+  // Extract info from sensitivity analysis if available
+  const bestCaseCashFlow = analysis?.sensitivityAnalysis?.bestCase?.cashFlow ?? (annualCashFlow * 1.1);
+  const worstCaseCashFlow = analysis?.sensitivityAnalysis?.worstCase?.cashFlow ?? (annualCashFlow * 0.9);
+  
   // Extract exit analysis data
   const exitAnalysis = analysis?.longTermAnalysis?.exitAnalysis || {};
   const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
@@ -261,7 +286,11 @@ export function mfAnalysisPrompt(dealData: any, analysis: any): string {
   const netProceedsFromSale = exitAnalysis.netProceedsFromSale || 0;
   const totalReturn = exitAnalysis.totalReturn || 0;
   const returnOnInvestment = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
-
+  
+  // Calculate property age
+  const currentYear = new Date().getFullYear();
+  const propertyAge = dealData.yearBuilt ? currentYear - dealData.yearBuilt : null;
+  
   // Extract Census data if available
   const censusData = dealData.censusData || {};
   const censusInsights = dealData.censusInsights || {};
@@ -280,46 +309,74 @@ export function mfAnalysisPrompt(dealData: any, analysis: any): string {
   const rentComparison = censusInsights.rentComparison;
   const affordabilityIndex = censusInsights.affordabilityIndex;
   const investmentContext = censusInsights.investmentContext;
+  
+  // Unit mix data
+  const unitMix = dealData.units || [];
+  const totalUnits = unitMix.length;
+  
+  // Calculate unit mix summary
+  const unitTypes = unitMix.reduce((acc: any, unit: any) => {
+    const key = `${unit.bedrooms}BR/${unit.bathrooms}BA`;
+    if (!acc[key]) {
+      acc[key] = {
+        count: 0,
+        totalRent: 0,
+        avgRent: 0,
+        percentage: 0
+      };
+    }
+    acc[key].count++;
+    acc[key].totalRent += (unit.monthlyRent || 0);
+    return acc;
+  }, {});
+  
+  // Calculate averages and percentages
+  Object.keys(unitTypes).forEach(key => {
+    const type = unitTypes[key];
+    type.avgRent = type.totalRent / type.count;
+    type.percentage = (type.count / totalUnits) * 100;
+  });
+  
+  // Format unit mix for prompt
+  const unitMixSummary = Object.keys(unitTypes).map(key => {
+    const type = unitTypes[key];
+    return `${key}: ${type.count} units (${type.percentage.toFixed(1)}%), Avg. Rent: $${type.avgRent.toFixed(2)}`;
+  }).join('\n');
 
-  return `Analyze this multi-family property investment:
+  return `You are a world-class real estate investment analyst with 25+ years of experience advising institutional investors, private equity firms, and high-net-worth individuals. You have deep expertise in multi-family property investments, market analysis, and financial optimization. Your analysis is known for being data-driven, nuanced, and highly strategic.
+
+I need you to provide an in-depth, sophisticated analysis of this multi-family property investment opportunity. Your analysis should be detailed, specific, and go far beyond basic metrics to provide truly valuable strategic insights.
 
 PROPERTY DETAILS:
-- Address: ${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode}
-- Total Units: ${totalUnits}
-- Total Square Feet: ${dealData.totalSqft}
-- Year Built: ${dealData.yearBuilt}
-- Price Per Unit: $${pricePerUnit.toFixed(2)}
-- Price Per Square Foot: $${pricePerSqft.toFixed(2)}
+- Purchase Price: $${dealData.purchasePrice.toLocaleString()}
+- Down Payment: $${dealData.downPayment.toLocaleString()} (${downPaymentPercent.toFixed(1)}%)
+- Property Type: Multi-Family (${totalUnits} units)
+- Year Built: ${dealData.yearBuilt || 'N/A'} ${propertyAge ? `(${propertyAge} years old)` : ''}
+- Total Square Footage: ${dealData.squareFootage ? dealData.squareFootage.toLocaleString() : 'N/A'}
+- Price per Unit: $${pricePerUnit.toLocaleString(undefined, {maximumFractionDigits: 0})}
+- Location: ${dealData.propertyAddress?.city || 'N/A'}, ${dealData.propertyAddress?.state || 'N/A'}
 
 UNIT MIX:
-${dealData.unitTypes.map((unit: any) => 
-  `- ${unit.count}x ${unit.type} (${unit.sqft} sqft) @ $${unit.monthlyRent}/month`
-).join('\n')}
+${unitMixSummary}
 
 FINANCIAL METRICS:
-- Purchase Price: $${dealData.purchasePrice}
-- Down Payment: $${dealData.downPayment} (${downPaymentPercent.toFixed(1)}%)
-- Interest Rate: ${dealData.interestRate}%
-- Loan Term: ${dealData.loanTerm} years
-- Monthly Mortgage: $${monthlyMortgage.toFixed(2)}
-- Monthly NOI: $${monthlyNOI.toFixed(2)}
-- Annual Cash Flow: $${annualCashFlow.toFixed(2)}
-- Total Investment: $${totalInvestment.toFixed(2)}
-- Average Rent Per Unit: $${avgRentPerUnit.toFixed(2)}
-- DSCR (Debt Service Coverage Ratio): ${dscr.toFixed(2)} (below 1.0 indicates negative cash flow)
+- Monthly NOI: $${monthlyNOI.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Monthly Cash Flow: $${(analysis?.monthlyAnalysis?.cashFlow ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Annual Cash Flow: $${annualCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Total Investment: $${totalInvestment.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- DSCR (Debt Service Coverage Ratio): ${dscr.toFixed(2)}
 - Cap Rate: ${capRate.toFixed(2)}%
 - Cash on Cash Return: ${cashOnCashReturn.toFixed(2)}%
-- IRR (if available): ${irr ? irr.toFixed(2) + '%' : 'N/A'}
+- NOI per Unit: $${noiPerUnit.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Average Rent per Unit: $${averageRentPerUnit.toLocaleString(undefined, {maximumFractionDigits: 2})}
 
-${medianHomeValue || medianRent || medianIncome ? `
-CENSUS DATA (MARKET CONTEXT):
-${medianHomeValue ? `- Area Median Home Value: $${medianHomeValue.toLocaleString()}` : ''}
-${medianRent ? `- Area Median Monthly Rent: $${medianRent.toLocaleString()}` : ''}
-${medianIncome ? `- Area Median Household Income: $${medianIncome.toLocaleString()}` : ''}
-${vacancyRate ? `- Area Vacancy Rate: ${(vacancyRate * 100).toFixed(1)}%` : ''}
-${totalPopulation ? `- Area Population: ${totalPopulation.toLocaleString()}` : ''}
-${ownerOccupied && renterOccupied ? `- Owner/Renter Ratio: ${Math.round((ownerOccupied / (ownerOccupied + renterOccupied)) * 100)}% / ${Math.round((renterOccupied / (ownerOccupied + renterOccupied)) * 100)}%` : ''}
-` : ''}
+RISK METRICS:
+- Expense Ratio: ${expenseRatio.toFixed(2)}% (operating expenses as % of income)
+- Break-Even Occupancy: ${breakEvenOccupancy.toFixed(2)}% (min. occupancy needed to break even)
+- Economic Vacancy Rate: ${economicVacancyRate.toFixed(2)}%
+- Operating Expense per Unit: $${operatingExpensePerUnit.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Best Case Annual Cash Flow: $${bestCaseCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Worst Case Annual Cash Flow: $${worstCaseCashFlow.toLocaleString(undefined, {maximumFractionDigits: 2})}
 
 ${valueComparison || rentComparison || affordabilityIndex ? `
 MARKET COMPARISONS:
@@ -330,20 +387,20 @@ ${investmentContext?.rentToValueRatio && investmentContext?.areaRentToValueRatio
 ` : ''}
 
 OPERATING EXPENSES:
-- Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toFixed(2)}/month
-- Insurance: $${(analysis?.monthlyAnalysis?.expenses?.insurance ?? 0).toFixed(2)}/month
-- Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toFixed(2)}/month
-- Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toFixed(2)}/month
-- Vacancy: $${(analysis?.monthlyAnalysis?.expenses?.vacancy ?? 0).toFixed(2)}/month
-- Utilities: $${(analysis?.monthlyAnalysis?.expenses?.utilities ?? 0).toFixed(2)}/month
-- Total Monthly Operating Expenses: $${(analysis?.monthlyAnalysis?.expenses?.total ?? 0).toFixed(2)}
+- Property Tax: $${(analysis?.monthlyAnalysis?.expenses?.propertyTax ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Insurance: $${(analysis?.monthlyAnalysis?.expenses?.insurance ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Maintenance: $${(analysis?.monthlyAnalysis?.expenses?.maintenance ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Property Management: $${(analysis?.monthlyAnalysis?.expenses?.propertyManagement ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Vacancy: $${(analysis?.monthlyAnalysis?.expenses?.vacancy ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Utilities: $${(analysis?.monthlyAnalysis?.expenses?.utilities ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}/month
+- Total Monthly Operating Expenses: $${(analysis?.monthlyAnalysis?.expenses?.total ?? 0).toLocaleString(undefined, {maximumFractionDigits: 2})}
 
 EXIT STRATEGY (Year ${projectionYears}):
-- Projected Sale Price: $${projectedSalePrice.toFixed(2)}
-- Selling Costs: $${sellingCosts.toFixed(2)}
-- Mortgage Payoff: $${mortgagePayoff.toFixed(2)}
-- Net Proceeds From Sale: $${netProceedsFromSale.toFixed(2)}
-- Total Return: $${totalReturn.toFixed(2)}
+- Projected Sale Price: $${projectedSalePrice.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Selling Costs: $${sellingCosts.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Mortgage Payoff: $${mortgagePayoff.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Net Proceeds From Sale: $${netProceedsFromSale.toLocaleString(undefined, {maximumFractionDigits: 2})}
+- Total Return: $${totalReturn.toLocaleString(undefined, {maximumFractionDigits: 2})}
 - Return on Investment: ${returnOnInvestment.toFixed(2)}%
 
 LONG-TERM ASSUMPTIONS:
@@ -353,53 +410,123 @@ LONG-TERM ASSUMPTIONS:
 - Projection Years: ${dealData.longTermAssumptions?.projectionYears ?? 10}
 - Vacancy Rate: ${dealData.longTermAssumptions?.vacancyRate ?? 5}%
 
+ANALYSIS INSTRUCTIONS:
+
+As a sophisticated multi-family real estate investment analyst, I need you to provide an exceptionally detailed, nuanced, and actionable analysis. Your analysis should:
+
+1. BE EXTREMELY SPECIFIC AND DETAILED: Include specific numbers, percentages, and dollar amounts in your analysis. Avoid vague statements like "strong cash flow" - instead say "$4,200 monthly cash flow representing a 7.2% cash-on-cash return."
+
+2. PROVIDE DEEP COMPARATIVE CONTEXT: Don't just state metrics - contextualize them against industry benchmarks, similar markets, and alternative investments. For example, "The 5.8% cap rate is 0.7% above the market average for similar multi-family properties in this submarket."
+
+3. ANALYZE UNIT MIX OPTIMIZATION: Provide specific recommendations for optimizing the unit mix to maximize returns, including potential unit reconfiguration, rent adjustments, or amenity additions with quantified ROI.
+
+4. EVALUATE OPERATIONAL EFFICIENCY: Identify specific operational improvements that could reduce expenses or increase revenue, with quantified impact on NOI and valuation.
+
+5. ASSESS SCALE ADVANTAGES/DISADVANTAGES: Analyze how the property's unit count affects operational efficiency, management costs, and overall returns compared to smaller or larger multi-family properties.
+
+6. PROVIDE DETAILED VALUE-ADD STRATEGIES: Go beyond basic recommendations to provide specific, implementable strategies with ROI estimates, difficulty ratings, and priority levels.
+
+7. DELIVER ACTIONABLE FINANCING INSIGHTS: Analyze the current financing structure and provide specific optimization recommendations with quantified impact on returns.
+
+8. INCLUDE PRECISE INVESTOR PROFILE MATCHING: Identify exactly what type of investor would be best suited for this property and why, with specific reference to investment goals and risk tolerance.
+
+9. OFFER DETAILED EXIT STRATEGY ANALYSIS: Provide specific timing recommendations based on equity buildup, market cycle projections, and tax considerations.
+
+10. INCLUDE PORTFOLIO CONTEXT: Analyze how this property would fit within different portfolio strategies, considering diversification benefits, correlation with other assets, and overall risk-return profile.
+
+${medianHomeValue || medianRent || medianIncome ? '11. PROVIDE DETAILED MARKET ANALYSIS: Use the census data to provide specific insights about how this property compares to local market metrics and what that means for future performance.' : ''}
+${ownerOccupied && renterOccupied ? '12. ANALYZE OWNERSHIP/RENTAL MIX: Evaluate how the owner-occupied to renter-occupied ratio in the area impacts rental demand, tenant quality, and long-term appreciation potential.' : ''}
+
 Please provide your analysis in the following JSON format:
 {
-  "summary": "2-3 sentence summary of the investment opportunity",
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2", "weakness3"],
-  "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
-  "riskAssessment": "1-2 sentences analyzing the risk profile of this investment",
+  "summary": "3-4 sentence summary of the investment opportunity that captures the most important strategic insights with specific numbers and percentages",
+  "investorFit": "Detailed description of what type of investor this property is best suited for and why, with specific reference to investment goals and risk tolerance",
+  "strengths": ["strength1 with specific metrics and comparisons", "strength2 with specific metrics and comparisons", "strength3 with specific metrics and comparisons", "strength4 with specific metrics and comparisons"],
+  "weaknesses": ["weakness1 with specific metrics and comparisons", "weakness2 with specific metrics and comparisons", "weakness3 with specific metrics and comparisons", "weakness4 with specific metrics and comparisons"],
+  "recommendations": ["detailed recommendation1 with specific action steps and quantified impact", "detailed recommendation2 with specific action steps and quantified impact", "detailed recommendation3 with specific action steps and quantified impact", "detailed recommendation4 with specific action steps and quantified impact"],
+  "riskAssessment": "Detailed risk profile analysis including quantified downside scenarios and specific risk mitigation strategies",
   "investmentScore": 0-100,
-  "unitMixAnalysis": "analysis of the property's unit mix and how it affects the investment",
-  "marketPositionAnalysis": "analysis of how this property is positioned in the local market",
+  "unitMixAnalysis": "Detailed analysis of the property's unit mix with specific recommendations for optimization and their quantified impact on returns",
+  "marketPositionAnalysis": "Detailed analysis of how this property is positioned in the local market with specific competitive advantages and vulnerabilities",
+  "strategicInsights": "4-5 sentences providing deeper strategic context about this investment opportunity with specific metrics, market comparisons, and actionable insights",
+  "competitiveAdvantage": "Detailed analysis of this property's competitive advantages or disadvantages in its specific market with quantified comparisons",
+  "wealthBuildingPotential": "Specific analysis of how this property contributes to long-term wealth building beyond just cash flow, including equity accumulation projections and tax advantages",
+  "marketCycleAnalysis": "Detailed assessment of where this market is in the real estate cycle with specific indicators and implications for the investment strategy",
+  "recommendedHoldPeriod": "Data-driven recommendation on optimal hold period with specific reasoning tied to equity buildup, market cycle projections, and tax considerations",
+  "marketTrendPrediction": "Detailed prediction of future market trends for this property based on specific economic indicators, demographic shifts, and supply-demand dynamics",
+  "optimalExitStrategy": "Comprehensive analysis of exit timing and strategy options with quantified returns under different scenarios",
+  "financingRecommendations": "Specific recommendations for optimizing the financing structure with quantified impact on cash flow, returns, and risk profile",
+  "portfolioFitAnalysis": "Detailed analysis of how this property would complement different investment portfolio strategies, with specific diversification benefits and risk-return considerations",
+  "opportunityCostAnalysis": "Quantified comparison to alternative investments in the current economic environment, including stocks, bonds, REITs, and other real estate opportunities",
+  "operationalEfficiencyAnalysis": "Detailed analysis of operational improvements that could reduce expenses or increase revenue, with quantified impact on NOI and valuation",
+  "notes": "Additional specific insights about the property and local market context that don't fit into other categories",
   "valueAddOpportunities": [
     {
-      "improvement": "name of potential improvement",
-      "estimatedCost": "estimated cost range",
-      "potentialRoiPercent": "estimated ROI percentage",
-      "rentIncreasePotential": "potential monthly rent increase",
-      "valueIncreasePotential": "potential property value increase"
+      "improvement": "Specific improvement opportunity",
+      "estimatedCost": "Precise cost range with supporting details",
+      "potentialRoiPercent": "Specific ROI percentage with calculation basis",
+      "rentIncreasePotential": "Specific monthly rent increase with market justification",
+      "valueIncreasePotential": "Specific property value increase with comparable evidence",
+      "implementationDifficulty": "easy/medium/hard with specific considerations",
+      "strategicPriority": "high/medium/low with specific reasoning"
     }
-  ],
-  "recommendedHoldPeriod": "recommendation on how long to hold this property"
+  ]
 }
 
 Your investmentScore should be on a scale from 0-100, where:
-- 0-20: Very poor investment, avoid
-- 21-40: Poor investment with significant issues
-- 41-60: Average investment with both pros and cons
-- 61-80: Good investment with some minor concerns
-- 81-100: Excellent investment opportunity
+- 0-20: Very poor investment, avoid (negative cash flow, extremely low returns)
+- 21-40: Poor investment with significant issues (minimal cash flow, below-average returns)
+- 41-60: Average investment with both pros and cons (modest cash flow, average returns)
+- 61-80: Good investment with some minor concerns (good cash flow, above-average returns)
+- 81-100: Excellent investment opportunity (strong cash flow, excellent returns)
 
 SCORING PRIORITIES (from highest to lowest importance):
 1. Cash flow and DSCR
 2. Cap rate and Cash on Cash Return
-3. IRR and appreciation potential
-4. Unit mix and occupancy potential
+3. NOI per unit and operational efficiency
+4. Unit mix optimization potential
 5. Location and market factors
 6. Value-add opportunities
 7. Exit strategy and total return potential
 ${medianHomeValue || medianRent || medianIncome ? '8. Market positioning compared to area averages' : ''}
+${ownerOccupied && renterOccupied ? '9. Owner/renter ratio in the area and what it means for rental demand' : ''}
 
-IMPORTANT CONSIDERATIONS:
-1. Multi-family properties should be evaluated primarily on their income potential and operational efficiency
-2. Unit mix should be analyzed for market fit and potential for rent increases
-3. Value-add opportunities should be identified and quantified
-4. Local market conditions, including supply/demand dynamics, should be considered
-5. Management efficiency and potential for operational improvements should be assessed
-${medianHomeValue || medianRent || medianIncome ? '6. How the property compares to area averages in terms of value and rent' : ''}
-${ownerOccupied && renterOccupied ? '7. The owner/renter ratio in the area and what it means for rental demand' : ''}
+STRATEGIC ANALYSIS GUIDELINES:
+
+1. Unit Mix Analysis:
+   - Evaluate the current unit mix against market demand
+   - Identify specific unit types that are underperforming or overperforming
+   - Recommend specific optimization strategies with quantified ROI
+
+2. Operational Efficiency Analysis:
+   - Identify specific expense categories that are above industry benchmarks
+   - Recommend specific operational improvements with quantified impact
+   - Analyze management efficiency and potential for improvements
+
+3. Market Cycle Analysis:
+   - Identify specific indicators of the current market cycle position
+   - Provide quantified projections for different cycle phases
+   - Specify how cycle position affects optimal hold period and exit strategy
+
+4. Competitive Advantage Analysis:
+   - Quantify specific advantages in terms of rent-to-value ratio, location premium, or property features
+   - Compare to specific competing properties or submarkets
+   - Assess the durability of competitive advantages with specific timeframes
+
+5. Value-Add Opportunity Analysis:
+   - Provide detailed cost estimates with specific ranges
+   - Calculate precise ROI for each improvement
+   - Prioritize improvements based on quantified impact and implementation difficulty
+
+6. Financing Optimization:
+   - Analyze current loan terms against market alternatives
+   - Calculate specific impact of refinancing or restructuring
+   - Recommend optimal debt strategy with quantified benefits
+
+7. Portfolio Fit Analysis:
+   - Specify correlation with other asset classes
+   - Quantify diversification benefits
+   - Recommend specific portfolio allocation percentages
 
 IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
 Only return valid JSON.`;
