@@ -180,4 +180,51 @@ For enhanced AI analysis:
 | Key metrics | Formatted prompt | Values extracted and formatted for LLM consumption |
 | Property details | Formatted prompt | Relevant details extracted |
 | (none) | Location data | Added from external APIs based on address |
-| AI Response | `aiInsights` | Parsed from structured JSON response | 
+| AI Response | `aiInsights` | Parsed from structured JSON response |
+
+## ZIP Code Field Naming Convention
+
+To ensure consistency and backward compatibility, the application handles ZIP code data with the following conventions:
+
+### Property Data Structure
+- In property data objects, the ZIP code field is named `zipCode` (camelCase with capital C) as part of the `propertyAddress` object:
+  ```typescript
+  propertyAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string; // Standard naming in property objects
+  }
+  ```
+
+### Census API Parameters
+- The Census API controller accepts both `zip` and `zipCode` parameters for backward compatibility
+- When both parameters are provided, `zipCode` takes precedence
+- Internally, the backend always uses `zip` when communicating with the Census service:
+  ```typescript
+  // In censusController.ts
+  const zipCode = (req.query.zipCode as string) || (req.query.zip as string);
+  
+  const params: CensusQueryParams = {
+    // ... other params
+    zip: zipCode, // Always map to 'zip' for internal consistency
+  };
+  ```
+
+### Frontend Implementation
+- When preparing Census API requests in the frontend, always map from `propertyAddress.zipCode` to the `zip` parameter:
+  ```typescript
+  const params: CensusQueryParams = {
+    zip: propertyData.propertyAddress?.zipCode, // Map from zipCode to zip
+    state: propertyData.propertyAddress?.state,
+    // Include other parameters as needed
+  };
+  ```
+- The `ExtendedPropertyAddress` interface might include a `zip` field for backward compatibility, but always prefer using `propertyAddress.zipCode` from the standard property data structure
+
+### Data Transformation Rules
+1. Frontend components should use `propertyAddress.zipCode` when accessing property data
+2. When preparing Census API requests, map from `propertyAddress.zipCode` to the `zip` parameter
+3. UI components should display ZIP codes with consistent formatting (e.g., 5-digit or ZIP+4 format)
+
+This approach ensures backward compatibility while maintaining a clear standard for future development.

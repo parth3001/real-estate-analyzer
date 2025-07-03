@@ -1082,13 +1082,15 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   // Fetch census data if we have location information
   useEffect(() => {
     const fetchCensusData = async () => {
-      if (extendedPropertyData.propertyAddress?.zip || extendedPropertyData.propertyAddress?.state) {
+      if (propertyData.propertyAddress?.zipCode || propertyData.propertyAddress?.state) {
         setCensusLoading(true);
         try {
           const params: CensusQueryParams = {
-            zip: extendedPropertyData.propertyAddress?.zip,
-            state: extendedPropertyData.propertyAddress?.state,
-            county: extendedPropertyData.propertyAddress?.county
+            // Send zipCode as zip for the backend
+            zip: propertyData.propertyAddress?.zipCode,
+            state: propertyData.propertyAddress?.state,
+            // Only include county if it exists in the extended data
+            ...(extendedPropertyData.propertyAddress?.county ? { county: extendedPropertyData.propertyAddress.county } : {})
           };
           
           const data = await censusService.getComprehensiveCensusData(params);
@@ -1102,7 +1104,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     };
     
     fetchCensusData();
-  }, [extendedPropertyData.propertyAddress]);
+  }, [propertyData.propertyAddress, extendedPropertyData.propertyAddress]);
 
   // Display error if validation failed
   if (error) {

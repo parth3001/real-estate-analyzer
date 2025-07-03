@@ -13,10 +13,13 @@ import { CensusQueryParams } from '../types/census';
  */
 export const getDemographicData = async (req: Request, res: Response) => {
   try {
+    // Check for both zip and zipCode parameters, with zipCode taking precedence
+    const zipCode = (req.query.zipCode as string) || (req.query.zip as string);
+    
     const params: CensusQueryParams = {
       state: req.query.state as string,
       county: req.query.county as string,
-      zip: req.query.zip as string,
+      zip: zipCode, // Use the zipCode value (which might come from either parameter)
       city: req.query.city as string,
       tract: req.query.tract as string,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
@@ -26,7 +29,7 @@ export const getDemographicData = async (req: Request, res: Response) => {
     // Validate that we have at least one location parameter
     if (!params.state && !params.county && !params.zip && !params.city && !params.tract) {
       return res.status(400).json({
-        error: 'At least one location parameter (state, county, zip, city, or tract) is required'
+        error: 'At least one location parameter (state, county, zip/zipCode, city, or tract) is required'
       });
     }
     
@@ -46,10 +49,13 @@ export const getDemographicData = async (req: Request, res: Response) => {
  */
 export const getIncomeData = async (req: Request, res: Response) => {
   try {
+    // Check for both zip and zipCode parameters, with zipCode taking precedence
+    const zipCode = (req.query.zipCode as string) || (req.query.zip as string);
+    
     const params: CensusQueryParams = {
       state: req.query.state as string,
       county: req.query.county as string,
-      zip: req.query.zip as string,
+      zip: zipCode, // Use the zipCode value (which might come from either parameter)
       city: req.query.city as string,
       tract: req.query.tract as string,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
@@ -59,7 +65,7 @@ export const getIncomeData = async (req: Request, res: Response) => {
     // Validate that we have at least one location parameter
     if (!params.state && !params.county && !params.zip && !params.city && !params.tract) {
       return res.status(400).json({
-        error: 'At least one location parameter (state, county, zip, city, or tract) is required'
+        error: 'At least one location parameter (state, county, zip/zipCode, city, or tract) is required'
       });
     }
     
@@ -79,10 +85,13 @@ export const getIncomeData = async (req: Request, res: Response) => {
  */
 export const getHousingData = async (req: Request, res: Response) => {
   try {
+    // Check for both zip and zipCode parameters, with zipCode taking precedence
+    const zipCode = (req.query.zipCode as string) || (req.query.zip as string);
+    
     const params: CensusQueryParams = {
       state: req.query.state as string,
       county: req.query.county as string,
-      zip: req.query.zip as string,
+      zip: zipCode, // Use the zipCode value (which might come from either parameter)
       city: req.query.city as string,
       tract: req.query.tract as string,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
@@ -92,7 +101,7 @@ export const getHousingData = async (req: Request, res: Response) => {
     // Validate that we have at least one location parameter
     if (!params.state && !params.county && !params.zip && !params.city && !params.tract) {
       return res.status(400).json({
-        error: 'At least one location parameter (state, county, zip, city, or tract) is required'
+        error: 'At least one location parameter (state, county, zip/zipCode, city, or tract) is required'
       });
     }
     
@@ -112,10 +121,13 @@ export const getHousingData = async (req: Request, res: Response) => {
  */
 export const getComprehensiveCensusData = async (req: Request, res: Response) => {
   try {
+    // Check for both zip and zipCode parameters, with zipCode taking precedence
+    const zipCode = (req.query.zipCode as string) || (req.query.zip as string);
+    
     const params: CensusQueryParams = {
       state: req.query.state as string,
       county: req.query.county as string,
-      zip: req.query.zip as string,
+      zip: zipCode, // Use the zipCode value (which might come from either parameter)
       city: req.query.city as string,
       tract: req.query.tract as string,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
@@ -125,7 +137,7 @@ export const getComprehensiveCensusData = async (req: Request, res: Response) =>
     // Validate that we have at least one location parameter
     if (!params.state && !params.county && !params.zip && !params.city && !params.tract) {
       return res.status(400).json({
-        error: 'At least one location parameter (state, county, zip, city, or tract) is required'
+        error: 'At least one location parameter (state, county, zip/zipCode, city, or tract) is required'
       });
     }
     
@@ -138,4 +150,4 @@ export const getComprehensiveCensusData = async (req: Request, res: Response) =>
       message: error.message
     });
   }
-}; 
+};
