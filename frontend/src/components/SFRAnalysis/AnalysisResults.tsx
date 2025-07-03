@@ -38,6 +38,7 @@ import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
 import MarketComparisonSection from '../MarketComparisonSection';
 import * as censusService from '../../services/censusService';
+import { COLORS } from './colors';
 
 // Extend MonthlyExpenses to include tenantTurnover
 interface MonthlyExpenses extends BaseMonthlyExpenses {
@@ -1081,11 +1082,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   // Fetch census data if we have location information
   useEffect(() => {
     const fetchCensusData = async () => {
-      if (extendedPropertyData.propertyAddress?.zipCode || extendedPropertyData.propertyAddress?.state) {
+      if (extendedPropertyData.propertyAddress?.zip || extendedPropertyData.propertyAddress?.state) {
         setCensusLoading(true);
         try {
           const params: CensusQueryParams = {
-            zip: extendedPropertyData.propertyAddress?.zipCode,
+            zip: extendedPropertyData.propertyAddress?.zip,
             state: extendedPropertyData.propertyAddress?.state,
             county: extendedPropertyData.propertyAddress?.county
           };
@@ -1141,7 +1142,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           Analysis Results: {propertyData.propertyName || 'Property'}
         </Typography>
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          {propertyData.propertyAddress?.street}, {propertyData.propertyAddress?.city}, {propertyData.propertyAddress?.state} {propertyData.propertyAddress?.zipCode}
+          {propertyData.propertyAddress?.street}, {propertyData.propertyAddress?.city}, {propertyData.propertyAddress?.state} {propertyData.propertyAddress?.zipCode || extendedPropertyData.propertyAddress?.zip}
         </Typography>
         
         <Divider sx={{ my: 3 }} />

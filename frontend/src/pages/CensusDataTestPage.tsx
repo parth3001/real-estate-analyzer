@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Typography, Box, Paper, Grid, Card, CardContent, CardHeader } from '@mui/material';
+import { Container, Typography, Box, Paper, Card, CardContent, CardHeader } from '@mui/material';
 import CensusDataDisplay from '../components/CensusDataDisplay';
 
 /**
@@ -65,9 +65,9 @@ const CensusDataTestPage: React.FC = () => {
             Sample Locations
           </Typography>
           
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1, mb: 3 }}>
             {sampleLocations.map((location) => (
-              <Grid item xs={12} sm={6} md={4} key={location.zip}>
+              <Box sx={{ width: { xs: '100%', sm: '50%', md: '33.33%' }, p: 1 }} key={location.zip}>
                 <Card 
                   variant={selectedLocation.zip === location.zip ? "outlined" : "elevation"} 
                   sx={{ 
@@ -84,16 +84,15 @@ const CensusDataTestPage: React.FC = () => {
                     <Typography variant="body2">County: {location.county}</Typography>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Paper>
         
         <CensusDataDisplay 
           zip={selectedLocation.zip}
           state={selectedLocation.state}
           county={selectedLocation.county}
-          propertyAddress={selectedLocation.address}
         />
       </Box>
     </Container>

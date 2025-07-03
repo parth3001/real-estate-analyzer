@@ -3,9 +3,7 @@ import {
   Box, 
   Typography, 
   Paper, 
-  Grid, 
   CircularProgress, 
-  Divider,
   Card,
   CardContent,
   CardHeader,
@@ -18,7 +16,6 @@ import type { CensusDataResponse, CensusQueryParams, MarketInsight } from '../ty
 import * as censusService from '../services/censusService';
 
 interface CensusDataDisplayProps {
-  propertyAddress?: string;
   zip?: string;
   state?: string;
   county?: string;
@@ -28,7 +25,6 @@ interface CensusDataDisplayProps {
  * Component to display Census data for a property location
  */
 const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({ 
-  propertyAddress, 
   zip, 
   state, 
   county 
@@ -99,7 +95,7 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
   }, []);
   
   // Handle tab change
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
   
@@ -112,8 +108,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
     }
     
     return (
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Box sx={{ width: '50%', p: 1 }}>
           <Card variant="outlined">
             <CardHeader title="Population" />
             <CardContent>
@@ -125,8 +121,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     );
   };
   
@@ -139,8 +135,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
     }
     
     return (
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Box sx={{ width: '50%', p: 1 }}>
           <Card variant="outlined">
             <CardHeader title="Income" />
             <CardContent>
@@ -152,8 +148,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     );
   };
   
@@ -166,8 +162,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
     }
     
     return (
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Box sx={{ width: '50%', p: 1 }}>
           <Card variant="outlined">
             <CardHeader title="Housing" />
             <CardContent>
@@ -185,8 +181,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </Box>
+        <Box sx={{ width: '50%', p: 1 }}>
           <Card variant="outlined">
             <CardHeader title="Occupancy" />
             <CardContent>
@@ -201,8 +197,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     );
   };
   
@@ -255,18 +251,18 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
     }
     
     return (
-      <Grid container spacing={2}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
         {insights.map((insight, index) => (
-          <Grid item xs={12} md={6} key={index}>
+          <Box sx={{ width: '50%', p: 1 }} key={index}>
             <Card variant="outlined">
               <CardHeader title={insight.title} />
               <CardContent>
                 <Typography variant="body1">{insight.insight}</Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     );
   };
   
@@ -278,8 +274,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
       
       {/* Location input form */}
       <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+          <Box sx={{ width: { xs: '100%', sm: '33.33%' }, p: 1 }}>
             <TextField
               label="ZIP Code"
               value={customZip}
@@ -287,8 +283,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               fullWidth
               margin="normal"
             />
-          </Grid>
-          <Grid item xs={12} sm={4}>
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '33.33%' }, p: 1 }}>
             <TextField
               label="State"
               value={customState}
@@ -297,8 +293,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
               margin="normal"
               placeholder="e.g. CA"
             />
-          </Grid>
-          <Grid item xs={12} sm={4}>
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '33.33%' }, p: 1 }}>
             <Button 
               variant="contained" 
               color="primary"
@@ -308,8 +304,8 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
             >
               Load Census Data
             </Button>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
       
       {loading && (

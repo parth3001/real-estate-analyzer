@@ -86,7 +86,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
 
   // Handle timeframe toggle
   const handleTimeframeChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newTimeframe: 'annual' | 'monthly' | null,
   ) => {
     if (newTimeframe !== null) {

@@ -96,7 +96,7 @@ const ExpenseBreakdownChart: React.FC<ExpenseBreakdownChartProps> = ({
 
   // Handle chart type toggle
   const handleChartTypeChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newType: 'pie' | 'donut' | null,
   ) => {
     if (newType !== null) {

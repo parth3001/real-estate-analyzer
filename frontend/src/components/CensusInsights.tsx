@@ -8,7 +8,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
   useTheme,
 } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -101,7 +100,7 @@ const CensusInsights: React.FC<CensusInsightsProps> = ({
             No census insights available for this property.
           </Typography>
         ) : (
-          Object.entries(groupedInsights).map(([category, categoryInsights], index) => (
+          Object.entries(groupedInsights).map(([category, categoryInsights]) => (
             <Box key={category} sx={{ mb: 2 }}>
               <Typography 
                 variant="subtitle1" 

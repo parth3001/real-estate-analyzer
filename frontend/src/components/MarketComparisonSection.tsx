@@ -4,11 +4,8 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
-  Divider,
   Tabs,
   Tab,
-  useTheme,
   Skeleton,
 } from '@mui/material';
 import MarketComparisonChart from './visualizations/MarketComparisonChart';
@@ -42,12 +39,11 @@ const MarketComparisonSection: React.FC<MarketComparisonSectionProps> = ({
   censusData,
   isLoading = false,
 }) => {
-  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [insights, setInsights] = useState<any[]>([]);
 
   // Handle tab change
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
@@ -170,36 +166,6 @@ const MarketComparisonSection: React.FC<MarketComparisonSectionProps> = ({
     
     setInsights(newInsights);
   }, [censusData, propertyData]);
-
-  // Prepare data for value comparison chart
-  const valueComparisonData = [
-    {
-      name: 'Property Value',
-      property: propertyData.purchasePrice || 0,
-      census: censusData?.housing?.medianHomeValue || 0,
-    },
-    {
-      name: 'Monthly Rent',
-      property: propertyData.monthlyRent || 0,
-      census: censusData?.housing?.medianRent || 0,
-    },
-  ];
-
-  // Prepare data for market metrics chart
-  const marketMetricsData = [
-    {
-      name: 'Vacancy Rate',
-      property: propertyData.vacancyRate || 0,
-      census: censusData?.housing?.vacancyRate ? censusData.housing.vacancyRate * 100 : 0,
-      isPercentage: true,
-    },
-    {
-      name: 'Owner Occupied',
-      property: 0, // This would need to come from property data if available
-      census: censusData?.housing?.ownerOccupancyRate ? censusData.housing.ownerOccupancyRate * 100 : 0,
-      isPercentage: true,
-    },
-  ];
 
   // Render loading state
   if (isLoading) {

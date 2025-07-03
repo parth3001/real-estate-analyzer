@@ -9,7 +9,6 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
-  Label,
 } from 'recharts';
 import {
   Card,
@@ -70,7 +69,7 @@ const MarketComparisonChart: React.FC<MarketComparisonChartProps> = ({
   };
 
   // Prepare data for the chart
-  const chartData = propertyData.map((item, index) => {
+  const chartData = propertyData.map(item => {
     const censusItem = censusData.find(c => c.name === item.name) || { name: item.name, value: 0 };
     
     // Calculate difference as percentage
