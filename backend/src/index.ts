@@ -7,6 +7,7 @@ import path from 'path';
 import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
+import censusRouter from './routes/censusRoutes';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 
@@ -26,7 +27,8 @@ if (result.error) {
     OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
     OPENAI_API_KEY_START: process.env.OPENAI_API_KEY?.substring(0, 10),
     CORS_ORIGIN: process.env.CORS_ORIGIN,
-    MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing'
+    MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing',
+    CENSUS_API_KEY: process.env.CENSUS_API_KEY ? 'exists' : 'missing'
   });
 }
 
@@ -41,6 +43,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/deals', dealsRouter);
 app.use('/api/analyze', analyzeRouter);
+app.use('/api/census', censusRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -52,7 +55,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
       OPENAI_API_KEY_EXISTS: !!process.env.OPENAI_API_KEY,
       OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
       CORS_ORIGIN: process.env.CORS_ORIGIN,
-      MONGODB_URI_EXISTS: !!process.env.MONGODB_URI
+      MONGODB_URI_EXISTS: !!process.env.MONGODB_URI,
+      CENSUS_API_KEY_EXISTS: !!process.env.CENSUS_API_KEY
     }
   });
 });

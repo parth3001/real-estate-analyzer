@@ -21,6 +21,8 @@ services:
         sync: false
       - key: MONGODB_URI
         sync: false
+      - key: CENSUS_API_KEY
+        sync: false
     autoDeploy: true
 
   - type: static_site

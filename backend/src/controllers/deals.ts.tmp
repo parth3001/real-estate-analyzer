@@ -1,0 +1,106 @@
+// Sample SFR data
+export const getSampleSFR = (req: Request, res: Response): void => {
+  const sampleSFR = {
+    propertyName: 'Sample SFR Property',
+    propertyType: 'SFR',
+    propertyAddress: {
+      street: '742 Middlefield Road',
+      city: 'Mountain View',
+      state: 'CA',
+      zipCode: '94043'
+    },
+    purchasePrice: 1500000,
+    downPayment: 300000,
+    interestRate: 4.5,
+    loanTerm: 30,
+    monthlyRent: 4500,
+    squareFootage: 1800,
+    bedrooms: 3,
+    bathrooms: 2,
+    yearBuilt: 1985,
+    propertyTaxRate: 1.2,
+    insuranceRate: 0.5,
+    maintenanceCost: 200,
+    propertyManagementRate: 8,
+    capitalInvestments: 10000,
+    tenantTurnoverFees: {
+      prepFees: 1000,
+      realtorCommission: 0.5
+    },
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 2,
+      annualPropertyValueIncrease: 3,
+      sellingCostsPercentage: 6,
+      inflationRate: 2,
+      vacancyRate: 5
+    }
+  };
+  
+  logger.info('Returning sample SFR data with Mountain View, CA ZIP code 94043');
+  res.json(sampleSFR);
+};
+
+// Sample Multi-Family data
+export const getSampleMF = (req: Request, res: Response): void => {
+  const sampleMF = {
+    propertyName: 'Sample Multi-Family Property',
+    propertyType: 'MF',
+    propertyAddress: {
+      street: '250 W 34th Street',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10001'
+    },
+    purchasePrice: 4200000,
+    downPayment: 840000,
+    interestRate: 5,
+    loanTerm: 30,
+    totalUnits: 8,
+    totalSqft: 7500,
+    yearBuilt: 1980,
+    propertyTaxRate: 1.5,
+    insuranceRate: 0.6,
+    maintenanceCost: 800,
+    maintenanceCostPerUnit: 100,
+    propertyManagementRate: 10,
+    capitalInvestments: 20000,
+    tenantTurnoverFees: {
+      prepFees: 1000,
+      realtorCommission: 0.5
+    },
+    unitTypes: [
+      {
+        type: '1 bed, 1 bath',
+        count: 4,
+        sqft: 650,
+        monthlyRent: 2200,
+        occupied: 4
+      },
+      {
+        type: '2 bed, 2 bath',
+        count: 4,
+        sqft: 950,
+        monthlyRent: 3500,
+        occupied: 3
+      }
+    ],
+    commonAreaUtilities: {
+      electric: 350,
+      water: 250,
+      gas: 200,
+      trash: 150
+    },
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 2.5,
+      annualPropertyValueIncrease: 3,
+      sellingCostsPercentage: 6,
+      inflationRate: 2,
+      vacancyRate: 7
+    }
+  };
+  
+  logger.info('Returning sample MF data with Manhattan, NY ZIP code 10001');
+  res.json(sampleMF);
+};

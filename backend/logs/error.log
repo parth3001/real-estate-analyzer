@@ -136,3 +136,154 @@
 2025-06-15 22:01:28:128 [31merror[39m: [31mRaw response:[39m
 2025-06-15 22:01:28:128 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
 2025-06-15 22:01:28:128 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-16 22:59:18:5918 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-16 22:59:18:5918 [31merror[39m: [31mRaw response:[39m
+2025-06-16 22:59:18:5918 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-16 22:59:18:5918 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-17 21:01:06:16 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-17 21:01:06:16 [31merror[39m: [31mRaw response:[39m
+2025-06-17 21:01:06:16 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-17 21:01:06:16 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-17 21:01:40:140 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-17 21:01:40:140 [31merror[39m: [31mRaw response:[39m
+2025-06-17 21:01:40:140 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-17 21:01:40:140 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-17 21:02:42:242 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-17 21:02:42:242 [31merror[39m: [31mRaw response:[39m
+2025-06-17 21:02:42:242 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-17 21:02:42:242 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:01:11 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-18 23:01:01:11 [31merror[39m: [31mRaw response:[39m
+2025-06-18 23:01:01:11 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:01:11 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:31:131 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-18 23:01:31:131 [31merror[39m: [31mRaw response:[39m
+2025-06-18 23:01:31:131 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:31:131 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:34:134 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-18 23:01:34:134 [31merror[39m: [31mRaw response:[39m
+2025-06-18 23:01:34:134 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-18 23:01:34:134 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:26:22:2622 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:26:22:2622 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:26:22:2622 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:26:22:2622 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:26:51:2651 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:26:51:2651 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:26:51:2651 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:26:51:2651 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:28:54:2854 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:28:54:2854 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:28:54:2854 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:28:54:2854 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:28:57:2857 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:28:57:2857 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:28:57:2857 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:28:57:2857 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:30:23:3023 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:30:23:3023 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:30:23:3023 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:30:23:3023 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:42:39:4239 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:42:39:4239 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:42:39:4239 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:42:39:4239 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 20:43:18:4318 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 20:43:18:4318 [31merror[39m: [31mRaw response:[39m
+2025-06-19 20:43:18:4318 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 20:43:18:4318 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-19 22:29:16:2916 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-06-19 22:29:16:2916 [31merror[39m: [31mRaw response:[39m
+2025-06-19 22:29:16:2916 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-06-19 22:29:16:2916 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-06-24 10:51:45:5145 [31merror[39m: [31mError finding all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:51:45:5145 [31merror[39m: [31m[DealService] Error getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:51:45:5145 [31merror[39m: [31mError getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:51:56:5156 [31merror[39m: [31mError finding all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:51:56:5156 [31merror[39m: [31m[DealService] Error getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:51:56:5156 [31merror[39m: [31mError getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:54:27:5427 [31merror[39m: [31mError finding all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:54:27:5427 [31merror[39m: [31m[DealService] Error getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:54:27:5427 [31merror[39m: [31mError getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:55:57:5557 [31merror[39m: [31mError creating SFR deal: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:55:57:5557 [31merror[39m: [31m[DealService] Error saving deal: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:55:57:5557 [31merror[39m: [31mError creating deal: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:56:07:567 [31merror[39m: [31mError finding all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:56:07:567 [31merror[39m: [31m[DealService] Error getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-06-24 10:56:07:567 [31merror[39m: [31mError getting all deals: 009F230A02000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:908:SSL alert number 80[39m
+[31m[39m
+2025-07-01 15:57:26:5726 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-07-01 15:57:26:5726 [31merror[39m: [31mRaw response:[39m
+2025-07-01 15:57:26:5726 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-07-01 15:57:26:5726 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-07-01 20:27:06:276 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-07-01 20:27:06:276 [31merror[39m: [31mRaw response:[39m
+2025-07-01 20:27:06:276 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-07-01 20:27:06:276 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-07-01 20:27:10:2710 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-07-01 20:27:10:2710 [31merror[39m: [31mRaw response:[39m
+2025-07-01 20:27:10:2710 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-07-01 20:27:10:2710 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-07-01 20:33:42:3342 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-07-01 20:33:42:3342 [31merror[39m: [31mRaw response:[39m
+2025-07-01 20:33:42:3342 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-07-01 20:33:42:3342 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-07-01 20:34:05:345 [31merror[39m: [31mError parsing OpenAI response as JSON: Unexpected token '`', "```json[39m
+[31m{[39m
+[31m"... is not valid JSON[39m
+2025-07-01 20:34:05:345 [31merror[39m: [31mRaw response:[39m
+2025-07-01 20:34:05:345 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
+2025-07-01 20:34:05:345 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
+2025-07-01 22:08:48:848 [31merror[39m: [31mError in getDemographicData controller: Census API error[39m

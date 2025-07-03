@@ -1,0 +1,88 @@
+// Analyze a deal
+export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const dealData = req.body;
+    
+    // Log detailed information about the request
+    logger.info('Analyzing property:', {
+      propertyType: dealData.propertyType,
+      propertyAddress: dealData.propertyAddress,
+      purchasePrice: dealData.purchasePrice,
+      monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
+      downPayment: dealData.downPayment,
+      interestRate: dealData.interestRate
+    });
+    
+    // Validate deal data
+    if (!dealData.propertyType) {
+      logger.warn('Analysis request missing property type');
+      res.status(400).json({ error: 'Property type is required' });
+      return;
+    }
+    
+    // Extract assumptions from the dealData
+    const assumptions: AnalysisAssumptions = {
+      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease || 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+    };
+    
+    // Use the appropriate analysis service directly
+    let analysis;
+    if (dealData.propertyType === 'SFR') {
+      logger.info('Analyzing SFR property');
+      const analyzer = new SFRAnalyzer(dealData, assumptions);
+      analysis = analyzer.analyze();
+    } else if (dealData.propertyType === 'MF') {
+      logger.info('Analyzing Multi-Family property');
+      const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);
+      analysis = analyzer.analyze();
+    } else {
+      throw new Error(`Unsupported property type: ${dealData.propertyType}`);
+    }
+    
+    if (!analysis) {
+      throw new Error('Analysis failed to produce results');
+    }
+    
+    // Add AI insights if possible
+    try {
+      analysis.aiInsights = await generateAIInsights(dealData, analysis);
+    } catch (aiError) {
+      logger.error('Error getting AI insights:', aiError);
+      // Continue without AI insights
+      analysis.aiInsights = {
+        summary: "AI insights are not available at this time.",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        investmentScore: 0
+      };
+    }
+    
+    logger.info('Calculated analysis metrics:', {
+      purchasePrice: dealData.purchasePrice,
+      monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
+      noi: analysis.keyMetrics?.noi,
+      cashFlow: analysis.monthlyAnalysis?.cashFlow,
+      capRate: analysis.keyMetrics?.capRate,
+      cashOnCash: analysis.keyMetrics?.cashOnCashReturn,
+      dscr: analysis.keyMetrics?.dscr
+    });
+    
+    logger.info('Analysis complete - returning results');
+    
+    // Return real analysis
+    res.json(analysis);
+  } catch (error) {
+    logger.error('Error analyzing deal:', error);
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: 'An unknown error occurred' });
+    }
+  }
+};

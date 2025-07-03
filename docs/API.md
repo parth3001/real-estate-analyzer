@@ -7,6 +7,136 @@ For a comprehensive listing of all data fields, their types, and usage, please r
 
 ## API Endpoints
 
+### Census Data
+
+#### Get Demographic Data
+```
+GET /api/census/demographics
+```
+
+**Purpose:** Retrieves demographic data for a specified location from the US Census Bureau API.
+
+**Query Parameters:**
+
+| Parameter | Type   | Description                                |
+|-----------|--------|--------------------------------------------|
+| zip       | string | ZIP code (e.g., "94043")                  |
+| state     | string | State code (e.g., "CA")                   |
+| county    | string | County code or name                        |
+| city      | string | City name                                  |
+| tract     | string | Census tract                               |
+| year      | number | Census data year (defaults to most recent) |
+| dataset   | string | Census dataset (defaults to "acs/acs5")    |
+
+**Response:**
+```json
+{
+  "totalPopulation": 28000,
+  "medianAge": 35.4
+}
+```
+
+#### Get Income Data
+```
+GET /api/census/income
+```
+
+**Purpose:** Retrieves income data for a specified location from the US Census Bureau API.
+
+**Query Parameters:**
+
+| Parameter | Type   | Description                                |
+|-----------|--------|--------------------------------------------|
+| zip       | string | ZIP code (e.g., "94043")                  |
+| state     | string | State code (e.g., "CA")                   |
+| county    | string | County code or name                        |
+| city      | string | City name                                  |
+| tract     | string | Census tract                               |
+| year      | number | Census data year (defaults to most recent) |
+| dataset   | string | Census dataset (defaults to "acs/acs5")    |
+
+**Response:**
+```json
+{
+  "medianHouseholdIncome": 85000,
+  "perCapitaIncome": 45000
+}
+```
+
+#### Get Housing Data
+```
+GET /api/census/housing
+```
+
+**Purpose:** Retrieves housing data for a specified location from the US Census Bureau API.
+
+**Query Parameters:**
+
+| Parameter | Type   | Description                                |
+|-----------|--------|--------------------------------------------|
+| zip       | string | ZIP code (e.g., "94043")                  |
+| state     | string | State code (e.g., "CA")                   |
+| county    | string | County code or name                        |
+| city      | string | City name                                  |
+| tract     | string | Census tract                               |
+| year      | number | Census data year (defaults to most recent) |
+| dataset   | string | Census dataset (defaults to "acs/acs5")    |
+
+**Response:**
+```json
+{
+  "totalHousingUnits": 12000,
+  "occupancyRate": 0.95,
+  "vacancyRate": 0.05,
+  "ownerOccupied": 7000,
+  "renterOccupied": 4400,
+  "medianHomeValue": 450000,
+  "medianRent": 1800
+}
+```
+
+#### Get Comprehensive Census Data
+```
+GET /api/census/comprehensive
+```
+
+**Purpose:** Retrieves comprehensive census data (demographics, income, housing) for a specified location.
+
+**Query Parameters:**
+
+| Parameter | Type   | Description                                |
+|-----------|--------|--------------------------------------------|
+| zip       | string | ZIP code (e.g., "94043")                  |
+| state     | string | State code (e.g., "CA")                   |
+| county    | string | County code or name                        |
+| city      | string | City name                                  |
+| tract     | string | Census tract                               |
+| year      | number | Census data year (defaults to most recent) |
+| dataset   | string | Census dataset (defaults to "acs/acs5")    |
+
+**Response:**
+```json
+{
+  "demographics": {
+    "totalPopulation": 28000,
+    "medianAge": 35.4
+  },
+  "income": {
+    "medianHouseholdIncome": 85000,
+    "perCapitaIncome": 45000
+  },
+  "housing": {
+    "totalHousingUnits": 12000,
+    "occupancyRate": 0.95,
+    "vacancyRate": 0.05,
+    "ownerOccupied": 7000,
+    "renterOccupied": 4400,
+    "medianHomeValue": 450000,
+    "medianRent": 1800
+  }
+}
+```
+
 ### Property Analysis
 
 #### Analyze Property

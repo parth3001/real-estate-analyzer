@@ -9,6 +9,7 @@ import { generateAnalysis } from '../services/openai';
 import { DealService } from '../services/dealService';
 import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
+import { enrichPropertyWithCensusData, analyzePropertyWithCensusContext } from '../services/propertyEnrichmentService';
 
 // Initialize the deal service
 const dealService = new DealService();
@@ -205,8 +206,24 @@ export const deleteDeal = async (req: Request, res: Response): Promise<void> => 
 export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
   try {
     const dealData = req.body;
-    logger.info('Analyzing deal with data:', dealData.propertyName || 'Unnamed property');
-
+    
+    // Log detailed information about the request
+    logger.info('Analyzing property:', {
+      propertyType: dealData.propertyType,
+      propertyAddress: dealData.propertyAddress,
+      purchasePrice: dealData.purchasePrice,
+      monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
+      downPayment: dealData.downPayment,
+      interestRate: dealData.interestRate
+    });
+    
+    // Validate deal data
+    if (!dealData.propertyType) {
+      logger.warn('Analysis request missing property type');
+      res.status(400).json({ error: 'Property type is required' });
+      return;
+    }
+    
     // Extract assumptions from the dealData
     const assumptions: AnalysisAssumptions = {
       projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
@@ -250,75 +267,26 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       };
     }
     
-    // Debug log the final analysis structure
-    logger.info('Final analysis structure check:');
-    logger.info('- monthlyAnalysis present:', !!analysis.monthlyAnalysis);
-    logger.info('- annualAnalysis present:', !!analysis.annualAnalysis);
-    logger.info('- longTermAnalysis present:', !!analysis.longTermAnalysis);
+    logger.info('Calculated analysis metrics:', {
+      purchasePrice: dealData.purchasePrice,
+      monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
+      noi: analysis.keyMetrics?.noi,
+      cashFlow: analysis.monthlyAnalysis?.cashFlow,
+      capRate: analysis.keyMetrics?.capRate,
+      cashOnCash: analysis.keyMetrics?.cashOnCashReturn,
+      dscr: analysis.keyMetrics?.dscr
+    });
     
-    if (analysis.longTermAnalysis) {
-      logger.info('- longTermAnalysis keys:', Object.keys(analysis.longTermAnalysis));
-      logger.info('- projections present:', !!analysis.longTermAnalysis.projections);
-      logger.info('- projections is array:', Array.isArray(analysis.longTermAnalysis.projections));
-      logger.info('- projections length:', analysis.longTermAnalysis.projections?.length || 0);
-      
-      // Ensure the structure is correct
-      if (!analysis.longTermAnalysis.projections) {
-        logger.error('projections is missing, adding empty array');
-        analysis.longTermAnalysis.projections = [];
-      }
-      
-      if (!analysis.longTermAnalysis.returns) {
-        logger.error('returns is missing, adding default object');
-        analysis.longTermAnalysis.returns = {
-          irr: 0,
-          totalCashFlow: 0,
-          totalAppreciation: 0,
-          totalReturn: 0
-        };
-      }
-      
-      if (!analysis.longTermAnalysis.exitAnalysis) {
-        logger.error('exitAnalysis is missing, adding default object');
-        analysis.longTermAnalysis.exitAnalysis = {
-          projectedSalePrice: 0,
-          sellingCosts: 0,
-          mortgagePayoff: 0,
-          netProceedsFromSale: 0,
-          totalProfit: 0,
-          returnOnInvestment: 0
-        };
-      }
-    } else {
-      logger.error('longTermAnalysis is missing, creating with default values');
-      analysis.longTermAnalysis = {
-        projections: [],
-        projectionYears: 10,
-        returns: {
-          irr: 0,
-          totalCashFlow: 0,
-          totalAppreciation: 0,
-          totalReturn: 0
-        },
-        exitAnalysis: {
-          projectedSalePrice: 0,
-          sellingCosts: 0,
-          mortgagePayoff: 0,
-          netProceedsFromSale: 0,
-          totalProfit: 0,
-          returnOnInvestment: 0
-        }
-      };
-    }
+    logger.info('Analysis complete - returning results');
     
-    logger.info('Analysis completed successfully');
+    // Return real analysis
     res.json(analysis);
   } catch (error) {
     logger.error('Error analyzing deal:', error);
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ error: 'An unknown error occurred during analysis' });
+      res.status(400).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -332,7 +300,7 @@ export const addNote = async (req: Request, res: Response): Promise<void> => {
     // Get the current deal
     const deal = await dealService.getDealById(dealId);
     if (!deal) {
-      res.status(404).json({ message: 'Deal not found' });
+      res.status(404).json({ error: 'Deal not found' });
       return;
     }
     
@@ -354,9 +322,9 @@ export const addNote = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     logger.error('Error adding note to deal:', error);
     if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ message: 'An unknown error occurred' });
+      res.status(400).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -370,7 +338,7 @@ export const addDocument = async (req: Request, res: Response): Promise<void> =>
     // Get the current deal
     const deal = await dealService.getDealById(dealId);
     if (!deal) {
-      res.status(404).json({ message: 'Deal not found' });
+      res.status(404).json({ error: 'Deal not found' });
       return;
     }
     
@@ -393,9 +361,9 @@ export const addDocument = async (req: Request, res: Response): Promise<void> =>
   } catch (error) {
     logger.error('Error adding document to deal:', error);
     if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ message: 'An unknown error occurred' });
+      res.status(400).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -409,7 +377,7 @@ export const addPerformanceMetrics = async (req: Request, res: Response): Promis
     // Get the current deal
     const deal = await dealService.getDealById(dealId);
     if (!deal) {
-      res.status(404).json({ message: 'Deal not found' });
+      res.status(404).json({ error: 'Deal not found' });
       return;
     }
     
@@ -431,9 +399,9 @@ export const addPerformanceMetrics = async (req: Request, res: Response): Promis
   } catch (error) {
     logger.error('Error adding performance metrics to deal:', error);
     if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(400).json({ message: 'An unknown error occurred' });
+      res.status(400).json({ error: 'An unknown error occurred' });
     }
   }
 };
@@ -444,27 +412,27 @@ export const getSampleSFR = (req: Request, res: Response): void => {
     propertyName: 'Sample SFR Property',
     propertyType: 'SFR',
     propertyAddress: {
-      street: '123 Main St',
-      city: 'Anytown',
+      street: '123 Elm Street',
+      city: 'Mountain View',
       state: 'CA',
-      zipCode: '12345'
+      zipCode: '94043'
     },
-    purchasePrice: 300000,
-    downPayment: 60000,
+    purchasePrice: 1500000,
+    downPayment: 300000,
     interestRate: 4.5,
     loanTerm: 30,
-    monthlyRent: 2500,
-    squareFootage: 1500,
-    bedrooms: 3,
-    bathrooms: 2,
-    yearBuilt: 1995,
+    monthlyRent: 5000,
+    squareFootage: 2200,
+    bedrooms: 4,
+    bathrooms: 3,
+    yearBuilt: 2005,
     propertyTaxRate: 1.2,
     insuranceRate: 0.5,
-    maintenanceCost: 150,
+    maintenanceCost: 250,
     propertyManagementRate: 8,
-    capitalInvestments: 5000,
+    capitalInvestments: 15000,
     tenantTurnoverFees: {
-      prepFees: 750,
+      prepFees: 1200,
       realtorCommission: 0.5
     },
     longTermAssumptions: {
@@ -486,10 +454,10 @@ export const getSampleMF = (req: Request, res: Response): void => {
     propertyName: 'Sample Multi-Family Property',
     propertyType: 'MF',
     propertyAddress: {
-      street: '456 Apartment Blvd',
-      city: 'Metroville',
+      street: '250 W 34th Street',
+      city: 'New York',
       state: 'NY',
-      zipCode: '54321'
+      zipCode: '10001'
     },
     purchasePrice: 1200000,
     downPayment: 240000,
@@ -535,5 +503,6 @@ export const getSampleMF = (req: Request, res: Response): void => {
     }
   };
   
+  logger.info("Returning sample MF data with Manhattan, NY ZIP code 10001");
   res.json(sampleMF);
-}; 
+};

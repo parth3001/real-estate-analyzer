@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -26,6 +26,7 @@ import type {
   KeyMetrics 
 } from '../../types/analysis';
 import type { SFRPropertyData } from '../../types/property';
+import type { CensusDataResponse, CensusQueryParams } from '../../types/censusData';
 import {
   ResponsiveContainer,
   PieChart,
@@ -35,6 +36,8 @@ import {
 } from 'recharts';
 import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
+import MarketComparisonSection from '../MarketComparisonSection';
+import * as censusService from '../../services/censusService';
 
 // Extend MonthlyExpenses to include tenantTurnover
 interface MonthlyExpenses extends BaseMonthlyExpenses {
@@ -103,9 +106,24 @@ interface ExtendedAnalysis extends Omit<Analysis, 'keyMetrics' | 'monthlyAnalysi
   aiInsights?: any;
 }
 
+// Extend the PropertyAddress type to include zip and county
+interface ExtendedPropertyAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  county?: string;
+}
+
+// Extend the SFRPropertyData type to use the extended PropertyAddress
+interface ExtendedSFRPropertyData extends Omit<SFRPropertyData, 'propertyAddress'> {
+  propertyAddress?: ExtendedPropertyAddress;
+}
+
+// Modify the AnalysisResultsProps interface
 interface AnalysisResultsProps {
   analysis: Analysis;
-  propertyData: SFRPropertyData;
+  propertyData: SFRPropertyData; // Keep the original type in the interface
   setAnalysis?: (analysis: Analysis) => void;
 }
 
@@ -793,17 +811,70 @@ const ensureBackwardsCompatibility = (analysis: any, propertyData: SFRPropertyDa
   }
 };
 
+// Add this function to identify Census-based insights
+const isCensusInsight = (text: string): boolean => {
+  const censusKeywords = [
+    'census',
+    'median home value',
+    'median rent',
+    'vacancy rate',
+    'population',
+    'demographic',
+    'income',
+    'housing',
+    'local market',
+    'neighborhood',
+    'area'
+  ];
+  
+  const lowerText = text.toLowerCase();
+  return censusKeywords.some(keyword => lowerText.includes(keyword));
+};
+
+// Add this function to format insights with Census data highlighted
+const formatInsightText = (text: string): React.ReactNode => {
+  if (isCensusInsight(text)) {
+    return (
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          mb: 1,
+          bgcolor: 'info.main',
+          color: 'info.contrastText',
+          p: 0.5,
+          borderRadius: 1,
+          display: 'inline-block',
+          width: 'fit-content'
+        }}
+      >
+        <strong>Census Data:</strong> {text}
+      </Typography>
+    );
+  }
+  
+  return (
+    <Typography variant="body2" sx={{ mb: 1 }}>
+      {text}
+    </Typography>
+  );
+};
+
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData, setAnalysis = () => {} }) => {
-  const [tabIndex, setTabIndex] = React.useState(0);
+  // Cast propertyData to extended type
+  const extendedPropertyData = propertyData as ExtendedSFRPropertyData;
+  
+  const [tabIndex, setTabIndex] = useState(0);
+  const [censusData, setCensusData] = useState<CensusDataResponse | null>(null);
+  const [censusLoading, setCensusLoading] = useState<boolean>(false);
   
   // For TypeScript safety, cast to extended types
   const analysisExt = analysis as unknown as ExtendedAnalysis;
   
   // Set up error state
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   // Debug log for projections
-  React.useEffect(() => {
+  useEffect(() => {
     if (analysis?.longTermAnalysis?.projections?.length > 0) {
       console.log('First Year Projection:', analysis.longTermAnalysis.projections[0]);
     }
@@ -815,10 +886,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   };
   
   // Get default expenses for fallback
-  const defaultExpenses = React.useMemo(() => calculateDefaultMonthlyExpenses(propertyData), [propertyData]);
+  const defaultExpenses = useMemo(() => calculateDefaultMonthlyExpenses(propertyData), [propertyData]);
   
   // Validate and fix analysis data
-  React.useEffect(() => {
+  useEffect(() => {
     // Skip if missing data
     if (!analysis || !propertyData) return;
     
@@ -903,7 +974,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   
   // CRITICAL FIX: Immediately fix projections if they're flat (no inflation)
   // Force this to happen BEFORE first render
-  React.useEffect(() => {
+  useEffect(() => {
     if (!analysis?.longTermAnalysis?.projections || 
         !Array.isArray(analysis.longTermAnalysis.projections) || 
         analysis.longTermAnalysis.projections.length === 0) {
@@ -986,15 +1057,51 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       { name: 'Maintenance', value: analysis?.monthlyAnalysis?.expenses?.maintenance || 0 },
       { name: 'Property Management', value: analysis?.monthlyAnalysis?.expenses?.propertyManagement || 0 },
       { name: 'Vacancy', value: analysis?.monthlyAnalysis?.expenses?.vacancy || 0 },
-      { name: 'Tenant Turnover', value: (analysis as any)?.monthlyAnalysis?.expenses?.tenantTurnover || 0 }
-    ].filter(item => item.value > 0);
+    ];
   } catch (err) {
     console.error('Error preparing expense breakdown data:', err);
-    expenseBreakdownData = [];
   }
-  
-  // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B', '#8884d8'];
+
+  // Prepare data for Market Comparison Section
+  const marketComparisonData = useMemo(() => {
+    return {
+      propertyValue: propertyData.purchasePrice,
+      monthlyRent: propertyData.monthlyRent,
+      purchasePrice: propertyData.purchasePrice,
+      vacancyRate: propertyData.longTermAssumptions?.vacancyRate,
+      propertyTaxRate: propertyData.propertyTaxRate,
+      // Map zipCode to both zip and zipCode for compatibility
+      zip: propertyData.propertyAddress?.zipCode,
+      zipCode: propertyData.propertyAddress?.zipCode,
+      state: propertyData.propertyAddress?.state,
+      county: extendedPropertyData.propertyAddress?.county
+    };
+  }, [propertyData, extendedPropertyData.propertyAddress]);
+
+  // Fetch census data if we have location information
+  useEffect(() => {
+    const fetchCensusData = async () => {
+      if (extendedPropertyData.propertyAddress?.zipCode || extendedPropertyData.propertyAddress?.state) {
+        setCensusLoading(true);
+        try {
+          const params: CensusQueryParams = {
+            zip: extendedPropertyData.propertyAddress?.zipCode,
+            state: extendedPropertyData.propertyAddress?.state,
+            county: extendedPropertyData.propertyAddress?.county
+          };
+          
+          const data = await censusService.getComprehensiveCensusData(params);
+          setCensusData(data);
+        } catch (error) {
+          console.error('Error fetching census data:', error);
+        } finally {
+          setCensusLoading(false);
+        }
+      }
+    };
+    
+    fetchCensusData();
+  }, [extendedPropertyData.propertyAddress]);
 
   // Display error if validation failed
   if (error) {
@@ -1317,6 +1424,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             <Tab label="Annual Analysis" />
             <Tab label="Year-by-Year Projections" />
             <Tab label="Exit Analysis" />
+            <Tab label="Market Comparison" />
           </Tabs>
         </Box>
         
@@ -1337,9 +1445,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                     <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
                       {Array.isArray(analysis.aiInsights.strengths) && analysis.aiInsights.strengths.length > 0 ? (
                         analysis.aiInsights.strengths.map((strength, index) => (
-                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                            • {strength}
-                          </Typography>
+                          <Box key={index} sx={{ mb: 1 }}>
+                            • {formatInsightText(strength)}
+                          </Box>
                         ))
                       ) : (
                         <Typography variant="body2">No strengths available</Typography>
@@ -1352,9 +1460,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                     <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
                       {Array.isArray(analysis.aiInsights.weaknesses) && analysis.aiInsights.weaknesses.length > 0 ? (
                         analysis.aiInsights.weaknesses.map((weakness, index) => (
-                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                            • {weakness}
-                          </Typography>
+                          <Box key={index} sx={{ mb: 1 }}>
+                            • {formatInsightText(weakness)}
+                          </Box>
                         ))
                       ) : (
                         <Typography variant="body2">No weaknesses available</Typography>
@@ -1367,9 +1475,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                     <Paper variant="outlined" sx={{ p: 2 }}>
                       {Array.isArray(analysis.aiInsights.recommendations) && analysis.aiInsights.recommendations.length > 0 ? (
                         analysis.aiInsights.recommendations.map((rec, index) => (
-                          <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                            • {rec}
-                          </Typography>
+                          <Box key={index} sx={{ mb: 1 }}>
+                            • {formatInsightText(rec)}
+                          </Box>
                         ))
                       ) : (
                         <Typography variant="body2">No recommendations available</Typography>
@@ -1803,6 +1911,17 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                 No exit analysis data available. This may occur with older saved deals that don't include exit projections.
               </Alert>
             )}
+          </Box>
+        )}
+
+        {/* Market Comparison Tab */}
+        {tabIndex === (analysis.aiInsights ? 5 : 4) && (
+          <Box>
+            <MarketComparisonSection 
+              propertyData={marketComparisonData}
+              censusData={censusData || undefined}
+              isLoading={censusLoading}
+            />
           </Box>
         )}
       </Paper>

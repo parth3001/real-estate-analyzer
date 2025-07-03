@@ -1,0 +1,41 @@
+// Sample SFR data
+export const getSampleSFR = (req: Request, res: Response): void => {
+  const sampleSFR = {
+    propertyName: 'Sample SFR Property',
+    propertyType: 'SFR',
+    propertyAddress: {
+      street: '123 Elm Street',
+      city: 'Mountain View',
+      state: 'CA',
+      zipCode: '94043'
+    },
+    purchasePrice: 1500000,
+    downPayment: 300000,
+    interestRate: 4.5,
+    loanTerm: 30,
+    monthlyRent: 5000,
+    squareFootage: 2200,
+    bedrooms: 4,
+    bathrooms: 3,
+    yearBuilt: 2005,
+    propertyTaxRate: 1.2,
+    insuranceRate: 0.5,
+    maintenanceCost: 250,
+    propertyManagementRate: 8,
+    capitalInvestments: 15000,
+    tenantTurnoverFees: {
+      prepFees: 1200,
+      realtorCommission: 0.5
+    },
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 2,
+      annualPropertyValueIncrease: 3,
+      sellingCostsPercentage: 6,
+      inflationRate: 2,
+      vacancyRate: 5
+    }
+  };
+  
+  res.json(sampleSFR);
+};

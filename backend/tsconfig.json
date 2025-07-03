@@ -12,8 +12,8 @@
     "resolveJsonModule": true,
     "declaration": true,
     "allowJs": true,
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts"]
+  "exclude": ["node_modules"]
 } 

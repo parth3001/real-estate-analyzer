@@ -44,6 +44,8 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "@types/supertest": "^6.0.3",
+    "nodemon": "^2.0.22",
+    "supertest": "^7.1.1"
   }
 }

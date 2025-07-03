@@ -9,8 +9,8 @@ export interface MonthlyExpenses {
     interest: number;
     total: number;
   };
-  tenantTurnover?: number;
   total: number;
+  tenantTurnover?: number;
 }
 
 export interface MonthlyAnalysis {

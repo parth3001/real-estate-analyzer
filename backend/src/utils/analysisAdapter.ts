@@ -12,6 +12,7 @@ import { ensureExpenseInflation, shouldRegenerateProjections } from './fixers/pr
  * 4. Exit analysis is always recalculated based on the projections
  * 5. Annual analysis is derived from monthly values if missing
  * 6. AI Insights are preserved as-is from the stored deal
+ * 7. Census data and insights are preserved
  */
 export function adaptAnalysisForFrontend(analysis: any): any {
   try {
@@ -29,8 +30,19 @@ export function adaptAnalysisForFrontend(analysis: any): any {
       hasLongTermAnalysis: !!adaptedAnalysis.longTermAnalysis,
       hasYearlyProjections: !!(adaptedAnalysis.longTermAnalysis?.yearlyProjections),
       hasProjections: !!(adaptedAnalysis.longTermAnalysis?.projections),
+      hasCensusData: !!adaptedAnalysis.censusData,
+      hasCensusInsights: !!adaptedAnalysis.censusInsights,
       keys: Object.keys(adaptedAnalysis)
     });
+    
+    // RULE 7: Preserve Census data and insights
+    if (analysis.censusData) {
+      adaptedAnalysis.censusData = analysis.censusData;
+    }
+    
+    if (analysis.censusInsights) {
+      adaptedAnalysis.censusInsights = analysis.censusInsights;
+    }
     
     // RULE 1: Ensure we have propertyData in adaptedAnalysis
     if (!adaptedAnalysis.propertyData) {

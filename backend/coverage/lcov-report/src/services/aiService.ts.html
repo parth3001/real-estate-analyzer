@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>0/30</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -152,7 +152,10 @@
 <a name='L87'></a><a href='#L87'>87</a>
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
-<a name='L90'></a><a href='#L90'>90</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,25 +186,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -220,6 +212,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -229,19 +231,23 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { getOpenAIClient } from './openai';</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { getOpenAIClient, generateAnalysis } from './openai';</span>
 <span class="cstat-no" title="statement not covered" >import { logger } from '../utils/logger';</span>
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { AIInsights } from '../types/analysis';
@@ -270,28 +276,27 @@ import { AIInsights } from '../types/analysis';
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    logger.info(`Generated ${dealData.propertyType} analysis prompt (${prompt.length} chars)`);</span>
 &nbsp;
-    const completion = <span class="cstat-no" title="statement not covered" >await openai.completions.create({</span>
-      model: "text-davinci-003",
-      prompt,
-      max_tokens: 800,
-      temperature: 0.7
-    });
-&nbsp;
-    const response = <span class="cstat-no" title="statement not covered" >completion.choices[0].text?.trim() || '';</span>
-    
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const aiResponse = <span class="cstat-no" title="statement not covered" >JSON.parse(response);</span>
+      // Use the updated generateAnalysis function from openai.ts
+      const aiResponse = <span class="cstat-no" title="statement not covered" >await generateAnalysis(prompt);</span>
+      
 <span class="cstat-no" title="statement not covered" >      return {</span>
         summary: aiResponse.summary || "No summary provided",
         strengths: aiResponse.strengths || [],
         weaknesses: aiResponse.weaknesses || [],
         recommendations: aiResponse.recommendations || [],
-        investmentScore: aiResponse.investmentScore || null
+        riskAssessment: aiResponse.riskAssessment,
+        investmentScore: aiResponse.investmentScore || null,
+        // For MF properties, include additional fields if they exist
+        unitMixAnalysis: aiResponse.unitMixAnalysis,
+        marketPositionAnalysis: aiResponse.marketPositionAnalysis,
+        valueAddOpportunities: aiResponse.valueAddOpportunities,
+        recommendedHoldPeriod: aiResponse.recommendedHoldPeriod
       };
-    } catch (parseError) {
-<span class="cstat-no" title="statement not covered" >      logger.error('Error parsing AI response:', parseError);</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      logger.error('Error generating AI insights:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return {</span>
-        summary: "Error parsing AI response. Please try again later.",
+        summary: "Error generating AI insights. Please try again later.",
         strengths: [],
         weaknesses: [],
         recommendations: [],
@@ -299,9 +304,9 @@ import { AIInsights } from '../types/analysis';
       };
     }
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    logger.error('Error getting AI insights:', error);</span>
+<span class="cstat-no" title="statement not covered" >    logger.error('Unexpected error in getAIInsights:', error);</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
-      summary: "Error generating AI analysis. Please try again later.",
+      summary: "An unexpected error occurred during AI analysis.",
       strengths: [],
       weaknesses: [],
       recommendations: [],
@@ -318,14 +323,18 @@ export const <span class="cstat-no" title="statement not covered" >generateAIRes
 <span class="cstat-no" title="statement not covered" >      return 'AI service is not available';</span>
     }
 &nbsp;
-    const completion = <span class="cstat-no" title="statement not covered" >await openai.completions.create({</span>
-      model: 'text-davinci-003',
-      prompt,
+    // Use the v3 API format for chat completions
+    const completion = <span class="cstat-no" title="statement not covered" >await openai.createChatCompletion({</span>
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant for real estate analysis.' },
+        { role: 'user', content: prompt }
+      ],
       max_tokens: 500,
       temperature: 0.7
     });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return completion.choices[0].text?.trim() || 'No response generated';</span>
+<span class="cstat-no" title="statement not covered" >    return completion.data.choices[0].message?.content?.trim() || 'No response generated';</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    logger.error('Error generating AI response:', error);</span>
 <span class="cstat-no" title="statement not covered" >    return 'Error generating AI response';</span>
@@ -337,7 +346,7 @@ export const <span class="cstat-no" title="statement not covered" >generateAIRes
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-13T02:31:32.520Z
+                at 2025-07-02T03:09:00.331Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

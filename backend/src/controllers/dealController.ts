@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { IDeal } from '../models/Deal';
 // import { analyzeSFRProperty, analyzeMFProperty } from '../services/analysisService';
 import { adaptAnalysisForFrontend } from '../utils/analysisAdapter';
+import { enrichPropertyWithCensusData, analyzePropertyWithCensusContext } from '../services/propertyEnrichmentService';
 
 // Mock implementations until proper TypeScript versions are created
 // These will be replaced by actual implementations in the future
@@ -536,11 +537,37 @@ export const analyzeDeal = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid property type. Must be "SFR" or "MF"' });
     }
     
+    // Enrich property data with census information if address is available
+    let enrichedData = dealData;
+    if (dealData.propertyAddress) {
+      try {
+        logger.info('Enriching property data with census information');
+        const enrichedProperty = await enrichPropertyWithCensusData({
+          ...dealData,
+          address: `${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode}`
+        });
+        
+        // Add census data to the property data
+        enrichedData = {
+          ...dealData,
+          censusData: enrichedProperty.censusData
+        };
+        
+        // Analyze property in context of census data
+        enrichedData = analyzePropertyWithCensusContext(enrichedData, enrichedProperty.censusData);
+        
+        logger.info('Successfully enriched property with census data');
+      } catch (censusError) {
+        logger.warn('Failed to enrich property with census data:', censusError);
+        // Continue with analysis without census data
+      }
+    }
+    
     let analysis;
     if (propertyType === 'SFR') {
-      analysis = await analyzeSFRProperty(dealData);
+      analysis = await analyzeSFRProperty(enrichedData);
     } else {
-      analysis = await analyzeMFProperty(dealData);
+      analysis = await analyzeMFProperty(enrichedData);
     }
     
     // Adapt the analysis to the frontend-expected format

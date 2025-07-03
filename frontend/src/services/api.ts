@@ -3,7 +3,7 @@ import type { PropertyData } from '../types/property';
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },

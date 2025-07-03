@@ -23,6 +23,7 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import SavedSearchIcon from '@mui/icons-material/SavedSearch';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import MapIcon from '@mui/icons-material/Map';
 
 const DRAWER_WIDTH = 240;
 
@@ -100,7 +101,44 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
         <ListItem disablePadding>
           <ListItemButton 
             component={Link}
+            to="/census-test"
+            selected={isActive('/census-test')}
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: 'primary.light',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  backgroundColor: 'primary.main',
+                },
+                '& .MuiListItemIcon-root': {
+                  color: 'primary.contrastText',
+                },
+              },
+            }}
+          >
+            <ListItemIcon>
+              <MapIcon />
+            </ListItemIcon>
+            <ListItemText primary="Census Data Test" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton 
+            component={Link}
             to="/help"
+            selected={isActive('/help')}
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: 'primary.light',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  backgroundColor: 'primary.main',
+                },
+                '& .MuiListItemIcon-root': {
+                  color: 'primary.contrastText',
+                },
+              },
+            }}
           >
             <ListItemIcon>
               <HelpOutlineIcon />

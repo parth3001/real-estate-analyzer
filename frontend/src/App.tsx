@@ -11,6 +11,7 @@ import MFAnalysis from './pages/MFAnalysis';
 import SavedProperties from './pages/SavedProperties';
 import HelpPage from './pages/HelpPage';
 import NotFound from './pages/NotFound';
+import CensusDataTestPage from './pages/CensusDataTestPage';
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ function App() {
               <Route path="/mf-analysis" element={<MFAnalysis />} />
               <Route path="/saved-properties" element={<SavedProperties />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/census-test" element={<CensusDataTestPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
