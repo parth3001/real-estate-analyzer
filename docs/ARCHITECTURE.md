@@ -253,60 +253,208 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
    - Property management actions
 
 ### 4. AI Integration Strategy
-**Current Implementation:** OpenAI API Placeholder
-- Basic integration structure is in place
-- Using placeholder API responses
-- Error handling for missing API keys
+**Current Implementation:** Full OpenAI v5.8.2 Integration with Market Intelligence ✅
+- Complete OpenAI API v5+ integration with modern client
+- Using GPT-4o-mini for enhanced analysis quality and cost efficiency
+- Structured JSON response format for reliable parsing
+- Enhanced prompts for expert-level real estate analysis
+- Comprehensive error handling with graceful fallbacks
+- **PHASE 1 ENHANCEMENT:** Market Intelligence Integration ✅
+  - Census data integration for market context analysis
+  - Market analysis engine (`marketAnalysis.ts`) for standardized calculations
+  - Score breakdown system with 4-category scoring framework
+  - Property positioning analysis vs. local market medians
+  - Affordability analysis based on median household income
+
 ```javascript
-// Current placeholder implementation
-const getAIInsights = async (analysis) => {
+// Current implementation with OpenAI v5.8.2 and Market Intelligence
+const getAIInsights = async (dealData, analysis) => {
   try {
-    // Placeholder response until OpenAI integration is complete
-    return {
-      insights: "AI insights will be available in future updates.",
-      recommendations: [],
-      riskAnalysis: "Pending AI integration"
-    };
+    const openai = getOpenAIClient(); // Modern OpenAI client
+    if (!openai) {
+      return generateFallbackInsights();
+    }
+
+    // PHASE 1 ENHANCEMENT: Calculate comprehensive market analysis if census data is available
+    let marketAnalysis = null;
+    if (analysis.censusData) {
+      const monthlyRent = dealData.propertyType === 'SFR' 
+        ? dealData.monthlyRent 
+        : dealData.unitTypes?.reduce((total, unit) => total + (unit.monthlyRent * unit.count), 0) || 0;
+      
+      marketAnalysis = performComprehensiveMarketAnalysis({
+        propertyPrice: dealData.purchasePrice,
+        monthlyRent: monthlyRent,
+        marketMedianValue: analysis.censusData.housing?.medianHomeValue || dealData.purchasePrice,
+        marketMedianRent: analysis.censusData.housing?.medianRent || monthlyRent,
+        medianHouseholdIncome: analysis.censusData.income?.medianHouseholdIncome || 70000,
+        vacancyRate: analysis.censusData.housing?.vacancyRate || 5,
+        medianAge: analysis.censusData.demographics?.medianAge || 35,
+        populationGrowth: analysis.censusData.demographics?.populationGrowth,
+        propertyQuality: 5 // Default property quality score
+      });
+    }
+
+    // Generate enhanced prompt based on property type with market intelligence
+    const prompt = dealData.propertyType === 'SFR' 
+      ? enhancedSfrAnalysisPrompt(dealData, analysis, marketAnalysis)
+      : enhancedMfAnalysisPrompt(dealData, analysis, marketAnalysis);
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini', // Latest efficient model
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a sophisticated real estate investment analyst with 25+ years of experience...'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+      response_format: { type: 'json_object' } // Structured JSON response
+    });
+
+    return JSON.parse(response.choices[0].message.content);
   } catch (error) {
     logger.error('Error getting AI insights:', error);
-    return null;
+    return generateFallbackInsights();
   }
 };
 ```
 
-**Future Implementation:** Full OpenAI Integration
-- Planned features:
-  - Market analysis
-  - Investment recommendations
-  - Risk assessment
-  - Comparative market analysis
-- Implementation roadmap:
-  ```javascript
-  // Future implementation structure
-  const getAIInsights = async (analysis) => {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
-    
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: generateAnalysisPrompt(analysis)
-        },
-        {
-          role: "user",
-          content: generateAnalysisPrompt(analysis)
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1500
-    });
+**✅ Implemented Features:**
+- **Expert-Level Analysis**: AI positioned as experienced real estate analyst
+- **Strategic Insights**: Beyond basic metrics to investment strategy
+- **Market Context**: Property positioning relative to market trends
+- **Risk Assessment**: Quantified risk analysis with mitigation strategies
+- **Value-Add Opportunities**: Specific improvement recommendations with ROI
+- **Investor Matching**: Identifies optimal investor profiles for each property
+- **Exit Strategy Analysis**: Data-driven recommendations for optimal hold periods
+- **Financing Optimization**: Specific recommendations for financing structure
+- **Portfolio Integration**: Analysis of how property fits investment portfolios
+- **Opportunity Cost Analysis**: Comparison to alternative investments
 
-    return processAIResponse(response);
-  };
-  ```
+**Enhanced Prompt Engineering:**
+```javascript
+// Enhanced prompt structure with detailed instructions
+const enhancedSfrAnalysisPrompt = (dealData, analysis) => {
+  return `You are a sophisticated real estate investment analyst with 25+ years of experience...
+  
+  ANALYSIS REQUIREMENTS:
+  1. PROVIDE STRATEGIC CONTEXT with specific numbers and percentages
+  2. IDENTIFY PATTERNS AND RELATIONSHIPS between metrics
+  3. OFFER COMPARATIVE ANALYSIS against industry benchmarks
+  4. PREDICT FUTURE PERFORMANCE based on market conditions
+  5. MATCH TO INVESTOR PROFILES with specific reasoning
+  6. SUGGEST RISK MITIGATION STRATEGIES with quantified impact
+  7. IDENTIFY VALUE-ADD OPPORTUNITIES with ROI estimates
+  8. OPTIMIZE EXIT STRATEGY based on equity and market cycles
+  
+  Respond with valid JSON in this exact format...
+  `;
+};
+```
+
+### 5. Market Analysis Engine (Phase 1 Enhancement) ✅
+
+**Implementation:** Comprehensive market intelligence system integrated with AI analysis
+
+**Location:** `backend/src/utils/marketAnalysis.ts`
+
+The Market Analysis Engine provides standardized market intelligence calculations that integrate with both Census data and AI insights generation.
+
+#### Core Functions
+
+1. **Market Positioning Analysis**
+   ```typescript
+   export const calculateMarketPositioning = (
+     propertyPrice: number, 
+     marketMedianValue: number
+   ): MarketPositioning => {
+     const percentageDiff = ((propertyPrice - marketMedianValue) / marketMedianValue) * 100;
+     
+     let position: string;
+     if (percentageDiff <= -20) position = 'Significantly Below Market';
+     else if (percentageDiff <= -10) position = 'Below Market';
+     else if (percentageDiff <= 10) position = 'At Market';
+     else if (percentageDiff <= 20) position = 'Above Market';
+     else position = 'Significantly Above Market';
+     
+     return {
+       propertyValue: propertyPrice,
+       marketMedian: marketMedianValue,
+       percentageDiff,
+       position,
+       competitiveAdvantage: generateCompetitiveAdvantage(position, percentageDiff)
+     };
+   };
+   ```
+
+2. **Affordability Analysis**
+   ```typescript
+   export const calculateAffordabilityAnalysis = (
+     monthlyRent: number,
+     medianHouseholdIncome: number
+   ): AffordabilityAnalysis => {
+     const requiredIncome = monthlyRent * 12 * 3; // 3x income rule
+     const affordabilityRatio = medianHouseholdIncome / requiredIncome;
+     
+     // Assessment and tenant pool size logic
+     return {
+       requiredIncome,
+       medianIncome: medianHouseholdIncome,
+       affordabilityRatio,
+       assessment,
+       tenantPoolSize
+     };
+   };
+   ```
+
+3. **Market Dynamics Assessment**
+   ```typescript
+   export const analyzeMarketDynamics = (
+     vacancyRate: number,
+     affordabilityRatio: number,
+     populationGrowth?: number
+   ): MarketDynamics => {
+     // Calculates market condition, demand level, and investment timing
+     return {
+       vacancyRate,
+       marketCondition,
+       demandLevel,
+       competitiveEnvironment,
+       investmentTiming
+     };
+   };
+   ```
+
+4. **Comprehensive Market Analysis Integration**
+   ```typescript
+   export const performComprehensiveMarketAnalysis = (params) => {
+     const marketPositioning = calculateMarketPositioning(params.propertyPrice, params.marketMedianValue);
+     const affordabilityAnalysis = calculateAffordabilityAnalysis(params.monthlyRent, params.medianHouseholdIncome);
+     const marketDynamics = analyzeMarketDynamics(params.vacancyRate, affordabilityAnalysis.affordabilityRatio, params.populationGrowth);
+     const demographicInsights = generateDemographicInsights(params.medianAge, params.populationGrowth || 0);
+     
+     return {
+       marketPositioning,
+       affordabilityAnalysis,
+       marketDynamics,
+       demographicInsights,
+       summary: generateMarketSummary(marketPositioning, affordabilityAnalysis, marketDynamics)
+     };
+   };
+   ```
+
+#### Integration Points
+
+- **AI Service Integration**: Automatically called when Census data is available
+- **Fallback Handling**: Graceful degradation when market data is unavailable  
+- **Score Breakdown**: Market positioning feeds into AI scoring algorithm
+- **Performance**: Optimized calculations with minimal computational overhead
 
 ## Architecture Diagram
 ```
@@ -451,6 +599,31 @@ sequenceDiagram
   app.use(express.json());
   app.use(morgan('combined'));
   app.use('/api/deals', dealRoutes);
+  app.use('/api/analyze', analyzeRoutes); // AI-enhanced analysis routes
+  ```
+
+### OpenAI Integration Layer
+- Modern OpenAI v5.8.2 client configuration:
+  ```javascript
+  import OpenAI from 'openai';
+  
+  let openaiClient = null;
+  
+  export const getOpenAIClient = () => {
+    if (!process.env.OPENAI_API_KEY) {
+      logger.warn('OpenAI API key not found');
+      return null;
+    }
+    
+    if (!openaiClient) {
+      openaiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      logger.info('OpenAI client initialized successfully');
+    }
+    
+    return openaiClient;
+  };
   ```
 
 ### Core Modules
@@ -493,20 +666,43 @@ sequenceDiagram
      };
      ```
 
-3. **AI Integration** (`/backend/src/controllers/deals.js`)
-   - OpenAI Configuration:
-     ```javascript
-     const openai = new OpenAI({
-       apiKey: process.env.OPENAI_API_KEY
-     });
+3. **AI Integration** (`/backend/src/services/aiService.ts`)
+   - Modern OpenAI v5.8.2 Integration:
+     ```typescript
+     import { getOpenAIClient, generateAnalysis } from './openai';
+     import { enhancedSfrAnalysisPrompt, enhancedMfAnalysisPrompt } from '../prompts/enhancedAIPrompts';
+     
+     export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysis: any): Promise<AIInsights> {
+       const openai = getOpenAIClient();
+       if (!openai) {
+         return generateFallbackInsights();
+       }
+       
+       const prompt = dealData.propertyType === 'SFR' 
+         ? enhancedSfrAnalysisPrompt(dealData, analysis)
+         : enhancedMfAnalysisPrompt(dealData, analysis);
+         
+       return await generateAnalysis(prompt);
+     }
      ```
-   - Prompt Engineering:
-     ```javascript
-     const generatePrompt = (analysis) => {
-       return `Analyze this real estate investment:
-         Property Value: ${analysis.propertyValue}
-         Cash Flow: ${analysis.cashFlow}
-         ...`;
+   - Enhanced Prompt Engineering:
+     ```typescript
+     const enhancedSfrAnalysisPrompt = (dealData, analysis) => {
+       return `You are a sophisticated real estate investment analyst...
+         
+         PROPERTY DETAILS:
+         - Purchase Price: $${dealData.purchasePrice.toLocaleString()}
+         - Monthly Rent: $${dealData.monthlyRent.toLocaleString()}
+         - Cap Rate: ${analysis.keyMetrics.capRate.toFixed(2)}%
+         ...
+         
+         ANALYSIS REQUIREMENTS:
+         1. BE EXTREMELY SPECIFIC with numbers and percentages
+         2. PROVIDE DEEP COMPARATIVE CONTEXT against benchmarks
+         3. IDENTIFY SPECIFIC OPTIMIZATION OPPORTUNITIES
+         4. ANALYZE RISK-ADJUSTED RETURNS with scenarios
+         ...
+         `;
      };
      ```
 

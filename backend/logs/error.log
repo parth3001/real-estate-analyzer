@@ -287,3 +287,4 @@
 2025-07-01 20:34:05:345 [31merror[39m: [31mError calling OpenAI API: Invalid JSON response from OpenAI[39m
 2025-07-01 20:34:05:345 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
 2025-07-01 22:08:48:848 [31merror[39m: [31mError in getDemographicData controller: Census API error[39m
+2025-07-05 12:01:23:123 [31merror[39m: [31mError in getDemographicData controller: Census API error[39m

@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Divider,
-  Rating,
   Chip,
   Table,
   TableBody,
@@ -15,7 +14,6 @@ import {
   TableHead,
   TableRow,
   LinearProgress,
-  Stack,
   useTheme,
   GridLegacy as Grid
 } from '@mui/material';
@@ -23,19 +21,8 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningIcon from '@mui/icons-material/Warning';
 import type { AIInsights, ValueAddOpportunity } from '../../types/analysis';
 
-// Helper functions for formatting
-const formatPercent = (value?: number) => {
-  if (value === undefined || value === null) return 'N/A';
-  return `${value.toFixed(1)}%`;
-};
-
-const formatDecimal = (value?: number) => {
-  if (value === undefined || value === null) return 'N/A';
-  return value.toFixed(2);
-};
 
 interface AIInsightsProps {
   aiInsights: AIInsights;

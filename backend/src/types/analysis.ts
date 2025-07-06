@@ -128,6 +128,19 @@ export interface AIAnalysis {
   unitMixAnalysis?: string;
 }
 
+export interface ScoreBreakdownItem {
+  score: number;
+  max: number;
+  reason: string;
+}
+
+export interface ScoreBreakdown {
+  cashFlow?: ScoreBreakdownItem;
+  marketPosition?: ScoreBreakdownItem;
+  riskAssessment?: ScoreBreakdownItem;
+  financialMetrics?: ScoreBreakdownItem;
+}
+
 export interface AIInsights {
   summary: string;
   strengths: string[];
@@ -135,6 +148,7 @@ export interface AIInsights {
   recommendations: string[];
   riskAssessment?: string;
   investmentScore: number | null;
+  scoreBreakdown?: ScoreBreakdown;  // New score breakdown for detailed analysis
   // For MF properties
   unitMixAnalysis?: string;
   marketPositionAnalysis?: string;

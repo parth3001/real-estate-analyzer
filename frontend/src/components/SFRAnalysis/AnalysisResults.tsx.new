@@ -1,0 +1,42 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  GridLegacy as Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Tab,
+  Divider,
+  Card,
+  CardContent,
+  Alert,
+  Tooltip
+} from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
+import EnhancedAIInsights from './EnhancedAIInsights';
+import type { 
+  Analysis, 
+  MonthlyExpenses as BaseMonthlyExpenses, 
+  AnnualAnalysis, 
+  KeyMetrics 
+} from '../../types/analysis';
+import type { SFRPropertyData } from '../../types/property';
+import type { CensusDataResponse, CensusQueryParams } from '../../types/censusData';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as RechartsTooltip
+} from 'recharts';
+import AdvancedMetricsSection from './AdvancedMetricsSection';
+import SensitivityAnalysisSection from './SensitivityAnalysisSection';
+import MarketComparisonSection from '../MarketComparisonSection';
+import * as censusService from '../../services/censusService';
+import { COLORS } from './colors';

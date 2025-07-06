@@ -9,7 +9,7 @@ exports.testConnection = async (req, res) => {
   try {
     // First do a simple test to verify the connection
     const testResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -25,7 +25,7 @@ exports.testConnection = async (req, res) => {
     
     // Now test the JSON structured response capability for real estate analysis
     const analysisTestResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

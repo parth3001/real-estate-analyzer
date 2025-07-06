@@ -1,81 +1,24 @@
 console.log('Deals controller loaded from file:', __filename);
 import { Request, Response } from 'express';
 import { SFRAnalyzer } from '../analysis';
-import { getOpenAIClient } from '../services/openai';
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { MultiFamilyAnalyzer } from '../analysis/MultiFamilyAnalyzer';
-import { sfrAnalysisPrompt, mfAnalysisPrompt } from '../prompts/aiPrompts';
-import { generateAnalysis } from '../services/openai';
 import { DealService } from '../services/dealService';
 import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
-import { enrichPropertyWithCensusData, analyzePropertyWithCensusContext } from '../services/propertyEnrichmentService';
+// Removed unused propertyEnrichmentService imports
 
 // Initialize the deal service
 const dealService = new DealService();
 
-// Utility function to get AI insights
+// Import our enhanced AI service
+import { getAIInsights } from '../services/aiService';
+
+// Utility function to get AI insights - now using enhanced service
 const generateAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
   try {
-    const openai = getOpenAIClient();
-    if (!openai) {
-      return {
-        summary: "AI insights are not available. Please check your OpenAI API key.",
-        strengths: [],
-        weaknesses: [],
-        recommendations: [],
-        investmentScore: 0
-      };
-    }
-
-    // Extract key metrics for logging purposes only
-    const metrics = {
-      cashFlow: analysis.monthlyAnalysis.cashFlow || 0,
-      annualCashFlow: (analysis.monthlyAnalysis.cashFlow || 0) * 12,
-      dscr: analysis.keyMetrics.dscr || 0,
-      capRate: analysis.keyMetrics.capRate || 0,
-      cashOnCashReturn: analysis.keyMetrics.cashOnCashReturn || 0,
-      irr: analysis.keyMetrics.irr || 0,
-      purchasePrice: dealData.purchasePrice || 0,
-      monthlyRent: dealData.propertyType === 'SFR' ? (dealData as SFRData).monthlyRent || 0 : 0,
-      propertyType: dealData.propertyType || 'SFR'
-    };
-
-    logger.info('Key metrics for AI analysis:', metrics);
-
-    // Get the appropriate prompt without adding anything to it
-    let prompt: string;
-    if (dealData.propertyType === 'SFR') {
-      prompt = sfrAnalysisPrompt(dealData, analysis);
-    } else if (dealData.propertyType === 'MF') {
-      prompt = mfAnalysisPrompt(dealData, analysis);
-    } else {
-      throw new Error('Unsupported propertyType for AI analysis');
-    }
-
-    logger.info('Sending prompt to OpenAI:', prompt.substring(0, 200) + '...');
-
-    // Use the generateAnalysis function from the openai service
-    const aiResponse = await generateAnalysis(prompt);
-    logger.info('AI response parsed successfully:', Object.keys(aiResponse));
-    
-    // Ensure investmentScore is included and is a number
-    const investmentScore = typeof aiResponse.investmentScore === 'number' 
-      ? aiResponse.investmentScore 
-      : (parseFloat(aiResponse.investmentScore) || 0);
-    
-    return {
-      summary: aiResponse.summary || "No summary provided",
-      strengths: Array.isArray(aiResponse.strengths) ? aiResponse.strengths : [],
-      weaknesses: Array.isArray(aiResponse.weaknesses) ? aiResponse.weaknesses : [],
-      recommendations: Array.isArray(aiResponse.recommendations) ? aiResponse.recommendations : [],
-      investmentScore: investmentScore,
-      // Add additional MF fields if they exist in the response
-      ...(aiResponse.unitMixAnalysis && { unitMixAnalysis: aiResponse.unitMixAnalysis }),
-      ...(aiResponse.marketPositionAnalysis && { marketPositionAnalysis: aiResponse.marketPositionAnalysis }),
-      ...(aiResponse.valueAddOpportunities && { valueAddOpportunities: aiResponse.valueAddOpportunities }),
-      ...(aiResponse.recommendedHoldPeriod && { recommendedHoldPeriod: aiResponse.recommendedHoldPeriod })
-    };
+    // Use our enhanced AI service which includes scoreBreakdown and market analysis
+    return await getAIInsights(dealData, analysis);
   } catch (error) {
     logger.error('Error getting AI insights:', error);
     return {

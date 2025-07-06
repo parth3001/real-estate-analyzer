@@ -139,12 +139,22 @@ GET /api/census/comprehensive
 
 ### Property Analysis
 
-#### Analyze Property
+#### Analyze Property (Enhanced with AI)
+```
+POST /api/analyze/:type
+```
+
+**Purpose:** Analyze a property with comprehensive financial metrics and AI-powered insights
+
+**Parameters:**
+- `type`: Property type (`sfr` for Single Family Rental, `mf` for Multi-Family)
+
+#### Legacy Analyze Property
 ```
 POST /api/deals/analyze
 ```
 
-**Purpose:** Analyze a property based on the provided data
+**Purpose:** Legacy analysis endpoint (deprecated - use /api/analyze/:type instead)
 
 **Request Body:**
 ```json
@@ -269,23 +279,59 @@ POST /api/deals/analyze
     "grossRentMultiplier": 10
   },
   "aiInsights": {
-    "summary": "This property appears to be a solid investment with positive cash flow and good long-term potential.",
+    "summary": "This property represents a solid investment opportunity with $259 monthly cash flow and a 5.9% cap rate, positioned 12% below market median pricing, making it suitable for income-focused investors seeking stable returns with moderate appreciation potential.",
+    "investmentScore": 75,
+    "investorFit": "Best suited for income-focused investors with 3-5 year investment horizons seeking stable cash flow with moderate appreciation. Ideal for portfolio diversification with 15-25% allocation to real estate.",
     "strengths": [
-      "Positive cash flow from day one",
-      "Good location with potential for appreciation",
-      "Solid cap rate compared to market average"
+      "Strong monthly cash flow of $259 representing 4.78% cash-on-cash return above market average of 4.2%",
+      "Excellent market positioning at 12% below area median home value of $340,000",
+      "Solid cap rate of 5.9% exceeding market average of 5.2% for similar properties",
+      "DSCR of 1.21 provides comfortable debt service coverage above lender requirements"
     ],
     "weaknesses": [
-      "Maintenance costs may increase due to property age",
-      "Property tax rate is slightly above average",
-      "Market rental rates may fluctuate"
+      "Property age of 15 years may result in $200-400 monthly maintenance increases over next 5 years",
+      "Property tax rate of 1.2% slightly above county average of 1.1%, adding $360 annually",
+      "Expense ratio of 43% approaches upper limit of acceptable range (35-45%)",
+      "Break-even occupancy of 87% leaves limited margin for extended vacancies"
     ],
     "recommendations": [
-      "Consider setting aside reserves for future capital expenditures",
-      "Monitor property tax assessments",
-      "Evaluate refinancing options after 5 years"
+      "Establish $15,000 capital reserve fund for major maintenance items (HVAC, roof) expected within 3-5 years",
+      "Consider refinancing if rates drop below 4% to improve cash flow by approximately $150/month",
+      "Implement property management system to reduce vacancy periods and optimize rent collection",
+      "Evaluate market rent increases of 3-5% annually based on local demographics and income growth"
     ],
-    "investmentScore": 75
+    "riskAssessment": "Moderate risk profile with primary concerns being property age-related maintenance costs and market rental volatility. Downside scenario shows potential for $50-100 monthly cash flow reduction if major repairs coincide with vacancy periods.",
+    "strategicInsights": "Property demonstrates strong fundamentals with defensive characteristics suitable for conservative portfolios. Below-market purchase price provides built-in equity cushion of approximately $40,000, while positive cash flow supports debt service during market downturns.",
+    "competitiveAdvantage": "Location in established neighborhood with 95% occupancy rates provides stable rental demand. Property's condition and recent updates position it favorably against 40% of area rentals requiring significant improvements.",
+    "wealthBuildingPotential": "Conservative wealth building vehicle with projected $31,000 equity accumulation over 5 years through mortgage paydown and 3% annual appreciation. Total return potential of $55,000 including cash flow represents 85% ROI over holding period.",
+    "marketCycleAnalysis": "Local market in mid-cycle expansion phase with population growth of 2.1% annually and median income increases of 4.2%. Optimal acquisition timing with 3-5 year appreciation runway before next cycle peak.",
+    "financingRecommendations": "Current 4.5% financing is competitive but monitor for refinancing opportunities below 4.0% which would improve cash flow by $150/month and IRR by 1.8 percentage points.",
+    "portfolioFitAnalysis": "Excellent diversification asset with low correlation to stock market volatility. Recommended allocation of 15-20% of investment portfolio for risk-adjusted returns and inflation hedging characteristics.",
+    "opportunityCostAnalysis": "Expected 12.3% IRR compares favorably to S&P 500 historical 10.5% with lower volatility. Superior to bond yields of 4.8% while providing inflation protection and tax advantages through depreciation.",
+    "marketTrendPrediction": "Expect continued rental demand growth driven by local job market expansion and limited new construction. Rental rates likely to increase 3-4% annually over next 3 years based on income growth and housing supply constraints.",
+    "optimalExitStrategy": "Hold for 5-7 years to maximize mortgage paydown and appreciation. Exit timing should coincide with market peak indicators: rent growth slowing below 2% annually and cap rate compression below 5.5%.",
+    "recommendedHoldPeriod": "5-7 years optimal hold period to balance equity accumulation with market cycle timing. Consider sale when IRR peaks around year 6-7 or if market fundamentals deteriorate significantly.",
+    "valueAddOpportunities": [
+      {
+        "improvement": "Kitchen renovation with modern appliances and finishes",
+        "estimatedCost": "$12,000-15,000",
+        "potentialRoiPercent": "18-22%",
+        "rentIncreasePotential": "$150-200/month",
+        "valueIncreasePotential": "$25,000-30,000",
+        "implementationDifficulty": "medium",
+        "strategicPriority": "high"
+      },
+      {
+        "improvement": "Energy efficiency upgrades (windows, insulation, HVAC)",
+        "estimatedCost": "$8,000-12,000",
+        "potentialRoiPercent": "15-20%",
+        "rentIncreasePotential": "$75-100/month",
+        "valueIncreasePotential": "$15,000-20,000",
+        "implementationDifficulty": "medium",
+        "strategicPriority": "medium"
+      }
+    ],
+    "notes": "Property benefits from established neighborhood character and proximity to employment centers. Consider local zoning changes that might allow ADU development for additional income potential."
   }
 }
 ```
@@ -550,11 +596,83 @@ interface MultiFamilyMetrics extends KeyMetrics {
 ### AI Insights
 ```typescript
 interface AIInsights {
+  // Core Analysis
   summary: string;
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
   investmentScore: number | null;
+  riskAssessment?: string;
+  
+  // PHASE 1 ENHANCEMENT: Score Breakdown System ✅
+  scoreBreakdown?: {
+    cashFlow: {
+      score: number;
+      max: number;
+      reason: string;
+    };
+    marketPosition: {
+      score: number;
+      max: number;
+      reason: string;
+    };
+    financialMetrics: {
+      score: number;
+      max: number;
+      reason: string;
+    };
+    riskAssessment: {
+      score: number;
+      max: number;
+      reason: string;
+    };
+  };
+  
+  // PHASE 1 ENHANCEMENT: Market Intelligence ✅
+  marketPositioning?: {
+    propertyValue: number;
+    marketMedian: number;
+    percentageDiff: number;
+    position: string;
+    competitiveAdvantage: string;
+  };
+  
+  marketInsights?: string[];
+  
+  // Enhanced Strategic Analysis (v2.0+)
+  investorFit?: string;
+  strategicInsights?: string;
+  competitiveAdvantage?: string;
+  wealthBuildingPotential?: string;
+  marketCycleAnalysis?: string;
+  financingRecommendations?: string;
+  portfolioFitAnalysis?: string;
+  opportunityCostAnalysis?: string;
+  
+  // Property-Specific Analysis
+  unitMixAnalysis?: string; // For Multi-Family properties
+  marketPositionAnalysis?: string;
+  
+  // Future Performance
+  marketTrendPrediction?: string;
+  optimalExitStrategy?: string;
+  recommendedHoldPeriod?: string;
+  
+  // Value Enhancement
+  valueAddOpportunities?: ValueAddOpportunity[];
+  
+  // Additional Context
+  notes?: string;
+}
+
+interface ValueAddOpportunity {
+  improvement: string;
+  estimatedCost: string;
+  potentialRoiPercent: string;
+  rentIncreasePotential: string;
+  valueIncreasePotential: string;
+  implementationDifficulty?: 'easy' | 'medium' | 'hard';
+  strategicPriority?: 'high' | 'medium' | 'low';
 }
 ```
 

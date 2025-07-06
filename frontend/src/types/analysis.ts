@@ -69,12 +69,26 @@ export interface ExitAnalysis {
   returnOnInvestment: number;
 }
 
+export interface ScoreBreakdownItem {
+  score: number;
+  max: number;
+  reason: string;
+}
+
+export interface ScoreBreakdown {
+  cashFlow?: ScoreBreakdownItem;
+  marketPosition?: ScoreBreakdownItem;
+  riskAssessment?: ScoreBreakdownItem;
+  financialMetrics?: ScoreBreakdownItem;
+}
+
 export interface AIInsights {
   summary: string;
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
   investmentScore: number;
+  scoreBreakdown?: ScoreBreakdown;  // New score breakdown for detailed analysis
   unitMixAnalysis?: string;
   marketPositionAnalysis?: string;
   valueAddOpportunities?: string[] | ValueAddOpportunity[];

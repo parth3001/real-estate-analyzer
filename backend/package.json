@@ -37,7 +37,7 @@
     "mongodb": "^6.17.0",
     "mongoose": "^7.8.7",
     "morgan": "^1.10.0",
-    "openai": "^3.2.1",
+    "openai": "^5.8.2",
     "rimraf": "^6.0.1",
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",

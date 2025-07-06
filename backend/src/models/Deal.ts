@@ -129,6 +129,28 @@ export interface Analysis {
     recommendations?: string[];
     investmentScore?: number;
     riskAssessment?: string;
+    // Enhanced strategic analysis fields
+    marketTrendPrediction?: string;
+    optimalExitStrategy?: string;
+    recommendedHoldPeriod?: string;
+    investorFit?: string;
+    strategicInsights?: string;
+    competitiveAdvantage?: string;
+    wealthBuildingPotential?: string;
+    marketCycleAnalysis?: string;
+    financingRecommendations?: string;
+    portfolioFitAnalysis?: string;
+    opportunityCostAnalysis?: string;
+    notes?: string;
+    // Value-add opportunities (can be string array or object array)
+    valueAddOpportunities?: any[];
+    // Market positioning and comparative analysis
+    comparativeMarketAnalysis?: string;
+    investorProfileMatch?: string;
+    riskMitigationStrategies?: string[];
+    // Unit mix analysis for multifamily
+    unitMixAnalysis?: string;
+    marketPositionAnalysis?: string;
   };
   sensitivityAnalysis?: {
     bestCase?: {
@@ -304,10 +326,32 @@ const AnalysisSchema = new Schema({
   aiInsights: {
     summary: String,
     strengths: [String],
-    weaknesses: [String],
+    weaknesses: [String], 
     recommendations: [String],
     investmentScore: Number,
-    riskAssessment: String
+    riskAssessment: String,
+    // Enhanced strategic analysis fields
+    marketTrendPrediction: String,
+    optimalExitStrategy: String,
+    recommendedHoldPeriod: String,
+    investorFit: String,
+    strategicInsights: String,
+    competitiveAdvantage: String,
+    wealthBuildingPotential: String,
+    marketCycleAnalysis: String,
+    financingRecommendations: String,
+    portfolioFitAnalysis: String,
+    opportunityCostAnalysis: String,
+    notes: String,
+    // Value-add opportunities (flexible schema)
+    valueAddOpportunities: [Schema.Types.Mixed],
+    // Market positioning and comparative analysis
+    comparativeMarketAnalysis: String,
+    investorProfileMatch: String,
+    riskMitigationStrategies: [String],
+    // Unit mix analysis for multifamily
+    unitMixAnalysis: String,
+    marketPositionAnalysis: String
   },
   sensitivityAnalysis: {
     bestCase: {

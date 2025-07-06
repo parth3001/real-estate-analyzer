@@ -149,7 +149,7 @@ async function getMultiFamilyAIAnalysis(formData, results) {
     `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Using gpt-3.5-turbo for faster response time
+      model: "gpt-4o-mini", // Using gpt-4o-mini for better analysis
       messages: [
         {
           role: "system",

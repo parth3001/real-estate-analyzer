@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/45</span>
+                <span class='fraction'>0/44</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/43</span>
+                <span class='fraction'>0/42</span>
             </div>
         
             
@@ -158,7 +158,8 @@
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
 <a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -184,7 +185,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -224,14 +224,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,16 +256,16 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import dotenv from 'dotenv';</span>
-<span class="cstat-no" title="statement not covered" >import { Configuration, OpenAIApi } from 'openai';</span>
+<span class="cstat-no" title="statement not covered" >import OpenAI from 'openai';</span>
 <span class="cstat-no" title="statement not covered" >import { logger } from '../utils/logger';</span>
 &nbsp;
 // Load environment variables
 <span class="cstat-no" title="statement not covered" >dotenv.config();</span>
 &nbsp;
 // Create OpenAI client singleton
-let openaiClient: OpenAIApi | null = <span class="cstat-no" title="statement not covered" >null;</span>
+let openaiClient: OpenAI | null = <span class="cstat-no" title="statement not covered" >null;</span>
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >getOpenAIClient = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): OpenAIApi | null =</span>&gt; {</span>
+export const <span class="cstat-no" title="statement not covered" >getOpenAIClient = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): OpenAI | null =</span>&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!process.env.OPENAI_API_KEY) {</span>
 <span class="cstat-no" title="statement not covered" >      logger.warn('OpenAI API key not found in environment variables');</span>
@@ -275,10 +277,9 @@ export const <span class="cstat-no" title="statement not covered" >getOpenAIClie
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!openaiClient) {</span>
-      const configuration = <span class="cstat-no" title="statement not covered" >new Configuration({</span>
+<span class="cstat-no" title="statement not covered" >      openaiClient = new OpenAI({</span>
         apiKey: process.env.OPENAI_API_KEY
       });
-<span class="cstat-no" title="statement not covered" >      openaiClient = new OpenAIApi(configuration);</span>
 <span class="cstat-no" title="statement not covered" >      logger.info('OpenAI client initialized successfully');</span>
     }
 &nbsp;
@@ -297,13 +298,13 @@ export const <span class="cstat-no" title="statement not covered" >generateAnaly
   }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  try {</span>
-    // Try to use GPT-4 if available, otherwise fall back to GPT-3.5-turbo
-    const preferredModel = <span class="cstat-no" title="statement not covered" >process.env.OPENAI_MODEL || 'gpt-3.5-turbo';</span>
+    // Use GPT-4o-mini as default, or GPT-4o if specified
+    const preferredModel = <span class="cstat-no" title="statement not covered" >process.env.OPENAI_MODEL || 'gpt-4o-mini';</span>
     
 <span class="cstat-no" title="statement not covered" >    logger.info(`Using OpenAI model: ${preferredModel}`);</span>
 <span class="cstat-no" title="statement not covered" >    logger.info(`Prompt length: ${prompt.length} characters`);</span>
     
-    const completion = <span class="cstat-no" title="statement not covered" >await openai.createChatCompletion({</span>
+    const completion = <span class="cstat-no" title="statement not covered" >await openai.chat.completions.create({</span>
       model: preferredModel,
       messages: [
         { 
@@ -315,11 +316,12 @@ export const <span class="cstat-no" title="statement not covered" >generateAnaly
           content: prompt 
         }
       ],
-      max_tokens: 1500,
-      temperature: 0.7
+      max_tokens: 2000,
+      temperature: 0.7,
+      response_format: { type: "json_object" }
     });
 &nbsp;
-    const content = <span class="cstat-no" title="statement not covered" >completion.data.choices[0].message?.content;</span>
+    const content = <span class="cstat-no" title="statement not covered" >completion.choices[0].message?.content;</span>
 <span class="cstat-no" title="statement not covered" >    logger.info(`Response length: ${content?.length || 0} characters`);</span>
     
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!content) {</span>
@@ -327,10 +329,11 @@ export const <span class="cstat-no" title="statement not covered" >generateAnaly
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      // Clean the response to handle markdown code blocks
+      // With response_format: json_object, the response should already be valid JSON
+      // But we'll still clean it just in case
       let cleanedContent = <span class="cstat-no" title="statement not covered" >content;</span>
       
-      // Remove markdown code blocks if present
+      // Remove markdown code blocks if present (shouldn't happen with json_object format)
 <span class="cstat-no" title="statement not covered" >      if (content.includes('```json')) {</span>
 <span class="cstat-no" title="statement not covered" >        cleanedContent = content.replace(/```json\n|\n```/g, '');</span>
       } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span>if (content.includes('```')) {</span>
@@ -355,7 +358,7 @@ export const <span class="cstat-no" title="statement not covered" >generateAnaly
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-02T03:09:00.331Z
+                at 2025-07-05T17:01:34.002Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

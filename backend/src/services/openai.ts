@@ -1,14 +1,14 @@
 import dotenv from 'dotenv';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import { logger } from '../utils/logger';
 
 // Load environment variables
 dotenv.config();
 
 // Create OpenAI client singleton
-let openaiClient: OpenAIApi | null = null;
+let openaiClient: OpenAI | null = null;
 
-export const getOpenAIClient = (): OpenAIApi | null => {
+export const getOpenAIClient = (): OpenAI | null => {
   try {
     if (!process.env.OPENAI_API_KEY) {
       logger.warn('OpenAI API key not found in environment variables');
@@ -20,10 +20,9 @@ export const getOpenAIClient = (): OpenAIApi | null => {
     }
 
     if (!openaiClient) {
-      const configuration = new Configuration({
+      openaiClient = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY
       });
-      openaiClient = new OpenAIApi(configuration);
       logger.info('OpenAI client initialized successfully');
     }
 
@@ -42,13 +41,13 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
   }
 
   try {
-    // Try to use GPT-4 if available, otherwise fall back to GPT-3.5-turbo
-    const preferredModel = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+    // Use GPT-4o-mini as default, or GPT-4o if specified
+    const preferredModel = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     
     logger.info(`Using OpenAI model: ${preferredModel}`);
     logger.info(`Prompt length: ${prompt.length} characters`);
     
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: preferredModel,
       messages: [
         { 
@@ -60,11 +59,12 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
           content: prompt 
         }
       ],
-      max_tokens: 1500,
-      temperature: 0.7
+      max_tokens: 2000,
+      temperature: 0.7,
+      response_format: { type: "json_object" }
     });
 
-    const content = completion.data.choices[0].message?.content;
+    const content = completion.choices[0].message?.content;
     logger.info(`Response length: ${content?.length || 0} characters`);
     
     if (!content) {
@@ -72,10 +72,11 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
     }
 
     try {
-      // Clean the response to handle markdown code blocks
+      // With response_format: json_object, the response should already be valid JSON
+      // But we'll still clean it just in case
       let cleanedContent = content;
       
-      // Remove markdown code blocks if present
+      // Remove markdown code blocks if present (shouldn't happen with json_object format)
       if (content.includes('```json')) {
         cleanedContent = content.replace(/```json\n|\n```/g, '');
       } else if (content.includes('```')) {

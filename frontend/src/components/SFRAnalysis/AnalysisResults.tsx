@@ -37,6 +37,8 @@ import {
 import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
 import MarketComparisonSection from '../MarketComparisonSection';
+import { MarketContextSection } from './MarketContextSection';
+import { EnhancedAIAnalysis } from './EnhancedAIAnalysis';
 import * as censusService from '../../services/censusService';
 import { COLORS } from './colors';
 
@@ -812,53 +814,7 @@ const ensureBackwardsCompatibility = (analysis: any, propertyData: SFRPropertyDa
   }
 };
 
-// Add this function to identify Census-based insights
-const isCensusInsight = (text: string): boolean => {
-  const censusKeywords = [
-    'census',
-    'median home value',
-    'median rent',
-    'vacancy rate',
-    'population',
-    'demographic',
-    'income',
-    'housing',
-    'local market',
-    'neighborhood',
-    'area'
-  ];
-  
-  const lowerText = text.toLowerCase();
-  return censusKeywords.some(keyword => lowerText.includes(keyword));
-};
 
-// Add this function to format insights with Census data highlighted
-const formatInsightText = (text: string): React.ReactNode => {
-  if (isCensusInsight(text)) {
-    return (
-      <Typography 
-        variant="body2" 
-        sx={{ 
-          mb: 1,
-          bgcolor: 'info.main',
-          color: 'info.contrastText',
-          p: 0.5,
-          borderRadius: 1,
-          display: 'inline-block',
-          width: 'fit-content'
-        }}
-      >
-        <strong>Census Data:</strong> {text}
-      </Typography>
-    );
-  }
-  
-  return (
-    <Typography variant="body2" sx={{ mb: 1 }}>
-      {text}
-    </Typography>
-  );
-};
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData, setAnalysis = () => {} }) => {
   // Cast propertyData to extended type
@@ -1422,170 +1378,25 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
               }
             }}
           >
-            {analysis.aiInsights && <Tab label="AI Insights" />}
+            {analysis.aiInsights && <Tab label="Enhanced AI Analysis" />}
             <Tab label="Monthly Analysis" />
             <Tab label="Annual Analysis" />
             <Tab label="Year-by-Year Projections" />
             <Tab label="Exit Analysis" />
+            <Tab label="Market Context" />
             <Tab label="Market Comparison" />
           </Tabs>
         </Box>
         
-        {/* AI Insights Tab */}
+        {/* Enhanced AI Analysis Tab */}
         {tabIndex === 0 && analysis.aiInsights && (
-          <Box>
-            <Typography variant="h6" gutterBottom>AI Analysis Summary</Typography>
-            
-            {analysis.aiInsights ? (
-              <>
-                <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-                  <Typography variant="body1">{analysis.aiInsights.summary || 'No summary available'}</Typography>
-                </Paper>
-                
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>Investment Strengths</Typography>
-                    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                      {Array.isArray(analysis.aiInsights.strengths) && analysis.aiInsights.strengths.length > 0 ? (
-                        analysis.aiInsights.strengths.map((strength, index) => (
-                          <Box key={index} sx={{ mb: 1 }}>
-                            • {formatInsightText(strength)}
-                          </Box>
-                        ))
-                      ) : (
-                        <Typography variant="body2">No strengths available</Typography>
-                      )}
-                    </Paper>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>Investment Weaknesses</Typography>
-                    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                      {Array.isArray(analysis.aiInsights.weaknesses) && analysis.aiInsights.weaknesses.length > 0 ? (
-                        analysis.aiInsights.weaknesses.map((weakness, index) => (
-                          <Box key={index} sx={{ mb: 1 }}>
-                            • {formatInsightText(weakness)}
-                          </Box>
-                        ))
-                      ) : (
-                        <Typography variant="body2">No weaknesses available</Typography>
-                      )}
-                    </Paper>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>Recommendations</Typography>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      {Array.isArray(analysis.aiInsights.recommendations) && analysis.aiInsights.recommendations.length > 0 ? (
-                        analysis.aiInsights.recommendations.map((rec, index) => (
-                          <Box key={index} sx={{ mb: 1 }}>
-                            • {formatInsightText(rec)}
-                          </Box>
-                        ))
-                      ) : (
-                        <Typography variant="body2">No recommendations available</Typography>
-                      )}
-                    </Paper>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>Investment Score</Typography>
-                        <Typography variant="h3" align="center">
-                          {analysis.aiInsights.investmentScore || 0}/100
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  
-                  {analysis.aiInsights.recommendedHoldPeriod && (
-                    <Grid item xs={12} md={6}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Typography variant="h6" gutterBottom>Recommended Hold Period</Typography>
-                          <Typography variant="h5" align="center">
-                            {analysis.aiInsights.recommendedHoldPeriod}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  )}
-                   
-                   {/* Market Trend Prediction */}
-                   {analysis.aiInsights.marketTrendPrediction && (
-                     <Grid item xs={12}>
-                       <Typography variant="h6" gutterBottom>Market Trend Prediction</Typography>
-                       <Paper variant="outlined" sx={{ p: 2 }}>
-                         <Typography variant="body1">
-                           {analysis.aiInsights.marketTrendPrediction}
-                         </Typography>
-                       </Paper>
-                     </Grid>
-                   )}
- 
-                   {/* Optimal Exit Strategy */}
-                   {analysis.aiInsights.optimalExitStrategy && (
-                     <Grid item xs={12}>
-                       <Typography variant="h6" gutterBottom>Optimal Exit Strategy</Typography>
-                       <Paper variant="outlined" sx={{ p: 2 }}>
-                         <Typography variant="body1">
-                           {analysis.aiInsights.optimalExitStrategy}
-                         </Typography>
-                       </Paper>
-                     </Grid>
-                   )}
- 
-                   {/* Value-Add Opportunities */}
-                   {analysis.aiInsights.valueAddOpportunities && Array.isArray(analysis.aiInsights.valueAddOpportunities) && (
-                     <Grid item xs={12}>
-                       <Typography variant="h6" gutterBottom>Value-Add Opportunities</Typography>
-                       <Paper variant="outlined" sx={{ p: 2 }}>
-                         {typeof analysis.aiInsights.valueAddOpportunities[0] === 'string' ? (
-                           // Handle string array format
-                           (analysis.aiInsights.valueAddOpportunities as string[]).map((opportunity: string, index: number) => (
-                             <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                               • {opportunity}
-                             </Typography>
-                           ))
-                         ) : (
-                           // Handle object array format
-                           <TableContainer component={Paper} variant="outlined">
-                             <Table size="small">
-                               <TableHead>
-                                 <TableRow>
-                                   <TableCell>Improvement</TableCell>
-                                   <TableCell>Estimated Cost</TableCell>
-                                   <TableCell>Potential ROI</TableCell>
-                                   <TableCell>Rent Increase</TableCell>
-                                   <TableCell>Value Increase</TableCell>
-                                 </TableRow>
-                               </TableHead>
-                               <TableBody>
-                                 {(analysis.aiInsights.valueAddOpportunities as any[]).map((opportunity: any, index: number) => (
-                                   <TableRow key={index}>
-                                     <TableCell>{opportunity.improvement}</TableCell>
-                                     <TableCell>{opportunity.estimatedCost}</TableCell>
-                                     <TableCell>{opportunity.potentialRoiPercent}</TableCell>
-                                     <TableCell>{opportunity.rentIncreasePotential}</TableCell>
-                                     <TableCell>{opportunity.valueIncreasePotential}</TableCell>
-                                   </TableRow>
-                                 ))}
-                               </TableBody>
-                             </Table>
-                           </TableContainer>
-                         )}
-                       </Paper>
-                     </Grid>
-                   )}
-                </Grid>
-              </>
-            ) : (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                AI insights are not available for this property. This may occur with older saved deals or if AI analysis was not generated.
-              </Alert>
-            )}
-          </Box>
+          <EnhancedAIAnalysis 
+            aiInsights={analysis.aiInsights}
+            propertyData={{
+              propertyName: propertyData?.propertyName,
+              propertyAddress: propertyData?.propertyAddress
+            }}
+          />
         )}
 
         {/* Monthly Analysis Tab */}
@@ -1917,8 +1728,19 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           </Box>
         )}
 
-        {/* Market Comparison Tab */}
+        {/* Market Context Tab */}
         {tabIndex === (analysis.aiInsights ? 5 : 4) && (
+          <Box>
+            <MarketContextSection 
+              analysis={analysis}
+              censusData={censusData}
+              propertyData={propertyData}
+            />
+          </Box>
+        )}
+
+        {/* Market Comparison Tab */}
+        {tabIndex === (analysis.aiInsights ? 6 : 5) && (
           <Box>
             <MarketComparisonSection 
               propertyData={marketComparisonData}

@@ -6,8 +6,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Divider,
-  Chip,
   LinearProgress,
   GridLegacy as Grid,
   useTheme,
@@ -24,7 +22,6 @@ import StarIcon from '@mui/icons-material/Star';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { AIInsights } from '../../types/analysis';
 
 interface AIInsightsDashboardProps {
