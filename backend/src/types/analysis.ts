@@ -1,4 +1,5 @@
 import { SFRData, MultiFamilyData, PropertyType } from './propertyTypes';
+import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from './marketData';
 
 export interface MonthlyAnalysis {
   income: {
@@ -156,7 +157,7 @@ export interface AIInsights {
   recommendedHoldPeriod?: string;  // Now available for both SFR and MF properties
   // New predictive analysis fields
   marketTrendPrediction?: string;
-  optimalExitStrategy?: string;
+  optimalExitStrategy?: string | any; // Can be string or object from AI
   notes?: string;  // Free-form additional insights
   // Enhanced strategic analysis fields
   investorFit?: string;
@@ -167,6 +168,34 @@ export interface AIInsights {
   financingRecommendations?: string;
   portfolioFitAnalysis?: string;
   opportunityCostAnalysis?: string;
+  // Bold predictions from enhanced AI analysis
+  boldPredictions?: {
+    wealthCreation?: {
+      year3Value?: string;
+      year5Value?: string;
+      year10Value?: string;
+      totalWealthCreated?: string;
+    };
+    cashFlowGrowth?: {
+      currentMonthly?: string;
+      year2Monthly?: string;
+      year5Monthly?: string;
+      doubleDate?: string;
+      reach5kDate?: string;
+    };
+    rentGrowthForecast?: {
+      currentRent?: string;
+      year3Rent?: string;
+      year5Rent?: string;
+      year7Rent?: string;
+    };
+    exitStrategy?: {
+      optimalExitYear?: string;
+      predictedSalePrice?: string;
+      totalProfit?: string;
+      annualizedReturn?: string;
+    };
+  };
 }
 
 export interface ValueAddOpportunity {
@@ -221,6 +250,10 @@ export interface AnalysisResult<T extends CommonMetrics> {
   longTermAnalysis: LongTermAnalysis;
   aiInsights?: AIInsights;
   sensitivityAnalysis?: SensitivityAnalysis;
+  // NEW: Market Intelligence Data
+  marketData?: MarketDataResponse;
+  marketInsights?: MarketInsight[];
+  investmentTiming?: InvestmentTimingAnalysis;
 }
 
 export type { SFRData, MultiFamilyData, PropertyType }; 

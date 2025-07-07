@@ -8,6 +8,7 @@ import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
 import censusRouter from './routes/censusRoutes';
+import marketDataRouter from './routes/marketDataRoutes';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 
@@ -28,7 +29,9 @@ if (result.error) {
     OPENAI_API_KEY_START: process.env.OPENAI_API_KEY?.substring(0, 10),
     CORS_ORIGIN: process.env.CORS_ORIGIN,
     MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing',
-    CENSUS_API_KEY: process.env.CENSUS_API_KEY ? 'exists' : 'missing'
+    CENSUS_API_KEY: process.env.CENSUS_API_KEY ? 'exists' : 'missing',
+    RENTCAST_API_KEY: process.env.RENTCAST_API_KEY ? 'exists' : 'missing',
+    FRED_API_KEY: process.env.FRED_API_KEY ? 'exists' : 'missing'
   });
 }
 
@@ -44,6 +47,7 @@ app.use(morgan('dev'));
 app.use('/api/deals', dealsRouter);
 app.use('/api/analyze', analyzeRouter);
 app.use('/api/census', censusRouter);
+app.use('/api/market-data', marketDataRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -56,13 +60,15 @@ app.get('/api/health', (_req: Request, res: Response) => {
       OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       MONGODB_URI_EXISTS: !!process.env.MONGODB_URI,
-      CENSUS_API_KEY_EXISTS: !!process.env.CENSUS_API_KEY
+      CENSUS_API_KEY_EXISTS: !!process.env.CENSUS_API_KEY,
+      RENTCAST_API_KEY_EXISTS: !!process.env.RENTCAST_API_KEY,
+      FRED_API_KEY_EXISTS: !!process.env.FRED_API_KEY
     }
   });
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   logger.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });

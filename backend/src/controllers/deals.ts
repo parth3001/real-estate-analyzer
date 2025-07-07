@@ -180,9 +180,9 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
     // Use the appropriate analysis service directly
     let analysis;
     if (dealData.propertyType === 'SFR') {
-      logger.info('Analyzing SFR property');
+      logger.info('Analyzing SFR property with market intelligence');
       const analyzer = new SFRAnalyzer(dealData, assumptions);
-      analysis = analyzer.analyze();
+      analysis = await analyzer.analyzeWithMarketIntelligence();
     } else if (dealData.propertyType === 'MF') {
       logger.info('Analyzing Multi-Family property');
       const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);

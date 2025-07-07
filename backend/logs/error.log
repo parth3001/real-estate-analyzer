@@ -288,3 +288,72 @@
 2025-07-01 20:34:05:345 [31merror[39m: [31mError getting AI insights: Invalid JSON response from OpenAI[39m
 2025-07-01 22:08:48:848 [31merror[39m: [31mError in getDemographicData controller: Census API error[39m
 2025-07-05 12:01:23:123 [31merror[39m: [31mError in getDemographicData controller: Census API error[39m
+2025-07-06 14:16:05:165 [31merror[39m: [31mRentCast API authentication failed - check API key[39m
+2025-07-06 14:16:06:166 [31merror[39m: [31mFailed to fetch market trends: RentCast getMarketTrends failed: The provided API key is not associated with an active API subscription. View subscription status on your API dashboard: https://app.rentcast.io/app/api[39m
+2025-07-06 14:16:22:1622 [31merror[39m: [31mRentCast API authentication failed - check API key[39m
+2025-07-06 14:16:22:1622 [31merror[39m: [31mFailed to fetch RentCast property data: RentCast getPropertyRentEstimate failed: The provided API key is not associated with an active API subscription. View subscription status on your API dashboard: https://app.rentcast.io/app/api[39m
+2025-07-06 14:16:22:1622 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:16:22:1622 [31merror[39m: [31mRentCast API authentication failed - check API key[39m
+2025-07-06 14:16:22:1622 [31merror[39m: [31mFailed to fetch market trends: RentCast getMarketTrends failed: The provided API key is not associated with an active API subscription. View subscription status on your API dashboard: https://app.rentcast.io/app/api[39m
+2025-07-06 14:23:44:2344 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:24:08:248 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:26:27:2627 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:43:57:4357 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:45:01:451 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:45:29:4529 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:45:40:4540 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:46:19:4619 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:46:39:4639 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:47:04:474 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 14:59:46:5946 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 15:01:53:153 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 15:05:57:557 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 15:16:37:1637 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 15:18:28:1828 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:43:34:4334 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:46:18:4618 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:46:36:4636 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:47:55:4755 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:49:00:490 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:51:18:5118 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:56:59:5659 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:57:06:576 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:57:14:5714 [31merror[39m: [31mFailed to fetch comparable properties: RentCast getComparableProperties failed: The requested resource was not found[39m
+2025-07-06 16:57:14:5714 [31merror[39m: [31mFailed to fetch market trends: RentCast getMarketTrends failed: The requested resource was not found[39m
+2025-07-06 16:58:13:5813 [31merror[39m: [31mFailed to fetch market trends: RentCast getMarketTrends failed: The requested resource was not found[39m
+2025-07-06 21:58:06:586 [31merror[39m: [31mError creating SFR deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: 10,[39m
+[31m  predictedSalePrice: '$412,582',[39m
+[31m  totalProfit: '$156,000',[39m
+[31m  annualizedReturn: '4.5%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-06 21:58:06:586 [31merror[39m: [31m[DealService] Error saving deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: 10,[39m
+[31m  predictedSalePrice: '$412,582',[39m
+[31m  totalProfit: '$156,000',[39m
+[31m  annualizedReturn: '4.5%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-06 21:58:06:586 [31merror[39m: [31mError creating deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: 10,[39m
+[31m  predictedSalePrice: '$412,582',[39m
+[31m  totalProfit: '$156,000',[39m
+[31m  annualizedReturn: '4.5%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-06 22:28:00:280 [31merror[39m: [31mError creating SFR deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: '10',[39m
+[31m  predictedSalePrice: '$485,000',[39m
+[31m  totalProfit: '$121,890.38 from appreciation and $13,132.80 from cash flow for a total of $135,023.18',[39m
+[31m  annualizedReturn: '9.55%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-06 22:28:00:280 [31merror[39m: [31m[DealService] Error saving deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: '10',[39m
+[31m  predictedSalePrice: '$485,000',[39m
+[31m  totalProfit: '$121,890.38 from appreciation and $13,132.80 from cash flow for a total of $135,023.18',[39m
+[31m  annualizedReturn: '9.55%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-06 22:28:00:280 [31merror[39m: [31mError creating deal: SFR validation failed: analysis.aiInsights.optimalExitStrategy: Cast to string failed for value "{[39m
+[31m  optimalExitYear: '10',[39m
+[31m  predictedSalePrice: '$485,000',[39m
+[31m  totalProfit: '$121,890.38 from appreciation and $13,132.80 from cash flow for a total of $135,023.18',[39m
+[31m  annualizedReturn: '9.55%'[39m
+[31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m

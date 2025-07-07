@@ -131,7 +131,7 @@ export interface Analysis {
     riskAssessment?: string;
     // Enhanced strategic analysis fields
     marketTrendPrediction?: string;
-    optimalExitStrategy?: string;
+    optimalExitStrategy?: any; // Can be string or object from AI
     recommendedHoldPeriod?: string;
     investorFit?: string;
     strategicInsights?: string;
@@ -151,6 +151,34 @@ export interface Analysis {
     // Unit mix analysis for multifamily
     unitMixAnalysis?: string;
     marketPositionAnalysis?: string;
+    // Bold predictions from enhanced AI analysis
+    boldPredictions?: {
+      wealthCreation?: {
+        year3Value?: string;
+        year5Value?: string;
+        year10Value?: string;
+        totalWealthCreated?: string;
+      };
+      cashFlowGrowth?: {
+        currentMonthly?: string;
+        year2Monthly?: string;
+        year5Monthly?: string;
+        doubleDate?: string;
+        reach5kDate?: string;
+      };
+      rentGrowthForecast?: {
+        currentRent?: string;
+        year3Rent?: string;
+        year5Rent?: string;
+        year7Rent?: string;
+      };
+      exitStrategy?: {
+        optimalExitYear?: string;
+        predictedSalePrice?: string;
+        totalProfit?: string;
+        annualizedReturn?: string;
+      };
+    };
   };
   sensitivityAnalysis?: {
     bestCase?: {
@@ -332,7 +360,7 @@ const AnalysisSchema = new Schema({
     riskAssessment: String,
     // Enhanced strategic analysis fields
     marketTrendPrediction: String,
-    optimalExitStrategy: String,
+    optimalExitStrategy: Schema.Types.Mixed, // Can be string or object from AI
     recommendedHoldPeriod: String,
     investorFit: String,
     strategicInsights: String,
@@ -351,7 +379,35 @@ const AnalysisSchema = new Schema({
     riskMitigationStrategies: [String],
     // Unit mix analysis for multifamily
     unitMixAnalysis: String,
-    marketPositionAnalysis: String
+    marketPositionAnalysis: String,
+    // Bold predictions from enhanced AI analysis
+    boldPredictions: {
+      wealthCreation: {
+        year3Value: String,
+        year5Value: String,
+        year10Value: String,
+        totalWealthCreated: String
+      },
+      cashFlowGrowth: {
+        currentMonthly: String,
+        year2Monthly: String,
+        year5Monthly: String,
+        doubleDate: String,
+        reach5kDate: String
+      },
+      rentGrowthForecast: {
+        currentRent: String,
+        year3Rent: String,
+        year5Rent: String,
+        year7Rent: String
+      },
+      exitStrategy: {
+        optimalExitYear: String,
+        predictedSalePrice: String,
+        totalProfit: String,
+        annualizedReturn: String
+      }
+    }
   },
   sensitivityAnalysis: {
     bestCase: {
@@ -364,6 +420,109 @@ const AnalysisSchema = new Schema({
       cashOnCashReturn: Number,
       totalReturn: Number
     }
+  },
+  
+  // NEW: Market Intelligence Data
+  marketData: {
+    property: {
+      rentEstimate: Number,
+      rentRange: {
+        low: Number,
+        high: Number
+      },
+      valueEstimate: Number,
+      valueRange: {
+        low: Number,
+        high: Number
+      },
+      capRateEstimate: Number,
+      marketPosition: String,
+      confidence: Number,
+      pricePerSqft: Number,
+      lastUpdated: Date,
+      dataSource: String
+    },
+    comparables: [{
+      address: String,
+      distance: Number,
+      salePrice: Number,
+      saleDate: Date,
+      pricePerSqft: Number,
+      bedrooms: Number,
+      bathrooms: Number,
+      sqft: Number,
+      daysOnMarket: Number,
+      propertyType: String,
+      rentEstimate: Number,
+      latitude: Number,
+      longitude: Number,
+      yearBuilt: Number,
+      lotSize: Number
+    }],
+    marketTrends: {
+      zipCode: String,
+      city: String,
+      state: String,
+      medianRent: Number,
+      averageRent: Number,
+      rentGrowthRate: Number,
+      medianSalePrice: Number,
+      averageSalePrice: Number,
+      priceGrowthRate: Number,
+      daysOnMarket: Number,
+      inventoryLevel: String,
+      priceToRentRatio: Number,
+      seasonalTrend: String,
+      sampleSize: {
+        rentals: Number,
+        sales: Number
+      },
+      lastUpdated: Date,
+      dataSource: String
+    },
+    economicIndicators: {
+      currentMortgageRate: Number,
+      mortgageRateTrend: String,
+      mortgageRateChange: Number,
+      inflationRate: Number,
+      unemploymentRate: Number,
+      housingIndex: Number,
+      housingIndexChange: Number,
+      economicGrowth: Number,
+      federalFundsRate: Number,
+      lastUpdated: Date,
+      dataSource: String
+    },
+    lastUpdated: Date,
+    dataSource: [String]
+  },
+  
+  marketInsights: [{
+    category: String,
+    insight: String,
+    impact: String,
+    confidence: Number,
+    dataSource: String,
+    metrics: Schema.Types.Mixed,
+    recommendation: String
+  }],
+  
+  investmentTiming: {
+    recommendation: String,
+    confidence: Number,
+    reasoning: [String],
+    marketCycle: String,
+    timingScore: Number,
+    riskFactors: [String],
+    opportunities: [String],
+    marketSignals: {
+      interestRateSignal: Number,
+      inflationSignal: Number,
+      housingSupplySignal: Number,
+      economicGrowthSignal: Number,
+      overallSignal: Number
+    },
+    nextReviewDate: Date
   }
 });
 

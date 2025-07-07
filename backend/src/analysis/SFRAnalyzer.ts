@@ -2,6 +2,9 @@ import { BasePropertyAnalyzer, AnalysisAssumptions } from './BasePropertyAnalyze
 import { FinancialCalculations } from '../utils/financialCalculations';
 import { SFRData } from '../types/propertyTypes';
 import { ExpenseBreakdown, AnalysisResult, MonthlyAnalysis, ExitAnalysis, SensitivityAnalysis, SFRMetrics } from '../types/analysis';
+import { marketIntelligenceService } from '../services/marketIntelligenceService';
+import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from '../types/marketData';
+import { logger } from '../utils/logger';
 
 export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   protected calculateGrossIncome(year: number): number {
@@ -461,9 +464,87 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     return normalized;
   }
 
-  // Modify the analyze method to normalize the output
+  // Add market data fetching method
+  private async fetchMarketData(): Promise<{
+    marketData: MarketDataResponse | null;
+    marketInsights: MarketInsight[];
+    investmentTiming: InvestmentTimingAnalysis | null;
+  }> {
+    try {
+      // Extract address information from SFR data
+      const address = `${this.data.propertyAddress.street}, ${this.data.propertyAddress.city}, ${this.data.propertyAddress.state} ${this.data.propertyAddress.zipCode}`;
+      
+      logger.info(`Fetching market data for SFR property: ${address}`);
+
+      // Fetch comprehensive market data
+      const marketData = await marketIntelligenceService.getComprehensiveMarketData({
+        address,
+        zipCode: this.data.propertyAddress.zipCode,
+        city: this.data.propertyAddress.city,
+        state: this.data.propertyAddress.state,
+        propertyType: 'SFR',
+        includeEconomicData: true,
+        maxComparables: 10,
+        radius: 0.5
+      });
+
+      // Generate market insights based on property data
+      const marketInsights = await marketIntelligenceService.generateMarketInsights(
+        this.data,
+        marketData
+      );
+
+      // Analyze investment timing
+      const investmentTiming = await marketIntelligenceService.analyzeInvestmentTiming(marketData);
+
+      logger.info(`Successfully fetched market intelligence: ${marketInsights.length} insights generated`);
+
+      return {
+        marketData,
+        marketInsights,
+        investmentTiming
+      };
+    } catch (error) {
+      logger.error('Failed to fetch market data for SFR analysis:', error);
+      
+      // Return empty data to allow analysis to continue
+      return {
+        marketData: null,
+        marketInsights: [],
+        investmentTiming: null
+      };
+    }
+  }
+
+  // Keep the original analyze method for compatibility
   public analyze(): AnalysisResult<SFRMetrics> {
     const result = super.analyze();
     return this.normalizeOutput(result);
+  }
+
+  // New method for comprehensive analysis with market data
+  public async analyzeWithMarketIntelligence(): Promise<AnalysisResult<SFRMetrics> & {
+    marketData?: MarketDataResponse;
+    marketInsights?: MarketInsight[];
+    investmentTiming?: InvestmentTimingAnalysis;
+  }> {
+    // Perform base analysis
+    const result = super.analyze();
+    const normalizedResult = this.normalizeOutput(result);
+
+    // Fetch market intelligence data
+    const { marketData, marketInsights, investmentTiming } = await this.fetchMarketData();
+
+    // Enhance the result with market intelligence
+    const enhancedResult = {
+      ...normalizedResult,
+      ...(marketData && { marketData }),
+      ...(marketInsights.length > 0 && { marketInsights }),
+      ...(investmentTiming && { investmentTiming })
+    };
+
+    logger.info('SFR analysis completed with market intelligence enhancement');
+
+    return enhancedResult;
   }
 } 

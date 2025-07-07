@@ -13,7 +13,7 @@ import {
 
 export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysis: any): Promise<AIInsights> {
   try {
-    logger.info('Enhanced AI insights generation started');
+    logger.info('Enhanced AI insights generation started with market intelligence');
     const openai = getOpenAIClient();
     if (!openai) {
       return {
@@ -52,6 +52,19 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       }
     }
 
+    // Extract market intelligence data for enhanced AI prompts
+    const marketIntelligence = {
+      marketData: analysis.marketData,
+      marketInsights: analysis.marketInsights,
+      investmentTiming: analysis.investmentTiming
+    };
+
+    logger.info('Market intelligence data extracted for AI enhancement', {
+      hasMarketData: !!marketIntelligence.marketData,
+      insightsCount: marketIntelligence.marketInsights?.length || 0,
+      hasTimingAnalysis: !!marketIntelligence.investmentTiming
+    });
+
     // Generate score breakdown based on analysis and market data
     const scoreBreakdown = generateScoreBreakdown(analysis, marketAnalysis);
     
@@ -68,9 +81,9 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
     }
     
     if (dealData.propertyType === 'SFR') {
-      prompt = enhancedSfrAnalysisPrompt(dealData, analysis, marketAnalysis);
+      prompt = enhancedSfrAnalysisPrompt(dealData, analysis, marketAnalysis, marketIntelligence);
     } else {
-      prompt = enhancedMfAnalysisPrompt(dealData, analysis, marketAnalysis);
+      prompt = enhancedMfAnalysisPrompt(dealData, analysis, marketAnalysis, marketIntelligence);
     }
 
     logger.info(`Generated ${dealData.propertyType} analysis prompt (${prompt.length} chars)`);
@@ -110,6 +123,9 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         financingRecommendations: aiResponse.financingRecommendations,
         portfolioFitAnalysis: aiResponse.portfolioFitAnalysis,
         opportunityCostAnalysis: aiResponse.opportunityCostAnalysis,
+        
+        // AI predictions for enhanced analysis
+        boldPredictions: aiResponse.boldPredictions,
         
         // Additional notes
         notes: aiResponse.notes

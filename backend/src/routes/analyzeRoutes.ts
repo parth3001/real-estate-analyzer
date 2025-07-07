@@ -148,7 +148,13 @@ const analyzeHandler = async (req: Request, res: Response): Promise<void> => {
       analyzer = new MultiFamilyAnalyzer(formData as MultiFamilyData, assumptions);
     }
 
-    const results = analyzer.analyze();
+    // Handle async analysis for SFR (includes market data) vs sync for MF
+    let results: any;
+    if (propertyType === 'sfr') {
+      results = await (analyzer as SFRAnalyzer).analyzeWithMarketIntelligence();
+    } else {
+      results = analyzer.analyze();
+    }
     
     // Enrich analysis with census data
     const enrichedResults = await enrichAnalysisWithCensusData(formData as SFRData | MultiFamilyData, results);
