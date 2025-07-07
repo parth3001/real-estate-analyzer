@@ -37,13 +37,29 @@ const EnhancedAIInsights: React.FC<AIInsightsProps> = ({ aiInsights, formatInsig
   }
 
   // Helper function to render a section if the data exists
-  const renderSection = (title: string, content?: string) => {
+  const renderSection = (title: string, content?: string | any) => {
     if (!content) return null;
+    
+    // Handle case where content is an object instead of string
+    let displayContent: string;
+    if (typeof content === 'string') {
+      displayContent = content;
+    } else if (typeof content === 'object') {
+      // If it's an object, try to extract meaningful information or show a message
+      if (content.optimalExitYear || content.predictedSalePrice) {
+        displayContent = 'Detailed exit strategy information is available in the Bold Predictions section.';
+      } else {
+        displayContent = 'Complex data structure - please see detailed analysis sections.';
+      }
+    } else {
+      displayContent = String(content);
+    }
+    
     return (
       <Box sx={{ mb: 3 }}>
         <Typography variant="h6" gutterBottom>{title}</Typography>
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="body1">{formatInsightText(content)}</Typography>
+          <Typography variant="body1">{formatInsightText(displayContent)}</Typography>
         </Paper>
       </Box>
     );
@@ -219,7 +235,10 @@ const EnhancedAIInsights: React.FC<AIInsightsProps> = ({ aiInsights, formatInsig
                 </Typography>
                 {aiInsights.optimalExitStrategy && (
                   <Typography variant="body2" align="center" sx={{ mt: 1 }}>
-                    {aiInsights.optimalExitStrategy.split('.')[0]}.
+                    {typeof aiInsights.optimalExitStrategy === 'string' 
+                      ? aiInsights.optimalExitStrategy.split('.')[0] + '.'
+                      : 'See detailed exit strategy analysis below'
+                    }
                   </Typography>
                 )}
               </CardContent>

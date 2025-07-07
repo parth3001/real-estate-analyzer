@@ -36,9 +36,10 @@ import {
 } from 'recharts';
 import AdvancedMetricsSection from './AdvancedMetricsSection';
 import SensitivityAnalysisSection from './SensitivityAnalysisSection';
-import MarketComparisonSection from '../MarketComparisonSection';
+import ComparablePropertiesSection from '../ComparablePropertiesSection';
 import { MarketContextSection } from './MarketContextSection';
 import { EnhancedAIAnalysis } from './EnhancedAIAnalysis';
+import MarketIntelligenceSection from './MarketIntelligenceSection';
 import * as censusService from '../../services/censusService';
 import { COLORS } from './colors';
 
@@ -822,7 +823,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   
   const [tabIndex, setTabIndex] = useState(0);
   const [censusData, setCensusData] = useState<CensusDataResponse | null>(null);
-  const [censusLoading, setCensusLoading] = useState<boolean>(false);
+  const [, setCensusLoading] = useState<boolean>(false);
   
   // For TypeScript safety, cast to extended types
   const analysisExt = analysis as unknown as ExtendedAnalysis;
@@ -1019,21 +1020,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     console.error('Error preparing expense breakdown data:', err);
   }
 
-  // Prepare data for Market Comparison Section
-  const marketComparisonData = useMemo(() => {
-    return {
-      propertyValue: propertyData.purchasePrice,
-      monthlyRent: propertyData.monthlyRent,
-      purchasePrice: propertyData.purchasePrice,
-      vacancyRate: propertyData.longTermAssumptions?.vacancyRate,
-      propertyTaxRate: propertyData.propertyTaxRate,
-      // Map zipCode to both zip and zipCode for compatibility
-      zip: propertyData.propertyAddress?.zipCode,
-      zipCode: propertyData.propertyAddress?.zipCode,
-      state: propertyData.propertyAddress?.state,
-      county: extendedPropertyData.propertyAddress?.county
-    };
-  }, [propertyData, extendedPropertyData.propertyAddress]);
 
   // Fetch census data if we have location information
   useEffect(() => {
@@ -1383,8 +1369,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             <Tab label="Annual Analysis" />
             <Tab label="Year-by-Year Projections" />
             <Tab label="Exit Analysis" />
+            <Tab label="Market Intelligence" />
             <Tab label="Market Context" />
-            <Tab label="Market Comparison" />
+            <Tab label="Comparable Properties" />
           </Tabs>
         </Box>
         
@@ -1728,8 +1715,27 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           </Box>
         )}
 
-        {/* Market Context Tab */}
+        {/* Market Intelligence Tab */}
         {tabIndex === (analysis.aiInsights ? 5 : 4) && (
+          <Box>
+            {/* Debug Info */}
+            {process.env.NODE_ENV === 'development' && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Debug - Market Data: {analysis.marketData ? 'Available' : 'Missing'} | 
+                Insights: {analysis.marketInsights?.length || 0} | 
+                Timing: {analysis.investmentTiming ? 'Available' : 'Missing'}
+              </Alert>
+            )}
+            <MarketIntelligenceSection
+              marketData={analysis.marketData}
+              marketInsights={analysis.marketInsights}
+              investmentTiming={analysis.investmentTiming}
+            />
+          </Box>
+        )}
+
+        {/* Market Context Tab */}
+        {tabIndex === (analysis.aiInsights ? 6 : 5) && (
           <Box>
             <MarketContextSection 
               analysis={analysis}
@@ -1739,13 +1745,21 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           </Box>
         )}
 
-        {/* Market Comparison Tab */}
-        {tabIndex === (analysis.aiInsights ? 6 : 5) && (
+        {/* Comparable Properties Tab */}
+        {tabIndex === (analysis.aiInsights ? 7 : 6) && (
           <Box>
-            <MarketComparisonSection 
-              propertyData={marketComparisonData}
-              censusData={censusData || undefined}
-              isLoading={censusLoading}
+            <ComparablePropertiesSection 
+              subjectProperty={{
+                address: `${propertyData.propertyAddress.street}, ${propertyData.propertyAddress.city}, ${propertyData.propertyAddress.state}`,
+                purchasePrice: propertyData.purchasePrice,
+                squareFootage: propertyData.squareFootage,
+                bedrooms: propertyData.bedrooms,
+                bathrooms: propertyData.bathrooms,
+                monthlyRent: propertyData.monthlyRent,
+                yearBuilt: propertyData.yearBuilt
+              }}
+              comparableProperties={analysisExt?.marketData?.comparables || []}
+              isLoading={false}
             />
           </Box>
         )}

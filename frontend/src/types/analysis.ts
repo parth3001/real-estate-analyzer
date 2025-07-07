@@ -95,7 +95,7 @@ export interface AIInsights {
   recommendedHoldPeriod?: string;
   // New predictive analysis fields
   marketTrendPrediction?: string;
-  optimalExitStrategy?: string;
+  optimalExitStrategy?: string | any; // Can be string or object from AI
   riskAssessment?: string;
   // Enhanced strategic analysis fields
   investorFit?: string;
@@ -107,6 +107,33 @@ export interface AIInsights {
   portfolioFitAnalysis?: string;
   opportunityCostAnalysis?: string;
   notes?: string;
+  boldPredictions?: {
+    wealthCreation?: {
+      year3Value?: string;
+      year5Value?: string;
+      year10Value?: string;
+      totalWealthCreated?: string;
+    };
+    cashFlowGrowth?: {
+      currentMonthly?: string;
+      year2Monthly?: string;
+      year5Monthly?: string;
+      doubleDate?: string;
+      reach5kDate?: string;
+    };
+    rentGrowthForecast?: {
+      currentRent?: string;
+      year3Rent?: string;
+      year5Rent?: string;
+      year7Rent?: string;
+    };
+    exitStrategy?: {
+      optimalExitYear?: string;
+      predictedSalePrice?: string;
+      totalProfit?: string;
+      annualizedReturn?: string;
+    };
+  };
 }
 
 export interface ValueAddOpportunity {
@@ -164,4 +191,8 @@ export interface Analysis {
     bestCase: any;
     worstCase: any;
   };
+  // NEW: Market Intelligence Data
+  marketData?: import('./marketData').MarketDataResponse;
+  marketInsights?: import('./marketData').MarketInsight[];
+  investmentTiming?: import('./marketData').InvestmentTimingAnalysis;
 } 
