@@ -127,58 +127,334 @@ The Phase 1 enhanced AI analysis system has been successfully implemented with c
 
 ---
 
-## Phase 2: User Experience Enhancements (Future Implementation)
+## Phase 1.5: CRITICAL MARKET CONTEXT REDESIGN - HIGH PRIORITY
 
-### 2.1 Interactive Scenario Planning - PLANNED
+**Status:** 🚨 **CRITICAL** - Current market context provides no actionable insights
 
-**Status:** 📋 **PLANNED** for future implementation
+**Problem Identified:** Current market context shows basic demographic cards without meaningful investment analysis. Users report graphs/charts provide no useful information for investment decisions.
 
-**Planned Features:**
+**Immediate Need:** Replace superficial market context with professional-grade market intelligence.
+
+### 1.5.1 Market Analysis Data Integration - CRITICAL
+
+**API Integration Requirements:**
+- **Real Estate Data APIs**: Zillow, RentSpotter, Redfin, or MLS integration
+- **Historical Price Data**: 5-10 year property value trends for ZIP codes
+- **Comparable Sales**: Recent sales data (6-12 months) for similar properties
+- **Rental Market Data**: Rent trends, vacancy rates, days on market
+- **Economic Indicators**: Interest rates, employment data, market cycle position
+
+**Data Architecture:**
+```typescript
+// New interfaces needed
+interface MarketTrendData {
+  propertyValues: HistoricalDataPoint[];
+  rentTrends: HistoricalDataPoint[];
+  salesVolume: HistoricalDataPoint[];
+  daysOnMarket: HistoricalDataPoint[];
+}
+
+interface ComparableProperty {
+  address: string;
+  soldDate: Date;
+  salePrice: number;
+  pricePerSqft: number;
+  sqft: number;
+  capRate?: number;
+  daysOnMarket: number;
+}
+
+interface MarketIntelligence {
+  marketCycle: 'Expansion' | 'Peak' | 'Contraction' | 'Recovery';
+  investmentTiming: 'Buy' | 'Hold' | 'Wait' | 'Sell';
+  priceVelocity: number; // % change last 12 months
+  inventoryLevels: 'Low' | 'Normal' | 'High';
+  competitiveAnalysis: ComparableProperty[];
+}
+```
+
+### 1.5.2 Market Intelligence Visualization - CRITICAL
+
+**Replace Current Market Context with:**
+
+1. **📈 Historical Market Trends Dashboard**
+   - Interactive price trend charts (5-10 years)
+   - Rent growth visualization with projections
+   - Market cycle position indicator
+   - Seasonal trend analysis
+
+2. **🏘️ Comparable Properties Analysis**
+   - Recent sales map with price points
+   - Price per square foot comparison table
+   - Cap rate benchmarking against local deals
+   - Time on market analysis
+
+3. **💰 Investment Timing Intelligence**
+   - Market temperature gauge (visual indicator)
+   - Buy/Hold/Sell recommendation with confidence score
+   - Price momentum indicators
+   - Market cycle timing analysis
+
+4. **📊 Professional Market Metrics**
+   - Inventory levels and absorption rates
+   - Price-to-rent ratio trends
+   - Rental market velocity indicators
+   - Economic impact analysis
+
+**Technical Implementation:**
+```typescript
+// New service: backend/src/services/marketIntelligenceService.ts
+class MarketIntelligenceService {
+  async getMarketTrends(location: LocationData): Promise<MarketTrendData>
+  async getComparableProperties(propertyData: PropertyData): Promise<ComparableProperty[]>
+  async analyzeInvestmentTiming(marketData: MarketData): Promise<InvestmentTiming>
+  async calculateMarketMetrics(location: LocationData): Promise<MarketMetrics>
+}
+
+// Enhanced component: frontend/src/components/SFRAnalysis/MarketIntelligenceSection.tsx
+// Replace existing MarketContextSection with comprehensive market intelligence
+```
+
+**API Integration Priority Order:**
+1. **Zillow API** - Property values, Zestimate history, rental estimates
+2. **RentSpotter/Apartments.com API** - Rental market data, vacancy rates
+3. **Redfin API** - Recent sales, days on market, price trends
+4. **Census API Enhancement** - Economic indicators, employment data
+5. **FRED API** - Interest rates, economic indicators
+
+---
+
+## Phase 2: User Experience Enhancements - UPDATED PLAN
+
+**Status:** 📋 **PLANNED** - Implementation after Market Context redesign
+
+### 2.1 Interactive Scenario Planning - HIGH PRIORITY
+
+**Status:** 📋 **PLANNED** for implementation Week 3-4
+
+**Enhanced Features:**
 - Interactive scenario planning with multiple projection models
-- Dynamic parameter adjustment (rent growth, expense inflation, appreciation rates)
-- Side-by-side scenario comparison
-- Best/worst case scenario analysis
-- Interactive charts for scenario visualization
+- Dynamic parameter adjustment sliders (rent growth, expense inflation, appreciation rates)
+- Side-by-side scenario comparison with market intelligence integration
+- Best/worst case scenario analysis using market trend data
+- Interactive charts for scenario visualization with market context
+- **NEW**: Market-adjusted scenario modeling based on local trends
 
-### 2.2 Educational Layer Implementation - PLANNED
+**Technical Requirements:**
+```typescript
+// Component: frontend/src/components/SFRAnalysis/ScenarioPlanning.tsx
+interface ScenarioParams {
+  rentGrowth: number;
+  expenseGrowth: number;
+  valueAppreciation: number;
+  vacancyRate: number;
+  marketAdjustment: number; // NEW: Based on market intelligence
+}
 
-**Status:** 📋 **PLANNED** for future implementation
+interface ScenarioResult {
+  projectedMetrics: FinancialMetrics;
+  marketConfidence: number; // NEW: Confidence based on market data
+  riskFactors: string[];
+  opportunities: string[];
+}
+```
 
-**Planned Features:**
-- Metric tooltips with educational explanations
-- Industry benchmark comparisons
-- Investment strategy guidance
-- Risk assessment education
+### 2.2 Educational Layer Implementation - HIGH PRIORITY
+
+**Status:** 📋 **PLANNED** for implementation Week 3-4
+
+**Enhanced Features:**
+- MetricTooltip with comprehensive educational explanations
+- Industry benchmark comparisons with local market context
+- Investment strategy guidance based on market conditions
+- Risk assessment education with market-specific factors
+- **NEW**: Market intelligence education (understanding trends, cycles, timing)
+
+**Technical Requirements:**
+```typescript
+// Component: frontend/src/components/shared/MetricTooltip.tsx
+interface MetricEducation {
+  explanation: string;
+  benchmark: string;
+  marketContext?: string; // NEW: Local market specific guidance
+  strategyTips: string[];
+  riskFactors: string[];
+}
+
+// Enhanced tooltips for:
+// - Cap Rate (with local market benchmarks)
+// - Cash-on-Cash Return (with market timing context)
+// - Market Position (with trend analysis)
+// - Investment Timing (with cycle education)
+```
 
 ---
 
-## Phase 3: Advanced Competitive Features - PLANNED
+## Phase 3: User Authentication & Account Management - NEW HIGH PRIORITY
 
-**Status:** 📋 **PLANNED** for future implementation
+**Status:** 📋 **PLANNED** for implementation Week 5-6
 
-### 3.1 Deal Pipeline Management - PLANNED
+**Problem:** Currently all data is stored anonymously without user persistence. Users lose their saved properties and analysis history when switching devices or clearing browser data.
 
-**Planned Features:**
-- Deal tracking and status management
-- Notes and documentation system
-- Follow-up reminders and task management
-- Deal comparison and portfolio analysis
+**Solution:** Implement user authentication system with Google Sign-In for seamless account management and data persistence across devices.
 
-### 3.2 Market Timing Intelligence - PLANNED
+### 3.1 Authentication Infrastructure - HIGH PRIORITY
 
-**Planned Features:**
-- Market cycle analysis
-- Economic indicator integration
-- Investment timing recommendations
-- Market trend predictions
+**Status:** 📋 **PLANNED** for implementation Week 5
+
+**Features:**
+- **Google OAuth 2.0 Integration** - Seamless sign-in with Google accounts
+- **JWT Token Management** - Secure authentication with refresh tokens
+- **User Profile Management** - Basic user info and preferences
+- **Session Persistence** - Stay logged in across browser sessions
+- **Privacy Controls** - User data management and deletion options
+
+**Technical Requirements:**
+```typescript
+// Backend: User model and authentication
+interface User {
+  id: string;
+  googleId: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  preferences: {
+    defaultDownPayment: number;
+    defaultInterestRate: number;
+    preferredAnalysisView: string;
+    marketAlerts: boolean;
+  };
+  subscription?: {
+    tier: 'Free' | 'Pro' | 'Enterprise';
+    expiresAt?: Date;
+  };
+  createdAt: Date;
+  lastLoginAt: Date;
+}
+
+// Routes
+// POST /api/auth/google - Google OAuth callback
+// GET /api/auth/me - Get current user info
+// PUT /api/auth/preferences - Update user preferences
+// DELETE /api/auth/account - Delete user account
+```
+
+**Frontend Integration:**
+```typescript
+// Component: frontend/src/components/Auth/GoogleSignIn.tsx
+// Hook: frontend/src/hooks/useAuth.ts
+// Context: frontend/src/contexts/AuthContext.tsx
+// Service: frontend/src/services/authService.ts
+```
+
+### 3.2 Data Migration & User Ownership - HIGH PRIORITY
+
+**Status:** 📋 **PLANNED** for implementation Week 5-6
+
+**Features:**
+- **Saved Properties Migration** - Convert anonymous saves to user accounts
+- **Analysis History** - Persistent analysis results tied to user accounts
+- **Cross-Device Sync** - Access saved data from any device
+- **Data Export** - Users can export their analysis data
+- **Account Linking** - Merge anonymous data when users sign up
+
+**Technical Implementation:**
+```typescript
+// Update existing models to include userId
+interface SavedProperty {
+  userId: string; // NEW: Link to authenticated user
+  // ... existing fields
+}
+
+interface DealPipeline {
+  userId: string; // UPDATE: Replace anonymous with real user ID
+  // ... existing fields
+}
+
+// Migration service
+class DataMigrationService {
+  async migrateAnonymousData(anonymousId: string, userId: string): Promise<void>
+  async linkUserData(tempUserId: string, authenticatedUserId: string): Promise<void>
+}
+```
+
+### 3.3 Enhanced User Experience with Authentication - MEDIUM PRIORITY
+
+**Status:** 📋 **PLANNED** for implementation Week 6
+
+**Features:**
+- **Personalized Dashboard** - Welcome user by name, show recent activity
+- **Analysis History Timeline** - Chronological view of all user analyses
+- **Favorite Properties** - Star/bookmark properties for quick access
+- **Analysis Sharing** - Share analysis reports with others via links
+- **Account Settings Page** - Manage preferences, export data, delete account
+
+**UI Components:**
+```typescript
+// Components to create/update:
+// - UserMenu (avatar dropdown in header)
+// - AnalysisHistory page
+// - AccountSettings page
+// - UserDashboard (enhanced home page)
+// - ShareAnalysis modal
+// - DataExport functionality
+```
 
 ---
 
-## Phase 4: Mobile & PWA Implementation - PLANNED
+## Phase 4: Advanced Competitive Features - UPDATED PLAN
 
-**Status:** 📋 **PLANNED** for future implementation
+**Status:** 📋 **PLANNED** for implementation Week 7-10
 
-### 4.1 Progressive Web App Setup - PLANNED
+### 4.1 Deal Pipeline Management - MEDIUM PRIORITY
+
+**Enhanced Features:**
+- Deal tracking and status management with market intelligence integration
+- Notes and documentation system with market context snapshots
+- Follow-up reminders based on market timing analysis
+- Deal comparison and portfolio analysis with market performance metrics
+- **NEW**: Market timing alerts (when market conditions change for tracked deals)
+- **NEW**: Competitive analysis for pipeline deals
+
+**Technical Requirements:**
+```typescript
+// Model: backend/src/models/DealPipeline.ts
+interface PipelineDeal {
+  // ... existing fields ...
+  marketSnapshot: MarketIntelligence; // NEW: Market conditions when deal was added
+  timingAlerts: TimingAlert[]; // NEW: Market change notifications
+  competitiveAnalysis: ComparableProperty[]; // NEW: Updated comps
+}
+```
+
+### 4.2 Market Timing Intelligence - HIGH PRIORITY
+
+**Enhanced Features:**
+- Advanced market cycle analysis with economic indicators
+- Multi-source economic indicator integration (FRED API, local employment data)
+- Investment timing recommendations with confidence scoring
+- Market trend predictions using historical data and AI analysis
+- **NEW**: Integration with market intelligence service
+- **NEW**: Predictive analytics for market timing
+
+**Technical Requirements:**
+```typescript
+// Service: backend/src/services/marketTimingService.ts
+class MarketTimingService {
+  async analyzeMarketCycle(location: LocationData): Promise<CycleAnalysis>
+  async getInvestmentTiming(marketData: MarketData): Promise<TimingRecommendation>
+  async predictMarketTrends(historicalData: MarketTrendData): Promise<TrendPrediction>
+  async generateTimingAlerts(portfolio: PipelineDeal[]): Promise<TimingAlert[]>
+}
+```
+
+---
+
+## Phase 5: Mobile & PWA Implementation - FUTURE PLAN
+
+**Status:** 📋 **PLANNED** for implementation Week 11-14
+
+### 5.1 Progressive Web App Setup - PLANNED
 
 **Planned Features:**
 - Mobile-optimized interface
@@ -186,7 +462,7 @@ The Phase 1 enhanced AI analysis system has been successfully implemented with c
 - App installation capability
 - Push notifications for deal updates
 
-### 4.2 Quick Analysis Mode - PLANNED
+### 5.2 Quick Analysis Mode - PLANNED
 
 **Planned Features:**
 - Rapid deal screening
@@ -202,9 +478,22 @@ The Phase 1 enhanced AI analysis system has been successfully implemented with c
 - Professional UI Components
 - OpenAI v5.8.2 API Integration with GPT-4o-mini
 
-### 📋 Phase 2-4: PLANNED for Future Implementation
+### 📋 Phase 1.5: CRITICAL PRIORITY (Week 1-2)
+- Market Context Redesign with Real Estate APIs
+- Historical Market Trends & Comparable Sales
+- Investment Timing Intelligence
+- Professional Market Metrics Visualization
+
+### 📋 Phase 2: PLANNED (Week 3-4)
 - Interactive Scenario Planning
 - Educational Layer Implementation
+
+### 📋 Phase 3: PLANNED (Week 5-6) - NEW
+- User Authentication with Google Sign-In
+- Data Migration & User Ownership
+- Enhanced User Experience with Accounts
+
+### 📋 Phase 4-5: PLANNED for Future Implementation (Week 7-14)
 - Deal Pipeline Management
 - Market Timing Intelligence
 - Progressive Web App Features
@@ -2255,36 +2544,46 @@ export const QuickAnalysisModal: React.FC<QuickAnalysisProps> = ({ open, onClose
 - [x] Create EnhancedAIAnalysis component with score breakdown
 - [x] Test census integration with AI analysis
 
-### Week 3-4: User Experience
+### Week 3-4: User Experience (Phase 2)
 - [ ] Implement ScenarioPlanning component
 - [ ] Create MetricTooltip for educational explanations
 - [ ] Update MetricsCards to use educational tooltips
 - [ ] Add interactive scenario comparison tools
 - [ ] Test scenario calculations and UI responsiveness
 
-### Week 5-6: Deal Pipeline
-- [ ] Create DealPipeline model and routes
+### Week 5-6: User Authentication (Phase 3) - NEW
+- [ ] Set up Google OAuth 2.0 integration
+- [ ] Create User model and authentication routes
+- [ ] Implement JWT token management
+- [ ] Build GoogleSignIn component and auth context
+- [ ] Create data migration service for anonymous users
+- [ ] Update existing models to include userId
+- [ ] Build user dashboard and account settings
+- [ ] Test authentication flow and data persistence
+
+### Week 7-8: Deal Pipeline (Phase 4)
+- [ ] Create DealPipeline model and routes (with user auth)
 - [ ] Build DealPipeline frontend page
 - [ ] Implement deal status management
 - [ ] Add note-taking functionality
 - [ ] Create pipeline API service
-- [ ] Test deal management workflow
+- [ ] Test deal management workflow with user accounts
 
-### Week 7-8: Market Timing
+### Week 9-10: Market Timing (Phase 4)
 - [ ] Implement MarketTimingService
 - [ ] Integrate market timing with analysis
 - [ ] Create market timing display components
 - [ ] Add market cycle indicators to analysis
 - [ ] Test market timing recommendations
 
-### Week 9-10: Mobile & PWA
+### Week 11-12: Mobile & PWA (Phase 5)
 - [ ] Update PWA manifest
 - [ ] Implement install prompt hook
 - [ ] Create InstallButton component
 - [ ] Add service worker for offline capability
 - [ ] Test PWA installation and offline features
 
-### Week 11-12: Quick Analysis
+### Week 13-14: Quick Analysis (Phase 5)
 - [ ] Build QuickAnalysisModal component
 - [ ] Implement quick calculation logic
 - [ ] Add quick analysis to main navigation

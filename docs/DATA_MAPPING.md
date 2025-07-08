@@ -71,13 +71,20 @@ When saving a property:
 
 When loading a saved property:
 
-| Database Field | Frontend Field | Transformation |
-|----------------|----------------|----------------|
-| Property document | Property form data | Restructured to match form structure |
-| `analysis` | `analysis` | Normalized structure (see Adapter) |
-| `createdAt` | Displayed in UI | Formatted date |
-| `updatedAt` | Displayed in UI | Formatted date |
-| `_id` | Used for updates | Preserved for API calls |
+| Database Field | Frontend Field | Transformation | Notes |
+|----------------|----------------|----------------|-------|
+| Property document | Property form data | Restructured to match form structure | Base property data preserved |
+| `analysis.marketData` | `analysis.marketData` | Preserved if exists, otherwise re-fetched from cache | **CACHED DATA** |
+| `analysis.marketInsights` | `analysis.marketInsights` | Preserved if exists, otherwise regenerated | **CACHED DATA** |
+| `analysis.investmentTiming` | `analysis.investmentTiming` | Preserved if exists, otherwise regenerated | **CACHED DATA** |
+| `analysis.aiInsights` | `analysis.aiInsights` | **ALWAYS REGENERATED** with current market data | **RECALCULATED** |
+| `analysis.monthlyAnalysis` | `analysis.monthlyAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `analysis.annualAnalysis` | `analysis.annualAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `analysis.keyMetrics` | `analysis.keyMetrics` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `analysis.longTermAnalysis` | `analysis.longTermAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `createdAt` | Displayed in UI | Formatted date | Preserved |
+| `updatedAt` | Displayed in UI | Formatted date | Preserved |
+| `_id` | Used for updates | Preserved for API calls | Preserved |
 
 ## Analysis Adapter Rules
 
@@ -228,3 +235,117 @@ To ensure consistency and backward compatibility, the application handles ZIP co
 3. UI components should display ZIP codes with consistent formatting (e.g., 5-digit or ZIP+4 format)
 
 This approach ensures backward compatibility while maintaining a clear standard for future development.
+
+## Data Persistence and Caching Strategy
+
+### Current Implementation (as of January 2025)
+
+The application uses a sophisticated caching and persistence strategy to optimize performance while ensuring data accuracy:
+
+### 1. Market Intelligence Data Caching
+
+#### RentCast API Data
+- **Cache Location**: MongoDB `api_cache` collection
+- **Cache Duration**: 30 days (configurable via `RENTCAST_CACHE_TTL_DAYS`)
+- **Cache Key Strategy**: Based on ZIP code, address, and API endpoint
+- **Cached Data Types**:
+  - Property rent estimates
+  - Comparable properties
+  - Market trend data
+  - Property valuations
+
+#### FRED Economic Data
+- **Cache Location**: MongoDB `api_cache` collection  
+- **Cache Duration**: 1 day for economic indicators
+- **Cached Data Types**:
+  - Mortgage rates
+  - Inflation data
+  - Housing price indices
+  - Employment data
+
+### 2. Deal Storage and Loading Strategy
+
+#### New Deal Analysis
+```
+User Input → SFRAnalyzer.analyzeWithMarketIntelligence() → Fetch/Use Cached Market Data → AI Analysis → Save Complete Analysis
+```
+
+#### Saved Deal Loading (Enhanced as of January 2025)
+```
+Load Deal → Check for Stored Market Data → Re-run SFRAnalyzer.analyzeWithMarketIntelligence() → Preserve Cached Data → Regenerate AI Insights → Return Enhanced Analysis
+```
+
+### 3. Data Categories by Persistence Strategy
+
+#### ✅ **SAVED AND PRESERVED**
+- Base property data (address, purchase price, financial details)
+- Market intelligence data (if available)
+- Market insights (if available) 
+- Investment timing analysis (if available)
+- Deal metadata (created/updated dates, IDs)
+
+#### 🔄 **ALWAYS RECALCULATED**
+- Monthly analysis (income, expenses, cash flow)
+- Annual analysis (NOI, debt service, returns)
+- Key financial metrics (cap rate, cash-on-cash, DSCR)
+- Long-term projections (yearly forecasts)
+- **AI insights (ALWAYS regenerated with fresh market context)**
+
+#### 💾 **CACHED BUT REFRESHED**
+- Market data from RentCast (30-day cache)
+- Economic indicators from FRED (1-day cache)
+- Comparable properties data
+- Market trend analysis
+
+### 4. Enhanced Saved Deal Loading Logic
+
+When a user loads a saved deal, the system now:
+
+1. **Loads the saved deal** from MongoDB
+2. **Checks for cached market intelligence data** in the deal
+3. **Re-runs full analysis** using `SFRAnalyzer.analyzeWithMarketIntelligence()`
+4. **Preserves cached market data** if fresh data isn't available
+5. **Generates fresh AI insights** with full market intelligence context
+6. **Returns enhanced analysis** with consistent intelligent predictions
+
+### 5. Benefits of Current Strategy
+
+#### Performance Benefits
+- ✅ Reduces API calls through intelligent caching
+- ✅ Faster load times for saved deals
+- ✅ Consistent analysis quality between new and saved deals
+
+#### Data Quality Benefits  
+- ✅ Investment scores display correctly on saved deals
+- ✅ AI predictions are consistent and intelligent (not basic math)
+- ✅ Market intelligence is utilized even for saved deals
+- ✅ Temperature effects in AI are mitigated through full context
+
+#### User Experience Benefits
+- ✅ No difference in analysis quality between new vs saved deals
+- ✅ Saved deals benefit from latest analysis engine improvements
+- ✅ Market data stays current through intelligent caching
+
+### 6. Cache Management
+
+#### Cache Invalidation
+- Market data cache expires after 30 days
+- Economic data cache expires after 1 day
+- Manual cache clearing available for development/testing
+
+#### Cache Optimization
+- ZIP code-based grouping reduces redundant API calls
+- Intelligent fallbacks when cache misses occur
+- Graceful degradation when external APIs are unavailable
+
+### 7. Future Considerations
+
+#### Potential Optimizations
+- Add user preference for cache refresh frequency
+- Implement background cache warming for popular markets
+- Add cache analytics and hit/miss monitoring
+
+#### Scalability Considerations
+- Monitor cache size and implement cleanup strategies
+- Consider Redis cache for high-frequency data
+- Implement cache partitioning for different data types

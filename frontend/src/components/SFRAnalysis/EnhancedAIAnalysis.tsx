@@ -207,7 +207,7 @@ export const EnhancedAIAnalysis: React.FC<EnhancedAIAnalysisProps> = ({
               </Box>
               
               <Typography variant="body2" sx={{ mt: 3 }}>
-                {aiInsights.investmentScore ? `${aiInsights.investmentScore}/100` : 'Score unavailable'}
+                {typeof aiInsights.investmentScore === 'number' ? `${aiInsights.investmentScore}/100` : 'Score unavailable'}
               </Typography>
               <Chip 
                 label={getScoreLabel(aiInsights.investmentScore || 0)}

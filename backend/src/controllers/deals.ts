@@ -51,6 +51,16 @@ export const getDealById = async (req: Request, res: Response): Promise<void> =>
   try {
     const { id } = req.params;
     const deal = await dealService.getDealById(id);
+    
+    // Log the investment score for debugging
+    if (deal && deal.analysis?.aiInsights) {
+      logger.info(`Deal ${id} investment score:`, {
+        investmentScore: deal.analysis.aiInsights.investmentScore,
+        hasScore: typeof deal.analysis.aiInsights.investmentScore === 'number',
+        scoreValue: deal.analysis.aiInsights.investmentScore
+      });
+    }
+    
     res.json(deal);
   } catch (error) {
     logger.error(`Error getting deal ${req.params.id}:`, error);
@@ -76,11 +86,37 @@ export const createDeal = async (req: Request, res: Response): Promise<void> => 
     // Log the full data for debugging
     logger.info('Full deal data:', JSON.stringify(dealData));
     
+    // Log investment score specifically
+    if (dealData.analysis?.aiInsights) {
+      logger.info('Investment score being saved:', {
+        investmentScore: dealData.analysis.aiInsights.investmentScore,
+        hasScore: typeof dealData.analysis.aiInsights.investmentScore === 'number',
+        scoreType: typeof dealData.analysis.aiInsights.investmentScore,
+        isZero: dealData.analysis.aiInsights.investmentScore === 0,
+        isNull: dealData.analysis.aiInsights.investmentScore === null,
+        isUndefined: dealData.analysis.aiInsights.investmentScore === undefined,
+        aiInsightsKeys: Object.keys(dealData.analysis.aiInsights)
+      });
+    } else {
+      logger.warn('No aiInsights found in analysis during save');
+    }
+    
     const newDeal = await dealService.saveDeal(dealData);
     logger.info('Deal created successfully:', {
       id: newDeal._id,
       propertyName: newDeal.propertyName
     });
+    
+    // Log what investment score was actually saved to the database
+    if (newDeal.analysis?.aiInsights) {
+      logger.info('Investment score actually saved to DB:', {
+        investmentScore: newDeal.analysis.aiInsights.investmentScore,
+        hasScore: typeof newDeal.analysis.aiInsights.investmentScore === 'number',
+        scoreType: typeof newDeal.analysis.aiInsights.investmentScore
+      });
+    } else {
+      logger.warn('No aiInsights found in saved deal');
+    }
     
     res.status(201).json(newDeal);
   } catch (error) {

@@ -321,7 +321,7 @@ const SavedProperties: React.FC = () => {
                         }
                       </TableCell>
                       <TableCell align="right">
-                        {property.analysis?.aiInsights?.investmentScore ? 
+                        {typeof property.analysis?.aiInsights?.investmentScore === 'number' ? 
                           `${property.analysis.aiInsights.investmentScore}/100` : 
                           'N/A'
                         }

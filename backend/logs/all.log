@@ -28431,3 +28431,1788 @@
 2025-07-06 22:58:14:5814 [32minfo[39m: [32mResponse length: 4466 characters[39m
 2025-07-06 22:58:14:5814 [32minfo[39m: [32mCalculated analysis metrics:[39m
 2025-07-06 22:58:14:5814 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-06 23:13:59:1359 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-06 23:31:23:3123 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 00:20:35:2035 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 01:15:10:1510 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 01:45:50:4550 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 02:53:57:5357 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 03:32:56:3256 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 03:33:57:3357 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 05:11:32:1132 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 06:39:25:3925 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 06:41:07:417 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 06:42:18:4218 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 07:14:07:147 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 07:14:07:147 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 07:14:08:148 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 07:14:08:148 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 07:14:08:148 [37mdebug[39m: [37mCache miss for sales:9009_chislom_trl_crossroads_tx_76227[39m
+2025-07-07 07:14:08:148 [37mdebug[39m: [37mCache miss for rent:9009_chislom_trl_crossroads_tx_76227[39m
+2025-07-07 07:14:08:148 [37mdebug[39m: [37mCache miss for market:76227[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mRentCast rate limit: 100 remaining[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mRentCast rate limit: 100 remaining[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mCached data for market:76227 (TTL: 720h)[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mCached data for rent:9009_chislom_trl_crossroads_tx_76227 (TTL: 720h)[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mRentCast rate limit: 100 remaining[39m
+2025-07-07 07:14:09:149 [37mdebug[39m: [37mCached data for sales:9009_chislom_trl_crossroads_tx_76227 (TTL: 720h)[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mGenerated SFR analysis prompt (12192 chars)[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 07:14:09:149 [32minfo[39m: [32mPrompt length: 12192 characters[39m
+2025-07-07 07:14:21:1421 [32minfo[39m: [32mResponse length: 3315 characters[39m
+2025-07-07 07:14:21:1421 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 07:14:21:1421 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 07:16:19:1619 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mGenerated SFR analysis prompt (12193 chars)[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 07:16:19:1619 [32minfo[39m: [32mPrompt length: 12193 characters[39m
+2025-07-07 07:16:33:1633 [32minfo[39m: [32mResponse length: 3273 characters[39m
+2025-07-07 07:16:33:1633 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 07:16:33:1633 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32mPOST /api/deals - Request Body:[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32mCreating deal with data:[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32mFull deal data:[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32m[DealService] Creating deal: Crossroads[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32mDeal created successfully:[39m
+2025-07-07 07:17:44:1744 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 07:17:53:1753 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 07:18:02:182 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 07:26:21:2621 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 07:34:24:3424 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 07:35:03:353 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 07:36:31:3631 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mGenerated SFR analysis prompt (12193 chars)[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 07:36:31:3631 [32minfo[39m: [32mPrompt length: 12193 characters[39m
+2025-07-07 07:36:52:3652 [32minfo[39m: [32mResponse length: 4632 characters[39m
+2025-07-07 07:36:52:3652 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 07:36:52:3652 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 07:38:15:3815 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mGenerated SFR analysis prompt (12172 chars)[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 07:38:15:3815 [32minfo[39m: [32mPrompt length: 12172 characters[39m
+2025-07-07 07:38:33:3833 [32minfo[39m: [32mResponse length: 4236 characters[39m
+2025-07-07 07:38:33:3833 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 07:38:33:3833 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 07:41:03:413 [32minfo[39m: [32mPUT /api/deals/686bbae8e9501a347703e865 - Request Body:[39m
+2025-07-07 07:41:03:413 [32minfo[39m: [32mUpdating deal 686bbae8e9501a347703e865 with data:[39m
+2025-07-07 07:41:03:413 [32minfo[39m: [32mFull update data:[39m
+2025-07-07 07:41:03:413 [32minfo[39m: [32m[DealService] Updating deal: Crossroads[39m
+2025-07-07 07:41:03:413 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-07-07 07:44:56:4456 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 07:45:49:4549 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 08:01:57:157 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 08:44:26:4426 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 08:47:43:4743 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 09:35:38:3538 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 09:40:55:4055 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 10:25:56:2556 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 10:30:14:3014 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 11:10:38:1038 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 11:26:33:2633 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 11:45:07:457 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 11:48:02:482 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 11:57:57:5757 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 12:17:52:1752 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 13:16:10:1610 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 13:36:43:3643 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 13:39:12:3912 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 13:44:52:4452 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 14:07:28:728 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 14:10:14:1014 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 14:12:44:1244 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 14:58:51:5851 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 15:38:48:3848 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 15:43:27:4327 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 16:01:17:117 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 16:18:07:187 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 16:29:04:294 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 16:36:52:3652 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 16:59:25:5925 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 17:07:32:732 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 17:25:26:2526 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 18:14:03:143 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 18:18:23:1823 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mCache hit for rent:9009_chislom_trl_crossroads_tx_76227 (age: 11.1h)[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mCache hit for sales:9009_chislom_trl_crossroads_tx_76227 (age: 11.1h)[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:19:09:199 [37mdebug[39m: [37mCache hit for market:76227 (age: 11.1h)[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mGenerated SFR analysis prompt (12172 chars)[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:19:09:199 [32minfo[39m: [32mPrompt length: 12172 characters[39m
+2025-07-07 18:19:25:1925 [32minfo[39m: [32mResponse length: 3349 characters[39m
+2025-07-07 18:19:25:1925 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:19:25:1925 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:19:34:1934 [32minfo[39m: [32mPUT /api/deals/686bbae8e9501a347703e865 - Request Body:[39m
+2025-07-07 18:19:34:1934 [32minfo[39m: [32mUpdating deal 686bbae8e9501a347703e865 with data:[39m
+2025-07-07 18:19:34:1934 [32minfo[39m: [32mFull update data:[39m
+2025-07-07 18:19:34:1934 [32minfo[39m: [32m[DealService] Updating deal: Crossroads[39m
+2025-07-07 18:19:35:1935 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-07-07 18:20:17:2017 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 18:20:22:2022 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 18:27:11:2711 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mGenerated SFR analysis prompt (12172 chars)[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:27:11:2711 [32minfo[39m: [32mPrompt length: 12172 characters[39m
+2025-07-07 18:27:22:2722 [32minfo[39m: [32mResponse length: 3446 characters[39m
+2025-07-07 18:27:22:2722 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:27:22:2722 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 18:30:19:3019 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mGenerated SFR analysis prompt (12172 chars)[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:30:19:3019 [32minfo[39m: [32mPrompt length: 12172 characters[39m
+2025-07-07 18:30:29:3029 [32minfo[39m: [32mResponse length: 3254 characters[39m
+2025-07-07 18:30:29:3029 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:30:29:3029 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:38:32:3832 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:38:32:3832 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:38:33:3833 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:38:33:3833 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:38:33:3833 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:38:33:3833 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:38:33:3833 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:38:34:3834 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:38:34:3834 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:38:35:3835 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:38:35:3835 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:38:35:3835 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.1h)[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:38:35:3835 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mResponse length: 3797 characters[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:38:56:3856 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:39:19:3919 [32minfo[39m: [32mResponse length: 3737 characters[39m
+2025-07-07 18:39:19:3919 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:39:19:3919 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:40:14:4014 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:40:14:4014 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:40:15:4015 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:40:16:4016 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.1h)[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:40:16:4016 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mResponse length: 3958 characters[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:40:37:4037 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:40:45:4045 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:40:45:4045 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:40:46:4046 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:40:46:4046 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:40:46:4046 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:40:46:4046 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:40:46:4046 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:40:47:4047 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:40:47:4047 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.1h)[39m
+2025-07-07 18:40:48:4048 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.1h)[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:40:48:4048 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:41:02:412 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:41:02:412 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:41:04:414 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:41:04:414 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:41:04:414 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:41:04:414 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:41:04:414 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:41:05:415 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:41:05:415 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:41:06:416 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:41:06:416 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:41:06:416 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:41:06:416 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:41:07:417 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:41:07:417 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mResponse length: 3589 characters[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:41:28:4128 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:41:45:4145 [32minfo[39m: [32mResponse length: 3374 characters[39m
+2025-07-07 18:41:45:4145 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:41:45:4145 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:42:30:4230 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:42:30:4230 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:42:31:4231 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:42:32:4232 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:42:32:4232 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:42:53:4253 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:42:53:4253 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:42:54:4254 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:42:55:4255 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:42:55:4255 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:43:17:4317 [32minfo[39m: [32mResponse length: 3896 characters[39m
+2025-07-07 18:43:17:4317 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:43:17:4317 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:43:18:4318 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:43:37:4337 [32minfo[39m: [32mResponse length: 3630 characters[39m
+2025-07-07 18:43:37:4337 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:43:37:4337 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:44:54:4454 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:44:54:4454 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:44:55:4455 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:44:55:4455 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:44:55:4455 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:44:55:4455 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:44:55:4455 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:44:56:4456 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:44:56:4456 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:44:57:4457 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:45:09:459 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:45:09:459 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:45:10:4510 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:45:10:4510 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:45:10:4510 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:45:10:4510 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:45:10:4510 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:45:11:4511 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:45:11:4511 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:12:4512 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:12:4512 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:12:4512 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:45:12:4512 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mResponse length: 3788 characters[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:45:30:4530 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:45:34:4534 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:45:34:4534 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:45:35:4535 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:45:35:4535 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:45:35:4535 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:45:35:4535 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:45:35:4535 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:38:4538 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:45:38:4538 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:39:4539 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:45:39:4539 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:45:45:4545 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 18:45:45:4545 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 18:45:46:4546 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 18:45:46:4546 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 18:45:46:4546 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 18:45:46:4546 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 18:45:46:4546 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mCache hit for market:94043 (age: 25.2h)[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:47:4547 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 25.2h)[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mGenerated SFR analysis prompt (12250 chars)[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:45:47:4547 [32minfo[39m: [32mPrompt length: 12250 characters[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mResponse length: 4518 characters[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:46:11:4611 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 18:46:30:4630 [32minfo[39m: [32mResponse length: 3541 characters[39m
+2025-07-07 18:46:30:4630 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:46:30:4630 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 18:52:29:5229 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mCache hit for rent:9009_chislom_trl_crossroads_tx_76227 (age: 11.6h)[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mCache hit for sales:9009_chislom_trl_crossroads_tx_76227 (age: 11.6h)[39m
+2025-07-07 18:52:36:5236 [37mdebug[39m: [37mCache hit for market:76227 (age: 11.6h)[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 18:52:36:5236 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mGenerated SFR analysis prompt (12172 chars)[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 18:52:37:5237 [32minfo[39m: [32mPrompt length: 12172 characters[39m
+2025-07-07 18:52:51:5251 [32minfo[39m: [32mResponse length: 3493 characters[39m
+2025-07-07 18:52:51:5251 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 18:52:51:5251 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:33:35:3335 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 20:33:35:3335 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 20:33:36:3336 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 20:33:36:3336 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 20:33:36:3336 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 20:33:36:3336 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 20:33:36:3336 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:33:37:3337 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 20:33:37:3337 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:33:38:3338 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.0h)[39m
+2025-07-07 20:33:38:3338 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:33:38:3338 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.0h)[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:33:38:3338 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.0h)[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:33:38:3338 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 20:33:49:3349 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 20:33:49:3349 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 20:33:50:3350 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 20:33:50:3350 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 20:33:50:3350 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 20:33:50:3350 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 20:33:50:3350 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.0h)[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:33:51:3351 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:33:51:3351 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.0h)[39m
+2025-07-07 20:33:52:3352 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.0h)[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:33:52:3352 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mResponse length: 4284 characters[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:34:14:3414 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 20:34:25:3425 [32minfo[39m: [32mResponse length: 3334 characters[39m
+2025-07-07 20:34:25:3425 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:34:25:3425 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:34:28:3428 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mLoading deal with market intelligence:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mDeal loaded from database:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mRe-analyzing SFR deal with market intelligence[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mCache hit for sales:9009_chislom_trl_crossroads_tx_76227 (age: 13.3h)[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mCache hit for rent:9009_chislom_trl_crossroads_tx_76227 (age: 13.3h)[39m
+2025-07-07 20:34:30:3430 [37mdebug[39m: [37mCache hit for market:76227 (age: 13.3h)[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:34:30:3430 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mGenerating fresh AI insights with market intelligence[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mGenerated SFR analysis prompt (12833 chars)[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:34:31:3431 [32minfo[39m: [32mPrompt length: 12833 characters[39m
+2025-07-07 20:34:39:3439 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mLoading deal with market intelligence:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mDeal loaded from database:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mRe-analyzing SFR deal with market intelligence[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mFetching market data for SFR property: 1105 Daffodil St, Princeton, TX 75407[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mCache hit for rent:1105_daffodil_st_princeton_tx_75407 (age: 27.0h)[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mCache hit for sales:1105_daffodil_st_princeton_tx_75407 (age: 27.0h)[39m
+2025-07-07 20:34:42:3442 [37mdebug[39m: [37mCache hit for market:75407 (age: 27.0h)[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mGenerating fresh AI insights with market intelligence[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mGenerated SFR analysis prompt (12823 chars)[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:34:42:3442 [32minfo[39m: [32mPrompt length: 12823 characters[39m
+2025-07-07 20:34:49:3449 [32minfo[39m: [32mResponse length: 4317 characters[39m
+2025-07-07 20:34:49:3449 [32minfo[39m: [32mAdapting analysis for frontend - initial structure:[39m
+2025-07-07 20:34:49:3449 [32minfo[39m: [32mCreated propertyData from top-level properties[39m
+2025-07-07 20:34:49:3449 [33mwarn[39m: [33mlongTermAnalysis is missing - creating empty structure[39m
+2025-07-07 20:34:49:3449 [37mdebug[39m: [37mAdapted analysis structure for frontend[39m
+2025-07-07 20:34:49:3449 [32minfo[39m: [32mReturning deal with market intelligence analysis[39m
+2025-07-07 20:34:56:3456 [32minfo[39m: [32mResponse length: 4258 characters[39m
+2025-07-07 20:34:56:3456 [32minfo[39m: [32mAdapting analysis for frontend - initial structure:[39m
+2025-07-07 20:34:56:3456 [32minfo[39m: [32mCreated propertyData from top-level properties[39m
+2025-07-07 20:34:56:3456 [33mwarn[39m: [33mlongTermAnalysis is missing - creating empty structure[39m
+2025-07-07 20:34:56:3456 [37mdebug[39m: [37mAdapted analysis structure for frontend[39m
+2025-07-07 20:34:56:3456 [32minfo[39m: [32mReturning deal with market intelligence analysis[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mFetching market data for SFR property: 1105 Daffodil St, Princeton, TX 75407[39m
+2025-07-07 20:35:15:3515 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mGenerated SFR analysis prompt (12823 chars)[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:35:15:3515 [32minfo[39m: [32mPrompt length: 12823 characters[39m
+2025-07-07 20:35:28:3528 [32minfo[39m: [32mResponse length: 4232 characters[39m
+2025-07-07 20:35:28:3528 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:35:28:3528 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:35:47:3547 [32minfo[39m: [32mPUT /api/deals/686b3fb8a6bfdb7f0b2f715d - Request Body:[39m
+2025-07-07 20:35:47:3547 [32minfo[39m: [32mUpdating deal 686b3fb8a6bfdb7f0b2f715d with data:[39m
+2025-07-07 20:35:47:3547 [32minfo[39m: [32mFull update data:[39m
+2025-07-07 20:35:47:3547 [32minfo[39m: [32m[DealService] Updating deal: Princeton1[39m
+2025-07-07 20:35:48:3548 [32minfo[39m: [32mDeal updated successfully:[39m
+2025-07-07 20:35:51:3551 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:35:53:3553 [32minfo[39m: [32mLoading deal with market intelligence:[39m
+2025-07-07 20:35:53:3553 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mDeal loaded from database:[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mRe-analyzing SFR deal with market intelligence[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 20:35:54:3554 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mGenerating fresh AI insights with market intelligence[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mGenerated SFR analysis prompt (12833 chars)[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:35:54:3554 [32minfo[39m: [32mPrompt length: 12833 characters[39m
+2025-07-07 20:36:12:3612 [32minfo[39m: [32mResponse length: 4549 characters[39m
+2025-07-07 20:36:12:3612 [32minfo[39m: [32mAdapting analysis for frontend - initial structure:[39m
+2025-07-07 20:36:12:3612 [32minfo[39m: [32mCreated propertyData from top-level properties[39m
+2025-07-07 20:36:12:3612 [33mwarn[39m: [33mlongTermAnalysis is missing - creating empty structure[39m
+2025-07-07 20:36:12:3612 [37mdebug[39m: [37mAdapted analysis structure for frontend[39m
+2025-07-07 20:36:12:3612 [32minfo[39m: [32mReturning deal with market intelligence analysis[39m
+2025-07-07 20:36:47:3647 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mLoading deal with market intelligence:[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mDeal loaded from database:[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mRe-analyzing SFR deal with market intelligence[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mFetching market data for SFR property: 1105 Daffodil St, Princeton, TX 75407[39m
+2025-07-07 20:36:49:3649 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mGenerating fresh AI insights with market intelligence[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mGenerated SFR analysis prompt (12823 chars)[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:36:49:3649 [32minfo[39m: [32mPrompt length: 12823 characters[39m
+2025-07-07 20:37:02:372 [32minfo[39m: [32mResponse length: 4117 characters[39m
+2025-07-07 20:37:02:372 [32minfo[39m: [32mAdapting analysis for frontend - initial structure:[39m
+2025-07-07 20:37:02:372 [32minfo[39m: [32mCreated propertyData from top-level properties[39m
+2025-07-07 20:37:02:372 [33mwarn[39m: [33mlongTermAnalysis is missing - creating empty structure[39m
+2025-07-07 20:37:02:372 [37mdebug[39m: [37mAdapted analysis structure for frontend[39m
+2025-07-07 20:37:02:372 [32minfo[39m: [32mReturning deal with market intelligence analysis[39m
+2025-07-07 20:37:59:3759 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mLoading deal with market intelligence:[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32m[DealService] Getting deal with ID: 686bbae8e9501a347703e865[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mDeal loaded from database:[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mRe-analyzing SFR deal with market intelligence[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mFetching market data for SFR property: 9009 Chislom Trl, Crossroads, TX 76227[39m
+2025-07-07 20:38:01:381 [37mdebug[39m: [37mReturning cached market data for query:[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mGenerating fresh AI insights with market intelligence[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mGenerated SFR analysis prompt (12833 chars)[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:38:01:381 [32minfo[39m: [32mPrompt length: 12833 characters[39m
+2025-07-07 20:38:18:3818 [32minfo[39m: [32mResponse length: 4167 characters[39m
+2025-07-07 20:38:18:3818 [32minfo[39m: [32mAdapting analysis for frontend - initial structure:[39m
+2025-07-07 20:38:18:3818 [32minfo[39m: [32mCreated propertyData from top-level properties[39m
+2025-07-07 20:38:18:3818 [33mwarn[39m: [33mlongTermAnalysis is missing - creating empty structure[39m
+2025-07-07 20:38:18:3818 [37mdebug[39m: [37mAdapted analysis structure for frontend[39m
+2025-07-07 20:38:18:3818 [32minfo[39m: [32mReturning deal with market intelligence analysis[39m
+2025-07-07 20:44:09:449 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 20:44:09:449 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 20:44:10:4410 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.2h)[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.2h)[39m
+2025-07-07 20:44:11:4411 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.2h)[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:44:11:4411 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mResponse length: 4343 characters[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:44:26:4426 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 20:44:33:4433 [32minfo[39m: [32mResponse length: 3439 characters[39m
+2025-07-07 20:44:33:4433 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:44:33:4433 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:44:57:4457 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 20:44:58:4458 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 20:46:18:4618 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 20:46:18:4618 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 20:46:19:4619 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 20:46:19:4619 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 20:46:19:4619 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 20:46:19:4619 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 20:46:19:4619 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.2h)[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:46:20:4620 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.2h)[39m
+2025-07-07 20:46:20:4620 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:46:21:4621 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.2h)[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:46:21:4621 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mResponse length: 4244 characters[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:46:34:4634 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 20:46:45:4645 [32minfo[39m: [32mResponse length: 4111 characters[39m
+2025-07-07 20:46:45:4645 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:46:45:4645 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:48:04:484 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 20:48:04:484 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 20:48:05:485 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 20:48:05:485 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 20:48:05:485 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 20:48:05:485 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 20:48:05:485 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 20:48:06:486 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.3h)[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 20:48:06:486 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.3h)[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 20:48:07:487 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.3h)[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:48:07:487 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mResponse length: 4030 characters[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 20:48:20:4820 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 20:48:29:4829 [32minfo[39m: [32mResponse length: 3936 characters[39m
+2025-07-07 20:48:29:4829 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 20:48:29:4829 [32minfo[39m: [32mAnalysis complete - returning results[39m
+{"level":"info","message":"CacheService initialized with 720 hour TTL","timestamp":"2025-07-08T01:52:44.580Z"}
+{"level":"info","message":"RentCast service initialized with MongoDB persistent cache","timestamp":"2025-07-08T01:52:44.581Z"}
+{"level":"info","message":"Attempting to load .env from:","timestamp":"2025-07-08T01:52:44.639Z"}
+{"level":"info","message":"✅ .env file loaded successfully","timestamp":"2025-07-08T01:52:44.639Z"}
+{"CENSUS_API_KEY":"exists","CORS_ORIGIN":"http://localhost:3000","FRED_API_KEY":"exists","MONGODB_URI":"exists","NODE_ENV":"development","OPENAI_API_KEY":"exists","OPENAI_API_KEY_LENGTH":164,"OPENAI_API_KEY_START":"sk-proj-13","PORT":"3001","RENTCAST_API_KEY":"exists","level":"info","message":"Raw environment variables:","timestamp":"2025-07-08T01:52:44.639Z"}
+{"CORS_ORIGIN":"http://localhost:3000","MONGODB_URI_EXISTS":true,"MONGODB_URI_LENGTH":117,"MONGODB_URI_START":"mongodb+sr...","NODE_ENV":"development","PORT":"3001","level":"info","message":"Environment variables:","timestamp":"2025-07-08T01:52:44.640Z"}
+{"level":"info","message":"Attempting to connect to MongoDB...","timestamp":"2025-07-08T01:52:44.640Z"}
+{"level":"info","message":"✅ Connected to MongoDB successfully","timestamp":"2025-07-08T01:52:45.409Z"}
+{"0":"MarketDataCache","1":"Deal","2":"SFR","3":"MF","level":"info","message":"Registered models:","timestamp":"2025-07-08T01:52:45.409Z"}
+{"level":"info","message":"All required models are registered","timestamp":"2025-07-08T01:52:45.410Z"}
+{"0":"deals","1":"marketDataCache","level":"info","message":"Collections in database:","timestamp":"2025-07-08T01:52:45.576Z"}
+2025-07-07 21:02:57:257 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 21:02:57:257 [32minfo[39m: [32mDeal 686b3fb8a6bfdb7f0b2f715d investment score:[39m
+2025-07-07 21:05:49:549 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 21:10:15:1015 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 21:21:33:2133 [33mwarn[39m: [33mMongoDB disconnected[39m
+2025-07-07 21:23:24:2324 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:23:24:2324 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:23:25:2325 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:23:26:2326 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.9h)[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:23:26:2326 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:23:42:2342 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:23:42:2342 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:23:43:2343 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:23:44:2344 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.9h)[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:23:44:2344 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:24:00:240 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:24:00:240 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:24:01:241 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:24:02:242 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.9h)[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:24:02:242 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mResponse length: 4349 characters[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:24:25:2425 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 21:24:41:2441 [32minfo[39m: [32mResponse length: 3365 characters[39m
+2025-07-07 21:24:41:2441 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:24:41:2441 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:27:30:2730 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 21:27:34:2734 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 21:27:34:2734 [32minfo[39m: [32mDeal 686b3fb8a6bfdb7f0b2f715d investment score:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mFetching market data for SFR property: 1105 Daffodil St, Princeton, TX 75407[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mCache hit for sales:1105_daffodil_st_princeton_tx_75407 (age: 27.9h)[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mCache hit for rent:1105_daffodil_st_princeton_tx_75407 (age: 27.9h)[39m
+2025-07-07 21:27:44:2744 [37mdebug[39m: [37mCache hit for market:75407 (age: 27.9h)[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mGenerated SFR analysis prompt (12823 chars)[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:27:44:2744 [32minfo[39m: [32mPrompt length: 12823 characters[39m
+2025-07-07 21:28:02:282 [32minfo[39m: [32mResponse length: 3793 characters[39m
+2025-07-07 21:28:02:282 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:28:02:282 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:28:20:2820 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:28:20:2820 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:28:21:2821 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:28:21:2821 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:28:21:2821 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:28:21:2821 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:28:21:2821 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:28:22:2822 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.9h)[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:28:22:2822 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:28:32:2832 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:28:32:2832 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:28:33:2833 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:28:33:2833 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:28:33:2833 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:28:33:2833 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:28:33:2833 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:34:2834 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:28:34:2834 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 27.9h)[39m
+2025-07-07 21:28:35:2835 [37mdebug[39m: [37mCache hit for market:94043 (age: 27.9h)[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:28:35:2835 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:28:56:2856 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:28:56:2856 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:28:57:2857 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:28:57:2857 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:28:57:2857 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:28:57:2857 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:28:57:2857 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:28:58:2858 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:28:58:2858 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:28:59:2859 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 28.0h)[39m
+2025-07-07 21:28:59:2859 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:28:59:2859 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 28.0h)[39m
+2025-07-07 21:28:59:2859 [37mdebug[39m: [37mCache hit for market:94043 (age: 28.0h)[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:28:59:2859 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mResponse length: 4051 characters[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:29:28:2928 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 21:29:45:2945 [32minfo[39m: [32mResponse length: 3840 characters[39m
+2025-07-07 21:29:45:2945 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:29:45:2945 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:29:57:2957 [32minfo[39m: [32mCacheService initialized with 720 hour TTL[39m
+2025-07-07 21:29:57:2957 [32minfo[39m: [32mRentCast service initialized with MongoDB persistent cache[39m
+2025-07-07 21:29:58:2958 [32minfo[39m: [32mAttempting to load .env from:[39m
+2025-07-07 21:29:58:2958 [32minfo[39m: [32m✅ .env file loaded successfully[39m
+2025-07-07 21:29:58:2958 [32minfo[39m: [32mRaw environment variables:[39m
+2025-07-07 21:29:58:2958 [32minfo[39m: [32mEnvironment variables:[39m
+2025-07-07 21:29:58:2958 [32minfo[39m: [32mAttempting to connect to MongoDB...[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32m✅ Connected to MongoDB successfully[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mRegistered models:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mAll required models are registered[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mCollections in database:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mAll required collections exist in the database[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32m🚀 Server running on port 3001[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mReturning sample MF data with Manhattan, NY ZIP code 10001[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mAnalyzing SFR property with market intelligence[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mFetching market data for SFR property: 123 Elm Street, Mountain View, CA 94043[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mFetching comprehensive market data[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mCalling RentCast service with query:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mFetching comprehensive economic indicators from FRED[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series MORTGAGE30US with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series UNRATE with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series CSUSHPINSA with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series FEDFUNDS with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series GDP with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mCache hit for rent:123_elm_street_mountain_view_ca_94043 (age: 28.0h)[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mFetching FRED series CPIAUCSL with params:[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mCache hit for sales:123_elm_street_mountain_view_ca_94043 (age: 28.0h)[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mSuccessfully fetched economic indicators[39m
+2025-07-07 21:29:59:2959 [37mdebug[39m: [37mCache hit for market:94043 (age: 28.0h)[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mOptimized API calls completed:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mRentCast service returned:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mMarket data fetch results:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mRetrieved market data:[39m
+2025-07-07 21:29:59:2959 [32minfo[39m: [32mSuccessfully compiled comprehensive market data[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mGenerated 5 market insights[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mSuccessfully fetched market intelligence: 5 insights generated[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mSFR analysis completed with market intelligence enhancement[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mOpenAI client initialized successfully[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mGenerated SFR analysis prompt (12911 chars)[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:30:00:300 [32minfo[39m: [32mPrompt length: 12911 characters[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32m[DealService] Getting all deals[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mResponse length: 4071 characters[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mAnalysis complete - returning results[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mPOST /api/deals/analyze - Request Body:[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mAnalyzing property:[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mAnalyzing Multi-Family property[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mEnhanced AI insights generation started with market intelligence[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mMarket intelligence data extracted for AI enhancement[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mScore breakdown generated successfully[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mGenerated MF analysis prompt (8088 chars)[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mUsing OpenAI model: gpt-4o-mini[39m
+2025-07-07 21:30:27:3027 [32minfo[39m: [32mPrompt length: 8088 characters[39m
+2025-07-07 21:30:31:3031 [32minfo[39m: [32m[DealService] Getting deal with ID: 686b3fb8a6bfdb7f0b2f715d[39m
+2025-07-07 21:30:31:3031 [32minfo[39m: [32mDeal 686b3fb8a6bfdb7f0b2f715d investment score:[39m
+2025-07-07 21:30:46:3046 [32minfo[39m: [32mResponse length: 3986 characters[39m
+2025-07-07 21:30:47:3047 [32minfo[39m: [32mCalculated analysis metrics:[39m
+2025-07-07 21:30:47:3047 [32minfo[39m: [32mAnalysis complete - returning results[39m

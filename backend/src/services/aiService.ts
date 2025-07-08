@@ -99,7 +99,7 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         weaknesses: aiResponse.weaknesses || [],
         recommendations: aiResponse.recommendations || [],
         riskAssessment: aiResponse.riskAssessment,
-        investmentScore: aiResponse.investmentScore || null,
+        investmentScore: typeof aiResponse.investmentScore === 'number' ? aiResponse.investmentScore : null,
         scoreBreakdown: scoreBreakdown, // Add the calculated score breakdown
         
         // Property-specific insights
@@ -137,7 +137,7 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         strengths: [],
         weaknesses: [],
         recommendations: [],
-        investmentScore: null
+        investmentScore: 0
       };
     }
   } catch (error) {
@@ -147,7 +147,7 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       strengths: [],
       weaknesses: [],
       recommendations: [],
-      investmentScore: null
+      investmentScore: 0
     };
   }
 }

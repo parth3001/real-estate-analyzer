@@ -283,7 +283,7 @@ Your analysis should:
 
 2. IDENTIFY PATTERNS AND RELATIONSHIPS: Connect different metrics to reveal deeper insights. For example, how the expense ratio relates to the property's age, or how the cash flow metrics align with the local market positioning.
 
-3. **WEALTH CREATION PREDICTION**: IRR is ${analysis?.keyMetrics?.irr || 0}%, but predict wealth creation based on MARKET INTELLIGENCE, not just IRR. Use unemployment rate (${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}%), mortgage rate trends (${marketIntelligence?.marketData?.economicIndicators?.mortgageRateTrend || 'Unknown'}), and local market timing score (${marketIntelligence?.investmentTiming?.timingScore || 0}/100) to predict when and why property values will accelerate beyond normal appreciation.
+3. **WEALTH CREATION PREDICTION**: IRR is ${analysis?.keyMetrics?.irr || 0}%, but predict TOTAL WEALTH CREATED (not property value). Wealth = Property Appreciation + Mortgage Principal Paydown + Accumulated Cash Flow. For example, if property goes from $500k to $650k (150k appreciation) + $50k principal paid down + $80k cash flow accumulated = $280k wealth created. Use unemployment rate (${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}%), mortgage rate trends (${marketIntelligence?.marketData?.economicIndicators?.mortgageRateTrend || 'Unknown'}), and local market timing score (${marketIntelligence?.investmentTiming?.timingScore || 0}/100) to predict when and why wealth accumulation will accelerate.
 
 4. **CASH FLOW ACCELERATION PATH**: Current cash flow is $${analysis?.monthlyAnalysis?.cashFlow || 0}/month. Use rent growth rate (${marketIntelligence?.marketData?.marketTrends?.rentGrowthRate || 0}%), local inventory levels (${marketIntelligence?.marketData?.marketTrends?.inventoryLevel || 'Unknown'}), and economic indicators to predict WHEN rental demand will spike and cash flow will jump (not just gradual increases).
 
@@ -304,7 +304,9 @@ Your analysis should:
 🔥 BOLD PREDICTIONS REQUIRED: Every prediction must be BOLD, SPECIFIC, and INTELLIGENT - not basic math!
 
 Example of GOOD boldPredictions response:
-"year3Value": "Based on unemployment dropping from ${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}% to projected 2.8% (increasing housing demand 15%), plus planned infrastructure spending creating 8% area premium, property will reach $445,000 by Year 3 vs typical $412,000 from 3% appreciation"
+"year3Value": "Based on unemployment dropping from ${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}% to projected 2.8% (increasing housing demand 15%), plus planned infrastructure spending creating 8% area premium, TOTAL WEALTH CREATED by Year 3 will be $145,000 ($75k property appreciation + $35k mortgage principal paid + $35k accumulated cash flow) vs typical $95k from normal appreciation"
+
+CRITICAL: Always specify wealth creation as the sum of appreciation + principal paydown + accumulated cash flow, NOT just property value.
 
 Please provide your AI PREDICTIONS in the following JSON format:
 {
@@ -320,10 +322,10 @@ Please provide your AI PREDICTIONS in the following JSON format:
   "notes": "Your boldest prediction about this investment",
   "boldPredictions": {
     "wealthCreation": {
-      "year3Value": "Exact property value in 3 years",
-      "year5Value": "Exact property value in 5 years", 
-      "year10Value": "Exact property value in 10 years",
-      "totalWealthCreated": "Total wealth created over hold period"
+      "year3Value": "Total wealth/equity created by year 3 (property appreciation + principal paydown + cash flow accumulated)",
+      "year5Value": "Total wealth/equity created by year 5 (property appreciation + principal paydown + cash flow accumulated)", 
+      "year10Value": "Total wealth/equity created by year 10 (property appreciation + principal paydown + cash flow accumulated)",
+      "totalWealthCreated": "Total wealth created over entire hold period"
     },
     "cashFlowGrowth": {
       "currentMonthly": "Current monthly cash flow",
