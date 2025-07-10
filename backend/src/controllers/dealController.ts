@@ -4,21 +4,25 @@ import { logger } from '../utils/logger';
 import { IDeal } from '../models/Deal';
 // import { analyzeSFRProperty, analyzeMFProperty } from '../services/analysisService';
 import { adaptAnalysisForFrontend } from '../utils/analysisAdapter';
-import { enrichPropertyWithCensusData, analyzePropertyWithCensusContext } from '../services/propertyEnrichmentService';
+// import { enrichPropertyWithCensusData, analyzePropertyWithCensusContext } from '../services/propertyEnrichmentService';
 import { SFRAnalyzer } from '../analysis';
 import { getAIInsights } from '../services/aiService';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 
-// Mock implementations until proper TypeScript versions are created
-// These will be replaced by actual implementations in the future
-const analyzeSFRProperty = async (data: any) => {
-  logger.info('Mock SFR analysis for data:', data);
-  return { /* mock analysis structure */ };
-};
-
-const analyzeMFProperty = async (data: any) => {
-  logger.info('Mock MF analysis for data:', data);
-  return { /* mock analysis structure */ };
+// Legacy MF analysis - will be replaced with proper MultiFamilyAnalyzer
+const analyzeMFProperty = async (_data: any) => {
+  logger.warn('Using legacy MF analysis - upgrade to MultiFamilyAnalyzer needed');
+  return {
+    summary: "Multi-family analysis not yet implemented with market intelligence",
+    keyMetrics: {},
+    aiInsights: {
+      summary: "Multi-family analysis coming soon",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+      investmentScore: null
+    }
+  };
 };
 
 interface AuthenticatedRequest extends Request {
@@ -246,38 +250,57 @@ export const deleteDeal = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 /**
- * Analyze a deal property
+ * Analyze a deal property using the enhanced SFR analyzer
  */
 export const analyzeDeal = async (req: Request, res: Response) => {
   try {
     const dealData = req.body;
     logger.info('Analyzing deal:', { propertyType: dealData.propertyType });
 
-    let analysis;
+    // Create analyzer instance with default assumptions
+    const assumptions: AnalysisAssumptions = {
+      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.inflationRate || 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+    };
+
+    let analysis: any;
     
     if (dealData.propertyType === 'SFR') {
-      analysis = await analyzeSFRProperty(dealData);
+      // Use the enhanced SFR analyzer with market intelligence
+      const analyzer = new SFRAnalyzer(dealData, assumptions);
+      analysis = await analyzer.analyzeWithMarketIntelligence();
+      
+      // Generate AI insights with market intelligence
+      try {
+        logger.info('Generating AI insights with market intelligence');
+        analysis.aiInsights = await getAIInsights(dealData, analysis);
+      } catch (aiError) {
+        logger.error('Error generating AI insights:', aiError);
+        analysis.aiInsights = {
+          summary: "Error generating AI insights. Please try again later.",
+          strengths: [],
+          weaknesses: [],
+          recommendations: [],
+          investmentScore: null
+        };
+      }
     } else if (dealData.propertyType === 'MF') {
+      // For MF, use basic analysis for now
       analysis = await analyzeMFProperty(dealData);
     } else {
       throw new Error(`Unsupported property type: ${dealData.propertyType}`);
     }
     
-    // Enrich with census data if possible
-    try {
-      const enrichedDeal = await enrichPropertyWithCensusData(dealData);
-      const enrichedAnalysis = await analyzePropertyWithCensusContext(enrichedDeal);
-      
-      // Merge the enriched analysis with the original
-      analysis = {
-        ...analysis,
-        ...enrichedAnalysis,
-        censusData: enrichedDeal.censusData,
-        censusInsights: enrichedDeal.censusInsights
-      };
-    } catch (enrichmentError) {
-      logger.warn('Could not enrich property with census data:', enrichmentError);
-    }
+    logger.info('Calculated analysis metrics:', {
+      hasAIInsights: !!analysis.aiInsights,
+      investmentScore: analysis.aiInsights?.investmentScore,
+      hasMarketData: !!analysis.marketData,
+      hasMarketInsights: !!analysis.marketInsights
+    });
     
     res.json(analysis);
   } catch (error) {

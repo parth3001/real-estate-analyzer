@@ -129,6 +129,28 @@ export interface Analysis {
     recommendations?: string[];
     investmentScore?: number;
     riskAssessment?: string;
+    scoreBreakdown?: {
+      cashFlow?: {
+        score: number;
+        max: number;
+        reason: string;
+      };
+      marketPosition?: {
+        score: number;
+        max: number;
+        reason: string;
+      };
+      riskAssessment?: {
+        score: number;
+        max: number;
+        reason: string;
+      };
+      financialMetrics?: {
+        score: number;
+        max: number;
+        reason: string;
+      };
+    };
     // Enhanced strategic analysis fields
     marketTrendPrediction?: string;
     optimalExitStrategy?: any; // Can be string or object from AI
@@ -358,6 +380,28 @@ const AnalysisSchema = new Schema({
     recommendations: [String],
     investmentScore: Number,
     riskAssessment: String,
+    scoreBreakdown: {
+      cashFlow: {
+        score: Number,
+        max: Number,
+        reason: String
+      },
+      marketPosition: {
+        score: Number,
+        max: Number,
+        reason: String
+      },
+      riskAssessment: {
+        score: Number,
+        max: Number,
+        reason: String
+      },
+      financialMetrics: {
+        score: Number,
+        max: Number,
+        reason: String
+      }
+    },
     // Enhanced strategic analysis fields
     marketTrendPrediction: String,
     optimalExitStrategy: Schema.Types.Mixed, // Can be string or object from AI

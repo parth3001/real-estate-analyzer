@@ -357,3 +357,19 @@
 [31m  totalProfit: '$121,890.38 from appreciation and $13,132.80 from cash flow for a total of $135,023.18',[39m
 [31m  annualizedReturn: '9.55%'[39m
 [31m}" (type Object) at path "aiInsights.optimalExitStrategy"[39m
+2025-07-07 21:39:44:3944 [31merror[39m: [31mError fetching income data from Census API: read ECONNRESET[39m
+2025-07-07 21:39:44:3944 [31merror[39m: [31mError fetching comprehensive census data: read ECONNRESET[39m
+2025-07-07 21:39:44:3944 [31merror[39m: [31mError in getComprehensiveCensusData controller: read ECONNRESET[39m
+2025-07-07 21:50:48:5048 [31merror[39m: [31mError fetching demographic data from Census API: Request failed with status code 503[39m
+2025-07-07 21:50:48:5048 [31merror[39m: [31mError fetching comprehensive census data: Request failed with status code 503[39m
+2025-07-07 21:50:48:5048 [31merror[39m: [31mError in getComprehensiveCensusData controller: Request failed with status code 503[39m
+2025-07-07 21:50:48:5048 [31merror[39m: [31mError fetching income data from Census API: Request failed with status code 503[39m
+2025-07-07 21:53:36:5336 [31merror[39m: [31mError fetching income data from Census API: read ECONNRESET[39m
+2025-07-07 21:53:36:5336 [31merror[39m: [31mError fetching comprehensive census data: read ECONNRESET[39m
+2025-07-07 21:53:36:5336 [31merror[39m: [31mError in getComprehensiveCensusData controller: read ECONNRESET[39m
+2025-07-07 22:19:10:1910 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m
+2025-07-07 22:19:59:1959 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m
+2025-07-07 22:20:40:2040 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m
+2025-07-07 22:21:52:2152 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m
+2025-07-07 22:23:21:2321 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m
+2025-07-07 22:26:32:2632 [31merror[39m: [31mError generating AI insights: Invalid regular expression: /**MARKET TIMING STRATEGY**([sS]*?)(?=**|$)/i: Nothing to repeat[39m

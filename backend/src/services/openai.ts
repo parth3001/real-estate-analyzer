@@ -52,7 +52,7 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
       messages: [
         { 
           role: "system", 
-          content: "You are a real estate investment analysis expert. Provide detailed, actionable insights in JSON format. Be precise with your numbers and analytics. Return ONLY the raw JSON without any markdown formatting, code blocks, or explanations."
+          content: "You are a sophisticated real estate investment analyst. Provide detailed, strategic insights that go beyond basic calculations. Focus on market intelligence, timing strategies, and actionable recommendations that add real value for investors."
         },
         { 
           role: "user", 
@@ -60,8 +60,7 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
         }
       ],
       max_tokens: 2000,
-      temperature: 0.7,
-      response_format: { type: "json_object" }
+      temperature: 0.7
     });
 
     const content = completion.choices[0].message?.content;
@@ -71,25 +70,8 @@ export const generateAnalysis = async (prompt: string): Promise<any> => {
       throw new Error('Empty response from OpenAI');
     }
 
-    try {
-      // With response_format: json_object, the response should already be valid JSON
-      // But we'll still clean it just in case
-      let cleanedContent = content;
-      
-      // Remove markdown code blocks if present (shouldn't happen with json_object format)
-      if (content.includes('```json')) {
-        cleanedContent = content.replace(/```json\n|\n```/g, '');
-      } else if (content.includes('```')) {
-        cleanedContent = content.replace(/```\n|\n```/g, '');
-      }
-      
-      // Parse JSON response
-      return JSON.parse(cleanedContent);
-    } catch (parseError) {
-      logger.error('Error parsing OpenAI response as JSON:', parseError);
-      logger.error('Raw response:', content);
-      throw new Error('Invalid JSON response from OpenAI');
-    }
+    // Return the text content directly - no JSON parsing needed
+    return content.trim();
   } catch (error) {
     logger.error('Error calling OpenAI API:', error);
     throw error;

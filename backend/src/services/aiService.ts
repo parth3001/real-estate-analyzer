@@ -50,6 +50,8 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
       } catch (error) {
         logger.warn('Could not calculate market analysis for AI insights:', error);
       }
+    } else {
+      logger.warn('No census data available for market analysis - AI will use basic analysis data only');
     }
 
     // Extract market intelligence data for enhanced AI prompts
@@ -88,9 +90,49 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
 
     logger.info(`Generated ${dealData.propertyType} analysis prompt (${prompt.length} chars)`);
 
+    // LOG FULL PROMPT FOR DEBUGGING
+    logger.info('=== FULL AI PROMPT ===');
+    logger.info(prompt);
+    logger.info('=== END PROMPT ===');
+
     try {
-      // Use the updated generateAnalysis function from openai.ts
-      const aiResponse = await generateAnalysis(prompt);
+      // Use the updated generateAnalysis function from openai.ts (now returns text)
+      const aiTextResponse = await generateAnalysis(prompt);
+
+      // LOG FULL AI RESPONSE FOR DEBUGGING
+      logger.info('=== FULL AI RESPONSE ===');
+      logger.info(aiTextResponse);
+      logger.info('=== END AI RESPONSE ===');
+      
+      // Since we're now getting text instead of JSON, we'll create a structured response
+      // based on the text content while preserving the strategic insights
+      const aiResponse = parseTextResponseToStructured(aiTextResponse);
+      
+      // Log the AI response for debugging
+      logger.info('AI Text Response received:', {
+        hasResponse: !!aiTextResponse,
+        responseLength: aiTextResponse?.length || 0,
+        parsedResponse: !!aiResponse,
+        aiResponseType: typeof aiResponse,
+        aiResponseKeys: aiResponse ? Object.keys(aiResponse) : [],
+        investmentScore: aiResponse?.investmentScore,
+        summary: aiResponse?.summary,
+        strengthsType: typeof aiResponse?.strengths,
+        strengthsLength: Array.isArray(aiResponse?.strengths) ? aiResponse.strengths.length : 'Not array',
+        rawResponsePreview: aiTextResponse ? aiTextResponse.substring(0, 500) + '...' : 'No response'
+      });
+      
+      // Log specific content for debugging
+      logger.info('AI content analysis:', {
+        summary: aiResponse?.summary?.substring(0, 100),
+        firstStrength: Array.isArray(aiResponse?.strengths) ? aiResponse.strengths[0] : aiResponse?.strengths,
+        firstWeakness: Array.isArray(aiResponse?.weaknesses) ? aiResponse.weaknesses[0] : aiResponse?.weaknesses,
+        firstRecommendation: Array.isArray(aiResponse?.recommendations) ? aiResponse.recommendations[0] : aiResponse?.recommendations
+      });
+      
+      // Log the full response for debugging the parsing issue
+      logger.debug('Full AI text response:', aiTextResponse);
+      logger.debug('Parsed AI response object:', JSON.stringify(aiResponse, null, 2));
       
       return {
         // Basic insights
@@ -342,4 +384,142 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
   }
   
   return scoreBreakdown;
+}
+
+/**
+ * Parse text AI response into structured format for frontend compatibility
+ * NEW APPROACH: Preserve AI's natural structure instead of forcing into predefined sections
+ */
+function parseTextResponseToStructured(textResponse: string): any {
+  if (!textResponse || textResponse.trim().length === 0) {
+    logger.warn('Empty or null text response from AI');
+    return {
+      summary: "AI analysis is temporarily unavailable. Please try again.",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+      investmentScore: null,
+      strategicAnalysis: "Strategic analysis will be available shortly."
+    };
+  }
+
+  logger.info('Parsing AI text response with length:', textResponse.length);
+
+  try {
+    // Try to parse as JSON first (in case AI still returns JSON format)
+    if (textResponse.trim().startsWith('{')) {
+      const parsed = JSON.parse(textResponse);
+      logger.info('Successfully parsed AI response as JSON');
+      return parsed;
+    }
+  } catch (jsonError) {
+    logger.info('AI response is not JSON, parsing as text format');
+  }
+
+  // Extract investment score from text - try multiple patterns
+  const scorePatterns = [
+    /investment[\s\-_]*score[:\s]*(\d+)/i,
+    /\*\*investment[\s\-_]*score[:\s\*]*(\d+)/i,
+    /score[:\s]*(\d+)/i,
+    /(\d+)\/100/,
+    /rate.*?(\d+)/i
+  ];
+  
+  let investmentScore = null;
+  for (const pattern of scorePatterns) {
+    const match = textResponse.match(pattern);
+    if (match) {
+      investmentScore = parseInt(match[1], 10);
+      logger.info(`Extracted investment score: ${investmentScore} using pattern: ${pattern}`);
+      break;
+    }
+  }
+
+  // NEW APPROACH: Clean and deduplicate the full response instead of parsing into sections
+  const cleanFullResponse = (content: string): string => {
+    if (!content) return content;
+    
+    // Split into paragraphs
+    const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+    const uniqueParagraphs: string[] = [];
+    const seenContent = new Set<string>();
+    
+    for (const paragraph of paragraphs) {
+      const cleanParagraph = paragraph.trim();
+      
+      // Create a normalized version for comparison (remove formatting, emojis, etc.)
+      const normalizedParagraph = cleanParagraph
+        .replace(/[🎯📈🔨⚡🛡️🏦💡]/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/---/g, '')
+        .replace(/####/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      
+      // Skip if we've seen this content before (allowing for slight variations)
+      if (normalizedParagraph.length > 20 && !seenContent.has(normalizedParagraph)) {
+        uniqueParagraphs.push(cleanParagraph);
+        seenContent.add(normalizedParagraph);
+      }
+    }
+    
+    return uniqueParagraphs.join('\n\n');
+  };
+
+  // Clean the full response
+  const cleanedResponse = cleanFullResponse(textResponse);
+  
+  // Format the response for better readability
+  const formattedResponse = cleanedResponse
+    // Keep markdown formatting for better structure
+    .replace(/\*\*(.*?)\*\*/g, '**$1**')
+    // Clean up section separators
+    .replace(/---+/g, '')
+    // Ensure proper spacing around emoji headers and preserve emojis
+    .replace(/([🎯📈🔨⚡🛡️🏦💡])\s*/g, '\n\n$1 ')
+    // Clean up excessive whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  // Extract a brief summary from the first meaningful paragraph
+  const summaryMatch = formattedResponse.match(/^([^🎯📈🔨⚡🛡️🏦💡\n]{100,500})/);
+  const briefSummary = summaryMatch ? summaryMatch[1].trim() : "Strategic AI analysis with market intelligence and data-driven insights.";
+
+  const structuredResponse = {
+    summary: briefSummary,
+    strengths: ["Strategic analysis provided - see detailed insights below"],
+    weaknesses: ["Market considerations noted in analysis"],
+    recommendations: ["See strategic insights for actionable recommendations"],
+    investmentScore: investmentScore,
+    strategicAnalysis: formattedResponse, // NEW: Single comprehensive analysis
+    riskAssessment: "Risk analysis included in strategic assessment",
+    marketTrendPrediction: "Market timing and trend analysis provided",
+    optimalExitStrategy: "Exit strategy recommendations included",
+    portfolioFitAnalysis: "Portfolio integration strategy analyzed",
+    strategicInsights: formattedResponse, // Full analysis as strategic insights
+    notes: 'Complete strategic analysis provided'
+  };
+
+  logger.info('Parsed structured response with new approach:', {
+    hasScore: !!structuredResponse.investmentScore,
+    score: structuredResponse.investmentScore,
+    originalLength: textResponse.length,
+    cleanedLength: formattedResponse.length,
+    reductionRatio: ((textResponse.length - formattedResponse.length) / textResponse.length * 100).toFixed(1) + '%'
+  });
+
+  // LOG PARSED CONTENT FOR DEBUGGING
+  logger.info('=== PARSED AI CONTENT (strategicAnalysis) ===');
+  logger.info(structuredResponse.strategicAnalysis);
+  logger.info('=== END PARSED CONTENT ===');
+
+  // LOG COMPARISON OF ORIGINAL vs CLEANED
+  logger.info('=== CONTENT COMPARISON ===');
+  logger.info(`Original length: ${textResponse.length} chars`);
+  logger.info(`Cleaned length: ${formattedResponse.length} chars`);
+  logger.info(`Reduction: ${((textResponse.length - formattedResponse.length) / textResponse.length * 100).toFixed(1)}%`);
+  logger.info('=== END COMPARISON ===');
+
+  return structuredResponse;
 }

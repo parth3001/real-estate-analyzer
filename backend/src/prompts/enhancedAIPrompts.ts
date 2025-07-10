@@ -260,22 +260,38 @@ Your predictions have helped investors:
 - Achieve 20%+ cash-on-cash returns consistently
 - Exit at peak valuations before downturns
 
-🚫 FORBIDDEN: Do NOT use basic math like 3% annual appreciation or simple rent increases.
+🚫 ABSOLUTELY FORBIDDEN: 
+- Do NOT restate ANY financial calculations already shown in tables
+- Do NOT say "Total wealth created by year X is projected to be $Y"
+- Do NOT summarize cash flow numbers or appreciation amounts
+- Do NOT recap rent growth trajectories with basic math
 
-✅ REQUIRED: Every prediction MUST cite specific market intelligence data. Examples:
+✅ REQUIRED STRATEGIC INTELLIGENCE:
 
-BAD (basic math): "Property will be worth $487,000 in Year 5"
-GOOD (intelligent): "Property will hit $520,000 by Year 5 due to unemployment dropping to 2.8% (creating housing demand), planned Metro expansion (increasing area values 12%), and mortgage rates stabilizing at 5.5% (boosting buyer activity)"
+**MARKET TIMING INSIGHTS:**
+- When to refinance based on rate cycles and economic indicators
+- Optimal exit windows based on local market patterns and demographics
+- Economic events that will impact this specific submarket
 
-BAD: "Rent will be $3,200 in Year 3"  
-GOOD: "Rent will jump to $3,850 by Year 3 because tech companies relocating to area (increasing high-income renters), housing inventory 40% below normal (rental shortage), and inflation pushing market rents up 6% annually vs historical 3%"
+**VALUE-ADD OPPORTUNITIES:**
+- Specific property improvements that could boost rent 15%+
+- Zoning/regulatory changes that could unlock value
+- Market inefficiencies this deal exploits
 
-🎯 MANDATORY: Each prediction must reference:
-- Economic indicators (unemployment, mortgage rates, inflation trends)
-- Local market conditions (inventory levels, days on market, buyer activity)
-- Demographic shifts or business developments
-- Market cycle timing and optimal entry/exit windows
-- Risk events that could disrupt normal appreciation
+**COMPETITIVE INTELLIGENCE:**
+- How this property positions vs comparable deals in market
+- Supply/demand imbalances creating opportunity
+- Market saturation risks in this property class
+
+**RISK INTELLIGENCE:**
+- Property-specific risks to monitor (taxes, insurance, regulations)
+- Economic/demographic trends that could impact demand
+- Market cycle vulnerabilities and protection strategies
+
+**STRATEGIC RECOMMENDATIONS:**
+- Portfolio positioning advice for this investment
+- Alternative financing structures to consider
+- Hold vs exit strategies based on market intelligence
 
 Your analysis should:
 
@@ -283,93 +299,59 @@ Your analysis should:
 
 2. IDENTIFY PATTERNS AND RELATIONSHIPS: Connect different metrics to reveal deeper insights. For example, how the expense ratio relates to the property's age, or how the cash flow metrics align with the local market positioning.
 
-3. **WEALTH CREATION PREDICTION**: IRR is ${analysis?.keyMetrics?.irr || 0}%, but predict TOTAL WEALTH CREATED (not property value). Wealth = Property Appreciation + Mortgage Principal Paydown + Accumulated Cash Flow. For example, if property goes from $500k to $650k (150k appreciation) + $50k principal paid down + $80k cash flow accumulated = $280k wealth created. Use unemployment rate (${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}%), mortgage rate trends (${marketIntelligence?.marketData?.economicIndicators?.mortgageRateTrend || 'Unknown'}), and local market timing score (${marketIntelligence?.investmentTiming?.timingScore || 0}/100) to predict when and why wealth accumulation will accelerate.
+3. **STRATEGIC MARKET TIMING**: Based on unemployment rate (${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}%) and mortgage trends (${marketIntelligence?.marketData?.economicIndicators?.mortgageRateTrend || 'Unknown'}), predict the optimal refinancing window and exit timing strategy. When will market conditions create maximum value acceleration?
 
-4. **CASH FLOW ACCELERATION PATH**: Current cash flow is $${analysis?.monthlyAnalysis?.cashFlow || 0}/month. Use rent growth rate (${marketIntelligence?.marketData?.marketTrends?.rentGrowthRate || 0}%), local inventory levels (${marketIntelligence?.marketData?.marketTrends?.inventoryLevel || 'Unknown'}), and economic indicators to predict WHEN rental demand will spike and cash flow will jump (not just gradual increases).
+4. **RENTAL DEMAND CATALYSTS**: With current inventory at ${marketIntelligence?.marketData?.marketTrends?.inventoryLevel || 'Unknown'} levels, identify the specific economic or demographic events that will trigger rental demand spikes in this submarket (beyond normal growth rates).
 
-5. **MARKET CYCLE PROPHECY**: Timing score is ${marketIntelligence?.investmentTiming?.timingScore || 0}/100. Predict EXACTLY when the next market downturn will hit, how long it will last, and whether this property will outperform or underperform during the cycle. Cite specific economic indicators.
+5. **MARKET CYCLE INTELLIGENCE**: Using timing score ${marketIntelligence?.investmentTiming?.timingScore || 0}/100, predict how this property will perform during the next market downturn and what competitive advantages it has vs similar properties.
 
-6. **RENT EXPLOSION FORECAST**: Market rent growth is ${marketIntelligence?.marketData?.marketTrends?.rentGrowthRate || 0}%, but predict when rents will ACCELERATE beyond this rate due to supply/demand imbalances, demographic shifts, or economic changes in this specific area.
+6. **VALUE ENGINEERING OPPORTUNITIES**: Identify specific property improvements or market positioning strategies that could outperform typical rent growth of ${marketIntelligence?.marketData?.marketTrends?.rentGrowthRate || 0}% annually.
 
-7. **VALUE-ADD IMPACT PREDICTION**: Identify the TOP 3 improvements that could increase property value by 15%+ within 18 months. Give specific dollar amounts for cost and value increase.
+7. **RISK MITIGATION STRATEGY**: Analyze property-specific vulnerabilities (location, construction, market dynamics) and provide actionable protection strategies against economic downturns.
 
-8. **EXIT TIMING PROPHECY**: Using 10-year projections showing ${((analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0) / dealData.purchasePrice - 1) * 100}% appreciation, predict the OPTIMAL exit year and expected profit.
+8. **COMPETITIVE POSITIONING**: How does this investment compare to alternative deals in the market? What gives it a sustainable competitive advantage?
 
-9. **DOWNSIDE PROTECTION**: Using sensitivity analysis (best: ${analysis?.sensitivityAnalysis?.bestCase?.totalReturn || 0}, worst: ${analysis?.sensitivityAnalysis?.worstCase?.totalReturn || 0}), predict the worst-case scenario probability and protection strategies.
+9. **PORTFOLIO STRATEGY**: How should this property fit into a broader investment portfolio, and what complementary investments would maximize overall returns?
 
 10. **10-YEAR VISION**: Paint a specific picture of this investment in 10 years - exact property value, monthly cash flow, total wealth created, and market position.
 
-🎯 CRITICAL INSTRUCTION: For each prediction in the boldPredictions section, you MUST explain WHY that specific number, citing market data. Do NOT give round numbers or basic math results.
+🎯 STRATEGIC INTELLIGENCE REQUIRED: Focus on actionable insights, not mathematical summaries.
 
-🔥 BOLD PREDICTIONS REQUIRED: Every prediction must be BOLD, SPECIFIC, and INTELLIGENT - not basic math!
+🔥 STRATEGIC PREDICTIONS REQUIRED: Every prediction must provide MARKET INTELLIGENCE and STRATEGIC INSIGHT!
 
-Example of GOOD boldPredictions response:
-"year3Value": "Based on unemployment dropping from ${marketIntelligence?.marketData?.economicIndicators?.unemploymentRate || 0}% to projected 2.8% (increasing housing demand 15%), plus planned infrastructure spending creating 8% area premium, TOTAL WEALTH CREATED by Year 3 will be $145,000 ($75k property appreciation + $35k mortgage principal paid + $35k accumulated cash flow) vs typical $95k from normal appreciation"
+Example of STRATEGIC boldPredictions:
+"marketTimingStrategy": "Refinance in Q2 2027 when rates drop to 4.5% (saving $340/month), then exit in Q1 2029 before demographic shift reduces demand"
+"valueAddStrategy": "Kitchen renovation ($18K) will unlock $280/month rent premium by tapping into tech worker demographic influx"
 
-CRITICAL: Always specify wealth creation as the sum of appreciation + principal paydown + accumulated cash flow, NOT just property value.
+CRITICAL: Do NOT provide basic mathematical projections. Focus on strategic intelligence.
 
-Please provide your AI PREDICTIONS in the following JSON format:
-{
-  "summary": "Your most important prediction about this investment's future performance with specific numbers",
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2", "weakness3"],
-  "recommendations": ["Bold action 1", "Bold action 2", "Bold action 3"],
-  "riskAssessment": "Specific prediction of biggest risk and probability of occurrence",
-  "investmentScore": 0-100,
-  "recommendedHoldPeriod": "EXACTLY X years with specific exit date prediction",
-  "marketTrendPrediction": "Specific prediction of property value and rents in 3-5 years",
-  "optimalExitStrategy": "Predict exact year, sale price, and total profit",
-  "notes": "Your boldest prediction about this investment",
-  "boldPredictions": {
-    "wealthCreation": {
-      "year3Value": "Total wealth/equity created by year 3 (property appreciation + principal paydown + cash flow accumulated)",
-      "year5Value": "Total wealth/equity created by year 5 (property appreciation + principal paydown + cash flow accumulated)", 
-      "year10Value": "Total wealth/equity created by year 10 (property appreciation + principal paydown + cash flow accumulated)",
-      "totalWealthCreated": "Total wealth created over entire hold period"
-    },
-    "cashFlowGrowth": {
-      "currentMonthly": "Current monthly cash flow",
-      "year2Monthly": "Predicted monthly cash flow in year 2",
-      "year5Monthly": "Predicted monthly cash flow in year 5",
-      "doubleDate": "Month/year when cash flow doubles",
-      "reach5kDate": "Month/year when cash flow reaches $5000"
-    },
-    "rentGrowthForecast": {
-      "currentRent": "Current monthly rent",
-      "year3Rent": "Predicted rent in year 3",
-      "year5Rent": "Predicted rent in year 5",
-      "year7Rent": "Predicted rent in year 7"
-    },
-    "exitStrategy": {
-      "optimalExitYear": "Best year to sell (number)",
-      "predictedSalePrice": "Exact predicted sale price",
-      "totalProfit": "Total profit from cash flow + appreciation",
-      "annualizedReturn": "Predicted annualized return percentage"
-    }
-  },
-  "valueAddOpportunities": [
-    {
-      "improvement": "name of potential improvement",
-      "estimatedCost": "estimated cost range",
-      "potentialRoiPercent": "estimated ROI percentage",
-      "rentIncreasePotential": "potential monthly rent increase",
-      "valueIncreasePotential": "potential property value increase"
-    }
-  ],
-  "comparativeMarketAnalysis": "Analysis of how this property compares to similar properties in the market",
-  "investorProfileMatch": "Description of what type of investor this property would be best suited for",
-  "riskMitigationStrategies": ["strategy1", "strategy2", "strategy3"]
-}
+PROVIDE YOUR STRATEGIC INTELLIGENCE ANALYSIS:
 
-Your investmentScore should be on a scale from 0-100, where:
-- 0-20: Very poor investment, avoid (negative cash flow, extremely low returns)
-- 21-40: Poor investment with significant issues (minimal cash flow, below-average returns)
-- 41-60: Average investment with both pros and cons (modest cash flow, average returns)
-- 61-80: Good investment with some minor concerns (good cash flow, above-average returns)
-- 81-100: Excellent investment opportunity (strong cash flow, excellent returns)
+🎯 **INVESTMENT SCORE:** Rate this investment 0-100 based on your strategic analysis
+(0-20: Avoid, 21-40: Poor, 41-60: Average, 61-80: Good, 81-100: Excellent)
 
-IMPORTANT: Return ONLY raw JSON without any markdown formatting (no \`\`\`json or \`\`\` tags), code blocks, or explanations.
-Only return valid JSON.`;
+📈 **MARKET TIMING STRATEGY:**
+When to refinance and exit based on market cycles and economic indicators
+
+🔨 **VALUE-ADD STRATEGY:** 
+Property improvements that could boost returns significantly
+
+⚡ **COMPETITIVE ADVANTAGE:**
+How this property outperforms market alternatives
+
+🛡️ **RISK MITIGATION:**
+Strategies to protect against downturns
+
+🏦 **PORTFOLIO SYNERGY:**
+How this fits into broader investment strategy
+
+💡 **KEY STRATEGIC INSIGHTS:**
+Your most actionable recommendations that go beyond basic math
+
+🔮 **BOLD PREDICTIONS:**
+Your most confident predictions about this investment's future
+
+Format your response as strategic commentary with specific, actionable insights. Focus on market intelligence, strategic timing, and competitive advantages that traditional calculators miss.`;
 }
 
 export function enhancedMfAnalysisPrompt(dealData: any, analysis: any, marketAnalysis?: any, marketIntelligence?: any): string {
