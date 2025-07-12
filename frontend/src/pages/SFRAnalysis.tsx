@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Alert, CircularProgress, Button, Snackbar } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Alert, CircularProgress, Button, Snackbar, Chip, Card, CardContent } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import { AutoAwesome, Edit } from '@mui/icons-material';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
+import PropertyWizard from '../components/SFRAnalysis/PropertyWizard';
 import { propertyApi } from '../services/api';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
@@ -21,6 +23,10 @@ const SFRAnalysis: React.FC = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [sampleLoading, setSampleLoading] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
+  
+  // Wizard mode state
+  const [useWizard, setUseWizard] = useState(false);
+  const wizardEnabled = true; // Enable for Phase 1 testing
 
   // Handle tab change
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -63,6 +69,9 @@ const SFRAnalysis: React.FC = () => {
     
     try {
       console.log('Sending property data to API:', data);
+      
+      // Use single unified analysis API for both wizard and manual data
+      console.log('Sending property data to unified analysis API:', data);
       const response = await propertyApi.analyzeProperty(data);
       
       if (response.status === 200 && response.data) {
@@ -261,12 +270,59 @@ const SFRAnalysis: React.FC = () => {
       </Box>
       
       {tabIndex === 0 && (
-        <SFRPropertyForm
-          onSubmit={handleAnalyzeProperty}
-          initialData={propertyData || undefined}
-          isLoading={isLoading}
-          error={error || undefined}
-        />
+        <Box>
+          {/* Wizard/Form Toggle */}
+          {wizardEnabled && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      Choose Your Input Method
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Use the guided wizard for intelligent auto-population or the traditional form for manual entry
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      icon={<AutoAwesome />}
+                      label="Smart Wizard"
+                      color={useWizard ? "primary" : "default"}
+                      variant={useWizard ? "filled" : "outlined"}
+                      onClick={() => setUseWizard(true)}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                    <Chip
+                      icon={<Edit />}
+                      label="Manual Form"
+                      color={!useWizard ? "primary" : "default"}
+                      variant={!useWizard ? "filled" : "outlined"}
+                      onClick={() => setUseWizard(false)}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Render Wizard or Form */}
+          {useWizard && wizardEnabled ? (
+            <PropertyWizard
+              onComplete={handleAnalyzeProperty}
+              initialData={propertyData || undefined}
+              onCancel={() => setUseWizard(false)}
+            />
+          ) : (
+            <SFRPropertyForm
+              onSubmit={handleAnalyzeProperty}
+              initialData={propertyData || undefined}
+              isLoading={isLoading}
+              error={error || undefined}
+            />
+          )}
+        </Box>
       )}
       
       {tabIndex === 1 && analysis && propertyData && (

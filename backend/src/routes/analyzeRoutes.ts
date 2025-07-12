@@ -6,6 +6,57 @@ import { getOpenAIClient } from '../services/openai';
 import { getAIInsights } from '../services/aiService';
 import { CensusService } from '../services/censusService';
 
+/**
+ * Convert wizard data format to standard analysis format
+ */
+function convertWizardToStandardFormat(wizardData: any): any {
+  logger.info('=== WIZARD DATA CONVERSION ===');
+  logger.info('Converting wizard data with:', {
+    monthlyRent: wizardData.monthlyRent,
+    maintenanceReservePercentage: wizardData.maintenanceReservePercentage,
+    vacancyRate: wizardData.vacancyRate,
+    insuranceRate: wizardData.insuranceRate
+  });
+
+  // Calculate maintenance cost from percentage
+  let maintenanceCost = wizardData.maintenanceCost || 0;
+  if (wizardData.maintenanceReservePercentage && wizardData.monthlyRent) {
+    maintenanceCost = Math.round((wizardData.monthlyRent * wizardData.maintenanceReservePercentage / 100) * 12);
+    logger.info('Calculated maintenance cost:', {
+      monthlyRent: wizardData.monthlyRent,
+      percentage: wizardData.maintenanceReservePercentage,
+      annualCost: maintenanceCost,
+      formula: `(${wizardData.monthlyRent} * ${wizardData.maintenanceReservePercentage} / 100) * 12 = ${maintenanceCost}`
+    });
+  }
+
+  // Convert to standard format
+  const standardData = {
+    ...wizardData,
+    maintenanceCost: maintenanceCost,
+    longTermAssumptions: {
+      ...wizardData.longTermAssumptions,
+      vacancyRate: wizardData.vacancyRate || wizardData.longTermAssumptions?.vacancyRate || 5
+    }
+  };
+
+  // Remove wizard-specific fields
+  delete standardData.maintenanceReservePercentage;
+  delete standardData.downPaymentPercentage;
+  delete standardData.closingCostPercentage;
+  delete standardData._isWizardData;
+
+  logger.info('Conversion complete:', {
+    originalMaintenanceReservePercentage: wizardData.maintenanceReservePercentage,
+    convertedMaintenanceCost: standardData.maintenanceCost,
+    originalVacancyRate: wizardData.vacancyRate,
+    convertedVacancyRate: standardData.longTermAssumptions.vacancyRate
+  });
+  logger.info('=== END WIZARD DATA CONVERSION ===');
+
+  return standardData;
+}
+
 const router = express.Router();
 
 // Initialize census service
@@ -122,13 +173,43 @@ const generateMarketContext = (analysis: any, censusData: any, propertyData: SFR
 const analyzeHandler = async (req: Request, res: Response): Promise<void> => {
   try {
     const propertyType = req.params.type.toLowerCase();
-    const formData = req.body;
+    let formData = req.body;
     
     logger.info(`Received ${propertyType} analysis request:`, { data: formData });
+    
+    // Log specific wizard fields to debug detection
+    logger.info('Wizard field detection debug:', {
+      hasMaintenanceReservePercentage: formData.maintenanceReservePercentage !== undefined,
+      maintenanceReservePercentageValue: formData.maintenanceReservePercentage,
+      hasVacancyRate: formData.vacancyRate !== undefined,
+      vacancyRateValue: formData.vacancyRate,
+      hasDownPaymentPercentage: formData.downPaymentPercentage !== undefined,
+      downPaymentPercentageValue: formData.downPaymentPercentage,
+      hasMaintenanceCost: formData.maintenanceCost !== undefined,
+      maintenanceCostValue: formData.maintenanceCost,
+      monthlyRent: formData.monthlyRent,
+      allFieldNames: Object.keys(formData)
+    });
 
     if (propertyType !== 'sfr' && propertyType !== 'mf') {
       res.status(400).json({ error: 'Invalid property type. Must be "sfr" or "mf".' });
       return;
+    }
+
+    // Detect if this is wizard data and convert to standard format
+    const isWizardData = formData._isWizardData || 
+                        formData.maintenanceReservePercentage !== undefined || 
+                        formData.vacancyRate !== undefined ||
+                        formData.downPaymentPercentage !== undefined;
+
+    if (isWizardData) {
+      logger.info('Detected wizard data, converting to standard format');
+      formData = convertWizardToStandardFormat(formData);
+      logger.info('Converted wizard data:', {
+        maintenanceCost: formData.maintenanceCost,
+        vacancyRate: formData.longTermAssumptions?.vacancyRate,
+        insuranceRate: formData.insuranceRate
+      });
     }
 
     // Create analyzer instance with default assumptions

@@ -23,6 +23,125 @@ export interface RentcastPropertyResponse {
   lastUpdated: string;
 }
 
+// Enhanced RentCast Property Details Response (from /properties endpoint)
+export interface RentcastPropertyDetailsResponse {
+  id: string;
+  formattedAddress: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  county: string;
+  latitude: number;
+  longitude: number;
+  propertyType: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  squareFootage?: number;
+  lotSize?: number;
+  yearBuilt?: number;
+  // Additional property characteristics
+  stories?: number;
+  parkingSpaces?: number;
+  garage?: boolean;
+  pool?: boolean;
+  ac?: boolean;
+  heating?: string;
+  cooling?: string;
+  flooring?: string;
+  roofType?: string;
+  exteriorWalls?: string;
+  fireplace?: boolean;
+  basement?: boolean;
+  // Market data
+  lastSalePrice?: number;
+  lastSaleDate?: string;
+  pricePerSquareFoot?: number;
+  taxAssessedValue?: number;
+  annualTaxAmount?: number;
+  // Estimates
+  rentEstimate?: number;
+  rentEstimateRange?: {
+    min: number;
+    max: number;
+  };
+  valueEstimate?: number;
+  valueEstimateRange?: {
+    min: number;
+    max: number;
+  };
+  // Metadata
+  confidence?: number;
+  lastUpdated?: string;
+  dataSource?: string;
+}
+
+// Enhanced Property Data for internal use
+export interface EnhancedPropertyData {
+  // Address information
+  address: {
+    formatted: string;
+    standardized: {
+      street: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      county: string;
+    };
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  // Property characteristics
+  propertyDetails: {
+    propertyType: string;
+    bedrooms?: number;
+    bathrooms?: number;
+    squareFootage?: number;
+    lotSize?: number;
+    yearBuilt?: number;
+    stories?: number;
+    parkingSpaces?: number;
+    hasGarage?: boolean;
+    hasPool?: boolean;
+    hasAC?: boolean;
+    hasFireplace?: boolean;
+    hasBasement?: boolean;
+    heating?: string;
+    cooling?: string;
+    flooring?: string;
+    roofType?: string;
+    exteriorWalls?: string;
+  };
+  // Financial data
+  financialData: {
+    lastSalePrice?: number;
+    lastSaleDate?: string;
+    pricePerSquareFoot?: number;
+    taxAssessedValue?: number;
+    annualTaxAmount?: number;
+    rentEstimate?: number;
+    rentEstimateRange?: {
+      min: number;
+      max: number;
+    };
+    valueEstimate?: number;
+    valueEstimateRange?: {
+      min: number;
+      max: number;
+    };
+  };
+  // Data quality
+  dataQuality: {
+    confidence: number;
+    lastUpdated: Date;
+    dataSource: string;
+    completeness: number; // 0-100, percentage of fields populated
+  };
+}
+
 export interface RentcastComparablesResponse {
   subject: {
     address: string;

@@ -9,6 +9,7 @@ import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
 import censusRouter from './routes/censusRoutes';
 import marketDataRouter from './routes/marketDataRoutes';
+import wizardRouter from './routes/wizardRoutes';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 
@@ -43,11 +44,26 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  if (req.method === 'POST') {
+    logger.info(`=== INCOMING ${req.method} REQUEST ===`);
+    logger.info(`URL: ${req.url}`);
+    logger.info(`Path: ${req.path}`);
+    logger.info(`Body keys: ${Object.keys(req.body || {})}`);
+    logger.info(`Has _isWizardData: ${!!req.body?._isWizardData}`);
+    logger.info(`Has maintenanceReservePercentage: ${!!req.body?.maintenanceReservePercentage}`);
+    logger.info(`=== END REQUEST LOG ===`);
+  }
+  next();
+});
+
 // Routes
 app.use('/api/deals', dealsRouter);
 app.use('/api/analyze', analyzeRouter);
 app.use('/api/census', censusRouter);
 app.use('/api/market-data', marketDataRouter);
+app.use('/api/wizard', wizardRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

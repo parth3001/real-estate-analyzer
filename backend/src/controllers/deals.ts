@@ -184,7 +184,82 @@ export const deleteDeal = async (req: Request, res: Response): Promise<void> => 
 // Analyze a deal
 export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
   try {
-    const dealData = req.body;
+    let dealData = req.body;
+    
+    // Check if this is wizard data and convert it
+    const isWizardData = dealData._isWizardData || 
+                        dealData.maintenanceReservePercentage !== undefined || 
+                        dealData.vacancyRate !== undefined ||
+                        dealData.downPaymentPercentage !== undefined;
+    
+    if (isWizardData) {
+      logger.info('=== WIZARD DATA CONVERSION (deals.ts) ===');
+      logger.info('Detected wizard data, converting to standard format');
+      logger.info('Full incoming dealData keys:', Object.keys(dealData));
+      const wizardDataInfo = {
+        maintenanceReservePercentage: dealData.maintenanceReservePercentage,
+        vacancyRate: dealData.vacancyRate,
+        monthlyRent: dealData.monthlyRent,
+        _isWizardData: dealData._isWizardData,
+        existingMaintenanceCost: dealData.maintenanceCost
+      };
+      logger.info('Wizard data received:');
+      logger.info(JSON.stringify(wizardDataInfo, null, 2));
+      
+      // Calculate maintenance cost from percentage
+      let maintenanceCost = dealData.maintenanceCost || 0;
+      logger.info('Initial maintenanceCost value:', maintenanceCost);
+      
+      if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
+        const calculatedCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
+        logger.info('Maintenance calculation check:', {
+          hasPercentage: !!dealData.maintenanceReservePercentage,
+          hasMonthlyRent: !!dealData.monthlyRent,
+          monthlyRent: dealData.monthlyRent,
+          percentage: dealData.maintenanceReservePercentage,
+          rawCalculation: (dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12,
+          roundedCalculation: calculatedCost,
+          formula: `(${dealData.monthlyRent} * ${dealData.maintenanceReservePercentage} / 100) * 12 = ${calculatedCost}`
+        });
+        maintenanceCost = calculatedCost;
+      } else {
+        logger.warn('Cannot calculate maintenance cost:', {
+          hasPercentage: !!dealData.maintenanceReservePercentage,
+          hasMonthlyRent: !!dealData.monthlyRent,
+          percentageValue: dealData.maintenanceReservePercentage,
+          monthlyRentValue: dealData.monthlyRent
+        });
+      }
+      
+      logger.info('Final maintenanceCost before assignment:', maintenanceCost);
+      
+      // Convert wizard data to standard format
+      dealData = {
+        ...dealData,
+        maintenanceCost: maintenanceCost,
+        longTermAssumptions: {
+          ...dealData.longTermAssumptions,
+          vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+        }
+      };
+      
+      logger.info('After dealData reassignment:', {
+        maintenanceCost: dealData.maintenanceCost,
+        maintenanceCostType: typeof dealData.maintenanceCost
+      });
+      
+      // Remove wizard-specific fields
+      delete dealData.maintenanceReservePercentage;
+      delete dealData.downPaymentPercentage;
+      delete dealData.closingCostPercentage;
+      delete dealData._isWizardData;
+      
+      logger.info('Wizard data converted:', {
+        convertedMaintenanceCost: dealData.maintenanceCost,
+        convertedVacancyRate: dealData.longTermAssumptions.vacancyRate
+      });
+      logger.info('=== END WIZARD DATA CONVERSION ===');
+    }
     
     // Log detailed information about the request
     logger.info('Analyzing property:', {
@@ -193,7 +268,11 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       purchasePrice: dealData.purchasePrice,
       monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
       downPayment: dealData.downPayment,
-      interestRate: dealData.interestRate
+      interestRate: dealData.interestRate,
+      maintenanceCost: dealData.maintenanceCost,
+      maintenanceCostType: typeof dealData.maintenanceCost,
+      isMaintenanceCostZero: dealData.maintenanceCost === 0,
+      isMaintenanceCostFalsy: !dealData.maintenanceCost
     });
     
     // Validate deal data
@@ -255,6 +334,47 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       cashOnCash: analysis.keyMetrics?.cashOnCashReturn,
       dscr: analysis.keyMetrics?.dscr
     });
+    
+    logger.info('Analysis complete - checking projections maintenance values');
+    
+    // Log maintenance values in projections before any field mapping
+    if (analysis.longTermAnalysis?.projections) {
+      const maintenanceValues = analysis.longTermAnalysis.projections.map(year => ({
+        year: year.year,
+        maintenance: year.maintenance,
+        maintenanceCost: year.maintenanceCost,
+        hasMaintenanceField: 'maintenance' in year,
+        hasMaintenanceCostField: 'maintenanceCost' in year
+      }));
+      logger.info('Projections maintenance values before field mapping:');
+      logger.info(JSON.stringify(maintenanceValues, null, 2));
+    }
+    
+    // Fix field name mapping for projections (ensure maintenance field is correctly named)
+    if (analysis.longTermAnalysis?.projections) {
+      analysis.longTermAnalysis.projections.forEach(year => {
+        // Ensure maintenance field exists with correct name for frontend
+        if (year.maintenanceCost !== undefined && year.maintenance === undefined) {
+          logger.info(`Mapping maintenanceCost to maintenance for year ${year.year}:`, {
+            maintenanceCost: year.maintenanceCost,
+            maintenance: year.maintenance
+          });
+          year.maintenance = year.maintenanceCost;
+          delete year.maintenanceCost;
+        }
+      });
+      
+      // Log maintenance values after field mapping
+      const maintenanceValuesAfter = analysis.longTermAnalysis.projections.map(year => ({
+        year: year.year,
+        maintenance: year.maintenance,
+        maintenanceCost: year.maintenanceCost,
+        hasMaintenanceField: 'maintenance' in year,
+        hasMaintenanceCostField: 'maintenanceCost' in year
+      }));
+      logger.info('Projections maintenance values after field mapping:');
+      logger.info(JSON.stringify(maintenanceValuesAfter, null, 2));
+    }
     
     logger.info('Analysis complete - returning results');
     

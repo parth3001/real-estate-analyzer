@@ -254,8 +254,57 @@ export const deleteDeal = async (req: AuthenticatedRequest, res: Response) => {
  */
 export const analyzeDeal = async (req: Request, res: Response) => {
   try {
-    const dealData = req.body;
+    let dealData = req.body;
     logger.info('Analyzing deal:', { propertyType: dealData.propertyType });
+    
+    // Check if this is wizard data and convert it
+    const isWizardData = dealData._isWizardData || 
+                        dealData.maintenanceReservePercentage !== undefined || 
+                        dealData.vacancyRate !== undefined ||
+                        dealData.downPaymentPercentage !== undefined;
+    
+    if (isWizardData) {
+      logger.info('Detected wizard data, converting to standard format');
+      logger.info('Wizard data received:', {
+        maintenanceReservePercentage: dealData.maintenanceReservePercentage,
+        vacancyRate: dealData.vacancyRate,
+        monthlyRent: dealData.monthlyRent,
+        _isWizardData: dealData._isWizardData
+      });
+      
+      // Calculate maintenance cost from percentage
+      let maintenanceCost = dealData.maintenanceCost || 0;
+      if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
+        maintenanceCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
+        logger.info('Calculated maintenance cost:', {
+          monthlyRent: dealData.monthlyRent,
+          percentage: dealData.maintenanceReservePercentage,
+          annualCost: maintenanceCost,
+          formula: `(${dealData.monthlyRent} * ${dealData.maintenanceReservePercentage} / 100) * 12 = ${maintenanceCost}`
+        });
+      }
+      
+      // Convert wizard data to standard format
+      dealData = {
+        ...dealData,
+        maintenanceCost: maintenanceCost,
+        longTermAssumptions: {
+          ...dealData.longTermAssumptions,
+          vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+        }
+      };
+      
+      // Remove wizard-specific fields
+      delete dealData.maintenanceReservePercentage;
+      delete dealData.downPaymentPercentage;
+      delete dealData.closingCostPercentage;
+      delete dealData._isWizardData;
+      
+      logger.info('Wizard data converted:', {
+        convertedMaintenanceCost: dealData.maintenanceCost,
+        convertedVacancyRate: dealData.longTermAssumptions.vacancyRate
+      });
+    }
 
     // Create analyzer instance with default assumptions
     const assumptions: AnalysisAssumptions = {

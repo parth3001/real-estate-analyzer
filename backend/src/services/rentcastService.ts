@@ -11,6 +11,8 @@ import {
   RentcastPropertyResponse,
   RentcastComparablesResponse,
   RentcastMarketDataResponse,
+  RentcastPropertyDetailsResponse,
+  EnhancedPropertyData,
   PropertyMarketData,
   ComparableProperty,
   MarketTrendData,
@@ -587,6 +589,170 @@ export class RentcastService {
       remaining: this.rateLimitRemaining,
       resetTime: this.rateLimitReset,
       canMakeRequest: this.rateLimitRemaining > 0 || Date.now() >= this.rateLimitReset
+    };
+  }
+
+  /**
+   * Get comprehensive property details using RentCast /properties endpoint
+   * Enhanced for Phase 2 - provides detailed property characteristics
+   */
+  async getEnhancedPropertyDetails(address: string): Promise<EnhancedPropertyData | null> {
+    try {
+      // Check cache first using 'market' type (property details are market data)
+      const cached = await cacheService.get('market', address);
+      
+      if (cached) {
+        logger.info('Enhanced property details retrieved from cache', { address });
+        return cached;
+      }
+
+      // Check rate limiting
+      await this.checkRateLimit();
+
+      // Make API call to RentCast /properties endpoint
+      const response = await this.client.get<RentcastPropertyDetailsResponse[]>('/properties', {
+        params: { address: address.trim() }
+      });
+
+      if (!response.data || response.data.length === 0) {
+        logger.warn('No property found in RentCast properties endpoint', { address });
+        return null;
+      }
+
+      // Transform the first result to our internal format
+      const propertyData = this.transformEnhancedPropertyData(response.data[0]);
+      
+      // Cache the result for 720 hours (30 days) using 'market' type
+      await cacheService.set(
+        'market',
+        address,
+        propertyData,
+        { source: 'RentCast', address }
+      );
+
+      logger.info('Enhanced property details fetched and cached', { 
+        address,
+        bedrooms: propertyData.propertyDetails.bedrooms,
+        bathrooms: propertyData.propertyDetails.bathrooms,
+        squareFootage: propertyData.propertyDetails.squareFootage,
+        confidence: propertyData.dataQuality.confidence
+      });
+
+      return propertyData;
+
+    } catch (error) {
+      const marketError = this.createMarketDataError(error, 'getEnhancedPropertyDetails');
+      logger.error('Enhanced property details lookup failed', {
+        address,
+        error: marketError.message,
+        statusCode: marketError.statusCode
+      });
+
+      // Return null for graceful degradation instead of throwing
+      return null;
+    }
+  }
+
+  /**
+   * Transform RentCast property details to internal enhanced format
+   */
+  private transformEnhancedPropertyData(property: RentcastPropertyDetailsResponse): EnhancedPropertyData {
+    // Calculate data completeness score
+    const totalFields = 20; // Total trackable fields
+    let populatedFields = 0;
+    
+    // Check core fields
+    if (property.bedrooms) populatedFields++;
+    if (property.bathrooms) populatedFields++;
+    if (property.squareFootage) populatedFields++;
+    if (property.lotSize) populatedFields++;
+    if (property.yearBuilt) populatedFields++;
+    if (property.propertyType) populatedFields++;
+    if (property.lastSalePrice) populatedFields++;
+    if (property.taxAssessedValue) populatedFields++;
+    if (property.annualTaxAmount) populatedFields++;
+    if (property.rentEstimate) populatedFields++;
+    if (property.valueEstimate) populatedFields++;
+    if (property.garage !== undefined) populatedFields++;
+    if (property.pool !== undefined) populatedFields++;
+    if (property.ac !== undefined) populatedFields++;
+    if (property.heating) populatedFields++;
+    if (property.cooling) populatedFields++;
+    if (property.fireplace !== undefined) populatedFields++;
+    if (property.basement !== undefined) populatedFields++;
+    if (property.stories) populatedFields++;
+    if (property.parkingSpaces) populatedFields++;
+
+    const completeness = Math.round((populatedFields / totalFields) * 100);
+    
+    // Base confidence starts at 85 for RentCast data
+    let confidence = 85;
+    
+    // Adjust confidence based on completeness
+    if (completeness >= 80) confidence += 10;
+    else if (completeness >= 60) confidence += 5;
+    else if (completeness < 40) confidence -= 15;
+    
+    // Adjust confidence based on data freshness
+    if (property.lastUpdated) {
+      const lastUpdated = new Date(property.lastUpdated);
+      const monthsOld = (Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24 * 30);
+      if (monthsOld > 6) confidence -= 10;
+      else if (monthsOld > 12) confidence -= 20;
+    }
+
+    return {
+      address: {
+        formatted: property.formattedAddress,
+        standardized: {
+          street: property.addressLine1,
+          city: property.city,
+          state: property.state,
+          zipCode: property.zipCode,
+          county: property.county
+        },
+        coordinates: {
+          latitude: property.latitude,
+          longitude: property.longitude
+        }
+      },
+      propertyDetails: {
+        propertyType: property.propertyType,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        squareFootage: property.squareFootage,
+        lotSize: property.lotSize,
+        yearBuilt: property.yearBuilt,
+        stories: property.stories,
+        parkingSpaces: property.parkingSpaces,
+        hasGarage: property.garage || false,
+        hasPool: property.pool || false,
+        hasAC: property.ac || false,
+        hasFireplace: property.fireplace || false,
+        hasBasement: property.basement || false,
+        heating: property.heating,
+        cooling: property.cooling,
+        flooring: property.flooring,
+        roofType: property.roofType,
+        exteriorWalls: property.exteriorWalls
+      },
+      financialData: {
+        lastSalePrice: property.lastSalePrice,
+        lastSaleDate: property.lastSaleDate,
+        pricePerSquareFoot: property.pricePerSquareFoot,
+        taxAssessedValue: property.taxAssessedValue,
+        annualTaxAmount: property.annualTaxAmount,
+        rentEstimate: property.rentEstimate,
+        rentEstimateRange: property.rentEstimateRange,
+        valueEstimate: property.valueEstimate,
+        valueEstimateRange: property.valueEstimateRange
+      },
+      dataQuality: {
+        confidence: Math.max(0, Math.min(100, confidence)),
+        lastUpdated: property.lastUpdated ? new Date(property.lastUpdated) : new Date(),
+        dataSource: 'RentCast Enhanced',
+        completeness
+      }
     };
   }
 
