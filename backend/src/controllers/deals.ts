@@ -253,6 +253,7 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       delete dealData.downPaymentPercentage;
       delete dealData.closingCostPercentage;
       delete dealData._isWizardData;
+      // Keep the calculated maintenanceCost instead of deleting it
       
       logger.info('Wizard data converted:', {
         convertedMaintenanceCost: dealData.maintenanceCost,
@@ -336,18 +337,26 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
     });
     
     logger.info('Analysis complete - checking projections maintenance values');
+    logger.info('Analysis result structure:', {
+      hasLongTermAnalysis: !!analysis.longTermAnalysis,
+      hasProjections: !!analysis.longTermAnalysis?.projections,
+      projectionsLength: analysis.longTermAnalysis?.projections?.length || 0,
+      projectionsIsArray: Array.isArray(analysis.longTermAnalysis?.projections)
+    });
     
     // Log maintenance values in projections before any field mapping
-    if (analysis.longTermAnalysis?.projections) {
-      const maintenanceValues = analysis.longTermAnalysis.projections.map(year => ({
-        year: year.year,
-        maintenance: year.maintenance,
-        maintenanceCost: year.maintenanceCost,
-        hasMaintenanceField: 'maintenance' in year,
-        hasMaintenanceCostField: 'maintenanceCost' in year
-      }));
-      logger.info('Projections maintenance values before field mapping:');
-      logger.info(JSON.stringify(maintenanceValues, null, 2));
+    if (analysis.longTermAnalysis?.projections && analysis.longTermAnalysis.projections.length > 0) {
+      const firstProjection = analysis.longTermAnalysis.projections[0];
+      logger.info('First projection sample:', {
+        year: firstProjection.year,
+        maintenance: firstProjection.maintenance,
+        maintenanceCost: firstProjection.maintenanceCost,
+        hasMaintenanceField: 'maintenance' in firstProjection,
+        hasMaintenanceCostField: 'maintenanceCost' in firstProjection,
+        allKeys: Object.keys(firstProjection)
+      });
+    } else {
+      logger.warn('No projections found or projections array is empty!');
     }
     
     // Fix field name mapping for projections (ensure maintenance field is correctly named)

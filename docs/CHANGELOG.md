@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Maintenance Cost Display Bug** - Fixed issue where maintenance costs were not displaying in yearly projections table when using Property Wizard
+  - **Root Cause**: Frontend `preserveUserInputValues` function was overriding backend-calculated maintenance values with 0 from wizard form data
+  - **Backend Fix**: Modified wizard data conversion in `deals.ts` to properly calculate and preserve maintenance cost (5% × monthly rent × 12)
+  - **Frontend Fix**: Updated `AnalysisResults.tsx` to only override backend calculations when user provides meaningful maintenance values (> 0)
+  - **Impact**: Yearly projections table now correctly displays maintenance costs ($1,197+ annually) for all 10 projection years
+  - **Data Flow**: Wizard → Backend calculation (5% × $1,995 × 12 = $1,197) → Frontend display (preserves calculated values)
+  - **Files Modified**: 
+    - `backend/src/controllers/deals.ts`: Removed premature deletion of calculated maintenanceCost
+    - `frontend/src/components/SFRAnalysis/AnalysisResults.tsx`: Enhanced preserveUserInputValues logic
+    - `frontend/src/components/SFRAnalysis/PropertyWizard.tsx`: Simplified wizard data submission
+
 ## [1.2.0] - 2025-07-06 - Phase 1 Complete ✅
 
 ### Added - PHASE 1 COMPLETION ✅

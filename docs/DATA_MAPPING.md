@@ -30,7 +30,7 @@ When a user submits property data for analysis:
 | `repairCosts` | `repairCosts` | Default to 0 if undefined |
 | `propertyTaxRate` | `propertyTaxRate` | None |
 | `insuranceRate` | `insuranceRate` | None |
-| `maintenanceCost` | `maintenanceCost` | None |
+| `maintenanceCost` | `maintenanceCost` | Wizard: Calculated from percentage (5% × monthlyRent × 12), Manual: Direct value |
 | `propertyManagementRate` | `propertyManagementRate` | None |
 | `capitalInvestments` | `capitalInvestments` | Default to 0 if undefined |
 | `tenantTurnoverFees.prepFees` | `tenantTurnoverFees.prepFees` | Default to 500 if undefined |
@@ -235,6 +235,46 @@ To ensure consistency and backward compatibility, the application handles ZIP co
 3. UI components should display ZIP codes with consistent formatting (e.g., 5-digit or ZIP+4 format)
 
 This approach ensures backward compatibility while maintaining a clear standard for future development.
+
+## Property Wizard Data Mapping
+
+### Wizard-Specific Field Transformations
+
+The Property Wizard uses percentage-based inputs that are converted to absolute values during backend processing:
+
+| Wizard Field | Backend Calculation | Notes |
+|--------------|-------------------|--------|
+| `maintenanceReservePercentage` | `maintenanceCost = (monthlyRent × percentage / 100) × 12` | Default: 5% of annual rent |
+| `downPaymentPercentage` | `downPayment = purchasePrice × (percentage / 100)` | Default: 25% |
+| `closingCostPercentage` | `closingCosts = purchasePrice × (percentage / 100)` | Default: 2.5% |
+| `vacancyRate` | Stored in `longTermAssumptions.vacancyRate` | Default: 5% |
+
+### Frontend Display Logic
+
+The frontend `AnalysisResults.tsx` component includes special logic to handle wizard vs. manual data:
+
+```typescript
+// Only preserve user input maintenance values if they're meaningful (> 0)
+// Don't override backend calculations when propertyData.maintenanceCost is 0 (wizard)
+if (propertyData.maintenanceCost !== undefined && propertyData.maintenanceCost > 0) {
+  // Use manual entry
+  analysis.monthlyAnalysis.expenses.maintenance = propertyData.maintenanceCost;
+} else {
+  // Preserve backend-calculated values from wizard
+  // Backend calculated: 5% × monthlyRent × 12
+}
+```
+
+### Data Flow for Wizard Submissions
+
+```
+Wizard Form (percentages) → Backend Conversion → Analysis Calculation → Frontend Display
+┌─────────────────────┐     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│ maintenanceReserve  │────→│ Calculate actual │──→│ SFRAnalyzer     │──→│ Preserve backend│
+│ Percentage: 5%      │     │ cost: $1,197    │   │ projections     │   │ calculated      │
+│ monthlyRent: $1,995 │     │ (5% × $1,995×12)│   │ with inflation  │   │ values in UI    │
+└─────────────────────┘     └─────────────────┘   └─────────────────┘   └─────────────────┘
+```
 
 ## Data Persistence and Caching Strategy
 

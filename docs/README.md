@@ -19,6 +19,7 @@ This directory contains all the documentation for the Real Estate Deal Analyzer 
 |----------|-------------|
 | [TypeScript Rules](TYPESCRIPT_RULES.md) | TypeScript coding standards and best practices |
 | [Changelog](CHANGELOG.md) | Version history and changes |
+| [Bug Fixes](BUG_FIXES.md) | Documented bug fixes and troubleshooting |
 | [Phase Plan](PHASE_PLAN.md) | Development phases and timeline |
 
 ## Features & Implementation

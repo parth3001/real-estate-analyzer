@@ -200,8 +200,9 @@ const calculateDefaultMonthlyExpenses = (propertyData: SFRPropertyData): any => 
 const preserveUserInputValues = (analysis: any, propertyData: SFRPropertyData): void => {
   if (!analysis.monthlyAnalysis?.expenses) return;
   
-  // For maintenance, always prefer user input if it exists
-  if (propertyData.maintenanceCost !== undefined) {
+  // For maintenance, only preserve user input if it's not from wizard data and actually has a meaningful value
+  // Don't override backend calculations when propertyData.maintenanceCost is 0 (which comes from wizard)
+  if (propertyData.maintenanceCost !== undefined && propertyData.maintenanceCost > 0) {
     console.log("Using user-provided maintenance value:", propertyData.maintenanceCost);
     analysis.monthlyAnalysis.expenses.maintenance = propertyData.maintenanceCost;
     
@@ -220,6 +221,8 @@ const preserveUserInputValues = (analysis: any, propertyData: SFRPropertyData): 
       
       console.log("Updated projections maintenance - Year 1:", analysis.longTermAnalysis.projections[0].maintenance);
     }
+  } else {
+    console.log("Skipping maintenance override - using backend calculated values (propertyData.maintenanceCost:", propertyData.maintenanceCost, ")");
   }
   
   // Recalculate totals after ensuring correct values
