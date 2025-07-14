@@ -88,6 +88,18 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
       userId: req.user.id // Add userId from authenticated user
     };
 
+    // Auto-generate property name if empty (common with wizard flow)
+    if (!dealData.propertyName || dealData.propertyName.trim() === '') {
+      if (dealData.propertyAddress) {
+        // Extract street number from address (e.g., "123" from "123 Main St")
+        const streetNumber = dealData.propertyAddress.street.split(' ')[0];
+        dealData.propertyName = `${streetNumber} ${dealData.propertyAddress.city}`;
+      } else {
+        dealData.propertyName = `${dealData.propertyType} Property - ${new Date().toLocaleDateString()}`;
+      }
+      logger.info('Auto-generated property name:', dealData.propertyName);
+    }
+
     logger.info('Creating deal with data:', {
       propertyName: dealData.propertyName,
       propertyType: dealData.propertyType,
