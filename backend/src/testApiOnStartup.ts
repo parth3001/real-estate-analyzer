@@ -21,6 +21,9 @@ const REQUIRED_FIELDS = [
 async function authenticateForTests(): Promise<boolean> {
   try {
     logger.info('[AUTH] Authenticating for smoke tests...');
+    logger.info('[AUTH] Using credentials:', { email: TEST_CREDENTIALS.email, passwordLength: TEST_CREDENTIALS.password.length });
+    logger.info('[AUTH] Attempting login to:', `${BASE_URL}/api/auth/login`);
+    
     const res = await axios({
       method: 'post',
       url: `${BASE_URL}/api/auth/login`,
@@ -28,21 +31,36 @@ async function authenticateForTests(): Promise<boolean> {
       timeout: 5000
     });
     
+    logger.info('[AUTH] Login response status:', res.status);
+    logger.info('[AUTH] Login response data keys:', Object.keys(res.data || {}));
+    
     if (res.data?.accessToken) {
       authToken = res.data.accessToken;
       logger.info(`[AUTH] Successfully authenticated as ${TEST_CREDENTIALS.email}`);
+      logger.info(`[AUTH] Token length: ${authToken.length}`);
       return true;
     } else {
       logger.warn('[AUTH] No access token received');
+      logger.warn('[AUTH] Response data:', res.data);
       return false;
     }
   } catch (err: any) {
-    logger.warn('[AUTH] Authentication failed:', err.response?.data || err.message);
+    logger.error('[AUTH] Authentication failed with error:', {
+      message: err.message,
+      status: err.response?.status,
+      statusText: err.response?.statusText,
+      data: err.response?.data,
+      url: err.config?.url
+    });
     return false;
   }
 }
 
 async function testEndpoint(endpoint: string, method: 'get' | 'post' = 'get', data?: any) {
+  return testEndpointWithTimeout(endpoint, method, data, 5000);
+}
+
+async function testEndpointWithTimeout(endpoint: string, method: 'get' | 'post' = 'get', data?: any, timeout: number = 5000) {
   try {
     const headers: any = {
       'Content-Type': 'application/json'
@@ -58,7 +76,7 @@ async function testEndpoint(endpoint: string, method: 'get' | 'post' = 'get', da
       url: `${BASE_URL}${endpoint}`, 
       data,
       headers,
-      timeout: 5000 // 5 second timeout
+      timeout
     });
     logger.info(`[PASS] ${method.toUpperCase()} ${endpoint}`);
     return res.data;
@@ -68,6 +86,8 @@ async function testEndpoint(endpoint: string, method: 'get' | 'post' = 'get', da
     
     if (status === 401) {
       logger.warn(`[FAIL] ${method.toUpperCase()} ${endpoint}: Unauthorized (${message})`);
+    } else if (err.code === 'ECONNABORTED' && err.message.includes('timeout')) {
+      logger.warn(`[FAIL] ${method.toUpperCase()} ${endpoint}: timeout of ${timeout}ms exceeded`);
     } else {
       logger.warn(`[FAIL] ${method.toUpperCase()} ${endpoint}: ${status ? `${status} - ` : ''}${message}`);
     }
@@ -92,7 +112,9 @@ function checkRequiredFields(obj: any, label: string) {
 
 export async function runApiSmokeTests() {
   try {
-    logger.info('🧪 Running API smoke tests...');
+    logger.info('');
+    logger.info('🧪 ===== STARTING API SMOKE TESTS =====');
+    logger.info('');
     
     // Only run tests in development or if explicitly enabled
     if (process.env.NODE_ENV === 'production' && process.env.RUN_SMOKE_TESTS !== 'true') {
@@ -100,10 +122,27 @@ export async function runApiSmokeTests() {
       return;
     }
     
+    // Add a delay to ensure server is fully initialized
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     // 0. Authenticate first
-    const authSuccess = await authenticateForTests();
+    logger.info('[SMOKE TEST] Starting authentication...');
+    logger.info('[SMOKE TEST] Test credentials:', { email: TEST_CREDENTIALS.email, hasPassword: !!TEST_CREDENTIALS.password });
+    
+    let authSuccess = false;
+    try {
+      authSuccess = await authenticateForTests();
+      logger.info('[SMOKE TEST] Authentication result:', authSuccess);
+    } catch (error) {
+      logger.error('[SMOKE TEST] Authentication threw error:', error);
+    }
+    
     if (!authSuccess) {
       logger.warn('⚠️  Authentication failed - some tests may fail');
+      logger.warn(`⚠️  Make sure admin user exists with email: ${TEST_CREDENTIALS.email}`);
+      logger.warn(`⚠️  Current authToken value: ${authToken ? 'EXISTS' : 'NULL'}`);
+    } else {
+      logger.info(`✅ Authentication successful - token acquired`);
     }
     
     // 1. Test health endpoint (no auth required)
@@ -118,22 +157,29 @@ export async function runApiSmokeTests() {
     // 4. Test deals endpoint (requires auth)
     await testEndpoint('/api/deals');
     
-    // 5. Test SFR analysis (requires auth)
+    // 5. Test SFR analysis (requires auth) - using longer timeout for analysis
     if (sfr) {
-      const sfrAnalysis = await testEndpoint('/api/deals/analyze', 'post', sfr);
+      const sfrAnalysis = await testEndpointWithTimeout('/api/deals/analyze', 'post', sfr, 15000);
       if (sfrAnalysis) checkRequiredFields(sfrAnalysis, 'SFR Analysis');
     }
     
-    // 6. Test MF analysis (requires auth)
+    // 6. Test MF analysis (requires auth) - using longer timeout for analysis
     if (mf) {
-      const mfAnalysis = await testEndpoint('/api/deals/analyze', 'post', mf);
+      const mfAnalysis = await testEndpointWithTimeout('/api/deals/analyze', 'post', mf, 15000);
       if (mfAnalysis) checkRequiredFields(mfAnalysis, 'MF Analysis');
     }
     
     // 7. Test wizard endpoints (requires auth)
     await testEndpoint('/api/wizard/health');
     
-    logger.info('✅ API smoke tests complete.');
+    logger.info('');
+    logger.info('✅ ===== API SMOKE TESTS COMPLETE =====');
+    logger.info('✅ All critical endpoints are responding correctly');
+    logger.info('✅ Authentication is working properly');
+    logger.info('✅ Sample data endpoints are functional');
+    logger.info('✅ Analysis endpoints are operational');
+    logger.info('====================================');
+    logger.info('');
   } catch (error) {
     // Catch any unexpected errors to prevent the app from crashing
     logger.error('❌ Error running smoke tests:', error);

@@ -42,7 +42,7 @@ Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistenc
 │   ├── cacheService.ts         # MongoDB caching layer
 │   └── aiService.ts            # Enhanced AI insights
 ├── routes/deals.ts             # Deal analysis endpoints
-├── controllers/dealController.ts # Analysis orchestration
+├── controllers/deals.ts        # Analysis orchestration (main controller)
 ├── models/Deal.ts              # MongoDB schemas
 └── types/                      # Backend TypeScript types
 
@@ -144,7 +144,7 @@ Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistenc
 
 ### **Existing Analysis Pipeline (DO NOT BREAK)**
 ```
-SFRPropertyForm → dealController.analyzeDeal() → SFRAnalyzer → 
+SFRPropertyForm → deals.analyzeDeal() → SFRAnalyzer → 
 Market Intelligence Enhancement → AI Insights → AnalysisResults
 ```
 
@@ -174,7 +174,7 @@ Market Intelligence Enhancement → AI Insights → AnalysisResults
 2. `/frontend/src/types/property.ts` - Data type definitions
 3. `/backend/src/services/fredService.ts` - FRED API integration
 4. `/backend/src/services/rentcastService.ts` - RentCast API integration
-5. `/backend/src/controllers/dealController.ts` - Analysis orchestration
+5. `/backend/src/controllers/deals.ts` - Analysis orchestration
 6. `/backend/src/models/Deal.ts` - Database schema
 
 ### **Documentation to Reference**

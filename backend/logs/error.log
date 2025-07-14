@@ -397,3 +397,22 @@
 2025-07-11 21:15:31:1531 [31merror[39m: [31mFailed to fetch FRED series CPIAUCSL: FRED getSeriesObservations(CPIAUCSL) failed: timeout of 15000ms exceeded[39m
 2025-07-13 19:22:02:222 [31merror[39m: [31m[AuthService] Login error: Invalid email or password[39m
 2025-07-13 19:22:02:222 [31merror[39m: [31m[AuthController] Login error: Invalid email or password[39m
+2025-07-14 08:03:58:358 [31merror[39m: [31mError creating SFR deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 08:03:58:358 [31merror[39m: [31m[DealService] Error saving deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 08:03:58:358 [31merror[39m: [31mError creating deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 08:46:47:4647 [31merror[39m: [31mError creating SFR deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 08:46:47:4647 [31merror[39m: [31m[DealService] Error saving deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 08:46:47:4647 [31merror[39m: [31mError creating deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 12:14:26:1426 [31merror[39m: [31mError creating SFR deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 12:14:26:1426 [31merror[39m: [31m[DealService] Error saving deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 12:14:26:1426 [31merror[39m: [31mError creating deal: SFR validation failed: userId: Path `userId` is required.[39m
+2025-07-14 12:29:09:299 [31merror[39m: [31mCould not import API smoke test module: ⨯ Unable to compile TypeScript:[39m
+[31m[96msrc/testApiOnStartup.ts[0m:[93m156[0m:[93m33[0m - [91merror[0m[90m TS2304: [0mCannot find name 'testEndpointWithTimeout'.[39m
+
+[31m[7m156[0m       const sfrAnalysis = await testEndpointWithTimeout('/api/deals/analyze', 'post', sfr, 15000);[39m
+[31m[7m   [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~[0m[39m
+[31m[96msrc/testApiOnStartup.ts[0m:[93m162[0m:[93m32[0m - [91merror[0m[90m TS2304: [0mCannot find name 'testEndpointWithTimeout'.[39m
+
+[31m[7m162[0m       const mfAnalysis = await testEndpointWithTimeout('/api/deals/analyze', 'post', mf, 15000);[39m
+[31m[7m   [0m [91m                               ~~~~~~~~~~~~~~~~~~~~~~~[0m[39m
+[31m[39m

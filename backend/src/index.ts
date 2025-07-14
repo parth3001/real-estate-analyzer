@@ -14,6 +14,7 @@ import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
+import { ensureAdminUser } from './utils/ensureAdminUser';
 
 const envPath = path.resolve(__dirname, '../.env');
 const result = dotenv.config({ path: envPath });
@@ -103,6 +104,9 @@ connectToDatabase()
     
     // Check if collections exist
     await checkCollections();
+    
+    // Ensure admin user exists for smoke tests
+    await ensureAdminUser();
     
     app.listen(port, () => {
       logger.info(`🚀 Server running on port ${port}`);

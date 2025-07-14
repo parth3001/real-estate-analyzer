@@ -1,5 +1,6 @@
 console.log('Deals controller loaded from file:', __filename);
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../middleware/auth';
 import { SFRAnalyzer } from '../analysis';
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { MultiFamilyAnalyzer } from '../analysis/MultiFamilyAnalyzer';
@@ -73,13 +74,25 @@ export const getDealById = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Create a new deal
-export const createDeal = async (req: Request, res: Response): Promise<void> => {
+export const createDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const dealData = req.body;
+    // Ensure user is authenticated
+    if (!req.user?.id) {
+      logger.error('[CreateDeal] No user ID found - authentication required');
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const dealData = {
+      ...req.body,
+      userId: req.user.id // Add userId from authenticated user
+    };
+
     logger.info('Creating deal with data:', {
       propertyName: dealData.propertyName,
       propertyType: dealData.propertyType,
       hasAnalysis: !!dealData.analysis,
+      userId: dealData.userId,
       bodyKeys: Object.keys(dealData)
     });
     

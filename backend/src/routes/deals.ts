@@ -10,6 +10,7 @@ import {
   analyzeDeal
 } from '../controllers/deals';
 import { logger } from '../utils/logger';
+import { authMiddleware } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -28,18 +29,18 @@ const logRequestBody = (req: Request, res: Response, next: NextFunction) => {
 // Apply middleware to all routes
 router.use(logRequestBody);
 
-// Sample endpoints
-router.get('/sample-sfr', getSampleSFR);
-router.get('/sample-mf', getSampleMF);
+// Sample endpoints (require authentication)
+router.get('/sample-sfr', authMiddleware, getSampleSFR);
+router.get('/sample-mf', authMiddleware, getSampleMF);
 
-// Deal routes
-router.get('/', getAllDeals);
-router.get('/:id', getDealById);
-router.post('/', createDeal);
-router.put('/:id', updateDeal);
-router.delete('/:id', deleteDeal);
+// Deal routes (require authentication)
+router.get('/', authMiddleware, getAllDeals);
+router.get('/:id', authMiddleware, getDealById);
+router.post('/', authMiddleware, createDeal);
+router.put('/:id', authMiddleware, updateDeal);
+router.delete('/:id', authMiddleware, deleteDeal);
 
-// Analysis endpoint
-router.post('/analyze', analyzeDeal);
+// Analysis endpoint (require authentication)
+router.post('/analyze', authMiddleware, analyzeDeal);
 
 export default router; 
