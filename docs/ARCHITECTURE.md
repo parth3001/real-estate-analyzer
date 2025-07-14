@@ -6,21 +6,108 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 ## Technical Stack
 
 ### Frontend
-- **Framework:** React with TypeScript
+- **Framework:** React 19 with TypeScript
 - **UI Library:** Material-UI (MUI) v7
 - **Data Visualization:** Recharts
-- **State Management:** React Hooks
+- **State Management:** React Context API + React Hooks
+- **Authentication:** React Context with JWT token management
+- **Routing:** React Router v6 with protected routes
 - **Type Checking:** TypeScript
-- **Data Persistence:** LocalStorage & Backend API
+- **Data Persistence:** MongoDB & Backend API
 - **Build Tool:** Vite
 
 ### Backend
 - **Runtime:** Node.js
 - **Framework:** Express.js
+- **Database:** MongoDB with Mongoose ODM
+- **Authentication:** JWT (JSON Web Tokens) with bcrypt password hashing
 - **Type Safety:** TypeScript
 - **API Documentation:** OpenAPI/Swagger
 - **Logging:** Winston
 - **Error Handling:** Custom middleware
+- **Security:** Role-based access control, auth middleware
+
+## Authentication & User Management System
+
+### Overview
+Complete JWT-based authentication system with role-based access control, providing secure user management and admin capabilities.
+
+### Authentication Architecture
+
+#### Backend Components
+1. **User Model** (`/backend/src/models/User.ts`)
+   - MongoDB schema with bcrypt password hashing
+   - Fields: email, password, firstName, lastName, role, isVerified
+   - Methods: comparePassword(), getFullName()
+   - Pre-save middleware for password hashing (12 salt rounds)
+
+2. **Authentication Service** (`/backend/src/services/authService.ts`)
+   - User registration and login logic
+   - JWT token generation and validation
+   - Password verification and user lookup
+
+3. **Auth Middleware** (`/backend/src/middleware/auth.ts`)
+   - JWT token verification
+   - Request authentication decorator
+   - Role-based authorization
+   - Optional authentication for flexible endpoints
+
+4. **Auth Controller** (`/backend/src/controllers/authController.ts`)
+   - REST endpoints: register, login, refresh, profile management
+   - Input validation and sanitization
+   - Error handling and security logging
+
+5. **Admin Controller** (`/backend/src/controllers/adminController.ts`)
+   - User management endpoints (admin-only)
+   - Role promotion/demotion
+   - User verification status management
+   - System statistics and monitoring
+
+#### Frontend Components
+1. **AuthContext** (`/frontend/src/contexts/AuthContext.tsx`)
+   - Global authentication state management
+   - Login, logout, register, profile update functions
+   - Automatic token refresh and storage management
+
+2. **Authentication Forms**
+   - **LoginForm** (`/frontend/src/components/auth/LoginForm.tsx`)
+   - **RegisterForm** (`/frontend/src/components/auth/RegisterForm.tsx`)
+   - Material-UI components with validation
+   - Error handling and loading states
+
+3. **Protected Routes** (`/frontend/src/components/auth/ProtectedRoute.tsx`)
+   - Route-level authentication guards
+   - Automatic redirect to login for unauthenticated users
+   - Role-based route protection
+
+4. **User Management Pages**
+   - **ProfilePage** (`/frontend/src/pages/ProfilePage.tsx`) - User profile management
+   - **SettingsPage** (`/frontend/src/pages/SettingsPage.tsx`) - Account settings and preferences
+   - **AdminUserManagement** (`/frontend/src/pages/AdminUserManagement.tsx`) - Admin user management dashboard
+
+### Security Features
+- **Password Security:** bcrypt hashing with 12 salt rounds
+- **JWT Tokens:** Secure token-based authentication
+- **Role-Based Access:** Admin/user role separation
+- **Route Protection:** Frontend and backend route guards
+- **Token Management:** Automatic refresh and secure storage
+- **Input Validation:** Comprehensive validation on all inputs
+- **Audit Logging:** Security event logging for admin actions
+
+### User Roles
+- **User:** Standard access to property analysis features
+- **Admin:** Full system access + user management capabilities
+
+### API Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/refresh` - Token refresh
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
+- `POST /api/auth/change-password` - Change password
+- `GET /api/admin/users` - List all users (admin)
+- `PUT /api/admin/users/:id/role` - Update user role (admin)
+- `PUT /api/admin/users/:id/status` - Update user status (admin)
 
 ## Single-Family Rental (SFR) Analysis Implementation
 

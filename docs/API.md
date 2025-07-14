@@ -7,6 +7,224 @@ For a comprehensive listing of all data fields, their types, and usage, please r
 
 ## API Endpoints
 
+### Authentication Endpoints
+
+#### User Registration
+```
+POST /api/auth/register
+```
+
+**Purpose:** Create a new user account.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "User registered successfully",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "user",
+    "isVerified": false
+  },
+  "accessToken": "jwt_token_here",
+  "refreshToken": "refresh_token_here"
+}
+```
+
+#### User Login
+```
+POST /api/auth/login
+```
+
+**Purpose:** Authenticate user and receive access tokens.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123"
+}
+```
+
+**Response:** Same as registration response.
+
+#### Token Refresh
+```
+POST /api/auth/refresh
+```
+
+**Purpose:** Refresh expired access token using refresh token.
+
+**Request Body:**
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
+
+#### Get User Profile
+```
+GET /api/auth/profile
+```
+
+**Purpose:** Get current user's profile information.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "user",
+    "isVerified": false,
+    "createdAt": "2025-07-13T19:14:40.000Z",
+    "lastLogin": "2025-07-13T20:30:15.000Z"
+  }
+}
+```
+
+#### Update User Profile
+```
+PUT /api/auth/profile
+```
+
+**Purpose:** Update user's profile information.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+```json
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "newemail@example.com"
+}
+```
+
+#### Change Password
+```
+POST /api/auth/change-password
+```
+
+**Purpose:** Change user's password.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+```json
+{
+  "currentPassword": "OldPassword123",
+  "newPassword": "NewPassword456"
+}
+```
+
+### Admin Endpoints
+
+#### Get All Users (Admin Only)
+```
+GET /api/admin/users
+```
+
+**Purpose:** Retrieve all users with statistics (admin only).
+
+**Headers:** `Authorization: Bearer <admin_access_token>`
+
+**Response:**
+```json
+{
+  "message": "Users retrieved successfully",
+  "users": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "email": "user@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "user",
+      "isVerified": true,
+      "createdAt": "2025-07-13T19:14:40.000Z",
+      "lastLogin": "2025-07-13T20:30:15.000Z",
+      "totalDeals": 5
+    }
+  ],
+  "total": 1
+}
+```
+
+#### Update User Role (Admin Only)
+```
+PUT /api/admin/users/:userId/role
+```
+
+**Purpose:** Change user's role (promote/demote admin).
+
+**Headers:** `Authorization: Bearer <admin_access_token>`
+
+**Request Body:**
+```json
+{
+  "role": "admin"
+}
+```
+
+#### Update User Status (Admin Only)
+```
+PUT /api/admin/users/:userId/status
+```
+
+**Purpose:** Update user's verification status.
+
+**Headers:** `Authorization: Bearer <admin_access_token>`
+
+**Request Body:**
+```json
+{
+  "isVerified": true
+}
+```
+
+#### Get System Statistics (Admin Only)
+```
+GET /api/admin/stats
+```
+
+**Purpose:** Get system-wide statistics.
+
+**Headers:** `Authorization: Bearer <admin_access_token>`
+
+**Response:**
+```json
+{
+  "stats": {
+    "users": {
+      "total": 150,
+      "admins": 3,
+      "verified": 120,
+      "recent": 15
+    },
+    "deals": {
+      "total": 1250
+    },
+    "timestamp": "2025-07-13T20:30:15.000Z"
+  }
+}
+```
+
 ### Census Data
 
 #### Get Demographic Data

@@ -2,6 +2,35 @@
 
 This document serves as a central reference for all data fields used throughout the Real Estate Deal Analyzer application. The purpose is to maintain consistency and provide clear documentation as the application evolves.
 
+## User & Authentication Data Fields
+
+### User Model Fields
+| Field Name | Type | Description | Required | Validation |
+|------------|------|-------------|----------|------------|
+| `_id` | ObjectId | MongoDB unique identifier | Auto | MongoDB generated |
+| `email` | string | User's email address (unique) | Yes | Email format validation |
+| `password` | string | Hashed password (bcrypt) | Yes | Min 8 chars, not selected by default |
+| `firstName` | string | User's first name | Yes | Max 50 characters |
+| `lastName` | string | User's last name | Yes | Max 50 characters |
+| `role` | string enum | User role ('user' or 'admin') | Yes | Default: 'user' |
+| `isVerified` | boolean | Email verification status | Yes | Default: false |
+| `createdAt` | Date | Account creation timestamp | Auto | MongoDB timestamp |
+| `updatedAt` | Date | Last update timestamp | Auto | MongoDB timestamp |
+| `lastLogin` | Date | Last successful login | No | Updated on login |
+
+### Authentication API Fields
+| Field Name | Type | Description | Used In |
+|------------|------|-------------|---------|
+| `accessToken` | string | JWT access token | Login/Register responses |
+| `refreshToken` | string | JWT refresh token | Login/Register responses |
+| `currentPassword` | string | Current password for changes | Change password requests |
+| `newPassword` | string | New password for changes | Change password requests |
+
+### Deal Model Updates
+| Field Name | Type | Description | Required | Notes |
+|------------|------|-------------|----------|-------|
+| `userId` | ObjectId | Reference to User who owns the deal | Yes | Added for user association |
+
 ## Property Data Fields
 
 ### Base Property Fields
