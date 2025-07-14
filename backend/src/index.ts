@@ -10,6 +10,8 @@ import analyzeRouter from './routes/analyzeRoutes';
 import censusRouter from './routes/censusRoutes';
 import marketDataRouter from './routes/marketDataRoutes';
 import wizardRouter from './routes/wizardRoutes';
+import authRouter from './routes/auth';
+import adminRouter from './routes/admin';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 
@@ -32,7 +34,8 @@ if (result.error) {
     MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing',
     CENSUS_API_KEY: process.env.CENSUS_API_KEY ? 'exists' : 'missing',
     RENTCAST_API_KEY: process.env.RENTCAST_API_KEY ? 'exists' : 'missing',
-    FRED_API_KEY: process.env.FRED_API_KEY ? 'exists' : 'missing'
+    FRED_API_KEY: process.env.FRED_API_KEY ? 'exists' : 'missing',
+    JWT_SECRET: process.env.JWT_SECRET ? 'exists' : 'missing'
   });
 }
 
@@ -59,6 +62,8 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/deals', dealsRouter);
 app.use('/api/analyze', analyzeRouter);
 app.use('/api/census', censusRouter);
@@ -78,7 +83,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
       MONGODB_URI_EXISTS: !!process.env.MONGODB_URI,
       CENSUS_API_KEY_EXISTS: !!process.env.CENSUS_API_KEY,
       RENTCAST_API_KEY_EXISTS: !!process.env.RENTCAST_API_KEY,
-      FRED_API_KEY_EXISTS: !!process.env.FRED_API_KEY
+      FRED_API_KEY_EXISTS: !!process.env.FRED_API_KEY,
+      JWT_SECRET_EXISTS: !!process.env.JWT_SECRET
     }
   });
 });

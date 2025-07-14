@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   AppBar, 
   Box, 
@@ -13,7 +13,11 @@ import {
   ListItemText, 
   useMediaQuery,
   IconButton,
-  Divider
+  Divider,
+  Avatar,
+  Menu,
+  MenuItem,
+  Chip
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useLocation, Outlet, Link } from 'react-router-dom';
@@ -24,6 +28,11 @@ import ApartmentIcon from '@mui/icons-material/Apartment';
 import SavedSearchIcon from '@mui/icons-material/SavedSearch';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import MapIcon from '@mui/icons-material/Map';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DRAWER_WIDTH = 240;
 
@@ -33,10 +42,30 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
   const theme = useTheme();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  
+  const { user, logout } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    handleUserMenuClose();
+    await logout();
+  };
+
+  const getUserInitials = (firstName: string, lastName: string): string => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   const isActive = (path: string) => {
@@ -177,6 +206,136 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}>
             {navigationItems.find((item) => isActive(item.path))?.text || 'Real Estate Analyzer'}
           </Typography>
+          
+          {/* User Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {user && (
+              <>
+                <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Welcome, {user.firstName}
+                  </Typography>
+                  {user.role === 'admin' && (
+                    <Chip 
+                      label="Admin" 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  )}
+                </Box>
+                
+                <IconButton
+                  onClick={handleUserMenuOpen}
+                  size="small"
+                  sx={{ ml: 1 }}
+                  aria-controls={anchorEl ? 'user-menu' : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={anchorEl ? 'true' : undefined}
+                >
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      bgcolor: 'primary.main',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {getUserInitials(user.firstName, user.lastName)}
+                  </Avatar>
+                </IconButton>
+                
+                <Menu
+                  id="user-menu"
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleUserMenuClose}
+                  onClick={handleUserMenuClose}
+                  PaperProps={{
+                    elevation: 0,
+                    sx: {
+                      overflow: 'visible',
+                      filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                      mt: 1.5,
+                      '& .MuiAvatar-root': {
+                        width: 32,
+                        height: 32,
+                        ml: -0.5,
+                        mr: 1,
+                      },
+                      '&:before': {
+                        content: '""',
+                        display: 'block',
+                        position: 'absolute',
+                        top: 0,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        bgcolor: 'background.paper',
+                        transform: 'translateY(-50%) rotate(45deg)',
+                        zIndex: 0,
+                      },
+                    },
+                  }}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                  <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {user.firstName} {user.lastName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user.email}
+                    </Typography>
+                    {user.role === 'admin' && (
+                      <Chip 
+                        label="Administrator" 
+                        size="small" 
+                        color="primary" 
+                        variant="outlined"
+                        sx={{ mt: 0.5 }}
+                      />
+                    )}
+                  </Box>
+                  
+                  <MenuItem onClick={handleUserMenuClose} component={Link} to="/profile">
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    My Profile
+                  </MenuItem>
+                  
+                  <MenuItem onClick={handleUserMenuClose} component={Link} to="/settings">
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" />
+                    </ListItemIcon>
+                    Settings
+                  </MenuItem>
+                  
+                  {user.role === 'admin' && (
+                    <>
+                      <Divider />
+                      <MenuItem onClick={handleUserMenuClose} component={Link} to="/admin/users">
+                        <ListItemIcon>
+                          <AdminPanelSettingsIcon fontSize="small" />
+                        </ListItemIcon>
+                        User Management
+                      </MenuItem>
+                    </>
+                  )}
+                  
+                  <Divider />
+                  
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" />
+                    </ListItemIcon>
+                    Logout
+                  </MenuItem>
+                </Menu>
+              </>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
       

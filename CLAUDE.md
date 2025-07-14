@@ -16,8 +16,14 @@
 
 ## 📊 **Current Data Flow**
 ```
-SFRPropertyForm (manual 60+ fields) → POST /api/deals/analyze → 
-SFRAnalyzer + Market Intelligence → Enhanced Analysis → AnalysisResults Display
+User Choice: Property Wizard OR Manual Form
+    ↓
+Property Wizard (4-step guided) → RentCast Auto-population → Wizard API
+    OR
+SFRPropertyForm (manual 60+ fields) → Direct input
+    ↓
+POST /api/deals/analyze → SFRAnalyzer + Market Intelligence → 
+Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistence
 ```
 
 ## 🗂️ **Key Directory Structure**
@@ -100,31 +106,39 @@ SFRAnalyzer + Market Intelligence → Enhanced Analysis → AnalysisResults Disp
   - TTL management by data type
   - Cache warming and health monitoring
 
+- ✅ **PropertyWizard Services**:
+  - PropertyDataAggregator for intelligent data compilation
+  - Address validation and property lookup
+  - Smart defaults based on location and property type
+  - Data conversion from wizard format to SFR analysis format
+
 ### **Data Types & Interfaces**
 - **SFRPropertyData**: 63 fields covering property, financial, assumptions
 - **Analysis**: Comprehensive analysis results with market intelligence
 - **MarketData**: FRED + RentCast combined market intelligence
 - **AIInsights**: Enhanced AI analysis with strategic recommendations
 
-## 🎯 **Current Project Status**
+## 🎯 **Current Project Status (Updated July 12, 2025)**
 
-### **Recently Completed**
-- ✅ Enhanced AI analysis with market intelligence integration
-- ✅ MongoDB caching system for external APIs
-- ✅ Fixed AI content repetition and formatting issues
-- ✅ Property wizard architecture design (comprehensive 79-page document)
-- ✅ Phase-by-phase implementation plan (7-week roadmap)
+### **✅ COMPLETED & WORKING IN PRODUCTION**
+- ✅ **Property Wizard**: Complete 4-step guided analysis (Address → Financials → Rental → Assumptions)
+- ✅ **Enhanced AI Analysis**: Market intelligence integration with GPT-4o-mini
+- ✅ **SFR Analysis Engine**: Comprehensive 60+ field analysis with real-time market data
+- ✅ **External API Integrations**: FRED, RentCast, Census APIs working with MongoDB caching
+- ✅ **Market Intelligence**: Orchestrated data from multiple sources with intelligent insights
+- ✅ **Deal Persistence**: Save/load analyses with MongoDB storage
+- ✅ **Smart Defaults**: Location-based intelligent auto-population
+- ✅ **Maintenance Cost Bug Fix**: Wizard maintenance costs display correctly in projections
 
-### **Active Development**
-- 🚧 **Property Wizard Phase 1**: Foundation & infrastructure setup
-- 🚧 Working within existing codebase structure
-- 🚧 Enhancing existing services rather than replacing
+### **🔲 CURRENT GAPS (Next Development Priorities)**
+- ❌ **User Authentication**: No user accounts, properties not user-specific
+- ❌ **Multi-Family Frontend**: Backend analysis exists but frontend is placeholder
+- ❌ **Data Export**: No PDF reports or analysis sharing capabilities
+- ❌ **Portfolio Management**: No multi-property tracking or comparison tools
 
-### **Planned (Property Wizard)**
-- 📋 4-step wizard: Address → Financials → Rental → Assumptions
-- 📋 External API integration: ATTOM, Insurance APIs, Tax APIs
-- 📋 Smart defaults engine based on location/property type
-- 📋 Progressive enhancement of existing analysis pipeline
+### **🚧 PARTIALLY COMPLETE**
+- 🔄 **Multi-Family Analysis**: Backend complete, frontend needs implementation
+- 🔄 **Advanced Features**: Export, collaboration, portfolio management planned
 
 ## 🚨 **Critical Integration Points**
 
@@ -135,9 +149,18 @@ Market Intelligence Enhancement → AI Insights → AnalysisResults
 ```
 
 ### **Current API Endpoints**
-- `POST /api/deals/analyze` - Main analysis endpoint (KEEP UNCHANGED)
-- `GET /api/deals/sample-sfr` - Sample data loading
+- `POST /api/deals/analyze` - Main analysis endpoint for all property types
+- `GET /api/deals` - List all saved properties 
+- `GET /api/deals/:id` - Get specific saved property
+- `POST /api/deals` - Save new property analysis
+- `PUT /api/deals/:id` - Update existing property
+- `DELETE /api/deals/:id` - Delete property
+- `GET /api/deals/sample-sfr` - Load sample SFR data
+- `GET /api/deals/sample-mf` - Load sample Multi-Family data
+- `POST /api/wizard/property-lookup` - Property Wizard RentCast lookup
+- `POST /api/wizard/smart-defaults` - Intelligent defaults generation
 - `GET /api/market-data/*` - Market intelligence endpoints
+- `GET /api/census/*` - Census demographic data endpoints
 
 ### **Data Compatibility Requirements**
 - All wizard outputs must match existing `SFRPropertyData` interface

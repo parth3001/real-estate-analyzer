@@ -25,11 +25,7 @@ const analyzeMFProperty = async (_data: any) => {
   };
 };
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-  };
-}
+import { AuthenticatedRequest } from '../middleware/auth';
 
 /**
  * Get all deals for the current user

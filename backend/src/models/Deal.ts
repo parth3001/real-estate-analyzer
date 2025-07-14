@@ -218,6 +218,7 @@ export interface Analysis {
 
 // Base deal interface
 export interface IDeal extends Document {
+  userId: mongoose.Schema.Types.ObjectId;
   propertyName: string;
   propertyType: 'SFR' | 'MF';
   propertyAddress: PropertyAddress;
@@ -572,6 +573,12 @@ const AnalysisSchema = new Schema({
 
 // Base schema for all deals
 const DealSchema = new Schema({
+  userId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true,
+    index: true
+  },
   propertyName: { type: String, required: true },
   propertyType: { type: String, enum: ['SFR', 'MF'], required: true },
   propertyAddress: { type: AddressSchema, required: true },

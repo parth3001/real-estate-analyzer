@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Recently Completed ✅
+- **Property Wizard Implementation** - Complete 4-step guided property analysis wizard
+  - ✅ AddressStep with RentCast API integration for auto-population
+  - ✅ FinancialsStep with smart defaults for purchase and financing
+  - ✅ RentalStep with market-based rent estimates and expense calculations
+  - ✅ AssumptionsStep with intelligent long-term projection defaults
+  - ✅ Backend PropertyDataAggregator service for data orchestration
+  - ✅ Wizard API endpoints for property lookup and validation
+  - ✅ Data conversion pipeline from wizard format to SFR analysis
+
 ### Fixed
 - **Maintenance Cost Display Bug** - Fixed issue where maintenance costs were not displaying in yearly projections table when using Property Wizard
   - **Root Cause**: Frontend `preserveUserInputValues` function was overriding backend-calculated maintenance values with 0 from wizard form data

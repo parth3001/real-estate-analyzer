@@ -395,3 +395,5 @@
 2025-07-11 21:15:30:1530 [31merror[39m: [31mFailed to fetch FRED series CSUSHPINSA: FRED getSeriesObservations(CSUSHPINSA) failed: timeout of 15000ms exceeded[39m
 2025-07-11 21:15:30:1530 [31merror[39m: [31mFailed to fetch FRED series CSUSHPINSA: FRED getSeriesObservations(CSUSHPINSA) failed: timeout of 15000ms exceeded[39m
 2025-07-11 21:15:31:1531 [31merror[39m: [31mFailed to fetch FRED series CPIAUCSL: FRED getSeriesObservations(CPIAUCSL) failed: timeout of 15000ms exceeded[39m
+2025-07-13 19:22:02:222 [31merror[39m: [31m[AuthService] Login error: Invalid email or password[39m
+2025-07-13 19:22:02:222 [31merror[39m: [31m[AuthController] Login error: Invalid email or password[39m

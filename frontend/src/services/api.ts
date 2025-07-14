@@ -1,5 +1,14 @@
 import axios from 'axios';
 import type { PropertyData } from '../types/property';
+import type { 
+  LoginCredentials, 
+  RegisterData, 
+  AuthResponse, 
+  TokenRefreshResponse,
+  ProfileUpdateData,
+  PasswordChangeData
+} from '../types/auth';
+import { TOKEN_STORAGE_KEYS } from '../types/auth';
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -8,6 +17,94 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Token management utilities
+export const tokenUtils = {
+  getAccessToken: (): string | null => {
+    return localStorage.getItem(TOKEN_STORAGE_KEYS.ACCESS_TOKEN);
+  },
+  
+  setAccessToken: (token: string): void => {
+    localStorage.setItem(TOKEN_STORAGE_KEYS.ACCESS_TOKEN, token);
+  },
+  
+  getRefreshToken: (): string | null => {
+    return localStorage.getItem(TOKEN_STORAGE_KEYS.REFRESH_TOKEN);
+  },
+  
+  setRefreshToken: (token: string): void => {
+    localStorage.setItem(TOKEN_STORAGE_KEYS.REFRESH_TOKEN, token);
+  },
+  
+  removeTokens: (): void => {
+    localStorage.removeItem(TOKEN_STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(TOKEN_STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(TOKEN_STORAGE_KEYS.USER_DATA);
+  },
+  
+  setUserData: (user: any): void => {
+    localStorage.setItem(TOKEN_STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+  },
+  
+  getUserData: (): any | null => {
+    const userData = localStorage.getItem(TOKEN_STORAGE_KEYS.USER_DATA);
+    return userData ? JSON.parse(userData) : null;
+  }
+};
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = tokenUtils.getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const refreshToken = tokenUtils.getRefreshToken();
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
+            refreshToken
+          });
+          
+          const { accessToken, refreshToken: newRefreshToken } = response.data;
+          tokenUtils.setAccessToken(accessToken);
+          tokenUtils.setRefreshToken(newRefreshToken);
+          
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return api(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, redirect to login
+          tokenUtils.removeTokens();
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
+      } else {
+        // No refresh token, redirect to login
+        tokenUtils.removeTokens();
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 export interface ApiResponse<T = any> {
   status: number;
@@ -443,6 +540,200 @@ export const wizardApi = {
       throw error;
     }
   }
+};
+
+// Authentication API methods
+export const authApi = {
+  // Register new user
+  register: async (data: RegisterData): Promise<ApiResponse<AuthResponse>> => {
+    try {
+      const response = await api.post('/auth/register', data);
+      
+      // Store tokens and user data
+      const { user, accessToken, refreshToken } = response.data;
+      tokenUtils.setAccessToken(accessToken);
+      tokenUtils.setRefreshToken(refreshToken);
+      tokenUtils.setUserData(user);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Registration failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Login user
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> => {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      
+      // Store tokens and user data
+      const { user, accessToken, refreshToken } = response.data;
+      tokenUtils.setAccessToken(accessToken);
+      tokenUtils.setRefreshToken(refreshToken);
+      tokenUtils.setUserData(user);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Login failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Logout user
+  logout: async (): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/logout');
+      
+      // Clear stored tokens and user data
+      tokenUtils.removeTokens();
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      // Clear tokens even if API call fails
+      tokenUtils.removeTokens();
+      
+      console.error('Logout error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { message: 'Logout completed locally' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Get user profile
+  getProfile: async (): Promise<ApiResponse<{ user: any }>> => {
+    try {
+      const response = await api.get('/auth/profile');
+      
+      // Update stored user data
+      tokenUtils.setUserData(response.data.user);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Get profile error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { user: null },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Update user profile
+  updateProfile: async (data: ProfileUpdateData): Promise<ApiResponse<{ user: any; message: string }>> => {
+    try {
+      const response = await api.put('/auth/profile', data);
+      
+      // Update stored user data
+      tokenUtils.setUserData(response.data.user);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Update failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Change password
+  changePassword: async (data: PasswordChangeData): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.put('/auth/password', data);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Change password error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Password change failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Refresh access token
+  refreshToken: async (): Promise<ApiResponse<TokenRefreshResponse>> => {
+    try {
+      const refreshToken = tokenUtils.getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await api.post('/auth/refresh', { refreshToken });
+      
+      // Update stored tokens
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      tokenUtils.setAccessToken(accessToken);
+      tokenUtils.setRefreshToken(newRefreshToken);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      // Clear tokens on refresh failure
+      tokenUtils.removeTokens();
+      
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Token refresh failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 export default api; 
