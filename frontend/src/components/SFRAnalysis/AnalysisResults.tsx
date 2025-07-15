@@ -13,12 +13,12 @@ import {
   Tabs,
   Tab,
   Divider,
-  Card,
-  CardContent,
   Alert,
   Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import { TrendingUp, Assessment, ShowChart, Home } from '@mui/icons-material';
+import MetricCard, { CashFlowCard, CapRateCard, CoCReturnCard, ROICard } from '../ui/MetricCard';
 import type { 
   Analysis, 
   MonthlyExpenses as BaseMonthlyExpenses, 
@@ -1094,238 +1094,169 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
         
         <Divider sx={{ my: 3 }} />
         
-        {/* Expanded Key Metrics Section */}
+        {/* Key Metrics Section - Modernized with MetricCards */}
         <Typography variant="h6" gutterBottom>Key Metrics</Typography>
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Cap Rate
-                  <Tooltip title="Net Operating Income / Property Value">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatPercent(analysis.keyMetrics.capRate)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Based on Purchase Price
-                </Typography>
-              </CardContent>
-            </Card>
+        
+        {/* Hero Metrics Row */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <CashFlowCard
+              value={formatCurrency(analysis.monthlyAnalysis?.cashFlow || 0)}
+              subtitle="First year average"
+              status={(analysis.monthlyAnalysis?.cashFlow || 0) >= 0 ? 'positive' : 'negative'}
+              size="medium"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Cash on Cash Return
-                  <Tooltip title="Annual Cash Flow / Total Investment">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatPercent(analysis.keyMetrics.cashOnCashReturn)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  First Year
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <CapRateCard
+              value={formatPercent(analysis.keyMetrics.capRate)}
+              subtitle="Based on purchase price"
+              status={
+                (analysis.keyMetrics.capRate || 0) >= 8 ? 'positive' : 
+                (analysis.keyMetrics.capRate || 0) >= 6 ? 'neutral' : 'negative'
+              }
+              size="medium"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  DSCR
-                  <Tooltip title="Net Operating Income / Annual Debt Service">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatDecimal(analysis?.keyMetrics?.dscr || 0)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Debt Service Coverage Ratio
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <CoCReturnCard
+              value={formatPercent(analysis.keyMetrics.cashOnCashReturn)}
+              subtitle="First year return"
+              status={
+                (analysis.keyMetrics.cashOnCashReturn || 0) >= 10 ? 'positive' : 
+                (analysis.keyMetrics.cashOnCashReturn || 0) >= 7 ? 'neutral' : 'negative'
+              }
+              size="medium"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  {propertyData.longTermAssumptions?.projectionYears || 10}-Year IRR
-                  <Tooltip title="Internal Rate of Return over the projection period">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatPercent(analysis.keyMetrics.irr)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Internal Rate of Return
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <ROICard
+              value={formatPercent(analysis.longTermAnalysis.exitAnalysis.returnOnInvestment)}
+              subtitle={`${propertyData.longTermAssumptions?.projectionYears || 10} year total`}
+              status={
+                (analysis.longTermAnalysis.exitAnalysis.returnOnInvestment || 0) >= 15 ? 'positive' : 
+                (analysis.longTermAnalysis.exitAnalysis.returnOnInvestment || 0) >= 10 ? 'neutral' : 'negative'
+              }
+              trend="up"
+              size="medium"
+            />
+          </Grid>
+        </Grid>
+        
+        {/* Additional Metrics Row 1 */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="DSCR"
+              value={formatDecimal(analysis?.keyMetrics?.dscr || 0)}
+              subtitle="Debt service coverage"
+              status={
+                (analysis?.keyMetrics?.dscr || 0) >= 1.25 ? 'positive' : 
+                (analysis?.keyMetrics?.dscr || 0) >= 1.0 ? 'neutral' : 'negative'
+              }
+              icon={<Assessment />}
+              tooltip="Net Operating Income / Annual Debt Service - Higher is better"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Monthly Cash Flow
-                  <Tooltip title="Monthly Income - Monthly Expenses">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(analysis.monthlyAnalysis.cashFlow)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  First Year Average
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title={`${propertyData.longTermAssumptions?.projectionYears || 10}-Year IRR`}
+              value={formatPercent(analysis.keyMetrics.irr)}
+              subtitle="Internal rate of return"
+              status={
+                (analysis.keyMetrics.irr || 0) >= 12 ? 'positive' : 
+                (analysis.keyMetrics.irr || 0) >= 8 ? 'neutral' : 'negative'
+              }
+              icon={<ShowChart />}
+              tooltip="Internal Rate of Return over the projection period"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Total ROI ({propertyData.longTermAssumptions?.projectionYears || 10} yr)
-                  <Tooltip title="Total Return on Investment over projection period">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatPercent(analysis.longTermAnalysis.exitAnalysis.returnOnInvestment)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {propertyData.longTermAssumptions?.projectionYears || 10} Year Total
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Price/SqFt"
+              value={formatCurrency(propertyData.purchasePrice / (propertyData.squareFootage || 1))}
+              subtitle="Initial purchase"
+              status="neutral"
+              icon={<Home />}
+              tooltip="Purchase Price per Square Foot"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Price/SqFt
-                  <Tooltip title="Purchase Price per Square Foot">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(propertyData.purchasePrice / (propertyData.squareFootage || 1))}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Initial Purchase
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Price/SqFt at Sale"
+              value={formatCurrency(analysis.longTermAnalysis.exitAnalysis.projectedSalePrice / (propertyData.squareFootage || 1))}
+              subtitle="Projected sale value"
+              status="positive"
+              icon={<TrendingUp />}
+              tooltip="Projected Sale Price per Square Foot"
+              trend="up"
+              size="small"
+            />
+          </Grid>
+        </Grid>
+
+        {/* Additional Metrics Row 2 - Missing Production Metrics */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Avg Rent/SqFt"
+              value={formatCurrency((propertyData.monthlyRent || 0) / (propertyData.squareFootage || 1))}
+              subtitle="Monthly average"
+              status="neutral"
+              icon={<Home />}
+              tooltip="Monthly Rent per Square Foot"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Price/SqFt at Sale
-                  <Tooltip title="Projected Sale Price per Square Foot">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(analysis.longTermAnalysis.exitAnalysis.projectedSalePrice / (propertyData.squareFootage || 1))}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Year 10 Projection
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Total Return"
+              value={formatCurrency(analysis.longTermAnalysis?.returns?.totalReturn || 0)}
+              subtitle={`${propertyData.longTermAssumptions?.projectionYears || 10} year projection`}
+              status="positive"
+              icon={<TrendingUp />}
+              tooltip="Total cash flow plus appreciation over projection period"
+              trend="up"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Avg Rent/SqFt
-                  <Tooltip title="Monthly Rent per Square Foot">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(monthlyRent / (propertyData.squareFootage || 1))}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Monthly Average
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="Total Investment"
+              value={formatCurrency(analysis.keyMetrics?.totalInvestment || ((propertyData.downPayment || 0) + (propertyData.closingCosts || 0)))}
+              subtitle="Down payment + costs"
+              status="neutral"
+              icon={<Assessment />}
+              tooltip="Total upfront investment required"
+              size="small"
+            />
           </Grid>
           
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Total Return
-                  <Tooltip title="Net Proceeds + Total Cash Flow">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(analysis.longTermAnalysis.returns.totalReturn || 0)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  10 Year Projection
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={12} sm={6} md={3}>
+            <MetricCard
+              title="AI Investment Score"
+              value={`${analysis.aiInsights?.investmentScore || 0}/100`}
+              subtitle="AI recommendation"
+              status={
+                (analysis.aiInsights?.investmentScore || 0) >= 70 ? 'positive' : 
+                (analysis.aiInsights?.investmentScore || 0) >= 50 ? 'neutral' : 'negative'
+              }
+              icon={<TrendingUp />}
+              tooltip="AI-generated investment score based on comprehensive analysis"
+              size="small"
+            />
           </Grid>
-          
-          <Grid item xs={6} sm={4} md={2}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Total Investment
-                  <Tooltip title="Down Payment + Closing Costs + Repair Costs">
-                    <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  </Tooltip>
-                </Typography>
-                <Typography variant="h5" component="div">
-                  {formatCurrency(propertyData.downPayment + (propertyData.closingCosts || 0))}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Down Payment + Costs
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {analysis.aiInsights?.investmentScore !== undefined && (
-            <Grid container item xs={6} sm={4} md={2}>
-              <Card variant="outlined" sx={{ height: '100%' }}>
-                <CardContent>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    AI Investment Score
-                    <Tooltip title="AI-Generated Investment Quality Score (0-100)">
-                      <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
-                    </Tooltip>
-                  </Typography>
-                  <Typography variant="h5" component="div">
-                    {analysis.aiInsights.investmentScore}/100
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    AI Recommendation
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
         </Grid>
         
         {/* Advanced Metrics Section */}
