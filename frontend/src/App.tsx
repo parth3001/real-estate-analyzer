@@ -1,8 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import theme from './theme';
-import MainLayout from './components/layout/MainLayout';
+import { appleTheme } from './theme/appleTheme';
+import AppleNavigation from './components/layout/AppleNavigation';
+
+// Import global Apple styles
+import './styles/appleGlobal.css';
 
 // Authentication
 import { AuthProvider } from './contexts/AuthContext';
@@ -21,6 +24,48 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
+import MarketDataPage from './pages/MarketDataPage';
+
+// Analysis Details Component (for viewing saved analyses)
+const AnalysisDetails: React.FC = () => {
+  const { id } = useParams();
+  return (
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4">Analysis Details</Typography>
+      <Typography>Analysis ID: {id}</Typography>
+      {/* Your existing AnalysisResults component can be used here */}
+    </Box>
+  );
+};
+
+// Authentication Layout (for login/register pages)
+const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: 2
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: 400,
+          backgroundColor: 'background.paper',
+          borderRadius: '24px',
+          padding: 4,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -36,7 +81,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={appleTheme}>
         <CssBaseline />
         <BrowserRouter>
           <AuthProvider>
@@ -46,7 +91,9 @@ function App() {
                 path="/login" 
                 element={
                   <GuestRoute>
-                    <LoginPage />
+                    <AuthLayout>
+                      <LoginPage />
+                    </AuthLayout>
                   </GuestRoute>
                 } 
               />
@@ -54,7 +101,9 @@ function App() {
                 path="/register" 
                 element={
                   <GuestRoute>
-                    <RegisterPage />
+                    <AuthLayout>
+                      <RegisterPage />
+                    </AuthLayout>
                   </GuestRoute>
                 } 
               />
@@ -63,20 +112,35 @@ function App() {
               <Route 
                 element={
                   <ProtectedRoute>
-                    <MainLayout />
+                    <AppleNavigation />
                   </ProtectedRoute>
                 }
               >
-                <Route path="/" element={<Dashboard />} />
+                {/* Main Dashboard */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                
+                {/* Property Analysis Routes */}
                 <Route path="/sfr-analysis" element={<SFRAnalysis />} />
+                <Route path="/sfr-analysis/:mode" element={<SFRAnalysis />} />
                 <Route path="/mf-analysis" element={<MFAnalysis />} />
+                
+                {/* Property Management */}
                 <Route path="/saved-properties" element={<SavedProperties />} />
+                <Route path="/analysis/:id" element={<AnalysisDetails />} />
+                
+                {/* Market & Tools */}
+                <Route path="/market-data" element={<MarketDataPage />} />
                 <Route path="/help" element={<HelpPage />} />
                 <Route path="/census-test" element={<CensusDataTestPage />} />
+                
+                {/* User Management */}
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin/users" element={<AdminUserManagement />} />
+                
+                {/* Catch all for protected routes */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
               
               {/* Public Routes */}

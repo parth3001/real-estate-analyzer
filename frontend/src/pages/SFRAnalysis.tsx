@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Alert, CircularProgress, Button, Snackbar, Chip, Card, CardContent } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Alert, 
+  CircularProgress, 
+  Button, 
+  Snackbar, 
+  ButtonGroup,
+  Container,
+  Stack,
+  Fade
+} from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { AutoAwesome, Edit } from '@mui/icons-material';
+import { AutoAwesome, Edit, Dashboard, DataUsage as SampleDataIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
 import PropertyWizard from '../components/SFRAnalysis/PropertyWizard';
@@ -9,12 +20,14 @@ import { propertyApi } from '../services/api';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
+import { AppleCard, AppleButton } from '../components/ui/AppleComponents';
+import { appleColors } from '../theme/appleDesignSystem';
 
 const SFRAnalysis: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [tabIndex, setTabIndex] = useState(0);
+  const [activeSection, setActiveSection] = useState<'input' | 'results'>('input');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,13 +37,14 @@ const SFRAnalysis: React.FC = () => {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
   
-  // Wizard mode state
-  const [useWizard, setUseWizard] = useState(false);
+  // Input method state
+  const [inputMethod, setInputMethod] = useState<'wizard' | 'manual'>('wizard');
   const wizardEnabled = true; // Enable for Phase 1 testing
 
-  // Handle tab change
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabIndex(newValue);
+  // Handle input method change
+  const handleInputMethodChange = (method: 'wizard' | 'manual') => {
+    setInputMethod(method);
+    setError(null);
   };
 
   // Load sample data
@@ -49,7 +63,7 @@ const SFRAnalysis: React.FC = () => {
       if (response.status === 200 && response.data) {
         console.log('Setting property data from sample data');
         setPropertyData(response.data as SFRPropertyData);
-        setTabIndex(0); // Switch to form tab
+        setActiveSection('input'); // Switch to input section
       } else {
         console.error('Failed to load sample data:', response);
         setError('Failed to load sample data: ' + (response.message || 'Unknown error'));
@@ -95,7 +109,7 @@ const SFRAnalysis: React.FC = () => {
         // Set data and show results
         setPropertyData(data);
         setAnalysis(response.data);
-        setTabIndex(1); // Switch to results tab
+        setActiveSection('results'); // Switch to results section
         return response.data;
       } else {
         console.error('API response error:', response);
@@ -160,7 +174,7 @@ const SFRAnalysis: React.FC = () => {
           });
           
           setAnalysis(dealAnalysis);
-          setTabIndex(1); // Switch to results tab
+          setActiveSection('results'); // Switch to results section
         }
       } else {
         console.error('Failed to load deal data:', response);
@@ -227,140 +241,364 @@ const SFRAnalysis: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Single-Family Rental Analysis
-        </Typography>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+        {/* Page Header */}
+        <Box sx={{ mb: 4 }}>
+          <AppleCard padding="large">
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={3}>
+              <Box>
+                <Typography 
+                  variant="h4" 
+                  component="h1"
+                  sx={{ 
+                    fontWeight: 700,
+                    color: appleColors.gray[900],
+                    mb: 1
+                  }}
+                >
+                  Single-Family Rental Analysis
+                </Typography>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: appleColors.gray[600],
+                    maxWidth: '600px',
+                    lineHeight: 1.6
+                  }}
+                >
+                  Analyze your single family rental investment with comprehensive market intelligence, 
+                  AI-powered insights, and detailed financial projections.
+                </Typography>
+              </Box>
+              
+              <Stack direction="row" spacing={2}>
+                <AppleButton
+                  variant="secondary"
+                  onClick={loadSampleData}
+                  disabled={sampleLoading}
+                  icon={<SampleDataIcon />}
+                >
+                  {sampleLoading ? 'Loading...' : 'Load Sample'}
+                </AppleButton>
+                <AppleButton
+                  variant="secondary"
+                  onClick={() => {
+                    console.log('Navigating to dashboard using window.location');
+                    window.location.href = '/';
+                  }}
+                  icon={<Dashboard />}
+                >
+                  Dashboard
+                </AppleButton>
+              </Stack>
+            </Stack>
+          </AppleCard>
+        </Box>
         
-        <Box>
-          <Button 
-            variant="outlined" 
-            onClick={loadSampleData}
-            disabled={sampleLoading}
-            sx={{ mr: 2 }}
-          >
-            {sampleLoading ? 'Loading...' : 'Load Sample Data'}
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="inherit" 
-            onClick={() => {
-              console.log('Navigating to dashboard using window.location');
-              window.location.href = '/';
-            }}
-            sx={{ textDecoration: 'none' }}
-          >
-            Back to Dashboard
-          </Button>
-        </Box>
-      </Box>
-      
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-      
-      <Box sx={{ mb: 2 }}>
-        <Tabs 
-          value={tabIndex} 
-          onChange={handleTabChange}
-          aria-label="SFR analysis tabs"
-        >
-          <Tab label="Property Input" />
-          <Tab label="Analysis Results" disabled={!analysis} />
-        </Tabs>
-      </Box>
-      
-      {tabIndex === 0 && (
-        <Box>
-          {/* Wizard/Form Toggle */}
-          {wizardEnabled && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h6" gutterBottom>
-                      Choose Your Input Method
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Use the guided wizard for intelligent auto-population or the traditional form for manual entry
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Chip
-                      icon={<AutoAwesome />}
-                      label="Smart Wizard"
-                      color={useWizard ? "primary" : "default"}
-                      variant={useWizard ? "filled" : "outlined"}
-                      onClick={() => setUseWizard(true)}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                    <Chip
-                      icon={<Edit />}
-                      label="Manual Form"
-                      color={!useWizard ? "primary" : "default"}
-                      variant={!useWizard ? "filled" : "outlined"}
-                      onClick={() => setUseWizard(false)}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Render Wizard or Form */}
-          {useWizard && wizardEnabled ? (
-            <PropertyWizard
-              onComplete={handleAnalyzeProperty}
-              initialData={propertyData || undefined}
-              onCancel={() => setUseWizard(false)}
-            />
-          ) : (
-            <SFRPropertyForm
-              onSubmit={handleAnalyzeProperty}
-              initialData={propertyData || undefined}
-              isLoading={isLoading}
-              error={error || undefined}
-            />
-          )}
-        </Box>
-      )}
-      
-      {tabIndex === 1 && analysis && propertyData && (
-        <React.Fragment>
-          {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
+        {/* Navigation Pills */}
+        <Box sx={{ mb: 4 }}>
+          <AppleCard padding="medium">
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={3}>
+              <ButtonGroup 
+                variant="outlined" 
+                sx={{ 
+                  '& .MuiButtonGroup-grouped': {
+                    borderRadius: '12px',
+                    px: 3,
+                    py: 1.5,
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    minWidth: '140px',
+                    '&:hover': {
+                      backgroundColor: appleColors.primary[50],
+                      borderColor: appleColors.primary[300]
+                    }
+                  }
+                }}
+              >
+                <Button
+                  onClick={() => setActiveSection('input')}
+                  sx={{
+                    backgroundColor: activeSection === 'input' ? appleColors.primary[50] : 'transparent',
+                    borderColor: activeSection === 'input' ? appleColors.primary[500] : appleColors.gray[300],
+                    color: activeSection === 'input' ? appleColors.primary[700] : appleColors.gray[700],
+                    '&:hover': {
+                      backgroundColor: appleColors.primary[50],
+                      borderColor: appleColors.primary[300]
+                    }
+                  }}
+                >
+                  Property Input
+                </Button>
+                <Button
+                  onClick={() => setActiveSection('results')}
+                  disabled={!analysis}
+                  sx={{
+                    backgroundColor: activeSection === 'results' ? appleColors.primary[50] : 'transparent',
+                    borderColor: activeSection === 'results' ? appleColors.primary[500] : appleColors.gray[300],
+                    color: activeSection === 'results' ? appleColors.primary[700] : appleColors.gray[700],
+                    '&:hover': {
+                      backgroundColor: appleColors.primary[50],
+                      borderColor: appleColors.primary[300]
+                    },
+                    '&:disabled': {
+                      backgroundColor: appleColors.gray[50],
+                      borderColor: appleColors.gray[200],
+                      color: appleColors.gray[400]
+                    }
+                  }}
+                >
+                  Analysis Results
+                </Button>
+              </ButtonGroup>
+              
+              {analysis && propertyData && activeSection === 'results' && (
+                <AppleButton
+                  variant="primary"
                   onClick={handleSaveDeal}
                   disabled={isSaving}
-                  startIcon={<SaveIcon />}
+                  icon={<SaveIcon />}
                 >
                   {isSaving ? 'Saving...' : 'Save Deal'}
-                </Button>
+                </AppleButton>
+              )}
+            </Stack>
+          </AppleCard>
+        </Box>
+        
+        {/* Error Display */}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: '16px',
+              backgroundColor: '#FEF2F2',
+              border: `1px solid #FECACA`,
+              '& .MuiAlert-icon': {
+                color: '#DC2626'
+              }
+            }}
+          >
+            {error}
+          </Alert>
+        )}
+        
+        {/* Property Input Section */}
+        <Fade in={activeSection === 'input'} unmountOnExit>
+          <Box sx={{ display: activeSection === 'input' ? 'block' : 'none' }}>
+            {/* Input Method Selection */}
+            {wizardEnabled && (
+              <Box sx={{ mb: 4 }}>
+                <AppleCard padding="large">
+                  <Stack spacing={3}>
+                    <Box>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.gray[900],
+                          mb: 1
+                        }}
+                      >
+                        Choose Analysis Method
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: appleColors.gray[600],
+                          lineHeight: 1.6
+                        }}
+                      >
+                        Select how you'd like to input your property information for analysis
+                      </Typography>
+                    </Box>
+                    
+                    <ButtonGroup 
+                      variant="outlined" 
+                      sx={{ 
+                        '& .MuiButtonGroup-grouped': {
+                          borderRadius: '12px',
+                          px: 4,
+                          py: 2,
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          minWidth: '180px',
+                          '&:hover': {
+                            backgroundColor: appleColors.primary[50],
+                            borderColor: appleColors.primary[300]
+                          }
+                        }
+                      }}
+                    >
+                      <Button
+                        onClick={() => handleInputMethodChange('wizard')}
+                        startIcon={<AutoAwesome />}
+                        sx={{
+                          backgroundColor: inputMethod === 'wizard' ? appleColors.primary[50] : 'transparent',
+                          borderColor: inputMethod === 'wizard' ? appleColors.primary[500] : appleColors.gray[300],
+                          color: inputMethod === 'wizard' ? appleColors.primary[700] : appleColors.gray[700],
+                          '&:hover': {
+                            backgroundColor: appleColors.primary[50],
+                            borderColor: appleColors.primary[300]
+                          }
+                        }}
+                      >
+                        Smart Wizard
+                      </Button>
+                      <Button
+                        onClick={() => handleInputMethodChange('manual')}
+                        startIcon={<Edit />}
+                        sx={{
+                          backgroundColor: inputMethod === 'manual' ? appleColors.primary[50] : 'transparent',
+                          borderColor: inputMethod === 'manual' ? appleColors.primary[500] : appleColors.gray[300],
+                          color: inputMethod === 'manual' ? appleColors.primary[700] : appleColors.gray[700],
+                          '&:hover': {
+                            backgroundColor: appleColors.primary[50],
+                            borderColor: appleColors.primary[300]
+                          }
+                        }}
+                      >
+                        Manual Form
+                      </Button>
+                    </ButtonGroup>
+                    
+                    {/* Method Descriptions */}
+                    <Box>
+                      {inputMethod === 'wizard' && (
+                        <Fade in={true}>
+                          <Alert 
+                            severity="info" 
+                            sx={{ 
+                              backgroundColor: '#EFF6FF',
+                              border: `1px solid #BFDBFE`,
+                              borderRadius: '12px',
+                              '& .MuiAlert-icon': {
+                                color: '#2563EB'
+                              }
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                              Guided Analysis (Recommended)
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
+                              Step-by-step property analysis with auto-population from market data, 
+                              smart defaults, and intelligent suggestions. Perfect for all experience levels.
+                            </Typography>
+                          </Alert>
+                        </Fade>
+                      )}
+                      
+                      {inputMethod === 'manual' && (
+                        <Fade in={true}>
+                          <Alert 
+                            severity="warning" 
+                            sx={{ 
+                              backgroundColor: '#FFF7ED',
+                              border: `1px solid #FED7AA`,
+                              borderRadius: '12px',
+                              '& .MuiAlert-icon': {
+                                color: '#EA580C'
+                              }
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                              Advanced Manual Entry
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
+                              Complete control over all 60+ fields with detailed input options. 
+                              Ideal for experienced investors who want full customization.
+                            </Typography>
+                          </Alert>
+                        </Fade>
+                      )}
+                    </Box>
+                  </Stack>
+                </AppleCard>
               </Box>
-              <AnalysisResults 
-                analysis={analysis} 
-                propertyData={propertyData} 
-                setAnalysis={setAnalysis}
-              />
-            </>
-          )}
-        </React.Fragment>
-      )}
-      
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={5000}
-        onClose={handleSnackbarClose}
-        message={successMessage}
-      />
-    </Box>
+            )}
+
+            {/* Render Wizard or Form */}
+            <Fade in={inputMethod === 'wizard'} unmountOnExit>
+              <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
+                {inputMethod === 'wizard' && wizardEnabled && (
+                  <PropertyWizard
+                    onComplete={handleAnalyzeProperty}
+                    initialData={propertyData || undefined}
+                    onCancel={() => handleInputMethodChange('manual')}
+                  />
+                )}
+              </Box>
+            </Fade>
+            
+            <Fade in={inputMethod === 'manual'} unmountOnExit>
+              <Box sx={{ display: inputMethod === 'manual' ? 'block' : 'none' }}>
+                {inputMethod === 'manual' && (
+                  <SFRPropertyForm
+                    onSubmit={handleAnalyzeProperty}
+                    initialData={propertyData || undefined}
+                    isLoading={isLoading}
+                    error={error || undefined}
+                  />
+                )}
+              </Box>
+            </Fade>
+          </Box>
+        </Fade>
+        
+        {/* Analysis Results Section */}
+        <Fade in={activeSection === 'results'} unmountOnExit>
+          <Box sx={{ display: activeSection === 'results' ? 'block' : 'none' }}>
+            {analysis && propertyData && (
+              <React.Fragment>
+                {isLoading ? (
+                  <AppleCard padding="large">
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+                      <CircularProgress 
+                        size={32} 
+                        sx={{ 
+                          color: appleColors.primary[500],
+                          mr: 2
+                        }} 
+                      />
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          color: appleColors.gray[600],
+                          fontWeight: 500
+                        }}
+                      >
+                        Analyzing your property...
+                      </Typography>
+                    </Box>
+                  </AppleCard>
+                ) : (
+                  <AnalysisResults 
+                    analysis={analysis} 
+                    propertyData={propertyData} 
+                    setAnalysis={setAnalysis}
+                  />
+                )}
+              </React.Fragment>
+            )}
+          </Box>
+        </Fade>
+        
+        {/* Success Snackbar */}
+        <Snackbar
+          open={!!successMessage}
+          autoHideDuration={5000}
+          onClose={handleSnackbarClose}
+          message={successMessage}
+          sx={{
+            '& .MuiSnackbarContent-root': {
+              backgroundColor: '#10B981',
+              borderRadius: '12px',
+              fontWeight: 500
+            }
+          }}
+        />
+      </Container>
   );
 };
 
