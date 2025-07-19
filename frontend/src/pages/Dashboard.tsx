@@ -7,8 +7,6 @@ import {
   Typography,
   Container,
   Card,
-  // CardContent, // unused
-  // LinearProgress, // unused
   Chip,
   IconButton,
   Skeleton
@@ -23,12 +21,6 @@ import {
   Assessment as AssessmentIcon,
   AutoAwesome as AIIcon,
   ArrowForward as ArrowForwardIcon,
-  // AccessTime as TimeIcon, // unused
-  // LocationOn as LocationIcon, // unused
-  // AttachMoney as MoneyIcon, // unused
-  // ShowChart as ChartIcon, // unused
-  // Speed as SpeedIcon, // unused
-  // Security as SecurityIcon, // unused
   MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';

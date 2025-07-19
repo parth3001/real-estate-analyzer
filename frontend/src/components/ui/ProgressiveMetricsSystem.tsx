@@ -111,11 +111,11 @@ const ProgressiveMetricsSystem: React.FC<ProgressiveMetricsSystemProps> = ({ ana
       priority: 'medium',
       displayMode: 'data-table',
       metrics: [
-        { key: 'marketRentEstimate', label: 'Market Rent Estimate', value: (analysis?.marketData as any)?.rentEstimate || 0, format: 'currency' },
-        { key: 'rentGrowthYoY', label: 'Rent Growth YoY', value: (analysis?.marketData as any)?.rentGrowthYoY || 0, format: 'percentage' },
-        { key: 'vacancyRate', label: 'Market Vacancy Rate', value: (analysis?.marketData as any)?.vacancyRate || 0, format: 'percentage' },
-        { key: 'daysOnMarket', label: 'Avg Days on Market', value: (analysis?.marketData as any)?.daysOnMarket || 0, format: 'number' },
-        { key: 'priceGrowthYoY', label: 'Price Growth YoY', value: (analysis?.marketData as any)?.priceGrowthYoY || 0, format: 'percentage' }
+        { key: 'marketRentEstimate', label: 'Market Rent Estimate', value: analysis?.marketData?.marketTrends?.medianRent || 0, format: 'currency' },
+        { key: 'rentGrowthYoY', label: 'Rent Growth YoY', value: analysis?.marketData?.marketTrends?.rentGrowthRate || 0, format: 'percentage' },
+        { key: 'vacancyRate', label: 'Market Vacancy Rate', value: analysis?.marketData?.marketTrends?.inventoryLevel === 'Low' ? 3 : analysis?.marketData?.marketTrends?.inventoryLevel === 'High' ? 8 : 5, format: 'percentage' },
+        { key: 'daysOnMarket', label: 'Avg Days on Market', value: analysis?.marketData?.marketTrends?.daysOnMarket || 0, format: 'number' },
+        { key: 'priceGrowthYoY', label: 'Price Growth YoY', value: analysis?.marketData?.marketTrends?.priceGrowthRate || 0, format: 'percentage' }
       ]
     },
     

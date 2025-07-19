@@ -129,7 +129,7 @@ export const appleTheme = createTheme({
     appleShadows['2xl'],
     appleShadows.inner,
     appleShadows.focus
-  ],
+  ] as any,
 
   components: {
     // Global component overrides for Apple style
