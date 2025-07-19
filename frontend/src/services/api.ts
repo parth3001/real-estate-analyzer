@@ -499,7 +499,7 @@ export const wizardApi = {
       console.log('Wizard API: Analysis response received:', {
         success: response.data.success || response.status === 200,
         hasAnalysis: !!response.data.analysis,
-        maintenanceCost: response.data.analysis?.yearlyProjections?.maintenanceCost
+        maintenanceCost: response.data.analysis?.longTermAnalysis?.projections?.[0]?.maintenance
       });
       
       return {

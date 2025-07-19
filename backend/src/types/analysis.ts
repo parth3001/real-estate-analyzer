@@ -210,6 +210,7 @@ export interface ValueAddOpportunity {
 
 export interface LongTermAnalysis {
   projections: YearlyProjection[];
+  yearlyProjections?: YearlyProjection[]; // Frontend compatibility field
   exitAnalysis: ExitAnalysis;
   returns: {
     irr: number;

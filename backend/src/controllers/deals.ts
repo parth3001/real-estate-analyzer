@@ -15,6 +15,95 @@ const dealService = new DealService();
 // Import our enhanced AI service
 import { getAIInsights } from '../services/aiService';
 
+// Helper function to convert wizard data to standard format
+const convertWizardData = (dealData: any): any => {
+  // Check if this is wizard data and convert it
+  const isWizardData = dealData._isWizardData || 
+                      dealData.maintenanceReservePercentage !== undefined || 
+                      dealData.vacancyRate !== undefined ||
+                      dealData.downPaymentPercentage !== undefined;
+  
+  if (!isWizardData) {
+    logger.info('Data is not wizard format, returning as-is');
+    return dealData;
+  }
+
+  logger.info('=== WIZARD DATA CONVERSION ===');
+  logger.info('Detected wizard data, converting to standard format');
+  logger.info('Full incoming dealData keys:', Object.keys(dealData));
+  
+  const wizardDataInfo = {
+    maintenanceReservePercentage: dealData.maintenanceReservePercentage,
+    vacancyRate: dealData.vacancyRate,
+    monthlyRent: dealData.monthlyRent,
+    _isWizardData: dealData._isWizardData,
+    existingMaintenanceCost: dealData.maintenanceCost
+  };
+  logger.info('Wizard data received:', JSON.stringify(wizardDataInfo, null, 2));
+  
+  // Calculate maintenance cost from percentage
+  let maintenanceCost = dealData.maintenanceCost || 0;
+  logger.info('Initial maintenanceCost value:', maintenanceCost);
+  
+  if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
+    const calculatedCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
+    logger.info('Maintenance calculation:', {
+      hasPercentage: !!dealData.maintenanceReservePercentage,
+      hasMonthlyRent: !!dealData.monthlyRent,
+      monthlyRent: dealData.monthlyRent,
+      percentage: dealData.maintenanceReservePercentage,
+      rawCalculation: (dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12,
+      roundedCalculation: calculatedCost,
+      formula: `(${dealData.monthlyRent} * ${dealData.maintenanceReservePercentage} / 100) * 12 = ${calculatedCost}`
+    });
+    maintenanceCost = calculatedCost;
+  } else {
+    logger.warn('Cannot calculate maintenance cost:', {
+      hasPercentage: !!dealData.maintenanceReservePercentage,
+      hasMonthlyRent: !!dealData.monthlyRent,
+      percentageValue: dealData.maintenanceReservePercentage,
+      monthlyRentValue: dealData.monthlyRent
+    });
+  }
+  
+  logger.info('Final maintenanceCost before assignment:', maintenanceCost);
+  
+  // Convert wizard data to standard format
+  const convertedData = {
+    ...dealData,
+    maintenanceCost: maintenanceCost,
+    longTermAssumptions: {
+      ...dealData.longTermAssumptions,
+      vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+    },
+    // Add metadata to track data source
+    _dataSource: {
+      isWizardData: true,
+      calculatedFields: ['maintenanceCost'],
+      userFields: Object.keys(dealData).filter(key => 
+        !['maintenanceReservePercentage', 'downPaymentPercentage', 'closingCostPercentage', '_isWizardData'].includes(key)
+      )
+    }
+  };
+  
+  logger.info('After data conversion:', {
+    maintenanceCost: convertedData.maintenanceCost,
+    maintenanceCostType: typeof convertedData.maintenanceCost,
+    dataSource: convertedData._dataSource
+  });
+  
+  // Remove wizard-specific fields
+  delete convertedData.maintenanceReservePercentage;
+  delete convertedData.downPaymentPercentage;
+  delete convertedData.closingCostPercentage;
+  delete convertedData._isWizardData;
+  
+  logger.info('Wizard data converted successfully');
+  logger.info('=== END WIZARD DATA CONVERSION ===');
+  
+  return convertedData;
+};
+
 // Utility function to get AI insights - now using enhanced service
 const generateAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
   try {
@@ -53,16 +142,38 @@ export const getDealById = async (req: Request, res: Response): Promise<void> =>
     const { id } = req.params;
     const deal = await dealService.getDealById(id);
     
-    // Log the investment score for debugging
-    if (deal && deal.analysis?.aiInsights) {
-      logger.info(`Deal ${id} investment score:`, {
-        investmentScore: deal.analysis.aiInsights.investmentScore,
-        hasScore: typeof deal.analysis.aiInsights.investmentScore === 'number',
-        scoreValue: deal.analysis.aiInsights.investmentScore
-      });
+    if (!deal) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
     }
     
-    res.json(deal);
+    logger.info(`Loading deal ${id} - returning saved data with complete analysis`);
+    
+    // Return the complete saved deal (data should be complete after Phase 1 fix)
+    const dealData = deal.toObject();
+    
+    // Validate that saved deal has complete analysis structure
+    if (!dealData.analysis) {
+      logger.error(`Deal ${id} missing analysis data - may need regeneration`);
+      res.status(422).json({ 
+        error: 'Deal missing analysis data. Please regenerate this deal.',
+        needsRegeneration: true 
+      });
+      return;
+    }
+    
+    // Log what we're returning for debugging
+    logger.info(`Deal ${id} loaded successfully:`, {
+      hasAnalysis: !!dealData.analysis,
+      hasMonthlyAnalysis: !!dealData.analysis?.monthlyAnalysis,
+      hasAnnualAnalysis: !!dealData.analysis?.annualAnalysis,
+      hasKeyMetrics: !!dealData.analysis?.keyMetrics,
+      hasLongTermAnalysis: !!dealData.analysis?.longTermAnalysis,
+      aiScore: dealData.analysis?.aiInsights?.investmentScore,
+      dataSource: dealData._dataSource || 'legacy'
+    });
+    
+    res.json(dealData);
   } catch (error) {
     logger.error(`Error getting deal ${req.params.id}:`, error);
     if (error instanceof Error) {
@@ -83,10 +194,13 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const dealData = {
+    // Convert wizard data to standard format before saving
+    const rawDealData = {
       ...req.body,
       userId: req.user.id // Add userId from authenticated user
     };
+    
+    const dealData = convertWizardData(rawDealData);
 
     // Auto-generate property name if empty (common with wizard flow)
     if (!dealData.propertyName || dealData.propertyName.trim() === '') {
@@ -211,81 +325,8 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
   try {
     let dealData = req.body;
     
-    // Check if this is wizard data and convert it
-    const isWizardData = dealData._isWizardData || 
-                        dealData.maintenanceReservePercentage !== undefined || 
-                        dealData.vacancyRate !== undefined ||
-                        dealData.downPaymentPercentage !== undefined;
-    
-    if (isWizardData) {
-      logger.info('=== WIZARD DATA CONVERSION (deals.ts) ===');
-      logger.info('Detected wizard data, converting to standard format');
-      logger.info('Full incoming dealData keys:', Object.keys(dealData));
-      const wizardDataInfo = {
-        maintenanceReservePercentage: dealData.maintenanceReservePercentage,
-        vacancyRate: dealData.vacancyRate,
-        monthlyRent: dealData.monthlyRent,
-        _isWizardData: dealData._isWizardData,
-        existingMaintenanceCost: dealData.maintenanceCost
-      };
-      logger.info('Wizard data received:');
-      logger.info(JSON.stringify(wizardDataInfo, null, 2));
-      
-      // Calculate maintenance cost from percentage
-      let maintenanceCost = dealData.maintenanceCost || 0;
-      logger.info('Initial maintenanceCost value:', maintenanceCost);
-      
-      if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
-        const calculatedCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
-        logger.info('Maintenance calculation check:', {
-          hasPercentage: !!dealData.maintenanceReservePercentage,
-          hasMonthlyRent: !!dealData.monthlyRent,
-          monthlyRent: dealData.monthlyRent,
-          percentage: dealData.maintenanceReservePercentage,
-          rawCalculation: (dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12,
-          roundedCalculation: calculatedCost,
-          formula: `(${dealData.monthlyRent} * ${dealData.maintenanceReservePercentage} / 100) * 12 = ${calculatedCost}`
-        });
-        maintenanceCost = calculatedCost;
-      } else {
-        logger.warn('Cannot calculate maintenance cost:', {
-          hasPercentage: !!dealData.maintenanceReservePercentage,
-          hasMonthlyRent: !!dealData.monthlyRent,
-          percentageValue: dealData.maintenanceReservePercentage,
-          monthlyRentValue: dealData.monthlyRent
-        });
-      }
-      
-      logger.info('Final maintenanceCost before assignment:', maintenanceCost);
-      
-      // Convert wizard data to standard format
-      dealData = {
-        ...dealData,
-        maintenanceCost: maintenanceCost,
-        longTermAssumptions: {
-          ...dealData.longTermAssumptions,
-          vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
-        }
-      };
-      
-      logger.info('After dealData reassignment:', {
-        maintenanceCost: dealData.maintenanceCost,
-        maintenanceCostType: typeof dealData.maintenanceCost
-      });
-      
-      // Remove wizard-specific fields
-      delete dealData.maintenanceReservePercentage;
-      delete dealData.downPaymentPercentage;
-      delete dealData.closingCostPercentage;
-      delete dealData._isWizardData;
-      // Keep the calculated maintenanceCost instead of deleting it
-      
-      logger.info('Wizard data converted:', {
-        convertedMaintenanceCost: dealData.maintenanceCost,
-        convertedVacancyRate: dealData.longTermAssumptions.vacancyRate
-      });
-      logger.info('=== END WIZARD DATA CONVERSION ===');
-    }
+    // Convert wizard data to standard format using shared helper function
+    dealData = convertWizardData(dealData);
     
     // Log detailed information about the request
     logger.info('Analyzing property:', {
@@ -319,7 +360,7 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
     };
     
     // Use the appropriate analysis service directly
-    let analysis;
+    let analysis: any;
     if (dealData.propertyType === 'SFR') {
       logger.info('Analyzing SFR property with market intelligence');
       const analyzer = new SFRAnalyzer(dealData, assumptions);
@@ -386,7 +427,7 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
     
     // Fix field name mapping for projections (ensure maintenance field is correctly named)
     if (analysis.longTermAnalysis?.projections) {
-      analysis.longTermAnalysis.projections.forEach(year => {
+      analysis.longTermAnalysis.projections.forEach((year: any) => {
         // Ensure maintenance field exists with correct name for frontend
         if (year.maintenanceCost !== undefined && year.maintenance === undefined) {
           logger.info(`Mapping maintenanceCost to maintenance for year ${year.year}:`, {
@@ -399,7 +440,7 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       });
       
       // Log maintenance values after field mapping
-      const maintenanceValuesAfter = analysis.longTermAnalysis.projections.map(year => ({
+      const maintenanceValuesAfter = analysis.longTermAnalysis.projections.map((year: any) => ({
         year: year.year,
         maintenance: year.maintenance,
         maintenanceCost: year.maintenanceCost,
@@ -540,7 +581,7 @@ export const addPerformanceMetrics = async (req: Request, res: Response): Promis
 };
 
 // Sample SFR data
-export const getSampleSFR = (req: Request, res: Response): void => {
+export const getSampleSFR = (_req: Request, res: Response): void => {
   const sampleSFR = {
     propertyName: 'Sample SFR Property',
     propertyType: 'SFR',
@@ -582,7 +623,7 @@ export const getSampleSFR = (req: Request, res: Response): void => {
 };
 
 // Sample Multi-Family data
-export const getSampleMF = (req: Request, res: Response): void => {
+export const getSampleMF = (_req: Request, res: Response): void => {
   const sampleMF = {
     propertyName: 'Sample Multi-Family Property',
     propertyType: 'MF',

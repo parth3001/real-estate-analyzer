@@ -1,5 +1,5 @@
 import { createTheme } from '@mui/material/styles';
-import { appleColors, appleTypography, appleShadows, appleBorderRadius } from './appleDesignSystem';
+import { appleColors, appleTypography, appleShadows } from './appleDesignSystem';
 
 export const appleTheme = createTheme({
   palette: {
@@ -103,7 +103,33 @@ export const appleTheme = createTheme({
     borderRadius: 12 // Apple-style default radius
   },
 
-  shadows: appleShadows,
+  shadows: [
+    'none',
+    appleShadows.sm,
+    appleShadows.default,
+    appleShadows.md,
+    appleShadows.lg,
+    appleShadows.xl,
+    appleShadows['2xl'],
+    appleShadows.inner,
+    appleShadows.focus,
+    appleShadows.cardHover,
+    appleShadows.default,
+    appleShadows.md,
+    appleShadows.lg,
+    appleShadows.xl,
+    appleShadows['2xl'],
+    appleShadows.inner,
+    appleShadows.focus,
+    appleShadows.cardHover,
+    appleShadows.default,
+    appleShadows.md,
+    appleShadows.lg,
+    appleShadows.xl,
+    appleShadows['2xl'],
+    appleShadows.inner,
+    appleShadows.focus
+  ],
 
   components: {
     // Global component overrides for Apple style

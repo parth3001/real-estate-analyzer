@@ -3,14 +3,14 @@
 
 import React from 'react';
 import { AppleMetricCard as BaseAppleMetricCard } from './AppleComponents';
-import { MetricCardProps } from './MetricCard';
-import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material';
+import type { MetricCardProps } from './MetricCard';
+import { TrendingUp } from '@mui/icons-material';
 
 // Enhanced AppleMetricCard that supports all existing MetricCard props
-interface AppleMetricCardProps extends Omit<MetricCardProps, 'change' | 'changeLabel'> {
+interface AppleMetricCardProps extends Omit<MetricCardProps, 'change' | 'changeLabel' | 'trend'> {
   // Apple-specific props
   format?: 'currency' | 'percent' | 'number';
-  trend?: number; // Percentage trend (positive or negative)
+  trend?: 'up' | 'down' | 'flat' | number; // Trend direction or percentage
   // Keep existing props for compatibility
   change?: number;
   changeLabel?: string;
@@ -19,25 +19,26 @@ interface AppleMetricCardProps extends Omit<MetricCardProps, 'change' | 'changeL
 export const AppleMetricCard: React.FC<AppleMetricCardProps> = ({
   title,
   value,
-  subtitle,
+  // subtitle, // unused
   status = 'neutral',
   change,
-  changeLabel,
-  tooltip,
+  // changeLabel, // unused
+  // tooltip, // unused
   loading = false,
   size = 'medium',
-  onClick,
+  // onClick, // unused
   highlight = false,
   icon,
   trend: trendProp,
   format,
-  ...props
+  // ...props - removed unused props spread
 }) => {
   // Convert status to highlight for Apple component
   const isHighlighted = highlight || status === 'positive';
   
   // Convert change to trend percentage
-  const trendValue = change !== undefined ? change : trendProp;
+  const trendValue = change !== undefined ? change : 
+    (typeof trendProp === 'number' ? trendProp : undefined);
   
   // Auto-detect format from value if not provided
   const autoFormat = format || (() => {
@@ -82,7 +83,7 @@ export const AppleMetricCard: React.FC<AppleMetricCardProps> = ({
       label={title}
       value={cleanValue}
       format={autoFormat}
-      trend={trendValue}
+      trend={typeof trendValue === 'number' ? trendValue : undefined}
       highlight={isHighlighted}
       icon={icon}
       size={size}

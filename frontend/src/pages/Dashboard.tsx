@@ -5,11 +5,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   Container,
   Card,
-  CardContent,
-  LinearProgress,
+  // CardContent, // unused
+  // LinearProgress, // unused
   Chip,
   IconButton,
   Skeleton
@@ -24,12 +23,12 @@ import {
   Assessment as AssessmentIcon,
   AutoAwesome as AIIcon,
   ArrowForward as ArrowForwardIcon,
-  AccessTime as TimeIcon,
-  LocationOn as LocationIcon,
-  AttachMoney as MoneyIcon,
-  ShowChart as ChartIcon,
-  Speed as SpeedIcon,
-  Security as SecurityIcon,
+  // AccessTime as TimeIcon, // unused
+  // LocationOn as LocationIcon, // unused
+  // AttachMoney as MoneyIcon, // unused
+  // ShowChart as ChartIcon, // unused
+  // Speed as SpeedIcon, // unused
+  // Security as SecurityIcon, // unused
   MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -205,9 +204,9 @@ const Dashboard: React.FC = () => {
         Start New Analysis
       </Typography>
       
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
         {/* SFR Analysis */}
-        <Grid item xs={12} md={6}>
+        <Box>
           <AppleCard
             hover
             padding="large"
@@ -273,10 +272,10 @@ const Dashboard: React.FC = () => {
               Start SFR Analysis
             </AppleButton>
           </AppleCard>
-        </Grid>
+        </Box>
 
         {/* Multi-Family Analysis */}
-        <Grid item xs={12} md={6}>
+        <Box>
           <AppleCard
             hover
             padding="large"
@@ -342,12 +341,12 @@ const Dashboard: React.FC = () => {
               Start MF Analysis
             </AppleButton>
           </AppleCard>
-        </Grid>
+        </Box>
 
         {/* Quick Actions Row */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <Box>
               <AppleCard 
                 hover 
                 padding="medium"
@@ -365,9 +364,9 @@ const Dashboard: React.FC = () => {
                   </Box>
                 </Box>
               </AppleCard>
-            </Grid>
+            </Box>
             
-            <Grid item xs={12} sm={4}>
+            <Box>
               <AppleCard 
                 hover 
                 padding="medium"
@@ -385,9 +384,9 @@ const Dashboard: React.FC = () => {
                   </Box>
                 </Box>
               </AppleCard>
-            </Grid>
+            </Box>
             
-            <Grid item xs={12} sm={4}>
+            <Box>
               <AppleCard 
                 hover 
                 padding="medium"
@@ -405,10 +404,10 @@ const Dashboard: React.FC = () => {
                   </Box>
                 </Box>
               </AppleCard>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -419,19 +418,19 @@ const Dashboard: React.FC = () => {
         Your Investment Dashboard
       </Typography>
       
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 3 }}>
         {quickStats.map((stat, index) => (
-          <Grid item xs={6} sm={3} key={index}>
+          <Box key={index}>
             <AppleMetricCard
               label={stat.label}
               value={stat.value}
-              icon={<stat.icon sx={{ fontSize: 20, color: stat.color }} />}
+              icon={React.createElement(stat.icon)}
               trend={stat.change}
               size="small"
             />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 
@@ -451,11 +450,11 @@ const Dashboard: React.FC = () => {
         </AppleButton>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
         {isLoading ? (
           // Loading skeletons
           Array.from({ length: 3 }).map((_, index) => (
-            <Grid item xs={12} md={4} key={index}>
+            <Box key={index}>
               <Card sx={{ borderRadius: '16px', p: 2 }}>
                 <Skeleton variant="text" width="80%" height={24} />
                 <Skeleton variant="text" width="60%" height={16} sx={{ mb: 2 }} />
@@ -465,10 +464,10 @@ const Dashboard: React.FC = () => {
                 </Box>
                 <Skeleton variant="rounded" width="100%" height={32} />
               </Card>
-            </Grid>
+            </Box>
           ))
         ) : recentAnalyses.length === 0 ? (
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: '1 / -1' }}>
             <AppleCard padding="large">
               <Box textAlign="center" py={4}>
                 <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -485,10 +484,10 @@ const Dashboard: React.FC = () => {
                 </AppleButton>
               </Box>
             </AppleCard>
-          </Grid>
+          </Box>
         ) : (
           recentAnalyses.map((analysis) => (
-            <Grid item xs={12} md={4} key={analysis.id}>
+            <Box key={analysis.id}>
               <AppleCard hover padding="medium">
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
                   <Box sx={{ flex: 1 }}>
@@ -528,9 +527,9 @@ const Dashboard: React.FC = () => {
 
                 {analysis.status === 'completed' && (
                   <Box sx={{ mb: 3 }}>
-                    <Grid container spacing={2}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
                       {analysis.aiScore !== undefined && (
-                        <Grid item xs={4}>
+                        <Box>
                           <Box textAlign="center">
                             <Typography variant="h6" fontWeight={600} color="primary.600">
                               {analysis.aiScore}
@@ -539,10 +538,10 @@ const Dashboard: React.FC = () => {
                               AI Score
                             </Typography>
                           </Box>
-                        </Grid>
+                        </Box>
                       )}
                       {analysis.monthlyFlow !== undefined && (
-                        <Grid item xs={4}>
+                        <Box>
                           <Box textAlign="center">
                             <Typography variant="h6" fontWeight={600} color="success.600">
                               ${Math.round(analysis.monthlyFlow)}
@@ -551,10 +550,10 @@ const Dashboard: React.FC = () => {
                               Cash Flow
                             </Typography>
                           </Box>
-                        </Grid>
+                        </Box>
                       )}
                       {analysis.capRate !== undefined && (
-                        <Grid item xs={4}>
+                        <Box>
                           <Box textAlign="center">
                             <Typography variant="h6" fontWeight={600} color="warning.600">
                               {analysis.capRate.toFixed(2)}%
@@ -563,9 +562,9 @@ const Dashboard: React.FC = () => {
                               Cap Rate
                             </Typography>
                           </Box>
-                        </Grid>
+                        </Box>
                       )}
-                    </Grid>
+                    </Box>
                   </Box>
                 )}
 
@@ -578,10 +577,10 @@ const Dashboard: React.FC = () => {
                   {analysis.status === 'completed' ? 'View Analysis' : 'Continue Analysis'}
                 </AppleButton>
               </AppleCard>
-            </Grid>
+            </Box>
           ))
         )}
-      </Grid>
+      </Box>
     </Box>
   );
 
@@ -593,9 +592,9 @@ const Dashboard: React.FC = () => {
       </Typography>
       
       <AppleCard padding="large">
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3 }}>
           {marketTrends.map((trend, index) => (
-            <Grid item xs={6} md={3} key={index}>
+            <Box key={index}>
               <Box textAlign="center">
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
                   {trend.value}
@@ -622,9 +621,9 @@ const Dashboard: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </AppleCard>
     </Box>
   );

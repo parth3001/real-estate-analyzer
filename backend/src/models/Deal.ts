@@ -299,7 +299,26 @@ const AnalysisSchema = new Schema({
       propertyManagement: Number,
       vacancy: Number,
       tenantTurnover: Number,
-      total: Number
+      debt: Number,
+      operating: Number,
+      total: Number,
+      breakdown: {
+        propertyTax: Number,
+        insurance: Number,
+        maintenance: Number,
+        propertyManagement: Number,
+        vacancy: Number,
+        tenantTurnover: Number,
+        utilities: Number,
+        commonAreaElectricity: Number,
+        landscaping: Number,
+        waterSewer: Number,
+        garbage: Number,
+        marketingAndAdvertising: Number,
+        repairsAndMaintenance: Number,
+        capEx: Number,
+        other: Number
+      }
     },
     income: {
       gross: Number,
@@ -308,6 +327,12 @@ const AnalysisSchema = new Schema({
     cashFlow: Number
   },
   annualAnalysis: {
+    income: Number,
+    expenses: Number,
+    noi: Number,
+    debtService: Number,
+    cashFlow: Number,
+    // Legacy fields for backward compatibility
     dscr: Number,
     cashOnCashReturn: Number,
     capRate: Number,
@@ -317,7 +342,7 @@ const AnalysisSchema = new Schema({
     effectiveGrossIncome: Number
   },
   longTermAnalysis: {
-    yearlyProjections: [{
+    projections: [{
       year: Number,
       cashFlow: Number,
       propertyValue: Number,
@@ -333,6 +358,7 @@ const AnalysisSchema = new Schema({
       noi: Number,
       debtService: Number,
       grossRent: Number,
+      grossIncome: Number,
       mortgageBalance: Number,
       appreciation: Number,
       totalReturn: Number,
@@ -352,7 +378,9 @@ const AnalysisSchema = new Schema({
       projectedSalePrice: Number,
       sellingCosts: Number,
       mortgagePayoff: Number,
-      netProceedsFromSale: Number
+      netProceedsFromSale: Number,
+      totalReturn: Number,
+      returnOnInvestment: Number
     }
   },
   keyMetrics: {
@@ -363,6 +391,7 @@ const AnalysisSchema = new Schema({
     pricePerSqFtAtSale: Number,
     avgRentPerSqFt: Number,
     expenseRatio: Number,
+    operatingExpenseRatio: Number,
     breakEvenOccupancy: Number,
     equityMultiple: Number,
     onePercentRuleValue: Number,

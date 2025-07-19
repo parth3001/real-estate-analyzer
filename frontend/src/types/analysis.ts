@@ -24,12 +24,16 @@ export interface MonthlyAnalysis {
 }
 
 export interface AnnualAnalysis {
+  income: number;
+  expenses: number;
+  noi: number;
+  debtService: number;
+  cashFlow: number;
+  // Legacy fields for backward compatibility
   grossRentalIncome?: number;
   effectiveGrossIncome?: number;
   operatingExpenses?: number;
-  noi?: number;
   annualDebtService?: number;
-  cashFlow?: number;
   dscr?: number;
   capRate?: number;
   cashOnCashReturn?: number;

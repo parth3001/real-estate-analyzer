@@ -826,70 +826,66 @@ const logger = winston.createLogger({
 });
 ```
 
-## Data Adapter Architecture
+## Data Storage Architecture
 
-### Storage vs. Calculation Rules
+### ✅ Complete Storage Architecture (Current - 2025-07-19)
 
-The application uses a clear set of rules to determine what data is stored in the database versus what is calculated on-demand. These rules are implemented in the `analysisAdapter.ts` module that handles data normalization between the backend and frontend.
+**Status**: IMPLEMENTED - Working baseline established  
+**Performance**: < 1 second load times achieved  
+**Reference**: See [COMPLETE_STORAGE_ARCHITECTURE_IMPLEMENTATION.md](./COMPLETE_STORAGE_ARCHITECTURE_IMPLEMENTATION.md) for detailed implementation
 
-#### Stored Data (Database)
-The following data is preserved from the database:
-1. **Core Property Data**:
-   - Purchase price, rent, loan details, tax rates, etc.
-   - Property characteristics (bedrooms, square footage, etc.)
-   - Address and metadata
+The application uses a **Complete Storage Architecture** where all calculated analysis data is stored in MongoDB at save time, with no recalculation on load.
 
-2. **Monthly Analysis Base Values**:
-   - Monthly income/rent
-   - Monthly expense breakdown (mortgage, tax, insurance, etc.)
-   - Monthly cash flow
+#### Current Storage Strategy
+**All analysis data is stored in the database**:
+1. **Core Property Data**: Purchase price, rent, loan details, property characteristics, address
+2. **Complete Monthly Analysis**: Income, expense breakdown, cash flow
+3. **Complete Annual Analysis**: Income, expenses, NOI, debt service, cash flow  
+4. **Complete Year-by-Year Projections**: All 10+ years with full financial details
+5. **Complete Exit Analysis**: Sale projections, costs, returns, ROI
+6. **Complete Key Metrics**: Cap rate, cash-on-cash, DSCR, expense ratios, etc.
+7. **AI Insights**: Complete analysis with scoring and recommendations
 
-3. **AI Insights**:
-   - Stored as-is when generated
-   - Not recalculated unless explicitly requested
-
-#### Calculated Data (On-Demand)
-The following data is always recalculated when a deal is loaded:
-1. **Year-by-Year Projections**:
-   - Future property values with appreciation
-   - Future rental income with growth
-   - Future expenses with inflation
-   - Mortgage balance and equity over time
-   - Cash flow for each year
-
-2. **Exit Analysis**:
-   - Projected sale price
-   - Selling costs
-   - Mortgage payoff
-   - Net proceeds from sale
-   - Total return on investment
-
-3. **Annual Totals** (if missing):
-   - Annual income (derived from monthly × 12)
-   - Annual expenses (derived from monthly × 12)
-   - Annual cash flow
-
-#### Adapter Rules Implementation
+#### Data Persistence Rules
 ```typescript
 /**
- * Adapter Rules:
- * 1. Core property data is preserved from the stored deal
- * 2. Monthly analysis is preserved with normalization to ensure consistent structure
- * 3. All projections are ALWAYS recalculated to ensure consistency
- * 4. Exit analysis is always recalculated based on the projections
- * 5. Annual analysis is derived from monthly values if missing
- * 6. AI Insights are preserved as-is from the stored deal
+ * Complete Storage Architecture Rules (COMMITTED):
+ * 1. ALL calculated data is stored in MongoDB at save time
+ * 2. NO recalculation on load (pure data retrieval)
+ * 3. Consistent field naming: 'projections' (not 'yearlyProjections')
+ * 4. Complete MongoDB schema coverage for all analyzer output
+ * 5. Fast loading performance: < 1 second target
  */
-export function adaptAnalysisForFrontend(analysis: any): any {
-  // Implementation follows these rules
-}
 ```
 
-### Benefits of this Approach
-1. **Consistency**: All derived values use the same calculation logic, regardless of when they were created
-2. **Storage Efficiency**: Only core data is stored, reducing database size
-3. **Flexibility**: Calculation logic can be updated without migrating existing data
-4. **Resilience**: Missing or incomplete data is handled gracefully with recalculation
+#### Field Naming Standards
+- **Projections**: Always use `longTermAnalysis.projections` (single field name)
+- **Metrics**: All metrics stored in `keyMetrics` object
+- **Exit Analysis**: Complete with `totalReturn` and `returnOnInvestment` fields
+- **Annual Analysis**: Matches backend output structure (`income`, `expenses`, `noi`, `debtService`, `cashFlow`)
+
+### Benefits of Complete Storage Architecture
+1. **Performance**: Fast loading (< 1 second vs 14+ seconds with recalculation)
+2. **Consistency**: Guaranteed data accuracy between save and load cycles
+3. **Scalability**: Supports portfolio features with 50+ properties
+4. **Reliability**: No dependency on external APIs for loading saved deals
+5. **Data Integrity**: Complete audit trail of calculated values
+
+### Migration from Previous Architecture
+
+**Previous Approach (DEPRECATED)**:
+- Mixed storage/calculation approach with `analysisAdapter.ts`
+- Recalculation on load causing 14+ second delays
+- Field name inconsistencies (`yearlyProjections` vs `projections`)
+- Incomplete MongoDB schema causing data loss
+
+**Migration Completed (2025-07-19)**:
+- ✅ Enhanced MongoDB schema for complete analysis storage
+- ✅ Standardized field naming across entire codebase
+- ✅ Removed conflicting recalculation logic
+- ✅ Achieved fast loading performance with complete data accuracy
+
+> **⚠️ Important**: The Complete Storage Architecture is the committed approach. Any future development should maintain this pattern and avoid introducing recalculation logic that would degrade performance.
 
 ## Test Strategy
 

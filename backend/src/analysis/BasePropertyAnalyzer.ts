@@ -351,7 +351,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       },
       keyMetrics: propertyMetrics,
       longTermAnalysis: {
-        projections: projections,
+        projections: projections, // Primary field name for consistency
         exitAnalysis: exitAnalysis,
         returns: {
           irr: propertyMetrics.irr || 0,

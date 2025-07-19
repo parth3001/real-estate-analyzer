@@ -6,7 +6,6 @@ import {
   Box,
   Typography,
   Container,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -19,6 +18,7 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
+import Grid from '@mui/system/Grid';
 import {
   Home as HomeIcon,
   Analytics as AnalyticsIcon,
@@ -50,6 +50,13 @@ interface AnalysisResultsProps {
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData }) => {
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
+  
+  // Debug: Log the analysis structure
+  console.log('AnalysisResults - analysis object:', analysis);
+  console.log('AnalysisResults - keyMetrics:', analysis?.keyMetrics);
+  console.log('AnalysisResults - monthlyAnalysis:', analysis?.monthlyAnalysis);
+  console.log('AnalysisResults - annualAnalysis (removed - using longTermAnalysis):', 'REMOVED');
+  console.log('AnalysisResults - longTermAnalysis:', analysis?.longTermAnalysis);
 
   // Analysis sections for horizontal navigation
   const analysisSections = [
@@ -143,9 +150,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     },
     {
       label: 'Net Operating Income',
-      value: analysis?.keyMetrics?.noi || analysis?.annualAnalysis?.noi || 0,
+      value: analysis?.keyMetrics?.noi || analysis?.longTermAnalysis?.projections?.[0]?.noi || 0,
       format: 'currency',
-      status: (analysis?.keyMetrics?.noi || analysis?.annualAnalysis?.noi || 0) > 0 ? 'positive' : 'negative',
+      status: (analysis?.keyMetrics?.noi || analysis?.longTermAnalysis?.projections?.[0]?.noi || 0) > 0 ? 'positive' : 'negative',
       description: 'Annual NOI after operating expenses'
     },
     {
@@ -183,8 +190,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     {
       label: 'Operating Expense Ratio',
       value: analysis?.keyMetrics?.operatingExpenseRatio || 
-        (analysis?.annualAnalysis?.expenses && analysis?.annualAnalysis?.income ? 
-        (analysis.annualAnalysis.expenses / analysis.annualAnalysis.income) * 100 : 0),
+        (analysis?.longTermAnalysis?.projections?.[0]?.operatingExpenses && analysis?.longTermAnalysis?.projections?.[0]?.grossIncome ? 
+        (analysis.longTermAnalysis.projections[0].operatingExpenses / analysis.longTermAnalysis.projections[0].grossIncome) * 100 : 0),
       format: 'percent',
       status: 'neutral',
       description: 'Operating expenses as % of income'
@@ -199,8 +206,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     {
       label: 'Debt-to-Income Ratio',
       value: analysis?.keyMetrics?.debtToIncomeRatio || 
-        (analysis?.annualAnalysis?.debtService && analysis?.annualAnalysis?.income ? 
-        (analysis.annualAnalysis.debtService / analysis.annualAnalysis.income) * 100 : 0),
+        (analysis?.longTermAnalysis?.projections?.[0]?.debtService && analysis?.longTermAnalysis?.projections?.[0]?.grossIncome ? 
+        (analysis.longTermAnalysis.projections[0].debtService / analysis.longTermAnalysis.projections[0].grossIncome) * 100 : 0),
       format: 'percent',
       status: 'neutral',
       description: 'Annual debt service vs income'
@@ -251,14 +258,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     // Additional metrics from documentation
     {
       label: 'Effective Gross Income',
-      value: analysis?.annualAnalysis?.effectiveGrossIncome || 0,
+      value: (analysis?.monthlyAnalysis?.income?.effective || 0) * 12,
       format: 'currency',
       status: 'neutral',
       description: 'Annual income after vacancy'
     },
     {
       label: 'Annual Debt Service',
-      value: analysis?.annualAnalysis?.debtService || 0,
+      value: analysis?.longTermAnalysis?.projections?.[0]?.debtService || 0,
       format: 'currency',
       status: 'neutral',
       description: 'Total yearly mortgage payments'
@@ -280,8 +287,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
     },
     {
       label: 'Turnover Cost Impact',
-      value: analysis?.longTermAnalysis?.projections?.[0]?.turnoverCosts && analysis?.annualAnalysis?.effectiveGrossIncome ?
-        (analysis.longTermAnalysis.projections[0].turnoverCosts / analysis.annualAnalysis.effectiveGrossIncome) * 100 : 2,
+      value: analysis?.longTermAnalysis?.projections?.[0]?.turnoverCosts && analysis?.monthlyAnalysis?.income?.effective ?
+        (analysis.longTermAnalysis.projections[0].turnoverCosts / (analysis.monthlyAnalysis.income.effective * 12)) * 100 : 0,
       format: 'percent',
       status: 'neutral',
       description: 'Turnover costs as % of income'
