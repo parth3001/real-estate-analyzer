@@ -44,15 +44,15 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100),
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100),
       maintenance: this.data.maintenanceCost,
-      propertyManagement: grossIncome * (this.data.propertyManagementRate / 100),
-      vacancy: grossIncome * (this.assumptions.vacancyRate / 100)
+      propertyManagement: grossIncome * (this.data.propertyManagementRate / 100)
+      // REMOVED vacancy - it should reduce income, not be an expense
     };
 
     return Object.values(baseExpenses).reduce((sum, expense) => sum + expense, 0);
   }
 
-  protected calculateNOI(grossIncome: number, operatingExpenses: number): number {
-    return FinancialCalculations.calculateNOI(grossIncome, operatingExpenses);
+  protected calculateNOI(effectiveIncome: number, operatingExpenses: number): number {
+    return FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
   }
 
   protected calculateCapRate(noi: number): number {
@@ -146,12 +146,13 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       });
       
       const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
-      const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
+      // Calculate effective income after vacancy
+      const effectiveIncome = grossIncome * (1 - this.assumptions.vacancyRate / 100);
       
       console.log(`Year ${year} Income-Based Expenses:`, {
-        propertyManagement,
-        vacancy
+        propertyManagement
       });
+      console.log(`Year ${year} Effective Income (after ${this.assumptions.vacancyRate}% vacancy):`, effectiveIncome);
       
       // Calculate tenant turnover costs
       const monthlyRentForYear = grossIncome / 12;
@@ -181,9 +182,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       
       console.log(`Year ${year} Capital Improvements:`, capitalImprovements);
       
-      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + vacancy + turnoverCosts;
+      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + turnoverCosts;
       
-      const noi = this.calculateNOI(grossIncome, operatingExpenses);
+      const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
       const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService) - capitalImprovements;
 
       console.log(`Year ${year} Cash Flow Calculation:`, {
@@ -202,7 +203,8 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       const principalPaid = annualDebtService - interestPaid;
       currentLoanBalance = Math.max(0, currentLoanBalance - principalPaid);
 
-      const realtorBrokerageFee = grossIncome * 0.0833;
+      // Calculate vacancy amount for display (not an expense, but shows income reduction)
+      const vacancyAmount = grossIncome * (this.assumptions.vacancyRate / 100);
       const appreciation = currentPropertyValue - this.data.purchasePrice;
 
       console.log(`Year ${year} Property Value & Mortgage:`, {
@@ -228,8 +230,8 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         insurance,
         maintenance,
         propertyManagement,
-        vacancy,
-        realtorBrokerageFee,
+        vacancy: vacancyAmount, // Show actual vacancy amount for transparency
+        realtorBrokerageFee: 0, // REMOVED - this was unauthorized expense
         grossRent: grossIncome,
         appreciation,
         turnoverCosts,
@@ -280,8 +282,11 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const annualDebtService = monthlyMortgage * 12;
     
     const grossIncome = this.calculateGrossIncome(1);
+    // Calculate effective income after vacancy
+    const effectiveIncome = grossIncome * (1 - this.assumptions.vacancyRate / 100);
     const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
-    const noi = this.calculateNOI(grossIncome, operatingExpenses);
+    // FIXED: NOI should be calculated on effective income, not gross
+    const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
 
     // Calculate total investment including capital investments
@@ -297,9 +302,12 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     console.log('Monthly Mortgage:', monthlyMortgage);
     console.log('Annual Debt Service:', annualDebtService);
     console.log('Gross Income (Annual):', grossIncome);
+    console.log('Vacancy Rate:', this.assumptions.vacancyRate + '%');
+    console.log('Effective Income (Annual):', effectiveIncome);
     console.log('Monthly Gross Income:', grossIncome / 12);
+    console.log('Monthly Effective Income:', effectiveIncome / 12);
     console.log('Operating Expenses (Annual):', operatingExpenses);
-    console.log('NOI:', noi);
+    console.log('NOI (from effective income):', noi);
     console.log('Cash Flow (Annual):', cashFlow);
     console.log('Cash Flow (Monthly):', cashFlow / 12);
     console.log('Total Investment:', totalInvestment, {
@@ -357,7 +365,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
           irr: propertyMetrics.irr || 0,
           totalCashFlow: totalCashFlow,
           totalAppreciation: totalAppreciation,
-          totalReturn: totalReturn
+          totalReturn: totalReturn,
+          totalInvestment: totalInvestment,
+          totalAdditionalInvestment: this.data.capitalInvestments || 0
         },
         projectionYears: this.assumptions.projectionYears
       }
@@ -400,7 +410,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100) / 12,
       maintenance: this.data.maintenanceCost / 12,
       propertyManagement: grossIncome * (this.data.propertyManagementRate / 100) / 12,
-      vacancy: grossIncome * (this.assumptions.vacancyRate / 100) / 12,
+      vacancy: 0, // Vacancy reduces income, not an expense - kept at 0 for type compatibility
       tenantTurnover: monthlyTurnoverCost,
       utilities: 0,
       commonAreaElectricity: 0,

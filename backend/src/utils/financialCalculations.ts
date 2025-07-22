@@ -1,4 +1,5 @@
 import { PropertyType } from '../types/propertyTypes';
+import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 
 export class FinancialCalculations {
   /**
@@ -385,5 +386,323 @@ export class FinancialCalculations {
   static calculateRemainingBalance(principal: number, payment: number, rate: number, period: number): number {
     if (rate === 0) return principal - (payment * period);
     return principal * Math.pow(1 + rate, period) - payment/rate * (Math.pow(1 + rate, period) - 1);
+  }
+
+  // ============================================================
+  // UNIFIED CALCULATION ENGINE - SUPPORTS ALL PROPERTY TYPES
+  // ============================================================
+
+  /**
+   * Calculate effective income after vacancy (CORE FIX)
+   * @param grossIncome Annual gross income
+   * @param vacancyRate Vacancy rate as percentage
+   * @returns Effective income after vacancy
+   */
+  static calculateEffectiveIncome(grossIncome: number, vacancyRate: number): number {
+    return grossIncome * (1 - vacancyRate / 100);
+  }
+
+  /**
+   * Calculate property tax expense
+   * @param purchasePrice Property purchase price  
+   * @param propertyTaxRate Tax rate as percentage
+   * @returns Annual property tax
+   */
+  static calculatePropertyTax(purchasePrice: number, propertyTaxRate: number): number {
+    return purchasePrice * (propertyTaxRate / 100);
+  }
+
+  /**
+   * Calculate insurance expense
+   * @param purchasePrice Property purchase price
+   * @param insuranceRate Insurance rate as percentage
+   * @returns Annual insurance cost
+   */
+  static calculateInsurance(purchasePrice: number, insuranceRate: number): number {
+    return purchasePrice * (insuranceRate / 100);
+  }
+
+  /**
+   * Calculate property management expense
+   * @param grossIncome Annual gross income
+   * @param managementRate Management rate as percentage
+   * @returns Annual property management cost
+   */
+  static calculatePropertyManagement(grossIncome: number, managementRate: number): number {
+    return grossIncome * (managementRate / 100);
+  }
+
+  /**
+   * Calculate projected value/expense with growth
+   * @param baseAmount Base amount
+   * @param growthRate Annual growth rate as percentage
+   * @param year Year number (1-based)
+   * @returns Projected amount for that year
+   */
+  static calculateProjectedAmount(baseAmount: number, growthRate: number, year: number): number {
+    return baseAmount * Math.pow(1 + growthRate / 100, year - 1);
+  }
+
+  /**
+   * Calculate total investment including all upfront costs
+   * @param downPayment Down payment amount
+   * @param closingCosts Closing costs
+   * @param capitalInvestments Capital investments/improvements
+   * @returns Total initial investment
+   */
+  static calculateTotalInvestment(downPayment: number, closingCosts: number = 0, capitalInvestments: number = 0): number {
+    return downPayment + closingCosts + capitalInvestments;
+  }
+
+  /**
+   * Calculate tenant turnover costs (FIXED - no more double broker fees)
+   * @param params Turnover parameters
+   * @returns Annual turnover costs
+   */
+  static calculateTurnoverCosts(params: {
+    prepFees: number;
+    monthlyRent: number;
+    realtorCommission: number;
+    turnoverFrequency: number;
+    vacancyRate: number;
+    units?: number; // For multi-family
+  }): number {
+    const { prepFees, monthlyRent, realtorCommission, turnoverFrequency, vacancyRate, units = 1 } = params;
+    
+    // Calculate base turnover rate as 1/frequency
+    const baseTurnoverRate = 1 / turnoverFrequency;
+    
+    // Adjust based on vacancy rate: higher vacancy = higher turnover
+    const vacancyAdjustment = vacancyRate / 5;
+    const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment);
+    
+    // Calculate per-unit turnover cost
+    const perUnitCost = (prepFees + (monthlyRent * realtorCommission)) * turnoverRate;
+    
+    // Scale by number of units for multi-family
+    return perUnitCost * units;
+  }
+
+}
+
+// ============================================================
+// PROPERTY-TYPE SPECIFIC CALCULATION ENGINES
+// ============================================================
+
+/**
+ * Interface for property-specific calculation engines
+ */
+export interface IPropertyCalculationEngine<TData, TMetrics> {
+  calculateGrossIncome(data: TData, year: number): number;
+  calculateOperatingExpenses(data: TData, grossIncome: number, year: number, assumptions: AnalysisAssumptions): number;
+  calculatePropertySpecificMetrics(data: TData, commonMetrics: any, assumptions: AnalysisAssumptions): TMetrics;
+}
+
+/**
+ * Base calculation engine with common functionality
+ */
+export abstract class BaseCalculationEngine {
+  /**
+   * Calculate operating expenses common to all property types
+   */
+  protected static calculateBaseOperatingExpenses(params: {
+    purchasePrice: number;
+    propertyTaxRate: number;
+    insuranceRate: number;
+    maintenanceCost: number;
+    grossIncome: number;
+    propertyManagementRate: number;
+    year: number;
+    inflationRate: number;
+  }): {
+    propertyTax: number;
+    insurance: number;
+    maintenance: number;
+    propertyManagement: number;
+    total: number;
+  } {
+    const inflationFactor = Math.pow(1 + params.inflationRate / 100, params.year - 1);
+    
+    const propertyTax = FinancialCalculations.calculatePropertyTax(params.purchasePrice, params.propertyTaxRate) * inflationFactor;
+    const insurance = FinancialCalculations.calculateInsurance(params.purchasePrice, params.insuranceRate) * inflationFactor;
+    const maintenance = params.maintenanceCost * inflationFactor;
+    const propertyManagement = FinancialCalculations.calculatePropertyManagement(params.grossIncome, params.propertyManagementRate);
+    
+    return {
+      propertyTax,
+      insurance,
+      maintenance,
+      propertyManagement,
+      total: propertyTax + insurance + maintenance + propertyManagement
+    };
+  }
+}
+
+/**
+ * SFR-specific calculation engine
+ */
+export class SFRCalculationEngine extends BaseCalculationEngine {
+  static calculateGrossIncome(data: any, year: number): number {
+    return FinancialCalculations.calculateProjectedAmount(
+      data.monthlyRent * 12,
+      data.longTermAssumptions?.annualRentIncrease || 3,
+      year
+    );
+  }
+
+  static calculateOperatingExpenses(data: any, grossIncome: number, year: number, assumptions: AnalysisAssumptions): number {
+    const baseExpenses = this.calculateBaseOperatingExpenses({
+      purchasePrice: data.purchasePrice,
+      propertyTaxRate: data.propertyTaxRate,
+      insuranceRate: data.insuranceRate,
+      maintenanceCost: data.maintenanceCost,
+      grossIncome,
+      propertyManagementRate: data.propertyManagementRate,
+      year,
+      inflationRate: assumptions.annualExpenseIncrease || 2
+    });
+
+    // Add SFR-specific expenses
+    const turnoverCosts = FinancialCalculations.calculateTurnoverCosts({
+      prepFees: data.tenantTurnoverFees?.prepFees || 500,
+      monthlyRent: grossIncome / 12,
+      realtorCommission: data.tenantTurnoverFees?.realtorCommission || 0.5,
+      turnoverFrequency: assumptions.turnoverFrequency || 2,
+      vacancyRate: assumptions.vacancyRate
+    });
+
+    // NO vacancy expense - it's handled as income reduction
+    // NO unauthorized defaults like 5% CapEx or mysterious 8.33% broker fees
+    return baseExpenses.total + turnoverCosts;
+  }
+
+  static calculatePropertySpecificMetrics(data: any, commonMetrics: any, assumptions: AnalysisAssumptions): any {
+    return {
+      ...commonMetrics,
+      pricePerSqFt: FinancialCalculations.calculatePricePerSqFt(data.purchasePrice, data.squareFootage),
+      rentPerSqFt: (data.monthlyRent * 12) / data.squareFootage,
+      grossRentMultiplier: FinancialCalculations.calculateGRM(data.purchasePrice, data.monthlyRent * 12),
+      onePercentRuleValue: FinancialCalculations.calculateOnePercentRuleValue(data.monthlyRent, data.purchasePrice),
+      rentToPriceRatio: FinancialCalculations.calculateRentToPriceRatio(data.monthlyRent, data.purchasePrice),
+      pricePerBedroom: FinancialCalculations.calculatePricePerBedroom(data.purchasePrice, data.bedrooms),
+      breakEvenOccupancy: FinancialCalculations.calculateBreakEvenOccupancy(
+        this.calculateOperatingExpenses(data, data.monthlyRent * 12, 1, assumptions),
+        FinancialCalculations.calculateMortgage(
+          FinancialCalculations.calculateLoanAmount(data.purchasePrice, data.downPayment),
+          data.interestRate,
+          data.loanTerm
+        ) * 12,
+        data.monthlyRent * 12
+      ),
+      equityMultiple: 0, // Will be calculated after projections
+      fiftyRuleAnalysis: FinancialCalculations.checkFiftyPercentRule(
+        this.calculateOperatingExpenses(data, data.monthlyRent * 12, 1, assumptions),
+        data.monthlyRent * 12
+      ),
+      debtToIncomeRatio: FinancialCalculations.calculateDebtToIncomeRatio(
+        FinancialCalculations.calculateMortgage(
+          FinancialCalculations.calculateLoanAmount(data.purchasePrice, data.downPayment),
+          data.interestRate,
+          data.loanTerm
+        ) * 12,
+        data.monthlyRent * 12
+      ),
+      returnOnImprovements: FinancialCalculations.calculateReturnOnImprovements(
+        commonMetrics.noi,
+        null,
+        data.capitalInvestments || 0
+      ),
+      turnoverCostImpact: FinancialCalculations.calculateTurnoverCostImpact(
+        FinancialCalculations.calculateTurnoverCosts({
+          prepFees: data.tenantTurnoverFees?.prepFees || 500,
+          monthlyRent: data.monthlyRent,
+          realtorCommission: data.tenantTurnoverFees?.realtorCommission || 0.5,
+          turnoverFrequency: assumptions.turnoverFrequency || 2,
+          vacancyRate: assumptions.vacancyRate
+        }),
+        data.monthlyRent * 12
+      )
+    };
+  }
+}
+
+/**
+ * Multi-Family calculation engine
+ */
+export class MFCalculationEngine extends BaseCalculationEngine {
+  static calculateGrossIncome(data: any, year: number): number {
+    const baseIncome = data.unitTypes.reduce((total: number, unit: any) => {
+      return total + (unit.monthlyRent * unit.count * 12);
+    }, 0);
+    
+    return FinancialCalculations.calculateProjectedAmount(
+      baseIncome,
+      data.longTermAssumptions?.annualRentIncrease || 3,
+      year
+    );
+  }
+
+  static calculateOperatingExpenses(data: any, grossIncome: number, year: number, assumptions: AnalysisAssumptions): number {
+    const baseExpenses = this.calculateBaseOperatingExpenses({
+      purchasePrice: data.purchasePrice,
+      propertyTaxRate: data.propertyTaxRate,
+      insuranceRate: data.insuranceRate,
+      maintenanceCost: data.maintenanceCostPerUnit * data.totalUnits,
+      grossIncome,
+      propertyManagementRate: data.propertyManagementRate,
+      year,
+      inflationRate: assumptions.annualExpenseIncrease || 2
+    });
+
+    // Add MF-specific expenses
+    const inflationFactor = Math.pow(1 + (assumptions.annualExpenseIncrease || 2) / 100, year - 1);
+    const utilitiesTotal = Object.values(data.commonAreaUtilities || {})
+      .reduce((sum: number, cost: any) => sum + (cost || 0), 0) as number;
+    const commonAreaUtilities = utilitiesTotal * inflationFactor;
+    
+    const avgMonthlyRent = grossIncome / 12 / data.totalUnits;
+    const turnoverCosts = FinancialCalculations.calculateTurnoverCosts({
+      prepFees: data.tenantTurnoverFees?.prepFees || 500,
+      monthlyRent: avgMonthlyRent,
+      realtorCommission: data.tenantTurnoverFees?.realtorCommission || 0.5,
+      turnoverFrequency: assumptions.turnoverFrequency || 2,
+      vacancyRate: assumptions.vacancyRate,
+      units: data.totalUnits
+    });
+
+    return baseExpenses.total + commonAreaUtilities + turnoverCosts;
+  }
+
+  static calculatePropertySpecificMetrics(data: any, commonMetrics: any, assumptions: AnalysisAssumptions): any {
+    const avgRentPerUnit = data.unitTypes.reduce((total: number, unit: any) => 
+      total + (unit.monthlyRent * unit.count), 0) / data.totalUnits;
+    
+    return {
+      ...commonMetrics,
+      pricePerUnit: FinancialCalculations.calculatePricePerUnit(data.purchasePrice, data.totalUnits),
+      pricePerSqft: data.totalSqft > 0 ? data.purchasePrice / data.totalSqft : 0,
+      noiPerUnit: commonMetrics.noi / data.totalUnits,
+      averageRentPerUnit: avgRentPerUnit,
+      operatingExpensePerUnit: (this.calculateOperatingExpenses(data, this.calculateGrossIncome(data, 1), 1, assumptions) || 0) / data.totalUnits,
+      commonAreaExpenseRatio: 0, // TODO: Calculate when we have the data
+      unitMixEfficiency: 0, // TODO: Calculate unit mix efficiency
+      economicVacancyRate: assumptions.vacancyRate
+    };
+  }
+}
+
+/**
+ * Factory to get the appropriate calculation engine
+ */
+export class PropertyCalculationEngineFactory {
+  static getEngine(propertyType: PropertyType): typeof SFRCalculationEngine | typeof MFCalculationEngine {
+    switch (propertyType) {
+      case 'SFR':
+        return SFRCalculationEngine;
+      case 'MF':
+        return MFCalculationEngine;
+      default:
+        throw new Error(`Unsupported property type: ${propertyType}`);
+    }
   }
 } 

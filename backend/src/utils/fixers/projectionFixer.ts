@@ -52,19 +52,19 @@ export function ensureExpenseInflation(
       maintenance: firstYear.maintenance * inflationFactor,
     };
     
-    // Recalculate operating expenses
+    // Recalculate operating expenses (FIXED - NO vacancy as expense)
     fixedYear.operatingExpenses = (
       fixedYear.propertyTax +
       fixedYear.insurance +
       fixedYear.maintenance +
       fixedYear.propertyManagement +
-      fixedYear.vacancy
+      (fixedYear.turnoverCosts || 0)
     );
     
-    // Recalculate NOI (Net Operating Income)
-    const effectiveGrossIncome = 
-      (year.grossRent || year.grossIncome) * 
-      (1 - (year.vacancyRate || (year.vacancy / (year.grossRent || year.grossIncome)) || 0));
+    // Recalculate NOI using CORRECT methodology (effective income - operating expenses)
+    const grossIncome = year.grossRent || year.grossIncome || 0;
+    const vacancyRate = year.vacancyRate || 0.05; // Default 5% if not available
+    const effectiveGrossIncome = grossIncome * (1 - vacancyRate / 100);
     
     fixedYear.noi = effectiveGrossIncome - fixedYear.operatingExpenses;
     

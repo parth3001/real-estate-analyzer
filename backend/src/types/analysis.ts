@@ -48,6 +48,7 @@ export interface CommonMetrics {
   irr: number;
   dscr: number;
   operatingExpenseRatio: number;
+  totalInvestment: number;
 }
 
 export interface SFRMetrics extends CommonMetrics {
@@ -142,6 +143,53 @@ export interface ScoreBreakdown {
   financialMetrics?: ScoreBreakdownItem;
 }
 
+export interface MetricIntelligence {
+  metricName: string;
+  noviceView: string;
+  proInsight: string;
+  actionItem: string;
+  benchmark: string;
+  warning: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface RiskBlindSpot {
+  riskType: string;
+  description: string;
+  probability: string;
+  impact: string;
+  mitigation: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface OpportunityAlternative {
+  category: 'real_estate' | 'investment' | 'timing' | 'market';
+  title: string;
+  description: string;
+  expectedReturn: string;
+  riskLevel: string;
+  benefit: string;
+}
+
+export interface AdvancedStrategy {
+  strategyType: string;
+  title: string;
+  description: string;
+  implementation: string;
+  costEstimate: string;
+  expectedROI: string;
+  timeframe: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+}
+
+export interface CompetitiveIntelligence {
+  marketInsight: string;
+  winningStrategies: string[];
+  losingPatterns: string[];
+  localTrends: string[];
+  investorBehavior: string;
+}
+
 export interface AIInsights {
   summary: string;
   strengths: string[];
@@ -161,6 +209,7 @@ export interface AIInsights {
   notes?: string;  // Free-form additional insights
   // Enhanced strategic analysis fields
   investorFit?: string;
+  strategicAnalysis?: string;  // Comprehensive strategic analysis text
   strategicInsights?: string;
   competitiveAdvantage?: string;
   wealthBuildingPotential?: string;
@@ -168,6 +217,16 @@ export interface AIInsights {
   financingRecommendations?: string;
   portfolioFitAnalysis?: string;
   opportunityCostAnalysis?: string;
+  // Intelligence Multiplier fields
+  metricIntelligence?: MetricIntelligence[];
+  riskBlindSpots?: RiskBlindSpot[];
+  opportunityAlternatives?: OpportunityAlternative[];
+  advancedStrategies?: AdvancedStrategy[];
+  competitiveIntelligence?: CompetitiveIntelligence;
+  intelligenceScore?: number;
+  sophisticationLevel?: 'novice' | 'intermediate' | 'advanced' | 'professional';
+  transformationInsights?: string;
+  professionalEquivalent?: string;
   // Bold predictions from enhanced AI analysis
   boldPredictions?: {
     wealthCreation?: {
@@ -217,6 +276,8 @@ export interface LongTermAnalysis {
     totalCashFlow: number;
     totalAppreciation: number;
     totalReturn: number;
+    totalInvestment: number;
+    totalAdditionalInvestment: number;
   };
   projectionYears: number;
 }

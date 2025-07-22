@@ -33,6 +33,7 @@ export interface CommonMetrics {
   irr: number;
   dscr: number;
   operatingExpenseRatio: number;
+  totalInvestment: number;
 }
 
 export interface SFRData extends BasePropertyData {

@@ -201,6 +201,54 @@ export interface Analysis {
         annualizedReturn?: string;
       };
     };
+    
+    // Intelligence Multiplier fields
+    metricIntelligence?: Array<{
+      metricName: string;
+      noviceView: string;
+      proInsight: string;
+      actionItem: string;
+      benchmark: string;
+      warning: string;
+      riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    }>;
+    riskBlindSpots?: Array<{
+      riskType: string;
+      description: string;
+      probability: string;
+      impact: string;
+      mitigation: string;
+      priority: 'low' | 'medium' | 'high' | 'critical';
+    }>;
+    opportunityAlternatives?: Array<{
+      category: 'real_estate' | 'investment' | 'timing' | 'market';
+      title: string;
+      description: string;
+      expectedReturn: string;
+      riskLevel: string;
+      benefit: string;
+    }>;
+    advancedStrategies?: Array<{
+      strategyType: string;
+      title: string;
+      description: string;
+      implementation: string;
+      costEstimate: string;
+      expectedROI: string;
+      timeframe: string;
+      difficulty: 'beginner' | 'intermediate' | 'advanced';
+    }>;
+    competitiveIntelligence?: {
+      marketInsight: string;
+      winningStrategies: string[];
+      losingPatterns: string[];
+      localTrends: string[];
+      investorBehavior: string;
+    };
+    intelligenceScore?: number;
+    sophisticationLevel?: 'novice' | 'intermediate' | 'advanced' | 'professional';
+    transformationInsights?: string;
+    professionalEquivalent?: string;
   };
   sensitivityAnalysis?: {
     bestCase?: {
@@ -372,7 +420,9 @@ const AnalysisSchema = new Schema({
       irr: Number,
       totalCashFlow: Number,
       totalAppreciation: Number,
-      totalReturn: Number
+      totalReturn: Number,
+      totalInvestment: Number,
+      totalAdditionalInvestment: Number
     },
     exitAnalysis: {
       projectedSalePrice: Number,
@@ -384,14 +434,19 @@ const AnalysisSchema = new Schema({
     }
   },
   keyMetrics: {
+    noi: Number,
     capRate: Number,
     cashOnCashReturn: Number,
+    irr: Number,
     dscr: Number,
+    operatingExpenseRatio: Number,
+    totalInvestment: Number,
+    pricePerSqFt: Number,
+    rentPerSqFt: Number,
     pricePerSqFtAtPurchase: Number,
     pricePerSqFtAtSale: Number,
     avgRentPerSqFt: Number,
     expenseRatio: Number,
-    operatingExpenseRatio: Number,
     breakEvenOccupancy: Number,
     equityMultiple: Number,
     onePercentRuleValue: Number,
@@ -481,7 +536,55 @@ const AnalysisSchema = new Schema({
         totalProfit: String,
         annualizedReturn: String
       }
-    }
+    },
+    
+    // Intelligence Multiplier fields
+    metricIntelligence: [{
+      metricName: String,
+      noviceView: String,
+      proInsight: String,
+      actionItem: String,
+      benchmark: String,
+      warning: String,
+      riskLevel: { type: String, enum: ['low', 'medium', 'high', 'critical'] }
+    }],
+    riskBlindSpots: [{
+      riskType: String,
+      description: String,
+      probability: String,
+      impact: String,
+      mitigation: String,
+      priority: { type: String, enum: ['low', 'medium', 'high', 'critical'] }
+    }],
+    opportunityAlternatives: [{
+      category: { type: String, enum: ['real_estate', 'investment', 'timing', 'market'] },
+      title: String,
+      description: String,
+      expectedReturn: String,
+      riskLevel: String,
+      benefit: String
+    }],
+    advancedStrategies: [{
+      strategyType: String,
+      title: String,
+      description: String,
+      implementation: String,
+      costEstimate: String,
+      expectedROI: String,
+      timeframe: String,
+      difficulty: { type: String, enum: ['beginner', 'intermediate', 'advanced'] }
+    }],
+    competitiveIntelligence: {
+      marketInsight: String,
+      winningStrategies: [String],
+      losingPatterns: [String],
+      localTrends: [String],
+      investorBehavior: String
+    },
+    intelligenceScore: Number,
+    sophisticationLevel: { type: String, enum: ['novice', 'intermediate', 'advanced', 'professional'] },
+    transformationInsights: String,
+    professionalEquivalent: String
   },
   sensitivityAnalysis: {
     bestCase: {

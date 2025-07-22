@@ -1,5 +1,5 @@
 import { BasePropertyAnalyzer, AnalysisAssumptions } from './BasePropertyAnalyzer';
-import { FinancialCalculations } from '../utils/financialCalculations';
+import { FinancialCalculations, SFRCalculationEngine } from '../utils/financialCalculations';
 import { SFRData } from '../types/propertyTypes';
 import { ExpenseBreakdown, AnalysisResult, MonthlyAnalysis, ExitAnalysis, SensitivityAnalysis, SFRMetrics } from '../types/analysis';
 import { marketIntelligenceService } from '../services/marketIntelligenceService';
@@ -8,44 +8,43 @@ import { logger } from '../utils/logger';
 
 export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   protected calculateGrossIncome(year: number): number {
-    return this.data.monthlyRent * 12 * 
-      Math.pow(1 + this.assumptions.annualRentIncrease / 100, year - 1);
+    return SFRCalculationEngine.calculateGrossIncome(this.data, year);
   }
 
   protected calculateOperatingExpenses(grossIncome: number): number {
-    const { purchasePrice, propertyTaxRate, insuranceRate, maintenanceCost } = this.data;
-    
-    // Calculate base expenses
-    const propertyTax = purchasePrice * (propertyTaxRate / 100);
-    const insurance = purchasePrice * (insuranceRate / 100);
-    const maintenance = maintenanceCost || grossIncome * 0.05; // Use provided maintenanceCost or default to 5% of gross income
-    const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
-    const vacancy = grossIncome * (this.assumptions.vacancyRate / 100);
-    const capEx = grossIncome * 0.05; // 5% for capital expenditures
-
-    return propertyTax + insurance + maintenance + propertyManagement + vacancy + capEx;
+    // FIXED: Use unified calculation engine - NO vacancy expense, NO unauthorized CapEx
+    return SFRCalculationEngine.calculateOperatingExpenses(this.data, grossIncome, 1, this.assumptions);
   }
 
   protected calculatePropertySpecificMetrics(): SFRMetrics {
     const monthlyMortgage = this.calculateMonthlyMortgage();
     const annualDebtService = monthlyMortgage * 12;
     const grossIncome = this.calculateGrossIncome(1);
+    
+    // FIXED: Calculate effective income (after vacancy) BEFORE NOI
+    const effectiveIncome = FinancialCalculations.calculateEffectiveIncome(grossIncome, this.assumptions.vacancyRate);
     const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
-    const noi = this.calculateNOI(grossIncome, operatingExpenses);
+    
+    // FIXED: NOI = effective income - operating expenses (no vacancy in expenses!)
+    const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
-    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
+    const totalInvestment = FinancialCalculations.calculateTotalInvestment(
+      this.data.downPayment,
+      this.data.closingCosts || 0,
+      this.data.capitalInvestments || 0
+    );
 
-    // Log calculation details
-    console.log('==== SFR CALCULATION DETAILS ====');
+    // Log calculation details with FIXED calculations
+    console.log('==== SFR UNIFIED CALCULATION ENGINE ====');
     console.log('Monthly Mortgage:', monthlyMortgage);
     console.log('Annual Debt Service:', annualDebtService);
     console.log('Gross Income:', grossIncome);
-    console.log('Operating Expenses:', operatingExpenses);
-    console.log('NOI:', noi);
+    console.log('Effective Income (after ' + this.assumptions.vacancyRate + '% vacancy):', effectiveIncome);
+    console.log('Operating Expenses (NO vacancy in expenses):', operatingExpenses);
+    console.log('NOI (effective income - operating expenses):', noi);
     console.log('Cash Flow:', cashFlow);
     console.log('Total Investment:', totalInvestment);
-    console.log('Capital Investments:', this.data.capitalInvestments || 0);
-    console.log('================================');
+    console.log('=======================================');
 
     // Calculate long-term returns for equity multiple
     const projections = this.calculateProjections();
@@ -59,35 +58,28 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const estimatedNOIBoost = capitalInvestments * 0.08; // Assume 8% return on capital improvements
     const baseNOI = noi - estimatedNOIBoost;
     
-    // Calculate turnover costs for the first year
-    const prepFees = this.data.tenantTurnoverFees?.prepFees || 500;
-    const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
-    const monthlyRentForYear = grossIncome / 12;
-    
-    // Get turnover frequency in years (default: 2 years)
-    const turnoverFrequency = this.assumptions.turnoverFrequency || 2;
-    // Calculate base turnover rate as 1/frequency (e.g., 1/2 = 50% annual turnover)
-    const baseTurnoverRate = 1 / turnoverFrequency;
-    
-    // Adjust based on vacancy rate: higher vacancy = higher turnover
-    const vacancyAdjustment = this.assumptions.vacancyRate / 5;
-    const turnoverRate = Math.min(0.9, baseTurnoverRate * vacancyAdjustment); // Cap at 90%
-    
-    // Calculate total turnover costs for the year
-    const turnoverCosts = (prepFees + (monthlyRentForYear * realtorCommission)) * turnoverRate;
+    // Use unified calculation engine for turnover costs
+    const turnoverCosts = FinancialCalculations.calculateTurnoverCosts({
+      prepFees: this.data.tenantTurnoverFees?.prepFees || 500,
+      monthlyRent: grossIncome / 12,
+      realtorCommission: this.data.tenantTurnoverFees?.realtorCommission || 0.5,
+      turnoverFrequency: this.assumptions.turnoverFrequency || 2,
+      vacancyRate: this.assumptions.vacancyRate
+    });
 
-    // Debug operating expense ratio calculation
-    console.log('==== OPERATING EXPENSE RATIO DEBUG ====');
-    console.log('Operating Expenses:', operatingExpenses);
-    console.log('Gross Income:', grossIncome);
-    console.log('Operating Expense Ratio:', operatingExpenses > 0 && grossIncome > 0 ? 
-      (operatingExpenses / grossIncome) * 100 : 0);
-    console.log('Operating Expense Breakdown:', {
+    // Debug operating expense ratio calculation - FIXED
+    console.log('==== FIXED OPERATING EXPENSE RATIO ====');
+    console.log('Operating Expenses (NO vacancy):', operatingExpenses);
+    console.log('Effective Income:', effectiveIncome);
+    console.log('Operating Expense Ratio (vs effective income):', operatingExpenses > 0 && effectiveIncome > 0 ? 
+      (operatingExpenses / effectiveIncome) * 100 : 0);
+    console.log('Operating Expense Breakdown (CORRECTED):', {
       propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100),
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100),
       maintenance: this.data.maintenanceCost,
       propertyManagement: grossIncome * (this.data.propertyManagementRate / 100),
-      vacancy: grossIncome * (this.assumptions.vacancyRate / 100)
+      turnoverCosts: turnoverCosts,
+      vacancy: 'REMOVED - handled as income reduction'
     });
     
     // Debug return on improvements and turnover cost impact calculations
@@ -114,57 +106,28 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     console.log('Turnover Cost Impact:', (turnoverCosts / grossIncome) * 100);
     console.log('=====================================');
 
-    const metrics: SFRMetrics = {
+    // Use unified calculation engine for all metrics
+    const commonMetrics = {
       noi,
-      capRate: this.calculateCapRate(noi),
-      cashOnCashReturn: this.calculateCashOnCashReturn(cashFlow, totalInvestment),
+      capRate: FinancialCalculations.calculateCapRate(noi, this.data.purchasePrice),
+      cashOnCashReturn: FinancialCalculations.calculateCashOnCashReturn(cashFlow, totalInvestment),
+      dscr: FinancialCalculations.calculateDSCR(noi, annualDebtService),
+      operatingExpenseRatio: FinancialCalculations.calculateOperatingExpenseRatio(operatingExpenses, effectiveIncome),
+      totalInvestment
+    };
+    
+    // Get SFR-specific metrics from unified engine
+    const sfrMetrics = SFRCalculationEngine.calculatePropertySpecificMetrics(this.data, commonMetrics, this.assumptions);
+    
+    const metrics: SFRMetrics = {
+      ...sfrMetrics,
+      noi,
       irr: FinancialCalculations.calculateIRR(this.getIRRCashFlows()),
-      dscr: this.calculateDSCR(noi, annualDebtService),
-      operatingExpenseRatio: FinancialCalculations.calculateOperatingExpenseRatio(
-        operatingExpenses,
-        grossIncome
-      ),
       
-      // SFR-specific metrics
-      pricePerSqFt: FinancialCalculations.calculatePricePerSqFt(
-        this.data.purchasePrice,
-        this.data.squareFootage
-      ),
-      rentPerSqFt: (this.data.monthlyRent * 12) / this.data.squareFootage,
-      grossRentMultiplier: FinancialCalculations.calculateGRM(
-        this.data.purchasePrice,
-        this.data.monthlyRent * 12
-      ),
-      
-      // New metrics
-      breakEvenOccupancy: FinancialCalculations.calculateBreakEvenOccupancy(
-        operatingExpenses,
-        annualDebtService,
-        grossIncome
-      ),
+      // Additional metrics calculated here (unified engine handles the rest)
       equityMultiple: FinancialCalculations.calculateEquityMultiple(
         totalReturn,
         totalInvestment
-      ),
-      onePercentRuleValue: FinancialCalculations.calculateOnePercentRuleValue(
-        this.data.monthlyRent,
-        this.data.purchasePrice
-      ),
-      fiftyRuleAnalysis: FinancialCalculations.checkFiftyPercentRule(
-        operatingExpenses,
-        grossIncome
-      ),
-      rentToPriceRatio: FinancialCalculations.calculateRentToPriceRatio(
-        this.data.monthlyRent,
-        this.data.purchasePrice
-      ),
-      pricePerBedroom: FinancialCalculations.calculatePricePerBedroom(
-        this.data.purchasePrice,
-        this.data.bedrooms
-      ),
-      debtToIncomeRatio: FinancialCalculations.calculateDebtToIncomeRatio(
-        annualDebtService,
-        grossIncome
       ),
       
       // Add return on improvements metric
@@ -334,20 +297,31 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   }
 
   protected getExpenseBreakdown(grossIncome: number): ExpenseBreakdown {
+    // Calculate monthly turnover cost using unified engine
+    const annualTurnoverCost = FinancialCalculations.calculateTurnoverCosts({
+      prepFees: this.data.tenantTurnoverFees?.prepFees || 500,
+      monthlyRent: grossIncome / 12,
+      realtorCommission: this.data.tenantTurnoverFees?.realtorCommission || 0.5,
+      turnoverFrequency: this.assumptions.turnoverFrequency || 2,
+      vacancyRate: this.assumptions.vacancyRate
+    });
+    const monthlyTurnoverCost = annualTurnoverCost / 12;
+
     return {
       propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100) / 12,
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100) / 12,
       maintenance: this.data.maintenanceCost / 12,
       propertyManagement: grossIncome * (this.data.propertyManagementRate / 100) / 12,
-      vacancy: grossIncome * (this.assumptions.vacancyRate / 100) / 12,
+      vacancy: 0, // FIXED - Vacancy reduces income, not an expense
+      tenantTurnover: monthlyTurnoverCost,
       utilities: 0,
       commonAreaElectricity: 0,
       landscaping: 0,
       waterSewer: 0,
       garbage: 0,
       marketingAndAdvertising: 0,
-      repairsAndMaintenance: grossIncome * 0.05 / 12, // 5% of gross income for repairs
-      capEx: grossIncome * 0.05 / 12, // 5% for capital expenditures
+      repairsAndMaintenance: 0, // REMOVED - was unauthorized 5% default
+      capEx: 0, // REMOVED - was unauthorized 5% default
       other: 0
     };
   }
@@ -436,7 +410,9 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
           irr: 0,
           totalCashFlow: 0,
           totalAppreciation: 0,
-          totalReturn: 0
+          totalReturn: 0,
+          totalInvestment: 0,
+          totalAdditionalInvestment: 0
         },
         exitAnalysis: {
           projectedSalePrice: 0,

@@ -8,7 +8,9 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "rimraf dist && tsc --skipLibCheck",
     "postinstall": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "validate-docs": "npx ts-node scripts/validate-docs.ts",
+    "test:docs": "jest tests/integration/documentation-consistency.test.ts"
   },
   "keywords": [
     "real-estate",

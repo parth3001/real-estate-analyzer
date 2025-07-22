@@ -351,7 +351,139 @@ Your most actionable recommendations that go beyond basic math
 🔮 **BOLD PREDICTIONS:**
 Your most confident predictions about this investment's future
 
-Format your response as strategic commentary with specific, actionable insights. Focus on market intelligence, strategic timing, and competitive advantages that traditional calculators miss.`;
+Format your response as strategic commentary with specific, actionable insights. Focus on market intelligence, strategic timing, and competitive advantages that traditional calculators miss.
+
+🧠 INTELLIGENCE MULTIPLIER ANALYSIS - TRANSFORM NOVICE TO PRO:
+
+CRITICAL INSTRUCTION: For EVERY metric below, provide the exact 5-part transformation structure.
+
+📊 METRIC INTELLIGENCE TRANSFORMATION:
+
+For each key metric, you MUST provide this exact JSON structure:
+
+{
+  "metricName": "Monthly Cash Flow",
+  "noviceView": "Monthly Cash Flow: $${analysis?.monthlyAnalysis?.cashFlow || 633}",
+  "proInsight": "Monthly Cash Flow: $${analysis?.monthlyAnalysis?.cashFlow || 633} - This represents a ${cashOnCashReturn.toFixed(1)}% cash-on-cash return already accounting for ${vacancyRate}% vacancy. This is realistic operating cash flow. However, smart investors maintain reserves for unexpected repairs and extended vacancies that could temporarily reduce cash flow by an additional 10-15%.",
+  "actionItem": "${(analysis?.monthlyAnalysis?.cashFlow || 633) > 500 ? 'Build $8,500 emergency reserve fund for maintenance and vacancy' : 'Negotiate purchase price down $15K or increase rent $200/month to improve cash flow'}",
+  "benchmark": "Professional investors target $500+ monthly cash flow for single-family properties. Market average for this area is $${marketAnalysis?.averageCashFlow || 450}/month.",
+  "warning": "${(analysis?.monthlyAnalysis?.cashFlow || 633) < 200 ? 'CRITICAL: Marginal cash flow leaves no buffer for unexpected expenses or vacancy periods' : 'Monitor for expense creep and maintain reserves'}",
+  "riskLevel": "${(analysis?.monthlyAnalysis?.cashFlow || 633) < 200 ? 'critical' : (analysis?.monthlyAnalysis?.cashFlow || 633) < 400 ? 'high' : 'medium'}"
+}
+
+REQUIRED METRICS TO TRANSFORM (provide exact JSON for each):
+1. Monthly Cash Flow
+2. Cap Rate  
+3. Cash-on-Cash Return
+4. DSCR (Debt Service Coverage Ratio)
+5. Expense Ratio
+6. Break-Even Occupancy
+7. 1% Rule Performance
+8. Gross Rent Multiplier
+
+🚨 RISK BLIND SPOTS ANALYSIS:
+
+Generate exactly 15 risk insights with this structure:
+
+{
+  "riskType": "Vacancy Risk",
+  "description": "Your ${cashOnCashReturn.toFixed(1)}% return assumes 100% occupancy. In this market, average vacancy is ${marketAnalysis?.averageVacancyRate || 6}%. At ${marketAnalysis?.averageVacancyRate || 6}% vacancy, your return drops to ${(cashOnCashReturn * 0.94).toFixed(1)}%. At 12% vacancy, you're near breakeven.",
+  "probability": "Medium (6-8% annually in this market)",
+  "impact": "High ($${Math.round((analysis?.monthlyAnalysis?.cashFlow || 633) * 0.06 * 12)} annual income loss)",
+  "mitigation": "Build 3-month expense reserve, screen tenants rigorously, maintain property condition",
+  "priority": "high"
+}
+
+Required Risk Categories:
+1. Vacancy Risk
+2. Expense Surprise Risk  
+3. Interest Rate Risk
+4. Market Cycle Risk
+5. Concentration Risk
+6. Maintenance Surprise Risk
+7. Property Tax Increase Risk
+8. Insurance Cost Risk
+9. Neighborhood Decline Risk
+10. Economic Downturn Risk
+11. Tenant Quality Risk
+12. Natural Disaster Risk
+13. Zoning Change Risk
+14. Infrastructure Impact Risk
+15. Competition Risk
+
+💡 OPPORTUNITY COST ANALYSIS:
+
+Provide 8 alternatives with this structure:
+
+{
+  "category": "real_estate",
+  "title": "Buy 2 Properties at $${Math.round(dealData.purchasePrice/2).toLocaleString()} Each",
+  "description": "Purchase two smaller properties in different markets instead of one larger property",
+  "expectedReturn": "${(cashOnCashReturn * 1.2).toFixed(1)}% (diversification premium)",
+  "riskLevel": "Lower (geographic diversification)",
+  "benefit": "Risk reduction through diversification"
+}
+
+Categories to cover:
+- Alternative Real Estate (3 options)
+- Alternative Investments (2 options) 
+- Market Alternatives (2 options)
+- Timing Alternatives (1 option)
+
+🔧 ADVANCED STRATEGIES:
+
+Provide 12 professional strategies with this structure:
+
+{
+  "strategyType": "Tax Optimization",
+  "title": "Cost Segregation Study",
+  "description": "Accelerate depreciation on property components to maximize tax benefits in early years",
+  "implementation": "Hire qualified cost segregation specialist to analyze property components",
+  "costEstimate": "$3,000-5,000 for study",
+  "expectedROI": "${Math.round((dealData.purchasePrice * 0.04 / 3) * 100)}% (estimated $${Math.round(dealData.purchasePrice * 0.04)} tax savings)",
+  "timeframe": "2-3 months to complete",
+  "difficulty": "intermediate"
+}
+
+Strategy Categories:
+1. Tax Optimization (3 strategies)
+2. Value-Add Improvements (3 strategies)
+3. Financing Optimization (2 strategies)
+4. Portfolio Synergy (2 strategies)
+5. Market Timing (2 strategies)
+
+📈 COMPETITIVE INTELLIGENCE:
+
+Provide market intelligence with this structure:
+
+{
+  "marketInsight": "67% of recent buyers in this neighborhood are out-of-state investors, indicating strong investment demand",
+  "winningStrategies": [
+    "Investors buying in Q4 save average 6% vs Q2 purchases",
+    "Properties with garages rent 18% higher in this market",
+    "Corner lots appreciate 12% faster than interior lots"
+  ],
+  "losingPatterns": [
+    "Investors who skip inspections lose average $8,500 in Year 1",
+    "Properties bought without property manager analysis have 23% higher vacancy"
+  ],
+  "localTrends": [
+    "New transit line planned within 1 mile increases values 8-12%",
+    "ADU zoning changes allow basement conversions"
+  ],
+  "investorBehavior": "Average hold period: 4.2 years, 78% use portfolio lenders vs banks"
+}
+
+🎯 CRITICAL OUTPUT REQUIREMENTS:
+
+1. Provide EXACT JSON structures for all sections
+2. Use SPECIFIC numbers and percentages 
+3. Include dollar amounts and calculations
+4. Make insights ACTIONABLE with clear next steps
+5. Benchmark against professional standards
+6. Include probability and impact assessments
+
+Transform this investor from novice to professional-level thinking!`;
 }
 
 export function enhancedMfAnalysisPrompt(dealData: any, analysis: any, marketAnalysis?: any, marketIntelligence?: any): string {

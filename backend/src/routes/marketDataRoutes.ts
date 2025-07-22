@@ -5,7 +5,7 @@
  */
 
 import express from 'express';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 import { marketIntelligenceService } from '../services/marketIntelligenceService';
 import { rentcastService } from '../services/rentcastService';
 import { fredService } from '../services/fredService';

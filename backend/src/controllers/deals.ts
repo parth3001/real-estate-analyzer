@@ -170,7 +170,8 @@ export const getDealById = async (req: Request, res: Response): Promise<void> =>
       hasKeyMetrics: !!dealData.analysis?.keyMetrics,
       hasLongTermAnalysis: !!dealData.analysis?.longTermAnalysis,
       aiScore: dealData.analysis?.aiInsights?.investmentScore,
-      dataSource: dealData._dataSource || 'legacy'
+      dataSource: dealData._dataSource || 'legacy',
+      hasTotalInvestment: !!dealData.analysis?.keyMetrics?.totalInvestment
     });
     
     res.json(dealData);

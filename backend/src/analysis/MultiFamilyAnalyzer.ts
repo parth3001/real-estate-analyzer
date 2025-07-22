@@ -47,7 +47,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
     const noi = this.calculateNOI(grossIncome, operatingExpenses);
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
-    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
+    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
     // Calculate IRR or use a default if calculation fails
     let irr = -99;
@@ -67,6 +67,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
         operatingExpenses,
         grossIncome
       ),
+      totalInvestment,
       
       // MF-specific metrics
       pricePerUnit: this.data.purchasePrice / this.data.totalUnits,
@@ -160,7 +161,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
   private getIRRCashFlows(): number[] {
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
-    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
+    const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
     return [
       -totalInvestment,
