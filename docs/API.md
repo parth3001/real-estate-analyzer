@@ -474,7 +474,9 @@ POST /api/deals/analyze
       "irr": 18.21,
       "totalCashFlow": 40950,
       "totalAppreciation": 103143,
-      "totalReturn": 144093
+      "totalReturn": 144093,
+      "totalInvestment": 65000,
+      "totalAdditionalInvestment": 15000
     },
     "exitAnalysis": {
       "projectedSalePrice": 403143,
@@ -486,15 +488,18 @@ POST /api/deals/analyze
     "projectionYears": 10
   },
   "keyMetrics": {
+    "noi": 17760,
     "capRate": 5.9,
     "cashOnCashReturn": 4.78,
+    "irr": 18.21,
     "dscr": 1.21,
+    "operatingExpenseRatio": 42.5,
     "totalInvestment": 65000,
-    "returnOnImprovements": 8.5,
-    "turnoverCostImpact": 1.2,
     "pricePerSqFt": 200,
     "rentPerSqFt": 1.67,
-    "grossRentMultiplier": 10
+    "grossRentMultiplier": 10,
+    "returnOnImprovements": 8.5,
+    "turnoverCostImpact": 1.2
   },
   "aiInsights": {
     "summary": "This property represents a solid investment opportunity with $259 monthly cash flow and a 5.9% cap rate, positioned 12% below market median pricing, making it suitable for income-focused investors seeking stable returns with moderate appreciation potential.",
@@ -729,6 +734,8 @@ interface LongTermAnalysis {
     totalCashFlow: number;
     totalAppreciation: number;
     totalReturn: number;
+    totalInvestment: number;
+    totalAdditionalInvestment: number;
   };
   projectionYears: number;
 }
@@ -774,13 +781,14 @@ interface ExitAnalysis {
 
 ### Key Metrics
 ```typescript
-interface KeyMetrics {
+interface CommonMetrics {
+  noi: number;
   capRate: number;
   cashOnCashReturn: number;
+  irr: number;
   dscr: number;
+  operatingExpenseRatio: number;
   totalInvestment: number;
-  returnOnImprovements?: number;
-  turnoverCostImpact?: number;
 }
 ```
 
@@ -928,13 +936,25 @@ interface BasePropertyData {
 
 ### SFR Property Data
 ```typescript
-interface SFRPropertyData extends BasePropertyData {
+interface SFRData extends BasePropertyData {
   propertyType: 'SFR';
   monthlyRent: number;
   squareFootage: number;
   bedrooms: number;
   bathrooms: number;
   yearBuilt: number;
+  condition?: string;
+  afterRepairValue?: number;
+  renovationCosts?: number;
+  longTermAssumptions?: {
+    projectionYears: number;
+    annualRentIncrease: number;
+    annualPropertyValueIncrease: number;
+    inflationRate: number;
+    vacancyRate: number;
+    sellingCostsPercentage: number;
+    turnoverFrequency?: number;
+  };
 }
 ```
 

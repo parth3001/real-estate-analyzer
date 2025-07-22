@@ -715,40 +715,49 @@ sequenceDiagram
 
 ### Core Modules
 
-1. **Analysis Engine** (`/backend/src/utils/analysis.js`)
-   - Financial Calculations:
-     ```javascript
-     // Monthly Cash Flow
-     const calculateMonthlyCashFlow = (income, expenses) => {
-       return income - expenses - mortgagePayment;
-     };
+1. **Analysis Engine** (TypeScript Implementation)
+   - **SFR Analyzer** (`/backend/src/analysis/SFRAnalyzer.ts`)
+   - **Multi-Family Analyzer** (`/backend/src/analysis/MultiFamilyAnalyzer.ts`)
+   - **Base Property Analyzer** (`/backend/src/analysis/BasePropertyAnalyzer.ts`)
+   - **Financial Calculations** (`/backend/src/utils/financialCalculations.ts`)
+   
+   ```typescript
+   // Example from FinancialCalculations class
+   static calculateCapRate(noi: number, purchasePrice: number): number {
+     return (noi / purchasePrice) * 100;
+   }
 
-     // Cap Rate
-     const calculateCapRate = (noi, purchasePrice) => {
-       return (noi * 12 / purchasePrice) * 100;
-     };
+   static calculateCashOnCashReturn(cashFlow: number, totalInvestment: number): number {
+     return totalInvestment > 0 ? (cashFlow / totalInvestment) * 100 : 0;
+   }
 
-     // Cash on Cash Return
-     const calculateCashOnCash = (annualCashFlow, totalInvestment) => {
-       return (annualCashFlow / totalInvestment) * 100;
-     };
+   static calculateIRR(cashFlows: number[]): number {
+     // Newton-Raphson method implementation for IRR
+   }
+   ```
 
-     // Internal Rate of Return (IRR)
-     const calculateIRR = (cashFlows) => {
-       // Newton-Raphson method implementation
-     };
-     ```
-
-2. **Deal Controller** (`/backend/src/controllers/deals.js`)
+2. **Deal Controller** (`/backend/src/controllers/deals.ts`)
    - Request Processing:
-     ```javascript
-     exports.analyzeDeal = async (req, res) => {
+     ```typescript
+     export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
        try {
-         const analysis = await performAnalysis(req.body);
-         const aiInsights = await getAIInsights(analysis);
-         res.json({ ...analysis, aiInsights });
+         let dealData = convertWizardData(req.body);
+         const assumptions: AnalysisAssumptions = { /* ... */ };
+         
+         let analysis: any;
+         if (dealData.propertyType === 'SFR') {
+           const analyzer = new SFRAnalyzer(dealData, assumptions);
+           analysis = await analyzer.analyzeWithMarketIntelligence();
+         } else if (dealData.propertyType === 'MF') {
+           const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);
+           analysis = analyzer.analyze();
+         }
+         
+         analysis.aiInsights = await generateAIInsights(dealData, analysis);
+         res.json(analysis);
        } catch (error) {
-         handleError(error, res);
+         logger.error('Error analyzing deal:', error);
+         res.status(400).json({ error: error.message });
        }
      };
      ```
@@ -933,7 +942,7 @@ The application uses a **Complete Storage Architecture** where all calculated an
 module.exports = {
   apps: [{
     name: "real-estate-analyzer",
-    script: "src/index.js",
+    script: "dist/index.js",
     instances: "max",
     exec_mode: "cluster",
     env: {

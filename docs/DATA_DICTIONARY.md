@@ -1,6 +1,14 @@
 # Real Estate Deal Analyzer - Data Dictionary
 
+**Last Updated**: July 19, 2025 - Post-Audit Update
+
 This document serves as a central reference for all data fields used throughout the Real Estate Deal Analyzer application. The purpose is to maintain consistency and provide clear documentation as the application evolves.
+
+## Implementation Status Legend
+- ✅ **Implemented**: Field is actively used and returned by TypeScript analyzers
+- ❌ **Missing**: Field is documented but not implemented in current TypeScript code  
+- 🔄 **Planned**: Field is planned for future implementation
+- 📋 **Legacy**: Field exists in old JavaScript code but not in active TypeScript implementation
 
 ## User & Authentication Data Fields
 
@@ -104,15 +112,18 @@ This document serves as a central reference for all data fields used throughout 
 | `annualAnalysis.cashFlow` | number | Annual cash flow | Yes | Analysis results |
 
 ### Key Metrics Fields
-| Field Name | Type | Description | Calculated | Used In |
-|------------|------|-------------|------------|---------|
-| `keyMetrics.capRate` | number | Capitalization Rate (%) | Yes | Analysis results |
-| `keyMetrics.cashOnCashReturn` | number | Cash on Cash Return (%) | Yes | Analysis results |
-| `keyMetrics.dscr` | number | Debt Service Coverage Ratio | Yes | Analysis results |
-| `keyMetrics.totalInvestment` | number | Total investment amount | Yes | Analysis results |
-| `keyMetrics.pricePerSqFt` | number | Price per square foot | Yes | SFR analysis |
-| `keyMetrics.rentPerSqFt` | number | Rent per square foot | Yes | SFR analysis |
-| `keyMetrics.grossRentMultiplier` | number | Gross Rent Multiplier | Yes | SFR analysis |
+| Field Name | Type | Description | Status | Used In |
+|------------|------|-------------|---------|---------|
+| `keyMetrics.capRate` | number | Capitalization Rate (%) | ✅ Implemented | Analysis results |
+| `keyMetrics.cashOnCashReturn` | number | Cash on Cash Return (%) | ✅ Implemented | Analysis results |
+| `keyMetrics.dscr` | number | Debt Service Coverage Ratio | ✅ Implemented | Analysis results |
+| `keyMetrics.noi` | number | Net Operating Income | ✅ Implemented | Analysis results |
+| `keyMetrics.irr` | number | Internal Rate of Return (%) | ✅ Implemented | Analysis results |
+| `keyMetrics.operatingExpenseRatio` | number | Operating Expense Ratio (%) | ✅ Implemented | Analysis results |
+| `keyMetrics.totalInvestment` | number | Total investment amount (downPayment + closingCosts + capitalInvestments) | ✅ Implemented | Analysis results |
+| `keyMetrics.pricePerSqFt` | number | Price per square foot | ✅ Implemented | SFR analysis |
+| `keyMetrics.rentPerSqFt` | number | Rent per square foot | ✅ Implemented | SFR analysis |
+| `keyMetrics.grossRentMultiplier` | number | Gross Rent Multiplier | ✅ Implemented | SFR analysis |
 
 ### Long-Term Analysis Fields
 | Field Name | Type | Description | Calculated | Used In |
@@ -139,6 +150,8 @@ This document serves as a central reference for all data fields used throughout 
 | `longTermAnalysis.returns.totalCashFlow` | number | Total cash flow over projection period | Yes | Analysis results |
 | `longTermAnalysis.returns.totalAppreciation` | number | Total appreciation over projection period | Yes | Analysis results |
 | `longTermAnalysis.returns.totalReturn` | number | Total return over projection period | Yes | Analysis results |
+| `longTermAnalysis.returns.totalInvestment` | number | Total investment amount (same as keyMetrics.totalInvestment) | ✅ Yes | Analysis results |
+| `longTermAnalysis.returns.totalAdditionalInvestment` | number | Capital investments only (subset of totalInvestment) | ✅ Yes | Analysis results |
 | `longTermAnalysis.exitAnalysis.projectedSalePrice` | number | Projected sale price | Yes | Analysis results |
 | `longTermAnalysis.exitAnalysis.sellingCosts` | number | Selling costs | Yes | Analysis results |
 | `longTermAnalysis.exitAnalysis.mortgagePayoff` | number | Mortgage payoff amount | Yes | Analysis results |
@@ -314,4 +327,77 @@ When adding new fields to the application, please follow these guidelines:
 | Investment score shows 0 | Falsy value check in frontend | Fixed: Use `typeof === 'number'` check |
 | AI predictions are basic math | Missing market intelligence context | Fixed: Always regenerate AI insights with market data |
 | Inconsistent analysis quality | Old analysis caching strategy | Fixed: Always recalculate core metrics |
-| Missing market data | API cache miss or expired data | Automatic: System fetches fresh data and caches it | 
+| Missing market data | API cache miss or expired data | Automatic: System fetches fresh data and caches it |
+
+## Intelligence Multiplier Data Fields
+
+### AI Insights - Intelligence Multiplier Fields (NEW - July 19, 2025)
+
+| Field Name | Type | Description | Required | Default |
+|------------|------|-------------|----------|---------|
+| `metricIntelligence` | Array<MetricIntelligence> | Professional transformation of key metrics | No | [] |
+| `riskBlindSpots` | Array<RiskBlindSpot> | Critical risks novice investors miss | No | [] |
+| `opportunityAlternatives` | Array<OpportunityAlternative> | Alternative investment options | No | [] |
+| `advancedStrategies` | Array<AdvancedStrategy> | Professional investment strategies | No | [] |
+| `competitiveIntelligence` | CompetitiveIntelligence | Market competition insights | No | null |
+| `intelligenceScore` | number | Analysis sophistication score (0-100) | No | 85 |
+| `sophisticationLevel` | string enum | Analysis sophistication level | No | 'professional' |
+| `transformationInsights` | string | Summary of analysis transformation | No | Auto-generated |
+| `professionalEquivalent` | string | Value proposition statement | No | "$1,500-3,000" |
+
+### MetricIntelligence Object
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `metricName` | string | Name of the metric being analyzed | Yes |
+| `noviceView` | string | How beginners interpret this metric | Yes |
+| `proInsight` | string | Professional-level understanding | Yes |
+| `actionItem` | string | Specific action to take | Yes |
+| `benchmark` | string | Industry standard for comparison | Yes |
+| `warning` | string | Critical risk or caution | Yes |
+| `riskLevel` | string enum | 'low' \| 'medium' \| 'high' \| 'critical' | Yes |
+
+### RiskBlindSpot Object
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `riskType` | string | Type of risk identified | Yes |
+| `description` | string | Detailed risk description | Yes |
+| `probability` | string | Likelihood of occurrence | Yes |
+| `impact` | string | Potential impact on investment | Yes |
+| `mitigation` | string | How to mitigate this risk | Yes |
+| `priority` | string enum | 'low' \| 'medium' \| 'high' \| 'critical' | Yes |
+
+### OpportunityAlternative Object
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `category` | string enum | 'real_estate' \| 'investment' \| 'timing' \| 'market' | Yes |
+| `title` | string | Alternative opportunity name | Yes |
+| `description` | string | Detailed description | Yes |
+| `expectedReturn` | string | Expected return profile | Yes |
+| `riskLevel` | string | Risk assessment | Yes |
+| `benefit` | string | Key benefit of this alternative | Yes |
+
+### AdvancedStrategy Object
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `strategyType` | string | Category of strategy | Yes |
+| `title` | string | Strategy name | Yes |
+| `description` | string | Detailed strategy description | Yes |
+| `implementation` | string | How to implement | Yes |
+| `costEstimate` | string | Implementation cost | Yes |
+| `expectedROI` | string | Expected return on investment | Yes |
+| `timeframe` | string | Implementation timeline | Yes |
+| `difficulty` | string enum | 'beginner' \| 'intermediate' \| 'advanced' | Yes |
+
+### CompetitiveIntelligence Object
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `marketInsight` | string | Key market intelligence | Yes |
+| `winningStrategies` | string[] | Successful investor strategies | Yes |
+| `losingPatterns` | string[] | Common investor mistakes | Yes |
+| `localTrends` | string[] | Local market trends | Yes |
+| `investorBehavior` | string | Market participant analysis | Yes | 

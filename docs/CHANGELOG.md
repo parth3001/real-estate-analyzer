@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-07-19
+
+### Intelligence Multiplier Feature ✨ NEW
+
+**🧠 Professional Intelligence Analysis System**
+- **Intelligence Multiplier**: Transform novice investors into professional-level thinkers
+- **Intelligence Score**: 0-100 rating of analysis sophistication (default: 85)
+- **Sophistication Levels**: Novice, Intermediate, Advanced, Professional
+- **Professional Equivalent Value**: $1,500-3,000 analysis value proposition
+
+**📊 Metric Intelligence Transformation**
+- **8 Key Metrics Transformed**: Monthly Cash Flow, Cap Rate, Cash-on-Cash Return, DSCR, Expense Ratio, Break-Even Occupancy, 1% Rule, Gross Rent Multiplier
+- **Professional Insights**: Each metric includes novice view vs. pro insight
+- **Actionable Intelligence**: Specific action items, benchmarks, and warnings
+- **Risk Levels**: Low, Medium, High, Critical indicators
+
+**🚨 Risk Blind Spots Analysis**
+- **15 Risk Categories**: Comprehensive coverage of risks novices typically miss
+- **Risk Assessment**: Probability, impact, and mitigation strategies
+- **Priority Levels**: Critical, High, Medium, Low prioritization
+- **Professional Mitigation**: Specific strategies to protect investments
+
+**🔧 Advanced Professional Strategies**
+- **Tax Optimization**: Cost segregation, depreciation strategies
+- **Value-Add Improvements**: ROI-focused property enhancements
+- **Financing Optimization**: Refinancing and leverage strategies
+- **Portfolio Synergy**: Diversification and portfolio building
+- **Market Timing**: Entry/exit optimization strategies
+
+**💡 Opportunity Cost Analysis**
+- **Alternative Investments**: Compare to other investment options
+- **Market Alternatives**: Different property types and locations
+- **Timing Alternatives**: Buy now vs. wait analysis
+- **Risk/Return Profiles**: Comprehensive alternative comparisons
+
+**📈 Competitive Intelligence**
+- **Market Insights**: Local trends and patterns
+- **Winning Strategies**: What successful investors do
+- **Common Mistakes**: Pitfalls to avoid
+- **Investor Behavior**: Market participant analysis
+
+**🛠️ Technical Enhancements**
+- **AI Service Updates**: Enhanced parsing for Intelligence Multiplier data
+- **OpenAI Integration**: Increased max_tokens from 2000 to 4000
+- **MongoDB Schema**: Added all Intelligence Multiplier fields for persistence
+- **TypeScript Types**: Complete type definitions for all new features
+- **Error Handling**: Robust parsing with fallback data
+
+**💾 Data Persistence**
+- **Complete Storage**: All Intelligence Multiplier data saved to MongoDB
+- **Instant Loading**: Saved deals load with all professional insights
+- **No Re-analysis**: Permanent storage eliminates repeated API calls
+- **Historical Tracking**: Compare insights over time
+
+**🎨 UI/UX Improvements**
+- **IntelligenceMultiplier Component**: New React component with Material-UI
+- **Apple Design System**: Professional styling and interactions
+- **Accordion Interface**: Organized, expandable insight sections
+- **Visual Indicators**: Progress bars, badges, and status cards
+- **Integration**: Seamlessly integrated into AnalysisResults display
+
+### Bug Fixes
+- Fixed Intelligence Score extraction from AI responses
+- Resolved parsing issues for truncated AI responses
+- Fixed TypeScript compilation errors with function declarations
+- Corrected data display issues in frontend components
+
+### Documentation
+- Created comprehensive INTELLIGENCE_MULTIPLIER.md documentation
+- Updated TypeScript interfaces documentation
+- Enhanced API documentation for new endpoints
+- Added troubleshooting guide for common issues
+
 ## [2.0.0] - 2025-07-13
 
 ### Phase 1.1: Authentication & User Foundation ✅ COMPLETED

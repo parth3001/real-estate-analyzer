@@ -1,6 +1,8 @@
 # Real Estate Deal Analyzer - Data Mapping
 
-This document describes how data is mapped between different layers of the application (frontend, backend, and database) and any transformations that occur.
+**Last Updated**: July 19, 2025 - Post-Architecture-Cleanup
+
+This document describes how data is mapped between different layers of the application (frontend, backend, and database) and any transformations that occur. All references are now updated to reflect the current TypeScript implementation.
 
 ## System Overview
 
@@ -81,7 +83,10 @@ When loading a saved property:
 | `analysis.monthlyAnalysis` | `analysis.monthlyAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
 | `analysis.annualAnalysis` | `analysis.annualAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
 | `analysis.keyMetrics` | `analysis.keyMetrics` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `analysis.keyMetrics.totalInvestment` | `analysis.keyMetrics.totalInvestment` | **CALCULATED** as downPayment + closingCosts + capitalInvestments | **NEW FIELD** |
 | `analysis.longTermAnalysis` | `analysis.longTermAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
+| `analysis.longTermAnalysis.returns.totalInvestment` | `analysis.longTermAnalysis.returns.totalInvestment` | **CALCULATED** same as keyMetrics.totalInvestment | **NEW FIELD** |
+| `analysis.longTermAnalysis.returns.totalAdditionalInvestment` | `analysis.longTermAnalysis.returns.totalAdditionalInvestment` | **CALCULATED** as capitalInvestments only | **NEW FIELD** |
 | `createdAt` | Displayed in UI | Formatted date | Preserved |
 | `updatedAt` | Displayed in UI | Formatted date | Preserved |
 | `_id` | Used for updates | Preserved for API calls | Preserved |
