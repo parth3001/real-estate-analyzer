@@ -1,6 +1,30 @@
 // Authentication types for frontend
 
 /**
+ * Dual-mode related types
+ */
+export type UserMode = 'novice' | 'pro';
+export type PersonaType = 'learning' | 'experienced' | 'data_analyst' | 'speed_scanner';
+
+export interface DualModePreferences {
+  currentMode: UserMode;
+  personaMapping: {
+    novice: PersonaType;
+    pro: PersonaType;
+  };
+  onboardingCompleted: boolean;
+  modeHistory: Array<{
+    mode: UserMode;
+    timestamp: string;
+  }>;
+  preferences: {
+    showEducationalTooltips: boolean;
+    defaultAnalysisComplexity: 'basic' | 'detailed' | 'comprehensive';
+    autoSwitchToProAfterAnalyses?: number;
+  };
+}
+
+/**
  * User information
  */
 export interface User {
@@ -12,6 +36,7 @@ export interface User {
   isVerified: boolean;
   createdAt?: string;
   lastLogin?: string;
+  dualModePreferences?: DualModePreferences;
 }
 
 /**

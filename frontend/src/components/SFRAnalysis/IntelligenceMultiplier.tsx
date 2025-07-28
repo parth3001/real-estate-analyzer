@@ -26,12 +26,14 @@ import {
   Security as SecurityIcon,
   Info as InfoIcon
 } from '@mui/icons-material';
+import { useDualMode } from '../../contexts/DualModeContext';
 
 interface IntelligenceMultiplierProps {
   aiInsights: any;
 }
 
 const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsights }) => {
+  const { mode } = useDualMode();
   const [expandedSection, setExpandedSection] = useState<string>('metrics');
 
   const handleSectionChange = (section: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
@@ -64,15 +66,17 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
   return (
     <Card sx={{ borderRadius: '16px', mb: 4, border: '2px solid #e3f2fd' }}>
       <CardContent sx={{ p: 3 }}>
-        {/* Header with Intelligence Score */}
+        {/* Header with Intelligence Score - Mode Aware */}
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <PsychologyIcon sx={{ color: 'primary.main', fontSize: 32 }} />
           <Box flex={1}>
             <Typography variant="h5" fontWeight={700} color="primary.main">
-              Professional Intelligence Analysis
+              Professional Investment Intelligence
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Transform from novice to institutional-level understanding
+              {mode === 'novice' 
+                ? 'Detailed insights to help you understand your investment better'
+                : 'Institutional-grade analysis with advanced metrics'}
             </Typography>
           </Box>
           <Box textAlign="right">
@@ -80,43 +84,46 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
               {intelligenceScore}/100
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Intelligence Score
+              Investment Score
             </Typography>
           </Box>
         </Box>
 
-        {/* Intelligence Score Progress */}
-        <Box mb={3}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography variant="body2" fontWeight={600}>
-              Analysis Sophistication Level
-            </Typography>
-            <Chip 
-              label={aiInsights?.sophisticationLevel || 'Professional'}
-              color="primary"
-              size="small"
-              sx={{ fontWeight: 600 }}
+        {/* Intelligence Score Progress - Hide sophistication in novice mode */}
+        {mode === 'pro' && (
+          <Box mb={3}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="body2" fontWeight={600}>
+                Analysis Sophistication Level
+              </Typography>
+              <Chip 
+                label={aiInsights?.sophisticationLevel || 'Professional'}
+                color="primary"
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+            </Box>
+            <LinearProgress 
+              variant="determinate" 
+              value={intelligenceScore} 
+              sx={{ 
+                height: 8, 
+                borderRadius: 4,
+                backgroundColor: '#e3f2fd',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: intelligenceScore >= 80 ? '#4caf50' : intelligenceScore >= 60 ? '#ff9800' : '#f44336'
+                }
+              }} 
             />
+            <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
+              {aiInsights?.transformationInsights || `Professional-grade analysis with ${metricCount + riskCount + strategyCount} insights`}
+            </Typography>
           </Box>
-          <LinearProgress 
-            variant="determinate" 
-            value={intelligenceScore} 
-            sx={{ 
-              height: 8, 
-              borderRadius: 4,
-              backgroundColor: '#e3f2fd',
-              '& .MuiLinearProgress-bar': {
-                backgroundColor: intelligenceScore >= 80 ? '#4caf50' : intelligenceScore >= 60 ? '#ff9800' : '#f44336'
-              }
-            }} 
-          />
-          <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
-            {aiInsights?.transformationInsights || `Professional-grade analysis with ${metricCount + riskCount + strategyCount} insights`}
-          </Typography>
-        </Box>
+        )}
 
-        {/* Quick Stats */}
-        <Grid container spacing={2} mb={3}>
+        {/* Quick Stats - Only show in pro mode */}
+        {mode === 'pro' && (
+          <Grid container spacing={2} mb={3}>
           <Grid item xs={6} sm={3}>
             <Card sx={{ textAlign: 'center', p: 1, backgroundColor: '#f3e5f5' }}>
               <Typography variant="h6" fontWeight={700} color="purple">
@@ -158,13 +165,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
             </Card>
           </Grid>
         </Grid>
-
-        {/* Professional Equivalent Value */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Professional Equivalent:</strong> {aiInsights?.professionalEquivalent || "This analysis would typically cost $1,500-3,000 from a professional real estate analyst."}
-          </Typography>
-        </Alert>
+        )}
 
         {/* Metric Intelligence Section */}
         <Accordion 
@@ -203,52 +204,59 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                     />
                   </Box>
                   
-                  {/* Novice View */}
-                  <Box sx={{ mb: 2, p: 2, backgroundColor: '#fafafa', borderRadius: 2 }}>
-                    <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
-                      👶 Novice View:
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {metric.noviceView}
-                    </Typography>
-                  </Box>
-                  
-                  {/* Professional Insight */}
-                  <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-                    <Typography variant="subtitle2" fontWeight={600} color="primary.main" mb={1}>
-                      🎓 Professional Insight:
-                    </Typography>
-                    <Typography variant="body2">
-                      {metric.proInsight}
-                    </Typography>
-                  </Box>
-
-                  {/* Action Items and Benchmarks */}
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 2 }}>
-                        <Typography variant="subtitle2" fontWeight={600} color="orange" mb={1}>
-                          🎯 Action Required:
+                  {/* Show different content based on mode */}
+                  {mode === 'novice' ? (
+                    /* Novice View - Detailed explanations */
+                    <>
+                      <Box sx={{ mb: 2, p: 2, backgroundColor: '#fafafa', borderRadius: 2 }}>
+                        <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
+                          💡 What this means:
                         </Typography>
-                        <Typography variant="body2">
-                          {metric.actionItem}
+                        <Typography variant="body2" color="text.secondary">
+                          {metric.noviceView}
                         </Typography>
                       </Box>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 2 }}>
-                        <Typography variant="subtitle2" fontWeight={600} color="green" mb={1}>
-                          📊 Benchmark:
-                        </Typography>
-                        <Typography variant="body2">
-                          {metric.benchmark}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
+                      
+                      {/* Action Items and Benchmarks for Novice */}
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={600} color="orange" mb={1}>
+                              🎯 What to do:
+                            </Typography>
+                            <Typography variant="body2">
+                              {metric.actionItem}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={600} color="green" mb={1}>
+                              📊 Good target:
+                            </Typography>
+                            <Typography variant="body2">
+                              {metric.benchmark}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </>
+                  ) : (
+                    /* Professional View - Condensed, data-only */
+                    <Box sx={{ mb: 2 }}>
+                      <Grid container spacing={1} alignItems="center">
+                        <Grid item xs={12}>
+                          <Typography variant="body2" color="text.secondary">
+                            {/* Extract value from the proInsight text */}
+                            {metric.proInsight?.split(' - ')[0] || metric.metricName}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  )}
 
-                  {/* Warning */}
-                  {metric.warning && (
+                  {/* Warning - Only show in novice mode */}
+                  {metric.warning && mode === 'novice' && (
                     <Alert severity={getRiskColor(metric.riskLevel)} sx={{ mt: 2 }}>
                       <Typography variant="body2">
                         <strong>⚠️ Warning:</strong> {metric.warning}
@@ -278,7 +286,9 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                   Risk Blind Spots Analysis
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {riskCount} critical risks novice investors typically miss
+                  {mode === 'novice' 
+                    ? `${riskCount} critical risks novice investors typically miss`
+                    : `${riskCount} risk factors identified`}
                 </Typography>
               </Box>
             </Box>
@@ -306,36 +316,42 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                     />
                   </Box>
                   
-                  <Typography variant="body2" mb={2}>
-                    {risk.description}
-                  </Typography>
-                  
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="caption" fontWeight={600} color="text.secondary">
-                        PROBABILITY:
+                  {mode === 'novice' && (
+                    /* Novice View Only - Full explanations */
+                    <>
+                      <Typography variant="body2" mb={2}>
+                        {risk.description}
                       </Typography>
-                      <Typography variant="body2">
-                        {risk.probability}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="caption" fontWeight={600} color="text.secondary">
-                        IMPACT:
-                      </Typography>
-                      <Typography variant="body2">
-                        {risk.impact}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <Typography variant="caption" fontWeight={600} color="text.secondary">
-                        MITIGATION:
-                      </Typography>
-                      <Typography variant="body2">
-                        {risk.mitigation}
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                      
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" fontWeight={600} color="text.secondary">
+                            PROBABILITY:
+                          </Typography>
+                          <Typography variant="body2">
+                            {risk.probability}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" fontWeight={600} color="text.secondary">
+                            IMPACT:
+                          </Typography>
+                          <Typography variant="body2">
+                            {risk.impact}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" fontWeight={600} color="text.secondary">
+                            MITIGATION:
+                          </Typography>
+                          <Typography variant="body2">
+                            {risk.mitigation}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </>
+                  )}
+                  {/* Pro mode shows just the risk name and priority chip - no additional content */}
                 </Box>
               </Alert>
             ))}

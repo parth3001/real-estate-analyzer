@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -39,6 +39,9 @@ const SFRAnalysis: React.FC = () => {
   
   // Input method state
   const [inputMethod, setInputMethod] = useState<'wizard' | 'manual'>('wizard');
+  
+  // Phase 2: Interactive Analysis state
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const wizardEnabled = true; // Enable for Phase 1 testing
 
   // Handle input method change
@@ -239,6 +242,132 @@ const SFRAnalysis: React.FC = () => {
   const handleSnackbarClose = () => {
     setSuccessMessage(null);
   };
+
+  // Phase 2: Interactive Analysis Handlers
+  
+  // Handle parameter changes with real-time analysis updates
+  const handleParameterChange = useCallback(async (updatedData: SFRPropertyData) => {
+    setIsRecalculating(true);
+    setError(null);
+    
+    try {
+      console.log('Updating analysis with new parameters:', updatedData);
+      const response = await propertyApi.analyzeProperty(updatedData);
+      
+      if (response.status === 200 && response.data) {
+        setPropertyData(updatedData);
+        setAnalysis(response.data);
+        console.log('Parameter update successful');
+      } else {
+        console.error('Parameter update failed:', response);
+        setError('Failed to update analysis: ' + (response.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error updating parameters:', err);
+      setError('Error updating analysis: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsRecalculating(false);
+    }
+  }, []);
+
+  // Handle applying deal fixes
+  const handleApplyFix = useCallback(async (updatedData: SFRPropertyData, fixDescription: string) => {
+    setIsRecalculating(true);
+    setError(null);
+    
+    try {
+      console.log('Applying deal fix using layered architecture:', fixDescription, updatedData);
+      
+      // Use layered architecture: Quick calculations + cached AI insights
+      const quickResponse = await propertyApi.quickCalculate(updatedData);
+      
+      if (quickResponse.status === 200 && quickResponse.data) {
+        // Update property data immediately with quick calculations
+        setPropertyData(updatedData);
+        
+        // Merge quick metrics with existing analysis, preserving AI insights
+        const updatedAnalysis = {
+          ...analysis,
+          keyMetrics: {
+            ...analysis?.keyMetrics,
+            ...quickResponse.data.keyMetrics
+          },
+          monthlyAnalysis: {
+            ...analysis?.monthlyAnalysis,
+            ...quickResponse.data.monthlyAnalysis
+          }
+          // Keep existing AI insights - they're cached and don't need regeneration for small parameter changes
+        };
+        
+        setAnalysis(updatedAnalysis);
+        setSuccessMessage(`Applied fix: ${fixDescription} (instant update)`);
+        console.log('Deal fix applied with layered architecture in', quickResponse.data.calculationTime, 'ms');
+        
+        // Only trigger full AI re-analysis if the fix involves major changes
+        const isMajorChange = updatedData.purchasePrice !== propertyData?.purchasePrice || 
+                             updatedData.monthlyRent !== propertyData?.monthlyRent;
+        
+        if (isMajorChange) {
+          console.log('Major change detected, triggering AI re-analysis...');
+          // Trigger full analysis in background for AI insights refresh
+          setTimeout(async () => {
+            try {
+              const fullResponse = await propertyApi.analyzeProperty(updatedData);
+              if (fullResponse.status === 200 && fullResponse.data) {
+                setAnalysis(fullResponse.data);
+                console.log('Background AI re-analysis completed');
+              }
+            } catch (err) {
+              console.warn('Background AI re-analysis failed:', err);
+            }
+          }, 500); // Small delay to not interfere with immediate UI updates
+        }
+      } else {
+        // Fallback to full analysis if quick calculation fails
+        console.warn('Quick calculation failed, falling back to full analysis');
+        const response = await propertyApi.analyzeProperty(updatedData);
+        
+        if (response.status === 200 && response.data) {
+          setPropertyData(updatedData);
+          setAnalysis(response.data);
+          setSuccessMessage(`Applied fix: ${fixDescription}`);
+        } else {
+          setError('Failed to apply fix: ' + (response.message || 'Unknown error'));
+        }
+      }
+    } catch (err) {
+      console.error('Error applying fix:', err);
+      setError('Error applying fix: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsRecalculating(false);
+    }
+  }, [analysis, propertyData]);
+
+  // Handle loading scenarios
+  const handleLoadScenario = useCallback(async (scenarioData: SFRPropertyData) => {
+    setIsRecalculating(true);
+    setError(null);
+    
+    try {
+      console.log('Loading scenario:', scenarioData);
+      const response = await propertyApi.analyzeProperty(scenarioData);
+      
+      if (response.status === 200 && response.data) {
+        setPropertyData(scenarioData);
+        setAnalysis(response.data);
+        setSuccessMessage('Scenario loaded successfully');
+        console.log('Scenario loaded successfully');
+      } else {
+        console.error('Scenario load failed:', response);
+        setError('Failed to load scenario: ' + (response.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error loading scenario:', err);
+      setError('Error loading scenario: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsRecalculating(false);
+    }
+  }, []);
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -577,6 +706,11 @@ const SFRAnalysis: React.FC = () => {
                     analysis={analysis} 
                     propertyData={propertyData} 
                     setAnalysis={setAnalysis}
+                    setPropertyData={setPropertyData}
+                    onParameterChange={handleParameterChange}
+                    onApplyFix={handleApplyFix}
+                    onLoadScenario={handleLoadScenario}
+                    isRecalculating={isRecalculating}
                   />
                 )}
               </React.Fragment>

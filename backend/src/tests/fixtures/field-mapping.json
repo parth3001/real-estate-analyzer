@@ -1,0 +1,816 @@
+{
+  "generated": "2025-07-27T23:26:23.051Z",
+  "propertyType": "SFR",
+  "fields": {
+    "monthlyAnalysis.income.gross": {
+      "type": "number",
+      "path": "monthlyAnalysis.income.gross",
+      "sampleValue": 2940
+    },
+    "monthlyAnalysis.income.effective": {
+      "type": "number",
+      "path": "monthlyAnalysis.income.effective",
+      "sampleValue": 2793
+    },
+    "monthlyAnalysis.expenses.operating": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.operating",
+      "sampleValue": 979.2833333333333
+    },
+    "monthlyAnalysis.expenses.debt": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.debt",
+      "sampleValue": 2334.953147645576
+    },
+    "monthlyAnalysis.expenses.total": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.total",
+      "sampleValue": 3232.1531476455757
+    },
+    "monthlyAnalysis.expenses.breakdown.propertyTax": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.propertyTax",
+      "sampleValue": 450
+    },
+    "monthlyAnalysis.expenses.breakdown.insurance": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.insurance",
+      "sampleValue": 187.5
+    },
+    "monthlyAnalysis.expenses.breakdown.maintenance": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.maintenance",
+      "sampleValue": 24.5
+    },
+    "monthlyAnalysis.expenses.breakdown.propertyManagement": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.propertyManagement",
+      "sampleValue": 235.20000000000002
+    },
+    "monthlyAnalysis.expenses.breakdown.vacancy": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.vacancy",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.tenantTurnover": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.tenantTurnover",
+      "sampleValue": 82.08333333333333
+    },
+    "monthlyAnalysis.expenses.breakdown.utilities": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.utilities",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.commonAreaElectricity": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.commonAreaElectricity",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.landscaping": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.landscaping",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.waterSewer": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.waterSewer",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.garbage": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.garbage",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.marketingAndAdvertising": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.marketingAndAdvertising",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.repairsAndMaintenance": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.repairsAndMaintenance",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.capEx": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.capEx",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.breakdown.other": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.breakdown.other",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.propertyTax": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.propertyTax",
+      "sampleValue": 450
+    },
+    "monthlyAnalysis.expenses.insurance": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.insurance",
+      "sampleValue": 187.5
+    },
+    "monthlyAnalysis.expenses.maintenance": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.maintenance",
+      "sampleValue": 24.5
+    },
+    "monthlyAnalysis.expenses.propertyManagement": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.propertyManagement",
+      "sampleValue": 235.20000000000002
+    },
+    "monthlyAnalysis.expenses.vacancy": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.vacancy",
+      "sampleValue": 0
+    },
+    "monthlyAnalysis.expenses.mortgage.total": {
+      "type": "number",
+      "path": "monthlyAnalysis.expenses.mortgage.total",
+      "sampleValue": 2334.953147645576
+    },
+    "monthlyAnalysis.cashFlow": {
+      "type": "number",
+      "path": "monthlyAnalysis.cashFlow",
+      "sampleValue": -521.2364809789093
+    },
+    "annualAnalysis.income": {
+      "type": "number",
+      "path": "annualAnalysis.income",
+      "sampleValue": 35280
+    },
+    "annualAnalysis.expenses": {
+      "type": "number",
+      "path": "annualAnalysis.expenses",
+      "sampleValue": 11751.4
+    },
+    "annualAnalysis.noi": {
+      "type": "number",
+      "path": "annualAnalysis.noi",
+      "sampleValue": 21764.6
+    },
+    "annualAnalysis.debtService": {
+      "type": "number",
+      "path": "annualAnalysis.debtService",
+      "sampleValue": 28019.43777174691
+    },
+    "annualAnalysis.cashFlow": {
+      "type": "number",
+      "path": "annualAnalysis.cashFlow",
+      "sampleValue": -6254.837771746912
+    },
+    "keyMetrics.noi": {
+      "type": "number",
+      "path": "keyMetrics.noi",
+      "sampleValue": 21764.6
+    },
+    "keyMetrics.capRate": {
+      "type": "number",
+      "path": "keyMetrics.capRate",
+      "sampleValue": 4.836577777777777
+    },
+    "keyMetrics.cashOnCashReturn": {
+      "type": "number",
+      "path": "keyMetrics.cashOnCashReturn",
+      "sampleValue": -6.949819746385458
+    },
+    "keyMetrics.dscr": {
+      "type": "number",
+      "path": "keyMetrics.dscr",
+      "sampleValue": 0.7767679058123748
+    },
+    "keyMetrics.operatingExpenseRatio": {
+      "type": "number",
+      "path": "keyMetrics.operatingExpenseRatio",
+      "sampleValue": 35.06205991168397
+    },
+    "keyMetrics.debtYield": {
+      "type": "number",
+      "path": "keyMetrics.debtYield",
+      "sampleValue": 6.0457222222222216
+    },
+    "keyMetrics.grossYield": {
+      "type": "number",
+      "path": "keyMetrics.grossYield",
+      "sampleValue": 7.84
+    },
+    "keyMetrics.totalInvestment": {
+      "type": "number",
+      "path": "keyMetrics.totalInvestment",
+      "sampleValue": 90000
+    },
+    "keyMetrics.pricePerSqFt": {
+      "type": "number",
+      "path": "keyMetrics.pricePerSqFt",
+      "sampleValue": 183.6734693877551
+    },
+    "keyMetrics.rentPerSqFt": {
+      "type": "number",
+      "path": "keyMetrics.rentPerSqFt",
+      "sampleValue": 14.4
+    },
+    "keyMetrics.grossRentMultiplier": {
+      "type": "number",
+      "path": "keyMetrics.grossRentMultiplier",
+      "sampleValue": 12.755102040816327
+    },
+    "keyMetrics.onePercentRuleValue": {
+      "type": "number",
+      "path": "keyMetrics.onePercentRuleValue",
+      "sampleValue": 0.6533333333333333
+    },
+    "keyMetrics.rentToPriceRatio": {
+      "type": "number",
+      "path": "keyMetrics.rentToPriceRatio",
+      "sampleValue": 0.6533333333333333
+    },
+    "keyMetrics.pricePerBedroom": {
+      "type": "number",
+      "path": "keyMetrics.pricePerBedroom",
+      "sampleValue": 150000
+    },
+    "keyMetrics.breakEvenOccupancy": {
+      "type": "number",
+      "path": "keyMetrics.breakEvenOccupancy",
+      "sampleValue": 112.72913200608534
+    },
+    "keyMetrics.equityMultiple": {
+      "type": "number",
+      "path": "keyMetrics.equityMultiple",
+      "sampleValue": 12.943934220464724
+    },
+    "keyMetrics.fiftyRuleAnalysis": {
+      "type": "boolean",
+      "path": "keyMetrics.fiftyRuleAnalysis",
+      "sampleValue": true
+    },
+    "keyMetrics.debtToIncomeRatio": {
+      "type": "number",
+      "path": "keyMetrics.debtToIncomeRatio",
+      "sampleValue": 79.42017508998558
+    },
+    "keyMetrics.returnOnImprovements": {
+      "type": "number",
+      "path": "keyMetrics.returnOnImprovements",
+      "sampleValue": 0
+    },
+    "keyMetrics.turnoverCostImpact": {
+      "type": "number",
+      "path": "keyMetrics.turnoverCostImpact",
+      "sampleValue": 2.791950113378685
+    },
+    "keyMetrics.irr": {
+      "type": "number",
+      "path": "keyMetrics.irr",
+      "sampleValue": 8.939668989303632
+    },
+    "keyMetrics.reservesAnalysis.minimumReserves": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.minimumReserves",
+      "sampleValue": 9942.709442936728
+    },
+    "keyMetrics.reservesAnalysis.recommendedReserves": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.recommendedReserves",
+      "sampleValue": 16571.182404894545
+    },
+    "keyMetrics.reservesAnalysis.optimalReserves": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.optimalReserves",
+      "sampleValue": 23199.655366852363
+    },
+    "keyMetrics.reservesAnalysis.breakdown.baseMonths": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.breakdown.baseMonths",
+      "sampleValue": 3
+    },
+    "keyMetrics.reservesAnalysis.breakdown.ageAdjustment": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.breakdown.ageAdjustment",
+      "sampleValue": 1
+    },
+    "keyMetrics.reservesAnalysis.breakdown.marketAdjustment": {
+      "type": "number",
+      "path": "keyMetrics.reservesAnalysis.breakdown.marketAdjustment",
+      "sampleValue": 1
+    },
+    "longTermAnalysis.projections.year": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].year",
+      "sampleValue": 1
+    },
+    "longTermAnalysis.projections.propertyValue": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].propertyValue",
+      "sampleValue": 463500
+    },
+    "longTermAnalysis.projections.grossIncome": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].grossIncome",
+      "sampleValue": 35280
+    },
+    "longTermAnalysis.projections.operatingExpenses": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].operatingExpenses",
+      "sampleValue": 11751.4
+    },
+    "longTermAnalysis.projections.noi": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].noi",
+      "sampleValue": 21764.6
+    },
+    "longTermAnalysis.projections.debtService": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].debtService",
+      "sampleValue": 28019.43777174691
+    },
+    "longTermAnalysis.projections.cashFlow": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].cashFlow",
+      "sampleValue": -6254.837771746912
+    },
+    "longTermAnalysis.projections.equity": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].equity",
+      "sampleValue": 107219.43777174689
+    },
+    "longTermAnalysis.projections.mortgageBalance": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].mortgageBalance",
+      "sampleValue": 356280.5622282531
+    },
+    "longTermAnalysis.projections.totalReturn": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].totalReturn",
+      "sampleValue": 7245.162228253088
+    },
+    "longTermAnalysis.projections.propertyTax": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].propertyTax",
+      "sampleValue": 5400
+    },
+    "longTermAnalysis.projections.insurance": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].insurance",
+      "sampleValue": 2250
+    },
+    "longTermAnalysis.projections.maintenance": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].maintenance",
+      "sampleValue": 294
+    },
+    "longTermAnalysis.projections.propertyManagement": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].propertyManagement",
+      "sampleValue": 2822.4
+    },
+    "longTermAnalysis.projections.vacancy": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].vacancy",
+      "sampleValue": 1764
+    },
+    "longTermAnalysis.projections.realtorBrokerageFee": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].realtorBrokerageFee",
+      "sampleValue": 0
+    },
+    "longTermAnalysis.projections.grossRent": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].grossRent",
+      "sampleValue": 35280
+    },
+    "longTermAnalysis.projections.appreciation": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].appreciation",
+      "sampleValue": 13500
+    },
+    "longTermAnalysis.projections.turnoverCosts": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].turnoverCosts",
+      "sampleValue": 985
+    },
+    "longTermAnalysis.projections.capitalImprovements": {
+      "type": "number",
+      "path": "longTermAnalysis.projections[0].capitalImprovements",
+      "sampleValue": 0
+    },
+    "longTermAnalysis.exitAnalysis.projectedSalePrice": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.projectedSalePrice",
+      "sampleValue": 1092268.1120353478
+    },
+    "longTermAnalysis.exitAnalysis.sellingCosts": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.sellingCosts",
+      "sampleValue": 65536.08672212088
+    },
+    "longTermAnalysis.exitAnalysis.mortgagePayoff": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.mortgagePayoff",
+      "sampleValue": 24072.820291269458
+    },
+    "longTermAnalysis.exitAnalysis.netProceedsFromSale": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.netProceedsFromSale",
+      "sampleValue": 1002659.2050219574
+    },
+    "longTermAnalysis.exitAnalysis.totalReturn": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.totalReturn",
+      "sampleValue": 1164954.0798418252
+    },
+    "longTermAnalysis.exitAnalysis.returnOnInvestment": {
+      "type": "number",
+      "path": "longTermAnalysis.exitAnalysis.returnOnInvestment",
+      "sampleValue": 1294.3934220464723
+    },
+    "longTermAnalysis.returns.irr": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.irr",
+      "sampleValue": 8.939668989303632
+    },
+    "longTermAnalysis.returns.totalCashFlow": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.totalCashFlow",
+      "sampleValue": 252294.87481986772
+    },
+    "longTermAnalysis.returns.totalAppreciation": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.totalAppreciation",
+      "sampleValue": 642268.1120353478
+    },
+    "longTermAnalysis.returns.totalReturn": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.totalReturn",
+      "sampleValue": 1164954.0798418252
+    },
+    "longTermAnalysis.returns.totalInvestment": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.totalInvestment",
+      "sampleValue": 90000
+    },
+    "longTermAnalysis.returns.totalAdditionalInvestment": {
+      "type": "number",
+      "path": "longTermAnalysis.returns.totalAdditionalInvestment",
+      "sampleValue": 0
+    },
+    "longTermAnalysis.projectionYears": {
+      "type": "number",
+      "path": "longTermAnalysis.projectionYears",
+      "sampleValue": 30
+    },
+    "sensitivityAnalysis.bestCase.cashFlow": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.cashFlow",
+      "sampleValue": -1830.1330584202515
+    },
+    "sensitivityAnalysis.bestCase.cashOnCashReturn": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.cashOnCashReturn",
+      "sampleValue": -2.0334811760225016
+    },
+    "sensitivityAnalysis.bestCase.totalReturn": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.totalReturn",
+      "sampleValue": 795281.0821836486
+    },
+    "sensitivityAnalysis.bestCase.noi": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.noi",
+      "sampleValue": 24768.85
+    },
+    "sensitivityAnalysis.bestCase.dscr": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.dscr",
+      "sampleValue": 0.9311953748607356
+    },
+    "sensitivityAnalysis.bestCase.vacancyRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.vacancyRate",
+      "sampleValue": 3
+    },
+    "sensitivityAnalysis.bestCase.interestRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.interestRate",
+      "sampleValue": 6.25
+    },
+    "sensitivityAnalysis.bestCase.appreciationRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.bestCase.appreciationRate",
+      "sampleValue": 3.5999999999999996
+    },
+    "sensitivityAnalysis.worstCase.cashFlow": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.cashFlow",
+      "sampleValue": -13040.829008150788
+    },
+    "sensitivityAnalysis.worstCase.cashOnCashReturn": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.cashOnCashReturn",
+      "sampleValue": -14.48981000905643
+    },
+    "sensitivityAnalysis.worstCase.totalReturn": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.totalReturn",
+      "sampleValue": -1794.3093664003536
+    },
+    "sensitivityAnalysis.worstCase.noi": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.noi",
+      "sampleValue": 17908.18
+    },
+    "sensitivityAnalysis.worstCase.dscr": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.dscr",
+      "sampleValue": 0.5786350055759029
+    },
+    "sensitivityAnalysis.worstCase.vacancyRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.vacancyRate",
+      "sampleValue": 8
+    },
+    "sensitivityAnalysis.worstCase.interestRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.interestRate",
+      "sampleValue": 7.75
+    },
+    "sensitivityAnalysis.worstCase.appreciationRate": {
+      "type": "number",
+      "path": "sensitivityAnalysis.worstCase.appreciationRate",
+      "sampleValue": 2.0999999999999996
+    },
+    "marketData.property.rentEstimate": {
+      "type": "number",
+      "path": "marketData.property.rentEstimate",
+      "sampleValue": 0
+    },
+    "marketData.property.rentRange.low": {
+      "type": "number",
+      "path": "marketData.property.rentRange.low",
+      "sampleValue": 0
+    },
+    "marketData.property.rentRange.high": {
+      "type": "number",
+      "path": "marketData.property.rentRange.high",
+      "sampleValue": 0
+    },
+    "marketData.property.marketPosition": {
+      "type": "string",
+      "path": "marketData.property.marketPosition",
+      "sampleValue": "At Market"
+    },
+    "marketData.property.confidence": {
+      "type": "number",
+      "path": "marketData.property.confidence",
+      "sampleValue": 0
+    },
+    "marketData.property.dataSource": {
+      "type": "string",
+      "path": "marketData.property.dataSource",
+      "sampleValue": "Fallback"
+    },
+    "marketData.marketTrends.zipCode": {
+      "type": "string",
+      "path": "marketData.marketTrends.zipCode",
+      "sampleValue": "37203"
+    },
+    "marketData.marketTrends.city": {
+      "type": "string",
+      "path": "marketData.marketTrends.city",
+      "sampleValue": "Unknown"
+    },
+    "marketData.marketTrends.state": {
+      "type": "string",
+      "path": "marketData.marketTrends.state",
+      "sampleValue": "Unknown"
+    },
+    "marketData.marketTrends.medianRent": {
+      "type": "number",
+      "path": "marketData.marketTrends.medianRent",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.averageRent": {
+      "type": "number",
+      "path": "marketData.marketTrends.averageRent",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.rentGrowthRate": {
+      "type": "number",
+      "path": "marketData.marketTrends.rentGrowthRate",
+      "sampleValue": 3
+    },
+    "marketData.marketTrends.medianSalePrice": {
+      "type": "number",
+      "path": "marketData.marketTrends.medianSalePrice",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.averageSalePrice": {
+      "type": "number",
+      "path": "marketData.marketTrends.averageSalePrice",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.priceGrowthRate": {
+      "type": "number",
+      "path": "marketData.marketTrends.priceGrowthRate",
+      "sampleValue": 5
+    },
+    "marketData.marketTrends.daysOnMarket": {
+      "type": "number",
+      "path": "marketData.marketTrends.daysOnMarket",
+      "sampleValue": 60
+    },
+    "marketData.marketTrends.inventoryLevel": {
+      "type": "string",
+      "path": "marketData.marketTrends.inventoryLevel",
+      "sampleValue": "Normal"
+    },
+    "marketData.marketTrends.priceToRentRatio": {
+      "type": "number",
+      "path": "marketData.marketTrends.priceToRentRatio",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.seasonalTrend": {
+      "type": "string",
+      "path": "marketData.marketTrends.seasonalTrend",
+      "sampleValue": "Stable"
+    },
+    "marketData.marketTrends.sampleSize.rentals": {
+      "type": "number",
+      "path": "marketData.marketTrends.sampleSize.rentals",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.sampleSize.sales": {
+      "type": "number",
+      "path": "marketData.marketTrends.sampleSize.sales",
+      "sampleValue": 0
+    },
+    "marketData.marketTrends.dataSource": {
+      "type": "string",
+      "path": "marketData.marketTrends.dataSource",
+      "sampleValue": "Fallback"
+    },
+    "marketData.economicIndicators.currentMortgageRate": {
+      "type": "number",
+      "path": "marketData.economicIndicators.currentMortgageRate",
+      "sampleValue": 7.5
+    },
+    "marketData.economicIndicators.mortgageRateTrend": {
+      "type": "string",
+      "path": "marketData.economicIndicators.mortgageRateTrend",
+      "sampleValue": "Stable"
+    },
+    "marketData.economicIndicators.mortgageRateChange": {
+      "type": "number",
+      "path": "marketData.economicIndicators.mortgageRateChange",
+      "sampleValue": 0
+    },
+    "marketData.economicIndicators.inflationRate": {
+      "type": "number",
+      "path": "marketData.economicIndicators.inflationRate",
+      "sampleValue": 3
+    },
+    "marketData.economicIndicators.unemploymentRate": {
+      "type": "number",
+      "path": "marketData.economicIndicators.unemploymentRate",
+      "sampleValue": 4
+    },
+    "marketData.economicIndicators.housingIndex": {
+      "type": "number",
+      "path": "marketData.economicIndicators.housingIndex",
+      "sampleValue": 300
+    },
+    "marketData.economicIndicators.housingIndexChange": {
+      "type": "number",
+      "path": "marketData.economicIndicators.housingIndexChange",
+      "sampleValue": 5
+    },
+    "marketData.economicIndicators.economicGrowth": {
+      "type": "number",
+      "path": "marketData.economicIndicators.economicGrowth",
+      "sampleValue": 2.5
+    },
+    "marketData.economicIndicators.federalFundsRate": {
+      "type": "number",
+      "path": "marketData.economicIndicators.federalFundsRate",
+      "sampleValue": 5
+    },
+    "marketData.economicIndicators.dataSource": {
+      "type": "string",
+      "path": "marketData.economicIndicators.dataSource",
+      "sampleValue": "FRED"
+    },
+    "marketData.location.address": {
+      "type": "string",
+      "path": "marketData.location.address",
+      "sampleValue": "123 Test Street, Nashville, TN 37203"
+    },
+    "marketData.location.zipCode": {
+      "type": "string",
+      "path": "marketData.location.zipCode",
+      "sampleValue": "37203"
+    },
+    "marketData.location.city": {
+      "type": "string",
+      "path": "marketData.location.city",
+      "sampleValue": "Nashville"
+    },
+    "marketData.location.state": {
+      "type": "string",
+      "path": "marketData.location.state",
+      "sampleValue": "TN"
+    },
+    "marketData.cacheKey": {
+      "type": "string",
+      "path": "marketData.cacheKey",
+      "sampleValue": "market_data:37203:123_test_street,_nashville,_tn_37203"
+    },
+    "marketInsights.category": {
+      "type": "string",
+      "path": "marketInsights[0].category",
+      "sampleValue": "Market Position"
+    },
+    "marketInsights.insight": {
+      "type": "string",
+      "path": "marketInsights[0].insight",
+      "sampleValue": "Property rent is $2,940 per month. Market median data is not available for comparison."
+    },
+    "marketInsights.impact": {
+      "type": "string",
+      "path": "marketInsights[0].impact",
+      "sampleValue": "Neutral"
+    },
+    "marketInsights.confidence": {
+      "type": "number",
+      "path": "marketInsights[0].confidence",
+      "sampleValue": 50
+    },
+    "marketInsights.dataSource": {
+      "type": "string",
+      "path": "marketInsights[0].dataSource",
+      "sampleValue": "RentCast"
+    },
+    "marketInsights.metrics.propertyRent": {
+      "type": "number",
+      "path": "marketInsights[0].metrics.propertyRent",
+      "sampleValue": 2940
+    },
+    "marketInsights.metrics.marketMedian": {
+      "type": "number",
+      "path": "marketInsights[0].metrics.marketMedian",
+      "sampleValue": 0
+    },
+    "marketInsights.metrics.differencePercent": {
+      "type": "number",
+      "path": "marketInsights[0].metrics.differencePercent",
+      "sampleValue": 0
+    },
+    "investmentTiming.recommendation": {
+      "type": "string",
+      "path": "investmentTiming.recommendation",
+      "sampleValue": "Hold"
+    },
+    "investmentTiming.confidence": {
+      "type": "number",
+      "path": "investmentTiming.confidence",
+      "sampleValue": 60
+    },
+    "investmentTiming.marketCycle": {
+      "type": "string",
+      "path": "investmentTiming.marketCycle",
+      "sampleValue": "Peak"
+    },
+    "investmentTiming.timingScore": {
+      "type": "number",
+      "path": "investmentTiming.timingScore",
+      "sampleValue": 50
+    },
+    "investmentTiming.marketSignals.interestRateSignal": {
+      "type": "number",
+      "path": "investmentTiming.marketSignals.interestRateSignal",
+      "sampleValue": -0.2857142857142858
+    },
+    "investmentTiming.marketSignals.inflationSignal": {
+      "type": "number",
+      "path": "investmentTiming.marketSignals.inflationSignal",
+      "sampleValue": 0
+    },
+    "investmentTiming.marketSignals.housingSupplySignal": {
+      "type": "number",
+      "path": "investmentTiming.marketSignals.housingSupplySignal",
+      "sampleValue": 0.1428571428571429
+    },
+    "investmentTiming.marketSignals.economicGrowthSignal": {
+      "type": "number",
+      "path": "investmentTiming.marketSignals.economicGrowthSignal",
+      "sampleValue": 0.125
+    },
+    "investmentTiming.marketSignals.overallSignal": {
+      "type": "number",
+      "path": "investmentTiming.marketSignals.overallSignal",
+      "sampleValue": -0.004464285714285726
+    }
+  }
+}

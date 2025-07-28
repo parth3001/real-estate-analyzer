@@ -106,6 +106,9 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     console.log('Turnover Cost Impact:', (turnoverCosts / grossIncome) * 100);
     console.log('=====================================');
 
+    // Calculate loan amount for debt yield calculation
+    const loanAmount = this.data.purchasePrice - this.data.downPayment;
+    
     // Use unified calculation engine for all metrics
     const commonMetrics = {
       noi,
@@ -113,14 +116,26 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       cashOnCashReturn: FinancialCalculations.calculateCashOnCashReturn(cashFlow, totalInvestment),
       dscr: FinancialCalculations.calculateDSCR(noi, annualDebtService),
       operatingExpenseRatio: FinancialCalculations.calculateOperatingExpenseRatio(operatingExpenses, effectiveIncome),
+      debtYield: FinancialCalculations.calculateDebtYield(noi, loanAmount),
+      grossYield: FinancialCalculations.calculateGrossYield(grossIncome, this.data.purchasePrice),
       totalInvestment
     };
     
+    // Calculate reserves analysis
+    const monthlyExpenses = operatingExpenses / 12 + monthlyMortgage;
+    const propertyAge = new Date().getFullYear() - (this.data.yearBuilt || 2000);
+    const reservesAnalysis = FinancialCalculations.calculateRecommendedReserves({
+      monthlyExpenses,
+      propertyAge,
+      marketVolatility: 'medium' // Default to medium, could be dynamic based on market data
+    });
+
     // Get SFR-specific metrics from unified engine
     const sfrMetrics = SFRCalculationEngine.calculatePropertySpecificMetrics(this.data, commonMetrics, this.assumptions);
     
     const metrics: SFRMetrics = {
       ...sfrMetrics,
+      ...commonMetrics, // Include debtYield and grossYield
       noi,
       irr: FinancialCalculations.calculateIRR(this.getIRRCashFlows()),
       
@@ -137,16 +152,25 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       turnoverCostImpact: FinancialCalculations.calculateTurnoverCostImpact(
         turnoverCosts,
         grossIncome
-      )
+      ),
+      
+      // Add reserves analysis
+      reservesAnalysis
     };
 
-    // Log calculated metrics
+    // Log calculated metrics with new additions
     console.log('==== SFR METRICS ====');
     console.log('NOI:', metrics.noi);
     console.log('Cap Rate:', metrics.capRate);
     console.log('Cash on Cash Return:', metrics.cashOnCashReturn);
     console.log('DSCR:', metrics.dscr);
+    console.log('Debt Yield:', commonMetrics.debtYield);
+    console.log('Gross Yield:', commonMetrics.grossYield);
     console.log('Price Per SqFt:', metrics.pricePerSqFt);
+    console.log('Reserves Analysis:', {
+      recommended: reservesAnalysis.recommendedReserves,
+      months: reservesAnalysis.breakdown.baseMonths + reservesAnalysis.breakdown.ageAdjustment + reservesAnalysis.breakdown.marketAdjustment
+    });
     console.log('Rent Per SqFt:', metrics.rentPerSqFt);
     console.log('Break-Even Occupancy:', metrics.breakEvenOccupancy);
     console.log('Equity Multiple:', metrics.equityMultiple);

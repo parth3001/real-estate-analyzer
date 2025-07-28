@@ -246,6 +246,65 @@ export const propertyApi = {
       };
     }
   },
+
+  // Quick calculations for interactive analysis (< 50ms response time)
+  quickCalculate: async (propertyData: PropertyData): Promise<ApiResponse<{
+    monthlyAnalysis: {
+      income: { gross: number; effective: number };
+      expenses: { 
+        operating: number; 
+        debt: number; 
+        total: number;
+        breakdown: any;
+      };
+      cashFlow: number;
+    };
+    keyMetrics: {
+      noi: number;
+      capRate: number;
+      cashOnCashReturn: number;
+      dscr: number;
+      totalInvestment: number;
+    };
+    calculationTime: number;
+    performanceMetrics?: {
+      calculationTime: number;
+      totalResponseTime: number;
+      targetMs: number;
+    };
+  }>> => {
+    try {
+      const response = await api.post('/quick/quick-calculate', propertyData);
+      return {
+        data: response.data.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error with quick calculation:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: {
+            monthlyAnalysis: {
+              income: { gross: 0, effective: 0 },
+              expenses: { operating: 0, debt: 0, total: 0, breakdown: {} },
+              cashFlow: 0
+            },
+            keyMetrics: {
+              noi: 0,
+              capRate: 0,
+              cashOnCashReturn: 0,
+              dscr: 0,
+              totalInvestment: 0
+            },
+            calculationTime: 0
+          },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 // Wizard-specific API interfaces

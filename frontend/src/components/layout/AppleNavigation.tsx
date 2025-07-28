@@ -43,6 +43,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDualMode } from '../../contexts/DualModeContext';
+import { ModeToggle } from '../common/ModeToggle';
 import { appleColors, appleBorderRadius } from '../../theme/appleDesignSystem';
 
 // Apple-style constants
@@ -50,7 +52,8 @@ const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
 
 // Navigation items configuration - preserving all existing routes
-const getNavigationItems = (userRole?: string) => [
+const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
+  const allItems = [
   {
     id: 'dashboard',
     label: 'Dashboard',
@@ -129,6 +132,31 @@ const getNavigationItems = (userRole?: string) => [
   }
 ];
 
+  // Filter navigation items based on mode
+  if (userMode === 'novice') {
+    return allItems.filter(item => {
+      // Hide advanced features in novice mode
+      const noviceHiddenItems = ['market-data', 'admin', 'census-test'];
+      
+      if (noviceHiddenItems.includes(item.id)) {
+        return false;
+      }
+      
+      // For analysis submenu, hide multi-family analysis in novice mode
+      if (item.id === 'analysis' && item.submenu) {
+        item.submenu = item.submenu.filter((subItem: any) => 
+          subItem.id !== 'mf-analysis' // Hide multi-family for novice users
+        );
+      }
+      
+      return true;
+    });
+  }
+  
+  // Return all items for pro mode
+  return allItems;
+};
+
 // Main Navigation Component
 interface AppleNavigationProps {
   children?: React.ReactNode;
@@ -140,6 +168,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuth();
+  const { mode } = useDualMode();
   
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Responsive default
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -150,7 +179,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
     admin: false
   });
 
-  const navigationItems = getNavigationItems(user?.role);
+  const navigationItems = getNavigationItems(user?.role, mode);
 
   // Handle sidebar toggle
   const handleSidebarToggle = () => {
@@ -492,6 +521,13 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           <Typography variant="h6" fontWeight={600} color="text.primary">
             {getPageTitle(location.pathname)}
           </Typography>
+          
+          {/* Dual-Mode Toggle - only for authenticated users */}
+          {user && (
+            <Box sx={{ ml: 4 }}>
+              <ModeToggle />
+            </Box>
+          )}
         </Box>
 
         <Box display="flex" alignItems="center" gap={1}>

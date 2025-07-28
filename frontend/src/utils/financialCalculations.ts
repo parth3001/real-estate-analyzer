@@ -100,6 +100,81 @@ export function calculateCashOnCashReturn(annualCashFlow: number, totalInvestmen
  * @returns DSCR as a ratio
  */
 export function calculateDSCR(noi: number, debtService: number): number {
-  if (!debtService) return 0;
+  if (!debtService) return Infinity;
   return noi / debtService;
+}
+
+/**
+ * Calculate monthly mortgage payment using standard amortization formula
+ * P = L[c(1 + c)^n]/[(1 + c)^n - 1]
+ */
+export const calculateMonthlyMortgagePayment = (
+  principal: number,
+  annualInterestRate: number,
+  loanTermYears: number
+): number => {
+  if (principal <= 0 || loanTermYears <= 0) return 0
+  
+  // Handle zero interest rate case
+  if (annualInterestRate === 0) {
+    return principal / (loanTermYears * 12)
+  }
+  
+  const monthlyRate = annualInterestRate / 100 / 12
+  const numberOfPayments = loanTermYears * 12
+  
+  const payment = principal * 
+    (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+    (Math.pow(1 + monthlyRate, numberOfPayments) - 1)
+  
+  return payment
+}
+
+/**
+ * Calculate Operating Expense Ratio
+ * OER = (Operating Expenses / Gross Income) * 100
+ */
+export const calculateOperatingExpenseRatio = (
+  operatingExpenses: number,
+  grossIncome: number
+): number => {
+  if (grossIncome === 0) return 0
+  return (operatingExpenses / grossIncome) * 100
+}
+
+/**
+ * Calculate Gross Rent Multiplier (GRM)
+ * GRM = Property Value / Annual Gross Rent
+ */
+export const calculateGrossRentMultiplier = (
+  propertyValue: number,
+  monthlyRent: number
+): number => {
+  if (monthlyRent === 0) return 0
+  const annualRent = monthlyRent * 12
+  return propertyValue / annualRent
+}
+
+/**
+ * Calculate 1% Rule Performance
+ * 1% Rule = (Monthly Rent / Property Value) * 100
+ */
+export const calculateOnePercentRule = (
+  monthlyRent: number,
+  propertyValue: number
+): number => {
+  if (propertyValue === 0) return 0
+  return (monthlyRent / propertyValue) * 100
+}
+
+/**
+ * Calculate Break-Even Occupancy Rate
+ * Break-Even = (Total Expenses / Gross Income) * 100
+ */
+export const calculateBreakEvenOccupancy = (
+  totalExpenses: number,
+  grossIncome: number
+): number => {
+  if (grossIncome === 0) return 0
+  return (totalExpenses / grossIncome) * 100
 } 

@@ -173,6 +173,82 @@ export class FinancialCalculations {
   }
 
   /**
+   * Calculate Debt Yield - Important for lender underwriting
+   * Shows how much income property generates relative to loan amount
+   */
+  static calculateDebtYield(noi: number, loanAmount: number): number {
+    return loanAmount > 0 ? (noi / loanAmount) * 100 : 0;
+  }
+
+  /**
+   * Calculate Gross Yield - Annual rent as percentage of purchase price
+   * Quick metric for initial property screening
+   */
+  static calculateGrossYield(annualRent: number, purchasePrice: number): number {
+    return purchasePrice > 0 ? (annualRent / purchasePrice) * 100 : 0;
+  }
+
+  /**
+   * Calculate recommended cash reserves based on property profile
+   * Considers property age, monthly expenses, and market volatility
+   */
+  static calculateRecommendedReserves(params: {
+    monthlyExpenses: number;
+    propertyAge?: number;
+    marketVolatility?: 'low' | 'medium' | 'high';
+  }): {
+    minimumReserves: number;
+    recommendedReserves: number;
+    optimalReserves: number;
+    breakdown: {
+      baseMonths: number;
+      ageAdjustment: number;
+      marketAdjustment: number;
+    };
+  } {
+    const { monthlyExpenses, propertyAge = 10, marketVolatility = 'medium' } = params;
+    
+    // Base: 3 months for newer properties, up to 6 months for older
+    let baseMonths = 3;
+    let ageAdjustment = 0;
+    
+    if (propertyAge > 30) {
+      ageAdjustment = 2; // Add 2 months for properties over 30 years
+    } else if (propertyAge > 15) {
+      ageAdjustment = 1; // Add 1 month for properties 15-30 years
+    }
+    
+    // Market volatility adjustment
+    let marketAdjustment = 0;
+    switch (marketVolatility) {
+      case 'high':
+        marketAdjustment = 2;
+        break;
+      case 'medium':
+        marketAdjustment = 1;
+        break;
+      case 'low':
+        marketAdjustment = 0;
+        break;
+    }
+    
+    const minimumMonths = baseMonths;
+    const recommendedMonths = baseMonths + ageAdjustment + marketAdjustment;
+    const optimalMonths = recommendedMonths + 2; // Conservative approach
+    
+    return {
+      minimumReserves: monthlyExpenses * minimumMonths,
+      recommendedReserves: monthlyExpenses * recommendedMonths,
+      optimalReserves: monthlyExpenses * optimalMonths,
+      breakdown: {
+        baseMonths,
+        ageAdjustment,
+        marketAdjustment
+      }
+    };
+  }
+
+  /**
    * Calculate Price per Square Foot
    */
   static calculatePricePerSqFt(price: number, squareFootage: number): number {

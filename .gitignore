@@ -9,6 +9,14 @@ backend/coverage/
 frontend/coverage/
 **/coverage/
 
+# Cypress test reports and artifacts
+backend/cypress/reports/
+backend/cypress/videos/
+backend/cypress/screenshots/
+**/cypress/reports/
+**/cypress/videos/
+**/cypress/screenshots/
+
 # Production
 /build
 /dist

@@ -140,7 +140,30 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         weaknesses: aiResponse.weaknesses || [],
         recommendations: aiResponse.recommendations || [],
         riskAssessment: aiResponse.riskAssessment,
-        investmentScore: typeof aiResponse.investmentScore === 'number' ? aiResponse.investmentScore : null,
+        investmentScore: (() => {
+          // CRITICAL: Override AI investment score if deal has red flags
+          let finalScore = typeof aiResponse.investmentScore === 'number' ? aiResponse.investmentScore : null;
+          
+          if (finalScore !== null) {
+            const cashFlow = analysis?.monthlyAnalysis?.cashFlow || 0;
+            const cocReturn = analysis?.keyMetrics?.cashOnCashReturn;
+            const dscr = analysis?.keyMetrics?.dscr;
+            
+            // Apply critical override logic
+            if (cashFlow < 0 && cocReturn < 0 && dscr < 1.0) {
+              finalScore = Math.min(finalScore, 15); // Triple red flag
+              logger.warn('AI score overridden: Triple red flags detected', { originalScore: aiResponse.investmentScore, finalScore });
+            } else if ((cashFlow < 0 && cocReturn < 0) || (cashFlow < 0 && dscr < 1.0) || (cocReturn < 0 && dscr < 1.0)) {
+              finalScore = Math.min(finalScore, 25); // Double red flag
+              logger.warn('AI score overridden: Double red flags detected', { originalScore: aiResponse.investmentScore, finalScore });
+            } else if (cashFlow < 0 || cocReturn < 0 || dscr < 1.0) {
+              finalScore = Math.min(finalScore, 35); // Single red flag
+              logger.warn('AI score overridden: Single red flag detected', { originalScore: aiResponse.investmentScore, finalScore });
+            }
+          }
+          
+          return finalScore;
+        })(),
         scoreBreakdown: scoreBreakdown, // Add the calculated score breakdown
         
         // Property-specific insights
@@ -245,15 +268,30 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
   const scoreBreakdown: ScoreBreakdown = {};
   
   try {
-    // Cash Flow Score (0-100)
+    // Cash Flow Score (0-100) - CRITICAL: Negative cash flow should severely penalize score
     const cashFlow = analysis?.monthlyAnalysis?.cashFlow || 0;
-    const cashFlowScore = Math.min(100, Math.max(0, (cashFlow > 0 ? 70 : 30) + (cashFlow / 500 * 30)));
+    let cashFlowScore: number;
+    let cashFlowReason: string;
+    
+    if (cashFlow >= 500) {
+      cashFlowScore = 90 + Math.min(10, cashFlow / 1000 * 10); // Excellent: 90-100
+      cashFlowReason = `Excellent cash flow of $${cashFlow.toFixed(0)}/month indicates strong rental performance`;
+    } else if (cashFlow >= 200) {
+      cashFlowScore = 70 + (cashFlow - 200) / 300 * 20; // Good: 70-90
+      cashFlowReason = `Good cash flow of $${cashFlow.toFixed(0)}/month shows solid rental performance`;
+    } else if (cashFlow >= 0) {
+      cashFlowScore = 50 + cashFlow / 200 * 20; // Break-even to fair: 50-70
+      cashFlowReason = `Break-even cash flow of $${cashFlow.toFixed(0)}/month - minimal rental returns`;
+    } else {
+      // CRITICAL: Negative cash flow should be heavily penalized
+      cashFlowScore = Math.max(5, 25 + (cashFlow / 500 * 20)); // Poor: 5-25
+      cashFlowReason = `NEGATIVE cash flow of $${Math.abs(cashFlow).toFixed(0)}/month creates wealth drain - requires immediate attention`;
+    }
+    
     scoreBreakdown.cashFlow = {
-      score: Math.round(cashFlowScore),
+      score: Math.round(Math.max(0, Math.min(100, cashFlowScore))),
       max: 100,
-      reason: cashFlow > 0 ? 
-        `Positive cash flow of $${cashFlow.toFixed(0)}/month indicates good rental performance` :
-        `Negative cash flow of $${Math.abs(cashFlow).toFixed(0)}/month requires careful consideration`
+      reason: cashFlowReason
     };
 
     // Market Position Score (0-100) 
@@ -308,8 +346,8 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
       }
     }
     
-    // Cash-on-Cash Return component (25 points)
-    if (keyMetrics.cashOnCashReturn) {
+    // Cash-on-Cash Return component (25 points) - CRITICAL: Negative returns should kill the score
+    if (keyMetrics.cashOnCashReturn !== undefined) {
       if (keyMetrics.cashOnCashReturn >= 12) {
         financialScore += 25;
         financialFactors.push('excellent CoC return');
@@ -319,9 +357,13 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
       } else if (keyMetrics.cashOnCashReturn >= 4) {
         financialScore += 5;
         financialFactors.push('moderate CoC return');
-      } else {
-        financialScore -= 10;
+      } else if (keyMetrics.cashOnCashReturn >= 0) {
+        financialScore -= 5;
         financialFactors.push('low CoC return');
+      } else {
+        // CRITICAL: Negative cash-on-cash return should severely penalize
+        financialScore -= 30;
+        financialFactors.push('NEGATIVE CoC return - wealth destroyer');
       }
     }
     
@@ -336,17 +378,21 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
     let riskScore = 70; // Start with moderate risk score
     let riskFactors: string[] = [];
     
-    // DSCR Risk Factor
-    if (keyMetrics.dscr) {
+    // DSCR Risk Factor - CRITICAL: DSCR below 1.0 means can't cover debt payments
+    if (keyMetrics.dscr !== undefined) {
       if (keyMetrics.dscr >= 1.5) {
         riskScore += 15;
         riskFactors.push('strong debt coverage');
-      } else if (keyMetrics.dscr >= 1.2) {
+      } else if (keyMetrics.dscr >= 1.25) {
         riskScore += 5;
         riskFactors.push('adequate debt coverage');
-      } else if (keyMetrics.dscr < 1.0) {
-        riskScore -= 20;
-        riskFactors.push('insufficient debt coverage');
+      } else if (keyMetrics.dscr >= 1.0) {
+        riskScore -= 5;
+        riskFactors.push('marginal debt coverage');
+      } else {
+        // CRITICAL: DSCR below 1.0 is extremely dangerous
+        riskScore -= 35;
+        riskFactors.push(`DANGEROUS: DSCR of ${keyMetrics.dscr.toFixed(2)} means insufficient income to cover debt payments`);
       }
     }
     
@@ -379,11 +425,55 @@ function generateScoreBreakdown(analysis: any, marketAnalysis: any): ScoreBreakd
       reason: `Risk assessment based on ${riskFactors.length > 0 ? riskFactors.join(', ') : 'available risk indicators'}`
     };
 
-    logger.info('Score breakdown generated successfully', { 
+    // CRITICAL OVERRIDE: Apply deal-killer logic
+    const dealKillers = [];
+    let overallScoreReduction = 0;
+    
+    // Deal Killer 1: Negative Cash Flow
+    if (cashFlow < 0) {
+      dealKillers.push(`Negative cash flow: $${Math.abs(cashFlow).toFixed(0)}/month`);
+      overallScoreReduction += 25; // Major penalty
+    }
+    
+    // Deal Killer 2: Negative Cash-on-Cash Return  
+    if (keyMetrics.cashOnCashReturn && keyMetrics.cashOnCashReturn < 0) {
+      dealKillers.push(`Negative cash-on-cash return: ${keyMetrics.cashOnCashReturn.toFixed(2)}%`);
+      overallScoreReduction += 20; // Major penalty
+    }
+    
+    // Deal Killer 3: DSCR below 1.0 (can't cover debt payments)
+    if (keyMetrics.dscr && keyMetrics.dscr < 1.0) {
+      dealKillers.push(`Insufficient debt coverage: DSCR ${keyMetrics.dscr.toFixed(2)}`);
+      overallScoreReduction += 30; // Severe penalty
+    }
+    
+    // Deal Killer 4: Multiple red flags compound the problem
+    if (dealKillers.length >= 2) {
+      overallScoreReduction += 15; // Additional penalty for multiple issues
+    }
+    
+    // Apply the reduction to all component scores
+    if (overallScoreReduction > 0) {
+      scoreBreakdown.cashFlow.score = Math.max(5, scoreBreakdown.cashFlow.score - overallScoreReduction);
+      scoreBreakdown.financialMetrics.score = Math.max(5, scoreBreakdown.financialMetrics.score - overallScoreReduction);
+      scoreBreakdown.riskAssessment.score = Math.max(5, scoreBreakdown.riskAssessment.score - overallScoreReduction);
+      
+      // Add deal killer warning to breakdown
+      scoreBreakdown.dealKillers = {
+        score: Math.max(5, 100 - overallScoreReduction),
+        max: 100,
+        reason: `CRITICAL ISSUES: ${dealKillers.join('; ')}. This property has fundamental problems that make it a poor investment.`
+      };
+    }
+
+    logger.info('Score breakdown generated with deal-killer analysis', { 
       cashFlow: scoreBreakdown.cashFlow?.score,
       marketPosition: scoreBreakdown.marketPosition?.score,
       financialMetrics: scoreBreakdown.financialMetrics?.score,
-      riskAssessment: scoreBreakdown.riskAssessment?.score
+      riskAssessment: scoreBreakdown.riskAssessment?.score,
+      dealKillersCount: dealKillers.length,
+      overallScoreReduction,
+      dealKillers
     });
 
   } catch (error) {
@@ -559,9 +649,29 @@ function parseTextResponseToStructured(textResponse: string): any {
       // Extract JSON from markdown code block if needed
       let jsonText = textResponse.trim();
       if (jsonText.startsWith('```json')) {
-        const jsonMatch = jsonText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-        if (jsonMatch) {
-          jsonText = jsonMatch[1];
+        // More robust extraction - find the opening brace and match it with closing brace
+        const startIndex = jsonText.indexOf('{');
+        if (startIndex !== -1) {
+          let braceCount = 0;
+          let endIndex = startIndex;
+          
+          for (let i = startIndex; i < jsonText.length; i++) {
+            if (jsonText[i] === '{') braceCount++;
+            if (jsonText[i] === '}') braceCount--;
+            if (braceCount === 0) {
+              endIndex = i;
+              break;
+            }
+          }
+          
+          if (braceCount === 0) {
+            jsonText = jsonText.substring(startIndex, endIndex + 1);
+            logger.info('Extracted JSON from markdown:', {
+              originalLength: textResponse.length,
+              extractedLength: jsonText.length,
+              extractedStart: jsonText.substring(0, 100)
+            });
+          }
         }
       }
       
@@ -593,6 +703,15 @@ function parseTextResponseToStructured(textResponse: string): any {
         aiInvestmentScore: parsed.investmentScore,
         intelligenceScore: intelligenceData.intelligenceScore,
         sophisticationLevel: intelligenceData.sophisticationLevel
+      });
+      
+      // Log the investment score being returned
+      logger.info('AI Service returning investment score:', {
+        investmentScore: finalResponse.investmentScore,
+        fromParsed: parsed.investmentScore,
+        fromAIScore: parsed.aiInvestmentScore,
+        finalScore: finalResponse.investmentScore,
+        type: typeof finalResponse.investmentScore
       });
       
       // Return the properly parsed JSON response - don't continue to text parsing
@@ -679,12 +798,36 @@ function parseTextResponseToStructured(textResponse: string): any {
   const summaryMatch = formattedResponse.match(/^([^🎯📈🔨⚡🛡️🏦💡🧠🚨\n]{100,500})/);
   const briefSummary = summaryMatch ? summaryMatch[1].trim() : "Strategic AI analysis with market intelligence and data-driven insights.";
 
+  // Log the investment score being used
+  logger.info('AI Service (text parsing) setting investment score:', {
+    investmentScore: investmentScore,
+    type: typeof investmentScore,
+    isNull: investmentScore === null,
+    isNumber: typeof investmentScore === 'number'
+  });
+  
   const structuredResponse = {
     summary: briefSummary,
     strengths: ["Strategic analysis provided - see detailed insights below"],
     weaknesses: ["Market considerations noted in analysis"],
     recommendations: ["See strategic insights for actionable recommendations"],
-    investmentScore: investmentScore,
+    investmentScore: (() => {
+      // CRITICAL: Apply conservative scoring for text-parsed results
+      let finalScore = investmentScore;
+      
+      if (finalScore !== null && finalScore > 40) {
+        // For text parsing without direct access to analysis data,
+        // be conservative with high scores
+        finalScore = Math.min(finalScore, 40);
+        logger.info('Text-parsed AI score conservatively capped at 40', { 
+          originalScore: investmentScore, 
+          finalScore,
+          reason: 'Text parsing cannot validate critical financial metrics' 
+        });
+      }
+      
+      return finalScore;
+    })(),
     strategicAnalysis: formattedResponse, // NEW: Single comprehensive analysis
     strategicInsights: formattedResponse, // Full analysis as strategic insights
     notes: 'Complete strategic analysis provided',

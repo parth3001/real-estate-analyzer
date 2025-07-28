@@ -316,3 +316,141 @@ export const logout = async (req: AuthenticatedRequest, res: Response): Promise<
     res.status(500).json({ error: 'Logout failed' });
   }
 };
+
+/**
+ * Validation rules for dual-mode preferences
+ */
+export const validateDualModeUpdate = [
+  body('mode')
+    .isIn(['novice', 'pro'])
+    .withMessage('Mode must be either "novice" or "pro"'),
+  
+  body('targetPersona')
+    .optional()
+    .isIn(['learning', 'experienced', 'data_analyst', 'speed_scanner'])
+    .withMessage('Target persona must be a valid persona type')
+];
+
+/**
+ * Get current user's dual-mode preference
+ */
+export const getDualMode = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    logger.info(`[AuthController] Dual-mode get request for user: ${userId}`);
+
+    const user = await authService.getUserProfile(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Return dual-mode preferences or defaults
+    const dualModePrefs = user.dualModePreferences || {
+      currentMode: 'novice',
+      personaMapping: {
+        novice: 'learning',
+        pro: 'experienced'
+      },
+      onboardingCompleted: false,
+      modeHistory: [],
+      preferences: {
+        showEducationalTooltips: true,
+        defaultAnalysisComplexity: 'basic'
+      }
+    };
+
+    res.json({ 
+      dualModePreferences: dualModePrefs,
+      currentMode: dualModePrefs.currentMode,
+      personaMapping: dualModePrefs.personaMapping
+    });
+  } catch (error) {
+    logger.error('[AuthController] Get dual-mode error:', error);
+    res.status(500).json({ error: 'Failed to get dual-mode preferences' });
+  }
+};
+
+/**
+ * Update user's dual-mode preference
+ */
+export const updateDualMode = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    // Check for validation errors
+    if (handleValidationErrors(req, res)) return;
+
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const { mode, targetPersona } = req.body;
+
+    logger.info(`[AuthController] Dual-mode update request for user: ${userId}, mode: ${mode}`);
+
+    const user = await authService.updateDualModePreferences(userId, {
+      currentMode: mode,
+      targetPersona
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    logger.info(`[AuthController] Dual-mode updated for user: ${user.email}, new mode: ${mode}`);
+    res.json({
+      message: 'Dual-mode preference updated successfully',
+      currentMode: user.dualModePreferences?.currentMode || mode,
+      personaMapping: user.dualModePreferences?.personaMapping
+    });
+  } catch (error) {
+    logger.error('[AuthController] Update dual-mode error:', error);
+    res.status(500).json({ error: 'Failed to update dual-mode preference' });
+  }
+};
+
+/**
+ * Complete dual-mode onboarding
+ */
+export const completeDualModeOnboarding = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const { preferredMode, personaMapping } = req.body;
+
+    logger.info(`[AuthController] Dual-mode onboarding completion for user: ${userId}`);
+
+    const user = await authService.completeDualModeOnboarding(userId, {
+      preferredMode: preferredMode || 'novice',
+      personaMapping: personaMapping || {
+        novice: 'learning',
+        pro: 'experienced'
+      }
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    logger.info(`[AuthController] Dual-mode onboarding completed for user: ${user.email}`);
+    res.json({
+      message: 'Dual-mode onboarding completed successfully',
+      dualModePreferences: user.dualModePreferences
+    });
+  } catch (error) {
+    logger.error('[AuthController] Complete dual-mode onboarding error:', error);
+    res.status(500).json({ error: 'Failed to complete dual-mode onboarding' });
+  }
+};

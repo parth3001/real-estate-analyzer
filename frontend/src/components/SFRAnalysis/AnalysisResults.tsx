@@ -36,21 +36,49 @@ import {
   ExpandLess as ExpandLessIcon,
   Info as InfoIcon,
   Warning as WarningIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  Tune as TuneIcon,
+  Build as FixIcon,
+  Assessment as ScenarioIcon
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
+import ProMetricsBar from './ProMetricsBar';
+import DynamicSliders from './DynamicSliders';
+import DealFixer from './DealFixer';
+import ScenarioManager from './ScenarioManager';
+import StressTestingDashboard from './StressTestingDashboard';
+import { useDualMode, type UserMode } from '../../contexts/DualModeContext';
+import { NoviceGuidance } from '../common/NoviceGuidance';
+import { EducationalTooltip } from '../common/EducationalTooltip';
 
 interface AnalysisResultsProps {
   analysis: any; // Your existing Analysis type
   propertyData: any; // Your existing PropertyData type
   setAnalysis?: (analysis: any) => void;
+  setPropertyData?: (data: any) => void; // Function to update property data
+  onParameterChange?: (data: any) => Promise<void>; // Handler for parameter changes
+  onApplyFix?: (data: any, description: string) => Promise<void>; // Handler for deal fixes
+  onLoadScenario?: (data: any) => Promise<void>; // Handler for loading scenarios
+  isRecalculating?: boolean; // Loading state for real-time updates
 }
 
-const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyData }) => {
+const AnalysisResults: React.FC<AnalysisResultsProps> = ({ 
+  analysis, 
+  propertyData, 
+  setAnalysis,
+  setPropertyData,
+  onParameterChange,
+  onApplyFix,
+  onLoadScenario,
+  isRecalculating = false
+}) => {
+  const { mode } = useDualMode();
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
+  const [showAllMetricIntelligence, setShowAllMetricIntelligence] = useState(false);
   
   // Debug: Log the analysis structure
   console.log('AnalysisResults - analysis object:', analysis);
@@ -59,15 +87,24 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   console.log('AnalysisResults - annualAnalysis (removed - using longTermAnalysis):', 'REMOVED');
   console.log('AnalysisResults - longTermAnalysis:', analysis?.longTermAnalysis);
 
-  // Analysis sections for horizontal navigation
-  const analysisSections = [
+  // Analysis sections for horizontal navigation - filter based on mode
+  const allAnalysisSections = [
     { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights' },
     { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis' },
     { id: 'projections', label: 'Long-term Projections', icon: TrendingUpIcon, description: '10-year forecasts' },
+    { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time' },
+    { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns' },
+    { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios' },
     { id: 'risk', label: 'Risk & Intelligence', icon: ShieldIcon, description: 'Risk analysis and market data' },
+    { id: 'stress', label: 'Stress Testing', icon: WarningIcon, description: 'Stress scenarios and risk heat maps' },
     { id: 'market', label: 'Market Analysis', icon: AssessmentIcon, description: 'Market trends and economics' },
     { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison' }
   ];
+
+  // Filter sections based on mode
+  const analysisSections = mode === 'novice' 
+    ? allAnalysisSections.filter(section => ['overview', 'financial', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
+    : allAnalysisSections;
 
   // Hero Metrics (Top 4 most important)
   const heroMetrics = [
@@ -467,10 +504,70 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           </Box>
         </Box>
 
+        {/* Strengths and Considerations */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+              <TargetIcon sx={{ fontSize: 16, mr: 1 }} />
+              Key Strengths
+            </Typography>
+            <Box sx={{ pl: 2 }}>
+              {analysis?.aiInsights?.strengths?.length > 0 ? (
+                analysis.aiInsights.strengths.slice(0, 4).map((strength: string, index: number) => (
+                  <Typography key={index} variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • {strength}
+                  </Typography>
+                ))
+              ) : (
+                <>
+                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • Strong long-term appreciation potential
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • Below market purchase price advantage
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • Growing market with good fundamentals
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    • Solid cap rate for the area
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+              <WarningIcon sx={{ fontSize: 16, mr: 1 }} />
+              Considerations
+            </Typography>
+            <Box sx={{ pl: 2 }}>
+              {analysis?.aiInsights?.weaknesses?.length > 0 ? (
+                analysis.aiInsights.weaknesses.slice(0, 3).map((weakness: string, index: number) => (
+                  <Typography key={index} variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • {weakness}
+                  </Typography>
+                ))
+              ) : (
+                <>
+                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • Monitor cash flow requirements
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
+                    • Consider market conditions
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    • Review rental market trends
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
 
         {/* AI Recommendations */}
-        {analysis?.aiInsights?.recommendations?.length > 0 && 
-         !analysis.aiInsights.recommendations[0].includes('See strategic insights') && (
+        {analysis?.aiInsights?.recommendations?.length > 0 && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
               <AutoAwesome sx={{ fontSize: 16, mr: 1 }} />
@@ -487,8 +584,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
         )}
 
         {/* Risk Assessment */}
-        {analysis?.aiInsights?.riskAssessment && 
-         !analysis.aiInsights.riskAssessment.includes('Risk analysis included in strategic assessment') && (
+        {analysis?.aiInsights?.riskAssessment && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
               <ShieldIcon sx={{ fontSize: 16, mr: 1 }} />
@@ -537,14 +633,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
             borderRadius: '12px' 
           }}
         >
-          {analysis?.aiInsights?.summary && 
-           !analysis.aiInsights.summary.includes('Investment analysis complete') &&
-           !analysis.aiInsights.summary.includes('Strategic analysis with market intelligence') ? (
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              <InfoIcon sx={{ fontSize: 14, mr: 1, verticalAlign: 'middle' }} />
-              {analysis.aiInsights.summary}
-            </Typography>
-          ) : null}
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            <InfoIcon sx={{ fontSize: 14, mr: 1, verticalAlign: 'middle' }} />
+            {analysis?.aiInsights?.summary || 
+             "This property shows potential but requires careful consideration of all factors. Review the detailed analysis below for comprehensive insights."}
+          </Typography>
         </Box>
       </CardContent>
     </Card>
@@ -769,51 +862,123 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
       case 'overview':
         return (
           <Box>
-            <AIInsightsCard />
+            {/* AI Insights Card removed from overview - now only in Risk section for learning mode */}
             
-            {/* Hero Metrics */}
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-              Hero Metrics
-            </Typography>
+            {/* Pro Mode - Condensed Metrics Bar */}
+            {mode === 'pro' && (
+              <ProMetricsBar
+                title="KEY METRICS AT A GLANCE"
+                metrics={[
+                  ...heroMetrics,
+                  ...keyFinancialMetrics.slice(0, 4) // Add first 4 financial metrics
+                ]}
+              />
+            )}
             
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {heroMetrics.map((metric, index) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-                  <AppleMetricCard metric={metric} />
+            {/* Hero Metrics - Detailed view for novice, hidden for pro (shown in bar above) */}
+            {mode === 'novice' && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h5" fontWeight={600}>
+                    Key Investment Numbers
+                  </Typography>
+                  <EducationalTooltip
+                    title="Investment Metrics"
+                    description="These are the most important numbers to understand if this property is a good investment. Green means good, yellow means okay, red means be careful."
+                    whyItMatters="These metrics tell you if you'll make money on this property and how much risk you're taking."
+                  />
+                </Box>
+            
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  {heroMetrics.map((metric, index) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                      <AppleMetricCard metric={metric} />
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
-
-            {/* Intelligence Multiplier - Professional Analysis */}
-            <IntelligenceMultiplier aiInsights={analysis?.aiInsights} />
+              </>
+            )}
 
             {/* Key Financial Metrics */}
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-              Key Financial Metrics
-            </Typography>
-            
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {keyFinancialMetrics.map((metric, index) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
-                  <AppleMetricCard metric={metric} />
+            {mode === 'novice' && (
+              <>
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                  Additional Financial Details
+                </Typography>
+                
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  {keyFinancialMetrics.map((metric, index) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
+                      <AppleMetricCard metric={metric} />
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
 
-            {/* Advanced Analytics */}
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-              Advanced Analytics
-            </Typography>
-            
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {advancedMetrics.slice(0, 12).map((metric, index) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
-                  <AppleMetricCard metric={metric} />
+                {/* Advanced Analytics - Show/Hide for novice mode */}
+                {!showAdvancedMetrics && (
+                  <>
+                    <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                      Advanced Analytics Preview
+                    </Typography>
+                    
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                      {advancedMetrics.slice(0, 8).map((metric, index) => (
+                        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
+                          <AppleMetricCard metric={metric} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </>
+                )}
+
+                {/* AI Investment Analysis - Only show in learning mode in overview section */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2, mt: 3 }}>
+                    🧠 Professional Investment Intelligence
+                  </Typography>
+                  <IntelligenceMultiplier aiInsights={analysis?.aiInsights} />
+                </Box>
+
+                {/* Show More Button for Novice Mode */}
+                {!showAdvancedMetrics && (
+                  <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => setShowAdvancedMetrics(true)}
+                      startIcon={<ExpandMoreIcon />}
+                      sx={{ 
+                        borderRadius: '12px',
+                        backgroundColor: appleColors.blue[500],
+                        '&:hover': {
+                          backgroundColor: appleColors.blue[600]
+                        }
+                      }}
+                    >
+                      Show Advanced Analytics
+                    </Button>
+                  </Box>
+                )}
+              </>
+            )}
+
+            {/* Advanced Analytics for Pro Mode or when expanded */}
+            {(mode === 'pro' || showAdvancedMetrics) && (
+              <>
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                  Complete Financial Analysis
+                </Typography>
+                
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  {advancedMetrics.map((metric, index) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
+                      <AppleMetricCard metric={metric} />
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
 
             <AdvancedMetricsSection />
+              </>
+            )}
           </Box>
         );
         
@@ -890,27 +1055,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
               </CardContent>
             </Card>
 
-            {/* Professional Metric Analysis for Financial Metrics */}
-            {analysis?.aiInsights?.metricIntelligence && (
-              <Card sx={{ mt: 3, borderRadius: '16px', mb: 4 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight={600} mb={2}>
-                    Professional Metric Analysis
-                  </Typography>
-                  {analysis.aiInsights.metricIntelligence.slice(0, 4).map((metric: any, index: number) => (
-                    <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} color="primary.main">
-                        {metric.metricName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {metric.proInsight}
-                      </Typography>
-                    </Box>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
             {/* Comprehensive Metrics Grid */}
             <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
               All Financial Metrics
@@ -940,6 +1084,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                   Year-by-Year Projections
                 </Typography>
                 
+                {/* Debug info */}
+                <Box sx={{ mb: 2, p: 2, backgroundColor: appleColors.gray[50], borderRadius: '8px' }}>
+                  <Typography variant="caption">
+                    Debug: Has longTermAnalysis: {analysis?.longTermAnalysis ? 'Yes' : 'No'} | 
+                    Has projections: {analysis?.longTermAnalysis?.projections ? 'Yes' : 'No'} | 
+                    Projections length: {analysis?.longTermAnalysis?.projections?.length || 0}
+                  </Typography>
+                </Box>
                 
                 {analysis?.longTermAnalysis?.projections && analysis.longTermAnalysis.projections.length > 0 ? (
                   <TableContainer>
@@ -964,8 +1116,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                       </TableHead>
                       <TableBody>
                         {analysis.longTermAnalysis.projections.map((projection: any, index: number) => {
-                          // Use backend-calculated operating expenses (no frontend calculations)
-                          const totalExpenses = projection.operatingExpenses || 0;
+                          // Calculate total operating expenses
+                          const totalExpenses = (projection.propertyTax || 0) + 
+                                               (projection.insurance || 0) + 
+                                               (projection.maintenance || 0) + 
+                                               (projection.propertyManagement || 0) + 
+                                               (projection.vacancy || 0) + 
+                                               (projection.turnoverCosts || 0) + 
+                                               (projection.capitalImprovements || 0);
                           
                           return (
                             <TableRow key={index} sx={{ 
@@ -1092,126 +1250,173 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
               </Card>
             )}
             
-            {/* Exit Analysis Summary */}
+            {/* Exit Analysis Summary - Tabular Format */}
             <Card sx={{ borderRadius: '16px' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
-                  Exit Analysis Summary
+                  Exit Analysis Summary (Year {propertyData?.longTermAssumptions?.projectionYears || 10})
                 </Typography>
                 
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ p: 3, backgroundColor: appleColors.green[50], borderRadius: '12px' }}>
-                      <Typography variant="h4" fontWeight={700} color={appleColors.green[600]} sx={{ mb: 1 }}>
-                        {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0, 'currency')}
-                      </Typography>
-                      <Typography variant="body2" color={appleColors.gray[600]}>
-                        Projected Sale Price (Year {propertyData?.longTermAssumptions?.projectionYears || 10})
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ p: 3, backgroundColor: appleColors.blue[50], borderRadius: '12px' }}>
-                      <Typography variant="h4" fontWeight={700} color={appleColors.blue[600]} sx={{ mb: 1 }}>
-                        {formatValue(analysis?.longTermAnalysis?.returns?.totalReturn || 0, 'currency')}
-                      </Typography>
-                      <Typography variant="body2" color={appleColors.gray[600]}>
-                        Total Return (Cash Flow + Appreciation)
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-                
-                {/* Exit Analysis Breakdown Table */}
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-                    Exit Analysis Breakdown
-                  </Typography>
-                  
-                  
-                  <TableContainer sx={{ backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600, border: 'none' }}>
-                            Projected Sale Price
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, border: 'none' }}>
-                            {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ pl: 4, color: appleColors.gray[600], border: 'none' }}>
-                            Less: Selling Costs ({propertyData?.longTermAssumptions?.sellingCosts || 6}%)
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: appleColors.red[600], border: 'none' }}>
-                            -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.sellingCosts || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ pl: 4, color: appleColors.gray[600], border: 'none' }}>
-                            Less: Mortgage Payoff
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: appleColors.red[600], border: 'none' }}>
-                            -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.mortgagePayoff || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow sx={{ backgroundColor: appleColors.green[50] }}>
-                          <TableCell sx={{ fontWeight: 700, border: 'none' }}>
-                            Net Proceeds from Sale
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, color: appleColors.green[600], border: 'none' }}>
-                            {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.netProceedsFromSale || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ pl: 4, color: appleColors.gray[600], border: 'none' }}>
-                            Plus: Total Cash Flow ({propertyData?.longTermAssumptions?.projectionYears || 10} years)
-                          </TableCell>
-                          <TableCell align="right" sx={{ 
-                            color: (analysis?.longTermAnalysis?.returns?.totalCashFlow || 0) >= 0 ? appleColors.green[600] : appleColors.red[600], 
-                            border: 'none' 
-                          }}>
-                            {(analysis?.longTermAnalysis?.returns?.totalCashFlow || 0) >= 0 ? '+' : ''}{formatValue(analysis?.longTermAnalysis?.returns?.totalCashFlow || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow sx={{ backgroundColor: appleColors.gray[100] }}>
-                          <TableCell sx={{ fontWeight: 600, border: 'none' }}>
-                            Gross Return (Proceeds + Cash Flow)
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, border: 'none' }}>
-                            {formatValue((analysis?.longTermAnalysis?.exitAnalysis?.netProceedsFromSale || 0) + (analysis?.longTermAnalysis?.returns?.totalCashFlow || 0), 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ pl: 4, color: appleColors.gray[600], border: 'none' }}>
-                            Less: Total Investment
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: appleColors.red[600], border: 'none' }}>
-                            -{formatValue(analysis?.keyMetrics?.totalInvestment || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
-                          <TableCell sx={{ fontWeight: 700, fontSize: '1.1rem', border: 'none' }}>
-                            Net Total Return
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.1rem', color: appleColors.blue[600], border: 'none' }}>
-                            {formatValue(analysis?.longTermAnalysis?.returns?.totalReturn || 0, 'currency')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600, border: 'none' }}>
-                            Return on Investment
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600, color: appleColors.blue[600], border: 'none' }}>
-                            {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0, 'percent')}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
+                <TableContainer>
+                  <Table>
+                    <TableBody>
+                      {/* Property Sale Section */}
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, borderBottom: 'none' }}>Projected Sale Price</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 700, 
+                          fontSize: '1.1rem',
+                          color: appleColors.green[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Selling Costs (6%)</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.red[600],
+                          borderBottom: 'none'
+                        }}>
+                          -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.sellingCosts || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: '2px solid', borderColor: appleColors.gray[300] }}>Mortgage Payoff</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.orange[600],
+                          borderBottom: '2px solid',
+                          borderColor: appleColors.gray[300]
+                        }}>
+                          -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.mortgagePayoff || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Net Proceeds - Highlighted */}
+                      <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
+                        <TableCell sx={{ 
+                          fontWeight: 700, 
+                          fontSize: '1.1rem',
+                          borderBottom: 'none'
+                        }}>
+                          Net Proceeds from Sale
+                        </TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 700,
+                          fontSize: '1.3rem',
+                          color: appleColors.blue[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.netProceedsFromSale || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Spacer Row */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 1 }}></TableCell>
+                      </TableRow>
+                      
+                      {/* Investment Returns Breakdown Header */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ 
+                          fontWeight: 600, 
+                          fontSize: '1.1rem',
+                          borderBottom: '1px solid',
+                          borderColor: appleColors.gray[300],
+                          pb: 1
+                        }}>
+                          Total Investment Returns Breakdown
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Initial Investment</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.gray[700],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.returns?.totalInvestment || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Total Cash Flow</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.green[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.returns?.totalCashFlow || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Property Appreciation</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 600,
+                          color: appleColors.purple[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.returns?.totalAppreciation || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Total Return - Highlighted */}
+                      <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
+                        <TableCell sx={{ 
+                          fontWeight: 700, 
+                          fontSize: '1.1rem',
+                          borderBottom: 'none'
+                        }}>
+                          <strong>Total Return</strong>
+                        </TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 700,
+                          fontSize: '1.2rem',
+                          color: appleColors.blue[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.returns?.totalReturn || 0, 'currency')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Spacer Row */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 1 }}></TableCell>
+                      </TableRow>
+                      
+                      {/* Performance Metrics */}
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Total ROI ({propertyData?.longTermAssumptions?.projectionYears || 10} years)</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
+                          color: appleColors.green[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0, 'percent')}
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell sx={{ borderBottom: 'none' }}>Equity Multiple</TableCell>
+                        <TableCell align="right" sx={{ 
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
+                          color: appleColors.purple[600],
+                          borderBottom: 'none'
+                        }}>
+                          {formatValue((analysis?.longTermAnalysis?.returns?.totalReturn || 0) / (analysis?.longTermAnalysis?.returns?.totalInvestment || 1), 'multiplier')}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </CardContent>
             </Card>
           </Box>
@@ -1280,9 +1485,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
                 </Card>
               </Grid>
             </Grid>
-
-            {/* Professional Intelligence Analysis for Risk Section */}
-            <IntelligenceMultiplier aiInsights={analysis?.aiInsights} />
             
             {/* AI Risk Assessment */}
             {analysis?.aiInsights?.riskAssessment && (
@@ -1639,6 +1841,61 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
           </Box>
         );
         
+      case 'interactive':
+        return (
+          <Box>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+              Interactive Analysis
+            </Typography>
+            <DynamicSliders
+              propertyData={propertyData}
+              onParameterChange={onParameterChange}
+              isCalculating={isRecalculating}
+            />
+          </Box>
+        );
+
+      case 'optimizer':
+        return (
+          <Box>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+              Deal Optimizer
+            </Typography>
+            <DealFixer
+              analysis={analysis}
+              propertyData={propertyData}
+              onApplyFix={onApplyFix}
+            />
+          </Box>
+        );
+
+      case 'scenarios':
+        return (
+          <Box>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+              Scenario Manager
+            </Typography>
+            <ScenarioManager
+              propertyData={propertyData}
+              analysis={analysis}
+              onLoadScenario={onLoadScenario}
+            />
+          </Box>
+        );
+
+      case 'stress':
+        return (
+          <Box>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+              Stress Testing Dashboard
+            </Typography>
+            <StressTestingDashboard
+              analysis={analysis}
+              propertyData={propertyData}
+            />
+          </Box>
+        );
+
       default:
         return (
           <Box>
@@ -1663,19 +1920,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis, propertyDat
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
-        {/* Property Header */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={700} sx={{ mb: 1, color: appleColors.gray[900] }}>
-            {propertyData?.propertyName || 'Property Analysis'}
-          </Typography>
-          <Typography variant="body1" sx={{ color: appleColors.gray[600], display: 'flex', alignItems: 'center' }}>
-            <HomeIcon sx={{ fontSize: 18, mr: 1 }} />
-            {propertyData?.propertyAddress ? 
-              `${propertyData.propertyAddress.street}, ${propertyData.propertyAddress.city}, ${propertyData.propertyAddress.state} ${propertyData.propertyAddress.zipCode}` 
-              : 'Property Address Not Available'}
-          </Typography>
-        </Box>
-
         {/* Header Actions */}
         <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mb: 4 }}>
           <Button

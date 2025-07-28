@@ -12,8 +12,9 @@ import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Initialize the deal service
 const dealService = new DealService();
 
-// Import our enhanced AI service
+// Import our enhanced AI service and caching
 import { getAIInsights } from '../services/aiService';
+import { AIInsightsCacheService } from '../services/aiInsightsCacheService';
 
 // Helper function to convert wizard data to standard format
 const convertWizardData = (dealData: any): any => {
@@ -106,9 +107,42 @@ const convertWizardData = (dealData: any): any => {
 
 // Utility function to get AI insights - now using enhanced service
 const generateAIInsights = async (dealData: SFRData | MultiFamilyData, analysis: any) => {
+  const startTime = Date.now();
+  
   try {
-    // Use our enhanced AI service which includes scoreBreakdown and market analysis
-    return await getAIInsights(dealData, analysis);
+    // Layer 2: Check for cached AI insights first
+    logger.info('Checking AI insights cache...');
+    const cached = await AIInsightsCacheService.getCachedInsights(dealData);
+    
+    if (cached) {
+      const cacheAge = (Date.now() - cached.timestamp) / (1000 * 60); // minutes
+      logger.info('Using cached AI insights', {
+        cacheAge: `${cacheAge.toFixed(1)} minutes`,
+        originalGenerationTime: cached.performanceMetrics.generationTime,
+        modelUsed: cached.performanceMetrics.modelUsed,
+        retrievalTime: Date.now() - startTime
+      });
+      return cached.insights;
+    }
+
+    // Generate fresh AI insights
+    logger.info('Generating fresh AI insights...');
+    const insights = await getAIInsights(dealData, analysis);
+    const generationTime = Date.now() - startTime;
+
+    // Cache the results for future use
+    await AIInsightsCacheService.cacheInsights(dealData, insights, {
+      generationTime,
+      modelUsed: 'gpt-4o-mini', // or detect from aiService
+      tokensUsed: undefined // would need to be returned from aiService
+    });
+
+    logger.info('AI insights generated and cached', {
+      generationTime,
+      insightsLength: JSON.stringify(insights).length
+    });
+
+    return insights;
   } catch (error) {
     logger.error('Error getting AI insights:', error);
     return {
@@ -378,8 +412,12 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       throw new Error('Analysis failed to produce results');
     }
     
-    // Add AI insights if possible
+    // Add AI insights with smart caching (Layer 2)
     try {
+      // Check if this is a parameter change scenario (re-analysis)
+      // In a real implementation, you'd compare against previous data from session/request context
+      // For now, the AIInsightsCacheService handles cache invalidation internally
+      
       analysis.aiInsights = await generateAIInsights(dealData, analysis);
     } catch (aiError) {
       logger.error('Error getting AI insights:', aiError);

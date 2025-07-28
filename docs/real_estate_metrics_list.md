@@ -33,9 +33,14 @@
 - ✅ **Price Per Bedroom** - Valuation per bedroom
 - ✅ **Debt-to-Income Ratio** - Leverage analysis
 - ✅ **Gross Rent Multiplier** - Price to annual rent ratio
-- ✅ **Operating Expense Ratio** - OpEx as % of income
+- ✅ **Operating Expense Ratio** - OpEx as % of effective income (excludes debt service)
 - ✅ **Return on Improvements** - Capital improvement ROI
 - ✅ **Turnover Cost Impact** - Tenant turnover as % of income
+
+### SFR New Enhanced Metrics (Phase 1)
+- ✅ **Debt Yield** - NOI divided by loan amount (important for lender underwriting)
+- ✅ **Gross Yield** - Annual rent as % of purchase price (quick screening metric)  
+- ✅ **Reserves Analysis** - Recommended cash reserves based on property profile
 
 ## Core Financial Metrics
 

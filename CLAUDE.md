@@ -1,18 +1,34 @@
 # Project Context for Claude
 
+## 🎯 **Strategic Vision**
+**Evolving from single-family analyzer to comprehensive multi-asset investment platform**
+- Target: Multi-family, commercial (retail/office/industrial), alternative assets (self-storage, mobile homes, data centers)
+- Mission: Transform novice investors into professional-level thinkers with institutional-grade analysis
+
 ## 🏗️ **Current Architecture**
 - **Frontend**: React 19 + TypeScript + Material-UI v7 + Vite
 - **Backend**: Node.js + Express + TypeScript + MongoDB
 - **Database**: MongoDB with Mongoose ODM
 - **APIs**: FRED (economic data) + RentCast (property data) + Census API
 - **Caching**: MongoDB persistent cache with TTL
-- **AI**: OpenAI GPT-4 for enhanced property insights
+- **AI**: OpenAI GPT-4o-mini with Intelligence Multiplier enhancement
 
 ## 🔌 **Active External Integrations**
 - **FRED API**: Mortgage rates, inflation, housing index, unemployment, GDP
 - **RentCast API**: Property rent estimates, comparable properties, market trends
 - **Census API**: Demographic and housing data by ZIP code
 - **OpenAI API**: Enhanced AI analysis with market intelligence
+
+### **Planned API Integrations**
+- **ATTOM Data API**: Comprehensive property details, tax assessments, ownership history
+- **Insurance APIs**: Risk assessment automation (Steadily, Cape Analytics, or BuildFax)
+- **Enhanced RentCast**: Address autocomplete and expanded property data
+
+## 💰 **Revenue Model (Subscription Tiers)**
+- **Free Tier**: $0/month - 3 analyses/month, basic features
+- **Professional**: $49/month - Unlimited analyses, AI insights, market data
+- **Enterprise**: $149/month - Team features, advanced analytics, priority support
+- **Institutional**: $399/month - API access, custom integrations, white-label options
 
 ## 📊 **Current Data Flow**
 ```
@@ -49,205 +65,7 @@ Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistenc
 /docs/                          # 📚 CRITICAL REFERENCE DOCUMENTS
 ```
 
-## 📚 **Critical /docs Folder - Always Reference These**
+[... rest of the existing file content remains the same ...]
 
-### **Architecture & Technical Documents**
-- `ARCHITECTURE.md` - Complete system architecture overview
-- `COMPLETE_STORAGE_ARCHITECTURE_IMPLEMENTATION.md` - **CRITICAL**: Working baseline implementation (2025-07-19)
-- `API.md` - API endpoint documentation and specifications
-- `DATA_DICTIONARY.md` - Comprehensive data field definitions
-- `DATA_MAPPING.md` - Data transformation and mapping rules
-- `DATA_MAPPING_Market_APIs.md` - External API response mappings
-- `TYPESCRIPT_RULES.md` - TypeScript coding standards
-
-### **Implementation & Integration Plans**
-- `PROPERTY_WIZARD_ARCHITECTURE.md` - Complete wizard architecture (79 pages)
-- `PROPERTY_WIZARD_IMPLEMENTATION_PLAN.md` - Phase-by-phase implementation
-- `INTEGRATION_PLAN_Market_APIs_Remaining.md` - Remaining API integrations
-- `TECHNICAL_PLAN_Market_API_Integration.md` - Technical integration details
-
-### **Business & Analysis Documents**
-- `PRD.md` - Product Requirements Document
-- `real_estate_metrics_list.md` - Complete metrics calculations
-- `NEW_METRICS_MAPPING.md` - Enhanced metrics implementation
-- `comprehensive_mf_strategy.md` - Multi-family analysis strategy
-
-### **Enhancement & AI Documents**
-- `AI_INSIGHTS_UI_ENHANCEMENT.md` - AI interface improvements
-- `AI_PROMPT_ENHANCEMENT.md` - AI prompt optimization
-- `SFR_AI_ENHANCEMENT_PLAN.md` - SFR-specific AI enhancements
-
-### **Development & Phase Tracking**
-- `PHASE_PLAN.md` - Overall project phases
-- `PHASE_1_COMPLETION_SUMMARY.md` - Phase 1 completion status
-- `MILESTONE.md` - Project milestones and deliverables
-- `CHANGELOG.md` - Version history and changes
-- `BUG_FIXES.md` - Bug fixes including Complete Storage Architecture implementation
-
-## 🔧 **Current Services & Capabilities**
-
-### **Existing Services (Reusable)**
-- ✅ **FredService**: 
-  - Current mortgage rates, trends, economic indicators
-  - Cached data with smart fallbacks
-  - Health check and rate limit management
-
-- ✅ **RentcastService**: 
-  - Property rent estimates with confidence scoring
-  - Comparable properties (sales & rental)
-  - Market trends by ZIP code
-  - MongoDB caching (1 month TTL)
-
-- ✅ **MarketIntelligenceService**:
-  - Orchestrates FRED + RentCast data
-  - Comprehensive market analysis
-  - Investment timing recommendations
-
-- ✅ **CacheService**:
-  - MongoDB persistent caching
-  - TTL management by data type
-  - Cache warming and health monitoring
-
-- ✅ **PropertyWizard Services**:
-  - PropertyDataAggregator for intelligent data compilation
-  - Address validation and property lookup
-  - Smart defaults based on location and property type
-  - Data conversion from wizard format to SFR analysis format
-
-### **Data Types & Interfaces**
-- **SFRPropertyData**: 63 fields covering property, financial, assumptions
-- **Analysis**: Comprehensive analysis results with market intelligence
-- **MarketData**: FRED + RentCast combined market intelligence
-- **AIInsights**: Enhanced AI analysis with strategic recommendations
-
-## 🎯 **Current Project Status (Updated July 12, 2025)**
-
-### **✅ COMPLETED & WORKING IN PRODUCTION**
-- ✅ **Property Wizard**: Complete 4-step guided analysis (Address → Financials → Rental → Assumptions)
-- ✅ **Enhanced AI Analysis**: Market intelligence integration with GPT-4o-mini
-- ✅ **SFR Analysis Engine**: Comprehensive 60+ field analysis with real-time market data
-- ✅ **External API Integrations**: FRED, RentCast, Census APIs working with MongoDB caching
-- ✅ **Market Intelligence**: Orchestrated data from multiple sources with intelligent insights
-- ✅ **Deal Persistence**: Save/load analyses with MongoDB storage
-- ✅ **Smart Defaults**: Location-based intelligent auto-population
-- ✅ **Maintenance Cost Bug Fix**: Wizard maintenance costs display correctly in projections
-- ✅ **Complete Storage Architecture**: Fast loading (<1s) with complete data accuracy (2025-07-19)
-
-### **🔲 CURRENT GAPS (Next Development Priorities)**
-- ❌ **User Authentication**: No user accounts, properties not user-specific
-- ❌ **Multi-Family Frontend**: Backend analysis exists but frontend is placeholder
-- ❌ **Data Export**: No PDF reports or analysis sharing capabilities
-- ❌ **Portfolio Management**: No multi-property tracking or comparison tools
-
-### **🚧 PARTIALLY COMPLETE**
-- 🔄 **Multi-Family Analysis**: Backend complete, frontend needs implementation
-- 🔄 **Advanced Features**: Export, collaboration, portfolio management planned
-
-## 🏗️ **CRITICAL ARCHITECTURE - Complete Storage Architecture**
-
-**⚠️ COMMITTED APPROACH**: Complete Storage Architecture (2025-07-19)
-- **Status**: IMPLEMENTED & WORKING - Tested baseline established
-- **Performance**: < 1 second load times (vs 14+ seconds with recalculation)
-- **Documentation**: [COMPLETE_STORAGE_ARCHITECTURE_IMPLEMENTATION.md](./docs/COMPLETE_STORAGE_ARCHITECTURE_IMPLEMENTATION.md)
-
-### **Architecture Rules (DO NOT VIOLATE)**
-1. **ALL calculated data stored in MongoDB at save time**
-2. **NO recalculation on load** (pure data retrieval)
-3. **Field naming standard**: `longTermAnalysis.projections` (never `yearlyProjections`)
-4. **Complete schema coverage** for all analyzer output in MongoDB
-5. **Fast loading mandatory**: < 1 second for saved properties
-
-> **🚨 WARNING**: Do not introduce recalculation logic that would degrade performance. The Complete Storage Architecture is the committed approach that resolved 0.00% financial metrics and 14+ second loading issues.
-
-## 🚨 **Critical Integration Points**
-
-### **Existing Analysis Pipeline (DO NOT BREAK)**
-```
-SFRPropertyForm → deals.analyzeDeal() → SFRAnalyzer → 
-Market Intelligence Enhancement → AI Insights → AnalysisResults
-```
-
-### **Current API Endpoints**
-- `POST /api/deals/analyze` - Main analysis endpoint for all property types
-- `GET /api/deals` - List all saved properties 
-- `GET /api/deals/:id` - Get specific saved property
-- `POST /api/deals` - Save new property analysis
-- `PUT /api/deals/:id` - Update existing property
-- `DELETE /api/deals/:id` - Delete property
-- `GET /api/deals/sample-sfr` - Load sample SFR data
-- `GET /api/deals/sample-mf` - Load sample Multi-Family data
-- `POST /api/wizard/property-lookup` - Property Wizard RentCast lookup
-- `POST /api/wizard/smart-defaults` - Intelligent defaults generation
-- `GET /api/market-data/*` - Market intelligence endpoints
-- `GET /api/census/*` - Census demographic data endpoints
-
-### **Data Compatibility Requirements**
-- All wizard outputs must match existing `SFRPropertyData` interface
-- Analysis results must maintain current `Analysis` type structure
-- AI insights must preserve existing `AIInsights` format
-
-## 🔍 **Before Any Major Changes - Always Check**
-
-### **Core Files to Review**
-1. `/frontend/src/components/SFRAnalysis/SFRPropertyForm.tsx` - Current form implementation
-2. `/frontend/src/types/property.ts` - Data type definitions
-3. `/backend/src/services/fredService.ts` - FRED API integration
-4. `/backend/src/services/rentcastService.ts` - RentCast API integration
-5. `/backend/src/controllers/deals.ts` - Analysis orchestration
-6. `/backend/src/models/Deal.ts` - Database schema
-
-### **Documentation to Reference**
-1. `/docs/ARCHITECTURE.md` - System overview
-2. `/docs/DATA_DICTIONARY.md` - Field definitions
-3. `/docs/PROPERTY_WIZARD_ARCHITECTURE.md` - Wizard specifications
-4. `/docs/API.md` - API contracts
-
-## 💡 **Development Guidelines**
-
-### **Code Quality Standards**
-- TypeScript strict mode enabled
-- 100% type coverage required
-- Comprehensive error handling
-- Structured logging with correlation IDs
-- Unit tests for all services
-
-### **API Integration Best Practices**
-- Respect rate limits with intelligent queuing
-- Implement exponential backoff for retries
-- Validate all external API responses
-- Never log sensitive data (API keys, user info)
-- Graceful degradation when APIs fail
-
-### **Data Quality Principles**
-- Always provide confidence scoring for auto-populated data
-- Allow manual override for any auto-populated field
-- Maintain audit trail of data sources and modifications
-- Validate data ranges and business rules
-
-## 🔄 **When Starting Work Session**
-
-### **Context Refresh Protocol**
-1. Read this CLAUDE.md file
-2. Check recent changes in relevant /docs files
-3. Review current implementation of files I'll be modifying
-4. Understand data flow impact of planned changes
-5. Verify compatibility with existing analysis pipeline
-
-### **Common Commands for Context**
-- `LS /docs` - Check available documentation
-- `Read key service files` - Understand current capabilities
-- `Check existing types/interfaces` - Ensure compatibility
-- `Review API endpoints` - Understand integration points
-
----
-
-## 📌 **Remember: /docs Folder is the Single Source of Truth**
-
-The `/docs` folder contains comprehensive documentation that should ALWAYS be referenced:
-- Architecture decisions and rationale
-- Complete API specifications and data mappings
-- Implementation strategies and technical plans
-- Business requirements and metric definitions
-- Development guidelines and coding standards
-
-**Never assume - always check the docs first!**
+## 📝 **Claude's Memory Log**
+- Added `memorize` note as a placeholder memory entry

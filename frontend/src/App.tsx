@@ -9,6 +9,8 @@ import './styles/appleGlobal.css';
 
 // Authentication
 import { AuthProvider } from './contexts/AuthContext';
+import { PersonaProvider } from './contexts/PersonaContext';
+import { DualModeProvider } from './contexts/DualModeContext';
 import ProtectedRoute, { GuestRoute } from './components/auth/ProtectedRoute';
 
 // Pages
@@ -85,7 +87,9 @@ function App() {
         <CssBaseline />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
+            <PersonaProvider>
+              <DualModeProvider>
+                <Routes>
               {/* Guest Routes (no authentication required) */}
               <Route 
                 path="/login" 
@@ -145,7 +149,9 @@ function App() {
               
               {/* Public Routes */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+                </Routes>
+              </DualModeProvider>
+            </PersonaProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

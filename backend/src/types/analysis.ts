@@ -51,6 +51,17 @@ export interface CommonMetrics {
   totalInvestment: number;
 }
 
+export interface ReservesAnalysis {
+  minimumReserves: number;
+  recommendedReserves: number;
+  optimalReserves: number;
+  breakdown: {
+    baseMonths: number;
+    ageAdjustment: number;
+    marketAdjustment: number;
+  };
+}
+
 export interface SFRMetrics extends CommonMetrics {
   pricePerSqFt: number;
   rentPerSqFt: number;
@@ -58,7 +69,7 @@ export interface SFRMetrics extends CommonMetrics {
   afterRepairValueRatio?: number;
   rehabROI?: number;
   
-  // New metrics
+  // Core new metrics
   breakEvenOccupancy: number;
   equityMultiple: number;
   onePercentRuleValue: number;
@@ -68,6 +79,13 @@ export interface SFRMetrics extends CommonMetrics {
   debtToIncomeRatio: number;
   returnOnImprovements: number; // Return on capital improvements as percentage
   turnoverCostImpact: number;   // Turnover costs as percentage of gross income
+  
+  // New added metrics for calculation accuracy
+  debtYield: number;            // NOI / Loan Amount - Important for lender underwriting
+  grossYield: number;           // Annual Rent / Purchase Price - Quick screening metric
+  
+  // Reserves analysis
+  reservesAnalysis?: ReservesAnalysis; // Optional reserves recommendation
 }
 
 export interface MultiFamilyMetrics extends CommonMetrics {
@@ -141,6 +159,7 @@ export interface ScoreBreakdown {
   marketPosition?: ScoreBreakdownItem;
   riskAssessment?: ScoreBreakdownItem;
   financialMetrics?: ScoreBreakdownItem;
+  dealKillers?: ScoreBreakdownItem; // For critical issues that make properties poor investments
 }
 
 export interface MetricIntelligence {

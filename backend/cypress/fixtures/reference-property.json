@@ -1,0 +1,211 @@
+{
+  "nashville_sfr_2024": {
+    "description": "Nashville SFR - Based on 2024 market data for financial validation",
+    "source": "Market research - Nashville Davidson County",
+    "propertyData": {
+      "propertyType": "SFR",
+      "propertyName": "Nashville Reference Property",
+      "propertyAddress": {
+        "street": "1234 Music Row Drive",
+        "city": "Nashville",
+        "state": "TN",
+        "zipCode": "37203"
+      },
+      "purchasePrice": 425000,
+      "downPayment": 85000,
+      "interestRate": 7.125,
+      "loanTerm": 30,
+      "propertyTaxRate": 1.25,
+      "insuranceRate": 0.52,
+      "propertyManagementRate": 8.5,
+      "yearBuilt": 2019,
+      "monthlyRent": 2875,
+      "squareFootage": 2150,
+      "bedrooms": 3,
+      "bathrooms": 2.5,
+      "maintenanceCost": 287,
+      "closingCosts": 8500,
+      "capitalInvestments": 2500,
+      "tenantTurnoverFees": {
+        "prepFees": 500,
+        "realtorCommission": 0.5
+      },
+      "longTermAssumptions": {
+        "projectionYears": 30,
+        "annualRentIncrease": 3.2,
+        "annualPropertyValueIncrease": 3.1,
+        "sellingCostsPercentage": 6.0,
+        "inflationRate": 2.4,
+        "vacancyRate": 5.2,
+        "turnoverFrequency": 2.3
+      }
+    },
+    "expectedCalculations": {
+      "monthlyAnalysis": {
+        "grossIncome": 2875,
+        "propertyTax": 442.71,
+        "insurance": 184.42,
+        "maintenance": 287,
+        "propertyManagement": 244.38,
+        "vacancy": 149.50,
+        "totalExpenses": 1307.01,
+        "netOperatingIncome": 1567.99,
+        "debtService": 1635.32,
+        "cashFlow": -67.33
+      },
+      "annualAnalysis": {
+        "grossIncome": 34500,
+        "totalExpenses": 15684.12,
+        "netOperatingIncome": 18815.88,
+        "debtService": 19623.84,
+        "cashFlow": -807.96
+      },
+      "keyMetrics": {
+        "capRate": 4.43,
+        "cashOnCashReturn": -0.86,
+        "debtServiceCoverageRatio": 0.96,
+        "operatingExpenseRatio": 45.46,
+        "grossRentMultiplier": 12.32,
+        "onePercentRuleValue": 0.68,
+        "pricePerSquareFoot": 197.67,
+        "rentToValueRatio": 0.68,
+        "breakEvenOccupancy": 104.3
+      },
+      "investmentClassification": "Cash Flow Negative - Appreciation Play",
+      "recommendedAction": "Consider if betting on Nashville appreciation",
+      "riskLevel": "Medium-High"
+    },
+    "validationRules": {
+      "capRate": {
+        "formula": "(NOI / Purchase Price) * 100",
+        "calculation": "(18815.88 / 425000) * 100 = 4.43%",
+        "tolerance": 0.1
+      },
+      "cashOnCashReturn": {
+        "formula": "(Annual Cash Flow / Total Cash Invested) * 100",
+        "calculation": "(-807.96 / 96000) * 100 = -0.84%",
+        "totalCashInvested": 96000,
+        "tolerance": 0.1
+      },
+      "debtServiceCoverageRatio": {
+        "formula": "NOI / Annual Debt Service",
+        "calculation": "18815.88 / 19623.84 = 0.96",
+        "tolerance": 0.02
+      },
+      "onePercentRule": {
+        "formula": "Monthly Rent / Purchase Price",
+        "calculation": "2875 / 425000 = 0.68%",
+        "benchmark": "1.0% is ideal",
+        "tolerance": 0.01
+      }
+    },
+    "edgeCaseTests": [
+      {
+        "scenario": "interest_rate_change",
+        "description": "Test sensitivity to 1% interest rate increase",
+        "modification": { "interestRate": 8.125 },
+        "expectedImpact": {
+          "cashFlow": "More negative by ~$50/month",
+          "dscr": "Further below 1.0"
+        }
+      },
+      {
+        "scenario": "rent_increase",
+        "description": "Test impact of $200 rent increase",
+        "modification": { "monthlyRent": 3075 },
+        "expectedImpact": {
+          "cashFlow": "Positive by ~$115/month",
+          "capRate": "Increase to ~5.0%"
+        }
+      },
+      {
+        "scenario": "higher_vacancy",
+        "description": "Test with 8% vacancy (vs 5.2%)",
+        "modification": { "longTermAssumptions": { "vacancyRate": 8.0 } },
+        "expectedImpact": {
+          "cashFlow": "More negative by ~$80/month",
+          "riskLevel": "Higher"
+        }
+      }
+    ]
+  },
+  "comparison_properties": [
+    {
+      "name": "High Cash Flow Property",
+      "description": "Lower price point with strong rent-to-price ratio",
+      "propertyData": {
+        "propertyType": "SFR",
+        "propertyName": "Cash Flow Winner",
+        "propertyAddress": {
+          "street": "5678 Affordable Lane",
+          "city": "Nashville",
+          "state": "TN",
+          "zipCode": "37211"
+        },
+        "purchasePrice": 185000,
+        "downPayment": 37000,
+        "interestRate": 7.125,
+        "loanTerm": 30,
+        "propertyTaxRate": 1.0,
+        "insuranceRate": 0.45,
+        "propertyManagementRate": 8,
+        "yearBuilt": 2015,
+        "monthlyRent": 1950,
+        "squareFootage": 1350,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "maintenanceCost": 195,
+        "longTermAssumptions": {
+          "projectionYears": 30,
+          "annualRentIncrease": 3.0,
+          "annualPropertyValueIncrease": 2.8,
+          "sellingCostsPercentage": 6.0,
+          "inflationRate": 2.4,
+          "vacancyRate": 6.0,
+          "turnoverFrequency": 2.5
+        }
+      },
+      "expectedClassification": "Positive Cash Flow",
+      "expectedCashFlow": "~$300-400/month positive"
+    },
+    {
+      "name": "Break Even Property",
+      "description": "Designed to break even for DSCR validation",
+      "propertyData": {
+        "propertyType": "SFR",
+        "propertyName": "Break Even Test",
+        "propertyAddress": {
+          "street": "9012 Neutral Street",
+          "city": "Nashville",
+          "state": "TN",
+          "zipCode": "37212"
+        },
+        "purchasePrice": 295000,
+        "downPayment": 59000,
+        "interestRate": 7.125,
+        "loanTerm": 30,
+        "propertyTaxRate": 1.15,
+        "insuranceRate": 0.48,
+        "propertyManagementRate": 8.5,
+        "yearBuilt": 2017,
+        "monthlyRent": 2180,
+        "squareFootage": 1650,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "maintenanceCost": 218,
+        "longTermAssumptions": {
+          "projectionYears": 30,
+          "annualRentIncrease": 3.0,
+          "annualPropertyValueIncrease": 3.0,
+          "sellingCostsPercentage": 6.0,
+          "inflationRate": 2.4,
+          "vacancyRate": 5.5,
+          "turnoverFrequency": 2.0
+        }
+      },
+      "expectedClassification": "Break Even",
+      "expectedCashFlow": "±$50/month",
+      "expectedDSCR": "~1.0"
+    }
+  ]
+}

@@ -8,9 +8,13 @@ import {
   updateProfile,
   changePassword,
   logout,
+  getDualMode,
+  updateDualMode,
+  completeDualModeOnboarding,
   validateRegister,
   validateLogin,
-  validatePasswordChange
+  validatePasswordChange,
+  validateDualModeUpdate
 } from '../controllers/authController';
 
 const router = Router();
@@ -63,5 +67,26 @@ router.put('/profile', authenticateToken, updateProfile);
  * @access  Private
  */
 router.put('/password', authenticateToken, validatePasswordChange, changePassword);
+
+/**
+ * @route   GET /api/auth/dual-mode
+ * @desc    Get user's dual-mode preferences
+ * @access  Private
+ */
+router.get('/dual-mode', authenticateToken, getDualMode);
+
+/**
+ * @route   PUT /api/auth/dual-mode
+ * @desc    Update user's dual-mode preference
+ * @access  Private
+ */
+router.put('/dual-mode', authenticateToken, validateDualModeUpdate, updateDualMode);
+
+/**
+ * @route   POST /api/auth/dual-mode/onboarding
+ * @desc    Complete dual-mode onboarding
+ * @access  Private
+ */
+router.post('/dual-mode/onboarding', authenticateToken, completeDualModeOnboarding);
 
 export default router;

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User';
+import { User, IUser, UserMode, PersonaType } from '../models/User';
 import { logger } from '../utils/logger';
 
 export interface RegisterData {
@@ -244,6 +244,118 @@ export class AuthService {
       logger.info(`[AuthService] Password changed successfully for user: ${user.email}`);
     } catch (error) {
       logger.error('[AuthService] Error changing password:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user's dual-mode preferences
+   */
+  async updateDualModePreferences(
+    userId: string, 
+    updates: { currentMode: UserMode; targetPersona?: PersonaType }
+  ): Promise<IUser | null> {
+    try {
+      logger.info(`[AuthService] Updating dual-mode preferences for user: ${userId}`);
+
+      const user = await User.findById(userId);
+      if (!user) {
+        logger.warn(`[AuthService] User not found for dual-mode update: ${userId}`);
+        return null;
+      }
+
+      // Initialize dual-mode preferences if they don't exist
+      if (!user.dualModePreferences) {
+        user.dualModePreferences = {
+          currentMode: updates.currentMode,
+          personaMapping: {
+            novice: 'learning',
+            pro: 'experienced'
+          },
+          onboardingCompleted: false,
+          modeHistory: [],
+          preferences: {
+            showEducationalTooltips: true,
+            defaultAnalysisComplexity: 'basic'
+          }
+        };
+      }
+
+      // Update current mode
+      const previousMode = user.dualModePreferences.currentMode;
+      user.dualModePreferences.currentMode = updates.currentMode;
+
+      // Update persona mapping if provided
+      if (updates.targetPersona) {
+        user.dualModePreferences.personaMapping[updates.currentMode] = updates.targetPersona;
+      }
+
+      // Add to mode history
+      user.dualModePreferences.modeHistory.push({
+        mode: updates.currentMode,
+        timestamp: new Date()
+      });
+
+      // Keep only last 20 mode changes
+      if (user.dualModePreferences.modeHistory.length > 20) {
+        user.dualModePreferences.modeHistory = user.dualModePreferences.modeHistory.slice(-20);
+      }
+
+      const savedUser = await user.save();
+
+      logger.info(`[AuthService] Dual-mode updated for user: ${user.email}, ${previousMode} -> ${updates.currentMode}`);
+      return savedUser;
+    } catch (error) {
+      logger.error('[AuthService] Error updating dual-mode preferences:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Complete dual-mode onboarding for user
+   */
+  async completeDualModeOnboarding(
+    userId: string,
+    settings: {
+      preferredMode: UserMode;
+      personaMapping?: { novice: PersonaType; pro: PersonaType };
+    }
+  ): Promise<IUser | null> {
+    try {
+      logger.info(`[AuthService] Completing dual-mode onboarding for user: ${userId}`);
+
+      const user = await User.findById(userId);
+      if (!user) {
+        logger.warn(`[AuthService] User not found for onboarding completion: ${userId}`);
+        return null;
+      }
+
+      // Initialize or update dual-mode preferences
+      const defaultPersonaMapping = settings.personaMapping || {
+        novice: 'learning',
+        pro: 'experienced'
+      };
+
+      user.dualModePreferences = {
+        currentMode: settings.preferredMode,
+        personaMapping: defaultPersonaMapping,
+        onboardingCompleted: true,
+        modeHistory: [{
+          mode: settings.preferredMode,
+          timestamp: new Date()
+        }],
+        preferences: {
+          showEducationalTooltips: settings.preferredMode === 'novice',
+          defaultAnalysisComplexity: settings.preferredMode === 'novice' ? 'basic' : 'detailed'
+        }
+      };
+
+      const savedUser = await user.save();
+
+      logger.info(`[AuthService] Dual-mode onboarding completed for user: ${user.email}, mode: ${settings.preferredMode}`);
+      return savedUser;
+    } catch (error) {
+      logger.error('[AuthService] Error completing dual-mode onboarding:', error);
       throw error;
     }
   }
