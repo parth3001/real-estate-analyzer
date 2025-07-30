@@ -29,7 +29,8 @@ import {
   ListItemSecondaryAction,
   Divider,
   Menu,
-  MenuItem
+  MenuItem,
+  CircularProgress
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -47,24 +48,16 @@ import {
 import { appleColors } from '../../theme/appleDesignSystem';
 import type { SFRPropertyData } from '../../types/property';
 import type { Analysis } from '../../types/analysis';
+import { scenarioApi, type SavedScenario } from '../../services/api';
 
 interface ScenarioManagerProps {
   currentPropertyData: SFRPropertyData;
   currentAnalysis: Analysis;
-  onLoadScenario: (data: SFRPropertyData) => Promise<void>;
+  dealId: string; // Required for MongoDB persistence
+  onLoadScenario: (data: SFRPropertyData, analysis?: Analysis) => Promise<void>;
 }
 
-interface SavedScenario {
-  id: string;
-  name: string;
-  description?: string;
-  propertyData: SFRPropertyData;
-  analysis: Analysis;
-  createdAt: Date;
-  lastModified: Date;
-  isFavorite?: boolean;
-  tags?: string[];
-}
+// SavedScenario interface now imported from API services
 
 interface ComparisonMetric {
   label: string;
@@ -77,6 +70,7 @@ interface ComparisonMetric {
 const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   currentPropertyData,
   currentAnalysis,
+  dealId,
   onLoadScenario
 }) => {
   const [scenarios, setScenarios] = useState<SavedScenario[]>([]);
@@ -87,28 +81,41 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   const [scenarioDescription, setScenarioDescription] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load scenarios from localStorage on mount
+  // Load scenarios from MongoDB on mount (following Complete Storage Architecture)
   useEffect(() => {
-    const savedScenarios = localStorage.getItem('propertyScenarios');
-    if (savedScenarios) {
+    const loadScenarios = async () => {
+      if (!dealId) {
+        console.warn('ScenarioManager: No dealId provided, cannot load scenarios');
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        const parsed = JSON.parse(savedScenarios);
-        setScenarios(parsed.map((s: any) => ({
-          ...s,
-          createdAt: new Date(s.createdAt),
-          lastModified: new Date(s.lastModified)
-        })));
+        console.log('🎯 SCENARIO MANAGER: Loading scenarios for deal:', dealId);
+        const response = await scenarioApi.getScenarios(dealId);
+        
+        if (response.status === 200) {
+          setScenarios(response.data.scenarios);
+          console.log('🎯 SCENARIO MANAGER: Loaded', response.data.scenarios.length, 'scenarios');
+        } else {
+          console.error('Failed to load scenarios:', response.message);
+          setError(response.message || 'Failed to load scenarios');
+        }
       } catch (error) {
         console.error('Error loading scenarios:', error);
+        setError('Error loading scenarios');
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
 
-  // Save scenarios to localStorage whenever scenarios change
-  useEffect(() => {
-    localStorage.setItem('propertyScenarios', JSON.stringify(scenarios));
-  }, [scenarios]);
+    loadScenarios();
+  }, [dealId]);
 
   // Comparison metrics configuration
   const comparisonMetrics: ComparisonMetric[] = [
@@ -156,88 +163,205 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     }
   ];
 
-  // Save current scenario
-  const handleSaveScenario = useCallback(() => {
+  // Save current scenario to MongoDB (following Complete Storage Architecture)
+  const handleSaveScenario = useCallback(async () => {
     if (!scenarioName.trim()) return;
 
-    const newScenario: SavedScenario = {
-      id: Date.now().toString(),
-      name: scenarioName.trim(),
-      description: scenarioDescription.trim() || undefined,
-      propertyData: currentPropertyData,
-      analysis: currentAnalysis,
-      createdAt: new Date(),
-      lastModified: new Date(),
-      isFavorite: false
-    };
+    // Validate that we have current data (not stale)
+    if (!currentPropertyData || !currentAnalysis) {
+      console.error('Cannot save scenario: missing property data or analysis');
+      setError('Cannot save scenario: missing property data or analysis');
+      return;
+    }
 
-    setScenarios(prev => [newScenario, ...prev]);
-    setScenarioName('');
-    setScenarioDescription('');
-    setShowSaveDialog(false);
-  }, [scenarioName, scenarioDescription, currentPropertyData, currentAnalysis]);
+    if (!dealId) {
+      console.error('Cannot save scenario: no dealId provided');
+      setError('Cannot save scenario: no deal ID');
+      return;
+    }
 
-  // Load scenario
-  const handleLoadScenario = useCallback(async (scenario: SavedScenario) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      await onLoadScenario(scenario.propertyData);
+      console.log('🎯 SCENARIO MANAGER: Saving scenario with current state:', {
+        dealId,
+        cashFlow: currentAnalysis.monthlyAnalysis?.cashFlow,
+        capRate: currentAnalysis.keyMetrics?.capRate,
+        purchasePrice: currentPropertyData.purchasePrice,
+        monthlyRent: currentPropertyData.monthlyRent,
+        scenarioName: scenarioName.trim(),
+        fullDataCaptured: {
+          propertyDataFields: Object.keys(currentPropertyData).length,
+          analysisDataFields: Object.keys(currentAnalysis).length
+        }
+      });
+
+      const scenarioData = {
+        name: scenarioName.trim(),
+        description: scenarioDescription.trim() || undefined,
+        // Complete Storage Architecture: Store complete snapshots
+        propertyData: { ...currentPropertyData },
+        analysis: { ...currentAnalysis },
+        isFavorite: false,
+        tags: []
+      };
+
+      const response = await scenarioApi.createScenario(dealId, scenarioData);
+
+      if (response.status === 201) {
+        // Add the new scenario to the list
+        setScenarios(prev => [response.data.scenario, ...prev]);
+        setScenarioName('');
+        setScenarioDescription('');
+        setShowSaveDialog(false);
+        console.log('🎯 SCENARIO MANAGER: Scenario saved successfully:', response.data.scenario._id);
+      } else {
+        console.error('Failed to save scenario:', response.message);
+        setError(response.message || 'Failed to save scenario');
+      }
+    } catch (error) {
+      console.error('Error saving scenario:', error);
+      setError('Error saving scenario');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [scenarioName, scenarioDescription, currentPropertyData, currentAnalysis, dealId]);
+
+  // Load scenario with preserved analysis data (follows Complete Storage Architecture)
+  const handleLoadScenario = useCallback(async (scenario: SavedScenario) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log('🎯 SCENARIO MANAGER: Loading scenario:', {
+        scenarioId: scenario._id,
+        scenarioName: scenario.name,
+        savedCashFlow: scenario.analysis.monthlyAnalysis?.cashFlow,
+        savedCapRate: scenario.analysis.keyMetrics?.capRate,
+        savedPurchasePrice: scenario.propertyData.purchasePrice,
+        savedMonthlyRent: scenario.propertyData.monthlyRent,
+        savedTimestamp: scenario.lastModified,
+        fullDataRestored: {
+          propertyDataFields: Object.keys(scenario.propertyData).length,
+          analysisDataFields: Object.keys(scenario.analysis).length
+        }
+      });
+
+      // Complete Storage Architecture: Load with saved analysis data (no recalculation)
+      await onLoadScenario(scenario.propertyData, scenario.analysis);
+      
+      console.log('🎯 SCENARIO MANAGER: Scenario loaded successfully:', scenario.name);
     } catch (error) {
       console.error('Error loading scenario:', error);
+      setError('Error loading scenario');
+    } finally {
+      setIsLoading(false);
     }
   }, [onLoadScenario]);
 
-  // Delete scenario
-  const handleDeleteScenario = useCallback((id: string) => {
-    setScenarios(prev => prev.filter(s => s.id !== id));
-    setSelectedScenarios(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
-  }, []);
+  // Delete scenario from MongoDB
+  const handleDeleteScenario = useCallback(async (scenarioId: string) => {
+    if (!dealId) {
+      console.error('Cannot delete scenario: no dealId provided');
+      setError('Cannot delete scenario: no deal ID');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log('🎯 SCENARIO MANAGER: Deleting scenario:', scenarioId);
+      
+      const response = await scenarioApi.deleteScenario(dealId, scenarioId);
+
+      if (response.status === 200) {
+        // Remove from local state
+        setScenarios(prev => prev.filter(s => s._id !== scenarioId));
+        setSelectedScenarios(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(scenarioId);
+          return newSet;
+        });
+        console.log('🎯 SCENARIO MANAGER: Scenario deleted successfully');
+      } else {
+        console.error('Failed to delete scenario:', response.message);
+        setError(response.message || 'Failed to delete scenario');
+      }
+    } catch (error) {
+      console.error('Error deleting scenario:', error);
+      setError('Error deleting scenario');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dealId]);
 
   // Toggle scenario selection for comparison
-  const toggleScenarioSelection = useCallback((id: string) => {
+  const toggleScenarioSelection = useCallback((scenarioId: string) => {
     setSelectedScenarios(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
+      if (newSet.has(scenarioId)) {
+        newSet.delete(scenarioId);
       } else if (newSet.size < 3) { // Limit to 3 scenarios
-        newSet.add(id);
+        newSet.add(scenarioId);
       }
       return newSet;
     });
   }, []);
 
-  // Toggle favorite
-  const toggleFavorite = useCallback((id: string) => {
-    setScenarios(prev => prev.map(s => 
-      s.id === id ? { ...s, isFavorite: !s.isFavorite } : s
-    ));
-  }, []);
+  // Toggle favorite status in MongoDB
+  const toggleFavorite = useCallback(async (scenarioId: string) => {
+    if (!dealId) {
+      console.error('Cannot toggle favorite: no dealId provided');
+      setError('Cannot toggle favorite: no deal ID');
+      return;
+    }
+
+    try {
+      console.log('🎯 SCENARIO MANAGER: Toggling favorite for scenario:', scenarioId);
+      
+      const response = await scenarioApi.toggleFavorite(dealId, scenarioId);
+
+      if (response.status === 200) {
+        // Update local state
+        setScenarios(prev => prev.map(s => 
+          s._id === scenarioId ? { ...s, isFavorite: response.data.scenario.isFavorite } : s
+        ));
+        console.log('🎯 SCENARIO MANAGER: Favorite toggled successfully');
+      } else {
+        console.error('Failed to toggle favorite:', response.message);
+        setError(response.message || 'Failed to toggle favorite');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      setError('Error toggling favorite');
+    }
+  }, [dealId]);
 
   // Export scenarios
   const handleExportScenarios = useCallback(() => {
-    const selectedScenariosData = scenarios.filter(s => selectedScenarios.has(s.id));
+    const selectedScenariosData = scenarios.filter(s => selectedScenarios.has(s._id));
     
     if (selectedScenariosData.length === 0) return;
 
     const exportData = {
       scenarios: selectedScenariosData,
       exportDate: new Date().toISOString(),
-      comparisonMetrics
+      comparisonMetrics,
+      dealId
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `property-scenarios-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `property-scenarios-${dealId}-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [scenarios, selectedScenarios, comparisonMetrics]);
+  }, [scenarios, selectedScenarios, comparisonMetrics, dealId]);
 
   // Menu handlers
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, scenarioId: string) => {
@@ -285,6 +409,17 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
 
   return (
     <Box>
+      {/* Error Display */}
+      {error && (
+        <Alert 
+          severity="error" 
+          sx={{ mb: 3, borderRadius: '16px' }}
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <Card sx={{ borderRadius: '16px', mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
@@ -302,15 +437,17 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                 variant="outlined"
                 onClick={() => setShowSaveDialog(true)}
                 startIcon={<SaveIcon />}
+                disabled={isLoading}
                 sx={{ textTransform: 'none' }}
               >
-                Save Current
+                {isLoading ? <CircularProgress size={16} /> : 'Save Current'}
               </Button>
               {selectedScenarios.size > 1 && (
                 <Button
                   variant="contained"
                   onClick={() => setShowCompareView(true)}
                   startIcon={<CompareIcon />}
+                  disabled={isLoading}
                   sx={{ textTransform: 'none' }}
                 >
                   Compare ({selectedScenarios.size})
@@ -350,13 +487,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
           <CardContent sx={{ p: 0 }}>
             <List>
               {scenarios.map((scenario, index) => {
-                const isSelected = selectedScenarios.has(scenario.id);
+                const isSelected = selectedScenarios.has(scenario._id);
                 const cashFlow = scenario.analysis.monthlyAnalysis?.cashFlow || 0;
                 const cocReturn = scenario.analysis.keyMetrics?.cashOnCashReturn || 0;
                 const aiScore = scenario.analysis.aiInsights?.investmentScore || 0;
                 
                 return (
-                  <Box key={scenario.id}>
+                  <Box key={scenario._id}>
                     <ListItem
                       sx={{
                         px: 3,
@@ -370,14 +507,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                           bgcolor: appleColors.gray[50]
                         }
                       }}
-                      onClick={() => toggleScenarioSelection(scenario.id)}
+                      onClick={() => toggleScenarioSelection(scenario._id)}
                     >
                       <ListItemIcon>
                         <IconButton
                           size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleFavorite(scenario.id);
+                            toggleFavorite(scenario._id);
                           }}
                         >
                           {scenario.isFavorite ? 
@@ -450,7 +587,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                           </Tooltip>
                           <IconButton
                             size="small"
-                            onClick={(e) => handleMenuOpen(e, scenario.id)}
+                            onClick={(e) => handleMenuOpen(e, scenario._id)}
                           >
                             <MoreIcon />
                           </IconButton>
@@ -564,7 +701,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                     <TableCell sx={{ fontWeight: 600 }}>Metric</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
                     {Array.from(selectedScenarios).map(id => {
-                      const scenario = scenarios.find(s => s.id === id);
+                      const scenario = scenarios.find(s => s._id === id);
                       return (
                         <TableCell key={id} sx={{ fontWeight: 600, textAlign: 'center' }}>
                           {scenario?.name}
@@ -577,7 +714,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                   {comparisonMetrics.map(metric => {
                     const selectedScenariosArray = Array.from(selectedScenarios);
                     const values = selectedScenariosArray.map(id => {
-                      const scenario = scenarios.find(s => s.id === id);
+                      const scenario = scenarios.find(s => s._id === id);
                       return scenario ? metric.getValue(scenario.analysis) : 0;
                     });
                     const baseValue = values[0];
@@ -650,7 +787,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         <MenuItem 
           onClick={() => {
             if (activeScenarioId) {
-              const scenario = scenarios.find(s => s.id === activeScenarioId);
+              const scenario = scenarios.find(s => s._id === activeScenarioId);
               if (scenario) handleLoadScenario(scenario);
             }
             handleMenuClose();

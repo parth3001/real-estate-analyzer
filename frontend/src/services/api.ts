@@ -795,4 +795,201 @@ export const authApi = {
   },
 };
 
+// Scenario-related types
+export interface SavedScenario {
+  _id: string;
+  userId: string;
+  dealId: string;
+  name: string;
+  description?: string;
+  propertyData: any; // SFRPropertyData
+  analysis: any; // Analysis object
+  isFavorite: boolean;
+  tags?: string[];
+  createdAt: Date;
+  lastModified: Date;
+}
+
+export interface CreateScenarioRequest {
+  name: string;
+  description?: string;
+  propertyData: any;
+  analysis: any;
+  isFavorite?: boolean;
+  tags?: string[];
+}
+
+export interface UpdateScenarioRequest {
+  name?: string;
+  description?: string;
+  propertyData?: any;
+  analysis?: any;
+  isFavorite?: boolean;
+  tags?: string[];
+}
+
+// Scenario API methods (following existing patterns and Complete Storage Architecture)
+export const scenarioApi = {
+  // Get all scenarios for a specific deal
+  getScenarios: async (dealId: string): Promise<ApiResponse<{ scenarios: SavedScenario[]; total: number }>> => {
+    try {
+      const response = await api.get(`/deals/${dealId}/scenarios`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error getting scenarios:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { scenarios: [], total: 0 },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Create a new scenario (follows Complete Storage Architecture)
+  createScenario: async (dealId: string, scenarioData: CreateScenarioRequest): Promise<ApiResponse<{ scenario: SavedScenario; message: string }>> => {
+    try {
+      console.log('Scenario API: Creating scenario for deal', dealId, 'with data:', {
+        name: scenarioData.name,
+        hasPropertyData: !!scenarioData.propertyData,
+        hasAnalysis: !!scenarioData.analysis,
+        isFavorite: scenarioData.isFavorite
+      });
+
+      const response = await api.post(`/deals/${dealId}/scenarios`, scenarioData);
+      
+      console.log('Scenario API: Created scenario successfully:', response.data.scenario._id);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error creating scenario:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { scenario: {} as SavedScenario, message: 'Failed to create scenario' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Get a specific scenario (follows Complete Storage Architecture - no recalculation)
+  getScenario: async (dealId: string, scenarioId: string): Promise<ApiResponse<SavedScenario>> => {
+    try {
+      console.log('Scenario API: Loading scenario', scenarioId, 'for deal', dealId);
+      
+      const response = await api.get(`/deals/${dealId}/scenarios/${scenarioId}`);
+      
+      console.log('Scenario API: Loaded scenario successfully:', {
+        name: response.data.name,
+        hasPropertyData: !!response.data.propertyData,
+        hasAnalysis: !!response.data.analysis,
+        cashFlow: response.data.analysis?.monthlyAnalysis?.cashFlow
+      });
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error getting scenario:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: {} as SavedScenario,
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Update a scenario
+  updateScenario: async (dealId: string, scenarioId: string, updateData: UpdateScenarioRequest): Promise<ApiResponse<{ scenario: SavedScenario; message: string }>> => {
+    try {
+      console.log('Scenario API: Updating scenario', scenarioId, 'for deal', dealId);
+      
+      const response = await api.put(`/deals/${dealId}/scenarios/${scenarioId}`, updateData);
+      
+      console.log('Scenario API: Updated scenario successfully');
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error updating scenario:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { scenario: {} as SavedScenario, message: 'Failed to update scenario' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Delete a scenario
+  deleteScenario: async (dealId: string, scenarioId: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      console.log('Scenario API: Deleting scenario', scenarioId, 'for deal', dealId);
+      
+      const response = await api.delete(`/deals/${dealId}/scenarios/${scenarioId}`);
+      
+      console.log('Scenario API: Deleted scenario successfully');
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error deleting scenario:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { message: 'Failed to delete scenario' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Toggle scenario favorite status
+  toggleFavorite: async (dealId: string, scenarioId: string): Promise<ApiResponse<{ scenario: SavedScenario; message: string }>> => {
+    try {
+      console.log('Scenario API: Toggling favorite for scenario', scenarioId);
+      
+      const response = await api.patch(`/deals/${dealId}/scenarios/${scenarioId}/favorite`);
+      
+      console.log('Scenario API: Toggled favorite successfully:', response.data.scenario.isFavorite);
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error toggling scenario favorite:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: { scenario: {} as SavedScenario, message: 'Failed to toggle favorite' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+};
+
 export default api; 

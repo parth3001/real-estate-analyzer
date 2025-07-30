@@ -56,6 +56,7 @@ import { EducationalTooltip } from '../common/EducationalTooltip';
 interface AnalysisResultsProps {
   analysis: any; // Your existing Analysis type
   propertyData: any; // Your existing PropertyData type
+  dealId?: string; // Required for MongoDB scenario persistence
   setAnalysis?: (analysis: any) => void;
   setPropertyData?: (data: any) => void; // Function to update property data
   onParameterChange?: (data: any) => Promise<void>; // Handler for parameter changes
@@ -67,6 +68,7 @@ interface AnalysisResultsProps {
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ 
   analysis, 
   propertyData, 
+  dealId,
   setAnalysis,
   setPropertyData,
   onParameterChange,
@@ -1847,11 +1849,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
               Interactive Analysis
             </Typography>
-            <DynamicSliders
-              propertyData={propertyData}
-              onParameterChange={onParameterChange}
-              isCalculating={isRecalculating}
-            />
+            {onParameterChange && (
+              <DynamicSliders
+                propertyData={propertyData}
+                analysis={analysis}
+                onParameterChange={onParameterChange}
+              />
+            )}
           </Box>
         );
 
@@ -1861,11 +1865,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
               Deal Optimizer
             </Typography>
-            <DealFixer
-              analysis={analysis}
-              propertyData={propertyData}
-              onApplyFix={onApplyFix}
-            />
+            {onApplyFix && (
+              <DealFixer
+                analysis={analysis}
+                propertyData={propertyData}
+                onApplyFix={onApplyFix}
+              />
+            )}
           </Box>
         );
 
@@ -1875,11 +1881,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
               Scenario Manager
             </Typography>
-            <ScenarioManager
-              propertyData={propertyData}
-              analysis={analysis}
-              onLoadScenario={onLoadScenario}
-            />
+            {onLoadScenario && dealId && (
+              <ScenarioManager
+                currentPropertyData={propertyData}
+                currentAnalysis={analysis}
+                dealId={dealId}
+                onLoadScenario={onLoadScenario}
+              />
+            )}
           </Box>
         );
 

@@ -391,6 +391,7 @@ const SavedProperties: React.FC = () => {
         <AnalysisResults 
           analysis={selectedDeal.analysis} 
           propertyData={selectedDeal.propertyData}
+          dealId={selectedDeal._id}
           setAnalysis={(updatedAnalysis) => {
             // Update the selected deal with the new analysis
             setSelectedDeal((prev: SavedProperty | null) => {

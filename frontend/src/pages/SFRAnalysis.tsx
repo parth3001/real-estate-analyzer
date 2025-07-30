@@ -42,7 +42,11 @@ const SFRAnalysis: React.FC = () => {
   
   // Phase 2: Interactive Analysis state
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const wizardEnabled = true; // Enable for Phase 1 testing
+  
+  // Race condition prevention for main analysis
+  const [activeAnalysisRequestId, setActiveAnalysisRequestId] = useState<string | null>(null);
 
   // Handle input method change
   const handleInputMethodChange = (method: 'wizard' | 'manual') => {
@@ -245,121 +249,194 @@ const SFRAnalysis: React.FC = () => {
 
   // Phase 2: Interactive Analysis Handlers
   
-  // Handle parameter changes with real-time analysis updates
-  const handleParameterChange = useCallback(async (updatedData: SFRPropertyData) => {
+  // Dedicated Apply Changes handler - complete UI lockdown and reload
+  const handleApplyChanges = useCallback(async (updatedData: SFRPropertyData) => {
+    console.log('🚀 APPLY CHANGES: Starting complete analysis reload');
+    
+    // 1. Lock the entire UI
+    setIsApplyingChanges(true);
     setIsRecalculating(true);
     setError(null);
     
+    // 2. Cancel any pending operations
+    if (activeAnalysisRequestId) {
+      console.log('🚀 APPLY CHANGES: Cancelling any pending analysis');
+      setActiveAnalysisRequestId(null);
+    }
+    
     try {
-      console.log('Updating analysis with new parameters:', updatedData);
+      console.log('🚀 APPLY CHANGES: Calling full analysis API with updated data:', updatedData);
+      
+      // 3. Call the full analysis API (same as initial analysis)
       const response = await propertyApi.analyzeProperty(updatedData);
       
       if (response.status === 200 && response.data) {
+        console.log('🚀 APPLY CHANGES: API success, completely refreshing state');
+        console.log('🚀 APPLY CHANGES: New cash flow:', response.data?.monthlyAnalysis?.cashFlow);
+        console.log('🚀 APPLY CHANGES: New cap rate:', response.data?.keyMetrics?.capRate);
+        
+        // 4. Completely refresh all state (force re-render of all components)
         setPropertyData(updatedData);
         setAnalysis(response.data);
-        console.log('Parameter update successful');
+        
+        // 5. Force all components to recognize the new data
+        console.log('🚀 APPLY CHANGES: State updated successfully');
+        
       } else {
-        console.error('Parameter update failed:', response);
-        setError('Failed to update analysis: ' + (response.message || 'Unknown error'));
+        console.error('🚀 APPLY CHANGES: API failed:', response);
+        setError('Failed to apply changes: ' + (response.message || 'Unknown error'));
       }
     } catch (err) {
-      console.error('Error updating parameters:', err);
-      setError('Error updating analysis: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      console.error('🚀 APPLY CHANGES: Error:', err);
+      setError('Error applying changes: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
+      // 6. Unlock the UI
+      setIsApplyingChanges(false);
       setIsRecalculating(false);
+      console.log('🚀 APPLY CHANGES: Complete - UI unlocked');
     }
-  }, []);
-
-  // Handle applying deal fixes
-  const handleApplyFix = useCallback(async (updatedData: SFRPropertyData, fixDescription: string) => {
+  }, [activeAnalysisRequestId]);
+  
+  // Handle parameter changes with race condition prevention
+  const handleParameterChange = useCallback(async (updatedData: SFRPropertyData) => {
+    // Check if this is an Apply Changes call (special flag)
+    if ((updatedData as any).__applyChangesMode) {
+      console.log('🚀 ROUTING: Apply Changes detected, routing to dedicated handler');
+      delete (updatedData as any).__applyChangesMode;
+      return handleApplyChanges(updatedData);
+    }
+    
+    // Generate unique request ID for this analysis
+    const requestId = `analysis-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
     setIsRecalculating(true);
     setError(null);
     
+    // Set active request ID
+    setActiveAnalysisRequestId(requestId);
+    
     try {
-      console.log('Applying deal fix using layered architecture:', fixDescription, updatedData);
+      console.log(`Starting full analysis (${requestId.substring(requestId.length - 4)}) with new parameters:`, updatedData);
+      const response = await propertyApi.analyzeProperty(updatedData);
       
-      // Use layered architecture: Quick calculations + cached AI insights
-      const quickResponse = await propertyApi.quickCalculate(updatedData);
-      
-      if (quickResponse.status === 200 && quickResponse.data) {
-        // Update property data immediately with quick calculations
-        setPropertyData(updatedData);
-        
-        // Merge quick metrics with existing analysis, preserving AI insights
-        const updatedAnalysis = {
-          ...analysis,
-          keyMetrics: {
-            ...analysis?.keyMetrics,
-            ...quickResponse.data.keyMetrics
-          },
-          monthlyAnalysis: {
-            ...analysis?.monthlyAnalysis,
-            ...quickResponse.data.monthlyAnalysis
-          }
-          // Keep existing AI insights - they're cached and don't need regeneration for small parameter changes
-        };
-        
-        setAnalysis(updatedAnalysis);
-        setSuccessMessage(`Applied fix: ${fixDescription} (instant update)`);
-        console.log('Deal fix applied with layered architecture in', quickResponse.data.calculationTime, 'ms');
-        
-        // Only trigger full AI re-analysis if the fix involves major changes
-        const isMajorChange = updatedData.purchasePrice !== propertyData?.purchasePrice || 
-                             updatedData.monthlyRent !== propertyData?.monthlyRent;
-        
-        if (isMajorChange) {
-          console.log('Major change detected, triggering AI re-analysis...');
-          // Trigger full analysis in background for AI insights refresh
-          setTimeout(async () => {
-            try {
-              const fullResponse = await propertyApi.analyzeProperty(updatedData);
-              if (fullResponse.status === 200 && fullResponse.data) {
-                setAnalysis(fullResponse.data);
-                console.log('Background AI re-analysis completed');
-              }
-            } catch (err) {
-              console.warn('Background AI re-analysis failed:', err);
-            }
-          }, 500); // Small delay to not interfere with immediate UI updates
-        }
-      } else {
-        // Fallback to full analysis if quick calculation fails
-        console.warn('Quick calculation failed, falling back to full analysis');
-        const response = await propertyApi.analyzeProperty(updatedData);
-        
-        if (response.status === 200 && response.data) {
+      // Use callback to check latest active request ID to avoid stale closures
+      setActiveAnalysisRequestId(currentActiveId => {
+        if (requestId === currentActiveId && response.status === 200 && response.data) {
+          console.log(`SFRAnalysis: About to update state with new data:`);
+          console.log(`SFRAnalysis: - Old analysis cash flow: ${analysis?.monthlyAnalysis?.cashFlow}`);
+          console.log(`SFRAnalysis: - New analysis cash flow: ${response.data?.monthlyAnalysis?.cashFlow}`);
+          console.log(`SFRAnalysis: - Updated property data:`, updatedData);
           setPropertyData(updatedData);
           setAnalysis(response.data);
-          setSuccessMessage(`Applied fix: ${fixDescription}`);
+          setIsRecalculating(false);
+          console.log(`Full analysis (${requestId.substring(requestId.length - 4)}) completed successfully`);
+        } else if (requestId !== currentActiveId) {
+          console.log(`Full analysis (${requestId.substring(requestId.length - 4)}) cancelled - newer request active`);
         } else {
-          setError('Failed to apply fix: ' + (response.message || 'Unknown error'));
+          console.error('Parameter update failed:', response);
+          setError('Failed to update analysis: ' + (response.message || 'Unknown error'));
+          setIsRecalculating(false);
         }
-      }
+        return currentActiveId; // Don't actually change the activeRequestId here
+      });
+      
+      // Backup timeout to ensure loading state clears
+      setTimeout(() => {
+        setActiveAnalysisRequestId(currentActiveId => {
+          if (requestId === currentActiveId) {
+            setIsRecalculating(false);
+          }
+          return currentActiveId;
+        });
+      }, 0);
+      
     } catch (err) {
-      console.error('Error applying fix:', err);
-      setError('Error applying fix: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    } finally {
+      console.error(`Error updating parameters (${requestId.substring(requestId.length - 4)}):`, err);
+      setError('Error updating analysis: ' + (err instanceof Error ? err.message : 'Unknown error'));
       setIsRecalculating(false);
     }
-  }, [analysis, propertyData]);
+  }, [handleApplyChanges]);
 
-  // Handle loading scenarios
-  const handleLoadScenario = useCallback(async (scenarioData: SFRPropertyData) => {
+  // Handle applying deal fixes - use full analysis for complete data consistency
+  const handleApplyFix = useCallback(async (updatedData: SFRPropertyData, fixDescription: string) => {
+    console.log('🚀 DEAL OPTIMIZER: Starting complete analysis reload');
+    
+    // 1. Lock the entire UI (same as Interactive Analysis)
+    setIsApplyingChanges(true);
+    setIsRecalculating(true);
+    setError(null);
+    
+    // 2. Cancel any pending operations
+    if (activeAnalysisRequestId) {
+      console.log('🚀 DEAL OPTIMIZER: Cancelling any pending analysis');
+      setActiveAnalysisRequestId(null);
+    }
+    
+    try {
+      console.log('🚀 DEAL OPTIMIZER: Applying fixes with full analysis:', fixDescription);
+      console.log('🚀 DEAL OPTIMIZER: Updated data:', updatedData);
+      
+      // 3. Use full analysis to ensure data consistency across all tabs
+      const response = await propertyApi.analyzeProperty(updatedData);
+      
+      if (response.status === 200 && response.data) {
+        console.log('🚀 DEAL OPTIMIZER: API success, completely refreshing state');
+        console.log('🚀 DEAL OPTIMIZER: New cash flow:', response.data?.monthlyAnalysis?.cashFlow);
+        console.log('🚀 DEAL OPTIMIZER: New cap rate:', response.data?.keyMetrics?.capRate);
+        
+        // 4. Completely refresh all state (force re-render of all components)
+        setPropertyData(updatedData);
+        setAnalysis(response.data);
+        setSuccessMessage(`Applied fix: ${fixDescription}`);
+        
+        console.log('🚀 DEAL OPTIMIZER: Deal fix applied successfully');
+      } else {
+        console.error('🚀 DEAL OPTIMIZER: Deal fix failed:', response);
+        setError('Failed to apply fix: ' + (response.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('🚀 DEAL OPTIMIZER: Error applying fix:', err);
+      setError('Error applying fix: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      // 5. Unlock the UI
+      setIsApplyingChanges(false);
+      setIsRecalculating(false);
+      console.log('🚀 DEAL OPTIMIZER: Complete - UI unlocked');
+    }
+  }, [activeAnalysisRequestId]);
+
+  // Handle loading scenarios with preserved analysis data
+  const handleLoadScenario = useCallback(async (scenarioData: SFRPropertyData, savedAnalysis?: Analysis) => {
     setIsRecalculating(true);
     setError(null);
     
     try {
-      console.log('Loading scenario:', scenarioData);
-      const response = await propertyApi.analyzeProperty(scenarioData);
+      console.log('Loading scenario:', {
+        scenarioName: scenarioData.propertyName || 'Unnamed',
+        hasSavedAnalysis: !!savedAnalysis,
+        savedCashFlow: savedAnalysis?.monthlyAnalysis?.cashFlow
+      });
       
-      if (response.status === 200 && response.data) {
+      if (savedAnalysis) {
+        // Load scenario with saved analysis data (no recalculation needed)
         setPropertyData(scenarioData);
-        setAnalysis(response.data);
-        setSuccessMessage('Scenario loaded successfully');
-        console.log('Scenario loaded successfully');
+        setAnalysis(savedAnalysis);
+        setSuccessMessage('Scenario loaded successfully (using saved analysis)');
+        console.log('Scenario loaded from saved analysis - no recalculation needed');
       } else {
-        console.error('Scenario load failed:', response);
-        setError('Failed to load scenario: ' + (response.message || 'Unknown error'));
+        // Fallback: recalculate analysis if no saved data available
+        console.log('No saved analysis found, recalculating...');
+        const response = await propertyApi.analyzeProperty(scenarioData);
+        
+        if (response.status === 200 && response.data) {
+          setPropertyData(scenarioData);
+          setAnalysis(response.data);
+          setSuccessMessage('Scenario loaded successfully (recalculated)');
+          console.log('Scenario loaded with fresh analysis');
+        } else {
+          console.error('Scenario load failed:', response);
+          setError('Failed to load scenario: ' + (response.message || 'Unknown error'));
+        }
       }
     } catch (err) {
       console.error('Error loading scenario:', err);
@@ -447,6 +524,7 @@ const SFRAnalysis: React.FC = () => {
               >
                 <Button
                   onClick={() => setActiveSection('input')}
+                  disabled={isApplyingChanges}
                   sx={{
                     backgroundColor: activeSection === 'input' ? appleColors.primary[50] : 'transparent',
                     borderColor: activeSection === 'input' ? appleColors.primary[500] : appleColors.gray[300],
@@ -461,7 +539,7 @@ const SFRAnalysis: React.FC = () => {
                 </Button>
                 <Button
                   onClick={() => setActiveSection('results')}
-                  disabled={!analysis}
+                  disabled={!analysis || isApplyingChanges}
                   sx={{
                     backgroundColor: activeSection === 'results' ? appleColors.primary[50] : 'transparent',
                     borderColor: activeSection === 'results' ? appleColors.primary[500] : appleColors.gray[300],
@@ -680,7 +758,7 @@ const SFRAnalysis: React.FC = () => {
           <Box sx={{ display: activeSection === 'results' ? 'block' : 'none' }}>
             {analysis && propertyData && (
               <React.Fragment>
-                {isLoading ? (
+                {isLoading || isApplyingChanges ? (
                   <AppleCard padding="large">
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
                       <CircularProgress 
@@ -690,21 +768,38 @@ const SFRAnalysis: React.FC = () => {
                           mr: 2
                         }} 
                       />
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: appleColors.gray[600],
-                          fontWeight: 500
-                        }}
-                      >
-                        Analyzing your property...
-                      </Typography>
+                      <Box>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            color: appleColors.gray[600],
+                            fontWeight: 500
+                          }}
+                        >
+                          {isApplyingChanges ? 'Applying changes and recalculating...' : 'Analyzing your property...'}
+                        </Typography>
+                        {activeAnalysisRequestId && (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              mt: 1, 
+                              color: appleColors.gray[500], 
+                              fontFamily: 'monospace', 
+                              fontSize: '10px',
+                              display: 'block'
+                            }}
+                          >
+                            Request ID: {activeAnalysisRequestId.substring(-6)}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </AppleCard>
                 ) : (
                   <AnalysisResults 
                     analysis={analysis} 
                     propertyData={propertyData} 
+                    dealId={dealId || undefined}
                     setAnalysis={setAnalysis}
                     setPropertyData={setPropertyData}
                     onParameterChange={handleParameterChange}

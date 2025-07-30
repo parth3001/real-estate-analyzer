@@ -9,6 +9,14 @@ import {
   getSampleMF,
   analyzeDeal
 } from '../controllers/deals';
+import {
+  getScenarios,
+  createScenario,
+  getScenario,
+  updateScenario,
+  deleteScenario,
+  toggleScenarioFavorite
+} from '../controllers/scenarioController';
 import { logger } from '../utils/logger';
 import { authMiddleware } from '../middleware/auth';
 
@@ -42,5 +50,13 @@ router.delete('/:id', authMiddleware, deleteDeal);
 
 // Analysis endpoint (require authentication)
 router.post('/analyze', authMiddleware, analyzeDeal);
+
+// Scenario routes (require authentication) - Nested under deals for logical grouping
+router.get('/:dealId/scenarios', authMiddleware, getScenarios);
+router.post('/:dealId/scenarios', authMiddleware, createScenario);
+router.get('/:dealId/scenarios/:scenarioId', authMiddleware, getScenario);
+router.put('/:dealId/scenarios/:scenarioId', authMiddleware, updateScenario);
+router.delete('/:dealId/scenarios/:scenarioId', authMiddleware, deleteScenario);
+router.patch('/:dealId/scenarios/:scenarioId/favorite', authMiddleware, toggleScenarioFavorite);
 
 export default router; 

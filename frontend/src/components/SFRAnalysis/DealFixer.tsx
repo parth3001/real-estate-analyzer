@@ -21,6 +21,7 @@ import {
   ListItemText,
   ListItemSecondaryAction
 } from '@mui/material';
+import Grid from '@mui/system/Grid';
 import {
   Build as FixIcon,
   TrendingUp as ImprovementIcon,
@@ -37,6 +38,8 @@ import {
 import { appleColors } from '../../theme/appleDesignSystem';
 import type { SFRPropertyData } from '../../types/property';
 import type { Analysis } from '../../types/analysis';
+import PreviewModeComponent from '../common/PreviewModeComponent';
+import PreviewMetricCard from '../common/PreviewMetricCard';
 
 interface DealFixerProps {
   propertyData: SFRPropertyData;
@@ -75,6 +78,7 @@ const DealFixer: React.FC<DealFixerProps> = ({
   const [selectedFixes, setSelectedFixes] = useState<Set<string>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
   const [expandedFix, setExpandedFix] = useState<string | null>(null);
+  const [previewMetrics, setPreviewMetrics] = useState<any>(null);
 
   // Calculate current deal score and identify issues
   const currentScore = analysis?.aiInsights?.investmentScore || 0;
@@ -251,20 +255,50 @@ const DealFixer: React.FC<DealFixerProps> = ({
     });
   }, [propertyData, currentCashFlow, currentCoCReturn, currentScore, isDealPoor]);
 
-  // Handle fix selection
-  const toggleFixSelection = useCallback((fixId: string) => {
-    setSelectedFixes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(fixId)) {
-        newSet.delete(fixId);
-      } else {
-        newSet.add(fixId);
-      }
-      return newSet;
-    });
-  }, []);
+  // Handle fix selection and calculate preview metrics
+  const toggleFixSelection = useCallback(async (fixId: string) => {
+    const newSelectedFixes = new Set(selectedFixes);
+    if (newSelectedFixes.has(fixId)) {
+      newSelectedFixes.delete(fixId);
+    } else {
+      newSelectedFixes.add(fixId);
+    }
+    setSelectedFixes(newSelectedFixes);
 
-  // Apply selected fixes
+    // Calculate preview metrics if any fixes are selected
+    if (newSelectedFixes.size > 0) {
+      const selectedSuggestions = suggestions.filter(s => newSelectedFixes.has(s.id));
+      
+      // Calculate combined impact for preview
+      const combinedCashFlowImprovement = selectedSuggestions.reduce((sum, fix) => 
+        sum + fix.expectedImprovement.cashFlow, 0
+      );
+      const combinedCoCImprovement = selectedSuggestions.reduce((sum, fix) => 
+        sum + fix.expectedImprovement.cocReturn, 0
+      );
+      const combinedScoreImprovement = selectedSuggestions.reduce((sum, fix) => 
+        sum + fix.expectedImprovement.score, 0
+      );
+
+      // Create preview metrics
+      setPreviewMetrics({
+        monthlyAnalysis: {
+          cashFlow: currentCashFlow + combinedCashFlowImprovement
+        },
+        keyMetrics: {
+          cashOnCashReturn: currentCoCReturn + combinedCoCImprovement,
+          capRate: analysis?.keyMetrics?.capRate || 0 // Cap rate doesn't change with these fixes
+        },
+        aiInsights: {
+          investmentScore: Math.min(100, currentScore + combinedScoreImprovement)
+        }
+      });
+    } else {
+      setPreviewMetrics(null);
+    }
+  }, [selectedFixes, suggestions, currentCashFlow, currentCoCReturn, currentScore, analysis]);
+
+  // Apply selected fixes (commit changes)
   const applySelectedFixes = useCallback(async () => {
     if (selectedFixes.size === 0) return;
     
@@ -285,14 +319,21 @@ const DealFixer: React.FC<DealFixerProps> = ({
       const combinedDescription = `Applied fixes: ${fixDescriptions.join(', ')}`;
       await onApplyFix(updatedData, combinedDescription);
       
-      // Clear selections after successful application
+      // Clear selections and preview after successful application
       setSelectedFixes(new Set());
+      setPreviewMetrics(null);
     } catch (error) {
       console.error('Error applying fixes:', error);
     } finally {
       setIsApplying(false);
     }
   }, [selectedFixes, suggestions, propertyData, onApplyFix]);
+
+  // Discard selected fixes (reset to no selection)
+  const discardSelectedFixes = useCallback(() => {
+    setSelectedFixes(new Set());
+    setPreviewMetrics(null);
+  }, []);
 
   // Calculate combined impact
   const combinedImpact = useMemo(() => {
@@ -551,26 +592,49 @@ const DealFixer: React.FC<DealFixerProps> = ({
           ))}
         </Box>
 
-        {/* Apply Button */}
-        {selectedFixes.size > 0 && (
-          <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={applySelectedFixes}
-              disabled={isApplying}
-              startIcon={<FixIcon />}
-              sx={{
-                borderRadius: '12px',
-                px: 4,
-                py: 1.5,
-                textTransform: 'none',
-                fontWeight: 600
-              }}
-            >
-              {isApplying ? 'Applying Fixes...' : `Apply ${selectedFixes.size} Selected Fix${selectedFixes.size > 1 ? 'es' : ''}`}
-            </Button>
-          </Box>
+        {/* Preview Mode for Selected Fixes */}
+        {selectedFixes.size > 0 && previewMetrics && (
+          <PreviewModeComponent
+            hasUnsavedChanges={selectedFixes.size > 0}
+            onApplyChanges={applySelectedFixes}
+            onDiscardChanges={discardSelectedFixes}
+            featureName="Deal Optimizer"
+            description={`Preview shows projected results from ${selectedFixes.size} selected fix${selectedFixes.size > 1 ? 'es' : ''}. Apply to update your full analysis.`}
+            isCalculating={isApplying}
+          >
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <PreviewMetricCard
+                  value={`$${(previewMetrics.monthlyAnalysis?.cashFlow || 0).toFixed(0)}/mo`}
+                  label="Monthly Cash Flow (After Fixes)"
+                  isPreview={true}
+                  valueColor={(previewMetrics.monthlyAnalysis?.cashFlow || 0) >= 0 ? appleColors.success[600] : appleColors.error[600]}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <PreviewMetricCard
+                  value={`${(previewMetrics.keyMetrics?.cashOnCashReturn || 0).toFixed(1)}%`}
+                  label="Cash-on-Cash Return (After Fixes)"
+                  isPreview={true}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <PreviewMetricCard
+                  value={`${(previewMetrics.keyMetrics?.capRate || 0).toFixed(2)}%`}
+                  label="Cap Rate"
+                  isPreview={false}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <PreviewMetricCard
+                  value={`${Math.round(previewMetrics.aiInsights?.investmentScore || 0)}/100`}
+                  label="AI Investment Score (After Fixes)"
+                  isPreview={true}
+                  valueColor={(previewMetrics.aiInsights?.investmentScore || 0) >= 70 ? appleColors.success[600] : (previewMetrics.aiInsights?.investmentScore || 0) >= 50 ? appleColors.warning[600] : appleColors.error[600]}
+                />
+              </Grid>
+            </Grid>
+          </PreviewModeComponent>
         )}
       </CardContent>
     </Card>
