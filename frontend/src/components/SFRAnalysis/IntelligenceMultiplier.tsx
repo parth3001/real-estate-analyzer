@@ -9,22 +9,16 @@ import {
   AccordionSummary,
   AccordionDetails,
   Alert,
-  Button,
-  Tooltip,
-  Grid,
   LinearProgress
 } from '@mui/material';
+import Grid from '@mui/system/Grid';
 import {
   ExpandMore as ExpandMoreIcon,
   Lightbulb as LightbulbIcon,
-  Warning as WarningIcon,
   TrendingUp as TrendingUpIcon,
-  School as SchoolIcon,
   CompareArrows as CompareIcon,
   Psychology as PsychologyIcon,
-  Assessment as AssessmentIcon,
-  Security as SecurityIcon,
-  Info as InfoIcon
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import { useDualMode } from '../../contexts/DualModeContext';
 
@@ -36,7 +30,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
   const { mode } = useDualMode();
   const [expandedSection, setExpandedSection] = useState<string>('metrics');
 
-  const handleSectionChange = (section: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+  const handleSectionChange = (section: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedSection(isExpanded ? section : '');
   };
 
@@ -124,7 +118,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
         {/* Quick Stats - Only show in pro mode */}
         {mode === 'pro' && (
           <Grid container spacing={2} mb={3}>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Card sx={{ textAlign: 'center', p: 1, backgroundColor: '#f3e5f5' }}>
               <Typography variant="h6" fontWeight={700} color="purple">
                 {metricCount}
@@ -134,7 +128,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Card sx={{ textAlign: 'center', p: 1, backgroundColor: '#fff3e0' }}>
               <Typography variant="h6" fontWeight={700} color="orange">
                 {riskCount}
@@ -144,7 +138,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Card sx={{ textAlign: 'center', p: 1, backgroundColor: '#e8f5e8' }}>
               <Typography variant="h6" fontWeight={700} color="green">
                 {strategyCount}
@@ -154,7 +148,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
               </Typography>
             </Card>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Card sx={{ textAlign: 'center', p: 1, backgroundColor: '#e3f2fd' }}>
               <Typography variant="h6" fontWeight={700} color="blue">
                 {opportunityCount}
@@ -219,7 +213,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                       
                       {/* Action Items and Benchmarks for Novice */}
                       <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                           <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 2 }}>
                             <Typography variant="subtitle2" fontWeight={600} color="orange" mb={1}>
                               🎯 What to do:
@@ -229,7 +223,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                           <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 2 }}>
                             <Typography variant="subtitle2" fontWeight={600} color="green" mb={1}>
                               📊 Good target:
@@ -245,7 +239,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                     /* Professional View - Condensed, data-only */
                     <Box sx={{ mb: 2 }}>
                       <Grid container spacing={1} alignItems="center">
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Typography variant="body2" color="text.secondary">
                             {/* Extract value from the proInsight text */}
                             {metric.proInsight?.split(' - ')[0] || metric.metricName}
@@ -324,7 +318,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                       </Typography>
                       
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Typography variant="caption" fontWeight={600} color="text.secondary">
                             PROBABILITY:
                           </Typography>
@@ -332,7 +326,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                             {risk.probability}
                           </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Typography variant="caption" fontWeight={600} color="text.secondary">
                             IMPACT:
                           </Typography>
@@ -340,7 +334,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                             {risk.impact}
                           </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <Typography variant="caption" fontWeight={600} color="text.secondary">
                             MITIGATION:
                           </Typography>
@@ -406,7 +400,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                   </Typography>
                   
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="caption" fontWeight={600} color="text.secondary">
                         IMPLEMENTATION:
                       </Typography>
@@ -414,7 +408,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
                         {strategy.implementation}
                       </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="caption" fontWeight={600} color="text.secondary">
                         TIMEFRAME:
                       </Typography>

@@ -41,7 +41,7 @@ const SFRAnalysis: React.FC = () => {
   const [inputMethod, setInputMethod] = useState<'wizard' | 'manual'>('wizard');
   
   // Phase 2: Interactive Analysis state
-  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [, setIsRecalculating] = useState(false);
   const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const wizardEnabled = true; // Enable for Phase 1 testing
   
@@ -800,12 +800,9 @@ const SFRAnalysis: React.FC = () => {
                     analysis={analysis} 
                     propertyData={propertyData} 
                     dealId={dealId || undefined}
-                    setAnalysis={setAnalysis}
-                    setPropertyData={setPropertyData}
                     onParameterChange={handleParameterChange}
                     onApplyFix={handleApplyFix}
                     onLoadScenario={handleLoadScenario}
-                    isRecalculating={isRecalculating}
                   />
                 )}
               </React.Fragment>

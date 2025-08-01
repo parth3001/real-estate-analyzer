@@ -63,7 +63,7 @@ const SavedProperties: React.FC = () => {
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedDeal, setSelectedDeal] = useState<any>(null);
+  const [selectedDeal] = useState<any>(null);
 
   // Fetch saved properties on component mount
   useEffect(() => {
@@ -392,16 +392,6 @@ const SavedProperties: React.FC = () => {
           analysis={selectedDeal.analysis} 
           propertyData={selectedDeal.propertyData}
           dealId={selectedDeal._id}
-          setAnalysis={(updatedAnalysis) => {
-            // Update the selected deal with the new analysis
-            setSelectedDeal((prev: SavedProperty | null) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                analysis: updatedAnalysis
-              };
-            });
-          }}
         />
       )}
     </Box>

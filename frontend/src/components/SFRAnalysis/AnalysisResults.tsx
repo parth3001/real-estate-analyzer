@@ -26,9 +26,6 @@ import {
   Shield as ShieldIcon,
   Assessment as AssessmentIcon,
   Compare as CompareIcon,
-  AutoAwesome as BrainIcon,
-  AutoAwesome,
-  GpsFixed as TargetIcon,
   Download as DownloadIcon,
   Share as ShareIcon,
   Save as SaveIcon,
@@ -49,16 +46,13 @@ import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
 import ScenarioManager from './ScenarioManager';
 import StressTestingDashboard from './StressTestingDashboard';
-import { useDualMode, type UserMode } from '../../contexts/DualModeContext';
-import { NoviceGuidance } from '../common/NoviceGuidance';
+import { useDualMode } from '../../contexts/DualModeContext';
 import { EducationalTooltip } from '../common/EducationalTooltip';
 
 interface AnalysisResultsProps {
   analysis: any; // Your existing Analysis type
   propertyData: any; // Your existing PropertyData type
   dealId?: string; // Required for MongoDB scenario persistence
-  setAnalysis?: (analysis: any) => void;
-  setPropertyData?: (data: any) => void; // Function to update property data
   onParameterChange?: (data: any) => Promise<void>; // Handler for parameter changes
   onApplyFix?: (data: any, description: string) => Promise<void>; // Handler for deal fixes
   onLoadScenario?: (data: any) => Promise<void>; // Handler for loading scenarios
@@ -69,18 +63,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   analysis, 
   propertyData, 
   dealId,
-  setAnalysis,
-  setPropertyData,
   onParameterChange,
   onApplyFix,
-  onLoadScenario,
-  isRecalculating = false
+  onLoadScenario
 }) => {
   const { mode } = useDualMode();
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
-  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
-  const [showAllMetricIntelligence, setShowAllMetricIntelligence] = useState(false);
   
   // Debug: Log the analysis structure
   console.log('AnalysisResults - analysis object:', analysis);
@@ -113,32 +102,32 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     {
       label: 'Monthly Cash Flow',
       value: analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || -14,
-      format: 'currency',
-      status: (analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || 0) >= 0 ? 'positive' : 'negative',
+      format: 'currency' as const,
+      status: (analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || 0) >= 0 ? 'positive' as const : 'negative' as const,
       highlight: true,
       description: 'Net monthly income after all expenses'
     },
     {
       label: 'Cap Rate',
       value: analysis?.keyMetrics?.capRate || 3.95,
-      format: 'percent',
-      status: (analysis?.keyMetrics?.capRate || 0) >= 5 ? 'positive' : (analysis?.keyMetrics?.capRate || 0) >= 3 ? 'warning' : 'negative',
+      format: 'percent' as const,
+      status: (analysis?.keyMetrics?.capRate || 0) >= 5 ? 'positive' as const : (analysis?.keyMetrics?.capRate || 0) >= 3 ? 'warning' as const : 'negative' as const,
       highlight: true,
       description: 'Annual return based on property value'
     },
     {
       label: 'Cash-on-Cash Return',
       value: analysis?.keyMetrics?.cashOnCashReturn || -0.17,
-      format: 'percent',
-      status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' : 'negative',
+      format: 'percent' as const,
+      status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' as const : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' as const : 'negative' as const,
       highlight: true,
       description: 'Annual cash return on invested capital'
     },
     {
       label: 'AI Investment Score',
       value: analysis?.aiInsights?.investmentScore || 68,
-      format: 'score',
-      status: (analysis?.aiInsights?.investmentScore || 0) >= 70 ? 'positive' : (analysis?.aiInsights?.investmentScore || 0) >= 50 ? 'warning' : 'negative',
+      format: 'score' as const,
+      status: (analysis?.aiInsights?.investmentScore || 0) >= 70 ? 'positive' as const : (analysis?.aiInsights?.investmentScore || 0) >= 50 ? 'warning' as const : 'negative' as const,
       highlight: true,
       description: 'AI-powered investment quality assessment'
     }
@@ -149,57 +138,57 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     {
       label: 'Total ROI (10 yr)',
       value: analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0,
-      format: 'percent',
-      status: (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 100 ? 'positive' : 'warning',
+      format: 'percent' as const,
+      status: (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 100 ? 'positive' as const : 'warning' as const,
       description: 'Total return on investment percentage over 10 years'
     },
     {
       label: '10-Year IRR',
       value: analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0,
-      format: 'percent',
-      status: (analysis?.keyMetrics?.irr || 0) >= 15 ? 'positive' : (analysis?.keyMetrics?.irr || 0) >= 8 ? 'warning' : 'negative',
+      format: 'percent' as const,
+      status: (analysis?.keyMetrics?.irr || 0) >= 15 ? 'positive' as const : (analysis?.keyMetrics?.irr || 0) >= 8 ? 'warning' as const : 'negative' as const,
       description: 'Internal Rate of Return'
     },
     {
       label: 'DSCR',
       value: analysis?.keyMetrics?.dscr || 0.98,
-      format: 'decimal',
-      status: (analysis?.keyMetrics?.dscr || 0) >= 1.25 ? 'positive' : (analysis?.keyMetrics?.dscr || 0) >= 1.0 ? 'warning' : 'negative',
+      format: 'decimal' as const,
+      status: (analysis?.keyMetrics?.dscr || 0) >= 1.25 ? 'positive' as const : (analysis?.keyMetrics?.dscr || 0) >= 1.0 ? 'warning' as const : 'negative' as const,
       description: 'Debt Service Coverage Ratio'
     },
     {
       label: 'Total Investment',
       value: analysis?.keyMetrics?.totalInvestment || ((propertyData?.downPayment || 0) + (propertyData?.closingCosts || 0) + (propertyData?.repairCosts || 0)) || 147500,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Total upfront investment required'
     },
     {
       label: 'Price/SqFt',
       value: propertyData?.squareFootage ? propertyData.purchasePrice / propertyData.squareFootage : 175,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Purchase price per square foot'
     },
     {
       label: 'Rent/SqFt',
       value: propertyData?.squareFootage ? (propertyData.monthlyRent || 0) / propertyData.squareFootage : 1,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Monthly rent per square foot'
     },
     {
       label: 'Net Operating Income',
       value: analysis?.keyMetrics?.noi || analysis?.longTermAnalysis?.projections?.[0]?.noi || 0,
-      format: 'currency',
-      status: (analysis?.keyMetrics?.noi || analysis?.longTermAnalysis?.projections?.[0]?.noi || 0) > 0 ? 'positive' : 'negative',
+      format: 'currency' as const,
+      status: (analysis?.keyMetrics?.noi || analysis?.longTermAnalysis?.projections?.[0]?.noi || 0) > 0 ? 'positive' as const : 'negative' as const,
       description: 'Annual NOI after operating expenses'
     },
     {
       label: 'Equity Multiple',
       value: analysis?.keyMetrics?.equityMultiple || 0.64,
-      format: 'multiplier',
-      status: (analysis?.keyMetrics?.equityMultiple || 0) >= 2.0 ? 'positive' : (analysis?.keyMetrics?.equityMultiple || 0) >= 1.5 ? 'warning' : 'negative',
+      format: 'multiplier' as const,
+      status: (analysis?.keyMetrics?.equityMultiple || 0) >= 2.0 ? 'positive' as const : (analysis?.keyMetrics?.equityMultiple || 0) >= 1.5 ? 'warning' as const : 'negative' as const,
       description: 'Total return multiple on investment'
     }
   ];
@@ -209,22 +198,22 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     {
       label: 'Break-Even Occupancy',
       value: analysis?.keyMetrics?.breakEvenOccupancy || 101.07,
-      format: 'percent',
-      status: (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 85 ? 'positive' : (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 95 ? 'warning' : 'negative',
+      format: 'percent' as const,
+      status: (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 85 ? 'positive' as const : (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 95 ? 'warning' as const : 'negative' as const,
       description: 'Minimum occupancy for profitability'
     },
     {
       label: '1% Rule Value',
       value: analysis?.keyMetrics?.onePercentRuleValue || (propertyData?.monthlyRent && propertyData?.purchasePrice ? (propertyData.monthlyRent / propertyData.purchasePrice) * 100 : 0.69),
-      format: 'percent',
-      status: (analysis?.keyMetrics?.onePercentRuleValue || 0) >= 1.0 ? 'positive' : (analysis?.keyMetrics?.onePercentRuleValue || 0) >= 0.8 ? 'warning' : 'negative',
+      format: 'percent' as const,
+      status: (analysis?.keyMetrics?.onePercentRuleValue || 0) >= 1.0 ? 'positive' as const : (analysis?.keyMetrics?.onePercentRuleValue || 0) >= 0.8 ? 'warning' as const : 'negative' as const,
       description: 'Monthly rent as % of purchase price'
     },
     {
       label: 'Gross Rent Multiplier',
       value: analysis?.keyMetrics?.grossRentMultiplier || (propertyData?.purchasePrice && propertyData?.monthlyRent ? propertyData.purchasePrice / (propertyData.monthlyRent * 12) : 0),
-      format: 'decimal',
-      status: 'neutral',
+      format: 'decimal' as const,
+      status: 'neutral' as const,
       description: 'Price to annual rent ratio'
     },
     {
@@ -232,15 +221,15 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       value: analysis?.keyMetrics?.operatingExpenseRatio || 
         (analysis?.longTermAnalysis?.projections?.[0]?.operatingExpenses && analysis?.longTermAnalysis?.projections?.[0]?.grossIncome ? 
         (analysis.longTermAnalysis.projections[0].operatingExpenses / analysis.longTermAnalysis.projections[0].grossIncome) * 100 : 0),
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Operating expenses as % of income'
     },
     {
       label: 'Price Per Bedroom',
       value: propertyData?.bedrooms ? (propertyData.purchasePrice || 0) / propertyData.bedrooms : 0,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Purchase price divided by bedrooms'
     },
     {
@@ -248,112 +237,112 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       value: analysis?.keyMetrics?.debtToIncomeRatio || 
         (analysis?.longTermAnalysis?.projections?.[0]?.debtService && analysis?.longTermAnalysis?.projections?.[0]?.grossIncome ? 
         (analysis.longTermAnalysis.projections[0].debtService / analysis.longTermAnalysis.projections[0].grossIncome) * 100 : 0),
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Annual debt service vs income'
     },
     {
       label: 'Down Payment %',
       value: propertyData?.downPayment && propertyData?.purchasePrice ? 
         (propertyData.downPayment / propertyData.purchasePrice) * 100 : 20,
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Down payment as % of purchase price'
     },
     {
       label: 'Loan Amount',
       value: (propertyData?.purchasePrice || 0) - (propertyData?.downPayment || 0),
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Total financed amount'
     },
     {
       label: 'Monthly Mortgage',
       value: analysis?.monthlyAnalysis?.expenses?.debt || analysis?.monthlyAnalysis?.expenses?.mortgage?.total || 0,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Monthly principal and interest'
     },
     {
       label: 'Projected Sale Price',
       value: analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0,
-      format: 'currency',
+      format: 'currency' as const,
       status: 'positive',
       description: 'Estimated value at year 10'
     },
     {
       label: 'Total Appreciation',
       value: analysis?.longTermAnalysis?.returns?.totalAppreciation || 0,
-      format: 'currency',
+      format: 'currency' as const,
       status: 'positive',
       description: 'Property value increase over 10 years'
     },
     {
       label: 'Cumulative Cash Flow',
       value: analysis?.longTermAnalysis?.returns?.totalCashFlow || 0,
-      format: 'currency',
-      status: (analysis?.longTermAnalysis?.returns?.totalCashFlow || 0) > 0 ? 'positive' : 'negative',
+      format: 'currency' as const,
+      status: (analysis?.longTermAnalysis?.returns?.totalCashFlow || 0) > 0 ? 'positive' as const : 'negative' as const,
       description: 'Total cash flow over 10 years'
     },
     // Additional metrics from documentation
     {
       label: 'Effective Gross Income',
       value: (analysis?.monthlyAnalysis?.income?.effective || 0) * 12,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Annual income after vacancy'
     },
     {
       label: 'Annual Debt Service',
       value: analysis?.longTermAnalysis?.projections?.[0]?.debtService || 0,
-      format: 'currency',
-      status: 'neutral',
+      format: 'currency' as const,
+      status: 'neutral' as const,
       description: 'Total yearly mortgage payments'
     },
     {
       label: 'Principal Paid Off',
       value: analysis?.longTermAnalysis?.projections?.[9]?.mortgageBalance ? 
         (propertyData?.purchasePrice - propertyData?.downPayment) - analysis.longTermAnalysis.projections[9].mortgageBalance : 0,
-      format: 'currency',
+      format: 'currency' as const,
       status: 'positive',
       description: 'Mortgage principal reduction over 10 years'
     },
     {
       label: 'Return on Improvements',
       value: propertyData?.repairCosts ? 8 : 0, // Standard 8% return estimate
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'ROI on capital improvements'
     },
     {
       label: 'Turnover Cost Impact',
       value: analysis?.longTermAnalysis?.projections?.[0]?.turnoverCosts && analysis?.monthlyAnalysis?.income?.effective ?
         (analysis.longTermAnalysis.projections[0].turnoverCosts / (analysis.monthlyAnalysis.income.effective * 12)) * 100 : 0,
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Turnover costs as % of income'
     },
     {
       label: 'Loan-to-Value Ratio',
       value: propertyData?.downPayment && propertyData?.purchasePrice ? 
         ((propertyData.purchasePrice - propertyData.downPayment) / propertyData.purchasePrice) * 100 : 80,
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Loan amount as % of property value'
     },
     {
       label: 'Interest Rate',
       value: propertyData?.interestRate || 7.125,
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Annual mortgage interest rate'
     },
     {
       label: 'Rent-to-Price Ratio',
       value: propertyData?.monthlyRent && propertyData?.purchasePrice ? 
         (propertyData.monthlyRent / propertyData.purchasePrice) * 100 : 0.8,
-      format: 'percent',
-      status: 'neutral',
+      format: 'percent' as const,
+      status: 'neutral' as const,
       description: 'Monthly rent as % of purchase price'
     }
   ];
@@ -455,195 +444,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     </Card>
   );
 
-  // Enhanced AI Insights Card with comprehensive analysis
-  const AIInsightsCard = () => (
-    <Card
-      sx={{
-        borderRadius: '24px',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        mb: 4
-      }}
-    >
-      <CardContent sx={{ p: 4 }}>
-        {/* Header Section */}
-        <Box display="flex" alignItems="center" mb={3}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mr: 3
-            }}
-          >
-            <BrainIcon sx={{ fontSize: 24 }} />
-          </Box>
-          <Box>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
-              AI Investment Analysis
-            </Typography>
-            <Box display="flex" alignItems="center">
-              <Typography variant="h4" fontWeight={700} sx={{ mr: 2 }}>
-                {analysis?.aiInsights?.investmentScore || 68}/100
-              </Typography>
-              <Chip
-                label={
-                  (analysis?.aiInsights?.investmentScore || 68) >= 70 ? "Great Investment" :
-                  (analysis?.aiInsights?.investmentScore || 68) >= 50 ? "Good Investment" :
-                  "Consider Carefully"
-                }
-                sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white',
-                  fontWeight: 600
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Strengths and Considerations */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <TargetIcon sx={{ fontSize: 16, mr: 1 }} />
-              Key Strengths
-            </Typography>
-            <Box sx={{ pl: 2 }}>
-              {analysis?.aiInsights?.strengths?.length > 0 ? (
-                analysis.aiInsights.strengths.slice(0, 4).map((strength: string, index: number) => (
-                  <Typography key={index} variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • {strength}
-                  </Typography>
-                ))
-              ) : (
-                <>
-                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • Strong long-term appreciation potential
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • Below market purchase price advantage
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • Growing market with good fundamentals
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    • Solid cap rate for the area
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <WarningIcon sx={{ fontSize: 16, mr: 1 }} />
-              Considerations
-            </Typography>
-            <Box sx={{ pl: 2 }}>
-              {analysis?.aiInsights?.weaknesses?.length > 0 ? (
-                analysis.aiInsights.weaknesses.slice(0, 3).map((weakness: string, index: number) => (
-                  <Typography key={index} variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • {weakness}
-                  </Typography>
-                ))
-              ) : (
-                <>
-                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • Monitor cash flow requirements
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                    • Consider market conditions
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    • Review rental market trends
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-
-        {/* AI Recommendations */}
-        {analysis?.aiInsights?.recommendations?.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <AutoAwesome sx={{ fontSize: 16, mr: 1 }} />
-              AI Recommendations
-            </Typography>
-            <Box sx={{ pl: 2 }}>
-              {analysis.aiInsights.recommendations.slice(0, 3).map((recommendation: string, index: number) => (
-                <Typography key={index} variant="body2" sx={{ mb: 1, opacity: 0.9 }}>
-                  • {recommendation}
-                </Typography>
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Risk Assessment */}
-        {analysis?.aiInsights?.riskAssessment && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <ShieldIcon sx={{ fontSize: 16, mr: 1 }} />
-              Risk Assessment
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, pl: 2 }}>
-              {analysis.aiInsights.riskAssessment}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Market Trends */}
-        {analysis?.aiInsights?.marketTrendPrediction && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <TrendingUpIcon sx={{ fontSize: 16, mr: 1 }} />
-              Market Trend Prediction
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, pl: 2 }}>
-              {analysis.aiInsights.marketTrendPrediction}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Exit Strategy */}
-        {analysis?.aiInsights?.optimalExitStrategy && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <TargetIcon sx={{ fontSize: 16, mr: 1 }} />
-              Optimal Exit Strategy
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, pl: 2 }}>
-              {typeof analysis.aiInsights.optimalExitStrategy === 'string' ? 
-                analysis.aiInsights.optimalExitStrategy : 
-                JSON.stringify(analysis.aiInsights.optimalExitStrategy)}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Summary */}
-        <Box 
-          sx={{ 
-            mt: 3, 
-            p: 3, 
-            backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-            borderRadius: '12px' 
-          }}
-        >
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            <InfoIcon sx={{ fontSize: 14, mr: 1, verticalAlign: 'middle' }} />
-            {analysis?.aiInsights?.summary || 
-             "This property shows potential but requires careful consideration of all factors. Review the detailed analysis below for comprehensive insights."}
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  );
 
   // Section Navigation
   const SectionNavigation = () => (
@@ -760,7 +560,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                     <Chip 
                       label={analysis.investmentTiming.recommendation || 'Analyze'}
                       color={analysis.investmentTiming.recommendation === 'Buy' ? 'success' : 
-                             analysis.investmentTiming.recommendation === 'Hold' ? 'warning' : 'default'}
+                             analysis.investmentTiming.recommendation === 'Hold' ? 'warning' as const : 'default'}
                       sx={{ fontWeight: 600 }}
                     />
                   </Box>
@@ -1526,7 +1326,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                             <Chip 
                               label={`${insight.confidence}% confidence`}
                               size="small"
-                              color={insight.confidence >= 80 ? 'success' : insight.confidence >= 60 ? 'warning' : 'default'}
+                              color={insight.confidence >= 80 ? 'success' : insight.confidence >= 60 ? 'warning' as const : 'default'}
                             />
                           </Box>
                         </Box>

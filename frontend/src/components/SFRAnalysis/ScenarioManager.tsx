@@ -564,7 +564,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                                 label={`Score: ${aiScore}/100`}
                                 sx={{ 
                                   bgcolor: appleColors.purple[100],
-                                  color: appleColors.purple[700]
+                                  color: appleColors.purple[600]
                                 }}
                               />
                             </Stack>

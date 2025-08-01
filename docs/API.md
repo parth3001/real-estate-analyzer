@@ -50,6 +50,126 @@ if (requestId === activeRequestId && response.status === 200) {
 
 ## API Endpoints
 
+### Interactive Analysis Endpoints
+
+#### Quick Calculation (Real-time Updates)
+```
+POST /api/quick-calculate
+```
+
+**Purpose:** Ultra-fast financial calculations for real-time interactive analysis.
+
+**Performance:** Target <50ms response time for immediate UI feedback.
+
+**Request Body:**
+```json
+{
+  "purchasePrice": 425000,
+  "downPayment": 85000,
+  "interestRate": 7.125,
+  "monthlyRent": 2875,
+  "propertyTaxRate": 1.25,
+  "insuranceRate": 0.52,
+  "maintenanceCost": 287,
+  "propertyManagementRate": 8.5,
+  "vacancyRate": 5,
+  "requestId": "analysis-1643723456789-abc123"
+}
+```
+
+**Response:**
+```json
+{
+  "requestId": "analysis-1643723456789-abc123",
+  "keyMetrics": {
+    "monthlyIncome": 2875,
+    "monthlyExpenses": 1158.51,
+    "monthlyCashFlow": -535.28,
+    "capRate": 4.95,
+    "cashOnCashReturn": -7.56,
+    "dscr": 0.77,
+    "debtYield": 6.19,
+    "grossYield": 8.12
+  },
+  "calculationTime": 23
+}
+```
+
+#### Deal Optimization
+```
+POST /api/deals/:id/optimize
+```
+
+**Purpose:** Generate AI-powered optimization suggestions for underperforming deals.
+
+**Request Body:**
+```json
+{
+  "optimizationGoals": ["improve_cash_flow", "reduce_risk", "maximize_returns"],
+  "constraints": {
+    "maxPriceReduction": 0.15,
+    "maxDownPaymentIncrease": 0.10
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "originalScore": 42,
+  "optimizations": [
+    {
+      "strategy": "purchase_price_reduction",
+      "description": "Reduce purchase price by 8.5% to improve cash flow",
+      "changes": { "purchasePrice": 388250 },
+      "impact": {
+        "newScore": 67,
+        "monthlyImprovement": 285.50,
+        "capRateImprovement": 1.2
+      },
+      "feasibility": "high",
+      "implementation": "Negotiate with seller citing comparable sales"
+    }
+  ]
+}
+```
+
+#### Scenario Management
+```
+POST /api/scenarios
+```
+
+**Purpose:** Save analysis scenario with custom name for future comparison.
+
+**Request Body:**
+```json
+{
+  "dealId": "507f1f77bcf86cd799439011",
+  "scenarioName": "Conservative Estimate",
+  "propertyData": { /* complete property data */ },
+  "analysis": { /* complete analysis results */ }
+}
+```
+
+```
+GET /api/scenarios/:dealId
+```
+
+**Purpose:** Retrieve all saved scenarios for a specific deal.
+
+```
+POST /api/scenarios/compare
+```
+
+**Purpose:** Compare multiple scenarios side-by-side.
+
+**Request Body:**
+```json
+{
+  "scenarioIds": ["scenario1", "scenario2", "scenario3"]
+}
+```
+
 ### Authentication Endpoints
 
 #### User Registration

@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Slider,
   Table,
   TableBody,
@@ -19,6 +18,7 @@ import {
   Alert,
   Divider
 } from '@mui/material';
+import Grid from '@mui/system/Grid';
 import {
   TrendingDown as StressIcon,
   Warning as WarningIcon,
@@ -54,7 +54,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
   propertyData,
   onParameterChange
 }) => {
-  const [selectedScenario, setSelectedScenario] = useState<string>('current');
+  const [, setSelectedScenario] = useState<string>('current');
   const [customParameters, setCustomParameters] = useState({
     rentDecrease: 0,
     vacancyIncrease: 0,
@@ -63,7 +63,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
     appreciationDecrease: 0
   });
   const [stressResults, setStressResults] = useState<any>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [, setIsCalculating] = useState(false);
 
   // Predefined stress test scenarios
   const stressScenarios: StressTestScenario[] = [
@@ -256,7 +256,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
             </Typography>
             
             <Grid container spacing={3}>
-              <Grid xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Box sx={{ p: 3, bgcolor: appleColors.gray[50], borderRadius: '12px' }}>
                   <Typography variant="subtitle1" fontWeight={600} color={appleColors.gray[700]} sx={{ mb: 2 }}>
                     📊 Current Performance
@@ -284,7 +284,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
                 </Box>
               </Grid>
 
-              <Grid xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Box sx={{ p: 3, bgcolor: appleColors.red[50], borderRadius: '12px' }}>
                   <Typography variant="subtitle1" fontWeight={600} color={appleColors.red[700]} sx={{ mb: 2 }}>
                     ⚠️ Stressed Performance
@@ -457,7 +457,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
           </Typography>
           
           <Grid container spacing={4}>
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={3}>
                 <Box>
                   <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -518,7 +518,7 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
               </Stack>
             </Grid>
 
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={3}>
                 <Box>
                   <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -598,22 +598,26 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ textAlign: 'center', p: 3, bgcolor: appleColors.gray[50], borderRadius: '12px' }}>
                 <Typography variant="h3" fontWeight={700} color={appleColors.blue[600]}>
-                  {stressScenarios.filter(s => calculateStressImpact(s.parameters)?.changes.cashFlowChange >= -200).length}
+                  {stressScenarios.filter(s => {
+                    const result = calculateStressImpact(s.parameters);
+                    return result?.changes.cashFlowChange ? result.changes.cashFlowChange >= -200 : false;
+                  }).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Low Risk Scenarios
                 </Typography>
               </Box>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ textAlign: 'center', p: 3, bgcolor: appleColors.warning[50], borderRadius: '12px' }}>
                 <Typography variant="h3" fontWeight={700} color={appleColors.warning[600]}>
                   {stressScenarios.filter(s => {
                     const result = calculateStressImpact(s.parameters);
-                    return result?.changes.cashFlowChange < -200 && result?.changes.cashFlowChange >= -1000;
+                    return result?.changes.cashFlowChange ? 
+                      result.changes.cashFlowChange < -200 && result.changes.cashFlowChange >= -1000 : false;
                   }).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -621,10 +625,13 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
                 </Typography>
               </Box>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ textAlign: 'center', p: 3, bgcolor: appleColors.red[50], borderRadius: '12px' }}>
                 <Typography variant="h3" fontWeight={700} color={appleColors.red[600]}>
-                  {stressScenarios.filter(s => calculateStressImpact(s.parameters)?.changes.cashFlowChange < -1000).length}
+                  {stressScenarios.filter(s => {
+                    const result = calculateStressImpact(s.parameters);
+                    return result?.changes.cashFlowChange ? result.changes.cashFlowChange < -1000 : false;
+                  }).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   High Risk Scenarios

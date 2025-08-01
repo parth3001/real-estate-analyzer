@@ -80,7 +80,7 @@ const DynamicSliders: React.FC<DynamicSlidersProps> = ({
   // Race condition prevention system
   const [updateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
-  const [lastRequestId, setLastRequestId] = useState<string>('');
+  const [, setLastRequestId] = useState<string>('');
 
   const sliderConfigs: SliderConfig[] = [
     // Financial Parameters
