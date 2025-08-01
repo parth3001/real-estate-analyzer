@@ -412,23 +412,34 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       throw new Error('Analysis failed to produce results');
     }
     
-    // Add AI insights with smart caching (Layer 2)
-    try {
-      // Check if this is a parameter change scenario (re-analysis)
-      // In a real implementation, you'd compare against previous data from session/request context
-      // For now, the AIInsightsCacheService handles cache invalidation internally
-      
-      analysis.aiInsights = await generateAIInsights(dealData, analysis);
-    } catch (aiError) {
-      logger.error('Error getting AI insights:', aiError);
-      // Continue without AI insights
+    // Add AI insights with smart caching (Layer 2) - unless skipAI is requested
+    if (dealData.skipAI) {
+      logger.info('Skipping AI insights generation due to skipAI flag');
       analysis.aiInsights = {
-        summary: "AI insights are not available at this time.",
+        summary: "AI insights skipped for faster processing.",
         strengths: [],
         weaknesses: [],
         recommendations: [],
         investmentScore: 0
       };
+    } else {
+      try {
+        // Check if this is a parameter change scenario (re-analysis)
+        // In a real implementation, you'd compare against previous data from session/request context
+        // For now, the AIInsightsCacheService handles cache invalidation internally
+        
+        analysis.aiInsights = await generateAIInsights(dealData, analysis);
+      } catch (aiError) {
+        logger.error('Error getting AI insights:', aiError);
+        // Continue without AI insights
+        analysis.aiInsights = {
+          summary: "AI insights are not available at this time.",
+          strengths: [],
+          weaknesses: [],
+          recommendations: [],
+          investmentScore: 0
+        };
+      }
     }
     
     logger.info('Calculated analysis metrics:', {

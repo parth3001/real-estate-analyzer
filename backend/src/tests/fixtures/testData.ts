@@ -2,7 +2,7 @@ import { BasePropertyData } from '../../types/propertyTypes';
 
 export const mockUser = {
   email: 'test@example.com',
-  password: 'password123',
+  password: 'Password123',
   firstName: 'Test',
   lastName: 'User',
   role: 'user' as const,

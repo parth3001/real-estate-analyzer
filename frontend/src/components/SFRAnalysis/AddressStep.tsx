@@ -3,7 +3,7 @@
  * Handles property address input and basic property details
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   TextField,
@@ -30,31 +30,169 @@ import WizardStep from './WizardStep';
 import type { WizardStepProps, DataConfidence } from './wizardTypes';
 import { wizardApi, type WizardPropertyLookupRequest } from '../../services/api';
 import type { PropertyAddress } from '../../types/property';
+import { useAPIDebounce } from '../../hooks/useDebounce';
 
 const AddressStep: React.FC<WizardStepProps> = ({
   state,
   onUpdate,
   validation
 }) => {
-  const [isLookingUp, setIsLookingUp] = useState(false);
-  const [lookupAttempted, setLookupAttempted] = useState(false);
+  const [, setLookupAttempted] = useState(false);
   const [propertyFound, setPropertyFound] = useState(false);
 
-  // Handle address field changes
+  // Extracted API logic for debounced calls
+  const handlePropertyLookupAPI = async (address: PropertyAddress) => {
+    if (!address || !address.street || !address.city || !address.state) {
+      throw new Error('Incomplete address for lookup');
+    }
+
+    setLookupAttempted(true);
+
+    // Format address for API call
+    const formattedAddress = `${address.street}, ${address.city}, ${address.state} ${address.zipCode || ''}`.trim();
+    
+    console.log('AddressStep: Starting debounced property lookup for:', formattedAddress);
+
+    // Call the wizard API with enhanced RentCast backend
+    const lookupRequest: WizardPropertyLookupRequest = {
+      address: formattedAddress,
+      includeComparables: true,
+      includeMarketData: true
+    };
+
+    const response = await wizardApi.lookupProperty(lookupRequest);
+
+    if (response.data.success && response.data.propertyDetails) {
+      const propertyDetails = response.data.propertyDetails;
+      
+      console.log('AddressStep: Property lookup successful:', {
+        squareFootage: propertyDetails.squareFootage,
+        bedrooms: propertyDetails.bedrooms,
+        bathrooms: propertyDetails.bathrooms,
+        yearBuilt: propertyDetails.yearBuilt,
+        dataSource: 'RentCast Enhanced'
+      });
+
+      // Auto-populate property data with API results
+      const updatedSmartDefaults: Record<string, any> = {};
+      
+      if (propertyDetails.squareFootage) {
+        updatedSmartDefaults.squareFootage = {
+          value: propertyDetails.squareFootage,
+          confidence: {
+            score: 85,
+            source: 'RentCast Enhanced',
+            lastUpdated: new Date(),
+            reliability: 'high' as const
+          }
+        };
+      }
+
+      if (propertyDetails.bedrooms) {
+        updatedSmartDefaults.bedrooms = {
+          value: propertyDetails.bedrooms,
+          confidence: {
+            score: 85,
+            source: 'RentCast Enhanced',
+            lastUpdated: new Date(),
+            reliability: 'high' as const
+          }
+        };
+      }
+
+      if (propertyDetails.bathrooms) {
+        updatedSmartDefaults.bathrooms = {
+          value: propertyDetails.bathrooms,
+          confidence: {
+            score: 85,
+            source: 'RentCast Enhanced',
+            lastUpdated: new Date(),
+            reliability: 'high' as const
+          }
+        };
+      }
+
+      if (propertyDetails.yearBuilt) {
+        updatedSmartDefaults.yearBuilt = {
+          value: propertyDetails.yearBuilt,
+          confidence: {
+            score: 90,
+            source: 'RentCast Enhanced',
+            lastUpdated: new Date(),
+            reliability: 'high' as const
+          }
+        };
+      }
+
+      // Update the wizard state with both smart defaults and actual data values
+      onUpdate({
+        data: {
+          ...state.data,
+          squareFootage: propertyDetails.squareFootage || state.data.squareFootage,
+          bedrooms: propertyDetails.bedrooms || state.data.bedrooms,
+          bathrooms: propertyDetails.bathrooms || state.data.bathrooms,
+          yearBuilt: propertyDetails.yearBuilt || state.data.yearBuilt
+        },
+        smartDefaults: {
+          ...state.smartDefaults,
+          ...updatedSmartDefaults
+        }
+      });
+
+      setPropertyFound(true);
+      console.log('AddressStep: Auto-populated property details from API');
+      
+      return response.data;
+    } else {
+      console.log('AddressStep: Property lookup returned no results');
+      setPropertyFound(false);
+      throw new Error('Property not found');
+    }
+  };
+  
+  // Debounced API call for property lookup
+  const { 
+    execute: debouncedPropertyLookup, 
+    isLoading: isLookingUp, 
+    cancel: cancelLookup 
+  } = useAPIDebounce(handlePropertyLookupAPI, {
+    delay: 1500, // Wait 1.5s after user stops typing
+    retryAttempts: 2,
+    retryDelay: 1000
+  });
+
+  // Handle address field changes with auto-lookup
   const handleAddressChange = (field: keyof PropertyAddress, value: string) => {
+    const updatedAddress = {
+      street: state.data.propertyAddress?.street || '',
+      city: state.data.propertyAddress?.city || '',
+      state: state.data.propertyAddress?.state || '',
+      zipCode: state.data.propertyAddress?.zipCode || '',
+      ...state.data.propertyAddress,
+      [field]: value
+    };
+
     onUpdate({
       data: {
         ...state.data,
-        propertyAddress: {
-          street: state.data.propertyAddress?.street || '',
-          city: state.data.propertyAddress?.city || '',
-          state: state.data.propertyAddress?.state || '',
-          zipCode: state.data.propertyAddress?.zipCode || '',
-          ...state.data.propertyAddress,
-          [field]: value
-        }
+        propertyAddress: updatedAddress
       }
     });
+
+    // Trigger auto-lookup if address is complete enough
+    if (isAddressCompleteForLookup(updatedAddress)) {
+      console.log('AddressStep: Address complete, triggering auto-lookup...');
+      debouncedPropertyLookup(updatedAddress);
+    } else {
+      // Cancel pending lookup if address becomes incomplete
+      cancelLookup();
+    }
+  };
+
+  // Check if address is complete enough for property lookup
+  const isAddressCompleteForLookup = (address: PropertyAddress) => {
+    return !!(address.street && address.city && address.state && 
+              address.street.length > 5 && address.city.length > 2);
   };
 
   // Handle property details changes
@@ -67,140 +205,20 @@ const AddressStep: React.FC<WizardStepProps> = ({
     });
   };
 
-  // Real property lookup using enhanced RentCast API (Phase 2)
-  const handlePropertyLookup = async () => {
+  // Manual property lookup (immediate, not debounced)
+  const handleManualPropertyLookup = async () => {
     const address = state.data.propertyAddress;
-    
-    if (!address || !address.street || !address.city || !address.state) {
+    if (!address || !isAddressCompleteForLookup(address)) {
+      console.warn('AddressStep: Cannot perform manual lookup - incomplete address');
       return;
     }
-
-    setIsLookingUp(true);
-    setLookupAttempted(true);
-
+    
     try {
-      // Format address for API call
-      const formattedAddress = `${address.street}, ${address.city}, ${address.state} ${address.zipCode || ''}`.trim();
-      
-      console.log('AddressStep: Starting real property lookup for:', formattedAddress);
-
-      // Call the wizard API with enhanced RentCast backend
-      const lookupRequest: WizardPropertyLookupRequest = {
-        address: formattedAddress,
-        includeComparables: true,
-        includeMarketData: true
-      };
-
-      const response = await wizardApi.lookupProperty(lookupRequest);
-
-      if (response.data.success && response.data.propertyDetails) {
-        const propertyDetails = response.data.propertyDetails;
-        
-        console.log('AddressStep: Real property lookup successful:', {
-          squareFootage: propertyDetails.squareFootage,
-          bedrooms: propertyDetails.bedrooms,
-          bathrooms: propertyDetails.bathrooms,
-          yearBuilt: propertyDetails.yearBuilt,
-          dataSource: 'RentCast Enhanced'
-        });
-
-        // Transform API response to match our state structure
-        const transformedData: Record<string, any> = {};
-        
-        if (propertyDetails.squareFootage) {
-          transformedData.squareFootage = {
-            value: propertyDetails.squareFootage,
-            confidence: propertyDetails.dataConfidence?.squareFootage || {
-              score: 85,
-              source: 'RentCast Enhanced',
-              lastUpdated: new Date(),
-              reliability: 'high' as const
-            }
-          };
-        }
-
-        if (propertyDetails.bedrooms) {
-          transformedData.bedrooms = {
-            value: propertyDetails.bedrooms,
-            confidence: propertyDetails.dataConfidence?.bedrooms || {
-              score: 85,
-              source: 'RentCast Enhanced',
-              lastUpdated: new Date(),
-              reliability: 'high' as const
-            }
-          };
-        }
-
-        if (propertyDetails.bathrooms) {
-          transformedData.bathrooms = {
-            value: propertyDetails.bathrooms,
-            confidence: propertyDetails.dataConfidence?.bathrooms || {
-              score: 85,
-              source: 'RentCast Enhanced',
-              lastUpdated: new Date(),
-              reliability: 'high' as const
-            }
-          };
-        }
-
-        if (propertyDetails.yearBuilt) {
-          transformedData.yearBuilt = {
-            value: propertyDetails.yearBuilt,
-            confidence: propertyDetails.dataConfidence?.yearBuilt || {
-              score: 90,
-              source: 'RentCast Enhanced',
-              lastUpdated: new Date(),
-              reliability: 'high' as const
-            }
-          };
-        }
-
-        // Update state with real auto-populated data from RentCast
-        onUpdate({
-          data: {
-            ...state.data,
-            squareFootage: transformedData.squareFootage?.value || state.data.squareFootage,
-            bedrooms: transformedData.bedrooms?.value || state.data.bedrooms,
-            bathrooms: transformedData.bathrooms?.value || state.data.bathrooms,
-            yearBuilt: transformedData.yearBuilt?.value || state.data.yearBuilt
-          },
-          autoPopulated: {
-            ...state.autoPopulated,
-            ...transformedData
-          }
-        });
-
-        setPropertyFound(true);
-        
-        console.log('AddressStep: Property data updated successfully with real RentCast data');
-      } else {
-        console.warn('AddressStep: No property found in RentCast database');
-        onUpdate({
-          apiErrors: [...state.apiErrors, 'Property not found in database. Please enter details manually.']
-        });
-      }
+      await handlePropertyLookupAPI(address);
     } catch (error) {
-      console.error('AddressStep: Real property lookup failed:', error);
-      onUpdate({
-        apiErrors: [...state.apiErrors, 'Property lookup failed. Please enter details manually.']
-      });
-    } finally {
-      setIsLookingUp(false);
+      console.error('AddressStep: Manual lookup failed:', error);
     }
   };
-
-  // Auto-trigger lookup when address is complete
-  useEffect(() => {
-    const address = state.data.propertyAddress;
-    if (address && address.street && address.city && address.state && !lookupAttempted && !isLookingUp) {
-      // Small delay to avoid excessive API calls
-      const timer = setTimeout(() => {
-        handlePropertyLookup();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [state.data.propertyAddress, lookupAttempted, isLookingUp]);
 
   // Get data confidence for this step
   const getStepConfidence = (): Record<string, DataConfidence> => {
@@ -304,7 +322,7 @@ const AddressStep: React.FC<WizardStepProps> = ({
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="outlined"
-              onClick={handlePropertyLookup}
+              onClick={handleManualPropertyLookup}
               disabled={isLookingUp || !state.data.propertyAddress?.street}
               startIcon={isLookingUp ? <CircularProgress size={20} /> : <Search />}
             >

@@ -345,8 +345,8 @@ const DealFixer: React.FC<DealFixerProps> = ({
     }), { cashFlow: 0, cocReturn: 0, score: 0 });
   }, [suggestions, selectedFixes]);
 
-  // Don't show component if deal is already good
-  if (!isVisible || !isDealPoor || suggestions.length === 0) {
+  // Don't show component if not visible
+  if (!isVisible) {
     return null;
   }
 
@@ -378,6 +378,42 @@ const DealFixer: React.FC<DealFixerProps> = ({
       default: return appleColors.gray[400];
     }
   };
+
+  // Show success message if deal is already good
+  if (!isDealPoor || suggestions.length === 0) {
+    return (
+      <Card sx={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <CheckIcon sx={{ 
+              fontSize: 48, 
+              color: appleColors.success[500], 
+              mb: 2 
+            }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, color: appleColors.gray[900], mb: 1 }}>
+              Great Deal! No Optimization Needed
+            </Typography>
+            <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 2 }}>
+              Current score: {currentScore}/100 - This deal is performing well
+            </Typography>
+            <Box sx={{ 
+              bgcolor: appleColors.success[50], 
+              border: `1px solid ${appleColors.success[200]}`,
+              borderRadius: '12px',
+              p: 2,
+              mt: 3
+            }}>
+              <Typography variant="body2" sx={{ color: appleColors.success[800] }}>
+                ✅ Investment score above 55/100<br/>
+                ✅ Deal metrics are within acceptable ranges<br/>
+                ✅ No immediate optimization required
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card sx={{ borderRadius: '16px', overflow: 'hidden' }}>

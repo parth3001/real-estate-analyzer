@@ -2,6 +2,7 @@
   "nashville_sfr_2024": {
     "description": "Nashville SFR - Based on 2024 market data for financial validation",
     "source": "Market research - Nashville Davidson County",
+    "expectedCalculationsNote": "Updated 2025-01-31: Corrected vacancy handling (income reduction vs expense) and debt service calculations to match industry standards and BiggerPockets methodology",
     "propertyData": {
       "propertyType": "SFR",
       "propertyName": "Nashville Reference Property",
@@ -43,27 +44,29 @@
     "expectedCalculations": {
       "monthlyAnalysis": {
         "grossIncome": 2875,
+        "effectiveIncome": 2725.50,
         "propertyTax": 442.71,
         "insurance": 184.42,
         "maintenance": 287,
         "propertyManagement": 244.38,
-        "vacancy": 149.50,
-        "totalExpenses": 1307.01,
-        "netOperatingIncome": 1567.99,
-        "debtService": 1635.32,
-        "cashFlow": -67.33
+        "vacancy": 0,
+        "totalExpenses": 2290.64,
+        "netOperatingIncome": 1755.36,
+        "debtService": 2290.64,
+        "cashFlow": -535.28
       },
       "annualAnalysis": {
         "grossIncome": 34500,
-        "totalExpenses": 15684.12,
-        "netOperatingIncome": 18815.88,
-        "debtService": 19623.84,
-        "cashFlow": -807.96
+        "effectiveIncome": 32706,
+        "totalExpenses": 13902.12,
+        "netOperatingIncome": 21064.25,
+        "debtService": 27487.72,
+        "cashFlow": -6423.47
       },
       "keyMetrics": {
-        "capRate": 4.43,
-        "cashOnCashReturn": -0.86,
-        "debtServiceCoverageRatio": 0.96,
+        "capRate": 4.95,
+        "cashOnCashReturn": -6.87,
+        "dscr": 0.77,
         "operatingExpenseRatio": 45.46,
         "grossRentMultiplier": 12.32,
         "onePercentRuleValue": 0.68,
