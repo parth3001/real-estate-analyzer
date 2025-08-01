@@ -190,7 +190,7 @@ export const useAdaptiveDebounce = <T extends (...args: any[]) => any>(
 export const useRequestTrackingDebounce = <T extends (...args: any[]) => Promise<any>>(
   func: T,
   options: DebounceOptions & RequestTrackingOptions
-): [(...args: Parameters<T>) => Promise<void>, () => void, string | null] => {
+): [(...args: Parameters<T>) => void, () => void, string | null] => {
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const funcRef = useRef(func);
   const requestCounterRef = useRef(0);
@@ -287,9 +287,9 @@ export const useInputDebounce = <T>(
 /**
  * Slider debounce hook - specialized for slider components
  */
-export const useSliderDebounce = <T extends (...args: any[]) => Promise<any>>(
-  onQuickChange: T,
-  onFullChange: T,
+export const useSliderDebounce = (
+  onQuickChange: (value: number) => Promise<any>,
+  onFullChange: (value: number) => Promise<any>,
   options: {
     quickDelay?: number;
     fullDelay?: number;
@@ -421,8 +421,10 @@ export const useAPIDebounce = <T extends (...args: any[]) => Promise<any>>(
 
   const execute = useCallback(async (...args: Parameters<T>) => {
     try {
-      const result = await debouncedExecute(...args);
-      return result as Awaited<ReturnType<T>>;
+      debouncedExecute(...args);
+      // Since debouncedExecute is now void, we can't return its result
+      // The actual result will be handled by the API call itself
+      return null;
     } catch (err) {
       console.error('Debounced API call failed:', err);
       return null;

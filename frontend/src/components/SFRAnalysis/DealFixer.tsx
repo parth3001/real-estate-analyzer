@@ -4,22 +4,17 @@ import {
   Typography,
   Card,
   CardContent,
-  Button,
   Chip,
   Stack,
-  LinearProgress,
-  IconButton,
-  Tooltip,
   Alert,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction
+  IconButton
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -32,7 +27,6 @@ import {
   Home as PropertyIcon,
   Schedule as TimingIcon,
   Assessment as AnalysisIcon,
-  Info as InfoIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';

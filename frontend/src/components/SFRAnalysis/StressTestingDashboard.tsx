@@ -15,16 +15,11 @@ import {
   LinearProgress,
   Stack,
   Button,
-  Alert,
-  Divider
+  Alert
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
-  TrendingDown as StressIcon,
-  Warning as WarningIcon,
-  Speed as GaugeIcon,
-  Timeline as TimelineIcon,
-  Thermostat as HeatIcon
+  TrendingDown as StressIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
 import { EducationalTooltip } from '../common/EducationalTooltip';
@@ -63,7 +58,6 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
     appreciationDecrease: 0
   });
   const [stressResults, setStressResults] = useState<any>(null);
-  const [, setIsCalculating] = useState(false);
 
   // Predefined stress test scenarios
   const stressScenarios: StressTestScenario[] = [
