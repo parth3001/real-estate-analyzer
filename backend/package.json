@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "build": "rimraf dist && tsc --skipLibCheck",
+    "build": "rimraf dist && tsc -p tsconfig.build.json --skipLibCheck",
     "postinstall": "npm run build",
     "test": "jest",
     "validate-docs": "npx ts-node scripts/validate-docs.ts",
