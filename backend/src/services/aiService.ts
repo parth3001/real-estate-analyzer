@@ -11,6 +11,31 @@ import {
   generateDemographicInsights
 } from '../utils/marketAnalysis';
 
+/**
+ * Normalize risk level to match schema enum values
+ */
+function normalizeRiskLevel(riskLevel: string): 'low' | 'medium' | 'high' | 'critical' {
+  const normalized = riskLevel?.toLowerCase().trim();
+  
+  // Map variations to valid enum values
+  switch (normalized) {
+    case 'low':
+      return 'low';
+    case 'medium':
+    case 'moderate':
+      return 'medium';
+    case 'high':
+    case 'very high':
+      return 'high';
+    case 'critical':
+    case 'extreme':
+    case 'severe':
+      return 'critical';
+    default:
+      return 'medium'; // Default to medium if unknown
+  }
+}
+
 export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysis: any): Promise<AIInsights> {
   try {
     logger.info('Enhanced AI insights generation started with market intelligence');
@@ -191,10 +216,20 @@ export async function getAIInsights(dealData: SFRData | MultiFamilyData, analysi
         opportunityCostAnalysis: aiResponse.opportunityCostAnalysis,
         
         // AI predictions for enhanced analysis
-        boldPredictions: aiResponse.boldPredictions,
+        // Handle case where AI returns string instead of structured object
+        boldPredictions: typeof aiResponse.boldPredictions === 'string' ? 
+          {
+            wealthCreation: {
+              year10Value: aiResponse.boldPredictions
+            }
+          } : aiResponse.boldPredictions,
         
         // Intelligence Multiplier fields
-        metricIntelligence: aiResponse.metricIntelligence,
+        // Normalize risk levels to match schema enum
+        metricIntelligence: aiResponse.metricIntelligence?.map((metric: any) => ({
+          ...metric,
+          riskLevel: normalizeRiskLevel(metric.riskLevel)
+        })) || aiResponse.metricIntelligence,
         riskBlindSpots: aiResponse.riskBlindSpots,
         opportunityAlternatives: aiResponse.opportunityAlternatives,
         advancedStrategies: aiResponse.advancedStrategies,

@@ -5,6 +5,7 @@ export interface PropertyAddress {
   city: string;
   state: string;
   zipCode: string;
+  county?: string;
 }
 
 export interface LongTermAssumptions {
@@ -92,6 +93,7 @@ export interface SavedProperty {
     city: string;
     state: string;
     zipCode: string;
+    county?: string;
   };
   purchasePrice: number;
   downPayment: number;

@@ -32,6 +32,7 @@ import {
 
 import WizardStep from './WizardStep';
 import type { WizardStepProps, DataConfidence } from './wizardTypes';
+import { wizardApi } from '../../services/api';
 
 const RentalStep: React.FC<WizardStepProps> = ({
   state,
@@ -49,43 +50,121 @@ const RentalStep: React.FC<WizardStepProps> = ({
   const grossRentalYield = state.data.purchasePrice && state.data.monthlyRent ?
     ((state.data.monthlyRent * 12) / state.data.purchasePrice * 100).toFixed(2) : '0';
 
-  // Mock rent estimate lookup (Phase 1)
+  // Real rent estimate lookup using RentCast + Census data
   useEffect(() => {
-    if (!state.autoPopulated.rentEstimate && state.data.propertyAddress?.zipCode && !loadingRentEstimate) {
+    if (!state.autoPopulated.rentEstimate && state.data.propertyAddress?.street && !loadingRentEstimate) {
       setLoadingRentEstimate(true);
       
-      // Simulate API call for rent estimate
-      setTimeout(() => {
-        const baseRent = state.data.squareFootage ? state.data.squareFootage * 1.2 : 2200;
-        const rentEstimate = Math.round(baseRent);
-        
-        onUpdate({
-          data: {
-            ...state.data,
-            monthlyRent: state.data.monthlyRent || rentEstimate
-          },
-          autoPopulated: {
-            ...state.autoPopulated,
-            rentEstimate: {
-              value: rentEstimate,
-              confidence: {
-                score: 88,
-                source: 'Market Analysis (Mock)',
-                lastUpdated: new Date(),
-                reliability: 'high' as const
+      const fetchRentEstimate = async () => {
+        try {
+          console.log('RentalStep: Fetching real rent estimate for property');
+          
+          // Build address string
+          const address = `${state.data.propertyAddress?.street}, ${state.data.propertyAddress?.city}, ${state.data.propertyAddress?.state}`;
+          
+          // Call real API
+          const response = await wizardApi.getRentEstimate({
+            address,
+            squareFootage: state.data.squareFootage,
+            bedrooms: state.data.bedrooms,
+            bathrooms: state.data.bathrooms,
+            yearBuilt: state.data.yearBuilt,
+            zipCode: state.data.propertyAddress?.zipCode
+          });
+
+          if (response.data.success && response.data.data) {
+            const rentData = response.data.data;
+            
+            console.log('RentalStep: Received rent estimate:', {
+              value: rentData.value,
+              confidence: rentData.confidence.score,
+              source: rentData.confidence.source
+            });
+            
+            onUpdate({
+              data: {
+                ...state.data,
+                monthlyRent: state.data.monthlyRent || rentData.value
               },
-              range: {
-                low: Math.round(rentEstimate * 0.9),
-                high: Math.round(rentEstimate * 1.1)
+              autoPopulated: {
+                ...state.autoPopulated,
+                rentEstimate: {
+                  value: rentData.value,
+                  confidence: {
+                    score: rentData.confidence.score,
+                    source: rentData.confidence.source,
+                    lastUpdated: new Date(),
+                    reliability: rentData.confidence.reliability
+                  },
+                  range: rentData.range
+                }
+              }
+            });
+          } else {
+            console.warn('RentalStep: Failed to get rent estimate, using fallback');
+            
+            // Fallback to simple calculation if API fails
+            const fallbackRent = state.data.squareFootage ? state.data.squareFootage * 1.2 : 2200;
+            
+            onUpdate({
+              data: {
+                ...state.data,
+                monthlyRent: state.data.monthlyRent || Math.round(fallbackRent)
+              },
+              autoPopulated: {
+                ...state.autoPopulated,
+                rentEstimate: {
+                  value: Math.round(fallbackRent),
+                  confidence: {
+                    score: 30,
+                    source: 'Fallback Calculation',
+                    lastUpdated: new Date(),
+                    reliability: 'low' as const
+                  },
+                  range: {
+                    low: Math.round(fallbackRent * 0.8),
+                    high: Math.round(fallbackRent * 1.2)
+                  }
+                }
+              }
+            });
+          }
+        } catch (error) {
+          console.error('RentalStep: Error fetching rent estimate:', error);
+          
+          // Fallback on error
+          const fallbackRent = state.data.squareFootage ? state.data.squareFootage * 1.2 : 2200;
+          
+          onUpdate({
+            data: {
+              ...state.data,
+              monthlyRent: state.data.monthlyRent || Math.round(fallbackRent)
+            },
+            autoPopulated: {
+              ...state.autoPopulated,
+              rentEstimate: {
+                value: Math.round(fallbackRent),
+                confidence: {
+                  score: 25,
+                  source: 'Error Fallback',
+                  lastUpdated: new Date(),
+                  reliability: 'low' as const
+                },
+                range: {
+                  low: Math.round(fallbackRent * 0.8),
+                  high: Math.round(fallbackRent * 1.2)
+                }
               }
             }
-          }
-        });
-        
-        setLoadingRentEstimate(false);
-      }, 1500);
+          });
+        } finally {
+          setLoadingRentEstimate(false);
+        }
+      };
+
+      fetchRentEstimate();
     }
-  }, [state.data.propertyAddress?.zipCode, state.data.squareFootage]);
+  }, [state.data.propertyAddress?.street, state.data.squareFootage, state.data.bedrooms, state.data.yearBuilt]);
 
   // Handle self management toggle
   const handleSelfManageToggle = (checked: boolean) => {

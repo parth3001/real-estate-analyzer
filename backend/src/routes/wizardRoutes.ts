@@ -13,7 +13,7 @@ import {
   SmartDefaultsRequest,
   AddressValidationRequest
 } from '../types/wizardTypes';
-import { convertWizardToSFRData, analyzePropertyFromWizard } from '../controllers/wizardController';
+import { convertWizardToSFRData, analyzePropertyFromWizard, getRentEstimate, getPropertyTaxEstimate } from '../controllers/wizardController';
 
 const router: Router = express.Router();
 
@@ -278,6 +278,18 @@ router.post('/convert', convertWizardToSFRData);
  * Analyze property using wizard data with enhanced metadata
  */
 router.post('/analyze', analyzePropertyFromWizard);
+
+/**
+ * POST /api/wizard/rent-estimate
+ * Generate smart rent estimate using real market data
+ */
+router.post('/rent-estimate', getRentEstimate);
+
+/**
+ * POST /api/wizard/property-tax-estimate
+ * Generate smart property tax estimate using RentCast historical tax data
+ */
+router.post('/property-tax-estimate', getPropertyTaxEstimate);
 
 /**
  * GET /api/wizard/stats

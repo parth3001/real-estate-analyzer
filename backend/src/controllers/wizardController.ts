@@ -8,6 +8,8 @@
 import { Request, Response } from 'express';
 import { logger } from '../utils/logger';
 import { propertyDataAggregator } from '../services/propertyDataAggregator';
+import { rentEstimationService } from '../services/rentEstimationService';
+import { propertyTaxEstimationService } from '../services/propertyTaxEstimationService';
 import { SFRData } from '../types/propertyTypes';
 import { WizardEnhancedSFRData } from '../types/wizardTypes';
 
@@ -339,4 +341,123 @@ function calculateMaintenanceCost(monthlyRent?: number, maintenanceReservePercen
   
   return Math.round(annualMaintenanceCost);
 }
+
+/**
+ * Generate smart rent estimate using real market data
+ */
+export const getRentEstimate = async (req: Request, res: Response) => {
+  try {
+    const { address, squareFootage, bedrooms, bathrooms, yearBuilt, zipCode } = req.body;
+
+    logger.info('Generating rent estimate for property', {
+      address,
+      squareFootage,
+      bedrooms,
+      bathrooms,
+      yearBuilt
+    });
+
+    // Validate required fields
+    if (!address) {
+      return res.status(400).json({
+        error: 'Property address is required'
+      });
+    }
+
+    // Prepare property details
+    const propertyDetails = {
+      address,
+      squareFootage: squareFootage ? Number(squareFootage) : undefined,
+      bedrooms: bedrooms ? Number(bedrooms) : undefined,
+      bathrooms: bathrooms ? Number(bathrooms) : undefined,
+      yearBuilt: yearBuilt ? Number(yearBuilt) : undefined,
+      zipCode
+    };
+
+    // Generate rent estimate
+    const rentEstimate = await rentEstimationService.generateSmartRentEstimate(propertyDetails);
+
+    logger.info('Successfully generated rent estimate', {
+      address,
+      estimatedRent: rentEstimate.value,
+      confidence: rentEstimate.confidence.score,
+      source: rentEstimate.confidence.source
+    });
+
+    res.json({
+      success: true,
+      data: rentEstimate
+    });
+
+  } catch (error) {
+    logger.error('Error generating rent estimate:', error);
+    res.status(500).json({
+      error: 'Failed to generate rent estimate',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+/**
+ * Generate smart property tax estimate using RentCast historical tax data
+ */
+export const getPropertyTaxEstimate = async (req: Request, res: Response) => {
+  try {
+    const { address, purchasePrice, zipCode, county, state } = req.body;
+
+    logger.info('Generating property tax estimate for property', {
+      address,
+      purchasePrice,
+      zipCode,
+      county,
+      state
+    });
+
+    // Validate required fields
+    if (!address || !purchasePrice) {
+      return res.status(400).json({
+        error: 'Property address and purchase price are required'
+      });
+    }
+
+    if (purchasePrice <= 0) {
+      return res.status(400).json({
+        error: 'Purchase price must be greater than 0'
+      });
+    }
+
+    // Prepare property tax request
+    const taxRequest = {
+      address,
+      purchasePrice: Number(purchasePrice),
+      zipCode,
+      county,
+      state
+    };
+
+    // Generate property tax estimate
+    const taxEstimate = await propertyTaxEstimationService.generatePropertyTaxEstimate(taxRequest);
+
+    logger.info('Successfully generated property tax estimate', {
+      address,
+      purchasePrice,
+      effectiveTaxRate: taxEstimate.effectiveTaxRate,
+      annualTaxAmount: taxEstimate.annualTaxAmount,
+      confidence: taxEstimate.confidence.score,
+      source: taxEstimate.confidence.source
+    });
+
+    res.json({
+      success: true,
+      data: taxEstimate
+    });
+
+  } catch (error) {
+    logger.error('Error generating property tax estimate:', error);
+    res.status(500).json({
+      error: 'Failed to generate property tax estimate',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
 

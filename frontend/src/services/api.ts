@@ -598,6 +598,137 @@ export const wizardApi = {
       console.error('Wizard API: Health check failed:', error);
       throw error;
     }
+  },
+
+  // Generate smart rent estimate
+  getRentEstimate: async (data: {
+    address: string;
+    squareFootage?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    yearBuilt?: number;
+    zipCode?: string;
+  }): Promise<ApiResponse<{
+    success: boolean;
+    data?: {
+      value: number;
+      confidence: {
+        score: number;
+        source: string;
+        reliability: 'high' | 'medium' | 'low';
+      };
+      range: {
+        low: number;
+        high: number;
+      };
+      breakdown: {
+        baseRentPerSqft: number;
+        adjustments: {
+          bedrooms: number;
+          yearBuilt: number;
+          marketFactor: number;
+        };
+        capByValueRule: number;
+      };
+    };
+    error?: string;
+  }>> => {
+    try {
+      console.log('Wizard API: Getting rent estimate for:', data.address);
+      
+      const response = await api.post('/wizard/rent-estimate', data);
+      
+      console.log('Wizard API: Rent estimate response:', {
+        success: response.data.success,
+        estimatedRent: response.data.data?.value,
+        confidence: response.data.data?.confidence?.score,
+        source: response.data.data?.confidence?.source
+      });
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Wizard API: Rent estimate failed:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: {
+            success: false,
+            error: error.response?.data?.error || error.message
+          },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Generate smart property tax estimate
+  getPropertyTaxEstimate: async (data: {
+    address: string;
+    purchasePrice: number;
+    zipCode?: string;
+    county?: string;
+    state?: string;
+  }): Promise<ApiResponse<{
+    success: boolean;
+    data?: {
+      annualTaxAmount: number;
+      effectiveTaxRate: number;
+      confidence: {
+        score: number;
+        source: string;
+        reliability: 'high' | 'medium' | 'low';
+        factors: string[];
+      };
+      breakdown: {
+        purchasePrice: number;
+        estimatedAssessmentRatio: number;
+        estimatedAssessedValue: number;
+        appliedTaxRate: number;
+      };
+      sourceData?: {
+        address: string;
+        taxAssessedValue: number;
+        annualTaxAmount: number;
+        calculatedRate: number;
+      };
+    };
+    error?: string;
+  }>> => {
+    try {
+      console.log('Wizard API: Getting property tax estimate for:', data.address);
+      
+      const response = await api.post('/wizard/property-tax-estimate', data);
+      
+      console.log('Wizard API: Property tax estimate response:', {
+        success: response.data.success,
+        annualTax: response.data.data?.annualTaxAmount,
+        taxRate: response.data.data?.effectiveTaxRate,
+        confidence: response.data.data?.confidence?.score,
+        source: response.data.data?.confidence?.source
+      });
+      
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Wizard API: Property tax estimate failed:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: {
+            success: false,
+            error: error.response?.data?.error || error.message
+          },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
   }
 };
 

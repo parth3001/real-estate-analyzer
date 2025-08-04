@@ -1,0 +1,354 @@
+{
+  "states": {
+    "AL": {
+      "name": "Alabama",
+      "assessmentRatio": 0.10,
+      "source": "Alabama Department of Revenue",
+      "notes": "Class III property (residential) assessed at 10% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "AK": {
+      "name": "Alaska",
+      "assessmentRatio": 1.00,
+      "source": "Alaska Department of Commerce",
+      "notes": "Properties assessed at 100% of full and true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "AZ": {
+      "name": "Arizona",
+      "assessmentRatio": 0.10,
+      "source": "Arizona Department of Revenue",
+      "notes": "Residential property assessed at 10% of full cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "AR": {
+      "name": "Arkansas",
+      "assessmentRatio": 0.20,
+      "source": "Arkansas Assessment Coordination Division",
+      "notes": "Residential real property assessed at 20% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "CA": {
+      "name": "California",
+      "assessmentRatio": 1.00,
+      "source": "California Board of Equalization",
+      "notes": "Proposition 13 - assessed at 100% of purchase price with 2% annual increase cap",
+      "lastUpdated": "2025-01-01"
+    },
+    "CO": {
+      "name": "Colorado",
+      "assessmentRatio": 0.0715,
+      "source": "Colorado Division of Property Taxation",
+      "notes": "Residential property assessed at 7.15% of actual value",
+      "lastUpdated": "2025-01-01"
+    },
+    "CT": {
+      "name": "Connecticut",
+      "assessmentRatio": 0.70,
+      "source": "Connecticut Office of Policy and Management",
+      "notes": "Properties assessed at 70% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "DE": {
+      "name": "Delaware",
+      "assessmentRatio": 1.00,
+      "source": "Delaware Division of Revenue",
+      "notes": "Properties assessed at 100% of true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "FL": {
+      "name": "Florida",
+      "assessmentRatio": 1.00,
+      "source": "Florida Department of Revenue",
+      "notes": "Properties assessed at 100% of just value with Save Our Homes cap",
+      "lastUpdated": "2025-01-01"
+    },
+    "GA": {
+      "name": "Georgia",
+      "assessmentRatio": 0.40,
+      "source": "Georgia Department of Revenue",
+      "notes": "Residential property assessed at 40% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "HI": {
+      "name": "Hawaii",
+      "assessmentRatio": 1.00,
+      "source": "Hawaii Department of Taxation",
+      "notes": "Properties assessed at 100% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "ID": {
+      "name": "Idaho",
+      "assessmentRatio": 1.00,
+      "source": "Idaho State Tax Commission",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "IL": {
+      "name": "Illinois",
+      "assessmentRatio": 0.3333,
+      "source": "Illinois Department of Revenue",
+      "notes": "Properties assessed at 33.33% (1/3) of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "IN": {
+      "name": "Indiana",
+      "assessmentRatio": 1.00,
+      "source": "Indiana Department of Local Government Finance",
+      "notes": "Properties assessed at 100% of true tax value",
+      "lastUpdated": "2025-01-01"
+    },
+    "IA": {
+      "name": "Iowa",
+      "assessmentRatio": 0.5478,
+      "source": "Iowa Department of Revenue",
+      "notes": "Residential property assessed at 54.78% of market value (2023 rollback)",
+      "lastUpdated": "2025-01-01"
+    },
+    "KS": {
+      "name": "Kansas",
+      "assessmentRatio": 0.115,
+      "source": "Kansas Department of Revenue",
+      "notes": "Residential property assessed at 11.5% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "KY": {
+      "name": "Kentucky",
+      "assessmentRatio": 1.00,
+      "source": "Kentucky Department of Revenue",
+      "notes": "Properties assessed at 100% of fair cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "LA": {
+      "name": "Louisiana",
+      "assessmentRatio": 0.10,
+      "source": "Louisiana Tax Commission",
+      "notes": "Residential property assessed at 10% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "ME": {
+      "name": "Maine",
+      "assessmentRatio": 1.00,
+      "source": "Maine Revenue Services",
+      "notes": "Properties assessed at 100% of just value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MD": {
+      "name": "Maryland",
+      "assessmentRatio": 1.00,
+      "source": "Maryland Department of Assessments and Taxation",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MA": {
+      "name": "Massachusetts",
+      "assessmentRatio": 1.00,
+      "source": "Massachusetts Department of Revenue",
+      "notes": "Properties assessed at 100% of full and fair cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MI": {
+      "name": "Michigan",
+      "assessmentRatio": 0.50,
+      "source": "Michigan Department of Treasury",
+      "notes": "Properties assessed at 50% of true cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MN": {
+      "name": "Minnesota",
+      "assessmentRatio": 1.00,
+      "source": "Minnesota Department of Revenue",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MS": {
+      "name": "Mississippi",
+      "assessmentRatio": 0.10,
+      "source": "Mississippi Department of Revenue",
+      "notes": "Class I residential property assessed at 10% of true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MO": {
+      "name": "Missouri",
+      "assessmentRatio": 0.19,
+      "source": "Missouri State Tax Commission",
+      "notes": "Residential property assessed at 19% of true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "MT": {
+      "name": "Montana",
+      "assessmentRatio": 1.00,
+      "source": "Montana Department of Revenue",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NE": {
+      "name": "Nebraska",
+      "assessmentRatio": 1.00,
+      "source": "Nebraska Department of Revenue",
+      "notes": "Properties assessed at 100% of actual value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NV": {
+      "name": "Nevada",
+      "assessmentRatio": 0.35,
+      "source": "Nevada Department of Taxation",
+      "notes": "Properties assessed at 35% of taxable value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NH": {
+      "name": "New Hampshire",
+      "assessmentRatio": 1.00,
+      "source": "New Hampshire Department of Revenue Administration",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NJ": {
+      "name": "New Jersey",
+      "assessmentRatio": 1.00,
+      "source": "New Jersey Division of Taxation",
+      "notes": "Properties assessed at 100% of true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NM": {
+      "name": "New Mexico",
+      "assessmentRatio": 0.33,
+      "source": "New Mexico Taxation and Revenue Department",
+      "notes": "Residential property assessed at 33.33% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "NY": {
+      "name": "New York",
+      "assessmentRatio": 1.00,
+      "source": "New York State Department of Taxation",
+      "notes": "Most areas assess at 100% of market value (varies by locality)",
+      "lastUpdated": "2025-01-01"
+    },
+    "NC": {
+      "name": "North Carolina",
+      "assessmentRatio": 1.00,
+      "source": "North Carolina Department of Revenue",
+      "notes": "Properties assessed at 100% of true value",
+      "lastUpdated": "2025-01-01"
+    },
+    "ND": {
+      "name": "North Dakota",
+      "assessmentRatio": 0.09,
+      "source": "North Dakota Office of State Tax Commissioner",
+      "notes": "Residential property assessed at 9% of true and full value",
+      "lastUpdated": "2025-01-01"
+    },
+    "OH": {
+      "name": "Ohio",
+      "assessmentRatio": 0.35,
+      "source": "Ohio Department of Taxation",
+      "notes": "Properties assessed at 35% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "OK": {
+      "name": "Oklahoma",
+      "assessmentRatio": 0.11,
+      "source": "Oklahoma Tax Commission",
+      "notes": "Residential property assessed at 11% of fair cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "OR": {
+      "name": "Oregon",
+      "assessmentRatio": 1.00,
+      "source": "Oregon Department of Revenue",
+      "notes": "Properties assessed at 100% of real market value with Measure 50 limits",
+      "lastUpdated": "2025-01-01"
+    },
+    "PA": {
+      "name": "Pennsylvania",
+      "assessmentRatio": 1.00,
+      "source": "Pennsylvania Department of Revenue",
+      "notes": "Properties assessed at 100% of market value (varies by county)",
+      "lastUpdated": "2025-01-01"
+    },
+    "RI": {
+      "name": "Rhode Island",
+      "assessmentRatio": 1.00,
+      "source": "Rhode Island Division of Taxation",
+      "notes": "Properties assessed at 100% of full and fair cash value",
+      "lastUpdated": "2025-01-01"
+    },
+    "SC": {
+      "name": "South Carolina",
+      "assessmentRatio": 0.04,
+      "source": "South Carolina Department of Revenue",
+      "notes": "Owner-occupied residential assessed at 4% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "SD": {
+      "name": "South Dakota",
+      "assessmentRatio": 0.85,
+      "source": "South Dakota Department of Revenue",
+      "notes": "Properties assessed at 85% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "TN": {
+      "name": "Tennessee",
+      "assessmentRatio": 0.25,
+      "source": "Tennessee Comptroller of the Treasury",
+      "notes": "Residential property assessed at 25% of appraised value",
+      "lastUpdated": "2025-01-01"
+    },
+    "TX": {
+      "name": "Texas",
+      "assessmentRatio": 1.00,
+      "source": "Texas Comptroller",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "UT": {
+      "name": "Utah",
+      "assessmentRatio": 0.55,
+      "source": "Utah State Tax Commission",
+      "notes": "Primary residential property assessed at 55% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "VT": {
+      "name": "Vermont",
+      "assessmentRatio": 1.00,
+      "source": "Vermont Department of Taxes",
+      "notes": "Properties assessed at 100% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "VA": {
+      "name": "Virginia",
+      "assessmentRatio": 1.00,
+      "source": "Virginia Department of Taxation",
+      "notes": "Properties assessed at 100% of fair market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "WA": {
+      "name": "Washington",
+      "assessmentRatio": 1.00,
+      "source": "Washington State Department of Revenue",
+      "notes": "Properties assessed at 100% of true and fair value",
+      "lastUpdated": "2025-01-01"
+    },
+    "WV": {
+      "name": "West Virginia",
+      "assessmentRatio": 0.60,
+      "source": "West Virginia State Tax Department",
+      "notes": "Class II residential property assessed at 60% of appraised value",
+      "lastUpdated": "2025-01-01"
+    },
+    "WI": {
+      "name": "Wisconsin",
+      "assessmentRatio": 1.00,
+      "source": "Wisconsin Department of Revenue",
+      "notes": "Properties assessed at 100% of market value",
+      "lastUpdated": "2025-01-01"
+    },
+    "WY": {
+      "name": "Wyoming",
+      "assessmentRatio": 0.095,
+      "source": "Wyoming Department of Revenue",
+      "notes": "Residential property assessed at 9.5% of fair market value",
+      "lastUpdated": "2025-01-01"
+    }
+  }
+}

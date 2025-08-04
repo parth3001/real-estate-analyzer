@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Texas Comptroller",
+    "type": "manual",
+    "url": "https://comptroller.texas.gov/taxes/property-tax/",
+    "description": "Texas property tax assessment ratios - 100% of market value",
+    "coverageLevel": "state",
+    "reliability": "high",
+    "updateFrequency": "annually",
+    "state": "TX",
+    "extractionMethod": "manual",
+    "dataFormat": "json",
+    "lastCollected": "2025-08-03T00:00:00.000Z"
+  },
+  {
+    "name": "California State Board of Equalization",
+    "type": "manual", 
+    "url": "https://www.boe.ca.gov/",
+    "description": "California Proposition 13 assessment ratios - 100% at purchase, limited increases",
+    "coverageLevel": "state",
+    "reliability": "high",
+    "updateFrequency": "annually",
+    "state": "CA",
+    "extractionMethod": "manual",
+    "dataFormat": "json",
+    "lastCollected": "2025-08-03T00:00:00.000Z"
+  },
+  {
+    "name": "Illinois Department of Revenue",
+    "type": "manual",
+    "url": "https://www2.illinois.gov/rev/localgovsupport/property/Pages/default.aspx",
+    "description": "Illinois property tax assessment ratios - 33.33% of fair market value",
+    "coverageLevel": "both",
+    "reliability": "high", 
+    "updateFrequency": "annually",
+    "state": "IL",
+    "extractionMethod": "manual",
+    "dataFormat": "json",
+    "lastCollected": "2025-08-03T00:00:00.000Z"
+  },
+  {
+    "name": "New York State Department of Taxation and Finance",
+    "type": "manual",
+    "url": "https://www.tax.ny.gov/pit/property/",
+    "description": "New York property tax assessment ratios - varies by municipality",
+    "coverageLevel": "both",
+    "reliability": "high",
+    "updateFrequency": "annually", 
+    "state": "NY",
+    "extractionMethod": "manual",
+    "dataFormat": "json",
+    "lastCollected": "2025-08-03T00:00:00.000Z"
+  },
+  {
+    "name": "Florida Department of Revenue",
+    "type": "manual",
+    "url": "https://floridarevenue.com/property/Pages/default.aspx",
+    "description": "Florida property tax assessment ratios - 100% with Save Our Homes cap",
+    "coverageLevel": "state",
+    "reliability": "high",
+    "updateFrequency": "annually",
+    "state": "FL", 
+    "extractionMethod": "manual",
+    "dataFormat": "json",
+    "lastCollected": "2025-08-03T00:00:00.000Z"
+  }
+]
