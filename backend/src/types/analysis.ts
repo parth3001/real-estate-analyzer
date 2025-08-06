@@ -335,6 +335,8 @@ export interface AnalysisResult<T extends CommonMetrics> {
   marketData?: MarketDataResponse;
   marketInsights?: MarketInsight[];
   investmentTiming?: InvestmentTimingAnalysis;
+  // NEW: Professional Investment Decision
+  investmentDecision?: any; // Will be strongly typed later - using any for now to avoid circular imports
 }
 
 export type { SFRData, MultiFamilyData, PropertyType }; 

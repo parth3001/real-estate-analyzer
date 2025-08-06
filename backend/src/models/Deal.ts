@@ -262,6 +262,61 @@ export interface Analysis {
       totalReturn?: number;
     };
   };
+  // Investment Decision from Investment Decision Engine
+  investmentDecision?: {
+    verdict: 'BUY' | 'PASS' | 'NEGOTIATE';
+    confidence: number;
+    primaryReason: string;
+    secondaryReasons: string[];
+    keyRisks: string[];
+    actionPlan: Array<{
+      action: string;
+      priority: 'immediate' | 'short-term' | 'long-term';
+      impact: string;
+      effort: 'low' | 'medium' | 'high';
+      expectedOutcome: string;
+      timeframe: string;
+    }>;
+    capitalStrategy: {
+      currentApproach: {
+        description: string;
+        cashRequired: number;
+        expectedReturn: number;
+        efficiency: 'poor' | 'fair' | 'good' | 'excellent';
+      };
+      recommendedApproach: {
+        description: string;
+        cashRequired: number;
+        expectedReturn: number;
+        efficiency: 'poor' | 'fair' | 'good' | 'excellent';
+      };
+      opportunityCost: {
+        annualCost: number;
+        description: string;
+        alternativeUse: string;
+      };
+      portfolioStrategy: string;
+    };
+    alternativeOptions: Array<{
+      type: 'better_deal' | 'market_timing' | 'different_strategy' | 'diversification';
+      title: string;
+      description: string;
+      expectedReturn: string;
+      riskLevel: 'lower' | 'similar' | 'higher';
+      timeframe: string;
+    }>;
+    marketContext: {
+      marketStage: 'early' | 'mid' | 'late' | 'correction';
+      pricingContext: 'undervalued' | 'fair' | 'overvalued' | 'bubble';
+      competitiveIntensity: 'low' | 'moderate' | 'high' | 'extreme';
+      recommendedStrategy: string;
+    };
+    timeline: {
+      immediateActions: string[];
+      shortTermActions: string[];
+      longTermStrategy: string[];
+    };
+  };
 }
 
 // Base deal interface
@@ -700,6 +755,62 @@ const AnalysisSchema = new Schema({
       overallSignal: Number
     },
     nextReviewDate: Date
+  },
+  
+  // Professional Investment Decision (Investment Decision Engine)
+  investmentDecision: {
+    verdict: { type: String, enum: ['BUY', 'PASS', 'NEGOTIATE'] },
+    confidence: Number,
+    primaryReason: String,
+    secondaryReasons: [String],
+    keyRisks: [String],
+    actionPlan: [{
+      action: String,
+      priority: { type: String, enum: ['immediate', 'short-term', 'long-term'] },
+      impact: String,
+      effort: { type: String, enum: ['low', 'medium', 'high'] },
+      expectedOutcome: String,
+      timeframe: String
+    }],
+    capitalStrategy: {
+      currentApproach: {
+        description: String,
+        cashRequired: Number,
+        expectedReturn: Number,
+        efficiency: { type: String, enum: ['poor', 'fair', 'good', 'excellent'] }
+      },
+      recommendedApproach: {
+        description: String,
+        cashRequired: Number,
+        expectedReturn: Number,
+        efficiency: { type: String, enum: ['poor', 'fair', 'good', 'excellent'] }
+      },
+      opportunityCost: {
+        annualCost: Number,
+        description: String,
+        alternativeUse: String
+      },
+      portfolioStrategy: String
+    },
+    alternativeOptions: [{
+      type: { type: String, enum: ['better_deal', 'market_timing', 'different_strategy', 'diversification'] },
+      title: String,
+      description: String,
+      expectedReturn: String,
+      riskLevel: { type: String, enum: ['lower', 'similar', 'higher'] },
+      timeframe: String
+    }],
+    marketContext: {
+      marketStage: { type: String, enum: ['early', 'mid', 'late', 'correction'] },
+      pricingContext: { type: String, enum: ['undervalued', 'fair', 'overvalued', 'bubble'] },
+      competitiveIntensity: { type: String, enum: ['low', 'moderate', 'high', 'extreme'] },
+      recommendedStrategy: String
+    },
+    timeline: {
+      immediateActions: [String],
+      shortTermActions: [String],
+      longTermStrategy: [String]
+    }
   }
 });
 

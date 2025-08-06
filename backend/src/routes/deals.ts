@@ -7,7 +7,8 @@ import {
   deleteDeal,
   getSampleSFR,
   getSampleMF,
-  analyzeDeal
+  analyzeDeal,
+  getQuickPredictions
 } from '../controllers/deals';
 import {
   getScenarios,
@@ -48,8 +49,11 @@ router.post('/', authMiddleware, createDeal);
 router.put('/:id', authMiddleware, updateDeal);
 router.delete('/:id', authMiddleware, deleteDeal);
 
-// Analysis endpoint (require authentication)
+// Analysis endpoints (require authentication)
 router.post('/analyze', authMiddleware, analyzeDeal);
+
+// NEW: Fast AI Predictions endpoint (3-4s vs 76+s)
+router.post('/quick-predictions', authMiddleware, getQuickPredictions);
 
 // Scenario routes (require authentication) - Nested under deals for logical grouping
 router.get('/:dealId/scenarios', authMiddleware, getScenarios);

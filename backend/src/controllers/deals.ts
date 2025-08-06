@@ -13,8 +13,11 @@ import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 const dealService = new DealService();
 
 // Import our enhanced AI service and caching
-import { getAIInsights } from '../services/aiService';
+import { getAIInsights, getFastAIPredictions } from '../services/aiService';
 import { AIInsightsCacheService } from '../services/aiInsightsCacheService';
+
+// Import Investment Decision Engine
+import { InvestmentDecisionEngine } from '../services/investment/investmentDecisionEngine';
 
 // Helper function to convert wizard data to standard format
 const convertWizardData = (dealData: any): any => {
@@ -442,6 +445,46 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       }
     }
     
+    // Generate Professional Investment Decision (Investment Decision Engine)
+    if (!dealData.skipAI) {
+      try {
+        logger.info('Generating professional investment decision...');
+        const decisionEngine = new InvestmentDecisionEngine();
+        
+        // Default user context - in production, this would come from user profile
+        const userContext = {
+          availableCash: dealData.totalInvestment || dealData.purchasePrice, // Assume they have the full purchase price
+          experienceLevel: 'intermediate' as const,
+          riskTolerance: 'moderate' as const,
+          investmentGoals: 'balanced' as const
+        };
+        
+        // Get predictions from AI insights if available
+        const predictions = analysis.aiInsights?.boldPredictions || null;
+        
+        analysis.investmentDecision = await decisionEngine.generateInvestmentDecision(
+          dealData,
+          analysis,
+          predictions,
+          null, // marketIntelligence - will add this later
+          userContext
+        );
+        
+        logger.info('Investment decision generated:', {
+          verdict: analysis.investmentDecision.verdict,
+          confidence: analysis.investmentDecision.confidence,
+          primaryReason: analysis.investmentDecision.primaryReason
+        });
+        
+      } catch (decisionError) {
+        logger.error('Error generating investment decision:', decisionError);
+        // Continue without investment decision - not critical for basic analysis
+        analysis.investmentDecision = null;
+      }
+    } else {
+      analysis.investmentDecision = null;
+    }
+    
     logger.info('Calculated analysis metrics:', {
       purchasePrice: dealData.purchasePrice,
       monthlyRent: dealData.propertyType === 'SFR' ? dealData.monthlyRent : 'Multiple units',
@@ -729,4 +772,93 @@ export const getSampleMF = (_req: Request, res: Response): void => {
   
   logger.info("Returning sample MF data with Manhattan, NY ZIP code 10001");
   res.json(sampleMF);
+};
+
+/**
+ * NEW: Fast AI Predictions Endpoint
+ * Provides 3-4 second response vs 76+ second mega-prompt
+ */
+export const getQuickPredictions = async (req: Request, res: Response): Promise<void> => {
+  const startTime = Date.now();
+  
+  try {
+    let dealData = req.body;
+    
+    // Convert wizard data to standard format
+    dealData = convertWizardData(dealData);
+    
+    logger.info('Quick predictions requested for:', {
+      propertyType: dealData.propertyType,
+      propertyAddress: dealData.propertyAddress,
+      purchasePrice: dealData.purchasePrice
+    });
+
+    // Validate deal data
+    if (!dealData.propertyType) {
+      res.status(400).json({ error: 'Property type is required' });
+      return;
+    }
+
+    // Extract assumptions
+    const assumptions: AnalysisAssumptions = {
+      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease || 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+    };
+
+    // Quick analysis for predictions
+    let quickAnalysis: any;
+    if (dealData.propertyType === 'SFR') {
+      const analyzer = new SFRAnalyzer(dealData, assumptions);
+      quickAnalysis = analyzer.analyze(); // Skip market intelligence for speed
+    } else if (dealData.propertyType === 'MF') {
+      const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);
+      quickAnalysis = analyzer.analyze();
+    } else {
+      res.status(400).json({ error: `Unsupported property type: ${dealData.propertyType}` });
+      return;
+    }
+
+    // Get fast AI predictions (parallel processing)
+    const result = await getFastAIPredictions(dealData, quickAnalysis);
+    
+    const totalTime = Date.now() - startTime;
+    
+    logger.info('Quick predictions completed', {
+      totalTime: `${totalTime}ms`,
+      predictionsGenerated: result.predictions.failedPredictions.length === 0
+    });
+
+    res.json({
+      success: true,
+      data: {
+        predictions: result.predictions,
+        basicInsights: result.basicInsights,
+        quickAnalysis: {
+          keyMetrics: quickAnalysis.keyMetrics,
+          monthlyAnalysis: quickAnalysis.monthlyAnalysis
+        }
+      },
+      performance: {
+        totalTime: `${totalTime}ms`,
+        improvement: `${Math.round((76000 - totalTime) / 76000 * 100)}% faster than full analysis`
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    const totalTime = Date.now() - startTime;
+    logger.error('Error in quick predictions:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Quick predictions failed',
+      performance: {
+        totalTime: `${totalTime}ms`
+      }
+    });
+  }
 };

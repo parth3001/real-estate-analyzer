@@ -5,7 +5,7 @@ export class CacheService {
   private ttlHours: number;
 
   constructor() {
-    this.ttlHours = parseInt(process.env.RENTCAST_CACHE_TTL_HOURS || '720');
+    this.ttlHours = parseInt(process.env.RENTCAST_CACHE_TTL_HOURS || '2880');
     logger.info(`CacheService initialized with ${this.ttlHours} hour TTL`);
   }
 

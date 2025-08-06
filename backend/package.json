@@ -24,7 +24,10 @@
     "test:frontend": "cd ../frontend && npm test -- --watchAll=false",
     "test:pre-commit": "npm run test:financial && npm run test:display-bugs && npm run test:quick",
     "test:full-validation": "npm run test:coverage && npm run test:benchmarks && npm run test:e2e",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "collect-assessment-ratios": "npx ts-node src/scripts/collectAssessmentRatios.ts",
+    "validate-tax-data": "npx ts-node src/scripts/validateTaxData.ts",
+    "load-all-states-data": "npx ts-node src/scripts/loadAllStatesData.ts"
   },
   "keywords": [
     "real-estate",
