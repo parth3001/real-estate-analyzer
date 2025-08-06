@@ -41,6 +41,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
+import InvestmentDecisionHero from './InvestmentDecisionHero';
 import ProMetricsBar from './ProMetricsBar';
 import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
@@ -664,7 +665,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       case 'overview':
         return (
           <Box>
-            {/* AI Insights Card removed from overview - now only in Risk section for learning mode */}
+            {/* Investment Decision Hero Card - BOTH PRO AND LEARNING MODES */}
+            {analysis?.investmentDecision && (
+              <InvestmentDecisionHero investmentDecision={analysis.investmentDecision} />
+            )}
             
             {/* Pro Mode - Condensed Metrics Bar */}
             {mode === 'pro' && (

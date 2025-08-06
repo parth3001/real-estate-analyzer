@@ -388,6 +388,295 @@ GET /api/admin/stats
 }
 ```
 
+### Property Wizard Endpoints
+
+#### Property Lookup
+```
+POST /api/wizard/property-lookup
+```
+
+**Purpose:** Look up comprehensive property details by address using cached RentCast and Census APIs.
+
+**Request Body:**
+```json
+{
+  "address": "123 Main Street, Austin, TX 78701",
+  "includeComparables": true,
+  "includeMarketData": true,
+  "includeTaxData": false,
+  "includeInsuranceEstimate": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "propertyDetails": {
+    "address": {
+      "formatted": "123 Main Street, Austin, TX 78701",
+      "standardized": {
+        "street": "123 Main Street",
+        "city": "Austin",
+        "state": "TX",
+        "zipCode": "78701",
+        "formattedAddress": "123 Main Street, Austin, TX 78701"
+      },
+      "latitude": 30.2672,
+      "longitude": -97.7431
+    },
+    "squareFootage": 2000,
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "yearBuilt": 2010,
+    "propertyType": "SFR",
+    "marketValue": 425000,
+    "dataConfidence": {
+      "squareFootage": {
+        "score": 85,
+        "source": "RentCast",
+        "lastUpdated": "2025-08-03T20:30:00.000Z"
+      }
+    }
+  },
+  "rentEstimate": {
+    "monthlyRent": 2875,
+    "range": { "low": 2588, "high": 3163 },
+    "confidence": 78,
+    "marketPosition": "At Market"
+  },
+  "comparables": [
+    {
+      "address": "456 Oak Street, Austin, TX 78701",
+      "distance": 0.3,
+      "salePrice": 415000,
+      "saleDate": "2025-06-15T00:00:00.000Z",
+      "sqft": 1950,
+      "bedrooms": 3,
+      "bathrooms": 2
+    }
+  ],
+  "marketData": {
+    "zipCode": "78701",
+    "medianRent": 2750,
+    "medianSalePrice": 435000,
+    "averageDaysOnMarket": 28,
+    "priceToRentRatio": 158,
+    "marketTrend": "Rising"
+  },
+  "apiCalls": {
+    "successful": ["RentCast", "Census"],
+    "failed": [],
+    "cached": ["FRED"]
+  }
+}
+```
+
+#### Smart Rent Estimation
+```
+POST /api/wizard/rent-estimate
+```
+
+**Purpose:** Generate intelligent rent estimate using RentCast property data, Census market data, and machine learning adjustments.
+
+**Features:**
+- Real-time market data integration
+- Intelligent adjustments for property characteristics
+- Confidence scoring and reliability indicators
+- Fallback calculations for API failures
+
+**Request Body:**
+```json
+{
+  "address": "123 Main Street, Austin, TX 78701",
+  "squareFootage": 2000,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "yearBuilt": 2010,
+  "zipCode": "78701"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "value": 2875,
+    "confidence": {
+      "score": 78,
+      "source": "Market Analysis (Square Footage, Bedrooms, Year Built, Property Value)",
+      "reliability": "high"
+    },
+    "range": {
+      "low": 2588,
+      "high": 3163
+    },
+    "breakdown": {
+      "baseRentPerSqft": 1.35,
+      "adjustments": {
+        "bedrooms": 0,
+        "yearBuilt": 143.75,
+        "marketFactor": 0
+      },
+      "capByValueRule": 0
+    }
+  }
+}
+```
+
+**Calculation Methodology:**
+
+1. **Base Rent per Sqft**: Sources from Census median rent and RentCast market data
+2. **Property Adjustments**:
+   - Extra bedrooms: +$150 per bedroom above 3
+   - Age adjustments: ±5% for new (<10 years) or old (>40 years) properties
+   - Market factor: ±25% based on comparable properties
+3. **1% Rule Cap**: Rent capped at 1% of property value monthly
+4. **Confidence Scoring**: Based on data availability and source reliability
+
+#### Smart Defaults
+```
+POST /api/wizard/smart-defaults
+```
+
+**Purpose:** Get intelligent default values based on location and property type using cached economic and market data.
+
+**Request Body:**
+```json
+{
+  "zipCode": "78701",
+  "propertyType": "SFR",
+  "propertyValue": 425000,
+  "squareFootage": 2000
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "defaults": {
+    "downPaymentPercentage": 25,
+    "closingCostPercentage": 2.5,
+    "currentMortgageRate": 7.125,
+    "managementFeePercentage": 8,
+    "maintenanceReservePercentage": 5,
+    "vacancyRatePercentage": 4,
+    "propertyTaxRate": 1.9,
+    "insuranceRate": 0.7,
+    "appreciationRate": 4.2,
+    "rentGrowthRate": 3.8,
+    "inflationRate": 2.5,
+    "dataSources": {
+      "economic": "FRED",
+      "market": "RentCast",
+      "regional": "Census"
+    },
+    "confidence": {
+      "economic": 95,
+      "market": 82,
+      "regional": 78
+    },
+    "lastUpdated": "2025-08-03T20:30:00.000Z"
+  },
+  "regionalContext": {
+    "marketType": "Hot",
+    "investmentTiming": "Favorable",
+    "keyFactors": [
+      "Strong job market growth in Austin metro",
+      "Limited housing supply driving rent growth",
+      "Below-average property tax rates for Texas"
+    ]
+  }
+}
+```
+
+#### Address Validation
+```
+POST /api/wizard/validate-address
+```
+
+**Purpose:** Validate and standardize address format for property lookup.
+
+**Request Body:**
+```json
+{
+  "address": "123 Main St, Austin, TX",
+  "validateOnly": true
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "isValid": true,
+  "standardizedAddress": {
+    "street": "123 Main St",
+    "city": "Austin",
+    "state": "TX",
+    "zipCode": "",
+    "formattedAddress": "123 Main St, Austin, TX"
+  },
+  "suggestions": []
+}
+```
+
+#### Wizard Health Check
+```
+GET /api/wizard/health
+```
+
+**Purpose:** Check health status of wizard services and external API integrations.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-08-03T20:30:00.000Z",
+  "services": {
+    "fred": {
+      "status": "healthy",
+      "message": "FRED API operational"
+    },
+    "rentcast": {
+      "status": "healthy", 
+      "message": "RentCast API operational"
+    },
+    "aggregator": {
+      "status": "healthy",
+      "message": "PropertyDataAggregator operational"
+    }
+  },
+  "version": "1.0.0-phase1"
+}
+```
+
+#### Wizard Analytics
+```
+GET /api/wizard/stats
+```
+
+**Purpose:** Get usage statistics and feature status for monitoring.
+
+**Response:**
+```json
+{
+  "timestamp": "2025-08-03T20:30:00.000Z",
+  "uptime": 86400,
+  "environment": "production",
+  "phase": "Phase 1 - Foundation",
+  "features": {
+    "propertyLookup": "enabled",
+    "smartDefaults": "enabled", 
+    "addressValidation": "basic",
+    "externalApis": "cached (FRED, RentCast)",
+    "costOptimization": "MongoDB caching active"
+  }
+}
+```
+
 ### Census Data
 
 #### Get Demographic Data

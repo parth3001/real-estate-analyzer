@@ -48,6 +48,7 @@ const SFRAnalysis: React.FC = () => {
   // Race condition prevention for main analysis
   const [activeAnalysisRequestId, setActiveAnalysisRequestId] = useState<string | null>(null);
 
+
   // Handle input method change
   const handleInputMethodChange = (method: 'wizard' | 'manual') => {
     setInputMethod(method);
@@ -91,29 +92,14 @@ const SFRAnalysis: React.FC = () => {
     try {
       console.log('Sending property data to API:', data);
       
-      // Use single unified analysis API for both wizard and manual data
-      console.log('Sending property data to unified analysis API:', data);
+      // Use traditional full analysis (includes market intelligence, tax estimation, etc.)
+      console.log('Sending property data to full analysis API:', data);
       const response = await propertyApi.analyzeProperty(data);
       
       if (response.status === 200 && response.data) {
-        console.log('API response successful:', response.data);
+        console.log('Analysis successful:', response.data);
         
-        // Validate the response has required data structures
-        if (!response.data.monthlyAnalysis || !response.data.annualAnalysis || !response.data.longTermAnalysis) {
-          console.error('API response missing required analysis data:', response.data);
-          setError('Analysis response is incomplete. Please try again.');
-          return null;
-        }
-        
-        // Log key structure for debugging
-        console.log('Analysis structure check:', {
-          hasMonthlyExpenses: !!response.data.monthlyAnalysis?.expenses,
-          hasAnnualAnalysis: !!response.data.annualAnalysis,
-          hasLongTermAnalysis: !!response.data.longTermAnalysis,
-          hasKeyMetrics: !!response.data.keyMetrics
-        });
-        
-        // Set data and show results
+        // Set data and show results (using traditional analysis format)
         setPropertyData(data);
         setAnalysis(response.data);
         setActiveSection('results'); // Switch to results section
@@ -272,6 +258,7 @@ const SFRAnalysis: React.FC = () => {
       
       if (response.status === 200 && response.data) {
         console.log('🚀 APPLY CHANGES: API success, completely refreshing state');
+        
         console.log('🚀 APPLY CHANGES: New cash flow:', response.data?.monthlyAnalysis?.cashFlow);
         console.log('🚀 APPLY CHANGES: New cap rate:', response.data?.keyMetrics?.capRate);
         
@@ -323,6 +310,7 @@ const SFRAnalysis: React.FC = () => {
       setActiveAnalysisRequestId(currentActiveId => {
         if (requestId === currentActiveId && response.status === 200 && response.data) {
           console.log(`SFRAnalysis: About to update state with new data:`);
+          
           console.log(`SFRAnalysis: - Old analysis cash flow: ${analysis?.monthlyAnalysis?.cashFlow}`);
           console.log(`SFRAnalysis: - New analysis cash flow: ${response.data?.monthlyAnalysis?.cashFlow}`);
           console.log(`SFRAnalysis: - Updated property data:`, updatedData);
@@ -381,6 +369,7 @@ const SFRAnalysis: React.FC = () => {
       
       if (response.status === 200 && response.data) {
         console.log('🚀 DEAL OPTIMIZER: API success, completely refreshing state');
+        
         console.log('🚀 DEAL OPTIMIZER: New cash flow:', response.data?.monthlyAnalysis?.cashFlow);
         console.log('🚀 DEAL OPTIMIZER: New cap rate:', response.data?.keyMetrics?.capRate);
         

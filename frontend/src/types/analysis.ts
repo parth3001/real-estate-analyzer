@@ -199,4 +199,7 @@ export interface Analysis {
   marketData?: import('./marketData').MarketDataResponse;
   marketInsights?: import('./marketData').MarketInsight[];
   investmentTiming?: import('./marketData').InvestmentTimingAnalysis;
+  // NEW: Fast AI Predictions data
+  predictions?: any;
+  performance?: any;
 } 

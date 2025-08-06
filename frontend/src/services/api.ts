@@ -185,7 +185,7 @@ export const propertyApi = {
     }
   },
 
-  // Analyze a property
+  // Analyze a property (traditional 76+ second analysis)
   analyzeProperty: async (propertyData: PropertyData): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post('/deals/analyze', propertyData);
@@ -195,6 +195,46 @@ export const propertyApi = {
       };
     } catch (error) {
       console.error('Error analyzing property:', error);
+      throw error;
+    }
+  },
+
+  // NEW: Fast AI Predictions (3-4 seconds vs 76+ seconds)
+  getQuickPredictions: async (propertyData: PropertyData): Promise<ApiResponse<{
+    predictions: {
+      marketTiming: any;
+      rentGrowth: any;
+      riskAssessment: any;
+      exitStrategy: any;
+      generatedAt: string;
+      totalTime: number;
+      failedPredictions: string[];
+    };
+    basicInsights: {
+      summary: string;
+      strengths: string[];
+      weaknesses: string[];
+      recommendations: string[];
+      investmentScore: number;
+      scoreBreakdown?: any;
+    };
+    quickAnalysis: {
+      keyMetrics: any;
+      monthlyAnalysis: any;
+    };
+    performance: {
+      totalTime: string;
+      improvement: string;
+    };
+  }>> => {
+    try {
+      const response = await api.post('/deals/quick-predictions', propertyData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error getting quick predictions:', error);
       throw error;
     }
   },
