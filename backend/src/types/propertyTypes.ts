@@ -7,6 +7,15 @@ export interface PropertyAddress {
   zipCode: string;
 }
 
+// Exit strategy data for investment decision enhancement
+export interface ExitStrategyData {
+  primaryExitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+  portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+  marketTimingFlexibility?: 'flexible' | 'somewhat' | 'constrained' | 'independent';
+  riskApproach?: 'conservative' | 'balanced' | 'aggressive' | 'opportunistic';
+  capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
+}
+
 export interface BasePropertyData {
   propertyType: PropertyType;
   purchasePrice: number;
@@ -55,6 +64,8 @@ export interface SFRData extends BasePropertyData {
     sellingCostsPercentage: number;
     turnoverFrequency?: number;
   };
+  // Exit strategy data for investment decision enhancement
+  exitStrategy?: ExitStrategyData;
 }
 
 export interface SFRMetrics extends CommonMetrics {

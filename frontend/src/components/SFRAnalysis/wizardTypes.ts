@@ -123,6 +123,15 @@ export interface SmartDefaults {
   confidence: DataConfidence;
 }
 
+// Exit strategy data for investment decision enhancement
+export interface ExitStrategyData {
+  primaryExitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+  portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+  marketTimingFlexibility?: 'flexible' | 'somewhat' | 'constrained' | 'independent';
+  riskApproach?: 'conservative' | 'balanced' | 'aggressive' | 'opportunistic';
+  capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
+}
+
 // Extended property data for wizard including percentage fields
 export interface WizardPropertyData extends Partial<SFRPropertyData> {
   // Wizard-specific percentage fields
@@ -130,6 +139,8 @@ export interface WizardPropertyData extends Partial<SFRPropertyData> {
   closingCostPercentage?: number;
   maintenanceReservePercentage?: number;
   vacancyRate?: number; // Note: this is already in longTermAssumptions but needed at top level for wizard
+  // Exit strategy fields for investment decision enhancement
+  exitStrategy?: ExitStrategyData;
 }
 
 // Wizard state management

@@ -18,7 +18,13 @@ import {
   Divider,
   Button,
   IconButton,
-  Tooltip
+  Tooltip,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Stack
 } from '@mui/material';
 import {
   AccountBalance,
@@ -28,7 +34,8 @@ import {
   CalendarToday,
   AutoAwesome,
   Info,
-  RestoreOutlined
+  RestoreOutlined,
+  Psychology as StrategyIcon
 } from '@mui/icons-material';
 
 import WizardStep from './WizardStep';
@@ -679,6 +686,385 @@ const AssumptionsStep: React.FC<WizardStepProps> = ({
               />
             </Grid>
           </Grid>
+        </Box>
+
+        <Divider />
+
+        {/* Investment Strategy Section */}
+        <Box>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <StrategyIcon color="primary" />
+            Investment Strategy
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Help us provide more personalized investment recommendations by sharing your strategy and goals.
+          </Typography>
+
+          <Stack spacing={3}>
+            {/* Primary Exit Strategy */}
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                What's your preferred exit strategy for this property?
+              </FormLabel>
+              <RadioGroup
+                value={state.data.exitStrategy?.primaryExitStrategy || ''}
+                onChange={(e) => onUpdate({
+                  data: {
+                    ...state.data,
+                    exitStrategy: {
+                      ...state.data.exitStrategy,
+                      primaryExitStrategy: e.target.value as any
+                    }
+                  }
+                })}
+                sx={{ ml: 1 }}
+              >
+                <FormControlLabel 
+                  value="sale" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Traditional Sale</Typography>
+                      <Typography variant="caption" color="text.secondary">Market timing dependent</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="refinance" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Cash-out Refinance</Typography>
+                      <Typography variant="caption" color="text.secondary">Hold indefinitely, extract equity</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="1031exchange" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>1031 Exchange</Typography>
+                      <Typography variant="caption" color="text.secondary">Reinvest into larger property</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="estate" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Estate/Generational Hold</Typography>
+                      <Typography variant="caption" color="text.secondary">Never sell, pass to heirs</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="flexible" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Flexible</Typography>
+                      <Typography variant="caption" color="text.secondary">Opportunistic based on market</Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* Portfolio Strategy */}
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                How does this property fit your investment strategy?
+              </FormLabel>
+              <RadioGroup
+                value={state.data.exitStrategy?.portfolioStrategy || ''}
+                onChange={(e) => onUpdate({
+                  data: {
+                    ...state.data,
+                    exitStrategy: {
+                      ...state.data.exitStrategy,
+                      portfolioStrategy: e.target.value as any
+                    }
+                  }
+                })}
+                sx={{ ml: 1 }}
+              >
+                <FormControlLabel 
+                  value="first" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>First Investment Property</Typography>
+                      <Typography variant="caption" color="text.secondary">Learning/conservative approach</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="geographic" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Geographic Diversification</Typography>
+                      <Typography variant="caption" color="text.secondary">New market expansion</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="cashflow" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Cash Flow Priority</Typography>
+                      <Typography variant="caption" color="text.secondary">Income-focused portfolio</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="appreciation" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Appreciation Priority</Typography>
+                      <Typography variant="caption" color="text.secondary">Wealth building focus</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="diversification" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Property Type Diversification</Typography>
+                      <Typography variant="caption" color="text.secondary">Mixed portfolio strategy</Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* Market Timing Flexibility */}
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                How flexible are you with market timing?
+              </FormLabel>
+              <RadioGroup
+                value={state.data.exitStrategy?.marketTimingFlexibility || ''}
+                onChange={(e) => onUpdate({
+                  data: {
+                    ...state.data,
+                    exitStrategy: {
+                      ...state.data.exitStrategy,
+                      marketTimingFlexibility: e.target.value as any
+                    }
+                  }
+                })}
+                sx={{ ml: 1 }}
+              >
+                <FormControlLabel 
+                  value="flexible" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Very Flexible</Typography>
+                      <Typography variant="caption" color="text.secondary">Can wait for optimal market conditions</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="somewhat" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Somewhat Flexible</Typography>
+                      <Typography variant="caption" color="text.secondary">Prefer good timing but not critical</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="constrained" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Time-Constrained</Typography>
+                      <Typography variant="caption" color="text.secondary">Must exit within projection period</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="independent" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Market Independent</Typography>
+                      <Typography variant="caption" color="text.secondary">Cash flow focused, timing irrelevant</Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* Risk Approach */}
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                What's your risk approach for this investment?
+              </FormLabel>
+              <RadioGroup
+                value={state.data.exitStrategy?.riskApproach || ''}
+                onChange={(e) => onUpdate({
+                  data: {
+                    ...state.data,
+                    exitStrategy: {
+                      ...state.data.exitStrategy,
+                      riskApproach: e.target.value as any
+                    }
+                  }
+                })}
+                sx={{ ml: 1 }}
+              >
+                <FormControlLabel 
+                  value="conservative" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Conservative</Typography>
+                      <Typography variant="caption" color="text.secondary">Stable cash flow, lower leverage</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="balanced" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Balanced</Typography>
+                      <Typography variant="caption" color="text.secondary">Moderate risk for moderate returns</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="aggressive" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Aggressive</Typography>
+                      <Typography variant="caption" color="text.secondary">Higher leverage for higher returns</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="opportunistic" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Opportunistic</Typography>
+                      <Typography variant="caption" color="text.secondary">Willing to take calculated risks</Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* Capital Deployment */}
+            <FormControl>
+              <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                What's your plan after exiting this property?
+              </FormLabel>
+              <RadioGroup
+                value={state.data.exitStrategy?.capitalDeployment || ''}
+                onChange={(e) => onUpdate({
+                  data: {
+                    ...state.data,
+                    exitStrategy: {
+                      ...state.data.exitStrategy,
+                      capitalDeployment: e.target.value as any
+                    }
+                  }
+                })}
+                sx={{ ml: 1 }}
+              >
+                <FormControlLabel 
+                  value="reinvest_re" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Reinvest in Real Estate</Typography>
+                      <Typography variant="caption" color="text.secondary">1031 or new purchase</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="diversify" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Diversify Investments</Typography>
+                      <Typography variant="caption" color="text.secondary">Stocks, bonds, other assets</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="lifestyle" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Fund Lifestyle/Expenses</Typography>
+                      <Typography variant="caption" color="text.secondary">Education, retirement, major purchases</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="business" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Business Investment</Typography>
+                      <Typography variant="caption" color="text.secondary">Start or expand business</Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel 
+                  value="debt" 
+                  control={<Radio />} 
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={500}>Pay Down Debts</Typography>
+                      <Typography variant="caption" color="text.secondary">Mortgage, loans, other debts</Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+          </Stack>
+
+          {/* Strategy Context Card */}
+          {(state.data.exitStrategy?.primaryExitStrategy || state.data.exitStrategy?.portfolioStrategy) && (
+            <Card variant="outlined" sx={{ mt: 3, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+              <CardContent>
+                <Typography variant="subtitle2" gutterBottom color="primary">
+                  <Info sx={{ verticalAlign: 'middle', mr: 0.5, fontSize: 16 }} />
+                  Investment Strategy Impact
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {state.data.exitStrategy?.primaryExitStrategy === 'refinance' && 
+                    'Your refinance strategy will influence our leverage recommendations and cash flow analysis.'}
+                  {state.data.exitStrategy?.primaryExitStrategy === 'sale' && 
+                    'Your sale strategy will emphasize market timing and appreciation potential in our analysis.'}
+                  {state.data.exitStrategy?.primaryExitStrategy === '1031exchange' && 
+                    'Your 1031 exchange strategy will focus on tax optimization and equity growth potential.'}
+                  {state.data.exitStrategy?.primaryExitStrategy === 'estate' && 
+                    'Your generational strategy will emphasize long-term stability and cash flow consistency.'}
+                  {state.data.exitStrategy?.portfolioStrategy === 'first' && 
+                    ' As your first property, we\'ll provide extra safety margins and educational insights.'}
+                  {state.data.exitStrategy?.riskApproach === 'conservative' && 
+                    ' Your conservative approach will prioritize stable returns over aggressive growth.'}
+                  {state.data.exitStrategy?.riskApproach === 'aggressive' && 
+                    ' Your aggressive approach will explore higher leverage opportunities for enhanced returns.'}
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
         </Box>
 
         {/* Summary Card */}

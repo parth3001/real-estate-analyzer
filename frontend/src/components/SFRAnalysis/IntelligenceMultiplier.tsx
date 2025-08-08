@@ -60,7 +60,7 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
   return (
     <Card sx={{ borderRadius: '16px', mb: 4, border: '2px solid #e3f2fd' }}>
       <CardContent sx={{ p: 3 }}>
-        {/* Header with Intelligence Score - Mode Aware */}
+        {/* Header - Mode Aware */}
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <PsychologyIcon sx={{ color: 'primary.main', fontSize: 32 }} />
           <Box flex={1}>
@@ -71,14 +71,6 @@ const IntelligenceMultiplier: React.FC<IntelligenceMultiplierProps> = ({ aiInsig
               {mode === 'novice' 
                 ? 'Detailed insights to help you understand your investment better'
                 : 'Institutional-grade analysis with advanced metrics'}
-            </Typography>
-          </Box>
-          <Box textAlign="right">
-            <Typography variant="h4" fontWeight={700} color="primary.main">
-              {intelligenceScore}/100
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Investment Score
             </Typography>
           </Box>
         </Box>

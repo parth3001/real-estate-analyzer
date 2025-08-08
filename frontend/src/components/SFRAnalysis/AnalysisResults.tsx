@@ -26,9 +26,6 @@ import {
   Shield as ShieldIcon,
   Assessment as AssessmentIcon,
   Compare as CompareIcon,
-  Download as DownloadIcon,
-  Share as ShareIcon,
-  Save as SaveIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Info as InfoIcon,
@@ -1733,53 +1730,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
-        {/* Header Actions */}
-        <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mb: 4 }}>
-          <Button
-            variant="outlined"
-            startIcon={<ShareIcon />}
-            sx={{ 
-              borderRadius: '12px',
-              borderColor: appleColors.gray[300],
-              color: appleColors.gray[700],
-              '&:hover': {
-                borderColor: appleColors.gray[400],
-                backgroundColor: appleColors.gray[50]
-              }
-            }}
-          >
-            Share
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            sx={{ 
-              borderRadius: '12px',
-              borderColor: appleColors.gray[300],
-              color: appleColors.gray[700],
-              '&:hover': {
-                borderColor: appleColors.gray[400],
-                backgroundColor: appleColors.gray[50]
-              }
-            }}
-          >
-            Export PDF
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<SaveIcon />}
-            sx={{ 
-              borderRadius: '12px',
-              backgroundColor: appleColors.primary[500],
-              '&:hover': {
-                backgroundColor: appleColors.primary[600]
-              }
-            }}
-          >
-            Save Analysis
-          </Button>
-        </Box>
-
         {/* Section Navigation */}
         <SectionNavigation />
 

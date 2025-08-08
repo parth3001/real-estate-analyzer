@@ -108,7 +108,10 @@ export class InvestmentDecisionEngine {
     logger.info('Investment Decision Engine: Starting analysis', {
       propertyPrice: propertyData.purchasePrice,
       userCash: userContext.availableCash,
-      experience: userContext.experienceLevel
+      experience: userContext.experienceLevel,
+      exitStrategy: propertyData.exitStrategy?.primaryExitStrategy || 'not_specified',
+      holdPeriod: propertyData.longTermAssumptions?.projectionYears || 10,
+      portfolioStrategy: propertyData.exitStrategy?.portfolioStrategy || 'not_specified'
     });
 
     try {
@@ -135,7 +138,8 @@ export class InvestmentDecisionEngine {
         fundamentals,
         leverageAnalysis,
         marketContext,
-        userContext
+        userContext,
+        propertyData
       );
 
       // 5. Create action plan
@@ -411,7 +415,8 @@ export class InvestmentDecisionEngine {
     fundamentals: any,
     leverageAnalysis: LeverageAnalysis,
     marketContext: MarketContextAnalysis,
-    userContext: any
+    userContext: any,
+    propertyData: SFRData
   ) {
     let verdict: InvestmentVerdict = 'PASS';
     let confidence = 50;
@@ -490,6 +495,51 @@ export class InvestmentDecisionEngine {
     }
     if (fundamentals.cashFlow < 300) {
       keyRisks.push('Limited cash flow buffer for unexpected expenses');
+    }
+
+    // Exit Strategy Adjustments
+    const exitStrategy = propertyData.exitStrategy;
+    const holdPeriod = propertyData.longTermAssumptions?.projectionYears || 10;
+    
+    if (exitStrategy) {
+      // Short-term exit strategy requires higher margins
+      if (holdPeriod <= 3 && exitStrategy.primaryExitStrategy === 'sale') {
+        if (verdict === 'BUY' && fundamentals.cashOnCashReturn < 0.12) {
+          verdict = 'NEGOTIATE';
+          confidence = Math.max(40, confidence - 20);
+          primaryReason = `Short-term hold (${holdPeriod} years) requires higher returns - negotiate for better price`;
+          keyRisks.push('Short-term exit increases market timing risk');
+        }
+      }
+
+      // Refinance strategy allows more aggressive leverage
+      if (exitStrategy.primaryExitStrategy === 'refinance' && exitStrategy.riskApproach === 'aggressive') {
+        if (verdict === 'NEGOTIATE' && leverageAnalysis.optimalScenario.leverageScore > 75) {
+          confidence = Math.min(85, confidence + 10);
+          secondaryReasons.push('Refinance strategy supports higher leverage approach');
+        }
+      }
+
+      // First-time investor protection
+      if (exitStrategy.portfolioStrategy === 'first' && fundamentals.riskLevel === 'medium') {
+        confidence = Math.max(35, confidence - 15);
+        keyRisks.push('Consider more conservative first investment to build experience');
+      }
+
+      // Conservative approach adjustments
+      const leverageRatio = leverageAnalysis.optimalScenario.loanAmount / (leverageAnalysis.optimalScenario.loanAmount + leverageAnalysis.optimalScenario.downPaymentAmount);
+      if (exitStrategy.riskApproach === 'conservative' && leverageRatio > 0.75) {
+        if (verdict === 'BUY') {
+          secondaryReasons.push('Consider lower leverage to match conservative risk approach');
+        }
+        keyRisks.push('High leverage may not align with conservative strategy');
+      }
+
+      // Market timing sensitivity
+      if (exitStrategy.marketTimingFlexibility === 'constrained' && marketContext.marketStage === 'late') {
+        confidence = Math.max(30, confidence - 20);
+        keyRisks.push('Limited timing flexibility in late market cycle increases risk');
+      }
     }
     
     // RE Analyst validation checks

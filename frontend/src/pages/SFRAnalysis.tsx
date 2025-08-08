@@ -12,7 +12,7 @@ import {
   Fade
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { AutoAwesome, Edit, Dashboard, DataUsage as SampleDataIcon } from '@mui/icons-material';
+import { AutoAwesome, Edit, DataUsage as SampleDataIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
 import PropertyWizard from '../components/SFRAnalysis/PropertyWizard';
@@ -441,50 +441,115 @@ const SFRAnalysis: React.FC = () => {
         <Box sx={{ mb: 4 }}>
           <AppleCard padding="large">
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={3}>
-              <Box>
-                <Typography 
-                  variant="h4" 
-                  component="h1"
-                  sx={{ 
-                    fontWeight: 700,
-                    color: appleColors.gray[900],
-                    mb: 1
-                  }}
-                >
-                  Single-Family Rental Analysis
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    color: appleColors.gray[600],
-                    maxWidth: '600px',
-                    lineHeight: 1.6
-                  }}
-                >
-                  Analyze your single family rental investment with comprehensive market intelligence, 
-                  AI-powered insights, and detailed financial projections.
-                </Typography>
+              <Box sx={{ flex: 1 }}>
+                {/* Dynamic Title: Property Address when analysis exists, generic when input */}
+                {activeSection === 'results' && propertyData?.propertyAddress ? (
+                  <>
+                    <Typography 
+                      variant="h4" 
+                      component="h1"
+                      sx={{ 
+                        fontWeight: 700,
+                        color: appleColors.gray[900],
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      📍 {propertyData.propertyAddress.street}, {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state} {propertyData.propertyAddress.zipCode}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 1 }}>
+                      {propertyData.bedrooms && propertyData.bathrooms && (
+                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                          {propertyData.bedrooms} bed • {propertyData.bathrooms} bath
+                        </Typography>
+                      )}
+                      {propertyData.squareFootage && (
+                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                          • {propertyData.squareFootage.toLocaleString()} sqft
+                        </Typography>
+                      )}
+                      {propertyData.yearBuilt && (
+                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                          • Built {propertyData.yearBuilt}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: appleColors.blue[600],
+                        fontWeight: 600
+                      }}
+                    >
+                      ${propertyData.purchasePrice?.toLocaleString()}
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <Typography 
+                      variant="h4" 
+                      component="h1"
+                      sx={{ 
+                        fontWeight: 700,
+                        color: appleColors.gray[900],
+                        mb: 1
+                      }}
+                    >
+                      Single-Family Rental Analysis
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: appleColors.gray[600],
+                        maxWidth: '600px',
+                        lineHeight: 1.6
+                      }}
+                    >
+                      Analyze your single family rental investment with comprehensive market intelligence, 
+                      AI-powered insights, and detailed financial projections.
+                    </Typography>
+                  </>
+                )}
               </Box>
               
+              {/* Context-Aware Action Buttons */}
               <Stack direction="row" spacing={2}>
-                <AppleButton
-                  variant="secondary"
-                  onClick={loadSampleData}
-                  disabled={sampleLoading}
-                  icon={<SampleDataIcon />}
-                >
-                  {sampleLoading ? 'Loading...' : 'Load Sample'}
-                </AppleButton>
-                <AppleButton
-                  variant="secondary"
-                  onClick={() => {
-                    console.log('Navigating to dashboard using window.location');
-                    window.location.href = '/';
-                  }}
-                  icon={<Dashboard />}
-                >
-                  Dashboard
-                </AppleButton>
+                {activeSection === 'results' ? (
+                  <>
+                    {/* Save Deal Button for Results */}
+                    <AppleButton
+                      variant="primary"
+                      onClick={handleSaveDeal}
+                      disabled={isSaving}
+                      icon={<SaveIcon />}
+                    >
+                      {isSaving ? 'Saving...' : dealId ? 'Update Deal' : 'Save Deal'}
+                    </AppleButton>
+                    {/* Edit Property Button */}
+                    <AppleButton
+                      variant="secondary"
+                      onClick={() => setActiveSection('input')}
+                      icon={<Edit />}
+                    >
+                      Edit Property
+                    </AppleButton>
+                  </>
+                ) : (
+                  <>
+                    {/* Load Sample Button - Only show during development/testing */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <AppleButton
+                        variant="secondary"
+                        onClick={loadSampleData}
+                        disabled={sampleLoading}
+                        icon={<SampleDataIcon />}
+                      >
+                        {sampleLoading ? 'Loading...' : 'Load Sample'}
+                      </AppleButton>
+                    )}
+                  </>
+                )}
               </Stack>
             </Stack>
           </AppleCard>
@@ -547,17 +612,6 @@ const SFRAnalysis: React.FC = () => {
                   Analysis Results
                 </Button>
               </ButtonGroup>
-              
-              {analysis && propertyData && activeSection === 'results' && (
-                <AppleButton
-                  variant="primary"
-                  onClick={handleSaveDeal}
-                  disabled={isSaving}
-                  icon={<SaveIcon />}
-                >
-                  {isSaving ? 'Saving...' : 'Save Deal'}
-                </AppleButton>
-              )}
             </Stack>
           </AppleCard>
         </Box>

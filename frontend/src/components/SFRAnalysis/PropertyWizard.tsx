@@ -264,7 +264,9 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
         ...state.data,
         _isWizardData: true, // Flag to identify wizard data
         maintenanceReservePercentage: state.data.maintenanceReservePercentage,
-        vacancyRate: state.data.vacancyRate
+        vacancyRate: state.data.vacancyRate,
+        // Include exit strategy data for Investment Decision Engine
+        exitStrategy: state.data.exitStrategy
       };
       const result = await onComplete(wizardData as SFRPropertyData);
       
@@ -323,6 +325,11 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
           if (!state.data.longTermAssumptions?.projectionYears || 
               state.data.longTermAssumptions.projectionYears < 1) {
             errors.projectionYears = 'Projection years must be at least 1';
+          }
+          
+          // Exit strategy questions are optional, but add informational warnings
+          if (!state.data.exitStrategy?.primaryExitStrategy) {
+            warnings.exitStrategy = 'Consider completing investment strategy questions for more personalized recommendations';
           }
           break;
       }
