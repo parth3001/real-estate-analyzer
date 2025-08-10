@@ -208,7 +208,7 @@ export class GoalContextualMessaging {
   /**
    * Generate goal-specific secondary insights
    */
-  static getGoalSpecificInsights(goalContext: GoalContext, analysis: AnalysisData): string[] {
+  static getGoalSpecificInsights(goalContext: GoalContext, _analysis: AnalysisData): string[] {
     const { exitStrategy, portfolioStrategy, riskApproach } = goalContext;
     const insights: string[] = [];
     
@@ -248,12 +248,4 @@ export class GoalContextualMessaging {
     }
   }
 
-  /**
-   * Helper: Calculate total wealth for estate planning
-   */
-  private static calculateTotalWealth(analysis: AnalysisData, years: number): number {
-    const totalCashFlow = analysis.longTermAnalysis?.totalCashFlow || 0;
-    const totalAppreciation = analysis.longTermAnalysis?.totalAppreciation || 0;
-    return totalCashFlow + totalAppreciation;
-  }
 }
