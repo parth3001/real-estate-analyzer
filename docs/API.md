@@ -1,7 +1,9 @@
-# Real Estate Analyzer API Documentation
+# Real Estate Investment Intelligence Platform API Documentation
 
 ## Overview
-This document outlines the API interfaces, calculations, and data structures used in the Real Estate Analyzer application.
+This document outlines the API interfaces for the Real Estate Investment Intelligence Platform, including the enhanced Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
+
+**Last Updated**: January 10, 2025 - Investment Decision Engine v2.1 Critical Fixes
 
 For a comprehensive listing of all data fields, their types, and usage, please refer to the [Data Dictionary](DATA_DICTIONARY.md).
 
@@ -49,6 +51,271 @@ if (requestId === activeRequestId && response.status === 200) {
 - **Resource Usage**: Eliminated redundant concurrent analyses
 
 ## API Endpoints
+
+### Enhanced Analysis Endpoints (NEW - August 2025)
+
+The Real Estate Investment Intelligence Platform now provides professional-grade investment analysis through enhanced endpoints powered by the Investment Decision Engine and AI microservices architecture.
+
+#### Professional Investment Analysis
+```
+POST /api/deals/analyze
+```
+
+**Purpose:** Complete professional property analysis with Investment Decision Engine and AI insights.
+
+**Enhanced Features:**
+- Professional investment verdict (BUY/NEGOTIATE/PASS) 
+- Market-relative analysis using local median cap rates
+- Walk-away price calculation using 3 methodologies
+- Experience-level adjustments for novice/intermediate/expert investors
+- Exit strategy-optimized recommendations
+- Leverage optimization analysis
+- AI-powered Intelligence Multiplier insights
+
+**Request Body:**
+```json
+{
+  "propertyType": "SFR",
+  "propertyName": "Investment Property Analysis",
+  "propertyAddress": {
+    "street": "123 Investment St",
+    "city": "Austin",
+    "state": "TX",
+    "zipCode": "78701"
+  },
+  "purchasePrice": 415000,
+  "downPayment": 83000,
+  "interestRate": 6.63,
+  "loanTerm": 30,
+  "monthlyRent": 3500,
+  "propertyTaxRate": 1.83,
+  "insuranceRate": 0.4,
+  "maintenanceCost": 2400,
+  "propertyManagementRate": 8,
+  "squareFootage": 2800,
+  "bedrooms": 4,
+  "bathrooms": 3,
+  "yearBuilt": 2018,
+  "exitStrategy": {
+    "primaryExitStrategy": "1031exchange",
+    "portfolioStrategy": "cashflow",
+    "marketTimingFlexibility": "flexible"
+  },
+  "longTermAssumptions": {
+    "projectionYears": 10,
+    "annualRentIncrease": 3,
+    "annualPropertyValueIncrease": 4,
+    "inflationRate": 2.5,
+    "vacancyRate": 5,
+    "sellingCostsPercentage": 8
+  }
+}
+```
+
+**Enhanced Response Structure:**
+```json
+{
+  "success": true,
+  "analysis": {
+    "monthlyAnalysis": { /* standard monthly analysis */ },
+    "keyMetrics": { /* enhanced key metrics */ },
+    "longTermAnalysis": { /* long-term projections */ },
+    "investmentDecision": {
+      "verdict": "NEGOTIATE",
+      "confidence": 72,
+      "primaryReason": "Positive cash flow of $983/month with 8.6% cap rate above market median, but 2.8% cash-on-cash return below 5.5% target for 1031 exchange strategy",
+      "secondaryReasons": [
+        "Property cap rate of 8.6% exceeds market median of 7.5%",
+        "Rent-to-price ratio of 1.01% indicates viable income potential",
+        "Strong cash flow buffer of $983 exceeds minimum $300 requirement"
+      ],
+      "keyRisks": [
+        "Cash-on-cash return below optimal threshold for exit strategy",
+        "Purchase price near upper limit of acceptable range"
+      ],
+      "actionPlan": [
+        {
+          "type": "immediate",
+          "title": "Negotiate Purchase Price",
+          "description": "Reduce purchase price to $385,000 to achieve 5.8% cash-on-cash return target",
+          "priority": "high",
+          "estimatedCost": "$30,000 price reduction",
+          "expectedBenefit": "Achieve target returns for 1031 exchange strategy",
+          "timeframe": "During contract negotiation"
+        }
+      ],
+      "marketContext": {
+        "marketPosition": "Above median performance",
+        "capRateComparison": 8.6,
+        "rentToValueRatio": 1.01,
+        "marketRisk": "medium"
+      },
+      "goalContext": {
+        "exitStrategy": "1031exchange",
+        "portfolioStrategy": "cashflow"
+      }
+    },
+    "leverageAnalysis": {
+      "scenarios": [ /* array of leverage scenarios */ ],
+      "optimalScenario": {
+        "downPaymentPercent": 25,
+        "monthlyNetCashFlow": 1150,
+        "cashOnCashReturn": 6.2,
+        "leverageScore": 88
+      },
+      "opportunityCost": {
+        "currentDeployment": {
+          "cashInvested": 85000,
+          "propertiesControlled": 1,
+          "portfolioVelocity": 4.88
+        },
+        "optimalDeployment": {
+          "cashInvested": 103750,
+          "propertiesControlled": 1,
+          "portfolioVelocity": 4.0
+        },
+        "opportunityCostAnnual": 2400
+      }
+    },
+    "aiInsights": {
+      "metricIntelligence": [ /* enhanced AI insights */ ],
+      "riskBlindSpots": [ /* professional risk analysis */ ],
+      "advancedStrategies": [ /* strategic recommendations */ ],
+      "intelligenceScore": 92
+    }
+  }
+}
+```
+
+#### Fast AI Predictions (NEW)
+```
+POST /api/deals/quick-predictions
+```
+
+**Purpose:** Rapid AI analysis for immediate feedback (3-4 second response time vs previous 76 seconds).
+
+**Request Body:**
+```json
+{
+  "propertyData": { /* same as main analysis */ },
+  "analysisType": "investment_decision"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "predictions": {
+    "investmentDecision": {
+      "verdict": "NEGOTIATE",
+      "confidence": 75,
+      "reasoning": "Positive fundamentals with optimization opportunities"
+    },
+    "keyInsights": [
+      "Strong cap rate performance vs market",
+      "Cash flow meets safety requirements",
+      "Price negotiation recommended for target returns"
+    ],
+    "processingTime": "3.2s"
+  }
+}
+```
+
+### Investment Decision Engine v2.1 (Single Source of Truth)
+
+#### Investment Decision Analysis
+```
+POST /api/deals/analyze
+```
+
+**Purpose:** Primary endpoint for comprehensive investment analysis with sophisticated verdict system.
+
+**Critical Fixes Applied (v2.1):**
+- ✅ **Single Source of Truth**: All business logic handled in backend
+- ✅ **Contradictory Messaging Eliminated**: Consistent verdict-to-message mapping
+- ✅ **Score Consistency**: Unified 0-100 property quality scoring
+- ✅ **Conservative Logic**: Walk-away price validation prevents overpaying
+
+**Request Body:**
+```json
+{
+  "propertyData": {
+    "purchasePrice": 300000,
+    "monthlyRent": 2200,
+    "downPayment": 60000,
+    "interestRate": 0.07
+  },
+  "userContext": {
+    "experienceLevel": "intermediate",
+    "exitStrategy": "refinance", 
+    "portfolioStrategy": "cashflow",
+    "riskTolerance": "moderate"
+  },
+  "enhancedGoals": {
+    "freeTextStrategy": "House hacking strategy focusing on cash flow"
+  }
+}
+```
+
+**Response (v2.1 Format):**
+```json
+{
+  "success": true,
+  "data": {
+    "investmentDecision": {
+      "verdict": "BUY",
+      "confidence": 75,
+      "score": 68,
+      "primaryReason": "Strong fundamentals with 12.0% return exceeding 6.5% target",
+      "secondaryReasons": ["Positive cash flow of $400/month", "Cap rate above market average"],
+      "keyRisks": ["Interest rate sensitivity", "Local market competition"],
+      "walkAwayPrice": 280000,
+      "improvementSuggestions": []
+    },
+    "analysis": { /* full property analysis */ },
+    "processingTime": "850ms"
+  }
+}
+```
+
+#### Goal Enhancement Analysis  
+```
+POST /api/deals/analyze-goals
+```
+
+**Purpose:** AI-enhanced processing of free-text investment strategies.
+
+**Request Body:**
+```json
+{
+  "structuredGoals": {
+    "exitStrategy": "refinance",
+    "portfolioStrategy": "geographic", 
+    "experienceLevel": "intermediate"
+  },
+  "freeTextStrategy": "Looking to invest out of state from California to Texas markets for better cash flow opportunities"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "enhancedGoals": {
+      "aiEnhancedStrategy": "Geographic arbitrage strategy detected - investing from high-cost to lower-cost markets",
+      "strategicInsights": [
+        "Texas markets typically offer 6-8% cap rates vs California's 3-4%",
+        "Consider property management requirements for out-of-state investing"
+      ],
+      "riskAdjustments": ["Factor travel costs for property visits", "Ensure local market knowledge"],
+      "confidenceScore": 88,
+      "processingMethod": "pattern"
+    }
+  }
+}
+```
 
 ### Interactive Analysis Endpoints
 
@@ -1534,4 +1801,157 @@ interface LongTermAssumptions {
    const calculateIRR = (cashFlows, iterations = 1000, guess = 0.1) => {
      // Implementation of Newton-Raphson method for IRR approximation
    };
-   ``` 
+   ```
+
+## Investment Decision Engine API Details (NEW)
+
+### Confidence Score Calculation
+
+The Investment Decision Engine calculates confidence scores using a multi-factor algorithm:
+
+```javascript
+const calculateConfidence = (baseScore, adjustments) => {
+  let confidence = baseScore;
+  
+  // Apply all adjustments cumulatively
+  adjustments.forEach(adjustment => {
+    confidence += adjustment;
+  });
+  
+  // Enforce bounds: 30% minimum, 95% maximum
+  return Math.max(30, Math.min(95, Math.round(confidence)));
+};
+```
+
+### Walk-Away Price Calculation
+
+The system calculates maximum acceptable price using three methods:
+
+```javascript
+const calculateWalkAwayPrice = (noi, treasuryRate, comparableAverage, monthlyRent) => {
+  const treasuryMethod = noi / (treasuryRate + 0.03);
+  const comparableMethod = comparableAverage * 0.95;
+  const incomeMethod = monthlyRent * 100;
+  
+  return Math.min(treasuryMethod, comparableMethod, incomeMethod);
+};
+```
+
+### Market-Relative Analysis
+
+```javascript
+const analyzeMarketPosition = (propertyCapRate, marketMedianCapRate) => {
+  const difference = propertyCapRate - marketMedianCapRate;
+  
+  if (difference <= -0.015) return 'PASS'; // >1.5% below median
+  if (difference <= -0.005) return 'NEGOTIATE'; // 0.5-1.5% below
+  return 'BUY_CONSIDERATION'; // At or above median
+};
+```
+
+## Error Handling & Validation
+
+### Standard Error Response Format
+
+All endpoints return standardized error responses:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Purchase price must be a positive number",
+    "field": "purchasePrice",
+    "details": {
+      "received": -100000,
+      "expected": "number > 0"
+    }
+  },
+  "timestamp": "2025-08-08T21:15:30.000Z"
+}
+```
+
+### Common Error Codes
+
+| Code | HTTP Status | Description | Resolution |
+|------|-------------|-------------|------------|
+| `VALIDATION_ERROR` | 400 | Invalid input data | Check request body against schema |
+| `MISSING_REQUIRED_FIELD` | 400 | Required field missing | Include all required fields |
+| `INVESTMENT_ENGINE_ERROR` | 500 | Decision engine failure | Retry with valid data |
+| `AI_SERVICE_TIMEOUT` | 503 | AI service unavailable | Retry request |
+| `MARKET_DATA_UNAVAILABLE` | 502 | External API failure | Market data temporarily unavailable |
+| `LEVERAGE_CALCULATION_ERROR` | 500 | Leverage analysis failure | Check property financials |
+
+### Input Validation Rules
+
+#### Property Data Validation
+```typescript
+interface PropertyValidation {
+  purchasePrice: number; // > 0, < 50,000,000
+  monthlyRent: number;   // > 0, < purchasePrice/12
+  downPayment: number;   // > 0, <= purchasePrice * 0.5
+  interestRate: number;  // 0.01 <= rate <= 0.20 (1-20%)
+  propertyTaxRate: number; // 0 <= rate <= 0.05 (0-5%)
+  squareFootage: number; // > 0, < 50,000
+}
+```
+
+#### Exit Strategy Validation
+```typescript
+interface ExitStrategyValidation {
+  primaryExitStrategy: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+  portfolioStrategy: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+  marketTimingFlexibility: 'flexible' | 'somewhat' | 'constrained' | 'independent';
+}
+```
+
+### Performance Guidelines
+
+#### Response Time Targets
+- **Quick Predictions**: < 4 seconds (average 3.2s)
+- **Full Analysis**: < 15 seconds (average 8-12s)
+- **Interactive Updates**: < 200ms
+
+#### Rate Limiting
+- **Authenticated Users**: 100 requests/hour
+- **Premium Users**: 500 requests/hour
+- **Enterprise Users**: Unlimited
+
+### API Versioning
+
+Current API version: `v1`
+
+All endpoints support versioning via header:
+```
+Accept: application/json; version=1
+```
+
+Future breaking changes will increment version numbers and maintain backward compatibility for 6 months.
+
+### Authentication Requirements
+
+#### Protected Endpoints
+- All `/api/deals/*` endpoints require authentication
+- `/api/scenarios/*` endpoints require authentication
+- Public endpoints: health checks and API documentation
+
+#### Required Headers
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+Accept: application/json
+```
+
+### Caching Strategy
+
+#### Client-Side Caching
+- Market data: Cache for 30 minutes
+- Analysis results: No caching (always fresh)
+- User preferences: Cache indefinitely until changed
+
+#### Server-Side Caching
+- RentCast API data: 30 days
+- FRED economic data: 1 day
+- Market intelligence: Tied to underlying data cache
+
+This comprehensive API documentation ensures developers can successfully integrate with the Real Estate Investment Intelligence Platform's enhanced capabilities. 

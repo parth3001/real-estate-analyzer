@@ -19,6 +19,9 @@ import { AIInsightsCacheService } from '../services/aiInsightsCacheService';
 // Import Investment Decision Engine
 import { InvestmentDecisionEngine } from '../services/investment/investmentDecisionEngine';
 
+// Import AI Goal Analysis
+import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiService';
+
 // Helper function to convert wizard data to standard format
 const convertWizardData = (dealData: any): any => {
   // Check if this is wizard data and convert it
@@ -451,12 +454,24 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
         logger.info('Generating professional investment decision...');
         const decisionEngine = new InvestmentDecisionEngine();
         
-        // Default user context - in production, this would come from user profile
+        // Enhanced user context - use enhanced goals from Step 5 or fallback to defaults
+        const enhancedGoals = dealData.enhancedGoals || {};
+        
+        logger.info('Enhanced goals received:', {
+          hasEnhancedGoals: !!dealData.enhancedGoals,
+          exitStrategy: enhancedGoals.exitStrategy,
+          portfolioStrategy: enhancedGoals.portfolioStrategy,
+          experienceLevel: enhancedGoals.experienceLevel,
+          riskTolerance: enhancedGoals.riskTolerance,
+          hasFreeTextStrategy: !!enhancedGoals.freeTextStrategy,
+          processingMethod: enhancedGoals.processingMethod
+        });
+        
         const userContext = {
           availableCash: dealData.totalInvestment || dealData.purchasePrice, // Assume they have the full purchase price
-          experienceLevel: 'intermediate' as const,
-          riskTolerance: 'moderate' as const,
-          investmentGoals: 'balanced' as const
+          experienceLevel: enhancedGoals.experienceLevel || 'intermediate' as const,
+          riskTolerance: enhancedGoals.riskTolerance || 'moderate' as const,
+          investmentGoals: 'balanced' as const // Keep as fallback for now
         };
         
         // Get predictions from AI insights if available
@@ -467,7 +482,8 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
           analysis,
           predictions,
           null, // marketIntelligence - will add this later
-          userContext
+          userContext,
+          enhancedGoals // NEW: Pass enhanced goals for personalized messaging
         );
         
         logger.info('Investment decision generated:', {
@@ -859,6 +875,90 @@ export const getQuickPredictions = async (req: Request, res: Response): Promise<
       performance: {
         totalTime: `${totalTime}ms`
       }
+    });
+  }
+};
+
+/**
+ * NEW: Analyze Investment Goals with AI Enhancement
+ * 
+ * This endpoint processes both structured goals (dropdowns) and free-text strategy
+ * to provide enhanced, personalized investment context beyond simple categories.
+ * 
+ * Features:
+ * - Fast pattern matching for common strategies (BRRRR, house hacking, etc.)
+ * - AI analysis for complex/unique strategies
+ * - Hybrid processing combining both approaches
+ * - Enhanced strategic insights and risk adjustments
+ */
+export const analyzeGoals = async (req: Request, res: Response): Promise<void> => {
+  const startTime = Date.now();
+  
+  try {
+    const { structuredGoals, freeTextStrategy } = req.body;
+    
+    logger.info('Goal analysis request received', {
+      hasStructuredGoals: !!structuredGoals,
+      hasFreeText: !!freeTextStrategy,
+      freeTextLength: freeTextStrategy?.length || 0,
+      structuredGoalKeys: structuredGoals ? Object.keys(structuredGoals) : []
+    });
+
+    // Validate request
+    if (!structuredGoals && !freeTextStrategy) {
+      res.status(400).json({
+        success: false,
+        error: 'Either structured goals or free-text strategy is required'
+      });
+      return;
+    }
+
+    // Perform AI goal analysis
+    const enhancedGoals: EnhancedGoalContext = await analyzeInvestmentGoals(
+      structuredGoals || {},
+      freeTextStrategy
+    );
+
+    const processingTime = Date.now() - startTime;
+
+    logger.info('Goal analysis completed', {
+      processingMethod: enhancedGoals.processingMethod,
+      confidenceScore: enhancedGoals.confidenceScore,
+      strategicInsightsCount: enhancedGoals.strategicInsights?.length || 0,
+      riskAdjustmentsCount: enhancedGoals.riskAdjustments?.length || 0,
+      processingTime: `${processingTime}ms`
+    });
+
+    res.json({
+      success: true,
+      data: {
+        enhancedGoals,
+        analysis: {
+          processingMethod: enhancedGoals.processingMethod,
+          confidenceScore: enhancedGoals.confidenceScore,
+          strategicInsightsCount: enhancedGoals.strategicInsights?.length || 0,
+          riskAdjustmentsCount: enhancedGoals.riskAdjustments?.length || 0,
+          hasAiEnhancement: !!enhancedGoals.aiEnhancedStrategy
+        }
+      },
+      performance: {
+        processingTime: `${processingTime}ms`,
+        efficiency: processingTime < 1000 ? 'excellent' : processingTime < 3000 ? 'good' : 'moderate'
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    const processingTime = Date.now() - startTime;
+    logger.error('Error in goal analysis:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Goal analysis failed',
+      performance: {
+        processingTime: `${processingTime}ms`
+      },
+      timestamp: new Date().toISOString()
     });
   }
 };

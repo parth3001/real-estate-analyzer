@@ -664,7 +664,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           <Box>
             {/* Investment Decision Hero Card - BOTH PRO AND LEARNING MODES */}
             {analysis?.investmentDecision && (
-              <InvestmentDecisionHero investmentDecision={analysis.investmentDecision} />
+              <InvestmentDecisionHero 
+                investmentDecision={analysis.investmentDecision} 
+                analysis={analysis}
+              />
             )}
             
             {/* Pro Mode - Condensed Metrics Bar */}

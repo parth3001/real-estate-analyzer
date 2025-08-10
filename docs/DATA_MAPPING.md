@@ -1,16 +1,37 @@
-# Real Estate Deal Analyzer - Data Mapping
+# Real Estate Investment Intelligence Platform - Data Mapping
 
-**Last Updated**: July 19, 2025 - Post-Architecture-Cleanup
+**Last Updated**: August 8, 2025 - Investment Decision Engine & AI Microservices Enhancement
 
-This document describes how data is mapped between different layers of the application (frontend, backend, and database) and any transformations that occur. All references are now updated to reflect the current TypeScript implementation.
+This document describes how data is mapped between different layers of the Real Estate Investment Intelligence Platform, including the enhanced Investment Decision Engine, AI microservices architecture, and professional analysis capabilities.
 
 ## System Overview
 
+The platform has evolved into a sophisticated investment intelligence system with multiple AI services and professional-grade analysis capabilities.
+
 ```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│    Frontend     │         │     Backend      │         │    Database     │
-│    (React)      │ ───────>│  (Node/Express)  │ ───────>│   (MongoDB)     │
-└─────────────────┘         └──────────────────┘         └─────────────────┘
+┌─────────────────┐    ┌──────────────────────────────────────────────┐    ┌─────────────────┐
+│    Frontend     │    │              Backend Services                │    │    Database     │
+│   (React 19)    │    │                                              │    │   (MongoDB)     │
+│                 │    │  ┌─────────────────────────────────────────┐ │    │                 │
+│ Investment      │    │  │           Core Services                 │ │    │ • Deal Storage  │
+│ Decision Hero   │◄───┤  │                                         │ │    │ • AI Insights   │
+│                 │    │  │ • InvestmentDecisionEngine              │ │    │ • Market Data   │
+│ Intelligence    │    │  │ • LeverageOptimizer                     │ │    │ • User Data     │
+│ Multiplier      │    │  │ • MarketIntelligenceService             │ │    │                 │
+│                 │    │  │ • PropertyTaxEstimationService          │ │◄───┤                 │
+│ Enhanced        │    │  └─────────────────────────────────────────┘ │    │                 │
+│ Analysis UI     │    │                                              │    │                 │
+│                 │    │  ┌─────────────────────────────────────────┐ │    │                 │
+└─────────────────┘    │  │         AI Microservices                │ │    │                 │
+                       │  │                                         │ │    │                 │
+┌─────────────────┐    │  │ • AI Orchestrator                      │ │    │                 │
+│  External APIs  │    │  │ • Core Analysis Service                 │ │    │                 │
+│                 │    │  │ • Market Analysis Service               │ │    │                 │
+│ • FRED API      │◄───┤  │ • Prediction Orchestrator              │ │    │                 │
+│ • RentCast API  │    │  │ • Enhancement Service                   │ │    │                 │
+│ • Census API    │    │  └─────────────────────────────────────────┘ │    │                 │
+│ • OpenAI API    │    └──────────────────────────────────────────────┘    │                 │
+└─────────────────┘                                                        └─────────────────┘
 ```
 
 ## Data Flow Patterns
@@ -42,6 +63,9 @@ When a user submits property data for analysis:
 | `bedrooms` (SFR) | `bedrooms` | None |
 | `bathrooms` (SFR) | `bathrooms` | None |
 | `longTermAssumptions` | `longTermAssumptions` | Apply defaults for missing values |
+| `exitStrategy` (NEW) | `exitStrategy` | Professional exit strategy configuration |
+| `exitStrategy.primaryExitStrategy` | `exitStrategy.primaryExitStrategy` | Maps to: 'sale', 'refinance', '1031exchange', 'estate', 'flexible' |
+| `exitStrategy.portfolioStrategy` | `exitStrategy.portfolioStrategy` | Maps to: 'first', 'geographic', 'cashflow', 'appreciation', 'diversification' |
 
 ### 2. Backend to Frontend (Analysis Response)
 
@@ -55,9 +79,72 @@ When the backend returns analysis results:
 | `longTermAnalysis.returns` | `longTermAnalysis.returns` | Recalculated based on projections |
 | `longTermAnalysis.exitAnalysis` | `longTermAnalysis.exitAnalysis` | Recalculated based on projections |
 | `keyMetrics` | `keyMetrics` | Ensure all metrics are present |
-| `aiInsights` | `aiInsights` | Preserved as-is |
+| `aiInsights` | `aiInsights` | Enhanced with Intelligence Multiplier analysis |
+| **`investmentDecision`** (NEW) | **`investmentDecision`** | **Professional investment verdict and analysis** |
+| `investmentDecision.verdict` | Displayed in InvestmentDecisionHero | Maps to: 'BUY', 'NEGOTIATE', 'PASS' |
+| `investmentDecision.confidence` | Confidence percentage display | Numeric 0-100 score |
+| `investmentDecision.primaryReason` | Main reasoning text | Professional explanation of verdict |
+| `investmentDecision.secondaryReasons` | Additional factors list | Array of supporting reasons |
+| `investmentDecision.keyRisks` | Risk assessment display | Array of identified risks |
+| `investmentDecision.actionPlan` | Actionable next steps | Array of ActionItem objects |
+| `investmentDecision.capitalStrategy` | Capital deployment advice | CapitalDeploymentAdvice object |
+| `investmentDecision.marketContext` | Market analysis | MarketContextAnalysis object |
+| `investmentDecision.goalContext` | Goal-contextual messaging | GoalContext for personalized UI |
+| **`leverageAnalysis`** (NEW) | **`leverageAnalysis`** | **Leverage optimization analysis** |
+| `leverageAnalysis.scenarios` | Leverage scenario comparison | Array of LeverageScenario objects |
+| `leverageAnalysis.optimalScenario` | Best leverage recommendation | Single LeverageScenario object |
+| `leverageAnalysis.opportunityCost` | Capital efficiency analysis | OpportunityCostAnalysis object |
 
-### 3. Frontend to Database (Save Property)
+### 3. Investment Decision Engine Data Flow (NEW)
+
+The Investment Decision Engine processes property and market data to generate professional investment recommendations:
+
+**Input Data Sources:**
+```typescript
+// Property Data
+SFRData {
+  purchasePrice, monthlyRent, exitStrategy, ...
+}
+
+// Analysis Results  
+AnalysisResult {
+  monthlyAnalysis: { cashFlow, totalExpenses },
+  keyMetrics: { capRate, cashOnCashReturn, dscr }
+}
+
+// Market Intelligence
+MarketIntelligence {
+  medianCapRate, currentMortgageRate, inflation, unemployment
+}
+
+// User Context
+UserContext {
+  experienceLevel, riskTolerance, investmentGoals, availableCash
+}
+```
+
+**Processing Pipeline:**
+1. **Market Analysis**: Compare property metrics to local market medians
+2. **Financial Validation**: Check cash flow, expense ratios, rent-to-price ratios
+3. **Risk Assessment**: Evaluate DSCR, vacancy risk, market timing
+4. **Walk-Away Price**: Calculate maximum acceptable price using 3 methods
+5. **Exit Strategy Optimization**: Adjust hurdle rates based on intended strategy
+6. **Experience Adjustments**: Apply novice/intermediate/expert modifications
+7. **Confidence Scoring**: Generate 30-95% confidence based on all factors
+
+**Output Data Structure:**
+```typescript
+InvestmentDecision {
+  verdict: 'BUY' | 'NEGOTIATE' | 'PASS',
+  confidence: number,
+  primaryReason: string,
+  actionPlan: ActionItem[],
+  marketContext: MarketContextAnalysis,
+  goalContext: GoalContext
+}
+```
+
+### 4. Frontend to Database (Save Property)
 
 When saving a property:
 

@@ -22,6 +22,7 @@ import {
   AttachMoney,
   Home,
   TrendingUp,
+  Psychology as GoalsIcon,
   ArrowBack,
   ArrowForward,
   Check
@@ -42,6 +43,7 @@ import AddressStep from './AddressStep';
 import FinancialsStep from './FinancialsStep';
 import RentalStep from './RentalStep';
 import AssumptionsStep from './AssumptionsStep';
+import GoalsStrategyStep from './GoalsStrategyStep';
 
 interface PropertyWizardProps {
   onComplete: (data: SFRPropertyData) => Promise<Analysis | null>;
@@ -81,6 +83,11 @@ const steps = [
     label: 'Long-term Assumptions',
     description: 'Growth rates and investment timeline',
     icon: TrendingUp
+  },
+  {
+    label: 'Investment Goals & Strategy',
+    description: 'Your investment approach and goals',
+    icon: GoalsIcon
   }
 ];
 
@@ -96,7 +103,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   // Wizard state management
   const [state, setState] = useState<WizardState>({
     currentStep: WizardStep.ADDRESS,
-    completed: [false, false, false, false],
+    completed: [false, false, false, false, false],
     data: {
       propertyType: 'SFR',
       propertyName: '',
@@ -170,8 +177,8 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState<WizardProgress>({
     completedSteps: 0,
-    totalSteps: 4,
-    estimatedTimeRemaining: 10,
+    totalSteps: 5,
+    estimatedTimeRemaining: 12,
     dataQualityScore: 60
   });
 
@@ -183,7 +190,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     setProgress(prev => ({
       ...prev,
       completedSteps: completedCount,
-      estimatedTimeRemaining: Math.max(1, (4 - completedCount) * 2.5),
+      estimatedTimeRemaining: Math.max(1, (5 - completedCount) * 2.5),
       dataQualityScore: dataQuality
     }));
   }, [state.completed, state.autoPopulated]);
@@ -210,7 +217,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
 
   // Navigation handlers
   const handleNext = useCallback(() => {
-    if (state.currentStep < WizardStep.ASSUMPTIONS) {
+    if (state.currentStep < WizardStep.GOALS) {
       const newCompleted = [...state.completed];
       newCompleted[state.currentStep] = true;
       
@@ -252,7 +259,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     try {
       // Mark final step as completed
       const finalCompleted = [...state.completed];
-      finalCompleted[WizardStep.ASSUMPTIONS] = true;
+      finalCompleted[WizardStep.GOALS] = true;
       
       setState(prev => ({
         ...prev,
@@ -265,8 +272,10 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
         _isWizardData: true, // Flag to identify wizard data
         maintenanceReservePercentage: state.data.maintenanceReservePercentage,
         vacancyRate: state.data.vacancyRate,
-        // Include exit strategy data for Investment Decision Engine
-        exitStrategy: state.data.exitStrategy
+        // Include exit strategy data for Investment Decision Engine (legacy support)
+        exitStrategy: state.data.exitStrategy,
+        // Include enhanced goals with AI analysis for personalized messaging
+        enhancedGoals: state.data.enhancedGoals
       };
       const result = await onComplete(wizardData as SFRPropertyData);
       
@@ -326,10 +335,23 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
               state.data.longTermAssumptions.projectionYears < 1) {
             errors.projectionYears = 'Projection years must be at least 1';
           }
+          break;
+
+        case WizardStep.GOALS:
+          // Basic validation - at least one exit strategy and portfolio strategy required
+          if (!state.data.enhancedGoals?.exitStrategy) {
+            errors.exitStrategy = 'Exit strategy is required';
+          }
+          if (!state.data.enhancedGoals?.portfolioStrategy) {
+            errors.portfolioStrategy = 'Portfolio strategy is required';
+          }
           
-          // Exit strategy questions are optional, but add informational warnings
-          if (!state.data.exitStrategy?.primaryExitStrategy) {
-            warnings.exitStrategy = 'Consider completing investment strategy questions for more personalized recommendations';
+          // Optional but helpful warnings
+          if (!state.data.enhancedGoals?.experienceLevel) {
+            warnings.experienceLevel = 'Experience level helps personalize recommendations';
+          }
+          if (!state.data.enhancedGoals?.riskTolerance) {
+            warnings.riskTolerance = 'Risk tolerance helps optimize investment advice';
           }
           break;
       }
@@ -366,6 +388,20 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
 
       case WizardStep.ASSUMPTIONS:
         return <AssumptionsStep {...stepProps} />;
+
+      case WizardStep.GOALS:
+        return <GoalsStrategyStep
+          goals={state.data.enhancedGoals || {}}
+          onGoalsChange={(goals) => {
+            setState(prev => ({
+              ...prev,
+              data: {
+                ...prev.data,
+                enhancedGoals: goals
+              }
+            }));
+          }}
+        />;
 
       default:
         return <Typography>Unknown step</Typography>;
@@ -478,7 +514,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
         </Button>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {state.currentStep === WizardStep.ASSUMPTIONS ? (
+          {state.currentStep === WizardStep.GOALS ? (
             <Button
               variant="contained"
               onClick={handleComplete}

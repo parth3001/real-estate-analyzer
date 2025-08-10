@@ -391,7 +391,276 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
     logger.error('Error generating AI response:', error);
     return 'Error generating AI response';
   }
-}; 
+};
+
+/**
+ * NEW: AI Goal Analysis for Enhanced Investment Strategy Personalization
+ * 
+ * This function analyzes both structured goals and free-text strategy descriptions
+ * to create enhanced, personalized investment context that goes beyond simple dropdowns.
+ * 
+ * Processing Steps:
+ * 1. Pattern Matching (fast, deterministic) - for common strategies
+ * 2. AI Analysis (slower, handles complex cases) - for unique/complex strategies
+ * 3. Merge & Enhance - combine structured data with AI insights
+ */
+export interface EnhancedGoalContext {
+  // Original structured goals
+  exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+  portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+  experienceLevel?: 'novice' | 'intermediate' | 'expert';
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+  
+  // Enhanced AI-derived insights
+  freeTextStrategy?: string;
+  aiEnhancedStrategy?: string;
+  strategicInsights?: string[];
+  riskAdjustments?: string[];
+  timeframeInsights?: string[];
+  confidenceScore?: number;
+  processingMethod?: 'pattern' | 'ai' | 'hybrid';
+  
+  // Advanced goal context
+  capitalDeploymentStrategy?: string;
+  portfolioPosition?: 'building' | 'optimizing' | 'scaling' | 'exiting';
+  marketTimingPreference?: 'opportunistic' | 'systematic' | 'flexible';
+  leveragePreference?: 'conservative' | 'moderate' | 'aggressive';
+}
+
+export async function analyzeInvestmentGoals(
+  structuredGoals: any,
+  freeTextStrategy?: string
+): Promise<EnhancedGoalContext> {
+  const startTime = Date.now();
+  
+  try {
+    logger.info('Starting AI goal analysis', {
+      hasStructuredGoals: !!structuredGoals,
+      hasFreeText: !!freeTextStrategy,
+      freeTextLength: freeTextStrategy?.length || 0
+    });
+
+    // Step 1: Start with structured goals as base
+    const enhancedContext: EnhancedGoalContext = {
+      ...structuredGoals,
+      freeTextStrategy,
+      strategicInsights: [],
+      riskAdjustments: [],
+      timeframeInsights: [],
+      confidenceScore: 85,
+      processingMethod: 'pattern'
+    };
+
+    // Step 2: Pattern matching for common strategies (fast path)
+    if (freeTextStrategy && freeTextStrategy.length > 20) {
+      const patternInsights = extractPatternInsights(freeTextStrategy);
+      
+      if (patternInsights.confidence > 0.7) {
+        // High confidence pattern match - use deterministic processing
+        enhancedContext.strategicInsights = patternInsights.insights;
+        enhancedContext.riskAdjustments = patternInsights.riskAdjustments;
+        enhancedContext.confidenceScore = Math.round(patternInsights.confidence * 100);
+        enhancedContext.processingMethod = 'pattern';
+        
+        logger.info('Pattern matching successful', {
+          confidence: patternInsights.confidence,
+          insightsCount: patternInsights.insights.length,
+          processingTime: `${Date.now() - startTime}ms`
+        });
+        
+        return enhancedContext;
+      } else {
+        // Low confidence - proceed to AI analysis
+        enhancedContext.processingMethod = 'hybrid';
+      }
+    }
+
+    // Step 3: AI analysis for complex/unique strategies (slower path)
+    if (freeTextStrategy && freeTextStrategy.length > 10) {
+      const openai = getOpenAIClient();
+      if (!openai) {
+        logger.warn('OpenAI not available for goal analysis - using pattern matching only');
+        return enhancedContext;
+      }
+
+      const aiAnalysis = await analyzeGoalsWithAI(openai, structuredGoals, freeTextStrategy);
+      
+      // Merge AI insights with structured data
+      enhancedContext.aiEnhancedStrategy = aiAnalysis.enhancedStrategy;
+      enhancedContext.strategicInsights = [...(enhancedContext.strategicInsights || []), ...aiAnalysis.insights];
+      enhancedContext.riskAdjustments = [...(enhancedContext.riskAdjustments || []), ...aiAnalysis.riskAdjustments];
+      enhancedContext.timeframeInsights = aiAnalysis.timeframeInsights;
+      enhancedContext.capitalDeploymentStrategy = aiAnalysis.capitalDeployment;
+      enhancedContext.portfolioPosition = aiAnalysis.portfolioPosition;
+      enhancedContext.confidenceScore = Math.round(aiAnalysis.confidence * 100);
+      enhancedContext.processingMethod = 'ai';
+      
+      logger.info('AI goal analysis completed', {
+        confidence: aiAnalysis.confidence,
+        insightsCount: enhancedContext.strategicInsights?.length || 0,
+        processingTime: `${Date.now() - startTime}ms`
+      });
+    }
+
+    return enhancedContext;
+    
+  } catch (error) {
+    logger.error('Error in AI goal analysis:', error);
+    
+    // Return enhanced structured goals with fallback insights
+    return {
+      ...structuredGoals,
+      freeTextStrategy,
+      strategicInsights: ['Analysis temporarily unavailable - using structured goals only'],
+      confidenceScore: 60,
+      processingMethod: 'pattern'
+    };
+  }
+}
+
+/**
+ * Fast pattern matching for common investment strategies
+ */
+function extractPatternInsights(text: string): {
+  insights: string[];
+  riskAdjustments: string[];
+  confidence: number;
+} {
+  const normalizedText = text.toLowerCase();
+  const insights: string[] = [];
+  const riskAdjustments: string[] = [];
+  let confidence = 0;
+
+  // BRRRR Strategy
+  if (normalizedText.includes('brrrr') || normalizedText.includes('buy rehab rent refinance')) {
+    insights.push('BRRRR strategy detected: Buy, Rehab, Rent, Refinance, Repeat for capital recycling');
+    riskAdjustments.push('Higher risk due to rehab complexity and refinance requirements');
+    confidence += 0.3;
+  }
+
+  // House Hacking
+  if (normalizedText.includes('house hack') || normalizedText.includes('live in') && normalizedText.includes('rent')) {
+    insights.push('House hacking strategy: Live-in investment to reduce living expenses');
+    riskAdjustments.push('Consider owner-occupancy requirements and transition planning');
+    confidence += 0.25;
+  }
+
+  // Cash Flow Focus
+  if (normalizedText.includes('cash flow') || normalizedText.includes('monthly income') || normalizedText.includes('passive income')) {
+    insights.push('Income-focused strategy prioritizes monthly cash flow over appreciation');
+    riskAdjustments.push('Ensure positive cash flow maintains during market downturns');
+    confidence += 0.2;
+  }
+
+  // Geographic Arbitrage
+  if (normalizedText.includes('midwest') && normalizedText.includes('california') || 
+      normalizedText.includes('arbitrage') || 
+      normalizedText.includes('remote') && normalizedText.includes('invest')) {
+    insights.push('Geographic arbitrage: Investing in lower-cost markets while living elsewhere');
+    riskAdjustments.push('Consider property management costs and distant market knowledge gaps');
+    confidence += 0.25;
+  }
+
+  // Scaling Strategy
+  if (normalizedText.includes('scale') || normalizedText.includes('portfolio') && normalizedText.includes('grow')) {
+    insights.push('Portfolio scaling strategy: Building multiple properties systematically');
+    riskAdjustments.push('Ensure adequate capital reserves and management systems for growth');
+    confidence += 0.15;
+  }
+
+  // Commercial Transition
+  if (normalizedText.includes('commercial') || normalizedText.includes('multifamily') || normalizedText.includes('apartment')) {
+    insights.push('Transitioning to commercial real estate for higher returns and professional management');
+    riskAdjustments.push('Commercial properties require higher capital and different financing');
+    confidence += 0.2;
+  }
+
+  return { insights, riskAdjustments, confidence };
+}
+
+/**
+ * AI-powered analysis for complex/unique investment strategies
+ */
+async function analyzeGoalsWithAI(openai: any, structuredGoals: any, freeText: string): Promise<{
+  enhancedStrategy: string;
+  insights: string[];
+  riskAdjustments: string[];
+  timeframeInsights: string[];
+  capitalDeployment: string;
+  portfolioPosition: 'building' | 'optimizing' | 'scaling' | 'exiting';
+  confidence: number;
+}> {
+  const prompt = `Analyze this real estate investment strategy and provide enhanced insights:
+
+STRUCTURED GOALS:
+- Exit Strategy: ${structuredGoals.exitStrategy || 'not specified'}
+- Portfolio Strategy: ${structuredGoals.portfolioStrategy || 'not specified'}
+- Experience Level: ${structuredGoals.experienceLevel || 'not specified'}
+- Risk Tolerance: ${structuredGoals.riskTolerance || 'not specified'}
+
+INVESTOR'S STRATEGY DESCRIPTION:
+"${freeText}"
+
+Please analyze and provide ONLY a JSON response with this structure:
+{
+  "enhancedStrategy": "One sentence summary of their complete strategy",
+  "insights": ["Strategic insight 1", "Strategic insight 2", "Strategic insight 3"],
+  "riskAdjustments": ["Risk consideration 1", "Risk consideration 2"],
+  "timeframeInsights": ["Timeline consideration 1", "Timeline consideration 2"],
+  "capitalDeployment": "How they plan to deploy capital",
+  "portfolioPosition": "building|optimizing|scaling|exiting",
+  "confidence": 0.85
+}
+
+Focus on actionable insights that go beyond basic dropdown categories.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert real estate investment strategist. Analyze investor goals and return structured insights as JSON only.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 800,
+      temperature: 0.3
+    });
+
+    const response = completion.choices[0].message?.content?.trim() || '{}';
+    
+    // Parse AI response
+    const aiAnalysis = JSON.parse(response);
+    
+    return {
+      enhancedStrategy: aiAnalysis.enhancedStrategy || '',
+      insights: aiAnalysis.insights || [],
+      riskAdjustments: aiAnalysis.riskAdjustments || [],
+      timeframeInsights: aiAnalysis.timeframeInsights || [],
+      capitalDeployment: aiAnalysis.capitalDeployment || 'Standard financing approach',
+      portfolioPosition: aiAnalysis.portfolioPosition || 'building',
+      confidence: aiAnalysis.confidence || 0.7
+    };
+    
+  } catch (error) {
+    logger.error('Error in AI goal analysis:', error);
+    
+    // Fallback analysis
+    return {
+      enhancedStrategy: 'Real estate investment strategy with personalized approach',
+      insights: ['Strategy requires custom analysis approach'],
+      riskAdjustments: ['Review risk factors based on strategy complexity'],
+      timeframeInsights: ['Timeline considerations vary by strategy'],
+      capitalDeployment: 'Standard real estate investment approach',
+      portfolioPosition: 'building',
+      confidence: 0.6
+    };
+  }
+} 
 
 /**
  * Generate score breakdown for AI insights based on financial analysis and market data

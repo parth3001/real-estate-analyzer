@@ -266,6 +266,7 @@ export interface Analysis {
   investmentDecision?: {
     verdict: 'BUY' | 'PASS' | 'NEGOTIATE';
     confidence: number;
+    score: number; // Property quality score 0-100
     primaryReason: string;
     secondaryReasons: string[];
     keyRisks: string[];
@@ -761,6 +762,7 @@ const AnalysisSchema = new Schema({
   investmentDecision: {
     verdict: { type: String, enum: ['BUY', 'PASS', 'NEGOTIATE'] },
     confidence: Number,
+    score: Number, // Property quality score 0-100
     primaryReason: String,
     secondaryReasons: [String],
     keyRisks: [String],

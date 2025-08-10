@@ -1,17 +1,49 @@
-# Real Estate Deal Analyzer Documentation
+# Real Estate Investment Intelligence Platform Documentation
 
-This directory contains all the documentation for the Real Estate Deal Analyzer project.
+**Last Updated**: January 10, 2025 - Critical Investment Decision Engine Fixes Applied
+
+This directory contains comprehensive documentation for the Real Estate Investment Intelligence Platform, which has evolved from a basic property analyzer into a sophisticated investment decision system with professional-grade AI analysis capabilities.
 
 ## Core Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](ARCHITECTURE.md) | System architecture and technical decisions |
-| [API Documentation](API.md) | Backend API endpoints and usage |
-| [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions and data structure |
-| [Data Mapping](DATA_MAPPING.md) | How data flows between frontend, backend, and database |
-| [Product Requirements](PRD.md) | Product requirements document |
-| [**Phase 1 Completion Summary**](PHASE_1_COMPLETION_SUMMARY.md) | **✅ Complete overview of Phase 1 achievements** |
+| Document | Description | Status |
+|----------|-------------|--------|
+| [**Investment Decision Engine v2.1**](INVESTMENT_DECISION_SYSTEM_V2.md) | **🚀 UPDATED: Professional investment analysis with critical fixes applied** | **✅ Complete** |
+| [Architecture](ARCHITECTURE.md) | System architecture and technical decisions | ✅ Updated |
+| [API Documentation](API.md) | Enhanced API endpoints including Investment Decision Engine | ✅ Updated |
+| [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions including new decision data structures | ✅ Updated |
+| [Data Mapping](DATA_MAPPING.md) | Enhanced data flows with Investment Decision Engine integration | ✅ Updated |
+| [Investment Decision Logic](INVESTMENT_DECISION_LOGIC.md) | Complete algorithmic logic documentation | ✅ Complete |
+| [Product Requirements](PRD.md) | Product requirements document | 📋 Legacy |
+| [**Phase 1 Completion Summary**](PHASE_1_COMPLETION_SUMMARY.md) | **✅ Complete overview of Phase 1 achievements** | ✅ Historical |
+
+## 🚀 Latest Critical Fixes (January 2025)
+
+### Investment Decision Engine v2.1 - Critical Issues Resolved
+The platform's Investment Decision Engine received critical fixes to eliminate contradictory messaging and ensure accurate recommendations:
+
+- **✅ Contradictory Messaging Fixed**: No more "PASS" verdicts showing "Consider With Adjustments" text
+- **✅ Score Consistency**: Eliminated dual scoring systems causing 45 vs 38 score conflicts
+- **✅ Single Source of Truth**: Backend handles all business logic, frontend is pure presentation layer
+- **✅ Conservative Logic**: Walk-away price validation prevents overpaying on properties
+- **✅ Comprehensive Testing**: 10/10 realistic scenario tests passing, validating engine behavior
+- **✅ Architecture Cleanup**: Removed frontend Professional Scoring Engine that violated architectural principles
+
+### AI Architecture Transformation
+- **Response Time Improvement**: Reduced AI analysis from 76 seconds to 3-4 seconds
+- **Microservices Architecture**: Distributed AI services with parallel processing
+- **Intelligence Multiplier**: Professional-level insights that transform basic metrics into actionable intelligence
+- **Goal-Contextual Messaging**: Personalizes analysis based on user's investment strategy
+
+### Enhanced User Experience
+- **Investment Decision Hero**: Professional investment verdict display with personalized messaging
+- **Leverage Optimization**: Analyzes optimal debt-to-equity ratios with opportunity cost calculations
+- **Enhanced Risk Analysis**: Professional risk blind spot identification and mitigation strategies
+
+### Technical Improvements
+- **Market Intelligence Integration**: Real-time market data with FRED, RentCast, and Census APIs
+- **Professional Test Coverage**: Comprehensive test suite for Investment Decision Engine
+- **Performance Optimization**: Sub-2-second analysis generation with caching strategies
 
 ## Development Guidelines
 

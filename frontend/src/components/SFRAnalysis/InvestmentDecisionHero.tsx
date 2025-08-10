@@ -29,14 +29,39 @@ import {
   Timeline as TimelineIcon,
   Compare as AlternativeIcon,
   CheckCircle,
-  Warning
+  Warning,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
+import InvestmentMessagingEngine, { type InvestmentMetrics, type GoalContext, type MessageResult } from '../../utils/investmentMessagingEngine';
+// Professional Scoring Engine removed - all scoring logic in backend
+
+interface AnalysisData {
+  monthlyAnalysis?: {
+    cashFlow?: number;
+  };
+  keyMetrics?: {
+    capRate?: number;
+    cashOnCashReturn?: number;
+  };
+  financing?: {
+    totalInvestment?: number;
+  };
+  purchasePrice?: number;
+  longTermAnalysis?: {
+    totalAppreciation?: number;
+    totalCashFlow?: number;
+  };
+  operatingExpenseRatio?: number;
+  dscr?: number;
+  rentToPriceRatio?: number;
+}
 
 interface InvestmentDecisionHeroProps {
   investmentDecision: {
     verdict: 'BUY' | 'PASS' | 'NEGOTIATE';
     confidence: number;
+    score?: number; // Property quality score 0-100
     primaryReason: string;
     secondaryReasons: string[];
     keyRisks: string[];
@@ -87,16 +112,117 @@ interface InvestmentDecisionHeroProps {
       shortTermActions: string[];
       longTermStrategy: string[];
     };
+    goalContext?: GoalContext; // Goal context for personalization
   };
+  analysis?: AnalysisData; // Analysis data for safe messaging
 }
 
 const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({ 
-  investmentDecision 
+  investmentDecision,
+  analysis 
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
+  
+  // Helper function to get user-friendly confidence context
+  const getConfidenceContext = (confidence: number, verdict: string): { label: string; description: string; color: string } => {
+    if (verdict === 'BUY') {
+      if (confidence >= 80) return {
+        label: 'Strong Confidence',
+        description: 'High certainty this is a good investment',
+        color: appleColors.green[600]
+      };
+      if (confidence >= 65) return {
+        label: 'Moderate Confidence',
+        description: 'Good opportunity with standard due diligence',
+        color: appleColors.green[500]
+      };
+      return {
+        label: 'Proceed with Caution',
+        description: 'Positive but requires careful review',
+        color: appleColors.orange[500]
+      };
+    } else if (verdict === 'NEGOTIATE') {
+      if (confidence >= 70) return {
+        label: 'Worth Negotiating',
+        description: 'Good potential if terms improve',
+        color: appleColors.orange[600]
+      };
+      if (confidence >= 50) return {
+        label: 'Consider Carefully',
+        description: 'May work with significant adjustments',
+        color: appleColors.orange[500]
+      };
+      return {
+        label: 'Limited Potential',
+        description: 'Unlikely to meet goals even with negotiation',
+        color: appleColors.orange[400]
+      };
+    } else { // PASS
+      if (confidence >= 80) return {
+        label: 'Strong Warning',
+        description: 'High certainty this property should be avoided',
+        color: appleColors.red[600]
+      };
+      if (confidence >= 65) return {
+        label: 'Not Recommended',
+        description: 'Multiple concerns indicate poor investment',
+        color: appleColors.red[500]
+      };
+      return {
+        label: 'Review Alternative Options',
+        description: 'Some concerns but may work for specific strategies',
+        color: appleColors.orange[500]
+      };
+    }
+  };
 
-  // Verdict styling configuration
+  // Convert analysis to InvestmentMetrics and generate safe messaging
+  const goalContext = investmentDecision.goalContext || {};
+  
+  let safeMessage: MessageResult;
+  
+  if (analysis) {
+    // Convert analysis data to InvestmentMetrics format
+    const metrics: InvestmentMetrics = {
+      monthlyFlow: analysis.monthlyAnalysis?.cashFlow || 0,
+      annualFlow: (analysis.monthlyAnalysis?.cashFlow || 0) * 12,
+      capRate: analysis.keyMetrics?.capRate || 0,
+      cashOnCashReturn: analysis.keyMetrics?.cashOnCashReturn || 0,
+      totalInvestment: analysis.financing?.totalInvestment || 0,
+      purchasePrice: analysis.purchasePrice || 0,
+      totalWealth: (analysis.longTermAnalysis?.totalAppreciation || 0) + (analysis.longTermAnalysis?.totalCashFlow || 0),
+      operatingExpenseRatio: analysis.operatingExpenseRatio,
+      dscr: analysis.dscr,
+      rentToPriceRatio: analysis.rentToPriceRatio
+    };
+    
+    // Backend already has all the analysis - no frontend scoring needed
+    // Use the backend verdict and messaging
+    safeMessage = InvestmentMessagingEngine.generateMessage(
+      investmentDecision.verdict,
+      goalContext,
+      metrics
+    );
+  } else {
+    // Fallback when no analysis data
+    safeMessage = {
+      header: "Professional Analysis",
+      primaryReason: investmentDecision.primaryReason,
+      verdictLabel: "Investment Analysis",
+      warnings: [],
+      sentiment: 'neutral',
+      confidence: 'medium'
+    };
+  }
+  
+  // Extract safe messaging values
+  const goalContextualHeader = safeMessage.header;
+  const goalContextualReason = safeMessage.primaryReason;
+  const goalContextualVerdictLabel = safeMessage.verdictLabel;
+  // Simplified for now - insights come from safeMessage.warnings
+
+  // Verdict styling configuration with goal-contextual labels
   const getVerdictConfig = (verdict: string) => {
     switch (verdict) {
       case 'BUY':
@@ -105,7 +231,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           color: appleColors.green[600],
           bgColor: appleColors.green[50],
           borderColor: appleColors.green[200],
-          label: 'Recommended Purchase',
+          label: goalContextualVerdictLabel,
           description: 'Strong investment opportunity'
         };
       case 'NEGOTIATE':
@@ -114,7 +240,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           color: appleColors.orange[600],
           bgColor: appleColors.orange[50],
           borderColor: appleColors.orange[200],
-          label: 'Negotiate Price',
+          label: goalContextualVerdictLabel,
           description: 'Potential with price adjustment'
         };
       case 'PASS':
@@ -123,7 +249,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           color: appleColors.red[600],
           bgColor: appleColors.red[50],
           borderColor: appleColors.red[200],
-          label: 'Pass on Property',
+          label: goalContextualVerdictLabel,
           description: 'Does not meet investment criteria'
         };
       default:
@@ -223,16 +349,35 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                   </Box>
                 </Box>
                 
-                <Chip
-                  label={`${investmentDecision.confidence}% Confidence`}
-                  sx={{
-                    backgroundColor: verdictConfig.color,
-                    color: 'white',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    height: 32
-                  }}
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={`${investmentDecision.confidence}% Confidence`}
+                      sx={{
+                        backgroundColor: getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).color,
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        height: 32
+                      }}
+                    />
+                    {investmentDecision.score !== undefined && (
+                      <Chip
+                        label={`Score: ${investmentDecision.score}/100`}
+                        sx={{
+                          backgroundColor: appleColors.gray[200],
+                          color: appleColors.gray[800],
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          height: 32
+                        }}
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="caption" sx={{ color: appleColors.gray[600], fontWeight: 500, maxWidth: 300 }}>
+                    <strong>{getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).label}:</strong> {getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).description}
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
 
@@ -240,7 +385,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 1, color: verdictConfig.color }}>
-                  Professional Analysis
+                  {goalContextualHeader}
                 </Typography>
                 <Typography 
                   variant="body1" 
@@ -251,8 +396,54 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     fontWeight: 500
                   }}
                 >
-                  {investmentDecision.primaryReason}
+                  {investmentDecision.score !== undefined 
+                    ? `This property scores ${investmentDecision.score}/100. ${goalContextualReason}`
+                    : goalContextualReason}
                 </Typography>
+                
+                {/* Display backend investment decision insights */}
+                {investmentDecision.secondaryReasons && investmentDecision.secondaryReasons.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    {investmentDecision.secondaryReasons.slice(0, 2).map((reason: string, index: number) => (
+                      <Alert 
+                        key={index}
+                        icon={investmentDecision.verdict === 'BUY' ? <CheckCircle /> : <InfoIcon />}
+                        severity={investmentDecision.verdict === 'BUY' ? 'success' : 'info'}
+                        sx={{ 
+                          mt: 0.5, 
+                          fontSize: '13px',
+                          py: 0.5,
+                          '& .MuiAlert-icon': { fontSize: '16px' },
+                          '& .MuiAlert-message': { py: 0.5 }
+                        }}
+                      >
+                        {reason}
+                      </Alert>
+                    ))}
+                  </Box>
+                )}
+                
+                {/* Display key risks from backend */}
+                {investmentDecision.keyRisks && investmentDecision.keyRisks.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    {investmentDecision.keyRisks.slice(0, 2).map((risk: string, index: number) => (
+                      <Alert 
+                        key={index}
+                        icon={<Warning />}
+                        severity="warning" 
+                        sx={{ 
+                          mt: 1, 
+                          fontSize: '13px',
+                          py: 0.5,
+                          '& .MuiAlert-icon': { fontSize: '16px' },
+                          '& .MuiAlert-message': { py: 0.5 }
+                        }}
+                      >
+                        {risk}
+                      </Alert>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Grid>
 

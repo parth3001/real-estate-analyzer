@@ -1,8 +1,8 @@
-# Real Estate Deal Analyzer - Data Dictionary
+# Real Estate Investment Intelligence Platform - Data Dictionary
 
-**Last Updated**: July 19, 2025 - Post-Audit Update
+**Last Updated**: August 8, 2025 - Investment Decision Engine & AI Enhancement Update
 
-This document serves as a central reference for all data fields used throughout the Real Estate Deal Analyzer application. The purpose is to maintain consistency and provide clear documentation as the application evolves.
+This document serves as a central reference for all data fields used throughout the Real Estate Investment Intelligence Platform. This includes the sophisticated Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
 
 ## Implementation Status Legend
 - ✅ **Implemented**: Field is actively used and returned by TypeScript analyzers
@@ -400,4 +400,180 @@ When adding new fields to the application, please follow these guidelines:
 | `winningStrategies` | string[] | Successful investor strategies | Yes |
 | `losingPatterns` | string[] | Common investor mistakes | Yes |
 | `localTrends` | string[] | Local market trends | Yes |
-| `investorBehavior` | string | Market participant analysis | Yes | 
+| `investorBehavior` | string | Market participant analysis | Yes |
+
+## Investment Decision Engine Data Fields (NEW - August 8, 2025)
+
+The Investment Decision Engine represents a major enhancement to the platform, providing professional-grade investment verdicts and sophisticated market-relative analysis.
+
+### Core Investment Decision Fields
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `investmentDecision.verdict` | string enum | Professional investment recommendation | Yes | Analysis results, Investment Hero |
+| `investmentDecision.confidence` | number | Confidence score (30-95) | Yes | Analysis results, Investment Hero |
+| `investmentDecision.primaryReason` | string | Main explanation for verdict | Yes | Analysis results, Investment Hero |
+| `investmentDecision.secondaryReasons` | string[] | Supporting reasons and factors | No | Analysis details |
+| `investmentDecision.keyRisks` | string[] | Identified investment risks | No | Risk assessment |
+| `investmentDecision.actionPlan` | ActionItem[] | Recommended next steps | No | Action plan UI |
+| `investmentDecision.capitalStrategy` | CapitalDeploymentAdvice | Capital deployment recommendations | No | Strategy advice |
+| `investmentDecision.marketContext` | MarketContextAnalysis | Market-relative analysis | No | Market intelligence |
+| `investmentDecision.timeline` | InvestmentTimeline | Recommended timing | No | Timeline guidance |
+| `investmentDecision.goalContext` | GoalContext | Goal-contextual messaging | No | Personalized UI |
+
+### Investment Verdict Enum Values
+
+| Value | Description | Confidence Range | Typical Use Case |
+|-------|-------------|------------------|------------------|
+| `'BUY'` | Strong recommendation to purchase | 70-95% | Property exceeds hurdle rates with good fundamentals |
+| `'NEGOTIATE'` | Conditional purchase with improvements needed | 45-85% | Positive potential with price/terms adjustments |
+| `'PASS'` | Recommendation to avoid investment | 30-60% | Poor fundamentals, overpriced, or high risk |
+
+### ActionItem Object Structure
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `type` | string enum | Action category: 'immediate', 'short_term', 'long_term' | Yes |
+| `title` | string | Action item title | Yes |
+| `description` | string | Detailed action description | Yes |
+| `priority` | string enum | Priority level: 'critical', 'high', 'medium', 'low' | Yes |
+| `estimatedCost` | string | Cost estimate for action | No |
+| `expectedBenefit` | string | Expected benefit description | No |
+| `timeframe` | string | Recommended completion timeframe | No |
+
+### MarketContextAnalysis Object Structure
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `marketPosition` | string | Property position vs market median | Yes |
+| `capRateComparison` | number | Property cap rate vs market median | Yes |
+| `rentToValueRatio` | number | Monthly rent to purchase price ratio | Yes |
+| `marketTrends` | string[] | Relevant local market trends | No |
+| `competitivePosition` | string | Position vs comparable properties | No |
+| `marketRisk` | string enum | Market risk level: 'low', 'medium', 'high' | Yes |
+
+### GoalContext Object Structure (Goal-Contextual Messaging)
+
+| Field Name | Type | Description | Required |
+|------------|------|-------------|----------|
+| `exitStrategy` | string enum | Primary exit strategy | No |
+| `portfolioStrategy` | string enum | Portfolio building approach | No |
+| `marketTimingFlexibility` | string enum | Timing flexibility level | No |
+| `riskApproach` | string enum | Risk tolerance approach | No |
+| `capitalDeployment` | string enum | Capital deployment strategy | No |
+| `projectionYears` | number | Investment time horizon | No |
+
+### Exit Strategy Enum Values
+
+| Value | Description | Hurdle Rate Adjustment | Special Considerations |
+|-------|-------------|----------------------|----------------------|
+| `'sale'` | Traditional sale after hold period | Standard 6.5% | Market timing flexibility important |
+| `'refinance'` | Cash-out refinance strategy | Standard 6.5% | Focus on appreciation and equity |
+| `'1031exchange'` | Tax-deferred exchange | Reduced to 5.5% | Tax benefits consideration |
+| `'estate'` | Generational wealth building | Standard 6.5% | Requires positive cash flow buffer |
+| `'flexible'` | Opportunistic exit timing | Standard 6.5% | Maximum flexibility approach |
+
+### Portfolio Strategy Enum Values
+
+| Value | Description | Cash Flow Requirements | Risk Adjustments |
+|-------|-------------|----------------------|------------------|
+| `'first'` | First investment property | Minimum $400/month | Extra safety margins |
+| `'geographic'` | Geographic diversification | Standard requirements | Market risk focus |
+| `'cashflow'` | Cash flow focused portfolio | Higher cash flow emphasis | Income sustainability |
+| `'appreciation'` | Appreciation focused strategy | Lower cash flow acceptance | Market timing critical |
+| `'diversification'` | Balanced diversification | Standard requirements | Risk-adjusted approach |
+
+## Leverage Analysis Data Fields (NEW - August 8, 2025)
+
+The Leverage Optimizer provides sophisticated analysis of optimal capital deployment and loan-to-value ratios.
+
+### Core Leverage Analysis Fields
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `leverageAnalysis.scenarios` | LeverageScenario[] | All analyzed leverage scenarios | Yes | Leverage comparison |
+| `leverageAnalysis.optimalScenario` | LeverageScenario | Recommended leverage scenario | Yes | Leverage recommendations |
+| `leverageAnalysis.currentScenario` | LeverageScenario | User's current approach | Yes | Comparison analysis |
+| `leverageAnalysis.recommendations` | LeverageRecommendation[] | Leverage improvement suggestions | No | Action items |
+| `leverageAnalysis.opportunityCost` | OpportunityCostAnalysis | Capital efficiency analysis | No | Investment strategy |
+| `leverageAnalysis.stressTestResults` | StressTestResult | Risk scenario analysis | No | Risk assessment |
+
+### LeverageScenario Object Structure
+
+| Field Name | Type | Description | Calculated |
+|------------|------|-------------|------------|
+| `downPaymentPercent` | number | Down payment percentage (0-100) | Input |
+| `downPaymentAmount` | number | Dollar amount of down payment | Calculated |
+| `loanAmount` | number | Loan amount | Calculated |
+| `monthlyPayment` | number | Monthly mortgage payment | Calculated |
+| `monthlyNetCashFlow` | number | Net monthly cash flow | Calculated |
+| `cashOnCashReturn` | number | Cash-on-cash return percentage | Calculated |
+| `capRate` | number | Capitalization rate | Calculated |
+| `dscr` | number | Debt service coverage ratio | Calculated |
+| `totalCashRequired` | number | Total cash needed (down + closing) | Calculated |
+| `leverageScore` | number | Leverage optimization score (0-100) | Calculated |
+
+### OpportunityCostAnalysis Object Structure
+
+| Field Name | Type | Description | Calculated |
+|------------|------|-------------|------------|
+| `currentDeployment.cashInvested` | number | Cash invested in current scenario | Calculated |
+| `currentDeployment.propertiesControlled` | number | Number of properties controlled | Calculated |
+| `currentDeployment.totalAssetValue` | number | Total value of controlled assets | Calculated |
+| `currentDeployment.portfolioVelocity` | number | Asset value per dollar invested | Calculated |
+| `optimalDeployment.cashInvested` | number | Cash invested in optimal scenario | Calculated |
+| `optimalDeployment.propertiesControlled` | number | Properties controlled with optimal leverage | Calculated |
+| `optimalDeployment.totalAssetValue` | number | Total asset value with optimization | Calculated |
+| `optimalDeployment.portfolioVelocity` | number | Optimal portfolio velocity | Calculated |
+| `opportunityCostAnnual` | number | Annual opportunity cost of current approach | Calculated |
+| `capitalEfficiencyGap` | number | Efficiency difference multiplier | Calculated |
+
+## Enhanced Analysis Calculations (NEW - August 8, 2025)
+
+### Investment Decision Scoring Algorithm
+
+The Investment Decision Engine uses a sophisticated multi-factor scoring system:
+
+#### Base Confidence Scores
+- **BUY Verdict**: Starts at 80% confidence
+- **NEGOTIATE Verdict**: Starts at 65% confidence  
+- **PASS Verdict**: Starts at 85% confidence
+
+#### Confidence Adjustments
+| Factor | Adjustment | Conditions |
+|--------|------------|------------|
+| **Market-Relative Cap Rate** | ±15% | Property vs median comparison |
+| **Rent-to-Price Ratio** | ±20% | Below 0.4% (fail), above 1.2% (flag) |
+| **Too Good to Be True** | -30% | Cap rate >1.5x median + long DOM |
+| **Operating Expense Ratio** | -15% | Above 50% of rental income |
+| **Experience Level** | ±0-25% | Novice: cap at 70%, Expert: up to 95% |
+| **Cash Flow Buffer** | ±10% | Adequate buffer vs requirements |
+| **Walk-Away Price** | Auto-PASS | Purchase price >110% of calculated max |
+
+#### Walk-Away Price Calculation
+The system calculates maximum acceptable price using the **minimum** of:
+1. **Treasury Spread Method**: `NOI ÷ (Treasury Rate + 3%)`
+2. **Comparable Method**: `Average Comparable Price × 0.95`  
+3. **Income Multiplier**: `Monthly Rent × 100`
+
+#### Market-Relative Cap Rate Thresholds
+- **PASS**: Property cap rate >1.5% below market median
+- **NEGOTIATE**: Property cap rate 0.5-1.5% below market median
+- **BUY Consideration**: Property cap rate at or above market median
+
+#### Experience-Based Adjustments
+| Experience Level | Hurdle Rate | Confidence Cap | Cash Flow Min | Risk Tolerance |
+|-----------------|-------------|----------------|---------------|----------------|
+| **Novice** | +1.0% above standard | 70% | $400/month | High safety margins |
+| **Intermediate** | Standard rates | 85% | Standard | Standard risk assessment |
+| **Experienced** | -0.5% with strong appreciation | 95% | Flexible | Advanced risk tolerance |
+
+#### Exit Strategy Hurdle Rate Adjustments
+| Exit Strategy | Hurdle Rate | Rationale |
+|---------------|-------------|-----------|
+| **1031 Exchange** | 5.5% (vs 6.5% standard) | Tax benefits consideration |
+| **Estate/Generational** | 6.5% + positive cash flow requirement | Sustainability critical |
+| **Quick Flip (<2 years)** | 12.0% minimum | Short-term capital gains risk |
+| **Standard Hold** | 6.5% baseline | Standard investment return |
+
+This comprehensive scoring system ensures professional-grade investment analysis that adapts to market conditions, user experience, and investment strategies. 

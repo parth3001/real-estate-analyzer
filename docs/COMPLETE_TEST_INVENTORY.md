@@ -72,6 +72,16 @@ cd backend && npm run test:integration
 - `src/tests/integration/calculation-benchmarks.test.ts` - **FIXED**: 13/13 tests passing (Jan 31, 2025)
 - `src/tests/integration/ai-score-validation.test.ts` - **FIXED**: 2/2 tests passing (Jan 31, 2025)
 
+#### **Investment Decision Engine Tests** ✅ ALL PASSING
+- `src/tests/integration/investment-decision-realistic-scenarios.test.ts` - **NEW**: 10/10 tests passing (Jan 2025)
+  - ✅ First impression quality tests (BUY, NEGOTIATE, PASS verdicts)
+  - ✅ Experience level adjustments (novice, intermediate, expert)
+  - ✅ Exit strategy optimizations (1031 exchange, estate planning, sale)
+  - ✅ Portfolio focus adjustments (cash flow, geographic expansion)  
+  - ✅ Free-text strategy processing (house hacking, generational wealth)
+  - ✅ Performance & consistency across strategy combinations
+  - **Purpose:** Validates Investment Decision Engine v2.0 sophisticated analysis
+
 #### **System Integration**
 - `src/tests/integration/backend-frontend-sync.test.ts` - Frontend-backend sync
 - `src/tests/integration/automatic-validation-demo.test.ts` - Automated validation
@@ -154,7 +164,14 @@ cd backend && npm run test:e2e:headless
    - Quick calculations under 50ms
    - Layer 1 performance architecture working
 
-3. **Display Accuracy** 🔍
+3. **Investment Decision Engine** ✅
+   ```bash
+   npm test -- investment-decision-realistic-scenarios
+   ```
+   - Investment verdict accuracy across all user scenarios
+   - Strategy-specific analysis validation
+
+4. **Display Accuracy** 🔍
    ```bash
    npm run test:display-bugs
    ```

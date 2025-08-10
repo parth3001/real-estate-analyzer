@@ -1,7 +1,20 @@
 # Real Estate Deal Analyzer - Architecture Documentation
 
 ## System Overview
-The Real Estate Deal Analyzer is a full-stack web application built using React (frontend) and Node.js/Express (backend). The application helps users analyze real estate investment opportunities by calculating key metrics and providing detailed financial projections for both Single Family (SFR) and Multi-Family (MF) properties.
+The Real Estate Investment Intelligence Platform is a full-stack web application built using React (frontend) and Node.js/Express (backend). The system provides institutional-grade investment analysis with **strict architectural separation**: backend handles all business logic, frontend is purely for presentation.
+
+## 🏛️ Core Architectural Principles (Updated January 2025)
+
+### **Single Source of Truth**
+- ✅ **Backend**: All business logic, calculations, scoring, and investment decisions
+- ✅ **Frontend**: Pure presentation layer - display data, collect user input only
+- ❌ **Eliminated**: Duplicate calculation logic in frontend (violates architectural integrity)
+
+### **Investment Decision Engine v2.1**
+- 🎯 **Primary Engine**: `/backend/src/services/investment/investmentDecisionEngine.ts`
+- 📊 **Sophisticated Analysis**: Walk-away price validation, rent-to-price ratios, strategy-specific logic
+- 🛡️ **Conservative Logic**: Prevents contradictory messaging and score inconsistencies
+- 📈 **Comprehensive Testing**: 10/10 realistic scenario tests validate engine behavior
 
 ## Technical Stack
 
@@ -9,12 +22,13 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 - **Framework:** React 19 with TypeScript
 - **UI Library:** Material-UI (MUI) v7
 - **Data Visualization:** Recharts
-- **State Management:** React Context API + React Hooks
+- **State Management:** React Context API + React Hooks  
 - **Authentication:** React Context with JWT token management
 - **Routing:** React Router v6 with protected routes
 - **Type Checking:** TypeScript
 - **Data Persistence:** MongoDB & Backend API
 - **Build Tool:** Vite
+- **Business Logic:** ❌ **NONE** - All calculations handled by backend APIs
 
 ### Backend
 - **Runtime:** Node.js
@@ -24,8 +38,10 @@ The Real Estate Deal Analyzer is a full-stack web application built using React 
 - **Type Safety:** TypeScript
 - **API Documentation:** OpenAPI/Swagger
 - **Logging:** Winston
-- **Error Handling:** Custom middleware
+- **Error Handling:** Custom middleware  
 - **Security:** Role-based access control, auth middleware
+- **Investment Analysis:** Investment Decision Engine v2.1 with single source of truth
+- **AI Services:** Goal enhancement, free-text strategy processing
 
 ## Authentication & User Management System
 

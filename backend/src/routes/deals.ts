@@ -8,7 +8,8 @@ import {
   getSampleSFR,
   getSampleMF,
   analyzeDeal,
-  getQuickPredictions
+  getQuickPredictions,
+  analyzeGoals
 } from '../controllers/deals';
 import {
   getScenarios,
@@ -54,6 +55,9 @@ router.post('/analyze', authMiddleware, analyzeDeal);
 
 // NEW: Fast AI Predictions endpoint (3-4s vs 76+s)
 router.post('/quick-predictions', authMiddleware, getQuickPredictions);
+
+// NEW: AI Goal Analysis endpoint - Enhanced investment strategy personalization
+router.post('/analyze-goals', authMiddleware, analyzeGoals);
 
 // Scenario routes (require authentication) - Nested under deals for logical grouping
 router.get('/:dealId/scenarios', authMiddleware, getScenarios);

@@ -10,7 +10,8 @@ export const WizardStep = {
   ADDRESS: 0,
   FINANCIALS: 1,
   RENTAL: 2,
-  ASSUMPTIONS: 3
+  ASSUMPTIONS: 3,
+  GOALS: 4
 } as const;
 
 export type WizardStep = typeof WizardStep[keyof typeof WizardStep];
@@ -132,6 +133,9 @@ export interface ExitStrategyData {
   capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
 }
 
+// Import enhanced goal context from GoalsStrategyStep
+import type { EnhancedGoalContext } from './GoalsStrategyStep';
+
 // Extended property data for wizard including percentage fields
 export interface WizardPropertyData extends Partial<SFRPropertyData> {
   // Wizard-specific percentage fields
@@ -139,8 +143,10 @@ export interface WizardPropertyData extends Partial<SFRPropertyData> {
   closingCostPercentage?: number;
   maintenanceReservePercentage?: number;
   vacancyRate?: number; // Note: this is already in longTermAssumptions but needed at top level for wizard
-  // Exit strategy fields for investment decision enhancement
+  // Exit strategy fields for investment decision enhancement (legacy - kept for compatibility)
   exitStrategy?: ExitStrategyData;
+  // NEW: Enhanced goals with AI analysis
+  enhancedGoals?: EnhancedGoalContext;
 }
 
 // Wizard state management

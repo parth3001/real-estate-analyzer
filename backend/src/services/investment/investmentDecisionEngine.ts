@@ -17,7 +17,8 @@ export type InvestmentVerdict = 'BUY' | 'PASS' | 'NEGOTIATE';
 
 export interface InvestmentDecision {
   verdict: InvestmentVerdict;
-  confidence: number; // 0-100
+  confidence: number; // 0-100 confidence in the verdict decision
+  score: number; // 0-100 property quality score
   primaryReason: string;
   secondaryReasons: string[];
   keyRisks: string[];
@@ -26,6 +27,16 @@ export interface InvestmentDecision {
   alternativeOptions: AlternativeInvestment[];
   marketContext: MarketContextAnalysis;
   timeline: InvestmentTimeline;
+  goalContext?: GoalContext; // NEW: Goal context for frontend personalization
+}
+
+export interface GoalContext {
+  exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+  portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+  marketTimingFlexibility?: 'flexible' | 'somewhat' | 'constrained' | 'independent';
+  riskApproach?: 'conservative' | 'balanced' | 'aggressive' | 'opportunistic';
+  capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
+  projectionYears?: number;
 }
 
 export interface ActionItem {
@@ -82,11 +93,149 @@ export interface InvestmentTimeline {
 
 export class InvestmentDecisionEngine {
   private leverageOptimizer: LeverageOptimizer;
-  private readonly HURDLE_RATE = 0.065; // 6.5% minimum return requirement
+  private readonly HURDLE_RATE = 0.065; // 6.5% minimum return requirement (will be adjusted by exit strategy)
   private readonly TREASURY_RATE = 0.045; // 4.5% risk-free rate
+  private readonly MIN_RENT_TO_PRICE_RATIO = 0.004; // 0.4% minimum (PASS threshold)
+  private readonly LOW_RENT_TO_PRICE_RATIO = 0.005; // 0.5% risk flag threshold
+  private readonly HIGH_CAP_RATE_MULTIPLIER = 1.5; // "Too good to be true" threshold
 
   constructor() {
     this.leverageOptimizer = new LeverageOptimizer();
+  }
+
+  /**
+   * Calculate market-relative cap rate threshold
+   */
+  private getMarketRelativeCapRateThreshold(marketIntelligence: any, propertyData: SFRData): {
+    marketMedianCapRate: number;
+    passThreshold: number;
+    negotiateThreshold: number;
+    buyThreshold: number;
+  } {
+    let marketMedianCapRate = 0.06; // Default 6%
+    
+    // Try to calculate from market intelligence
+    if (marketIntelligence?.marketTrends?.averageRent && marketIntelligence?.economicIndicators?.medianHomePrice) {
+      const avgRent = marketIntelligence.marketTrends.averageRent;
+      const medianPrice = marketIntelligence.economicIndicators.medianHomePrice;
+      marketMedianCapRate = (avgRent * 12) / medianPrice;
+      
+      // Cap between 3-10% for sanity
+      marketMedianCapRate = Math.min(0.10, Math.max(0.03, marketMedianCapRate));
+    }
+    
+    return {
+      marketMedianCapRate,
+      passThreshold: marketMedianCapRate - 0.015, // 1.5% below market
+      negotiateThreshold: marketMedianCapRate - 0.005, // 0.5% below market  
+      buyThreshold: marketMedianCapRate // At or above market
+    };
+  }
+
+  /**
+   * Calculate walk away price - maximum acceptable purchase price
+   */
+  private calculateWalkAwayPrice(propertyData: SFRData, analysis: any): number {
+    const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6); // Fallback NOI estimate
+    const monthlyRent = propertyData.monthlyRent || 0;
+    
+    // Three price ceilings
+    const treasuryBasedPrice = noi / (this.TREASURY_RATE + 0.03); // 300bps spread
+    const onePercentRuleCeiling = monthlyRent * 100; // 1% rule
+    const comparablesCeiling = propertyData.purchasePrice * 0.95; // 5% below asking (rough)
+    
+    // Take the minimum (most conservative)
+    return Math.min(treasuryBasedPrice, onePercentRuleCeiling, comparablesCeiling);
+  }
+
+  /**
+   * Check rent-to-price ratio flags
+   */
+  private assessRentToPriceRatio(monthlyRent: number, purchasePrice: number): {
+    ratio: number;
+    isAutoPass: boolean;
+    isRiskFlag: boolean;
+    isVerificationFlag: boolean;
+  } {
+    const ratio = monthlyRent / purchasePrice;
+    
+    return {
+      ratio,
+      isAutoPass: ratio < this.MIN_RENT_TO_PRICE_RATIO, // <0.4%
+      isRiskFlag: ratio < this.LOW_RENT_TO_PRICE_RATIO, // <0.5%  
+      isVerificationFlag: ratio > 0.012 // >1.2%
+    };
+  }
+
+  /**
+   * Check for "too good to be true" scenarios
+   */
+  private checkTooGoodToBeTrueFlags(
+    capRate: number, 
+    marketMedianCapRate: number,
+    daysOnMarket: number = 30 // Default assumption
+  ): {
+    isSuspicious: boolean;
+    confidencePenalty: number;
+    warningMessage: string;
+  } {
+    const isSuspicious = capRate > (marketMedianCapRate * this.HIGH_CAP_RATE_MULTIPLIER) && daysOnMarket > 30;
+    
+    return {
+      isSuspicious,
+      confidencePenalty: isSuspicious ? 30 : 0,
+      warningMessage: isSuspicious 
+        ? `Unusually high ${(capRate * 100).toFixed(1)}% cap rate vs ${(marketMedianCapRate * 100).toFixed(1)}% market median - verify all assumptions`
+        : ''
+    };
+  }
+
+  /**
+   * Calculate minimum cash flow buffer requirements
+   */
+  private calculateMinimumCashFlowBuffer(analysis: any, propertyData: SFRData): {
+    minimumBuffer: number;
+    bufferPercentage: number;
+    isInsufficient: boolean;
+    isCritical: boolean;
+  } {
+    const mortgagePayment = analysis.monthlyAnalysis?.debtService || (propertyData.purchasePrice * 0.8 * 0.07 / 12); // Rough estimate
+    const bufferFromMortgage = mortgagePayment * 0.2; // 20% of mortgage payment
+    const absoluteMinimum = 300;
+    
+    const minimumBuffer = Math.max(bufferFromMortgage, absoluteMinimum);
+    const actualCashFlow = analysis.monthlyAnalysis?.cashFlow || 0;
+    const bufferPercentage = actualCashFlow / minimumBuffer;
+    
+    return {
+      minimumBuffer,
+      bufferPercentage,
+      isInsufficient: bufferPercentage < 1.0, // Below 100% of requirement
+      isCritical: bufferPercentage < 0.5 // Below 50% of requirement
+    };
+  }
+
+  /**
+   * Get adjusted hurdle rate based on exit strategy
+   */
+  private getAdjustedHurdleRate(exitStrategy?: any): number {
+    if (!exitStrategy) return this.HURDLE_RATE;
+    
+    switch (exitStrategy.primaryExitStrategy) {
+      case '1031exchange':
+        return 0.055; // 5.5% for 1031 exchanges (tax benefits)
+      case 'estate':
+        return this.HURDLE_RATE; // Standard rate but require positive cash flow
+      case 'sale':
+        if (exitStrategy.timeframe && exitStrategy.timeframe <= 2) {
+          return 0.12; // 12% for quick flips
+        }
+        return this.HURDLE_RATE;
+      case 'refinance':
+        return this.HURDLE_RATE - 0.005; // Slightly lower for cash-out refinance strategy
+      default:
+        return this.HURDLE_RATE;
+    }
   }
 
   /**
@@ -102,7 +251,8 @@ export class InvestmentDecisionEngine {
       experienceLevel: 'novice' | 'intermediate' | 'experienced';
       riskTolerance: 'conservative' | 'moderate' | 'aggressive';
       investmentGoals: 'cash_flow' | 'appreciation' | 'balanced';
-    }
+    },
+    enhancedGoals?: any // Enhanced goals from Step 5 for personalized messaging
   ): Promise<InvestmentDecision> {
     const startTime = Date.now();
     logger.info('Investment Decision Engine: Starting analysis', {
@@ -139,7 +289,9 @@ export class InvestmentDecisionEngine {
         leverageAnalysis,
         marketContext,
         userContext,
-        propertyData
+        propertyData,
+        analysis,
+        marketIntelligence
       );
 
       // 5. Create action plan
@@ -168,9 +320,29 @@ export class InvestmentDecisionEngine {
       // 8. Create timeline
       const timeline = this.createInvestmentTimeline(verdict, actionPlan);
 
+      // 9. Extract goal context for frontend personalization - prioritize enhanced goals
+      const goalContext: GoalContext = {
+        exitStrategy: enhancedGoals?.exitStrategy || propertyData.exitStrategy?.primaryExitStrategy,
+        portfolioStrategy: enhancedGoals?.portfolioStrategy || propertyData.exitStrategy?.portfolioStrategy,
+        marketTimingFlexibility: propertyData.exitStrategy?.marketTimingFlexibility,
+        riskApproach: propertyData.exitStrategy?.riskApproach,
+        capitalDeployment: propertyData.exitStrategy?.capitalDeployment,
+        projectionYears: propertyData.longTermAssumptions?.projectionYears
+      };
+
+      // Log enhanced goals integration
+      logger.info('Investment Decision Engine: Enhanced goals integrated', {
+        hasEnhancedGoals: !!enhancedGoals,
+        exitStrategy: goalContext.exitStrategy,
+        portfolioStrategy: goalContext.portfolioStrategy,
+        enhancedExitStrategy: enhancedGoals?.exitStrategy,
+        enhancedPortfolioStrategy: enhancedGoals?.portfolioStrategy
+      });
+
       const decision: InvestmentDecision = {
         verdict: verdict.verdict,
         confidence: verdict.confidence,
+        score: verdict.score, // Property quality score
         primaryReason: verdict.primaryReason,
         secondaryReasons: verdict.secondaryReasons,
         keyRisks: verdict.keyRisks,
@@ -178,7 +350,8 @@ export class InvestmentDecisionEngine {
         capitalStrategy,
         alternativeOptions,
         marketContext,
-        timeline
+        timeline,
+        goalContext // NEW: Include goal context for frontend
       };
 
       const processingTime = Date.now() - startTime;
@@ -409,14 +582,68 @@ export class InvestmentDecisionEngine {
   }
 
   /**
-   * Generate investment verdict
+   * Calculate property quality score (0-100)
+   * This is a comprehensive score of the property's investment quality
+   */
+  private calculatePropertyScore(
+    fundamentals: any,
+    marketContext: MarketContextAnalysis,
+    leverageAnalysis: LeverageAnalysis
+  ): number {
+    let score = 50; // Base score
+    
+    // Cash flow scoring (0-25 points)
+    const monthlyFlow = fundamentals.cashFlow || 0;
+    if (monthlyFlow >= 500) score += 20;
+    else if (monthlyFlow >= 250) score += 15;
+    else if (monthlyFlow >= 100) score += 10;
+    else if (monthlyFlow >= 0) score += 5;
+    else if (monthlyFlow >= -100) score -= 5;
+    else score -= 15;
+    
+    // Cap rate scoring (0-25 points)
+    const capRate = fundamentals.capRate || 0;
+    if (capRate >= 0.07) score += 20;
+    else if (capRate >= 0.055) score += 15;
+    else if (capRate >= 0.04) score += 10;
+    else if (capRate >= 0.03) score += 5;
+    else score -= 10;
+    
+    // Return scoring (0-20 points)
+    const cocReturn = fundamentals.cashOnCashReturn || 0;
+    if (cocReturn >= 0.10) score += 15;
+    else if (cocReturn >= 0.07) score += 10;
+    else if (cocReturn >= 0.05) score += 5;
+    else if (cocReturn >= 0) score += 2;
+    else score -= 10;
+    
+    // Risk scoring (0-20 points)
+    const dscr = fundamentals.dscr || 0;
+    if (dscr >= 1.5) score += 15;
+    else if (dscr >= 1.25) score += 10;
+    else if (dscr >= 1.0) score += 5;
+    else score -= 15;
+    
+    // Market context bonus (0-10 points)
+    if (marketContext.pricingContext === 'undervalued') score += 10;
+    else if (marketContext.pricingContext === 'fair') score += 5;
+    else if (marketContext.pricingContext === 'overvalued') score -= 5;
+    
+    // Ensure score is between 0-100
+    return Math.max(0, Math.min(100, Math.round(score)));
+  }
+
+  /**
+   * Generate investment verdict (ENHANCED VERSION)
    */
   private async generateVerdict(
     fundamentals: any,
     leverageAnalysis: LeverageAnalysis,
     marketContext: MarketContextAnalysis,
     userContext: any,
-    propertyData: SFRData
+    propertyData: SFRData,
+    analysis: any,
+    marketIntelligence: any
   ) {
     let verdict: InvestmentVerdict = 'PASS';
     let confidence = 50;
@@ -424,77 +651,224 @@ export class InvestmentDecisionEngine {
     let secondaryReasons: string[] = [];
     let keyRisks: string[] = [];
 
-    // Decision logic based on multiple factors
-    const hasPositiveCashFlow = leverageAnalysis.optimalScenario.monthlyNetCashFlow > 0;
-    const meetsHurdleRate = fundamentals.cashOnCashReturn >= this.HURDLE_RATE;
-    const isOverpriced = fundamentals.capRate < 0.04 && marketContext.pricingContext === 'overvalued';
+    // ===== ENHANCED VALIDATION CHECKS =====
+    
+    // 1. Get market-relative thresholds
+    const marketThresholds = this.getMarketRelativeCapRateThreshold(marketIntelligence, propertyData);
+    
+    // 2. Check rent-to-price ratio
+    const rentToPriceCheck = this.assessRentToPriceRatio(propertyData.monthlyRent || 0, propertyData.purchasePrice);
+    
+    // 3. Calculate walk away price
+    const walkAwayPrice = this.calculateWalkAwayPrice(propertyData, analysis);
+    
+    // 4. Get adjusted hurdle rate based on exit strategy
+    const adjustedHurdleRate = this.getAdjustedHurdleRate(propertyData.exitStrategy);
+    
+    // 5. Check cash flow buffer requirements
+    const cashFlowBuffer = this.calculateMinimumCashFlowBuffer(analysis, propertyData);
+    
+    // 6. Check for "too good to be true" flags
+    const tooGoodFlags = this.checkTooGoodToBeTrueFlags(
+      fundamentals.capRate || 0, 
+      marketThresholds.marketMedianCapRate
+    );
+
+    // ===== PRIMARY DECISION FACTORS (ENHANCED) =====
+    const mainMonthlyCashFlow = analysis.monthlyAnalysis?.cashFlow || 0;
+    const hasPositiveCashFlow = mainMonthlyCashFlow > 0;
+    const meetsAdjustedHurdleRate = fundamentals.cashOnCashReturn >= adjustedHurdleRate;
+    const capRateBelowMarket = fundamentals.capRate < marketThresholds.passThreshold;
+    const priceAboveWalkAway = propertyData.purchasePrice > (walkAwayPrice * 1.1);
     const hasLeverageOptions = leverageAnalysis.optimalScenario.leverageScore > 60;
 
-    // PASS scenarios
-    if (!hasPositiveCashFlow && !hasLeverageOptions) {
+    logger.info('Investment Decision: Enhanced analysis', {
+      mainMonthlyCashFlow,
+      adjustedHurdleRate: (adjustedHurdleRate * 100).toFixed(1) + '%',
+      marketMedianCapRate: (marketThresholds.marketMedianCapRate * 100).toFixed(1) + '%',
+      walkAwayPrice,
+      currentPrice: propertyData.purchasePrice,
+      rentToPriceRatio: (rentToPriceCheck.ratio * 100).toFixed(2) + '%',
+      cashFlowBufferHealth: cashFlowBuffer.bufferPercentage.toFixed(2)
+    });
+
+    // ===== AUTOMATIC PASS SCENARIOS =====
+    
+    // 1. Rent-to-price ratio too low (premium markets exception)
+    if (rentToPriceCheck.isAutoPass) {
+      verdict = 'PASS';
+      confidence = 90;
+      primaryReason = `Rent-to-price ratio of ${(rentToPriceCheck.ratio * 100).toFixed(2)}% is below viable threshold`;
+      secondaryReasons.push('Property does not generate sufficient income relative to price');
+      keyRisks.push('Appreciation-dependent investment with poor fundamentals');
+    }
+    
+    // 2. Price above walk-away threshold
+    else if (priceAboveWalkAway) {
+      verdict = 'PASS';
+      confidence = 85;
+      primaryReason = `Purchase price exceeds maximum acceptable value of $${Math.round(walkAwayPrice).toLocaleString()}`;
+      secondaryReasons.push('Price fails multiple valuation methodologies');
+      keyRisks.push('Overpaying reduces returns and increases downside risk');
+    }
+    
+    // 3. Cap rate significantly below market
+    else if (capRateBelowMarket) {
+      verdict = 'PASS';
+      confidence = 80;
+      primaryReason = `Cap rate of ${(fundamentals.capRate * 100).toFixed(1)}% is ${((marketThresholds.passThreshold - fundamentals.capRate) * 100).toFixed(1)}% below market threshold`;
+      secondaryReasons.push(`Market median cap rate: ${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      keyRisks.push('Significantly underperforming market returns');
+    }
+    
+    // 4. No positive cash flow and no leverage solution
+    else if (!hasPositiveCashFlow && !hasLeverageOptions) {
       verdict = 'PASS';
       confidence = 85;
       primaryReason = 'Property cannot generate positive cash flow with any reasonable leverage scenario';
       secondaryReasons.push('High risk of monthly capital injection requirements');
       keyRisks.push('Negative cash flow stress');
-    } else if (isOverpriced && fundamentals.returnQuality === 'poor') {
+    }
+    
+    // 5. Critical cash flow buffer shortage
+    else if (cashFlowBuffer.isCritical) {
       verdict = 'PASS';
       confidence = 75;
-      primaryReason = 'Property is overpriced for its income potential and market conditions';
-      secondaryReasons.push(`Cap rate of ${(fundamentals.capRate * 100).toFixed(1)}% below market threshold`);
-      keyRisks.push('Appreciation-dependent investment in late market cycle');
+      primaryReason = `Cash flow of $${Math.round(mainMonthlyCashFlow)}/month provides insufficient buffer for expenses`;
+      secondaryReasons.push(`Minimum buffer needed: $${Math.round(cashFlowBuffer.minimumBuffer)}/month`);
+      keyRisks.push('High risk of financial stress from unexpected expenses');
     }
 
-    // NEGOTIATE scenarios
-    else if (hasLeverageOptions && (isOverpriced || fundamentals.returnQuality === 'fair')) {
+    // ===== NEGOTIATE SCENARIOS =====
+    
+    // 1. "Too good to be true" properties need verification
+    else if (tooGoodFlags.isSuspicious) {
+      verdict = 'NEGOTIATE';
+      confidence = 60;
+      primaryReason = tooGoodFlags.warningMessage;
+      secondaryReasons.push('Recommend thorough inspection and due diligence');
+      keyRisks.push('High returns may indicate hidden problems or incorrect data');
+    }
+    
+    // 2. Cap rate slightly below market but positive cash flow
+    else if (hasPositiveCashFlow && fundamentals.capRate < marketThresholds.negotiateThreshold) {
       verdict = 'NEGOTIATE';
       confidence = 70;
       
-      // Use market-specific target cap rate (calculated from market context)
-      const targetCapRate = 0.06; // Will be enhanced with market data in Phase 2
+      // Calculate price reduction using improved methodology
+      const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6);
+      const targetPrice = Math.round(noi / marketThresholds.buyThreshold);
+      const priceReduction = propertyData.purchasePrice - targetPrice;
       
-      // Calculate suggested price based on market-specific target
-      const noi = (fundamentals.monthlyRent * 12) - (fundamentals.monthlyRent * 12 * fundamentals.operatingExpenseRatio);
-      const suggestedPrice = Math.round(noi / targetCapRate);
-      const priceReduction = fundamentals.purchasePrice - suggestedPrice;
+      primaryReason = `Negotiate $${priceReduction.toLocaleString()} reduction to align with ${(marketThresholds.buyThreshold * 100).toFixed(1)}% market cap rate`;
+      secondaryReasons.push(`Current cap rate: ${(fundamentals.capRate * 100).toFixed(1)}% vs market: ${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      secondaryReasons.push(`Target price: $${targetPrice.toLocaleString()}`);
+    }
+    
+    // 3. Positive cash flow but below adjusted hurdle rate  
+    else if (hasPositiveCashFlow && !meetsAdjustedHurdleRate && fundamentals.capRate > 0.02) {
+      verdict = 'NEGOTIATE';
+      confidence = 65;
       
-      primaryReason = `Property becomes attractive with $${priceReduction.toLocaleString()} price reduction to $${suggestedPrice.toLocaleString()}`;
-      secondaryReasons.push(`At lower price, optimal leverage generates strong returns`);
-      secondaryReasons.push(`Current pricing requires excessive cash for minimal returns`);
-      keyRisks.push('Seller may not accept reduced price in competitive market');
+      // Enhanced price reduction calculation
+      const currentInvestment = fundamentals.totalInvestment || (leverageAnalysis.currentScenario.downPaymentPercent * propertyData.purchasePrice / 100);
+      const currentAnnualCashFlow = mainMonthlyCashFlow * 12;
+      const targetAnnualCashFlow = currentInvestment * adjustedHurdleRate;
+      const additionalCashFlowNeeded = targetAnnualCashFlow - currentAnnualCashFlow;
+      
+      // Use current cap rate to calculate price reduction (more accurate than multiplier)
+      const priceReduction = Math.round(additionalCashFlowNeeded / fundamentals.capRate);
+      
+      primaryReason = `Positive cash flow but ${((adjustedHurdleRate - fundamentals.cashOnCashReturn) * 100).toFixed(1)}% below return target`;
+      secondaryReasons.push(`Negotiate $${priceReduction.toLocaleString()} reduction to meet ${(adjustedHurdleRate * 100).toFixed(1)}% return goal`);
+      secondaryReasons.push(`Monthly cash flow: $${Math.round(mainMonthlyCashFlow)}`);
+    }
+    
+    // 4. Insufficient cash flow buffer
+    else if (hasPositiveCashFlow && cashFlowBuffer.isInsufficient && !cashFlowBuffer.isCritical) {
+      verdict = 'NEGOTIATE';
+      confidence = 60;
+      primaryReason = `Cash flow buffer below recommended minimum - negotiate for better terms`;
+      secondaryReasons.push(`Current buffer: $${Math.round(mainMonthlyCashFlow)}/month vs recommended: $${Math.round(cashFlowBuffer.minimumBuffer)}/month`);
+      keyRisks.push('Limited cushion for unexpected expenses or vacancy');
     }
 
-    // BUY scenarios  
-    else if (hasPositiveCashFlow && meetsHurdleRate && fundamentals.returnQuality !== 'poor') {
+    // ===== BUY SCENARIOS =====
+    else if (hasPositiveCashFlow && meetsAdjustedHurdleRate && fundamentals.capRate >= marketThresholds.buyThreshold) {
       verdict = 'BUY';
       confidence = 80;
-      primaryReason = `Strong fundamentals with positive cash flow and returns above ${(this.HURDLE_RATE * 100).toFixed(1)}% hurdle rate`;
-      secondaryReasons.push(`Optimal leverage: ${leverageAnalysis.optimalScenario.downPaymentPercent}% down`);
-      secondaryReasons.push(`Monthly cash flow: $${leverageAnalysis.optimalScenario.monthlyNetCashFlow.toFixed(0)}`);
+      primaryReason = `Strong fundamentals with ${(fundamentals.cashOnCashReturn * 100).toFixed(1)}% return exceeding ${(adjustedHurdleRate * 100).toFixed(1)}% target`;
+      secondaryReasons.push(`Cap rate of ${(fundamentals.capRate * 100).toFixed(1)}% meets market standards`);
+      secondaryReasons.push(`Monthly cash flow: $${Math.round(mainMonthlyCashFlow)}`);
       
       if (leverageAnalysis.opportunityCost.capitalEfficiencyGap > 1.5) {
         secondaryReasons.push('Leverage optimization enables portfolio expansion');
       }
     }
 
-    // Adjust confidence based on market context
+    // ===== ENHANCED CONFIDENCE ADJUSTMENTS AND RISK ASSESSMENT =====
+    
+    // Apply "too good to be true" penalty
+    if (tooGoodFlags.isSuspicious) {
+      confidence = Math.max(30, confidence - tooGoodFlags.confidencePenalty);
+    }
+    
+    // Market context adjustments
     if (marketContext.marketStage === 'late' && marketContext.pricingContext === 'overvalued') {
       confidence = Math.max(40, confidence - 20);
       keyRisks.push('Late market cycle increases downside risk');
     }
 
-    // Adjust for user experience
-    if (userContext.experienceLevel === 'novice' && fundamentals.riskLevel === 'high') {
-      confidence = Math.max(30, confidence - 15);
-      keyRisks.push('Complex deal not suitable for novice investors');
+    // Experience level adjustments with enhanced logic
+    if (userContext.experienceLevel === 'novice') {
+      if (fundamentals.riskLevel === 'high' || fundamentals.riskLevel === 'very_high') {
+        confidence = Math.max(30, confidence - 25);
+        keyRisks.push('Complex deal not suitable for novice investors');
+      } else if (mainMonthlyCashFlow < 400) {
+        confidence = Math.max(40, confidence - 15);
+        keyRisks.push('Recommend higher cash flow buffer for first-time investors');
+      }
+      // Cap confidence for novices
+      confidence = Math.min(70, confidence);
     }
 
-    // Add common risks
+    // Enhanced risk flags based on property metrics
     if (fundamentals.dscr < 1.25) {
+      confidence = Math.max(35, confidence - 15);
       keyRisks.push('Low debt service coverage ratio increases payment stress risk');
     }
-    if (fundamentals.cashFlow < 300) {
-      keyRisks.push('Limited cash flow buffer for unexpected expenses');
+    
+    if (rentToPriceCheck.isRiskFlag) {
+      confidence = Math.max(40, confidence - 10);  
+      keyRisks.push(`Low rent-to-price ratio of ${(rentToPriceCheck.ratio * 100).toFixed(2)}% increases income risk`);
+    }
+    
+    if (rentToPriceCheck.isVerificationFlag) {
+      confidence = Math.max(50, confidence - 5);
+      keyRisks.push('Verify rent accuracy - unusually high for property price');
+    }
+    
+    // Operating expense ratio checks
+    const operatingExpenseRatio = fundamentals.operatingExpenseRatio || 0;
+    if (operatingExpenseRatio > 0.50) {
+      confidence = Math.max(35, confidence - 15);
+      keyRisks.push('High operating expense ratio indicates operational inefficiency');
+    } else if (operatingExpenseRatio < 0.25) {
+      confidence = Math.max(45, confidence - 10);
+      keyRisks.push('Suspiciously low expenses - verify all costs included');
+    }
+    
+    // Property age risk (if available)
+    const propertyAge = fundamentals.propertyAgeRisk;
+    if (propertyAge === 'high' && fundamentals.capRate > marketThresholds.marketMedianCapRate) {
+      confidence = Math.max(40, confidence - 15);
+      keyRisks.push('Older property with high cap rate may have hidden deferred maintenance');
+    }
+    
+    // Cash flow buffer warnings
+    if (cashFlowBuffer.isInsufficient && !cashFlowBuffer.isCritical) {
+      confidence = Math.max(45, confidence - 10);
+      keyRisks.push('Limited cash flow buffer for unexpected expenses or vacancy');
     }
 
     // Exit Strategy Adjustments
@@ -561,9 +935,13 @@ export class InvestmentDecisionEngine {
       }
     }
 
+    // Calculate property quality score
+    const propertyScore = this.calculatePropertyScore(fundamentals, marketContext, leverageAnalysis);
+    
     return {
       verdict,
       confidence: Math.round(confidence),
+      score: propertyScore,
       primaryReason,
       secondaryReasons,
       keyRisks

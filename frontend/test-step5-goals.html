@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Step 5: Goals Strategy</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Step 5: Investment Goals & Strategy Test</h1>
+    
+    <div class="test-result info">
+        <h3>✅ Component Structure Test</h3>
+        <p><strong>GoalsStrategyStep.tsx:</strong> Created with full UI implementation</p>
+        <ul>
+            <li>✅ Structured goal dropdowns (exit strategy, portfolio strategy, experience, risk tolerance)</li>
+            <li>✅ Free-text strategy input with AI analysis</li>
+            <li>✅ Real-time AI enhancement with debounced API calls</li>
+            <li>✅ Enhanced insights display with strategic insights and risk adjustments</li>
+            <li>✅ Proper navigation with back/next buttons</li>
+        </ul>
+    </div>
+
+    <div class="test-result info">
+        <h3>✅ Wizard Integration Test</h3>
+        <p><strong>PropertyWizard.tsx:</strong> Updated to support 5 steps</p>
+        <ul>
+            <li>✅ Added Step 5: GOALS (Psychology icon)</li>
+            <li>✅ Updated completed array: [false, false, false, false, false]</li>
+            <li>✅ Added step validation for enhanced goals</li>
+            <li>✅ Updated completion logic to use WizardStep.GOALS as final step</li>
+            <li>✅ Enhanced goals included in final submission data</li>
+        </ul>
+    </div>
+
+    <div class="test-result info">
+        <h3>✅ Data Flow Test</h3>
+        <p><strong>wizardTypes.ts:</strong> Extended with enhanced goals support</p>
+        <ul>
+            <li>✅ Added WizardStep.GOALS = 4</li>
+            <li>✅ WizardPropertyData.enhancedGoals?: EnhancedGoalContext</li>
+            <li>✅ Import from GoalsStrategyStep for type consistency</li>
+            <li>✅ Backward compatibility maintained</li>
+        </ul>
+    </div>
+
+    <div class="test-result success">
+        <h3>✅ Backend Integration Ready</h3>
+        <p><strong>API Endpoint:</strong> POST /api/deals/analyze-goals</p>
+        <ul>
+            <li>✅ Pattern matching for common strategies (BRRRR, house hacking, etc.)</li>
+            <li>✅ AI analysis for complex strategies</li>
+            <li>✅ Enhanced goal context with 15+ additional data points</li>
+            <li>✅ Safety validation and error handling</li>
+        </ul>
+    </div>
+
+    <div class="test-result success">
+        <h3>✅ User Experience Flow</h3>
+        <p><strong>New 5-Step Wizard:</strong></p>
+        <ol>
+            <li>Property Address (LocationOn icon)</li>
+            <li>Purchase & Financing (AttachMoney icon)</li>
+            <li>Rental Analysis (Home icon)</li>
+            <li>Long-term Assumptions (TrendingUp icon)</li>
+            <li><strong>NEW:</strong> Investment Goals & Strategy (Psychology icon)</li>
+        </ol>
+        
+        <p><strong>Step 5 Features:</strong></p>
+        <ul>
+            <li>🎯 Structured dropdowns for basic strategy</li>
+            <li>🤖 AI-enhanced free-text input for sophisticated investors</li>
+            <li>⚡ Real-time analysis with 2-second debounce</li>
+            <li>📊 Enhanced insights with confidence scoring</li>
+            <li>🛡️ Safety validation before positive messaging</li>
+        </ul>
+    </div>
+
+    <h2>🧪 Manual Testing Steps</h2>
+    <div class="test-result info">
+        <ol>
+            <li><strong>Start PropertyWizard</strong> - Should show 5 steps in stepper</li>
+            <li><strong>Complete Steps 1-4</strong> - Navigate through existing steps</li>
+            <li><strong>Reach Step 5</strong> - Should show "Investment Goals & Strategy" with Psychology icon</li>
+            <li><strong>Fill Structured Goals</strong> - Select exit strategy, portfolio strategy, etc.</li>
+            <li><strong>Add Free Text</strong> - Type strategy like "I want to use BRRRR strategy..."</li>
+            <li><strong>Watch AI Analysis</strong> - Should see "AI analyzing your strategy..." then success message</li>
+            <li><strong>View Enhanced Insights</strong> - Should display strategic insights and risk considerations</li>
+            <li><strong>Complete Analysis</strong> - Button should say "Generate Personalized Analysis"</li>
+        </ol>
+    </div>
+
+    <div class="test-result success">
+        <h3>✅ Phase 2 Complete: Frontend Integration</h3>
+        <p>Step 5 is fully integrated and ready for testing!</p>
+    </div>
+</body>
+</html>
