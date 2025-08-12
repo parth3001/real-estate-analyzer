@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "log-server": {
+      "command": "node",
+      "args": ["/Users/parthpatel/mcp-log-server/mcp-log-server.js"],
+      "env": {
+        "LOG_FILE_PATH": "/Users/parthpatel/real-estate-analyzer/backend/logs/all.log",
+        "MAX_LINES": "10000",
+        "TAIL_LINES": "500"
+      }
+    }
+  }
+}

@@ -525,11 +525,13 @@ function extractPatternInsights(text: string): {
   insights: string[];
   riskAdjustments: string[];
   confidence: number;
+  strategicHoldPeriod?: number; // NEW: Extract user's strategic timeline (separate from financial projectionYears)
 } {
   const normalizedText = text.toLowerCase();
   const insights: string[] = [];
   const riskAdjustments: string[] = [];
   let confidence = 0;
+  let strategicHoldPeriod: number | undefined;
 
   // BRRRR Strategy
   if (normalizedText.includes('brrrr') || normalizedText.includes('buy rehab rent refinance')) {

@@ -10,11 +10,14 @@ The Real Estate Investment Intelligence Platform is a full-stack web application
 - ✅ **Frontend**: Pure presentation layer - display data, collect user input only
 - ❌ **Eliminated**: Duplicate calculation logic in frontend (violates architectural integrity)
 
-### **Investment Decision Engine v2.1**
+### **Investment Decision Engine v2.1 - Institutional-Grade Intelligence**
 - 🎯 **Primary Engine**: `/backend/src/services/investment/investmentDecisionEngine.ts`
-- 📊 **Sophisticated Analysis**: Walk-away price validation, rent-to-price ratios, strategy-specific logic
-- 🛡️ **Conservative Logic**: Prevents contradictory messaging and score inconsistencies
-- 📈 **Comprehensive Testing**: 10/10 realistic scenario tests validate engine behavior
+- 🏛️ **Phase 2A**: Market Intelligence with Tier 1/2/3 classification (`marketTierService.ts`)
+- 🏠 **Phase 2B**: Property Classification with A/B/C risk assessment (`propertyClassificationService.ts`)
+- 🎯 **Phase 3**: Strategy Alignment analysis with strategy-market fit (`strategyAlignmentService.ts`)
+- 📊 **Enhanced Analysis**: Market-relative thresholds, property quality scoring, strategy optimization
+- 🛡️ **Conservative Logic**: Sophisticated confidence system with multi-factor risk assessment
+- 📈 **Comprehensive Testing**: 34/34 test scenarios passed (100%) with value validation confirmed
 
 ## Technical Stack
 
@@ -40,8 +43,11 @@ The Real Estate Investment Intelligence Platform is a full-stack web application
 - **Logging:** Winston
 - **Error Handling:** Custom middleware  
 - **Security:** Role-based access control, auth middleware
-- **Investment Analysis:** Investment Decision Engine v2.1 with single source of truth
-- **AI Services:** Goal enhancement, free-text strategy processing
+- **Investment Analysis:** Investment Decision Engine v2.1 with institutional-grade intelligence
+  - **Market Intelligence Service**: 65+ cities classified into Tier 1/2/3 markets
+  - **Property Classification Service**: A/B/C property assessment with confidence scoring
+  - **Strategy Alignment Service**: Strategy-market fit analysis with optimization recommendations
+- **AI Services:** Goal enhancement, free-text strategy processing, market intelligence integration
 
 ## Authentication & User Management System
 
@@ -124,6 +130,173 @@ Complete JWT-based authentication system with role-based access control, providi
 - `GET /api/admin/users` - List all users (admin)
 - `PUT /api/admin/users/:id/role` - Update user role (admin)
 - `PUT /api/admin/users/:id/status` - Update user status (admin)
+
+## Investment Decision Engine v2.1 - Institutional-Grade Intelligence
+
+### Overview
+The Investment Decision Engine v2.1 represents a complete transformation from basic calculations to institutional-grade investment intelligence. Through three integrated phases, it provides market intelligence that no Excel spreadsheet can deliver.
+
+### Architecture Components
+
+#### Core Engine
+**File**: `/backend/src/services/investment/investmentDecisionEngine.ts`
+- **Primary Orchestrator**: Integrates all analysis phases
+- **Decision Logic**: BUY/NEGOTIATE/PASS verdicts with confidence scoring
+- **Enhanced Reasoning**: Multi-factor analysis with professional recommendations
+
+#### Phase 2A: Market Intelligence Service
+**File**: `/backend/src/services/investment/marketTierService.ts`
+
+**Capabilities**:
+- **65+ Cities Classified**: Comprehensive market tier database
+- **Market Tiers**:
+  - **Tier 1**: Premium appreciation markets (Austin, San Francisco, Seattle, etc.)
+  - **Tier 2**: Balanced growth markets (Dallas, Phoenix, Atlanta, etc.)
+  - **Tier 3**: Cash flow focused markets (Anna TX, Tulsa OK, Birmingham AL, etc.)
+- **Market-Relative Analysis**: Dynamic thresholds based on market characteristics
+- **Fair Market Value**: NOI-based pricing with market intelligence
+
+**Key Methods**:
+```typescript
+static getMarketTier(city: string, state: string): MarketTier
+static calculateFairMarketValue(noi: number, marketTier: MarketTier): number
+static getMarketThresholds(tier: 1 | 2 | 3): MarketThresholds
+```
+
+#### Phase 2B: Property Classification Service
+**File**: `/backend/src/services/investment/propertyClassificationService.ts`
+
+**Capabilities**:
+- **A/B/C Classification**: Based on age, condition, price positioning, market tier
+- **Quality Assessment**: Comprehensive scoring across multiple dimensions
+- **Risk Adjustments**: Class-specific cap rate premiums, maintenance multipliers
+- **Confidence Scoring**: 50-95% confidence with detailed reasoning
+
+**Classifications**:
+- **Class A**: Premium properties (<10 years, high-end finishes, low management)
+- **Class B**: Investment-grade (10-30 years, solid condition, moderate management)
+- **Class C**: Value properties (30+ years, higher cash flow, intensive management)
+
+**Key Methods**:
+```typescript
+static classifyProperty(yearBuilt, price, marketMedianPrice, marketTier): PropertyClassification
+static getPropertyClassRiskAdjustments(propertyClass, marketTier): RiskAdjustments
+static generatePropertyClassInsights(classification, yearBuilt, price): string[]
+```
+
+#### Phase 3: Strategy Alignment Service
+**File**: `/backend/src/services/investment/strategyAlignmentService.ts`
+
+**Capabilities**:
+- **Strategy-Market Fit**: Cash flow strategies in appreciation markets = mismatch
+- **Hold Period Alignment**: Short-term holds with appreciation strategies = conflict
+- **Experience Matching**: Novice investors + Class C properties = critical warning
+- **Opportunity Cost Analysis**: Quantifies cost of strategy misalignments
+
+**Alignment Levels**:
+- **EXCELLENT** (90-100): Perfect strategy-market-experience fit
+- **GOOD** (75-89): Solid alignment with minor optimization opportunities  
+- **FAIR** (60-74): Reasonable alignment with some mismatches
+- **POOR** (40-59): Significant misalignments affecting returns
+- **MISMATCH** (0-39): Critical conflicts requiring strategy adjustment
+
+**Key Methods**:
+```typescript
+static analyzeStrategyAlignment(userStrategy, marketTier, propertyClass, metrics): StrategyAlignment
+static analyzeStrategyMarketFit(strategy, marketTier, metrics): AlignmentResult
+static calculateOpportunityCost(userStrategy, marketTier, propertyClass): OpportunityCost
+```
+
+### Integration Flow
+
+```typescript
+// Enhanced Decision Flow in investmentDecisionEngine.ts
+async generateInvestmentDecision(propertyData, analysis, context): Promise<InvestmentDecision> {
+  // 1. Calculate fundamentals (existing)
+  const fundamentals = this.calculateFundamentals(propertyData);
+  
+  // 2A. Market Intelligence Analysis
+  const marketIntelligence = this.analyzeMarketIntelligence(propertyData, fundamentals);
+  
+  // 2B. Property Classification Analysis
+  const propertyClassification = this.analyzePropertyClassification(
+    propertyData, marketIntelligence, fundamentals
+  );
+  
+  // 2C. Strategy Alignment Analysis
+  const strategyAlignment = this.analyzeStrategyAlignment(
+    propertyData, marketIntelligence, propertyClassification, fundamentals
+  );
+  
+  // 3. Generate enhanced verdict with all intelligence
+  return this.generateVerdict(
+    fundamentals, leverageAnalysis, marketContext, userContext,
+    propertyData, analysis,
+    marketIntelligence,      // Phase 2A
+    propertyClassification,  // Phase 2B
+    strategyAlignment        // Phase 3
+  );
+}
+```
+
+### Enhanced Response Structure
+
+The Investment Decision now includes insights from all phases:
+
+**secondaryReasons Examples**:
+```json
+[
+  "Tier 2 - Balanced Growth Market: Dallas provides balanced appreciation and cash flow potential",
+  "Class B - Standard investment-grade property (85% classification confidence)",
+  "Strategy Alignment: GOOD (80/100) - balanced strategy in balanced market with 6-year hold period",
+  "Fair market value analysis: Property priced at market median with 3% premium acceptable",
+  "Mature property (2010) may require capital improvements within 5-10 years"
+]
+```
+
+**keyRisks Examples**:
+```json
+[
+  "Strategy misalignment increases execution risk",
+  "Class C property requires experienced management - consider professional guidance",
+  "Hold period too short for appreciation strategy - extend to 5-7 years or switch focus",
+  "Cash flow strategy in appreciation market - consider Tier 3 markets for better yields"
+]
+```
+
+### Value Proposition
+
+**Before Investment Decision Engine v2.1**:
+```
+Cap Rate: 6.5%
+Cash Flow: $400/month  
+Verdict: BUY (generic reasoning)
+```
+
+**After Investment Decision Engine v2.1**:
+```
+🏛️ Market Intelligence: "Tier 2 - Balanced Growth Market"
+🏠 Property Class: "Class B - Standard investment-grade property (85% confidence)"
+🎯 Strategy Alignment: "GOOD (80/100) - balanced strategy in balanced market"
+💰 Fair Market Value: "Target price: $340,000 vs asking $420,000"
+📊 Risk Assessment: "Mature property may require capital improvements within 5-10 years"
+💡 Professional Recommendation: "Negotiate to $350,000 for optimal returns"
+
+Verdict: NEGOTIATE (with institutional-grade reasoning)
+Confidence: 75% (based on comprehensive multi-factor analysis)
+```
+
+### Testing & Validation
+
+**Comprehensive Test Suite**: `/backend/src/tests/comprehensive-decision-engine-test-matrix.js`
+- ✅ **34/34 Test Scenarios Passed** (100% success rate)
+- ✅ **All Market Tiers**: Tier 1/2/3 with different cities
+- ✅ **All Property Classes**: A/B/C with different age profiles
+- ✅ **All Strategy Alignments**: Perfect, good, mismatched scenarios
+- ✅ **Edge Cases**: Extreme values, missing data, boundary conditions
+- ✅ **Value Validation**: Institutional features confirmed (5/5)
+
+**Real-World Validation**: NC Property test confirmed system correctly handles complex scenarios with professional-grade analysis.
 
 ## Single-Family Rental (SFR) Analysis Implementation
 

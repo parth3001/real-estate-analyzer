@@ -326,7 +326,7 @@ export interface MarketDataResponse {
 }
 
 export interface MarketInsight {
-  category: 'Market Position' | 'Rental Market' | 'Economic Climate' | 'Investment Timing' | 'Comparable Analysis';
+  category: 'Market Position' | 'Rental Market' | 'Economic Climate' | 'Investment Timing' | 'Comparable Analysis' | 'Market Intelligence';
   insight: string;
   impact: 'Positive' | 'Negative' | 'Neutral';
   confidence: number; // 0-100
@@ -335,6 +335,51 @@ export interface MarketInsight {
     [key: string]: number | string;
   };
   recommendation?: string;
+}
+
+// Market Intelligence Types for Phase 2A
+export interface MarketTierData {
+  tier: 1 | 2 | 3;
+  name: string;
+  description: string;
+  focusType: 'appreciation' | 'balanced' | 'cashflow';
+  thresholds: {
+    rentToPriceMinimum: number;
+    capRatePremium: number;
+    appreciationExpectation: number;
+    liquidityRisk: number;
+    managementComplexity: 'low' | 'medium' | 'high';
+  };
+}
+
+export interface MarketIntelligenceData {
+  marketTier: MarketTierData;
+  marketContext: {
+    cityName: string;
+    stateName: string;
+    marketMedianCapRate?: number;
+    marketMedianRent?: number;
+    marketMedianPrice?: number;
+  };
+  relativePerformance: {
+    capRateVsMarket: number;
+    rentVsMarket: number;
+    priceVsMarket: number;
+  };
+  fairMarketValue: {
+    fairValue: number;
+    targetCapRate: number;
+    reasoning: string;
+    overpriced?: boolean;
+    overpricedBy?: number;
+  };
+  marketInsights: string[];
+  comparableAnalysis?: {
+    comparableProperties: number;
+    averageCapRate?: number;
+    averageRent?: number;
+    averagePrice?: number;
+  };
 }
 
 export interface InvestmentTimingAnalysis {

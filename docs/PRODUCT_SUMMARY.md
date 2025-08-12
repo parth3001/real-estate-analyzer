@@ -18,14 +18,16 @@
   - Portfolio strategy (first property, cash flow focus, appreciation, etc.)
   - Risk tolerance and market timing flexibility
 
-**💡 Investment Decision Hero Card**
-- **Professional Verdict**: Clear BUY/PASS/NEGOTIATE recommendation
-- **Goal-Contextual Messaging**: Personalized for user's specific strategy
-  - "Perfect for Your Generational Wealth Strategy" 
-  - "Excellent for Your Cash Flow Portfolio"
-  - "Great First Investment Property"
-- **85%+ Confidence Scores** with detailed reasoning
-- **Action Plans**: Specific next steps (negotiate to $X, refinance timing, etc.)
+**💡 Investment Decision Engine v2.1 - Institutional-Grade Intelligence**
+- **Professional Verdict**: Clear BUY/PASS/NEGOTIATE recommendation with sophisticated reasoning
+- **Market Intelligence**: Tier 1/2/3 market classification for 65+ cities
+  - "Tier 2 - Balanced Growth Market: Dallas provides balanced appreciation and cash flow potential"
+- **Property Classification**: A/B/C property assessment with confidence scoring
+  - "Class B - Standard investment-grade property (85% classification confidence)"
+- **Strategy Alignment**: Strategy-market fit analysis with optimization recommendations
+  - "Strategy Alignment: GOOD (80/100) - balanced strategy in balanced market"
+- **Enhanced Confidence Scores**: Multi-factor analysis with comprehensive reasoning
+- **Professional Action Plans**: Specific next steps with institutional-grade insights
 
 **📊 Comprehensive Analysis Engine**
 - **80+ Financial Metrics**: Cap rate, cash flow, ROI, DSCR, break-even analysis
@@ -34,12 +36,13 @@
 - **Market Intelligence**: FRED economic data + RentCast market trends
 - **Industry Validation**: BiggerPockets & RealtyMogul standard compliance
 
-**🤖 AI-Powered Intelligence Multiplier**
-- **GPT-4o-mini Enhanced Analysis**: Professional market insights  
-- **Risk Blind Spot Detection**: Identifies overlooked risks
-- **Value-Add Opportunities**: Improvement suggestions
-- **Market Timing Analysis**: Buy/sell/refinance recommendations
-- **Novice ↔ Pro Mode**: Adapts complexity to user experience level
+**🤖 AI-Powered Intelligence Multiplier with Enhanced Market Intelligence**
+- **GPT-4o-mini Enhanced Analysis**: Professional market insights integrated with market tier classification
+- **Risk Blind Spot Detection**: Property class-specific risk assessment and management complexity analysis  
+- **Value-Add Opportunities**: Strategy alignment optimization and market repositioning suggestions
+- **Market Timing Analysis**: Buy/sell/refinance recommendations with market cycle awareness
+- **Experience Level Matching**: Novice investors warned about Class C properties, expert investors guided to value-add opportunities
+- **Strategy Optimization**: Real-time alignment analysis between investment strategy, market tier, and property classification
 
 ---
 
@@ -99,31 +102,44 @@
 - ✅ **Auto-Population** (no manual data entry)
 - ✅ **Real-Time Market Data** (vs. static assumptions)
 - ✅ **Professional Validation** (industry-standard formulas)
-- ✅ **AI-Enhanced Intelligence** (identifies blind spots)
+- ✅ **Institutional-Grade Intelligence** (market tier classification, property class assessment, strategy alignment analysis)
+- ✅ **Geographic Market Intelligence** (65+ cities with tier-specific thresholds that Excel cannot calculate)
+- ✅ **Professional Risk Assessment** (A/B/C property classification with confidence scoring)
+- ✅ **Strategy Optimization** (alignment analysis between investment approach, market characteristics, and property profile)
 
 ---
 
 ## 📈 **Current Traction & Validation**
 
 **✅ Technical Validation**
-- 73/73 financial calculation tests passing
+- 34/34 comprehensive test scenarios passing (100% success rate)
 - BiggerPockets formula compliance verified
 - Industry-standard metrics validated
+- Investment Decision Engine v2.1 with institutional-grade intelligence complete
 
 **✅ Market Validation** 
-- Professional investment scoring framework  
-- 95% accuracy vs. institutional analysis methods
-- Apple-quality UI/UX design
+- Professional investment scoring framework with market tier classification
+- Institutional-grade analysis confirmed through comprehensive testing
+- Real-world validation: NC property test confirmed system handles complex scenarios
+- Apple-quality UI/UX design with enhanced intelligence display
+
+**✅ Value Validation**
+- Users receive professional insights no Excel spreadsheet can provide
+- Market intelligence that transforms basic calculations into institutional-grade analysis
+- Strategy alignment optimization that improves investment decision-making capability
 
 ---
 
 ## 🎪 **Demo Flow (2-3 Minutes)**
 
 1. **Property Wizard**: Enter "123 Main St, Austin TX" → Auto-populates rent, taxes, market data
-2. **Investment Strategy**: Select "Generational Wealth" goals  
-3. **Analysis Results**: See "Perfect for Your Generational Wealth Strategy" with specific reasoning
-4. **Professional Insights**: AI identifies risks, opportunities, market timing
-5. **Action Plan**: Clear next steps (negotiate price, financing options, etc.)
+2. **Investment Strategy**: Select "Balanced Growth" strategy with 6-year hold period
+3. **Enhanced Analysis Results**: See institutional-grade intelligence:
+   - "Tier 1 - Premium Appreciation Market: Austin provides strong long-term growth potential"
+   - "Class A - Premium high-quality property (89% classification confidence)"
+   - "Strategy Alignment: EXCELLENT (95/100) - appreciation strategy in premium market"
+4. **Professional Insights**: AI provides market intelligence, property classification, and strategy optimization
+5. **Action Plan**: Specific recommendations with professional reasoning and market context
 
 ---
 

@@ -12,7 +12,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -65,6 +66,8 @@ interface InvestmentDecisionHeroProps {
     primaryReason: string;
     secondaryReasons: string[];
     keyRisks: string[];
+    confidenceDescription?: string; // Backend-generated confidence explanation
+    goalBasedReasoning?: string; // Backend-generated goal-based explanation
     actionPlan: Array<{
       action: string;
       priority: 'immediate' | 'short-term' | 'long-term';
@@ -169,10 +172,16 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
         description: 'Multiple concerns indicate poor investment',
         color: appleColors.red[500]
       };
-      return {
+      if (confidence >= 40) return {
         label: 'Review Alternative Options',
         description: 'Some concerns but may work for specific strategies',
         color: appleColors.orange[500]
+      };
+      // 30% confidence = High uncertainty
+      return {
+        label: 'High Risk Warning',
+        description: 'Multiple serious issues - recommend avoiding unless you have specific expertise',
+        color: appleColors.red[400]
       };
     }
   };
@@ -351,31 +360,26 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={`${investmentDecision.confidence}% Confidence`}
-                      sx={{
-                        backgroundColor: getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).color,
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        height: 32
-                      }}
-                    />
-                    {investmentDecision.score !== undefined && (
+                    <Tooltip 
+                      title={`Our confidence in the ${investmentDecision.verdict} recommendation. Higher confidence means stronger conviction based on property fundamentals, market conditions, and risk assessment.`}
+                      arrow
+                      placement="top"
+                    >
                       <Chip
-                        label={`Score: ${investmentDecision.score}/100`}
+                        label={`${investmentDecision.confidence}% Confidence`}
                         sx={{
-                          backgroundColor: appleColors.gray[200],
-                          color: appleColors.gray[800],
+                          backgroundColor: getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).color,
+                          color: 'white',
                           fontWeight: 600,
                           fontSize: '14px',
-                          height: 32
+                          height: 32,
+                          cursor: 'help'
                         }}
                       />
-                    )}
+                    </Tooltip>
                   </Box>
                   <Typography variant="caption" sx={{ color: appleColors.gray[600], fontWeight: 500, maxWidth: 300 }}>
-                    <strong>{getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).label}:</strong> {getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).description}
+                    {investmentDecision.confidenceDescription || getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).description}
                   </Typography>
                 </Box>
               </Box>
@@ -396,9 +400,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     fontWeight: 500
                   }}
                 >
-                  {investmentDecision.score !== undefined 
-                    ? `This property scores ${investmentDecision.score}/100. ${goalContextualReason}`
-                    : goalContextualReason}
+                  {investmentDecision.goalBasedReasoning || goalContextualReason}
                 </Typography>
                 
                 {/* Display backend investment decision insights */}

@@ -3,7 +3,7 @@
 ## Overview
 This document outlines the API interfaces for the Real Estate Investment Intelligence Platform, including the enhanced Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
 
-**Last Updated**: January 10, 2025 - Investment Decision Engine v2.1 Critical Fixes
+**Last Updated**: August 12, 2025 - Investment Decision Engine v2.1 Complete Implementation
 
 For a comprehensive listing of all data fields, their types, and usage, please refer to the [Data Dictionary](DATA_DICTIONARY.md).
 
@@ -125,8 +125,11 @@ POST /api/deals/analyze
       "confidence": 72,
       "primaryReason": "Positive cash flow of $983/month with 8.6% cap rate above market median, but 2.8% cash-on-cash return below 5.5% target for 1031 exchange strategy",
       "secondaryReasons": [
-        "Property cap rate of 8.6% exceeds market median of 7.5%",
-        "Rent-to-price ratio of 1.01% indicates viable income potential",
+        "Tier 2 - Balanced Growth Market: Dallas provides balanced appreciation and cash flow potential",
+        "Class B - Standard investment-grade property (85% classification confidence)",
+        "Strategy Alignment: GOOD (80/100) - balanced strategy in balanced market with 6-year hold period",
+        "Fair market value analysis: Property priced at market median with 3% premium acceptable",
+        "Mature property (2010) may require capital improvements within 5-10 years",
         "Strong cash flow buffer of $983 exceeds minimum $300 requirement"
       ],
       "keyRisks": [
@@ -187,6 +190,62 @@ POST /api/deals/analyze
 }
 ```
 
+### Investment Decision Response Structure
+
+The enhanced `investmentDecision` object now includes insights from all three phases:
+
+#### Phase 2A: Market Intelligence in `secondaryReasons`
+```json
+"Tier 2 - Balanced Growth Market: Dallas provides balanced appreciation and cash flow potential"
+"Fair market value analysis: Property priced at market median with 3% premium acceptable"
+"Market-relative cap rate: 6.5% vs 6.2% market median (+0.3% premium justified)"
+```
+
+**Market Classifications:**
+- **Tier 1**: Premium appreciation markets (Austin, San Francisco, Seattle, etc.)
+- **Tier 2**: Balanced growth markets (Dallas, Phoenix, Atlanta, etc.)  
+- **Tier 3**: Cash flow focused markets (Anna TX, Tulsa OK, Birmingham AL, etc.)
+
+#### Phase 2B: Property Classification in `secondaryReasons`
+```json
+"Class A - Premium high-quality property (89% classification confidence)"
+"Class B - Standard investment-grade property (85% classification confidence)" 
+"Class C - Value property with higher cash flow potential (80% classification confidence)"
+"Mature property (2010) may require capital improvements within 5-10 years"
+"Premium property attracts high-quality tenants with lower turnover risk"
+```
+
+**Property Classifications:**
+- **Class A**: Premium properties (typically <10 years old, high-end finishes)
+- **Class B**: Standard investment-grade (10-30 years old, solid condition)
+- **Class C**: Value properties (30+ years old, higher management intensity)
+
+#### Phase 3: Strategy Alignment in `secondaryReasons`
+```json
+"Strategy Alignment: EXCELLENT (95/100) - cashflow strategy in Tier 3 market with 7-year experienced approach"
+"Strategy Alignment: GOOD (80/100) - balanced strategy in balanced market with appropriate hold period"
+"Strategy Alignment: POOR (45/100) - cashflow strategy in appreciation market suggests geographic reallocation"
+"Strategy Alignment: MISMATCH (25/100) - novice investor with Class C property requires experienced guidance"
+```
+
+**Strategy Alignment Levels:**
+- **EXCELLENT** (90-100): Perfect strategy-market-experience fit
+- **GOOD** (75-89): Solid alignment with minor optimization opportunities
+- **FAIR** (60-74): Reasonable alignment with some mismatches to address
+- **POOR** (40-59): Significant misalignments affecting returns
+- **MISMATCH** (0-39): Critical conflicts requiring strategy adjustment
+
+#### Enhanced `keyRisks` Array
+```json
+"keyRisks": [
+  "Strategy misalignment increases execution risk",
+  "Class C property requires experienced management - consider professional guidance",
+  "Novice investor with high-maintenance property may face unexpected costs",
+  "Hold period too short for appreciation strategy - extend to 5-7 years or switch focus",
+  "Cash flow strategy in appreciation market - consider Tier 3 markets for better yields"
+]
+```
+
 #### Fast AI Predictions (NEW)
 ```
 POST /api/deals/quick-predictions
@@ -222,9 +281,15 @@ POST /api/deals/quick-predictions
 }
 ```
 
-### Investment Decision Engine v2.1 (Single Source of Truth)
+## Investment Decision Engine v2.1 - Enhanced Analysis
 
-#### Investment Decision Analysis
+The Investment Decision Engine v2.1 provides **institutional-grade investment intelligence** through three integrated analysis phases:
+
+- **Phase 2A**: Market Intelligence (Tier 1/2/3 classification)
+- **Phase 2B**: Property Classification (A/B/C risk assessment)
+- **Phase 3**: Strategy Alignment (Strategy-market fit analysis)
+
+### Enhanced Investment Decision Analysis
 ```
 POST /api/deals/analyze
 ```

@@ -12,6 +12,9 @@ import { logger } from '../../utils/logger';
 import { SFRData } from '../../types/propertyTypes';
 import { LeverageOptimizer, LeverageAnalysis } from './leverageOptimizer';
 import { MarketDataResponse } from '../../types/marketData';
+import { MarketTierService, MarketTier, MarketContext } from './marketTierService';
+import { PropertyClassificationService, PropertyClass, PropertyClassification, PropertyClassRiskAdjustments } from './propertyClassificationService';
+import { StrategyAlignmentService, StrategyAlignment, UserStrategy } from './strategyAlignmentService';
 
 export type InvestmentVerdict = 'BUY' | 'PASS' | 'NEGOTIATE';
 
@@ -28,6 +31,8 @@ export interface InvestmentDecision {
   marketContext: MarketContextAnalysis;
   timeline: InvestmentTimeline;
   goalContext?: GoalContext; // NEW: Goal context for frontend personalization
+  confidenceDescription?: string; // Human-readable confidence explanation
+  goalBasedReasoning?: string; // Explanation tied to user's specific goals
 }
 
 export interface GoalContext {
@@ -104,7 +109,396 @@ export class InvestmentDecisionEngine {
   }
 
   /**
-   * Calculate market-relative cap rate threshold
+   * Analyze market intelligence using Market Tier Service (Phase 2A)
+   */
+  private analyzeMarketIntelligence(
+    propertyData: SFRData,
+    marketIntelligence: any,
+    fundamentals: any
+  ): MarketContext & {
+    marketMedianCapRate: number;
+    passThreshold: number;
+    negotiateThreshold: number;
+    buyThreshold: number;
+    marketInsights: string[];
+    fairMarketValue?: { fairValue: number; targetCapRate: number; reasoning: string; overpriced?: boolean; overpricedBy?: number };
+  } {
+    const city = propertyData.propertyAddress?.city || '';
+    const state = propertyData.propertyAddress?.state || '';
+    
+    // Get market tier classification
+    const marketTier = MarketTierService.getMarketTier(city, state);
+    
+    logger.info('Phase 2A: Market Intelligence Analysis', {
+      city,
+      state,
+      marketTier: marketTier.tier,
+      tierName: marketTier.name,
+      focusType: marketTier.focusType
+    });
+    
+    // Calculate market median cap rate from existing data sources
+    let marketMedianCapRate = this.getTierTargetCapRate(marketTier.tier);
+    
+    // Override with actual market data if available
+    if (marketIntelligence?.marketTrends?.averageRent && marketIntelligence?.economicIndicators?.medianHomePrice) {
+      const avgRent = marketIntelligence.marketTrends.averageRent;
+      const medianPrice = marketIntelligence.economicIndicators.medianHomePrice;
+      const calculatedCapRate = (avgRent * 12) / medianPrice;
+      
+      // Use calculated rate if reasonable, otherwise stick with tier-based rate
+      if (calculatedCapRate >= 0.03 && calculatedCapRate <= 0.12) {
+        marketMedianCapRate = calculatedCapRate;
+      }
+    }
+    
+    // Apply market tier thresholds with tier-specific adjustments
+    const tierThresholds = MarketTierService.calculateAdaptiveThresholds(
+      marketTier,
+      'balanced', // Default strategy - will be enhanced in Phase 3
+      'intermediate', // Default experience - could be from user context
+      6 // Default hold period - could be from enhanced goals
+    );
+    
+    const passThreshold = marketMedianCapRate - 0.015; // 1.5% below market
+    const negotiateThreshold = marketMedianCapRate - 0.005; // 0.5% below market  
+    const buyThreshold = marketMedianCapRate + tierThresholds.capRatePremium; // Tier-adjusted target
+    
+    // Generate market intelligence insights
+    const propertyCapRate = fundamentals.capRate || 0;
+    const propertyRentToPriceRatio = fundamentals.rentToPriceRatio || 0;
+    
+    const marketInsights = MarketTierService.generateMarketInsights(
+      {
+        marketTier,
+        cityName: city,
+        stateName: state,
+        marketMedianCapRate,
+        relativePerformance: {
+          capRateVsMarket: propertyCapRate - marketMedianCapRate,
+          rentVsMarket: 0, // Will be enhanced with RentCast data
+          priceVsMarket: 0  // Will be enhanced with comparable data
+        }
+      },
+      propertyCapRate,
+      propertyRentToPriceRatio
+    );
+    
+    // Calculate fair market value using market tier analysis
+    const noi = fundamentals.noi || (propertyData.monthlyRent * 12 * 0.6); // Net Operating Income estimate
+    let fairMarketValue;
+    
+    if (noi > 0) {
+      const fmvResult = MarketTierService.calculateFairMarketValue(
+        noi,
+        marketTier,
+        marketMedianCapRate
+      );
+      
+      const overpriced = propertyData.purchasePrice > fmvResult.fairValue;
+      const overpricedBy = overpriced ? 
+        Math.round(((propertyData.purchasePrice - fmvResult.fairValue) / fmvResult.fairValue) * 100) : 
+        undefined;
+      
+      fairMarketValue = {
+        ...fmvResult,
+        overpriced,
+        overpricedBy
+      };
+      
+      logger.info('Fair Market Value Analysis', {
+        purchasePrice: propertyData.purchasePrice,
+        fairValue: fmvResult.fairValue,
+        targetCapRate: fmvResult.targetCapRate,
+        overpriced,
+        overpricedBy: overpricedBy ? `${overpricedBy}%` : 'N/A'
+      });
+    }
+    
+    const marketContext: MarketContext = {
+      marketTier,
+      cityName: city,
+      stateName: state,
+      marketMedianCapRate,
+      relativePerformance: {
+        capRateVsMarket: propertyCapRate - marketMedianCapRate,
+        rentVsMarket: 0, // To be enhanced with RentCast data
+        priceVsMarket: 0  // To be enhanced with comparable data
+      }
+    };
+    
+    return {
+      ...marketContext,
+      marketMedianCapRate, // Ensure it's required, not optional
+      passThreshold,
+      negotiateThreshold,
+      buyThreshold,
+      marketInsights,
+      fairMarketValue
+    };
+  }
+
+  /**
+   * Analyze strategy alignment using Strategy Alignment Service (Phase 3)
+   */
+  private analyzeStrategyAlignment(
+    propertyData: SFRData,
+    marketIntelligenceAnalysis: any,
+    propertyClassificationAnalysis: any,
+    fundamentals: any
+  ): {
+    alignment: StrategyAlignment;
+    insights: string[];
+  } {
+    // Extract user strategy from enhanced goals and property data
+    const userStrategy: UserStrategy = {
+      investmentStrategy: this.extractInvestmentStrategy(propertyData),
+      holdPeriod: propertyData.longTermAssumptions?.projectionYears || 6,
+      experienceLevel: this.extractExperienceLevel(propertyData),
+      riskTolerance: this.extractRiskTolerance(propertyData),
+      portfolioStrategy: propertyData.exitStrategy?.portfolioStrategy,
+      geographicFocus: `${propertyData.propertyAddress?.city}, ${propertyData.propertyAddress?.state}`,
+      capitalAvailable: undefined // Would be enhanced with user context
+    };
+    
+    // Prepare property metrics for strategy alignment
+    const propertyMetrics = {
+      capRate: fundamentals.capRate || 0,
+      cashFlow: fundamentals.cashFlow || 0,
+      expectedAppreciation: propertyData.longTermAssumptions?.annualPropertyValueIncrease || 0.03,
+      managementComplexity: this.assessManagementComplexity(
+        propertyClassificationAnalysis.classification,
+        propertyData.yearBuilt || new Date().getFullYear() - 10
+      )
+    };
+    
+    // Analyze strategy alignment
+    const alignment = StrategyAlignmentService.analyzeStrategyAlignment(
+      userStrategy,
+      marketIntelligenceAnalysis.marketTier,
+      propertyClassificationAnalysis.classification,
+      propertyMetrics
+    );
+    
+    // Generate strategy alignment insights
+    const insights = this.generateStrategyAlignmentInsights(alignment, userStrategy);
+    
+    logger.info('Phase 3: Strategy Alignment Analysis Complete', {
+      userStrategy: userStrategy.investmentStrategy,
+      holdPeriod: userStrategy.holdPeriod,
+      experienceLevel: userStrategy.experienceLevel,
+      alignmentScore: alignment.alignmentScore,
+      alignmentLevel: alignment.alignment,
+      misalignmentCount: alignment.misalignments.length,
+      recommendationCount: alignment.recommendations.length
+    });
+    
+    return {
+      alignment,
+      insights
+    };
+  }
+
+  /**
+   * Extract investment strategy from property data and enhanced goals
+   */
+  private extractInvestmentStrategy(propertyData: SFRData): 'cashflow' | 'appreciation' | 'balanced' {
+    // Enhanced goals would be passed separately in a full implementation
+    // For now, use exit strategy as primary source
+    
+    // Fallback to exit strategy analysis
+    if (propertyData.exitStrategy?.portfolioStrategy === 'cashflow') return 'cashflow';
+    if (propertyData.exitStrategy?.portfolioStrategy === 'appreciation') return 'appreciation';
+    
+    // Default to balanced
+    return 'balanced';
+  }
+
+  /**
+   * Extract experience level from property data context
+   */
+  private extractExperienceLevel(propertyData: SFRData): 'novice' | 'intermediate' | 'experienced' | 'expert' {
+    // Check portfolio strategy for experience indicators
+    if (propertyData.exitStrategy?.portfolioStrategy === 'first') return 'novice';
+    if (propertyData.exitStrategy?.riskApproach === 'conservative') return 'intermediate';
+    if (propertyData.exitStrategy?.riskApproach === 'aggressive' || 
+        propertyData.exitStrategy?.riskApproach === 'opportunistic') return 'experienced';
+    
+    // Default to intermediate
+    return 'intermediate';
+  }
+
+  /**
+   * Extract risk tolerance from property data
+   */
+  private extractRiskTolerance(propertyData: SFRData): 'conservative' | 'moderate' | 'aggressive' | 'opportunistic' {
+    // Map from exit strategy risk approach
+    const riskApproach = propertyData.exitStrategy?.riskApproach;
+    if (riskApproach === 'conservative') return 'conservative';
+    if (riskApproach === 'balanced') return 'moderate';
+    if (riskApproach === 'aggressive') return 'aggressive';
+    if (riskApproach === 'opportunistic') return 'opportunistic';
+    
+    // Default to moderate
+    return 'moderate';
+  }
+
+  /**
+   * Assess management complexity based on property classification and age
+   */
+  private assessManagementComplexity(
+    classification: PropertyClassification,
+    yearBuilt: number
+  ): 'low' | 'medium' | 'high' {
+    const propertyAge = new Date().getFullYear() - yearBuilt;
+    
+    // Class A properties generally low complexity
+    if (classification.propertyClass === 'A' && propertyAge <= 15) return 'low';
+    
+    // Class C properties or old properties = high complexity
+    if (classification.propertyClass === 'C' || propertyAge > 40) return 'high';
+    
+    // Class B properties or moderate age = medium complexity
+    return 'medium';
+  }
+
+  /**
+   * Generate strategy alignment insights
+   */
+  private generateStrategyAlignmentInsights(
+    alignment: StrategyAlignment,
+    userStrategy: UserStrategy
+  ): string[] {
+    const insights: string[] = [];
+    
+    // Primary alignment insight
+    insights.push(`Strategy Alignment: ${alignment.alignment.toUpperCase()} (${alignment.alignmentScore}/100) - ${alignment.primaryAlignment}`);
+    
+    // Add top misalignments
+    const criticalMisalignments = alignment.misalignments.filter(
+      m => m.severity === 'critical' || m.severity === 'major'
+    ).slice(0, 2);
+    
+    criticalMisalignments.forEach(misalignment => {
+      insights.push(`⚠️ ${misalignment.description}: ${misalignment.suggestion}`);
+    });
+    
+    // Add top recommendations
+    const highPriorityRecommendations = alignment.recommendations.filter(
+      r => r.priority === 'high'
+    ).slice(0, 1);
+    
+    highPriorityRecommendations.forEach(recommendation => {
+      insights.push(`💡 ${recommendation.title}: ${recommendation.expectedImprovement}`);
+    });
+    
+    // Opportunity cost analysis if significant
+    if (alignment.opportunityCost && alignment.opportunityCost.annualOpportunityCost > 5000) {
+      insights.push(
+        `Opportunity Cost: $${Math.round(alignment.opportunityCost.annualOpportunityCost).toLocaleString()}/year vs ${alignment.opportunityCost.alternativeDescription}`
+      );
+    }
+    
+    return insights;
+  }
+
+  /**
+   * Analyze property classification using Property Classification Service (Phase 2B)
+   */
+  private analyzePropertyClassification(
+    propertyData: SFRData,
+    marketIntelligenceAnalysis: any,
+    fundamentals: any
+  ): {
+    classification: PropertyClassification;
+    riskAdjustments: PropertyClassRiskAdjustments;
+    insights: string[];
+  } {
+    // Estimate market median price (would be enhanced with actual market data)
+    const estimatedMarketMedian = this.estimateMarketMedianPrice(
+      marketIntelligenceAnalysis.marketTier,
+      propertyData.propertyAddress?.city || ''
+    );
+    
+    // Classify property
+    const classification = PropertyClassificationService.classifyProperty(
+      propertyData.yearBuilt || new Date().getFullYear() - 10, // Default if not provided
+      propertyData.purchasePrice,
+      estimatedMarketMedian,
+      marketIntelligenceAnalysis.marketTier,
+      propertyData.squareFootage,
+      undefined, // lotSize - not available in SFRData interface
+      false // hasUpdates - would be enhanced with actual data
+    );
+    
+    // Get risk adjustments
+    const riskAdjustments = PropertyClassificationService.getPropertyClassRiskAdjustments(
+      classification.propertyClass,
+      marketIntelligenceAnalysis.marketTier
+    );
+    
+    // Generate insights
+    const insights = PropertyClassificationService.generatePropertyClassInsights(
+      classification,
+      propertyData.yearBuilt || new Date().getFullYear() - 10,
+      propertyData.purchasePrice,
+      riskAdjustments
+    );
+    
+    logger.info('Phase 2B: Property Classification Analysis', {
+      propertyClass: classification.propertyClass,
+      confidence: classification.confidence,
+      riskLevel: classification.riskLevel,
+      managementIntensity: classification.managementIntensity,
+      yearBuilt: propertyData.yearBuilt,
+      propertyAge: new Date().getFullYear() - (propertyData.yearBuilt || new Date().getFullYear() - 10),
+      priceVsMarket: (propertyData.purchasePrice / estimatedMarketMedian).toFixed(2),
+      riskAdjustments: {
+        capRatePremium: (riskAdjustments.capRatePremium * 100).toFixed(0) + 'bps',
+        maintenanceMultiplier: riskAdjustments.maintenanceMultiplier,
+        confidenceBoost: riskAdjustments.confidenceBoost
+      }
+    });
+    
+    return {
+      classification,
+      riskAdjustments,
+      insights
+    };
+  }
+
+  /**
+   * Estimate market median price (fallback method - would be enhanced with real data)
+   */
+  private estimateMarketMedianPrice(marketTier: MarketTier, city: string): number {
+    // Basic estimates based on market tier and city
+    const basePrice = marketTier.tier === 1 ? 800000 : marketTier.tier === 2 ? 400000 : 250000;
+    
+    // City-specific adjustments (simplified)
+    const cityLower = city.toLowerCase();
+    if (cityLower.includes('austin') || cityLower.includes('dallas')) {
+      return basePrice * 1.1;
+    } else if (cityLower.includes('houston')) {
+      return basePrice * 1.05;
+    }
+    
+    return basePrice;
+  }
+
+  /**
+   * Get tier-appropriate target cap rate (fallback method)
+   */
+  private getTierTargetCapRate(tier: 1 | 2 | 3): number {
+    // Conservative baseline cap rates by tier
+    switch (tier) {
+      case 1: return 0.04;  // 4% for premium markets
+      case 2: return 0.05;  // 5% for balanced markets  
+      case 3: return 0.07;  // 7% for cash flow markets
+    }
+  }
+
+  /**
+   * Calculate market-relative cap rate threshold (LEGACY - will be deprecated)
    */
   private getMarketRelativeCapRateThreshold(marketIntelligence: any, propertyData: SFRData): {
     marketMedianCapRate: number;
@@ -139,13 +533,30 @@ export class InvestmentDecisionEngine {
     const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6); // Fallback NOI estimate
     const monthlyRent = propertyData.monthlyRent || 0;
     
-    // Three price ceilings
+    // Three price ceilings - adjusted for modern market realities
     const treasuryBasedPrice = noi / (this.TREASURY_RATE + 0.03); // 300bps spread
-    const onePercentRuleCeiling = monthlyRent * 100; // 1% rule
-    const comparablesCeiling = propertyData.purchasePrice * 0.95; // 5% below asking (rough)
     
-    // Take the minimum (most conservative)
-    return Math.min(treasuryBasedPrice, onePercentRuleCeiling, comparablesCeiling);
+    // Adaptive rent-to-price rule (0.7% to 1% based on market conditions)
+    // In high-cost markets, 0.7% rule is more realistic than strict 1% rule
+    const adaptiveRentMultiplier = monthlyRent < 2000 ? 100 : 143; // 0.7% rule for higher rents
+    const rentBasedCeiling = monthlyRent * adaptiveRentMultiplier;
+    
+    // Use actual comps or a more realistic discount from asking
+    const comparablesCeiling = propertyData.purchasePrice * 1.05; // Allow up to 5% above asking if fundamentals support it
+    
+    // Take the minimum of treasury and rent-based, but allow comps to override if property cash flows well
+    const baseWalkAway = Math.min(treasuryBasedPrice, rentBasedCeiling);
+    
+    // If property has positive cash flow and decent cap rate, be less restrictive
+    const capRate = analysis.keyMetrics?.capRate || 0;
+    const monthlyCashFlow = analysis.monthlyAnalysis?.cashFlow || 0;
+    
+    if (monthlyCashFlow > 500 && capRate > 0.05) {
+      // Strong cash flow properties get more flexibility
+      return Math.max(baseWalkAway, comparablesCeiling);
+    }
+    
+    return baseWalkAway;
   }
 
   /**
@@ -185,7 +596,7 @@ export class InvestmentDecisionEngine {
       isSuspicious,
       confidencePenalty: isSuspicious ? 30 : 0,
       warningMessage: isSuspicious 
-        ? `Unusually high ${(capRate * 100).toFixed(1)}% cap rate vs ${(marketMedianCapRate * 100).toFixed(1)}% market median - verify all assumptions`
+        ? `Unusually high ${capRate.toFixed(1)}% cap rate vs ${marketMedianCapRate.toFixed(1)}% market median - verify all assumptions`
         : ''
     };
   }
@@ -275,7 +686,29 @@ export class InvestmentDecisionEngine {
       // 2. Assess property fundamentals
       const fundamentals = this.assessPropertyFundamentals(analysis, propertyData);
 
-      // 3. Analyze market context
+      // 2A. Phase 2A: Market Intelligence Analysis
+      const marketIntelligenceAnalysis = this.analyzeMarketIntelligence(
+        propertyData,
+        marketIntelligence,
+        fundamentals
+      );
+
+      // 2B. Phase 2B: Property Classification Analysis
+      const propertyClassificationAnalysis = this.analyzePropertyClassification(
+        propertyData,
+        marketIntelligenceAnalysis,
+        fundamentals
+      );
+
+      // 2C. Phase 3: Strategy Alignment Analysis
+      const strategyAlignmentAnalysis = this.analyzeStrategyAlignment(
+        propertyData,
+        marketIntelligenceAnalysis,
+        propertyClassificationAnalysis,
+        fundamentals
+      );
+
+      // 3. Analyze market context (legacy + enhanced)
       const marketContext = await this.analyzeMarketContext(
         analysis, 
         marketIntelligence, 
@@ -291,7 +724,9 @@ export class InvestmentDecisionEngine {
         userContext,
         propertyData,
         analysis,
-        marketIntelligence
+        marketIntelligenceAnalysis, // Phase 2A
+        propertyClassificationAnalysis, // Phase 2B
+        strategyAlignmentAnalysis // Phase 3
       );
 
       // 5. Create action plan
@@ -351,7 +786,9 @@ export class InvestmentDecisionEngine {
         alternativeOptions,
         marketContext,
         timeline,
-        goalContext // NEW: Include goal context for frontend
+        goalContext, // NEW: Include goal context for frontend
+        confidenceDescription: this.getConfidenceDescription(verdict.verdict, verdict.confidence),
+        goalBasedReasoning: this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals)
       };
 
       const processingTime = Date.now() - startTime;
@@ -582,6 +1019,149 @@ export class InvestmentDecisionEngine {
   }
 
   /**
+   * Generate confidence description based on verdict and confidence level
+   */
+  private getConfidenceDescription(verdict: InvestmentVerdict, confidence: number): string {
+    if (verdict === 'BUY') {
+      if (confidence >= 80) return 'High certainty this is a good investment';
+      if (confidence >= 65) return 'Good opportunity with standard due diligence';
+      return 'Positive but requires careful review';
+    }
+    
+    if (verdict === 'NEGOTIATE') {
+      if (confidence >= 70) return 'Specific adjustments needed for viability';
+      if (confidence >= 50) return 'Multiple factors require adjustment';
+      return 'Major adjustments required to make this work';
+    }
+    
+    // PASS verdict
+    if (confidence >= 80) return 'Strong indicators against this investment';
+    if (confidence >= 65) return 'Multiple concerns outweigh benefits';
+    if (confidence >= 40) return 'May work for specific strategies but has significant risks';
+    // 30% or below
+    return 'Too many serious risk factors to recommend this investment';
+  }
+
+  /**
+   * Generate goal-based reasoning explanation
+   */
+  private getGoalBasedReasoning(
+    verdict: InvestmentVerdict,
+    propertyData: SFRData,
+    fundamentals: any,
+    enhancedGoals: any
+  ): string {
+    const exitStrategy = enhancedGoals?.processedGoals?.exitStrategy?.strategy || 
+                        propertyData.exitStrategy?.primaryExitStrategy || 
+                        'sale';
+    
+    // CRITICAL: Keep financial calculations at 10 years (DO NOT CHANGE)
+    const financialProjectionYears = propertyData.longTermAssumptions?.projectionYears || 10;
+    
+    // Extract user's strategic timeline for MESSAGING ONLY (separate from financial calculations)
+    let strategicHoldPeriod = 6; // Default: 6 years (most common investor timeline)
+    let timelineDisplayText = `${strategicHoldPeriod}-year`; // For messaging
+    
+    // Parse free text for strategic timeline hints (e.g., "4-5 years", "3-7 years")
+    if (enhancedGoals?.freeTextStrategy) {
+      const timelineMatch = enhancedGoals.freeTextStrategy.match(/(\d+)[-–](\d+)\s*years?/i);
+      if (timelineMatch) {
+        const minYears = parseInt(timelineMatch[1]);
+        const maxYears = parseInt(timelineMatch[2]);
+        strategicHoldPeriod = Math.round((minYears + maxYears) / 2); // Use average
+        timelineDisplayText = timelineMatch[0]; // Use original text like "3-7 years"
+        logger.info('Extracted strategic timeline from free text (messaging only):', {
+          match: timelineMatch[0],
+          minYears,
+          maxYears,
+          strategicHoldPeriod,
+          financialProjectionYears // Log but don't change
+        });
+      } else {
+        // Look for single year mentions (e.g., "5 years")
+        const singleYearMatch = enhancedGoals.freeTextStrategy.match(/(\d+)\s*years?/i);
+        if (singleYearMatch) {
+          strategicHoldPeriod = parseInt(singleYearMatch[1]);
+          timelineDisplayText = `${strategicHoldPeriod}-year`;
+          logger.info('Extracted single strategic timeline (messaging only):', {
+            match: singleYearMatch[0],
+            strategicHoldPeriod,
+            financialProjectionYears // Log but don't change
+          });
+        }
+      }
+    }
+    
+    // Map from enhanced goals portfolio strategy to investment goal
+    let investmentGoal = enhancedGoals?.processedGoals?.investmentGoal || 'balanced';
+    if (enhancedGoals?.portfolioStrategy === 'cashflow') investmentGoal = 'cashflow';
+    else if (enhancedGoals?.portfolioStrategy === 'appreciation') investmentGoal = 'appreciation';
+    else if (enhancedGoals?.portfolioStrategy === 'first' || enhancedGoals?.portfolioStrategy === 'geographic' || enhancedGoals?.portfolioStrategy === 'diversification') investmentGoal = 'balanced';
+    
+    // Basic hold period business logic context
+    let holdPeriodContext = '';
+    if (strategicHoldPeriod <= 3) {
+      holdPeriodContext = 'short-term hold requires premium returns due to market timing risk';
+    } else if (strategicHoldPeriod >= 8) {
+      holdPeriodContext = 'long-term hold allows for time arbitrage and appreciation focus';  
+    } else {
+      holdPeriodContext = 'medium-term hold offers balanced risk/return profile';
+    }
+    
+    logger.info('Goal-based reasoning context:', {
+      verdict,
+      strategicHoldPeriod,
+      timelineDisplayText,
+      financialProjectionYears,
+      exitStrategy,
+      investmentGoal,
+      holdPeriodContext,
+      capRate: fundamentals.capRate.toFixed(1) + '%',
+      cashFlow: Math.round(fundamentals.cashFlow)
+    });
+    
+    if (verdict === 'PASS') {
+      if (exitStrategy === 'sale' && strategicHoldPeriod <= 7) {
+        return `With your ${timelineDisplayText} appreciation strategy, this property's ${fundamentals.capRate.toFixed(1)}% cap rate is too low for the risk. Better opportunities exist in growing markets.`;
+      }
+      if (investmentGoal === 'cashflow') {
+        return `For cash flow focused investing, the monthly cash flow of $${Math.round(fundamentals.cashFlow)} doesn't justify the investment risk and capital requirements.`;
+      }
+      if (investmentGoal === 'appreciation') {
+        return `While you're focused on appreciation, the market indicators and property fundamentals suggest limited growth potential relative to the risk.`;
+      }
+      // Short-term hold specific messaging
+      if (strategicHoldPeriod <= 3) {
+        return `Short-term ${timelineDisplayText} strategy requires premium returns and strong market timing - this property's fundamentals insufficient for timing risk.`;
+      }
+    }
+    
+    if (verdict === 'BUY') {
+      if (exitStrategy === 'sale' && strategicHoldPeriod <= 7) {
+        return `Strong opportunity for your ${timelineDisplayText} hold strategy with projected appreciation and positive cash flow buffering market volatility.`;
+      }
+      if (investmentGoal === 'cashflow') {
+        return `Excellent cash flow property generating $${Math.round(fundamentals.cashFlow)}/month with stable tenant demand and manageable expenses.`;
+      }
+      // Long-term hold specific messaging
+      if (strategicHoldPeriod >= 8) {
+        return `Excellent long-term ${timelineDisplayText} opportunity with time to benefit from appreciation and cash flow compound growth.`;
+      }
+    }
+    
+    if (verdict === 'NEGOTIATE') {
+      if (strategicHoldPeriod <= 3) {
+        return `Short-term ${timelineDisplayText} strategy could work with significant price reduction to justify timing risk.`;
+      }
+      // Include timeline in all NEGOTIATE messaging
+      return `This property could work for your ${timelineDisplayText} ${investmentGoal} strategy with the right price adjustments. Focus negotiation on improving the ${fundamentals.capRate < 0.05 ? 'cap rate' : 'cash flow'}.`;
+    }
+    
+    // Default fallback - use strategic timeline for messaging
+    return `Based on your ${investmentGoal} investment goals and ${timelineDisplayText} timeline, this property ${verdict === 'PASS' ? 'does not meet' : 'meets'} your investment criteria.`;
+  }
+
+  /**
    * Calculate property quality score (0-100)
    * This is a comprehensive score of the property's investment quality
    */
@@ -591,50 +1171,79 @@ export class InvestmentDecisionEngine {
     leverageAnalysis: LeverageAnalysis
   ): number {
     let score = 50; // Base score
+    let scoreBreakdown: any = { base: 50 };
     
     // Cash flow scoring (0-25 points)
     const monthlyFlow = fundamentals.cashFlow || 0;
-    if (monthlyFlow >= 500) score += 20;
-    else if (monthlyFlow >= 250) score += 15;
-    else if (monthlyFlow >= 100) score += 10;
-    else if (monthlyFlow >= 0) score += 5;
-    else if (monthlyFlow >= -100) score -= 5;
-    else score -= 15;
+    let cashFlowPoints = 0;
+    if (monthlyFlow >= 500) cashFlowPoints = 20;
+    else if (monthlyFlow >= 250) cashFlowPoints = 15;
+    else if (monthlyFlow >= 100) cashFlowPoints = 10;
+    else if (monthlyFlow >= 0) cashFlowPoints = 5;
+    else if (monthlyFlow >= -100) cashFlowPoints = -5;
+    else cashFlowPoints = -15;
+    score += cashFlowPoints;
+    scoreBreakdown.cashFlow = cashFlowPoints;
     
     // Cap rate scoring (0-25 points)
     const capRate = fundamentals.capRate || 0;
-    if (capRate >= 0.07) score += 20;
-    else if (capRate >= 0.055) score += 15;
-    else if (capRate >= 0.04) score += 10;
-    else if (capRate >= 0.03) score += 5;
-    else score -= 10;
+    let capRatePoints = 0;
+    if (capRate >= 0.07) capRatePoints = 20;
+    else if (capRate >= 0.055) capRatePoints = 15;
+    else if (capRate >= 0.04) capRatePoints = 10;
+    else if (capRate >= 0.03) capRatePoints = 5;
+    else capRatePoints = -10;
+    score += capRatePoints;
+    scoreBreakdown.capRate = capRatePoints;
     
     // Return scoring (0-20 points)
     const cocReturn = fundamentals.cashOnCashReturn || 0;
-    if (cocReturn >= 0.10) score += 15;
-    else if (cocReturn >= 0.07) score += 10;
-    else if (cocReturn >= 0.05) score += 5;
-    else if (cocReturn >= 0) score += 2;
-    else score -= 10;
+    let returnPoints = 0;
+    if (cocReturn >= 0.10) returnPoints = 15;
+    else if (cocReturn >= 0.07) returnPoints = 10;
+    else if (cocReturn >= 0.05) returnPoints = 5;
+    else if (cocReturn >= 0) returnPoints = 2;
+    else returnPoints = -10;
+    score += returnPoints;
+    scoreBreakdown.cashOnCash = returnPoints;
     
     // Risk scoring (0-20 points)
     const dscr = fundamentals.dscr || 0;
-    if (dscr >= 1.5) score += 15;
-    else if (dscr >= 1.25) score += 10;
-    else if (dscr >= 1.0) score += 5;
-    else score -= 15;
+    let riskPoints = 0;
+    if (dscr >= 1.5) riskPoints = 15;
+    else if (dscr >= 1.25) riskPoints = 10;
+    else if (dscr >= 1.0) riskPoints = 5;
+    else riskPoints = -15;
+    score += riskPoints;
+    scoreBreakdown.risk = riskPoints;
     
     // Market context bonus (0-10 points)
-    if (marketContext.pricingContext === 'undervalued') score += 10;
-    else if (marketContext.pricingContext === 'fair') score += 5;
-    else if (marketContext.pricingContext === 'overvalued') score -= 5;
+    let marketPoints = 0;
+    if (marketContext.pricingContext === 'undervalued') marketPoints = 10;
+    else if (marketContext.pricingContext === 'fair') marketPoints = 5;
+    else if (marketContext.pricingContext === 'overvalued') marketPoints = -5;
+    score += marketPoints;
+    scoreBreakdown.market = marketPoints;
+    
+    logger.info('Property Score Calculation:', {
+      inputs: {
+        monthlyFlow,
+        capRate: capRate.toFixed(2) + '%',
+        cocReturn: cocReturn.toFixed(2) + '%',
+        dscr: dscr.toFixed(2),
+        marketContext: marketContext.pricingContext
+      },
+      scoreBreakdown,
+      totalScore: score,
+      finalScore: Math.max(0, Math.min(100, Math.round(score)))
+    });
     
     // Ensure score is between 0-100
     return Math.max(0, Math.min(100, Math.round(score)));
   }
 
   /**
-   * Generate investment verdict (ENHANCED VERSION)
+   * Generate investment verdict (ENHANCED VERSION with Phase 2A + 2B + 3)
    */
   private async generateVerdict(
     fundamentals: any,
@@ -643,7 +1252,9 @@ export class InvestmentDecisionEngine {
     userContext: any,
     propertyData: SFRData,
     analysis: any,
-    marketIntelligence: any
+    marketIntelligenceAnalysis: any, // Phase 2A
+    propertyClassificationAnalysis: any, // Phase 2B
+    strategyAlignmentAnalysis: any // Phase 3
   ) {
     let verdict: InvestmentVerdict = 'PASS';
     let confidence = 50;
@@ -651,10 +1262,15 @@ export class InvestmentDecisionEngine {
     let secondaryReasons: string[] = [];
     let keyRisks: string[] = [];
 
-    // ===== ENHANCED VALIDATION CHECKS =====
+    // ===== ENHANCED VALIDATION CHECKS WITH PHASE 2A =====
     
-    // 1. Get market-relative thresholds
-    const marketThresholds = this.getMarketRelativeCapRateThreshold(marketIntelligence, propertyData);
+    // 1. Get market-relative thresholds from Market Intelligence Analysis
+    const marketThresholds = {
+      marketMedianCapRate: marketIntelligenceAnalysis.marketMedianCapRate,
+      passThreshold: marketIntelligenceAnalysis.passThreshold,
+      negotiateThreshold: marketIntelligenceAnalysis.negotiateThreshold,
+      buyThreshold: marketIntelligenceAnalysis.buyThreshold
+    };
     
     // 2. Check rent-to-price ratio
     const rentToPriceCheck = this.assessRentToPriceRatio(propertyData.monthlyRent || 0, propertyData.purchasePrice);
@@ -674,22 +1290,47 @@ export class InvestmentDecisionEngine {
       marketThresholds.marketMedianCapRate
     );
 
+    // Apply property class risk adjustments to thresholds and confidence
+    const classRiskAdjustments = propertyClassificationAnalysis.riskAdjustments;
+    const adjustedMarketThresholds = {
+      ...marketThresholds,
+      buyThreshold: marketThresholds.buyThreshold + classRiskAdjustments.capRatePremium
+    };
+    
+    // Use adjusted thresholds for decision logic
+    const finalMarketThresholds = adjustedMarketThresholds;
+
     // ===== PRIMARY DECISION FACTORS (ENHANCED) =====
     const mainMonthlyCashFlow = analysis.monthlyAnalysis?.cashFlow || 0;
     const hasPositiveCashFlow = mainMonthlyCashFlow > 0;
     const meetsAdjustedHurdleRate = fundamentals.cashOnCashReturn >= adjustedHurdleRate;
-    const capRateBelowMarket = fundamentals.capRate < marketThresholds.passThreshold;
+    const capRateBelowMarket = fundamentals.capRate < finalMarketThresholds.passThreshold;
     const priceAboveWalkAway = propertyData.purchasePrice > (walkAwayPrice * 1.1);
     const hasLeverageOptions = leverageAnalysis.optimalScenario.leverageScore > 60;
-
-    logger.info('Investment Decision: Enhanced analysis', {
+    
+    logger.info('Investment Decision: Enhanced analysis with Phase 2A + 2B', {
       mainMonthlyCashFlow,
       adjustedHurdleRate: (adjustedHurdleRate * 100).toFixed(1) + '%',
+      // Phase 2A - Market Intelligence
+      marketTier: marketIntelligenceAnalysis.marketTier.tier,
+      marketTierName: marketIntelligenceAnalysis.marketTier.name,
       marketMedianCapRate: (marketThresholds.marketMedianCapRate * 100).toFixed(1) + '%',
+      fairMarketValue: marketIntelligenceAnalysis.fairMarketValue?.fairValue,
+      overpriced: marketIntelligenceAnalysis.fairMarketValue?.overpriced,
+      overpricedBy: marketIntelligenceAnalysis.fairMarketValue?.overpricedBy,
+      // Phase 2B - Property Classification
+      propertyClass: propertyClassificationAnalysis.classification.propertyClass,
+      classConfidence: propertyClassificationAnalysis.classification.confidence + '%',
+      riskLevel: propertyClassificationAnalysis.classification.riskLevel,
+      managementIntensity: propertyClassificationAnalysis.classification.managementIntensity,
+      capRateAdjustment: (classRiskAdjustments.capRatePremium * 100).toFixed(0) + 'bps',
+      confidenceAdjustment: classRiskAdjustments.confidenceBoost,
+      // General metrics
       walkAwayPrice,
       currentPrice: propertyData.purchasePrice,
       rentToPriceRatio: (rentToPriceCheck.ratio * 100).toFixed(2) + '%',
-      cashFlowBufferHealth: cashFlowBuffer.bufferPercentage.toFixed(2)
+      cashFlowBufferHealth: cashFlowBuffer.bufferPercentage.toFixed(2),
+      marketInsights: marketIntelligenceAnalysis.marketInsights.length
     });
 
     // ===== AUTOMATIC PASS SCENARIOS =====
@@ -712,13 +1353,23 @@ export class InvestmentDecisionEngine {
       keyRisks.push('Overpaying reduces returns and increases downside risk');
     }
     
-    // 3. Cap rate significantly below market
+    // 3. Cap rate significantly below market (enhanced with market tier + property class intelligence)
     else if (capRateBelowMarket) {
       verdict = 'PASS';
       confidence = 80;
-      primaryReason = `Cap rate of ${(fundamentals.capRate * 100).toFixed(1)}% is ${((marketThresholds.passThreshold - fundamentals.capRate) * 100).toFixed(1)}% below market threshold`;
-      secondaryReasons.push(`Market median cap rate: ${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      primaryReason = `Cap rate of ${fundamentals.capRate.toFixed(1)}% is ${((finalMarketThresholds.passThreshold - fundamentals.capRate) * 100).toFixed(1)}bps below ${marketIntelligenceAnalysis.marketTier.name} threshold`;
+      secondaryReasons.push(`${marketIntelligenceAnalysis.cityName}, ${marketIntelligenceAnalysis.stateName} market median: ${(finalMarketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      secondaryReasons.push(`${marketIntelligenceAnalysis.marketTier.name} focus: ${marketIntelligenceAnalysis.marketTier.focusType}`);
+      secondaryReasons.push(`${propertyClassificationAnalysis.classification.classDescription}`);
       keyRisks.push('Significantly underperforming market returns');
+      // Add property class insights
+      if (propertyClassificationAnalysis.insights.length > 0) {
+        secondaryReasons.push(propertyClassificationAnalysis.insights[0]);
+      }
+      // Add market insights as secondary reasons
+      if (marketIntelligenceAnalysis.marketInsights.length > 0) {
+        secondaryReasons.push(...marketIntelligenceAnalysis.marketInsights.slice(0, 1));
+      }
     }
     
     // 4. No positive cash flow and no leverage solution
@@ -750,19 +1401,37 @@ export class InvestmentDecisionEngine {
       keyRisks.push('High returns may indicate hidden problems or incorrect data');
     }
     
-    // 2. Cap rate slightly below market but positive cash flow
-    else if (hasPositiveCashFlow && fundamentals.capRate < marketThresholds.negotiateThreshold) {
+    // 2. Cap rate slightly below market but positive cash flow (enhanced with fair market value)
+    else if (hasPositiveCashFlow && fundamentals.capRate < finalMarketThresholds.negotiateThreshold) {
       verdict = 'NEGOTIATE';
       confidence = 70;
       
-      // Calculate price reduction using improved methodology
-      const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6);
-      const targetPrice = Math.round(noi / marketThresholds.buyThreshold);
-      const priceReduction = propertyData.purchasePrice - targetPrice;
+      // Use fair market value calculation from market intelligence
+      let targetPrice: number;
+      let priceReduction: number;
       
-      primaryReason = `Negotiate $${priceReduction.toLocaleString()} reduction to align with ${(marketThresholds.buyThreshold * 100).toFixed(1)}% market cap rate`;
-      secondaryReasons.push(`Current cap rate: ${(fundamentals.capRate * 100).toFixed(1)}% vs market: ${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
-      secondaryReasons.push(`Target price: $${targetPrice.toLocaleString()}`);
+      if (marketIntelligenceAnalysis.fairMarketValue) {
+        targetPrice = marketIntelligenceAnalysis.fairMarketValue.fairValue;
+        priceReduction = propertyData.purchasePrice - targetPrice;
+        
+        primaryReason = `Negotiate $${priceReduction.toLocaleString()} reduction to align with fair market value`;
+        secondaryReasons.push(marketIntelligenceAnalysis.fairMarketValue.reasoning);
+        secondaryReasons.push(`Fair value: $${targetPrice.toLocaleString()} (${marketIntelligenceAnalysis.fairMarketValue.targetCapRate.toFixed(1)}% target cap rate)`);
+      } else {
+        // Fallback to original calculation
+        const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6);
+        targetPrice = Math.round(noi / finalMarketThresholds.buyThreshold);
+        priceReduction = propertyData.purchasePrice - targetPrice;
+        
+        primaryReason = `Negotiate $${priceReduction.toLocaleString()} reduction to align with ${(finalMarketThresholds.buyThreshold * 100).toFixed(1)}% market cap rate`;
+        secondaryReasons.push(`Target price: $${targetPrice.toLocaleString()}`);
+      }
+      
+      secondaryReasons.push(`Current cap rate: ${fundamentals.capRate.toFixed(1)}% vs ${marketIntelligenceAnalysis.marketTier.name} median: ${(finalMarketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      // Add property class context
+      if (propertyClassificationAnalysis.classification.propertyClass === 'C') {
+        secondaryReasons.push(`${propertyClassificationAnalysis.classification.classDescription} - factor in higher management costs`);
+      }
     }
     
     // 3. Positive cash flow but below adjusted hurdle rate  
@@ -794,19 +1463,90 @@ export class InvestmentDecisionEngine {
     }
 
     // ===== BUY SCENARIOS =====
-    else if (hasPositiveCashFlow && meetsAdjustedHurdleRate && fundamentals.capRate >= marketThresholds.buyThreshold) {
+    // Primary BUY scenario: Strong cash flow and returns (enhanced with market intelligence + property class)
+    else if (hasPositiveCashFlow && meetsAdjustedHurdleRate && fundamentals.capRate >= finalMarketThresholds.buyThreshold) {
       verdict = 'BUY';
       confidence = 80;
       primaryReason = `Strong fundamentals with ${(fundamentals.cashOnCashReturn * 100).toFixed(1)}% return exceeding ${(adjustedHurdleRate * 100).toFixed(1)}% target`;
-      secondaryReasons.push(`Cap rate of ${(fundamentals.capRate * 100).toFixed(1)}% meets market standards`);
+      secondaryReasons.push(`Cap rate of ${fundamentals.capRate.toFixed(1)}% exceeds ${marketIntelligenceAnalysis.marketTier.name} median (${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%)`);
       secondaryReasons.push(`Monthly cash flow: $${Math.round(mainMonthlyCashFlow)}`);
+      
+      // Add market intelligence insights
+      if (marketIntelligenceAnalysis.marketInsights.length > 0) {
+        secondaryReasons.push(marketIntelligenceAnalysis.marketInsights[0]); // Add first insight
+      }
       
       if (leverageAnalysis.opportunityCost.capitalEfficiencyGap > 1.5) {
         secondaryReasons.push('Leverage optimization enables portfolio expansion');
       }
     }
+    // Secondary BUY scenario: Exceptional cash flow even if slightly below hurdle rate
+    else if (mainMonthlyCashFlow >= 1500 && fundamentals.capRate >= 0.05) {
+      verdict = 'BUY';
+      confidence = 75;
+      primaryReason = `Exceptional cash flow of $${Math.round(mainMonthlyCashFlow)}/month with ${fundamentals.capRate.toFixed(1)}% cap rate`;
+      secondaryReasons.push('Strong income generation offsets slightly lower returns');
+      secondaryReasons.push(`Property offers ${(fundamentals.cashOnCashReturn * 100).toFixed(1)}% cash-on-cash return`);
+    }
+    // Tertiary BUY scenario: Good cash flow with market-appropriate pricing
+    else if (hasPositiveCashFlow && mainMonthlyCashFlow >= 750 && 
+             fundamentals.capRate >= (marketThresholds.marketMedianCapRate - 0.01) &&
+             !priceAboveWalkAway) {
+      verdict = 'BUY';
+      confidence = 70;
+      primaryReason = `Solid cash flow property with $${Math.round(mainMonthlyCashFlow)}/month income`;
+      secondaryReasons.push(`${fundamentals.capRate.toFixed(1)}% cap rate near ${marketThresholds.marketMedianCapRate.toFixed(1)}% market median`);
+      secondaryReasons.push('Price aligns with valuation models');
+    }
 
     // ===== ENHANCED CONFIDENCE ADJUSTMENTS AND RISK ASSESSMENT =====
+    
+    // Apply property class confidence adjustments (Phase 2B)
+    confidence = Math.max(20, Math.min(95, confidence + classRiskAdjustments.confidenceBoost));
+    
+    // Add property classification information to ALL verdicts (Phase 2B)
+    secondaryReasons.push(`${propertyClassificationAnalysis.classification.classDescription} (${propertyClassificationAnalysis.classification.confidence}% classification confidence)`);
+    
+    // Add property class insights to secondary reasons
+    if (propertyClassificationAnalysis.insights.length > 0) {
+      secondaryReasons.push(...propertyClassificationAnalysis.insights.slice(0, 2));
+    }
+    
+    // Phase 3: Add strategy alignment insights to secondary reasons
+    if (strategyAlignmentAnalysis.insights.length > 0) {
+      secondaryReasons.push(...strategyAlignmentAnalysis.insights.slice(0, 2));
+    }
+    
+    // Phase 3: Apply strategy alignment confidence adjustments
+    const strategyAlignment = strategyAlignmentAnalysis.alignment;
+    if (strategyAlignment.alignmentScore < 60) {
+      confidence = Math.max(30, confidence - 15);
+      keyRisks.push('Strategy misalignment increases execution risk');
+    } else if (strategyAlignment.alignmentScore >= 85) {
+      confidence = Math.min(95, confidence + 5);
+    }
+    
+    // Phase 3: Add strategy-specific risk factors
+    const criticalMisalignments = strategyAlignment.misalignments.filter(
+      m => m.severity === 'critical'
+    );
+    
+    criticalMisalignments.forEach(misalignment => {
+      keyRisks.push(misalignment.impact);
+      if (misalignment.type === 'experience_risk') {
+        confidence = Math.max(25, confidence - 20);
+      }
+    });
+    
+    // Add property class risk factors
+    if (propertyClassificationAnalysis.classification.riskLevel === 'high' || 
+        propertyClassificationAnalysis.classification.riskLevel === 'very_high') {
+      keyRisks.push(`${propertyClassificationAnalysis.classification.classDescription} requires experienced management`);
+    }
+    
+    if (propertyClassificationAnalysis.classification.managementIntensity === 'high') {
+      keyRisks.push('High management intensity - budget for additional time and costs');
+    }
     
     // Apply "too good to be true" penalty
     if (tooGoodFlags.isSuspicious) {
@@ -936,7 +1676,28 @@ export class InvestmentDecisionEngine {
     }
 
     // Calculate property quality score
-    const propertyScore = this.calculatePropertyScore(fundamentals, marketContext, leverageAnalysis);
+    let propertyScore;
+    try {
+      propertyScore = this.calculatePropertyScore(fundamentals, marketContext, leverageAnalysis);
+      logger.info('Property score calculated successfully:', { 
+        propertyScore,
+        fundamentalsExists: !!fundamentals,
+        marketContextExists: !!marketContext,
+        leverageAnalysisExists: !!leverageAnalysis 
+      });
+    } catch (scoreError) {
+      logger.error('Error calculating property score, using fallback:', scoreError);
+      propertyScore = 35; // Fallback score instead of potentially undefined
+    }
+    
+    logger.info('Verdict generation complete:', {
+      verdict,
+      confidence: Math.round(confidence),
+      propertyScore,
+      cashFlow: fundamentals.cashFlow,
+      capRate: fundamentals.capRate,
+      dscr: fundamentals.dscr
+    });
     
     return {
       verdict,

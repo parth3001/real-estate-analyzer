@@ -467,21 +467,33 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
           processingMethod: enhancedGoals.processingMethod
         });
         
+        // Map portfolio strategy to investment goals for backward compatibility
+        let investmentGoals: 'cash_flow' | 'appreciation' | 'balanced' = 'balanced';
+        if (enhancedGoals.portfolioStrategy === 'cashflow') investmentGoals = 'cash_flow';
+        else if (enhancedGoals.portfolioStrategy === 'appreciation') investmentGoals = 'appreciation';
+        
         const userContext = {
           availableCash: dealData.totalInvestment || dealData.purchasePrice, // Assume they have the full purchase price
           experienceLevel: enhancedGoals.experienceLevel || 'intermediate' as const,
           riskTolerance: enhancedGoals.riskTolerance || 'moderate' as const,
-          investmentGoals: 'balanced' as const // Keep as fallback for now
+          investmentGoals
         };
         
         // Get predictions from AI insights if available
         const predictions = analysis.aiInsights?.boldPredictions || null;
         
+        // Pass market intelligence from analysis instead of null
+        const marketIntelligence = {
+          marketData: analysis.marketData,
+          marketInsights: analysis.marketInsights,
+          investmentTiming: analysis.investmentTiming
+        };
+        
         analysis.investmentDecision = await decisionEngine.generateInvestmentDecision(
           dealData,
           analysis,
           predictions,
-          null, // marketIntelligence - will add this later
+          marketIntelligence,
           userContext,
           enhancedGoals // NEW: Pass enhanced goals for personalized messaging
         );
@@ -489,6 +501,10 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
         logger.info('Investment decision generated:', {
           verdict: analysis.investmentDecision.verdict,
           confidence: analysis.investmentDecision.confidence,
+          score: analysis.investmentDecision.score,
+          scoreType: typeof analysis.investmentDecision.score,
+          scoreUndefined: analysis.investmentDecision.score === undefined,
+          scoreNull: analysis.investmentDecision.score === null,
           primaryReason: analysis.investmentDecision.primaryReason
         });
         

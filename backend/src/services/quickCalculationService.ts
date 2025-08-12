@@ -85,14 +85,14 @@ export class QuickCalculationService {
     
     // Key metrics
     const totalInvestment = downPayment + (closingCosts || 0) + (capitalInvestments || 0);
-    const capRate = purchasePrice > 0 ? (annualNOI / purchasePrice) * 100 : 0;
-    const cashOnCashReturn = totalInvestment > 0 ? (annualCashFlow / totalInvestment) * 100 : 0;
+    const capRate = purchasePrice > 0 ? (annualNOI / purchasePrice) : 0;
+    const cashOnCashReturn = totalInvestment > 0 ? (annualCashFlow / totalInvestment) : 0;
     const dscr = annualDebtService > 0 ? annualNOI / annualDebtService : Infinity;
     
     // New metrics for enhanced calculation accuracy
-    const debtYield = loanAmount > 0 ? (annualNOI / loanAmount) * 100 : 0;
-    const grossYield = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) * 100 : 0;
-    const operatingExpenseRatio = effectiveMonthlyIncome > 0 ? (totalOperatingExpenses / effectiveMonthlyIncome) * 100 : 0;
+    const debtYield = loanAmount > 0 ? (annualNOI / loanAmount) : 0;
+    const grossYield = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) : 0;
+    const operatingExpenseRatio = effectiveMonthlyIncome > 0 ? (totalOperatingExpenses / effectiveMonthlyIncome) : 0;
     
     return {
       monthlyAnalysis: {

@@ -46,7 +46,7 @@ export class FinancialCalculations {
   }
 
   /**
-   * Calculate Cap Rate
+   * Calculate Cap Rate (returns as percentage, e.g. 6.5 for 6.5%)
    */
   static calculateCapRate(noi: number, purchasePrice: number): number {
     if (!purchasePrice) return 0;
@@ -54,7 +54,7 @@ export class FinancialCalculations {
   }
 
   /**
-   * Calculate Cash on Cash Return
+   * Calculate Cash on Cash Return (returns as percentage, e.g. 12 for 12%)
    */
   static calculateCashOnCashReturn(annualCashFlow: number, totalInvestment: number): number {
     if (!totalInvestment) return 0;
