@@ -8,11 +8,9 @@ import {
   Chip,
   Stack,
   Fade,
-  Grow,
-  Slide
+  Grow
 } from '@mui/material';
 import {
-  TrendingUp,
   LocationOn,
   CompareArrows,
   Psychology,
@@ -30,7 +28,7 @@ interface SmartCard {
   id: string;
   title: string;
   subtitle: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<any>;
   preview: string;
   confidence: 'high' | 'medium' | 'low';
   priority: 1 | 2 | 3 | 4 | 5; // Phase priority
@@ -38,8 +36,7 @@ interface SmartCard {
 }
 
 const SmartInvestmentStack: React.FC<SmartInvestmentStackProps> = ({
-  investmentDecision,
-  analysisData
+  investmentDecision
 }) => {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [unlockedPhases, setUnlockedPhases] = useState<Set<number>>(new Set([1])); // Phase 1 always unlocked
@@ -225,7 +222,7 @@ const SmartInvestmentStack: React.FC<SmartInvestmentStackProps> = ({
                           justifyContent: 'center'
                         }}
                       >
-                        <card.icon sx={{ fontSize: 24, color: appleColors.blue[500] }} />
+                        {React.createElement(card.icon, { sx: { fontSize: 24, color: appleColors.blue[500] } })}
                       </Box>
                       <Box>
                         <Typography variant="h6" fontWeight={600}>
