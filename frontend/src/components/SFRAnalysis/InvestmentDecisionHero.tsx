@@ -207,12 +207,29 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
     };
     
     // Backend already has all the analysis - no frontend scoring needed
-    // Use the backend verdict and messaging
-    safeMessage = InvestmentMessagingEngine.generateMessage(
+    // Generate contextual messaging but preserve backend's primary reason
+    const generatedMessage = InvestmentMessagingEngine.generateMessage(
       investmentDecision.verdict,
       goalContext,
       metrics
     );
+    
+    // CRITICAL FIX: Always use backend's primaryReason over frontend's generic message
+    // The backend has sophisticated market intelligence, property classification, and strategy alignment
+    // that generates specific, actionable reasons. The frontend's generic messages lose this context.
+    safeMessage = {
+      ...generatedMessage,
+      primaryReason: investmentDecision.primaryReason || generatedMessage.primaryReason
+    };
+    
+    // Debug logging to verify fix
+    if (investmentDecision.primaryReason !== generatedMessage.primaryReason) {
+      console.log('🔧 INVESTMENT DECISION FIX APPLIED:', {
+        backendReason: investmentDecision.primaryReason,
+        frontendGenericReason: generatedMessage.primaryReason,
+        usingBackendReason: true
+      });
+    }
   } else {
     // Fallback when no analysis data
     safeMessage = {
@@ -259,7 +276,9 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           bgColor: appleColors.red[50],
           borderColor: appleColors.red[200],
           label: goalContextualVerdictLabel,
-          description: 'Does not meet investment criteria'
+          description: investmentDecision.confidence < 50 
+            ? 'Some concerns but may work for specific strategies'
+            : 'Does not meet investment criteria'
         };
       default:
         return {
