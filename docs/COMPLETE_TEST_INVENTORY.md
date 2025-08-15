@@ -72,6 +72,15 @@ cd backend && npm run test:integration
 - `src/tests/integration/calculation-benchmarks.test.ts` - **FIXED**: 13/13 tests passing (Jan 31, 2025)
 - `src/tests/integration/ai-score-validation.test.ts` - **FIXED**: 2/2 tests passing (Jan 31, 2025)
 
+#### **Industry Standard Validation** ✅ CRITICAL
+- `src/tests/integration/industry-standard-validation.test.ts` - **VALIDATION AGAINST INDUSTRY TOOLS**
+  - ✅ BiggerPockets Calculator validation (exact match for fundamental calculations)
+  - ✅ Zillow Rental Manager calculation comparison
+  - ✅ RealtyMogul investment calculator validation
+  - ✅ Roofstock marketplace metrics validation
+  - **Purpose:** Ensures our calculations match industry-standard real estate investment tools
+  - **Importance:** Critical for user trust and calculation accuracy validation
+
 #### **Investment Decision Engine Tests** ✅ ALL PASSING
 - `src/tests/integration/investment-decision-realistic-scenarios.test.ts` - **NEW**: 10/10 tests passing (Jan 2025)
   - ✅ First impression quality tests (BUY, NEGOTIATE, PASS verdicts)
@@ -157,21 +166,29 @@ cd backend && npm run test:e2e:headless
    - All 7 financial calculation tests passing
    - Cap rate, cash flow, NOI calculations validated
 
-2. **Performance Layer 1** ✅ 
+2. **Industry Standard Validation** ✅
+   ```bash
+   npm test -- industry-standard-validation
+   ```
+   - BiggerPockets calculator exact match
+   - Zillow, RealtyMogul, Roofstock validation
+   - Critical for user trust and accuracy
+
+3. **Performance Layer 1** ✅ 
    ```bash
    npm test -- quickCalculation
    ```
    - Quick calculations under 50ms
    - Layer 1 performance architecture working
 
-3. **Investment Decision Engine** ✅
+4. **Investment Decision Engine** ✅
    ```bash
    npm test -- investment-decision-realistic-scenarios
    ```
    - Investment verdict accuracy across all user scenarios
    - Strategy-specific analysis validation
 
-4. **Display Accuracy** 🔍
+5. **Display Accuracy** 🔍
    ```bash
    npm run test:display-bugs
    ```
@@ -294,14 +311,196 @@ open frontend/coverage/index.html
 
 ---
 
-## 🚀 **Next Steps**
+## 🔄 **PORTFOLIO FEATURE - REGRESSION TESTING REQUIREMENTS**
 
-1. **Fix Cypress Authentication Tests** - High priority for production readiness
-2. **Complete E2E Test Suite Run** - Get full status of all Cypress tests  
-3. **Validate Performance Layer 2** - After implementing AI caching
-4. **Add Component Unit Tests** - Expand frontend test coverage
+### **Overview**
+The Portfolio Intelligence & Optimization feature is the first major module addition beyond SFR analysis. All existing tests MUST continue passing after portfolio implementation.
+
+### **Regression Test Matrix**
+
+#### **1. CRITICAL - Must Not Break (P0)**
+These tests validate core functionality that portfolio features interact with directly:
+
+| Test Suite | File | Impact Area | Portfolio Integration Point |
+|------------|------|-------------|---------------------------|
+| **Financial Calculations** | `financial-accuracy.test.ts` | Core math | Portfolio aggregates these calculations |
+| **Quick Calculation** | `quickCalculation.test.ts` | Performance | Portfolio context adds to payload |
+| **SFR Analyzer** | `SFRAnalyzer.test.ts` | Property analysis | Enhanced with portfolio context |
+| **Investment Decision** | `investment-decision-realistic-scenarios.test.ts` | Decision engine | Enhanced with portfolio fit analysis |
+| **Deal CRUD** | `deals.test.ts` | Data persistence | Deals now have optional portfolioId |
+| **Display Accuracy** | `display-accuracy.test.ts` | UI data | Portfolio adds new display fields |
+| **Industry Standards** | `industry-standard-validation.test.ts` | Calculation accuracy | Portfolio must maintain industry-standard calculations |
+
+**Regression Requirements:**
+- ✅ All financial calculations must remain accurate (0.01% tolerance)
+- ✅ Quick calculation must maintain <50ms response time with portfolio context
+- ✅ SFR analysis must work with AND without portfolio selection
+- ✅ Investment decisions must be backward compatible (no portfolio = current behavior)
+- ✅ Existing deals without portfolioId must continue working
+- ✅ All existing UI fields must display correctly
+- ✅ Industry-standard calculations (BiggerPockets, Zillow, etc.) must remain exact matches
+
+#### **2. HIGH PRIORITY - Monitor Closely (P1)**
+These tests may need updates but core functionality must remain:
+
+| Test Suite | File | Potential Impact | Required Validation |
+|------------|------|-----------------|-------------------|
+| **API Endpoints** | `backend-frontend-sync.test.ts` | New endpoints | Existing endpoints unchanged |
+| **Database Operations** | `database.test.ts` | New collections | Existing collections intact |
+| **External Services** | `externalServices.test.ts` | Enhanced usage | Same API contracts |
+| **Authentication** | `auth.test.ts` | User context | Auth flow unchanged |
+| **Frontend Components** | `SFRPropertyForm.test.tsx` | UI updates | Form functionality intact |
+| **Analysis Results** | `AnalysisResults.test.tsx` | Enhanced display | Base display unchanged |
+
+**Regression Requirements:**
+- ✅ All existing API endpoints maintain same request/response format
+- ✅ Database migrations don't affect existing collections
+- ✅ External API rate limits accommodate portfolio usage
+- ✅ Authentication and authorization unchanged for existing features
+- ✅ Component props remain backward compatible
+
+#### **3. ENHANCEMENT TESTS - New Validations (P2)**
+New tests to validate portfolio doesn't break existing features:
+
+```typescript
+// New regression test suite: portfolio-regression.test.ts
+describe('Portfolio Feature Regression Tests', () => {
+  describe('Backward Compatibility', () => {
+    it('should analyze property without portfolio context', async () => {
+      const result = await analyzeProperty(testData);
+      expect(result.investmentDecision).toBeDefined();
+      expect(result.investmentDecision.portfolioContext).toBeUndefined();
+    });
+
+    it('should maintain existing deal structure', async () => {
+      const deal = await createDeal(testDeal);
+      expect(deal.portfolioId).toBeUndefined(); // Optional field
+      expect(deal.analysis).toBeDefined(); // Existing fields intact
+    });
+
+    it('should preserve quick calculation performance', async () => {
+      const start = Date.now();
+      const result = await quickCalculate(testData);
+      expect(Date.now() - start).toBeLessThan(50);
+    });
+  });
+
+  describe('Migration Safety', () => {
+    it('should not modify existing deals during migration', async () => {
+      const beforeMigration = await getDeal(existingDealId);
+      await runPortfolioMigration();
+      const afterMigration = await getDeal(existingDealId);
+      
+      // Core fields unchanged
+      expect(afterMigration.purchasePrice).toBe(beforeMigration.purchasePrice);
+      expect(afterMigration.analysis).toEqual(beforeMigration.analysis);
+    });
+  });
+
+  describe('Performance Impact', () => {
+    it('should not degrade SFR analysis performance', async () => {
+      const timings = [];
+      for (let i = 0; i < 10; i++) {
+        const start = Date.now();
+        await analyzeProperty(testData);
+        timings.push(Date.now() - start);
+      }
+      const avgTime = timings.reduce((a, b) => a + b) / timings.length;
+      expect(avgTime).toBeLessThan(5000); // <5s average
+    });
+  });
+});
+```
+
+### **Test Execution Plan for Portfolio Feature**
+
+#### **Phase 1: Pre-Implementation Baseline (Week 0)**
+```bash
+# Capture baseline metrics
+npm run test:all > baseline-test-results.txt
+npm run test:benchmarks > baseline-performance.txt
+npm run test:coverage > baseline-coverage.txt
+```
+
+#### **Phase 2: During Development (Weeks 1-14)**
+```bash
+# Daily regression runs
+npm run test:regression:daily
+
+# Weekly full suite
+npm run test:regression:weekly
+```
+
+#### **Phase 3: Pre-Deployment Validation (Week 14)**
+```bash
+# Complete regression suite
+npm run test:regression:complete
+
+# Performance comparison
+npm run test:regression:performance-compare
+
+# Coverage analysis
+npm run test:regression:coverage-compare
+```
+
+### **Regression Test Scripts**
+Add to `package.json`:
+```json
+{
+  "scripts": {
+    "test:regression:daily": "npm test -- financial-accuracy quickCalculation SFRAnalyzer investment-decision",
+    "test:regression:weekly": "npm test && npm run test:integration && npm run test:e2e:headless",
+    "test:regression:complete": "npm run test:all && npm run test:regression:portfolio",
+    "test:regression:portfolio": "npm test -- portfolio-regression",
+    "test:regression:performance-compare": "node scripts/compare-performance.js",
+    "test:regression:coverage-compare": "node scripts/compare-coverage.js"
+  }
+}
+```
+
+### **Success Criteria for Portfolio Feature Launch**
+
+#### **Regression Testing Gates**
+- [ ] **100% backward compatibility**: All existing tests pass without modification
+- [ ] **Performance maintained**: No degradation >10% in any performance metric
+- [ ] **Coverage maintained**: Overall coverage doesn't drop below current 80%
+- [ ] **Zero breaking changes**: All existing API contracts honored
+- [ ] **Data integrity**: All existing data remains accessible and unmodified
+
+#### **New Feature Testing Gates**
+- [ ] **Portfolio CRUD**: 100% test coverage for new services
+- [ ] **Analytics Engine**: 95% coverage for calculation logic
+- [ ] **Migration Safety**: 100% success rate on test data
+- [ ] **Performance Targets**: <3s for 50-property portfolio analytics
+- [ ] **Integration Tests**: All portfolio-deal relationships validated
+
+### **Monitoring During Rollout**
+
+#### **Canary Testing Strategy**
+1. **5% rollout**: Monitor error rates, performance metrics
+2. **25% rollout**: Validate no regression in user workflows
+3. **50% rollout**: Check database performance under load
+4. **100% rollout**: Full production validation
+
+#### **Rollback Criteria**
+- Any P0 test failure rate >1%
+- Performance degradation >20%
+- Error rate increase >5%
+- User-reported breaking changes
 
 ---
 
-**Last Updated:** January 26, 2025  
-**Test Coverage Target:** 80% overall, 95% critical paths
+## 🚀 **Next Steps**
+
+1. **Establish Baseline Metrics** - Run full test suite before portfolio development
+2. **Fix Cypress Authentication Tests** - High priority for production readiness
+3. **Complete E2E Test Suite Run** - Get full status of all Cypress tests  
+4. **Implement Portfolio Regression Suite** - Before starting portfolio development
+5. **Set Up Continuous Regression Testing** - Automated daily/weekly runs
+6. **Validate Performance Layer 2** - After implementing AI caching
+7. **Add Component Unit Tests** - Expand frontend test coverage
+
+---
+
+**Last Updated:** January 26, 2025 (Updated August 15, 2025 for Portfolio Feature)  
+**Test Coverage Target:** 80% overall, 95% critical paths, 100% portfolio regression

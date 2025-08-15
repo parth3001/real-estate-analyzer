@@ -247,6 +247,784 @@ SFRAnalysis.tsx
 - Real-time calculation engine
 - Basic state management
 
+---
+
+# Epic: Portfolio Intelligence & Optimization
+
+**Priority**: P0 (Revenue Critical + Competitive Moat)  
+**Business Impact**: Very High (+65% revenue, +45% professional tier conversion)  
+**Technical Complexity**: High (First major module addition beyond SFR/MF)  
+**Timeline**: 14 weeks (Q1-Q2 2025)  
+**Team**: 2 full-stack developers + 1 UX designer + 1 product manager
+
+## 🎯 **EPIC OVERVIEW**
+
+### **Problem Statement**
+Current platform analyzes properties in isolation, ignoring portfolio context that drives institutional investment decisions. Individual investors lack sophisticated portfolio management tools available to institutions, missing opportunities for diversification, risk optimization, and strategic capital allocation.
+
+### **Solution Vision**
+Transform our single-property analysis platform into institutional-grade portfolio management system with:
+- Portfolio-context property evaluation that considers diversification impact
+- Advanced portfolio analytics with risk scoring and performance tracking  
+- Professional rebalancing recommendations with specific action plans
+- Seamless integration with existing Investment Decision Engine v2.1
+
+### **Target Users**
+- **Primary**: Individual investors with 2+ properties (60% of professional tier users)
+- **Secondary**: Family offices with 10-50 properties (enterprise tier growth)  
+- **Tertiary**: Small institutions with 50+ properties (institutional tier creation)
+
+### **Success Criteria**
+- [ ] Portfolio dashboard loads <3s with 50+ properties
+- [ ] Property analysis includes portfolio context in <4s total time
+- [ ] 45% increase in professional tier conversion ($49/month)
+- [ ] 25% increase in enterprise tier conversion ($149/month)
+- [ ] 85% user satisfaction with portfolio onboarding experience
+- [ ] 70% adoption rate among users with 3+ properties
+
+---
+
+## 🏗️ **THEME 1: PORTFOLIO FOUNDATION & ONBOARDING**
+
+### **User Story PF-1.1: Portfolio Creation & Strategy Setup**
+```
+As an investor with multiple properties,
+I want to create a portfolio with my investment strategy and goals,
+So that I can get strategy-aligned recommendations and analysis.
+```
+
+**Business Context**: Most retail investors never articulate their strategy, leading to random property acquisitions. Institutional investors always start with strategy. This is where we educate and guide users toward professional thinking.
+
+**Acceptance Criteria**:
+- [ ] **Portfolio Creation Wizard**:
+  - Portfolio name and description
+  - Investment strategy selection (Cash Flow, Appreciation, Balanced, Tax Advantage)
+  - Risk tolerance assessment (Conservative, Moderate, Aggressive)
+  - Target portfolio size and timeline
+  - Geographic preferences and constraints
+- [ ] **Strategy Validation**:
+  - Consistency checks between goals and risk tolerance
+  - Educational content explaining strategy implications
+  - Warning flags for conflicting objectives
+- [ ] **Default Settings Configuration**:
+  - Concentration risk thresholds (40% geographic, 60% property class)
+  - Rebalancing alert preferences
+  - Benchmark selections (REITs, local market indices)
+
+**Technical Requirements**:
+```typescript
+interface PortfolioStrategy {
+  primaryGoal: 'CashFlow' | 'Appreciation' | 'Balanced' | 'TaxAdvantage';
+  riskTolerance: 'Conservative' | 'Moderate' | 'Aggressive';
+  targetHoldPeriod: number; // years
+  targetPortfolioSize: number; // number of properties
+  targetPortfolioValue: number; // dollar amount
+  geographicPreference: string[]; // states/cities
+  propertyTypePreference: ('SFR' | 'MF' | 'Commercial')[];
+}
+```
+
+**Definition of Done**:
+- [ ] Strategy setup wizard guides users through all decisions
+- [ ] Strategy consistency validation prevents conflicting goals
+- [ ] Educational content explains each strategy's implications
+- [ ] Default settings align with stated strategy
+- [ ] Portfolio created successfully and visible in dashboard
+
+---
+
+### **User Story PF-1.2: Bulk Property Import & Data Migration**
+```
+As an investor with existing properties,
+I want to quickly import my current portfolio with guided data entry,
+So that I can start benefiting from portfolio analytics without manual data friction.
+```
+
+**Business Context**: This is the make-or-break moment. If import is painful, users abandon. CBRE clients often have 20+ properties across multiple markets. Need to make this feel effortless while capturing essential data.
+
+**Acceptance Criteria**:
+- [ ] **Import Method Selection**:
+  - Guided wizard (recommended for <10 properties)
+  - CSV upload with template (for 10+ properties)  
+  - Integration options (property management software - future)
+- [ ] **Guided Property Entry Wizard** (per property):
+  - Address with validation and auto-complete
+  - Basic financials (purchase price, date, current rent, mortgage)
+  - Property details (type, size, year built, condition)
+  - Current status (occupied, vacant, owner-occupied)
+  - Strategic notes (why acquired, planned exit)
+- [ ] **Smart Data Enhancement**:
+  - Market data auto-population from existing APIs
+  - Property value estimates from market intelligence
+  - Rent validation against market rates
+  - Tax rate estimates from local data
+- [ ] **Bulk Operations**:
+  - Copy similar properties to speed entry
+  - Batch edit common fields (management company, loan terms)
+  - Save-and-resume capability (don't lose progress)
+  - Progress tracking with estimated completion time
+
+**UX Requirements**:
+- Maximum 3 minutes per property for basic onboarding
+- Mobile-responsive for users who want to input while visiting properties  
+- Clear progress indicators and time estimates
+- Smart defaults reduce required fields by 50%
+
+**Technical Requirements**:
+```typescript
+interface PropertyImportData {
+  basic: {
+    address: string;
+    purchaseDate: Date;
+    purchasePrice: number;
+    propertyType: 'SFR' | 'MF' | 'Commercial';
+  };
+  financial: {
+    currentRent: number;
+    mortgageBalance?: number;
+    monthlyPayment?: number;
+    operatingExpenses?: number;
+  };
+  operational: {
+    status: 'Occupied' | 'Vacant' | 'OwnerOccupied';
+    managementType: 'Self' | 'Professional';
+    lastMaintenanceDate?: Date;
+  };
+  strategic: {
+    acquisitionReason: string;
+    exitStrategy: 'Hold' | 'Sell' | 'Refinance' | 'Undecided';
+    strategicRole: 'Core' | 'Satellite' | 'Opportunistic';
+  };
+}
+```
+
+**Definition of Done**:
+- [ ] Users can import 10 properties in under 30 minutes
+- [ ] 95% data accuracy with validation
+- [ ] Zero data loss during session interruptions
+- [ ] CSV template handles 50+ properties efficiently
+- [ ] Smart defaults reduce input time by 50%
+
+---
+
+### **User Story PF-1.3: Historical Performance Baseline**
+```
+As an investor importing existing properties,
+I want to establish historical performance baselines for accurate tracking,
+So that I can understand what's working and get realistic future projections.
+```
+
+**Business Context**: Without historical context, portfolio analytics are meaningless. Institutional investors obsess over track records. This creates the foundation for all future performance measurement and optimization.
+
+**Acceptance Criteria**:
+- [ ] **Historical Data Collection**:
+  - Purchase details (price, date, total initial investment)
+  - Rent history (starting rent, current rent, major increases)
+  - Major expenses (renovations, repairs, vacancy periods)
+  - Refinancing history and terms
+- [ ] **Performance Calculations**:
+  - Actual cap rate from acquisition to current
+  - IRR based on actual cash flows
+  - Total return (cash flow + appreciation)
+  - Comparison to initial projections (if available)
+- [ ] **Data Quality Assessment**:
+  - Completeness scoring (green/yellow/red indicators)
+  - Confidence intervals for calculated returns
+  - Missing data impact analysis
+  - Recommendations for improving data quality
+- [ ] **Benchmark Integration**:
+  - Market-appropriate benchmarks by location and property type
+  - Peer comparison (similar investors, similar strategies)
+  - Risk-adjusted performance metrics
+  - Market cycle context (when properties were acquired)
+
+**Technical Requirements**:
+```typescript
+interface HistoricalPerformance {
+  actualMetrics: {
+    actualCapRate: number;
+    actualCashOnCash: number;
+    actualIRR: number;
+    totalReturn: number;
+    holdingPeriod: number; // months
+  };
+  benchmarkComparison: {
+    vsMarketIndex: number;
+    vsPeerProperties: number;
+    vsREITs: number;
+    marketCycleContext: string;
+  };
+  dataQuality: {
+    completenessScore: number; // 0-100
+    confidenceLevel: 'High' | 'Medium' | 'Low';
+    missingDataItems: string[];
+    improvementSuggestions: string[];
+  };
+}
+```
+
+**Definition of Done**:
+- [ ] Historical performance calculated for all imported properties
+- [ ] Benchmark comparisons available for each property
+- [ ] Data quality assessment completed with improvement suggestions
+- [ ] Performance trends visualized and understandable
+- [ ] Foundation established for ongoing performance tracking
+
+---
+
+## 🏗️ **THEME 2: PORTFOLIO ANALYTICS & INTELLIGENCE**
+
+### **User Story PA-2.1: Comprehensive Portfolio Dashboard**
+```
+As an investor with multiple properties,
+I want a comprehensive portfolio dashboard showing key metrics and insights,
+So that I can quickly assess portfolio health and identify areas needing attention.
+```
+
+**Business Context**: The portfolio dashboard is where users spend 70% of their time. This is our opportunity to demonstrate institutional-level sophistication while maintaining simplicity. Must load fast and provide immediate value.
+
+**Acceptance Criteria**:
+- [ ] **Portfolio Summary Metrics**:
+  - Total portfolio value (current market estimates)
+  - Total equity and leverage ratio
+  - Aggregate monthly and annual cash flow
+  - Portfolio-weighted cap rate and cash-on-cash return
+  - Total return and IRR across all properties
+- [ ] **Geographic Visualization**:
+  - Interactive map with property locations and performance indicators
+  - Market tier color coding (Tier 1/2/3 from existing system)
+  - Concentration risk visualization with heat mapping
+  - Market performance comparison across locations
+- [ ] **Performance Dashboard**:
+  - Portfolio performance trending (1Y, 3Y, 5Y, inception)
+  - Cash flow trends with projections
+  - Occupancy tracking and vacancy impact analysis
+  - Market value appreciation across properties
+- [ ] **Risk & Diversification Overview**:
+  - Geographic concentration warnings (>40% in single market)
+  - Property class distribution (A/B/C mix)
+  - Leverage analysis with DSCR aggregation
+  - Correlation analysis between properties/markets
+- [ ] **Action Items Panel**:
+  - Properties requiring immediate attention
+  - Upcoming lease expirations and renewal dates
+  - Refinancing opportunities with rate analysis
+  - Disposition candidates based on performance
+  - Market expansion opportunities
+
+**Performance Requirements**:
+- Dashboard loads in <3 seconds with 50+ properties
+- Real-time updates when property data changes
+- Mobile-responsive layout for on-the-go monitoring
+
+**Technical Requirements**:
+```typescript
+interface PortfolioDashboard {
+  summary: {
+    totalProperties: number;
+    totalValue: number;
+    totalEquity: number;
+    leverageRatio: number;
+    portfolioCapRate: number;
+    monthlyNetCashFlow: number;
+    portfolioIRR: number;
+  };
+  geographic: {
+    properties: Array<{
+      id: string;
+      location: { lat: number; lng: number; };
+      value: number;
+      performance: number;
+      marketTier: 1 | 2 | 3;
+      riskLevel: 'Low' | 'Medium' | 'High';
+    }>;
+    concentrationAnalysis: {
+      topMarkets: Array<{ market: string; percentage: number; }>;
+      concentrationRisk: number; // 0-100 score
+    };
+  };
+  actionItems: Array<{
+    type: 'Attention' | 'Opportunity' | 'Risk';
+    priority: 'High' | 'Medium' | 'Low';
+    property: string;
+    description: string;
+    recommendation: string;
+    deadline?: Date;
+  }>;
+}
+```
+
+**Definition of Done**:
+- [ ] Dashboard shows all key metrics accurately
+- [ ] Geographic visualization renders correctly with performance indicators
+- [ ] Performance calculations match manual verification
+- [ ] Risk indicators trigger at appropriate thresholds
+- [ ] Action items update dynamically based on property changes
+- [ ] Mobile responsiveness verified across devices
+- [ ] Load time consistently under 3 seconds
+
+---
+
+### **User Story PA-2.2: Advanced Diversification Analysis**
+```
+As an investor building a portfolio,
+I want detailed diversification analysis across multiple dimensions,
+So that I can understand concentration risks and optimize my allocation.
+```
+
+**Business Context**: Diversification is the only free lunch in investing. Most individual investors are over-concentrated without realizing it. This analysis should be educational while being actionable - showing current state, ideal state, and path to improvement.
+
+**Acceptance Criteria**:
+- [ ] **Geographic Diversification Analysis**:
+  - State and city concentration breakdown
+  - Market tier allocation (Tier 1/2/3) with target recommendations
+  - Correlation analysis between markets (how properties move together)
+  - Warning thresholds (>40% in single market flagged as high risk)
+  - Geographic expansion recommendations with market analysis
+- [ ] **Property Class Diversification**:
+  - A/B/C property distribution with risk-return analysis
+  - Age diversification (construction decades and implications)
+  - Size diversification (property value ranges)
+  - Condition diversification (maintenance requirements)
+- [ ] **Strategy & Timeline Diversification**:
+  - Cash flow vs appreciation property mix
+  - Hold period diversification analysis
+  - Exit strategy distribution and coordination
+  - Acquisition timing diversification (market cycle analysis)
+- [ ] **Risk Concentration Scoring**:
+  - Overall diversification score (0-100) with explanation
+  - Specific concentration risk flags with impact analysis
+  - Improvement recommendations prioritized by impact
+  - Scenario analysis ("what if Dallas market crashes?")
+
+**Educational Components**:
+- Explanation of why diversification matters with real examples
+- Historical analysis of concentration risk impacts
+- Interactive tools to explore "what-if" scenarios
+
+**Technical Requirements**:
+```typescript
+interface DiversificationAnalysis {
+  geographic: {
+    breakdown: Array<{ location: string; percentage: number; value: number; }>;
+    concentrationScore: number; // 0-100 (higher = more concentrated)
+    correlationMatrix: number[][]; // market correlation analysis
+    riskAdjustment: number; // portfolio risk reduction from diversification
+  };
+  propertyClass: {
+    distribution: { classA: number; classB: number; classC: number; };
+    riskReturn: Array<{ class: string; avgReturn: number; riskLevel: number; }>;
+    optimization: { target: any; current: any; improvement: string; };
+  };
+  timeline: {
+    acquisitionTiming: Array<{ year: number; count: number; marketCycle: string; }>;
+    holdPeriods: Array<{ range: string; percentage: number; }>;
+    exitCoordination: Array<{ year: number; plannedExits: number; }>;
+  };
+  scoring: {
+    overallScore: number;
+    componentScores: {
+      geographic: number;
+      propertyClass: number;
+      timeline: number;
+    };
+    improvements: Array<{
+      action: string;
+      impact: number;
+      difficulty: 'Easy' | 'Medium' | 'Hard';
+      timeline: string;
+    }>;
+  };
+}
+```
+
+**Definition of Done**:
+- [ ] Accurate diversification calculations across all dimensions
+- [ ] Visual representations clearly show current vs optimal allocation
+- [ ] Risk scoring methodology is transparent and educational
+- [ ] Recommendations are specific, prioritized, and actionable
+- [ ] Correlation analysis provides meaningful insights
+- [ ] Educational content helps users understand diversification importance
+
+---
+
+### **User Story PA-2.3: Portfolio-Context Property Evaluation**
+```
+As an investor evaluating a new property acquisition,
+I want to see how this property fits within my existing portfolio context,
+So that I can optimize for portfolio goals rather than just individual property returns.
+```
+
+**Business Context**: This is the game-changing feature that justifies premium pricing. Individual property analysis ignores portfolio fit. We reject good properties that hurt portfolio balance, and we identify mediocre properties that provide perfect diversification.
+
+**Acceptance Criteria**:
+- [ ] **Portfolio Fit Analysis**:
+  - Geographic diversification impact (improves/hurts concentration)
+  - Property class balance impact (balances/increases concentration) 
+  - Market tier allocation optimization
+  - Risk concentration impact assessment
+  - Overall portfolio fit score (0-100) with detailed breakdown
+- [ ] **Enhanced Investment Decision**:
+  - Standard verdict (BUY/NEGOTIATE/PASS) plus portfolio context
+  - Portfolio-adjusted confidence scoring
+  - Capital allocation optimization advice
+  - Timing recommendations (buy now vs wait for better opportunities)
+- [ ] **Strategic Impact Analysis**:
+  - Alignment with stated portfolio strategy and goals
+  - Progress toward target portfolio allocation
+  - Opportunity cost analysis (vs other potential investments)
+  - Exit strategy coordination with existing properties
+- [ ] **Financial Impact Modeling**:
+  - Portfolio-level IRR impact projection
+  - Cash flow impact on overall portfolio
+  - Leverage impact on portfolio risk profile
+  - Tax implications and optimization opportunities
+- [ ] **Alternative Recommendations**:
+  - Better markets for similar investment capital
+  - Better property types for current diversification needs
+  - Suggested portfolio changes to accommodate this property
+  - Timeline optimization for capital deployment
+
+**Enhanced Verdict Example**:
+```
+INDIVIDUAL ANALYSIS: BUY (78/100)
+PORTFOLIO CONTEXT: EXCELLENT FIT (92/100)
+FINAL RECOMMENDATION: STRONG BUY
+
+Portfolio Impact:
+✅ Adds needed Tier 2 market exposure (15% → 25%)
+✅ Balances Class A concentration (75% → 65%) 
+⚠️ Increases portfolio leverage to 72% (monitor)
+💡 Perfect timing for 3-year expansion plan
+
+Capital Optimization:
+🎯 Use available cash + dispose of underperforming Dallas property
+💰 Expected portfolio IRR improvement: 11.2% → 12.1%
+📈 Diversification benefit worth 0.5% IRR premium
+
+Strategic Considerations:
+• Wait 6 months: Austin market may cool (15% probability)
+• Alternative: Phoenix similar returns, better diversification  
+• Coordination: Defer if Nashville Class B becomes available
+```
+
+**Technical Requirements**:
+```typescript
+interface PortfolioContextAnalysis {
+  portfolioFit: {
+    diversificationImpact: {
+      geographic: number; // -100 to +100 (improvement score)
+      propertyClass: number;
+      marketTier: number;
+      overall: number;
+    };
+    strategicAlignment: {
+      strategyScore: number; // alignment with portfolio goals
+      goalProgress: number; // progress toward targets
+      riskAlignment: number; // fit with risk tolerance
+    };
+  };
+  enhancedDecision: {
+    adjustedVerdict: 'BUY' | 'CONDITIONAL_BUY' | 'NEGOTIATE' | 'PASS' | 'DEFER';
+    adjustedConfidence: number;
+    portfolioSpecificReasons: string[];
+    timingRecommendation: string;
+  };
+  financialImpact: {
+    portfolioIRRChange: number;
+    cashFlowImpact: number;
+    riskImpact: number;
+    taxImplications: {
+      benefit: number;
+      strategy: string;
+    };
+  };
+  alternatives: Array<{
+    type: 'Market' | 'PropertyType' | 'Timing' | 'Strategy';
+    suggestion: string;
+    reasoning: string;
+    expectedBenefit: string;
+  }>;
+}
+```
+
+**Definition of Done**:
+- [ ] Portfolio context seamlessly integrated into existing Investment Decision Engine
+- [ ] Portfolio fit scoring algorithm validated against institutional practices
+- [ ] Enhanced verdict includes specific portfolio-context reasoning
+- [ ] Capital allocation advice is actionable and specific
+- [ ] Alternative suggestions are relevant and helpful
+- [ ] Analysis maintains existing <4 second response time
+- [ ] Integration preserves all existing single-property functionality
+
+---
+
+## 🏗️ **THEME 3: PORTFOLIO OPTIMIZATION & STRATEGIC PLANNING**
+
+### **User Story PO-3.1: Intelligent Rebalancing Recommendations**
+```
+As an investor seeking to optimize my portfolio,
+I want specific, actionable rebalancing recommendations with expected outcomes,
+So that I can systematically improve risk-adjusted returns through strategic decisions.
+```
+
+**Business Context**: Portfolio rebalancing is where institutional investors create alpha. It's not about finding good properties—it's about having the RIGHT mix. Most individual investors never rebalance, leaving significant returns on the table.
+
+**Acceptance Criteria**:
+- [ ] **Current State Analysis**:
+  - Portfolio allocation vs target allocation analysis
+  - Identification of over/under-allocated segments
+  - Quantified impact of current imbalances on returns
+  - Risk concentration assessment and impact
+- [ ] **Specific Disposition Recommendations**:
+  - Properties to consider selling with detailed reasoning
+  - Expected sale price estimates with market analysis
+  - Net proceeds calculations including all transaction costs
+  - Tax implications (capital gains, depreciation recapture, 1031 opportunities)
+  - Market timing considerations and optimal sale windows
+- [ ] **Strategic Acquisition Targets**:
+  - Specific markets and property types to target
+  - Expected investment amounts and financing strategies
+  - Timeline for rebalancing completion with milestones
+  - Alternative strategies if preferred properties unavailable
+- [ ] **Optimization Scenarios**:
+  - Conservative rebalancing (minimal disruption, lower impact)
+  - Moderate rebalancing (balanced approach, medium impact)
+  - Aggressive rebalancing (major restructuring, high impact)
+  - Market-responsive scenarios (recession, growth, stability)
+  - Capital-constrained scenarios (limited liquidity options)
+
+**Implementation Support**:
+- Step-by-step implementation guides
+- Template documents for property sales/purchases
+- Timeline coordination tools
+- Progress tracking and adjustment capabilities
+
+**Technical Requirements**:
+```typescript
+interface RebalancingRecommendations {
+  currentState: {
+    allocation: AllocationBreakdown;
+    imbalances: Array<{
+      category: string;
+      currentWeight: number;
+      targetWeight: number;
+      impact: number;
+    }>;
+    opportunityCost: number; // annual return impact
+  };
+  dispositionCandidates: Array<{
+    propertyId: string;
+    reasoning: string[];
+    expectedSalePrice: number;
+    netProceeds: number;
+    taxImplications: {
+      capitalGains: number;
+      depreciationRecapture: number;
+      potentialSavings: number;
+    };
+    marketTiming: {
+      currentConditions: string;
+      recommendedWindow: string;
+      riskFactors: string[];
+    };
+    urgency: 'High' | 'Medium' | 'Low';
+  }>;
+  acquisitionTargets: Array<{
+    profile: PropertyProfile;
+    reasoning: string;
+    targetMarkets: string[];
+    investmentRange: { min: number; max: number; };
+    expectedImpact: {
+      returnImprovement: number;
+      riskReduction: number;
+      diversificationBenefit: number;
+    };
+    timeline: string;
+  }>;
+  scenarios: Array<{
+    name: string;
+    description: string;
+    actions: RebalancingAction[];
+    expectedOutcome: {
+      returnImprovement: number;
+      riskReduction: number;
+      implementation: {
+        timeframe: string;
+        complexity: 'Low' | 'Medium' | 'High';
+        capitalRequired: number;
+      };
+    };
+  }>;
+}
+```
+
+**Definition of Done**:
+- [ ] Rebalancing algorithm produces mathematically sound recommendations
+- [ ] Tax implications accurately calculated for each scenario
+- [ ] Multiple scenarios provided for different risk tolerances and constraints
+- [ ] Recommendations include specific, actionable next steps
+- [ ] Expected outcomes are quantified and realistic
+- [ ] Implementation guidance supports user execution
+- [ ] Progress tracking allows for plan adjustment
+
+---
+
+### **User Story PO-3.2: Advanced Scenario Planning & Stress Testing**
+```
+As an investor planning major portfolio changes,
+I want to model different scenarios and stress-test my portfolio,
+So that I can make decisions with confidence about future outcomes.
+```
+
+**Business Context**: Institutional investors live in scenario planning. "What if interest rates rise 2%?" "What if Dallas market crashes?" "What if I need liquidity in 18 months?" These tools separate professionals from amateurs.
+
+**Acceptance Criteria**:
+- [ ] **Market Scenario Modeling**:
+  - Interest rate change scenarios (+/-1%, +/-2%, +/-3%)
+  - Market downturn scenarios (mild 10%, moderate 20%, severe 30%)
+  - Market growth scenarios (continued growth, acceleration, normalization)
+  - Regional economic scenarios (tech boom/bust, energy price changes)
+- [ ] **Portfolio Change Scenarios**:
+  - Property addition scenarios (specific properties or property types)
+  - Property disposition scenarios (forced sale, optimal timing)
+  - Refinancing scenarios (rate changes, term modifications)
+  - Portfolio expansion scenarios (doubling, aggressive growth)
+- [ ] **Stress Testing**:
+  - Vacancy clustering (multiple properties vacant simultaneously)
+  - Major repair scenarios (roof, HVAC, foundation issues)
+  - Economic recession scenarios with job loss impact
+  - Credit tightening scenarios affecting refinancing
+- [ ] **Timeline Modeling**:
+  - 5-year portfolio evolution scenarios
+  - Retirement planning scenarios (income transition)
+  - Wealth transfer scenarios (estate planning)
+  - Market cycle timing scenarios (buy/sell coordination)
+
+**Analytical Outputs**:
+- Probability-weighted outcomes for each scenario
+- Worst-case and best-case analysis for risk management
+- Sensitivity analysis identifying key risk factors
+- Mitigation strategies for identified risks
+
+**Technical Requirements**:
+```typescript
+interface ScenarioAnalysis {
+  baseCase: {
+    description: string;
+    assumptions: MarketAssumptions;
+    outcomes: PortfolioOutcomes;
+  };
+  scenarios: Array<{
+    name: string;
+    category: 'Market' | 'Portfolio' | 'Economic' | 'Personal';
+    probability: number; // 0-100
+    assumptions: ScenarioAssumptions;
+    outcomes: PortfolioOutcomes;
+    impact: {
+      returnImpact: number;
+      riskImpact: number;
+      liquidityImpact: number;
+      timelineImpact: string;
+    };
+    mitigation: {
+      strategies: string[];
+      effectiveness: number;
+      cost: number;
+    };
+  }>;
+  stressTests: Array<{
+    name: string;
+    severity: 'Mild' | 'Moderate' | 'Severe';
+    description: string;
+    outcomes: {
+      portfolioValue: number;
+      cashFlowImpact: number;
+      recoveryTime: string;
+      actionRequired: string[];
+    };
+  }>;
+  sensitivity: {
+    keyFactors: Array<{
+      factor: string;
+      impact: number; // per 1% change
+      currentLevel: number;
+      riskRange: { min: number; max: number; };
+    }>;
+  };
+}
+```
+
+**Definition of Done**:
+- [ ] Scenario modeling covers all major risk categories
+- [ ] Stress testing provides realistic worst-case analysis
+- [ ] Sensitivity analysis identifies key portfolio drivers
+- [ ] Mitigation strategies are specific and actionable
+- [ ] Probability assessments are well-calibrated
+- [ ] Results clearly communicate risk/return tradeoffs
+- [ ] Analysis supports both strategic and tactical decisions
+
+---
+
+## 📊 **TECHNICAL IMPLEMENTATION REFERENCE**
+
+For detailed technical implementation, database design, API architecture, and development timeline, see:
+**[PORTFOLIO_EPIC_TECHNICAL_PLAN.md](/docs/PORTFOLIO_EPIC_TECHNICAL_PLAN.md)**
+
+Key technical highlights:
+- **Database**: New collections (Portfolio, PortfolioAnalytics, PortfolioRecommendations) + enhanced Deal model
+- **Backend**: New portfolio service layer + enhanced Investment Decision Engine integration  
+- **Frontend**: New portfolio module + enhanced existing property analysis components
+- **Timeline**: 14 weeks across 4 phases
+- **Performance**: <3s dashboard, <4s enhanced property analysis, <2s portfolio analytics
+
+---
+
+## 🎯 **EPIC SUCCESS METRICS**
+
+### **Business Impact Metrics**
+- [ ] Professional tier conversion: 12% → 22% (+83% increase)
+- [ ] Enterprise tier conversion: 3% → 9% (+200% increase)  
+- [ ] User engagement: +30% average session duration
+- [ ] Feature adoption: 70% of users with 3+ properties adopt portfolio features
+- [ ] User retention (90-day): 78% → 88%
+
+### **Technical Performance Metrics**
+- [ ] Portfolio dashboard load time: <3 seconds (50+ properties)
+- [ ] Enhanced property analysis: <4 seconds (including portfolio context)
+- [ ] Portfolio analytics calculation: <2 seconds
+- [ ] Property import wizard: 10 properties in <30 minutes
+- [ ] 99.9% uptime for all portfolio features
+
+### **User Experience Metrics**
+- [ ] Portfolio onboarding completion rate: >80%
+- [ ] Time to first value: <10 minutes from import start
+- [ ] User satisfaction score: >4.5/5 for portfolio features
+- [ ] Support ticket reduction: <5% portfolio-related issues
+- [ ] Mobile usage: >40% of portfolio sessions on mobile
+
+---
+
+## 🚀 **EPIC DEPENDENCIES & RISKS**
+
+### **Dependencies**
+- [ ] Investment Decision Engine v2.1 (✅ Complete)
+- [ ] Market intelligence APIs (✅ Complete - FRED, RentCast, Census)
+- [ ] User authentication system (✅ Complete)
+- [ ] Material-UI design system (✅ Complete)
+
+### **Key Risks & Mitigation**
+- **Risk**: Performance degradation with large portfolios  
+  **Mitigation**: Separate analytics collection, background processing, pagination
+- **Risk**: UI complexity overwhelming novice users  
+  **Mitigation**: Progressive disclosure, experience-based defaults, guided onboarding
+- **Risk**: Low adoption of portfolio features  
+  **Mitigation**: Portfolio context in single-property analysis, clear value demonstration
+
+---
+
+*This epic transforms our A- platform into A+ institutional-grade portfolio management while maintaining accessibility for novice investors. It creates our most significant competitive advantage and revenue opportunity.*
+
 ### Week 2: Optimization
 - Deal Fixer component
 - Optimization algorithms

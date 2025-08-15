@@ -222,14 +222,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
       primaryReason: investmentDecision.primaryReason || generatedMessage.primaryReason
     };
     
-    // Debug logging to verify fix
-    if (investmentDecision.primaryReason !== generatedMessage.primaryReason) {
-      console.log('🔧 INVESTMENT DECISION FIX APPLIED:', {
-        backendReason: investmentDecision.primaryReason,
-        frontendGenericReason: generatedMessage.primaryReason,
-        usingBackendReason: true
-      });
-    }
+    // Fix applied: Backend's sophisticated reasoning now preserved over frontend's generic messages
   } else {
     // Fallback when no analysis data
     safeMessage = {
@@ -419,7 +412,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     fontWeight: 500
                   }}
                 >
-                  {investmentDecision.goalBasedReasoning || goalContextualReason}
+{investmentDecision.goalBasedReasoning || goalContextualReason}
                 </Typography>
                 
                 {/* Display backend investment decision insights */}

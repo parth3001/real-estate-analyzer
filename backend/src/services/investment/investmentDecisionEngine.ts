@@ -1308,6 +1308,16 @@ export class InvestmentDecisionEngine {
     const priceAboveWalkAway = propertyData.purchasePrice > (walkAwayPrice * 1.1);
     const hasLeverageOptions = leverageAnalysis.optimalScenario.leverageScore > 60;
     
+    // CRITICAL: Log to ensure we're using updated analysis data
+    logger.info('Investment Decision: Using latest analysis data', {
+      currentCashFlow: mainMonthlyCashFlow,
+      analysisTimestamp: analysis?.timestamp || 'unknown',
+      fundamentalsCashFlow: fundamentals?.cashFlow || 'not provided',
+      hasPositiveCashFlow,
+      capRate: fundamentals.capRate,
+      cashOnCashReturn: fundamentals.cashOnCashReturn
+    });
+    
     logger.info('Investment Decision: Enhanced analysis with Phase 2A + 2B', {
       mainMonthlyCashFlow,
       adjustedHurdleRate: (adjustedHurdleRate * 100).toFixed(1) + '%',
