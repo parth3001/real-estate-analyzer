@@ -249,8 +249,7 @@ interface InvestmentDecisionHeroProps {
 }
 
 const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({ 
-  investmentDecision,
-  analysis 
+  investmentDecision
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
@@ -807,8 +806,8 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     </Grid>
                     
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <Box sx={{ textAlign: 'center', p: 3, backgroundColor: appleColors.indigo[50], borderRadius: '12px', border: `2px solid ${appleColors.indigo[200]}` }}>
-                        <Typography variant="h4" fontWeight={700} color={appleColors.indigo[700]}>
+                      <Box sx={{ textAlign: 'center', p: 3, backgroundColor: appleColors.blue[50], borderRadius: '12px', border: `2px solid ${appleColors.blue[200]}` }}>
+                        <Typography variant="h4" fontWeight={700} color={appleColors.blue[700]}>
                           {investmentDecision.professionalAssessment.dataReliability}
                         </Typography>
                         <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
@@ -837,7 +836,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     {[
                       { name: 'Cash Flow', weight: 35, score: investmentDecision.professionalAssessment.cashFlowScore, color: appleColors.green[600] },
                       { name: 'IRR', weight: 25, score: investmentDecision.professionalAssessment.irrScore, color: appleColors.blue[600] },
-                      { name: 'Market Strength', weight: 15, score: investmentDecision.professionalAssessment.marketStrengthScore, color: appleColors.indigo[600] },
+                      { name: 'Market Strength', weight: 15, score: investmentDecision.professionalAssessment.marketStrengthScore, color: appleColors.blue[700] },
                       { name: 'Debt Structure', weight: 10, score: investmentDecision.professionalAssessment.debtStructureScore, color: appleColors.orange[600] },
                       { name: 'Exit Strategy', weight: 10, score: investmentDecision.professionalAssessment.exitStrategyScore, color: appleColors.orange[500] },
                       { name: 'Cap Rate', weight: 3, score: investmentDecision.professionalAssessment.capRateScore, color: appleColors.red[600] },

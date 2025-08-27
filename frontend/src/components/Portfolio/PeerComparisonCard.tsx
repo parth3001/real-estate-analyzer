@@ -17,8 +17,7 @@ import {
   TrendingDown,
   Insights,
   CheckCircle,
-  Warning,
-  Info
+  Warning
 } from '@mui/icons-material';
 import type { PeerComparisonInsights } from '../../services/portfolioAIApi';
 

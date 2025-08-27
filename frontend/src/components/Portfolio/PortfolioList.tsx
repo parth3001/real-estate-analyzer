@@ -506,11 +506,13 @@ export const PortfolioList: React.FC<PortfolioListProps> = ({
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
         onClose={handleMenuClose}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: 160,
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              minWidth: 160,
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+            }
           }
         }}
       >

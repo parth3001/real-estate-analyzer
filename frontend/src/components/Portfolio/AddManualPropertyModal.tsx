@@ -8,7 +8,6 @@ import {
   Box,
   Typography,
   TextField,
-  Grid,
   Alert,
   IconButton,
   FormControl,
@@ -17,6 +16,7 @@ import {
   MenuItem,
   InputAdornment
 } from '@mui/material';
+import Grid from '@mui/system/Grid';
 import { Close as CloseIcon, Home } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
 import { propertyApi } from '../../services/api';
@@ -295,7 +295,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
 
         <Grid container spacing={3}>
           {/* Property Name */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Property Name"
@@ -307,7 +307,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Property Type */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Property Type</InputLabel>
               <Select
@@ -334,7 +334,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Purchase Price */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Purchase Price"
@@ -348,7 +348,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Purchase Date */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Purchase Date"
@@ -361,14 +361,14 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Portfolio Performance Section */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: appleColors.gray[900] }}>
               Financial Details (For Portfolio Analytics)
             </Typography>
           </Grid>
 
           {/* Monthly Income */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label={
@@ -389,7 +389,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Monthly Operating Expenses */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Monthly Operating Expenses"
@@ -408,7 +408,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Current Mortgage Balance */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Current Mortgage Balance"
@@ -423,7 +423,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Current Estimated Value */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Current Estimated Value"
@@ -438,13 +438,13 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Address Section */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: appleColors.gray[900] }}>
               Property Address
             </Typography>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Street Address"
@@ -455,7 +455,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="City"
@@ -465,7 +465,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="State"
@@ -476,7 +476,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="ZIP Code"
@@ -487,7 +487,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           </Grid>
 
           {/* Property Details */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: appleColors.gray[900] }}>
               Property Details (Optional)
             </Typography>
@@ -496,7 +496,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           {/* Show bedrooms/bathrooms for residential properties */}
           {['SFR', 'MF', 'APARTMENT', 'CONDO', 'TOWNHOUSE'].includes(formData.propertyType) && (
             <>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   fullWidth
                   label="Bedrooms"
@@ -509,7 +509,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   fullWidth
                   label="Bathrooms"
@@ -526,7 +526,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
 
           {/* Show units description for commercial properties */}
           {['COMMERCIAL_RETAIL', 'COMMERCIAL_OFFICE', 'COMMERCIAL_INDUSTRIAL', 'COMMERCIAL_MIXED', 'SELF_STORAGE', 'MOBILE_HOME_PARK'].includes(formData.propertyType) && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Units/Space Description"
@@ -541,7 +541,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
             </Grid>
           )}
 
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               fullWidth
               label="Square Footage"
@@ -553,7 +553,7 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               fullWidth
               label="Year Built"

@@ -11,8 +11,7 @@ import Grid from '@mui/system/Grid';
 import {
   Folder,
   TrendingUp,
-  AttachMoney,
-  Assessment
+  AttachMoney
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
 
@@ -47,7 +46,7 @@ export const PortfolioImpactSummary: React.FC<PortfolioImpactSummaryProps> = ({
       p: 3, 
       borderRadius: '16px',
       border: `1px solid ${appleColors.blue[200]}`,
-      backgroundColor: appleColors.blue[25],
+      backgroundColor: appleColors.blue[50],
       mb: 3
     }}>
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>

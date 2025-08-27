@@ -29,7 +29,6 @@ import AdminUserManagement from './pages/AdminUserManagement';
 import MarketDataPage from './pages/MarketDataPage';
 
 // Portfolio Components
-import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDashboard from './pages/PortfolioDashboard';
 import { ApplePortfolioWizard } from './components/Portfolio/ApplePortfolioWizard';
 
@@ -142,10 +141,7 @@ function App() {
                 <Route path="/portfolio" element={<PortfolioDashboard />} />
                 <Route path="/portfolio/create" element={
                   <Box sx={{ p: 3 }}>
-                    <ApplePortfolioWizard
-                      onComplete={() => window.location.href = '/portfolio'}
-                      onCancel={() => window.location.href = '/portfolio'}
-                    />
+                    <ApplePortfolioWizard />
                   </Box>
                 } />
                 <Route path="/portfolio/:id" element={<PortfolioDashboard />} />
