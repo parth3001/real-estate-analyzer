@@ -1,0 +1,1940 @@
+[8/25/2025, 10:12:07 PM] [32minfo[39m: CacheService initialized with 2880 hour TTL
+[8/25/2025, 10:12:07 PM] [33mwarn[39m: RentCast API key not found. Market data features will be disabled.
+[8/25/2025, 10:12:07 PM] [32minfo[39m: RentCast service initialized with MongoDB persistent cache
+[8/25/2025, 10:12:07 PM] [32minfo[39m: FRED API key not provided. Using public access (may have rate limits).
+🔍 DEBUGGING IRR vs ROI CALCULATION DISCREPANCY
+
+============================================================
+📊 Test Property Data:
+  Purchase Price: $250,000
+  Down Payment: $50,000
+  Monthly Rent: $2,000
+  Interest Rate: 7%
+  Projection Years: 10 years
+
+
+
+========== PROJECTIONS CALCULATION ==========
+Initial Values: {
+  purchasePrice: 250000,
+  downPayment: 50000,
+  closingCosts: 5000,
+  capitalInvestments: 0,
+  propertyTaxRate: 1.2,
+  insuranceRate: 0.4,
+  maintenanceCost: 2000,
+  propertyManagementRate: 8
+}
+Assumptions: {
+  projectionYears: 10,
+  annualRentIncrease: 3,
+  annualExpenseIncrease: 2.5,
+  annualPropertyValueIncrease: 3,
+  vacancyRate: 5,
+  turnoverFrequency: 2,
+  sellingCosts: 6
+}
+Mortgage Details: {
+  monthlyMortgage: 1330.6049903583646,
+  annualDebtService: 15967.259884300376,
+  interestRate: 7,
+  loanTerm: 30,
+  initialLoanBalance: 200000
+}
+Base expenses (Year 1): {
+  basePropertyTaxForYear1: 3000,
+  baseInsuranceForYear1: 1000,
+  maintenanceCost: 2000
+}
+Tenant Turnover Parameters: {
+  prepFees: 500,
+  realtorCommission: 0.5,
+  turnoverFrequency: 2,
+  baseTurnoverRate: 0.5
+}
+
+--- YEAR 1 CALCULATION ---
+Year 1 Gross Income: 24000
+Year 1 Expense Inflation Factor: 1
+Year 1 Basic Expenses: { propertyTax: 3000, insurance: 1000, maintenance: 2000 }
+Year 1 Income-Based Expenses: { propertyManagement: 1920 }
+Year 1 Effective Income (after 5% vacancy): 22800
+Year 1 Turnover Calculation: {
+  monthlyRentForYear: 2000,
+  inflatedPrepFees: 500,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 750,
+  calculation: { prepFeesPart: 250, commissionPart: 500 }
+}
+Year 1 Capital Improvements: 0
+Year 1 Cash Flow Calculation: {
+  grossIncome: 24000,
+  operatingExpenses: 8670,
+  noi: 14130,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1837.2598843003761,
+  formula: '14130 - 15967.259884300376 - 0 = -1837.2598843003761'
+}
+Year 1 Property Value & Mortgage: {
+  currentPropertyValue: 257500,
+  appreciation: 7500,
+  interestPaid: 14000.000000000002,
+  principalPaid: 1967.2598843003743,
+  currentLoanBalance: 198032.74011569962
+}
+
+--- YEAR 2 CALCULATION ---
+Year 2 Gross Income: 24720
+Year 2 Expense Inflation Factor: 1.025
+Year 2 Basic Expenses: { propertyTax: 3074.9999999999995, insurance: 1025, maintenance: 2050 }
+Year 2 Income-Based Expenses: { propertyManagement: 1977.6000000000001 }
+Year 2 Effective Income (after 5% vacancy): 23484
+Year 2 Turnover Calculation: {
+  monthlyRentForYear: 2060,
+  inflatedPrepFees: 512.5,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 771.25,
+  calculation: { prepFeesPart: 256.25, commissionPart: 515 }
+}
+Year 2 Capital Improvements: 0
+Year 2 Cash Flow Calculation: {
+  grossIncome: 24720,
+  operatingExpenses: 8898.85,
+  noi: 14585.15,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1382.1098843003765,
+  formula: '14585.15 - 15967.259884300376 - 0 = -1382.1098843003765'
+}
+Year 2 Property Value & Mortgage: {
+  currentPropertyValue: 265225,
+  appreciation: 15225,
+  interestPaid: 13862.291808098975,
+  principalPaid: 2104.9680762014013,
+  currentLoanBalance: 195927.77203949823
+}
+
+--- YEAR 3 CALCULATION ---
+Year 3 Gross Income: 25461.6
+Year 3 Expense Inflation Factor: 1.050625
+Year 3 Basic Expenses: {
+  propertyTax: 3151.8749999999995,
+  insurance: 1050.625,
+  maintenance: 2101.25
+}
+Year 3 Income-Based Expenses: { propertyManagement: 2036.9279999999999 }
+Year 3 Effective Income (after 5% vacancy): 24188.519999999997
+Year 3 Turnover Calculation: {
+  monthlyRentForYear: 2121.7999999999997,
+  inflatedPrepFees: 525.3125,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 793.1062499999999,
+  calculation: { prepFeesPart: 262.65625, commissionPart: 530.4499999999999 }
+}
+Year 3 Capital Improvements: 0
+Year 3 Cash Flow Calculation: {
+  grossIncome: 25461.6,
+  operatingExpenses: 9133.78425,
+  noi: 15054.735749999996,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -912.52413430038,
+  formula: '15054.735749999996 - 15967.259884300376 - 0 = -912.52413430038'
+}
+Year 3 Property Value & Mortgage: {
+  currentPropertyValue: 273181.75,
+  appreciation: 23181.75,
+  interestPaid: 13714.944042764877,
+  principalPaid: 2252.315841535499,
+  currentLoanBalance: 193675.45619796275
+}
+
+--- YEAR 4 CALCULATION ---
+Year 4 Gross Income: 26225.448
+Year 4 Expense Inflation Factor: 1.0768906249999997
+Year 4 Basic Expenses: {
+  propertyTax: 3230.671874999999,
+  insurance: 1076.8906249999995,
+  maintenance: 2153.781249999999
+}
+Year 4 Income-Based Expenses: { propertyManagement: 2098.03584 }
+Year 4 Effective Income (after 5% vacancy): 24914.1756
+Year 4 Turnover Calculation: {
+  monthlyRentForYear: 2185.454,
+  inflatedPrepFees: 538.4453124999998,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 815.5861562499999,
+  calculation: { prepFeesPart: 269.2226562499999, commissionPart: 546.3635 }
+}
+Year 4 Capital Improvements: 0
+Year 4 Cash Flow Calculation: {
+  grossIncome: 26225.448,
+  operatingExpenses: 9374.965746249996,
+  noi: 15539.209853750002,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -428.0500305503738,
+  formula: '15539.209853750002 - 15967.259884300376 - 0 = -428.0500305503738'
+}
+Year 4 Property Value & Mortgage: {
+  currentPropertyValue: 281377.2025,
+  appreciation: 31377.202500000014,
+  interestPaid: 13557.281933857394,
+  principalPaid: 2409.9779504429825,
+  currentLoanBalance: 191265.47824751976
+}
+
+--- YEAR 5 CALCULATION ---
+Year 5 Gross Income: 27012.211440000003
+Year 5 Expense Inflation Factor: 1.1038128906249995
+Year 5 Basic Expenses: {
+  propertyTax: 3311.438671874999,
+  insurance: 1103.8128906249995,
+  maintenance: 2207.625781249999
+}
+Year 5 Income-Based Expenses: { propertyManagement: 2160.9769152000003 }
+Year 5 Effective Income (after 5% vacancy): 25661.600868
+Year 5 Turnover Calculation: {
+  monthlyRentForYear: 2251.01762,
+  inflatedPrepFees: 551.9064453124997,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 838.7076276562499,
+  calculation: { prepFeesPart: 275.95322265624986, commissionPart: 562.754405 }
+}
+Year 5 Capital Improvements: 0
+Year 5 Cash Flow Calculation: {
+  grossIncome: 27012.211440000003,
+  operatingExpenses: 9622.561886606247,
+  noi: 16039.038981393755,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 71.77909709337837,
+  formula: '16039.038981393755 - 15967.259884300376 - 0 = 71.77909709337837'
+}
+Year 5 Property Value & Mortgage: {
+  currentPropertyValue: 289818.518575,
+  appreciation: 39818.518574999995,
+  interestPaid: 13388.583477326385,
+  principalPaid: 2578.676406973991,
+  currentLoanBalance: 188686.80184054576
+}
+
+--- YEAR 6 CALCULATION ---
+Year 6 Gross Income: 27822.577783200002
+Year 6 Expense Inflation Factor: 1.1314082128906244
+Year 6 Basic Expenses: {
+  propertyTax: 3394.2246386718734,
+  insurance: 1131.4082128906243,
+  maintenance: 2262.8164257812487
+}
+Year 6 Income-Based Expenses: { propertyManagement: 2225.806222656 }
+Year 6 Effective Income (after 5% vacancy): 26431.44889404
+Year 6 Turnover Calculation: {
+  monthlyRentForYear: 2318.5481486000003,
+  inflatedPrepFees: 565.7041064453122,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 862.4890903726562,
+  calculation: {
+    prepFeesPart: 282.8520532226561,
+    commissionPart: 579.6370371500001
+  }
+}
+Year 6 Capital Improvements: 0
+Year 6 Cash Flow Calculation: {
+  grossIncome: 27822.577783200002,
+  operatingExpenses: 9876.744590372402,
+  noi: 16554.704303667597,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 587.4444193672207,
+  formula: '16554.704303667597 - 15967.259884300376 - 0 = 587.4444193672207'
+}
+Year 6 Property Value & Mortgage: {
+  currentPropertyValue: 298513.07413225,
+  appreciation: 48513.07413224998,
+  interestPaid: 13208.076128838204,
+  principalPaid: 2759.1837554621725,
+  currentLoanBalance: 185927.61808508358
+}
+
+--- YEAR 7 CALCULATION ---
+Year 7 Gross Income: 28657.255116696004
+Year 7 Expense Inflation Factor: 1.15969341821289
+Year 7 Basic Expenses: {
+  propertyTax: 3479.08025463867,
+  insurance: 1159.69341821289,
+  maintenance: 2319.38683642578
+}
+Year 7 Income-Based Expenses: { propertyManagement: 2292.5804093356805 }
+Year 7 Effective Income (after 5% vacancy): 27224.392360861202
+Year 7 Turnover Calculation: {
+  monthlyRentForYear: 2388.1045930580003,
+  inflatedPrepFees: 579.846709106445,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 886.9495028177225,
+  calculation: {
+    prepFeesPart: 289.9233545532225,
+    commissionPart: 597.0261482645001
+  }
+}
+Year 7 Capital Improvements: 0
+Year 7 Cash Flow Calculation: {
+  grossIncome: 28657.255116696004,
+  operatingExpenses: 10137.690421430743,
+  noi: 17086.70193943046,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1119.4420551300827,
+  formula: '17086.70193943046 - 15967.259884300376 - 0 = 1119.4420551300827'
+}
+Year 7 Property Value & Mortgage: {
+  currentPropertyValue: 307468.4663562175,
+  appreciation: 57468.46635621751,
+  interestPaid: 13014.933265955851,
+  principalPaid: 2952.326618344525,
+  currentLoanBalance: 182975.29146673906
+}
+
+--- YEAR 8 CALCULATION ---
+Year 8 Gross Income: 29516.972770196884
+Year 8 Expense Inflation Factor: 1.1886857536682123
+Year 8 Basic Expenses: {
+  propertyTax: 3566.057261004637,
+  insurance: 1188.6857536682123,
+  maintenance: 2377.3715073364247
+}
+Year 8 Income-Based Expenses: { propertyManagement: 2361.3578216157507 }
+Year 8 Effective Income (after 5% vacancy): 28041.12413168704
+Year 8 Turnover Calculation: {
+  monthlyRentForYear: 2459.7477308497405,
+  inflatedPrepFees: 594.3428768341062,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 912.1083711294882,
+  calculation: {
+    prepFeesPart: 297.1714384170531,
+    commissionPart: 614.9369327124351
+  }
+}
+Year 8 Capital Improvements: 0
+Year 8 Cash Flow Calculation: {
+  grossIncome: 29516.972770196884,
+  operatingExpenses: 10405.580714754513,
+  noi: 17635.543416932527,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1668.283532632151,
+  formula: '17635.543416932527 - 15967.259884300376 - 0 = 1668.283532632151'
+}
+Year 8 Property Value & Mortgage: {
+  currentPropertyValue: 316692.52034690406,
+  appreciation: 66692.52034690406,
+  interestPaid: 12808.270402671735,
+  principalPaid: 3158.9894816286414,
+  currentLoanBalance: 179816.30198511042
+}
+
+--- YEAR 9 CALCULATION ---
+Year 9 Gross Income: 30402.48195330279
+Year 9 Expense Inflation Factor: 1.2184028975099173
+Year 9 Basic Expenses: {
+  propertyTax: 3655.2086925297517,
+  insurance: 1218.4028975099172,
+  maintenance: 2436.8057950198345
+}
+Year 9 Income-Based Expenses: { propertyManagement: 2432.1985562642235 }
+Year 9 Effective Income (after 5% vacancy): 28882.35785563765
+Year 9 Turnover Calculation: {
+  monthlyRentForYear: 2533.5401627752326,
+  inflatedPrepFees: 609.2014487549586,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 937.9857650712875,
+  calculation: {
+    prepFeesPart: 304.6007243774793,
+    commissionPart: 633.3850406938082
+  }
+}
+Year 9 Capital Improvements: 0
+Year 9 Cash Flow Calculation: {
+  grossIncome: 30402.48195330279,
+  operatingExpenses: 10680.601706395015,
+  noi: 18201.756149242632,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2234.496264942256,
+  formula: '18201.756149242632 - 15967.259884300376 - 0 = 2234.496264942256'
+}
+Year 9 Property Value & Mortgage: {
+  currentPropertyValue: 326193.2959573112,
+  appreciation: 76193.29595731117,
+  interestPaid: 12587.14113895773,
+  principalPaid: 3380.1187453426464,
+  currentLoanBalance: 176436.18323976776
+}
+
+--- YEAR 10 CALCULATION ---
+Year 10 Gross Income: 31314.556411901878
+Year 10 Expense Inflation Factor: 1.2488629699476652
+Year 10 Basic Expenses: {
+  propertyTax: 3746.5889098429957,
+  insurance: 1248.8629699476653,
+  maintenance: 2497.7259398953306
+}
+Year 10 Income-Based Expenses: { propertyManagement: 2505.1645129521503 }
+Year 10 Effective Income (after 5% vacancy): 29748.82859130678
+Year 10 Turnover Calculation: {
+  monthlyRentForYear: 2609.54636765849,
+  inflatedPrepFees: 624.4314849738327,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 964.6023344015389,
+  calculation: {
+    prepFeesPart: 312.2157424869163,
+    commissionPart: 652.3865919146225
+  }
+}
+Year 10 Capital Improvements: 0
+Year 10 Cash Flow Calculation: {
+  grossIncome: 31314.556411901878,
+  operatingExpenses: 10962.944667039681,
+  noi: 18785.883924267102,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2818.624039966726,
+  formula: '18785.883924267102 - 15967.259884300376 - 0 = 2818.624039966726'
+}
+Year 10 Property Value & Mortgage: {
+  currentPropertyValue: 335979.0948360305,
+  appreciation: 85979.0948360305,
+  interestPaid: 12350.532826783745,
+  principalPaid: 3616.7270575166312,
+  currentLoanBalance: 172819.45618225113
+}
+Exit Analysis Calculation: {
+  propertyValue: 335979.0948360305,
+  loanBalance: 172819.45618225113,
+  sellingCosts: 6,
+  totalInvestment: 55000,
+  cumulativeCashFlow: 3940.125475680308,
+  components: { downPayment: 50000, closingCosts: 5000, capitalInvestments: 0 }
+}
+==== SFR UNIFIED CALCULATION ENGINE ====
+Monthly Mortgage: 1330.6049903583646
+Annual Debt Service: 15967.259884300376
+Gross Income: 24000
+Effective Income (after 5% vacancy): 22800
+Operating Expenses (NO vacancy in expenses): 8670
+NOI (effective income - operating expenses): 14130
+Cash Flow: -1837.2598843003761
+Total Investment: 55000
+=======================================
+
+
+========== PROJECTIONS CALCULATION ==========
+Initial Values: {
+  purchasePrice: 250000,
+  downPayment: 50000,
+  closingCosts: 5000,
+  capitalInvestments: 0,
+  propertyTaxRate: 1.2,
+  insuranceRate: 0.4,
+  maintenanceCost: 2000,
+  propertyManagementRate: 8
+}
+Assumptions: {
+  projectionYears: 10,
+  annualRentIncrease: 3,
+  annualExpenseIncrease: 2.5,
+  annualPropertyValueIncrease: 3,
+  vacancyRate: 5,
+  turnoverFrequency: 2,
+  sellingCosts: 6
+}
+Mortgage Details: {
+  monthlyMortgage: 1330.6049903583646,
+  annualDebtService: 15967.259884300376,
+  interestRate: 7,
+  loanTerm: 30,
+  initialLoanBalance: 200000
+}
+Base expenses (Year 1): {
+  basePropertyTaxForYear1: 3000,
+  baseInsuranceForYear1: 1000,
+  maintenanceCost: 2000
+}
+Tenant Turnover Parameters: {
+  prepFees: 500,
+  realtorCommission: 0.5,
+  turnoverFrequency: 2,
+  baseTurnoverRate: 0.5
+}
+
+--- YEAR 1 CALCULATION ---
+Year 1 Gross Income: 24000
+Year 1 Expense Inflation Factor: 1
+Year 1 Basic Expenses: { propertyTax: 3000, insurance: 1000, maintenance: 2000 }
+Year 1 Income-Based Expenses: { propertyManagement: 1920 }
+Year 1 Effective Income (after 5% vacancy): 22800
+Year 1 Turnover Calculation: {
+  monthlyRentForYear: 2000,
+  inflatedPrepFees: 500,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 750,
+  calculation: { prepFeesPart: 250, commissionPart: 500 }
+}
+Year 1 Capital Improvements: 0
+Year 1 Cash Flow Calculation: {
+  grossIncome: 24000,
+  operatingExpenses: 8670,
+  noi: 14130,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1837.2598843003761,
+  formula: '14130 - 15967.259884300376 - 0 = -1837.2598843003761'
+}
+Year 1 Property Value & Mortgage: {
+  currentPropertyValue: 257500,
+  appreciation: 7500,
+  interestPaid: 14000.000000000002,
+  principalPaid: 1967.2598843003743,
+  currentLoanBalance: 198032.74011569962
+}
+
+--- YEAR 2 CALCULATION ---
+Year 2 Gross Income: 24720
+Year 2 Expense Inflation Factor: 1.025
+Year 2 Basic Expenses: { propertyTax: 3074.9999999999995, insurance: 1025, maintenance: 2050 }
+Year 2 Income-Based Expenses: { propertyManagement: 1977.6000000000001 }
+Year 2 Effective Income (after 5% vacancy): 23484
+Year 2 Turnover Calculation: {
+  monthlyRentForYear: 2060,
+  inflatedPrepFees: 512.5,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 771.25,
+  calculation: { prepFeesPart: 256.25, commissionPart: 515 }
+}
+Year 2 Capital Improvements: 0
+Year 2 Cash Flow Calculation: {
+  grossIncome: 24720,
+  operatingExpenses: 8898.85,
+  noi: 14585.15,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1382.1098843003765,
+  formula: '14585.15 - 15967.259884300376 - 0 = -1382.1098843003765'
+}
+Year 2 Property Value & Mortgage: {
+  currentPropertyValue: 265225,
+  appreciation: 15225,
+  interestPaid: 13862.291808098975,
+  principalPaid: 2104.9680762014013,
+  currentLoanBalance: 195927.77203949823
+}
+
+--- YEAR 3 CALCULATION ---
+Year 3 Gross Income: 25461.6
+Year 3 Expense Inflation Factor: 1.050625
+Year 3 Basic Expenses: {
+  propertyTax: 3151.8749999999995,
+  insurance: 1050.625,
+  maintenance: 2101.25
+}
+Year 3 Income-Based Expenses: { propertyManagement: 2036.9279999999999 }
+Year 3 Effective Income (after 5% vacancy): 24188.519999999997
+Year 3 Turnover Calculation: {
+  monthlyRentForYear: 2121.7999999999997,
+  inflatedPrepFees: 525.3125,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 793.1062499999999,
+  calculation: { prepFeesPart: 262.65625, commissionPart: 530.4499999999999 }
+}
+Year 3 Capital Improvements: 0
+Year 3 Cash Flow Calculation: {
+  grossIncome: 25461.6,
+  operatingExpenses: 9133.78425,
+  noi: 15054.735749999996,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -912.52413430038,
+  formula: '15054.735749999996 - 15967.259884300376 - 0 = -912.52413430038'
+}
+Year 3 Property Value & Mortgage: {
+  currentPropertyValue: 273181.75,
+  appreciation: 23181.75,
+  interestPaid: 13714.944042764877,
+  principalPaid: 2252.315841535499,
+  currentLoanBalance: 193675.45619796275
+}
+
+--- YEAR 4 CALCULATION ---
+Year 4 Gross Income: 26225.448
+Year 4 Expense Inflation Factor: 1.0768906249999997
+Year 4 Basic Expenses: {
+  propertyTax: 3230.671874999999,
+  insurance: 1076.8906249999995,
+  maintenance: 2153.781249999999
+}
+Year 4 Income-Based Expenses: { propertyManagement: 2098.03584 }
+Year 4 Effective Income (after 5% vacancy): 24914.1756
+Year 4 Turnover Calculation: {
+  monthlyRentForYear: 2185.454,
+  inflatedPrepFees: 538.4453124999998,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 815.5861562499999,
+  calculation: { prepFeesPart: 269.2226562499999, commissionPart: 546.3635 }
+}
+Year 4 Capital Improvements: 0
+Year 4 Cash Flow Calculation: {
+  grossIncome: 26225.448,
+  operatingExpenses: 9374.965746249996,
+  noi: 15539.209853750002,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -428.0500305503738,
+  formula: '15539.209853750002 - 15967.259884300376 - 0 = -428.0500305503738'
+}
+Year 4 Property Value & Mortgage: {
+  currentPropertyValue: 281377.2025,
+  appreciation: 31377.202500000014,
+  interestPaid: 13557.281933857394,
+  principalPaid: 2409.9779504429825,
+  currentLoanBalance: 191265.47824751976
+}
+
+--- YEAR 5 CALCULATION ---
+Year 5 Gross Income: 27012.211440000003
+Year 5 Expense Inflation Factor: 1.1038128906249995
+Year 5 Basic Expenses: {
+  propertyTax: 3311.438671874999,
+  insurance: 1103.8128906249995,
+  maintenance: 2207.625781249999
+}
+Year 5 Income-Based Expenses: { propertyManagement: 2160.9769152000003 }
+Year 5 Effective Income (after 5% vacancy): 25661.600868
+Year 5 Turnover Calculation: {
+  monthlyRentForYear: 2251.01762,
+  inflatedPrepFees: 551.9064453124997,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 838.7076276562499,
+  calculation: { prepFeesPart: 275.95322265624986, commissionPart: 562.754405 }
+}
+Year 5 Capital Improvements: 0
+Year 5 Cash Flow Calculation: {
+  grossIncome: 27012.211440000003,
+  operatingExpenses: 9622.561886606247,
+  noi: 16039.038981393755,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 71.77909709337837,
+  formula: '16039.038981393755 - 15967.259884300376 - 0 = 71.77909709337837'
+}
+Year 5 Property Value & Mortgage: {
+  currentPropertyValue: 289818.518575,
+  appreciation: 39818.518574999995,
+  interestPaid: 13388.583477326385,
+  principalPaid: 2578.676406973991,
+  currentLoanBalance: 188686.80184054576
+}
+
+--- YEAR 6 CALCULATION ---
+Year 6 Gross Income: 27822.577783200002
+Year 6 Expense Inflation Factor: 1.1314082128906244
+Year 6 Basic Expenses: {
+  propertyTax: 3394.2246386718734,
+  insurance: 1131.4082128906243,
+  maintenance: 2262.8164257812487
+}
+Year 6 Income-Based Expenses: { propertyManagement: 2225.806222656 }
+Year 6 Effective Income (after 5% vacancy): 26431.44889404
+Year 6 Turnover Calculation: {
+  monthlyRentForYear: 2318.5481486000003,
+  inflatedPrepFees: 565.7041064453122,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 862.4890903726562,
+  calculation: {
+    prepFeesPart: 282.8520532226561,
+    commissionPart: 579.6370371500001
+  }
+}
+Year 6 Capital Improvements: 0
+Year 6 Cash Flow Calculation: {
+  grossIncome: 27822.577783200002,
+  operatingExpenses: 9876.744590372402,
+  noi: 16554.704303667597,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 587.4444193672207,
+  formula: '16554.704303667597 - 15967.259884300376 - 0 = 587.4444193672207'
+}
+Year 6 Property Value & Mortgage: {
+  currentPropertyValue: 298513.07413225,
+  appreciation: 48513.07413224998,
+  interestPaid: 13208.076128838204,
+  principalPaid: 2759.1837554621725,
+  currentLoanBalance: 185927.61808508358
+}
+
+--- YEAR 7 CALCULATION ---
+Year 7 Gross Income: 28657.255116696004
+Year 7 Expense Inflation Factor: 1.15969341821289
+Year 7 Basic Expenses: {
+  propertyTax: 3479.08025463867,
+  insurance: 1159.69341821289,
+  maintenance: 2319.38683642578
+}
+Year 7 Income-Based Expenses: { propertyManagement: 2292.5804093356805 }
+Year 7 Effective Income (after 5% vacancy): 27224.392360861202
+Year 7 Turnover Calculation: {
+  monthlyRentForYear: 2388.1045930580003,
+  inflatedPrepFees: 579.846709106445,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 886.9495028177225,
+  calculation: {
+    prepFeesPart: 289.9233545532225,
+    commissionPart: 597.0261482645001
+  }
+}
+Year 7 Capital Improvements: 0
+Year 7 Cash Flow Calculation: {
+  grossIncome: 28657.255116696004,
+  operatingExpenses: 10137.690421430743,
+  noi: 17086.70193943046,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1119.4420551300827,
+  formula: '17086.70193943046 - 15967.259884300376 - 0 = 1119.4420551300827'
+}
+Year 7 Property Value & Mortgage: {
+  currentPropertyValue: 307468.4663562175,
+  appreciation: 57468.46635621751,
+  interestPaid: 13014.933265955851,
+  principalPaid: 2952.326618344525,
+  currentLoanBalance: 182975.29146673906
+}
+
+--- YEAR 8 CALCULATION ---
+Year 8 Gross Income: 29516.972770196884
+Year 8 Expense Inflation Factor: 1.1886857536682123
+Year 8 Basic Expenses: {
+  propertyTax: 3566.057261004637,
+  insurance: 1188.6857536682123,
+  maintenance: 2377.3715073364247
+}
+Year 8 Income-Based Expenses: { propertyManagement: 2361.3578216157507 }
+Year 8 Effective Income (after 5% vacancy): 28041.12413168704
+Year 8 Turnover Calculation: {
+  monthlyRentForYear: 2459.7477308497405,
+  inflatedPrepFees: 594.3428768341062,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 912.1083711294882,
+  calculation: {
+    prepFeesPart: 297.1714384170531,
+    commissionPart: 614.9369327124351
+  }
+}
+Year 8 Capital Improvements: 0
+Year 8 Cash Flow Calculation: {
+  grossIncome: 29516.972770196884,
+  operatingExpenses: 10405.580714754513,
+  noi: 17635.543416932527,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1668.283532632151,
+  formula: '17635.543416932527 - 15967.259884300376 - 0 = 1668.283532632151'
+}
+Year 8 Property Value & Mortgage: {
+  currentPropertyValue: 316692.52034690406,
+  appreciation: 66692.52034690406,
+  interestPaid: 12808.270402671735,
+  principalPaid: 3158.9894816286414,
+  currentLoanBalance: 179816.30198511042
+}
+
+--- YEAR 9 CALCULATION ---
+Year 9 Gross Income: 30402.48195330279
+Year 9 Expense Inflation Factor: 1.2184028975099173
+Year 9 Basic Expenses: {
+  propertyTax: 3655.2086925297517,
+  insurance: 1218.4028975099172,
+  maintenance: 2436.8057950198345
+}
+Year 9 Income-Based Expenses: { propertyManagement: 2432.1985562642235 }
+Year 9 Effective Income (after 5% vacancy): 28882.35785563765
+Year 9 Turnover Calculation: {
+  monthlyRentForYear: 2533.5401627752326,
+  inflatedPrepFees: 609.2014487549586,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 937.9857650712875,
+  calculation: {
+    prepFeesPart: 304.6007243774793,
+    commissionPart: 633.3850406938082
+  }
+}
+Year 9 Capital Improvements: 0
+Year 9 Cash Flow Calculation: {
+  grossIncome: 30402.48195330279,
+  operatingExpenses: 10680.601706395015,
+  noi: 18201.756149242632,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2234.496264942256,
+  formula: '18201.756149242632 - 15967.259884300376 - 0 = 2234.496264942256'
+}
+Year 9 Property Value & Mortgage: {
+  currentPropertyValue: 326193.2959573112,
+  appreciation: 76193.29595731117,
+  interestPaid: 12587.14113895773,
+  principalPaid: 3380.1187453426464,
+  currentLoanBalance: 176436.18323976776
+}
+
+--- YEAR 10 CALCULATION ---
+Year 10 Gross Income: 31314.556411901878
+Year 10 Expense Inflation Factor: 1.2488629699476652
+Year 10 Basic Expenses: {
+  propertyTax: 3746.5889098429957,
+  insurance: 1248.8629699476653,
+  maintenance: 2497.7259398953306
+}
+Year 10 Income-Based Expenses: { propertyManagement: 2505.1645129521503 }
+Year 10 Effective Income (after 5% vacancy): 29748.82859130678
+Year 10 Turnover Calculation: {
+  monthlyRentForYear: 2609.54636765849,
+  inflatedPrepFees: 624.4314849738327,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 964.6023344015389,
+  calculation: {
+    prepFeesPart: 312.2157424869163,
+    commissionPart: 652.3865919146225
+  }
+}
+Year 10 Capital Improvements: 0
+Year 10 Cash Flow Calculation: {
+  grossIncome: 31314.556411901878,
+  operatingExpenses: 10962.944667039681,
+  noi: 18785.883924267102,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2818.624039966726,
+  formula: '18785.883924267102 - 15967.259884300376 - 0 = 2818.624039966726'
+}
+Year 10 Property Value & Mortgage: {
+  currentPropertyValue: 335979.0948360305,
+  appreciation: 85979.0948360305,
+  interestPaid: 12350.532826783745,
+  principalPaid: 3616.7270575166312,
+  currentLoanBalance: 172819.45618225113
+}
+Exit Analysis Calculation: {
+  propertyValue: 335979.0948360305,
+  loanBalance: 172819.45618225113,
+  sellingCosts: 6,
+  totalInvestment: 55000,
+  cumulativeCashFlow: 3940.125475680308,
+  components: { downPayment: 50000, closingCosts: 5000, capitalInvestments: 0 }
+}
+==== FIXED OPERATING EXPENSE RATIO ====
+Operating Expenses (NO vacancy): 8670
+Effective Income: 22800
+Operating Expense Ratio (vs effective income): 38.026315789473685
+Operating Expense Breakdown (CORRECTED): {
+  propertyTax: 3000,
+  insurance: 1000,
+  maintenance: 2000,
+  propertyManagement: 1920,
+  turnoverCosts: 750,
+  vacancy: 'REMOVED - handled as income reduction'
+}
+==== RETURN ON IMPROVEMENTS DEBUG ====
+Capital Investments: 0
+Estimated NOI Boost from Improvements: 0
+Base NOI (without improvements): 14130
+NOI (with improvements): 14130
+NOI Increase: 0
+Return on Improvements Calculation: {
+  estimatedNOIBoost: 0,
+  capitalInvestments: 0,
+  returnOnImprovements: '0%'
+}
+==== TURNOVER COST IMPACT DEBUG ====
+Turnover Costs: 750
+Gross Income: 24000
+Turnover Cost Impact: 3.125
+=====================================
+
+
+========== PROJECTIONS CALCULATION ==========
+Initial Values: {
+  purchasePrice: 250000,
+  downPayment: 50000,
+  closingCosts: 5000,
+  capitalInvestments: 0,
+  propertyTaxRate: 1.2,
+  insuranceRate: 0.4,
+  maintenanceCost: 2000,
+  propertyManagementRate: 8
+}
+Assumptions: {
+  projectionYears: 10,
+  annualRentIncrease: 3,
+  annualExpenseIncrease: 2.5,
+  annualPropertyValueIncrease: 3,
+  vacancyRate: 5,
+  turnoverFrequency: 2,
+  sellingCosts: 6
+}
+Mortgage Details: {
+  monthlyMortgage: 1330.6049903583646,
+  annualDebtService: 15967.259884300376,
+  interestRate: 7,
+  loanTerm: 30,
+  initialLoanBalance: 200000
+}
+Base expenses (Year 1): {
+  basePropertyTaxForYear1: 3000,
+  baseInsuranceForYear1: 1000,
+  maintenanceCost: 2000
+}
+Tenant Turnover Parameters: {
+  prepFees: 500,
+  realtorCommission: 0.5,
+  turnoverFrequency: 2,
+  baseTurnoverRate: 0.5
+}
+
+--- YEAR 1 CALCULATION ---
+Year 1 Gross Income: 24000
+Year 1 Expense Inflation Factor: 1
+Year 1 Basic Expenses: { propertyTax: 3000, insurance: 1000, maintenance: 2000 }
+Year 1 Income-Based Expenses: { propertyManagement: 1920 }
+Year 1 Effective Income (after 5% vacancy): 22800
+Year 1 Turnover Calculation: {
+  monthlyRentForYear: 2000,
+  inflatedPrepFees: 500,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 750,
+  calculation: { prepFeesPart: 250, commissionPart: 500 }
+}
+Year 1 Capital Improvements: 0
+Year 1 Cash Flow Calculation: {
+  grossIncome: 24000,
+  operatingExpenses: 8670,
+  noi: 14130,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1837.2598843003761,
+  formula: '14130 - 15967.259884300376 - 0 = -1837.2598843003761'
+}
+Year 1 Property Value & Mortgage: {
+  currentPropertyValue: 257500,
+  appreciation: 7500,
+  interestPaid: 14000.000000000002,
+  principalPaid: 1967.2598843003743,
+  currentLoanBalance: 198032.74011569962
+}
+
+--- YEAR 2 CALCULATION ---
+Year 2 Gross Income: 24720
+Year 2 Expense Inflation Factor: 1.025
+Year 2 Basic Expenses: { propertyTax: 3074.9999999999995, insurance: 1025, maintenance: 2050 }
+Year 2 Income-Based Expenses: { propertyManagement: 1977.6000000000001 }
+Year 2 Effective Income (after 5% vacancy): 23484
+Year 2 Turnover Calculation: {
+  monthlyRentForYear: 2060,
+  inflatedPrepFees: 512.5,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 771.25,
+  calculation: { prepFeesPart: 256.25, commissionPart: 515 }
+}
+Year 2 Capital Improvements: 0
+Year 2 Cash Flow Calculation: {
+  grossIncome: 24720,
+  operatingExpenses: 8898.85,
+  noi: 14585.15,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1382.1098843003765,
+  formula: '14585.15 - 15967.259884300376 - 0 = -1382.1098843003765'
+}
+Year 2 Property Value & Mortgage: {
+  currentPropertyValue: 265225,
+  appreciation: 15225,
+  interestPaid: 13862.291808098975,
+  principalPaid: 2104.9680762014013,
+  currentLoanBalance: 195927.77203949823
+}
+
+--- YEAR 3 CALCULATION ---
+Year 3 Gross Income: 25461.6
+Year 3 Expense Inflation Factor: 1.050625
+Year 3 Basic Expenses: {
+  propertyTax: 3151.8749999999995,
+  insurance: 1050.625,
+  maintenance: 2101.25
+}
+Year 3 Income-Based Expenses: { propertyManagement: 2036.9279999999999 }
+Year 3 Effective Income (after 5% vacancy): 24188.519999999997
+Year 3 Turnover Calculation: {
+  monthlyRentForYear: 2121.7999999999997,
+  inflatedPrepFees: 525.3125,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 793.1062499999999,
+  calculation: { prepFeesPart: 262.65625, commissionPart: 530.4499999999999 }
+}
+Year 3 Capital Improvements: 0
+Year 3 Cash Flow Calculation: {
+  grossIncome: 25461.6,
+  operatingExpenses: 9133.78425,
+  noi: 15054.735749999996,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -912.52413430038,
+  formula: '15054.735749999996 - 15967.259884300376 - 0 = -912.52413430038'
+}
+Year 3 Property Value & Mortgage: {
+  currentPropertyValue: 273181.75,
+  appreciation: 23181.75,
+  interestPaid: 13714.944042764877,
+  principalPaid: 2252.315841535499,
+  currentLoanBalance: 193675.45619796275
+}
+
+--- YEAR 4 CALCULATION ---
+Year 4 Gross Income: 26225.448
+Year 4 Expense Inflation Factor: 1.0768906249999997
+Year 4 Basic Expenses: {
+  propertyTax: 3230.671874999999,
+  insurance: 1076.8906249999995,
+  maintenance: 2153.781249999999
+}
+Year 4 Income-Based Expenses: { propertyManagement: 2098.03584 }
+Year 4 Effective Income (after 5% vacancy): 24914.1756
+Year 4 Turnover Calculation: {
+  monthlyRentForYear: 2185.454,
+  inflatedPrepFees: 538.4453124999998,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 815.5861562499999,
+  calculation: { prepFeesPart: 269.2226562499999, commissionPart: 546.3635 }
+}
+Year 4 Capital Improvements: 0
+Year 4 Cash Flow Calculation: {
+  grossIncome: 26225.448,
+  operatingExpenses: 9374.965746249996,
+  noi: 15539.209853750002,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -428.0500305503738,
+  formula: '15539.209853750002 - 15967.259884300376 - 0 = -428.0500305503738'
+}
+Year 4 Property Value & Mortgage: {
+  currentPropertyValue: 281377.2025,
+  appreciation: 31377.202500000014,
+  interestPaid: 13557.281933857394,
+  principalPaid: 2409.9779504429825,
+  currentLoanBalance: 191265.47824751976
+}
+
+--- YEAR 5 CALCULATION ---
+Year 5 Gross Income: 27012.211440000003
+Year 5 Expense Inflation Factor: 1.1038128906249995
+Year 5 Basic Expenses: {
+  propertyTax: 3311.438671874999,
+  insurance: 1103.8128906249995,
+  maintenance: 2207.625781249999
+}
+Year 5 Income-Based Expenses: { propertyManagement: 2160.9769152000003 }
+Year 5 Effective Income (after 5% vacancy): 25661.600868
+Year 5 Turnover Calculation: {
+  monthlyRentForYear: 2251.01762,
+  inflatedPrepFees: 551.9064453124997,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 838.7076276562499,
+  calculation: { prepFeesPart: 275.95322265624986, commissionPart: 562.754405 }
+}
+Year 5 Capital Improvements: 0
+Year 5 Cash Flow Calculation: {
+  grossIncome: 27012.211440000003,
+  operatingExpenses: 9622.561886606247,
+  noi: 16039.038981393755,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 71.77909709337837,
+  formula: '16039.038981393755 - 15967.259884300376 - 0 = 71.77909709337837'
+}
+Year 5 Property Value & Mortgage: {
+  currentPropertyValue: 289818.518575,
+  appreciation: 39818.518574999995,
+  interestPaid: 13388.583477326385,
+  principalPaid: 2578.676406973991,
+  currentLoanBalance: 188686.80184054576
+}
+
+--- YEAR 6 CALCULATION ---
+Year 6 Gross Income: 27822.577783200002
+Year 6 Expense Inflation Factor: 1.1314082128906244
+Year 6 Basic Expenses: {
+  propertyTax: 3394.2246386718734,
+  insurance: 1131.4082128906243,
+  maintenance: 2262.8164257812487
+}
+Year 6 Income-Based Expenses: { propertyManagement: 2225.806222656 }
+Year 6 Effective Income (after 5% vacancy): 26431.44889404
+Year 6 Turnover Calculation: {
+  monthlyRentForYear: 2318.5481486000003,
+  inflatedPrepFees: 565.7041064453122,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 862.4890903726562,
+  calculation: {
+    prepFeesPart: 282.8520532226561,
+    commissionPart: 579.6370371500001
+  }
+}
+Year 6 Capital Improvements: 0
+Year 6 Cash Flow Calculation: {
+  grossIncome: 27822.577783200002,
+  operatingExpenses: 9876.744590372402,
+  noi: 16554.704303667597,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 587.4444193672207,
+  formula: '16554.704303667597 - 15967.259884300376 - 0 = 587.4444193672207'
+}
+Year 6 Property Value & Mortgage: {
+  currentPropertyValue: 298513.07413225,
+  appreciation: 48513.07413224998,
+  interestPaid: 13208.076128838204,
+  principalPaid: 2759.1837554621725,
+  currentLoanBalance: 185927.61808508358
+}
+
+--- YEAR 7 CALCULATION ---
+Year 7 Gross Income: 28657.255116696004
+Year 7 Expense Inflation Factor: 1.15969341821289
+Year 7 Basic Expenses: {
+  propertyTax: 3479.08025463867,
+  insurance: 1159.69341821289,
+  maintenance: 2319.38683642578
+}
+Year 7 Income-Based Expenses: { propertyManagement: 2292.5804093356805 }
+Year 7 Effective Income (after 5% vacancy): 27224.392360861202
+Year 7 Turnover Calculation: {
+  monthlyRentForYear: 2388.1045930580003,
+  inflatedPrepFees: 579.846709106445,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 886.9495028177225,
+  calculation: {
+    prepFeesPart: 289.9233545532225,
+    commissionPart: 597.0261482645001
+  }
+}
+Year 7 Capital Improvements: 0
+Year 7 Cash Flow Calculation: {
+  grossIncome: 28657.255116696004,
+  operatingExpenses: 10137.690421430743,
+  noi: 17086.70193943046,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1119.4420551300827,
+  formula: '17086.70193943046 - 15967.259884300376 - 0 = 1119.4420551300827'
+}
+Year 7 Property Value & Mortgage: {
+  currentPropertyValue: 307468.4663562175,
+  appreciation: 57468.46635621751,
+  interestPaid: 13014.933265955851,
+  principalPaid: 2952.326618344525,
+  currentLoanBalance: 182975.29146673906
+}
+
+--- YEAR 8 CALCULATION ---
+Year 8 Gross Income: 29516.972770196884
+Year 8 Expense Inflation Factor: 1.1886857536682123
+Year 8 Basic Expenses: {
+  propertyTax: 3566.057261004637,
+  insurance: 1188.6857536682123,
+  maintenance: 2377.3715073364247
+}
+Year 8 Income-Based Expenses: { propertyManagement: 2361.3578216157507 }
+Year 8 Effective Income (after 5% vacancy): 28041.12413168704
+Year 8 Turnover Calculation: {
+  monthlyRentForYear: 2459.7477308497405,
+  inflatedPrepFees: 594.3428768341062,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 912.1083711294882,
+  calculation: {
+    prepFeesPart: 297.1714384170531,
+    commissionPart: 614.9369327124351
+  }
+}
+Year 8 Capital Improvements: 0
+Year 8 Cash Flow Calculation: {
+  grossIncome: 29516.972770196884,
+  operatingExpenses: 10405.580714754513,
+  noi: 17635.543416932527,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1668.283532632151,
+  formula: '17635.543416932527 - 15967.259884300376 - 0 = 1668.283532632151'
+}
+Year 8 Property Value & Mortgage: {
+  currentPropertyValue: 316692.52034690406,
+  appreciation: 66692.52034690406,
+  interestPaid: 12808.270402671735,
+  principalPaid: 3158.9894816286414,
+  currentLoanBalance: 179816.30198511042
+}
+
+--- YEAR 9 CALCULATION ---
+Year 9 Gross Income: 30402.48195330279
+Year 9 Expense Inflation Factor: 1.2184028975099173
+Year 9 Basic Expenses: {
+  propertyTax: 3655.2086925297517,
+  insurance: 1218.4028975099172,
+  maintenance: 2436.8057950198345
+}
+Year 9 Income-Based Expenses: { propertyManagement: 2432.1985562642235 }
+Year 9 Effective Income (after 5% vacancy): 28882.35785563765
+Year 9 Turnover Calculation: {
+  monthlyRentForYear: 2533.5401627752326,
+  inflatedPrepFees: 609.2014487549586,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 937.9857650712875,
+  calculation: {
+    prepFeesPart: 304.6007243774793,
+    commissionPart: 633.3850406938082
+  }
+}
+Year 9 Capital Improvements: 0
+Year 9 Cash Flow Calculation: {
+  grossIncome: 30402.48195330279,
+  operatingExpenses: 10680.601706395015,
+  noi: 18201.756149242632,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2234.496264942256,
+  formula: '18201.756149242632 - 15967.259884300376 - 0 = 2234.496264942256'
+}
+Year 9 Property Value & Mortgage: {
+  currentPropertyValue: 326193.2959573112,
+  appreciation: 76193.29595731117,
+  interestPaid: 12587.14113895773,
+  principalPaid: 3380.1187453426464,
+  currentLoanBalance: 176436.18323976776
+}
+
+--- YEAR 10 CALCULATION ---
+Year 10 Gross Income: 31314.556411901878
+Year 10 Expense Inflation Factor: 1.2488629699476652
+Year 10 Basic Expenses: {
+  propertyTax: 3746.5889098429957,
+  insurance: 1248.8629699476653,
+  maintenance: 2497.7259398953306
+}
+Year 10 Income-Based Expenses: { propertyManagement: 2505.1645129521503 }
+Year 10 Effective Income (after 5% vacancy): 29748.82859130678
+Year 10 Turnover Calculation: {
+  monthlyRentForYear: 2609.54636765849,
+  inflatedPrepFees: 624.4314849738327,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 964.6023344015389,
+  calculation: {
+    prepFeesPart: 312.2157424869163,
+    commissionPart: 652.3865919146225
+  }
+}
+Year 10 Capital Improvements: 0
+Year 10 Cash Flow Calculation: {
+  grossIncome: 31314.556411901878,
+  operatingExpenses: 10962.944667039681,
+  noi: 18785.883924267102,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2818.624039966726,
+  formula: '18785.883924267102 - 15967.259884300376 - 0 = 2818.624039966726'
+}
+Year 10 Property Value & Mortgage: {
+  currentPropertyValue: 335979.0948360305,
+  appreciation: 85979.0948360305,
+  interestPaid: 12350.532826783745,
+  principalPaid: 3616.7270575166312,
+  currentLoanBalance: 172819.45618225113
+}
+Exit Analysis Calculation: {
+  propertyValue: 335979.0948360305,
+  loanBalance: 172819.45618225113,
+  sellingCosts: 6,
+  totalInvestment: 55000,
+  cumulativeCashFlow: 3940.125475680308,
+  components: { downPayment: 50000, closingCosts: 5000, capitalInvestments: 0 }
+}
+==== IRR CALCULATION DEBUG ====
+Initial Investment: 55000
+Annual Cash Flows: [
+  -1837.2598843003761,
+  -1382.1098843003765,
+  -912.52413430038,
+  -428.0500305503738,
+  71.77909709337837,
+  587.4444193672207,
+  1119.4420551300827,
+  1668.283532632151,
+  2234.496264942256,
+  2818.624039966726
+]
+Exit Proceeds: 143000.89296361755
+Complete Cash Flow Array: [
+  -55000,
+  -1837.2598843003761,
+  -1382.1098843003765,
+  -912.52413430038,
+  -428.0500305503738,
+  71.77909709337837,
+  587.4444193672207,
+  1119.4420551300827,
+  1668.283532632151,
+  2234.496264942256,
+  2818.624039966726,
+  143000.89296361755
+]
+=============================
+==== IRR CALCULATION PROCESS ====
+Cash Flows: [
+  -55000,
+  -1837.2598843003761,
+  -1382.1098843003765,
+  -912.52413430038,
+  -428.0500305503738,
+  71.77909709337837,
+  587.4444193672207,
+  1119.4420551300827,
+  1668.283532632151,
+  2234.496264942256,
+  2818.624039966726,
+  143000.89296361755
+]
+Sign Changes: 1
+Iteration 0: Rate=1.7574999999999998, NPV=-55385.240172944796
+Converged after 40 iterations. IRR: 9.107937087752813%
+==============================
+==== SFR METRICS ====
+NOI: 14130
+Cap Rate: 5.652
+Cash on Cash Return: -3.3404725169097746
+DSCR: 0.8849358062927979
+Debt Yield: 7.065
+Gross Yield: 9.6
+Price Per SqFt: 0
+Reserves Analysis: { recommended: 10265.524951791822, months: 5 }
+Rent Per SqFt: NaN
+Break-Even Occupancy: 102.65524951791822
+Equity Multiple: 1.6716548807145064
+One Percent Rule Value: 0.8
+Fifty Rule Analysis: true
+Rent-to-Price Ratio: 0.8
+Price Per Bedroom: 0
+Debt-to-Income Ratio: 66.53024951791824
+Return on Improvements: 0
+Turnover Cost Impact: 3.125
+=====================
+==== BASE ANALYZER CALCULATIONS ====
+Monthly Mortgage: 1330.6049903583646
+Annual Debt Service: 15967.259884300376
+Gross Income (Annual): 24000
+Vacancy Rate: 5%
+Effective Income (Annual): 22800
+Monthly Gross Income: 2000
+Monthly Effective Income: 1900
+Operating Expenses (Annual): 8670
+NOI (from effective income): 14130
+Cash Flow (Annual): -1837.2598843003761
+Cash Flow (Monthly): -153.1049903583647
+Total Investment: 55000 { downPayment: 50000, closingCosts: 5000, capitalInvestments: 0 }
+Property Metrics: {
+  noi: 14130,
+  capRate: 5.652,
+  cashOnCashReturn: -3.3404725169097746,
+  dscr: 0.8849358062927979,
+  operatingExpenseRatio: 38.026315789473685,
+  debtYield: 7.065,
+  grossYield: 9.6,
+  totalInvestment: 55000,
+  pricePerSqFt: 0,
+  rentPerSqFt: NaN,
+  grossRentMultiplier: 10.416666666666666,
+  onePercentRuleValue: 0.8,
+  rentToPriceRatio: 0.8,
+  pricePerBedroom: 0,
+  breakEvenOccupancy: 102.65524951791822,
+  equityMultiple: 1.6716548807145064,
+  fiftyRuleAnalysis: true,
+  debtToIncomeRatio: 66.53024951791824,
+  returnOnImprovements: 0,
+  turnoverCostImpact: 3.125,
+  irr: 9.107937087752813,
+  reservesAnalysis: {
+    minimumReserves: 6159.314971075093,
+    recommendedReserves: 10265.524951791822,
+    optimalReserves: 14371.73493250855,
+    breakdown: { baseMonths: 3, ageAdjustment: 1, marketAdjustment: 1 }
+  }
+}
+Projections Count: 10
+Exit Analysis: {
+  projectedSalePrice: 335979.0948360305,
+  sellingCosts: 20158.745690161828,
+  mortgagePayoff: 172819.45618225113,
+  netProceedsFromSale: 143000.89296361755,
+  totalReturn: 91941.01843929786,
+  returnOnInvestment: 167.16548807145065
+}
+===================================
+==== RETURNS CALCULATION ====
+Total Cash Flow: 3940.125475680308
+Total Appreciation: 85979.0948360305
+Net Proceeds from Sale: 143000.89296361755
+Total Return: 91941.01843929786
+============================
+==== FINAL ANALYSIS RESULT STRUCTURE ====
+Monthly Analysis Keys: [ 'income', 'expenses', 'cashFlow' ]
+Monthly Income: { gross: 2000, effective: 1900 }
+Monthly Expenses: {
+  operating: 722.5,
+  debt: 1330.6049903583646,
+  total: 2053.1049903583644,
+  breakdown: {
+    propertyTax: 250,
+    insurance: 83.33333333333333,
+    maintenance: 166.66666666666666,
+    propertyManagement: 160,
+    vacancy: 0,
+    tenantTurnover: 62.5,
+    utilities: 0,
+    commonAreaElectricity: 0,
+    landscaping: 0,
+    waterSewer: 0,
+    garbage: 0,
+    marketingAndAdvertising: 0,
+    repairsAndMaintenance: 0,
+    capEx: 0,
+    other: 0
+  }
+}
+Monthly Cash Flow: -153.1049903583647
+Annual Analysis Keys: [ 'income', 'expenses', 'noi', 'debtService', 'cashFlow' ]
+Metrics Keys: [
+  'noi',                   'capRate',
+  'cashOnCashReturn',      'dscr',
+  'operatingExpenseRatio', 'debtYield',
+  'grossYield',            'totalInvestment',
+  'pricePerSqFt',          'rentPerSqFt',
+  'grossRentMultiplier',   'onePercentRuleValue',
+  'rentToPriceRatio',      'pricePerBedroom',
+  'breakEvenOccupancy',    'equityMultiple',
+  'fiftyRuleAnalysis',     'debtToIncomeRatio',
+  'returnOnImprovements',  'turnoverCostImpact',
+  'irr',                   'reservesAnalysis'
+]
+Long Term Returns: {
+  irr: 9.107937087752813,
+  totalCashFlow: 3940.125475680308,
+  totalAppreciation: 85979.0948360305,
+  totalReturn: 91941.01843929786,
+  totalInvestment: 55000,
+  totalAdditionalInvestment: 0
+}
+========================================
+
+
+========== PROJECTIONS CALCULATION ==========
+Initial Values: {
+  purchasePrice: 250000,
+  downPayment: 50000,
+  closingCosts: 5000,
+  capitalInvestments: 0,
+  propertyTaxRate: 1.2,
+  insuranceRate: 0.4,
+  maintenanceCost: 2000,
+  propertyManagementRate: 8
+}
+Assumptions: {
+  projectionYears: 10,
+  annualRentIncrease: 3,
+  annualExpenseIncrease: 2.5,
+  annualPropertyValueIncrease: 3,
+  vacancyRate: 5,
+  turnoverFrequency: 2,
+  sellingCosts: 6
+}
+Mortgage Details: {
+  monthlyMortgage: 1330.6049903583646,
+  annualDebtService: 15967.259884300376,
+  interestRate: 7,
+  loanTerm: 30,
+  initialLoanBalance: 200000
+}
+Base expenses (Year 1): {
+  basePropertyTaxForYear1: 3000,
+  baseInsuranceForYear1: 1000,
+  maintenanceCost: 2000
+}
+Tenant Turnover Parameters: {
+  prepFees: 500,
+  realtorCommission: 0.5,
+  turnoverFrequency: 2,
+  baseTurnoverRate: 0.5
+}
+
+--- YEAR 1 CALCULATION ---
+Year 1 Gross Income: 24000
+Year 1 Expense Inflation Factor: 1
+Year 1 Basic Expenses: { propertyTax: 3000, insurance: 1000, maintenance: 2000 }
+Year 1 Income-Based Expenses: { propertyManagement: 1920 }
+Year 1 Effective Income (after 5% vacancy): 22800
+Year 1 Turnover Calculation: {
+  monthlyRentForYear: 2000,
+  inflatedPrepFees: 500,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 750,
+  calculation: { prepFeesPart: 250, commissionPart: 500 }
+}
+Year 1 Capital Improvements: 0
+Year 1 Cash Flow Calculation: {
+  grossIncome: 24000,
+  operatingExpenses: 8670,
+  noi: 14130,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1837.2598843003761,
+  formula: '14130 - 15967.259884300376 - 0 = -1837.2598843003761'
+}
+Year 1 Property Value & Mortgage: {
+  currentPropertyValue: 257500,
+  appreciation: 7500,
+  interestPaid: 14000.000000000002,
+  principalPaid: 1967.2598843003743,
+  currentLoanBalance: 198032.74011569962
+}
+
+--- YEAR 2 CALCULATION ---
+Year 2 Gross Income: 24720
+Year 2 Expense Inflation Factor: 1.025
+Year 2 Basic Expenses: { propertyTax: 3074.9999999999995, insurance: 1025, maintenance: 2050 }
+Year 2 Income-Based Expenses: { propertyManagement: 1977.6000000000001 }
+Year 2 Effective Income (after 5% vacancy): 23484
+Year 2 Turnover Calculation: {
+  monthlyRentForYear: 2060,
+  inflatedPrepFees: 512.5,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 771.25,
+  calculation: { prepFeesPart: 256.25, commissionPart: 515 }
+}
+Year 2 Capital Improvements: 0
+Year 2 Cash Flow Calculation: {
+  grossIncome: 24720,
+  operatingExpenses: 8898.85,
+  noi: 14585.15,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -1382.1098843003765,
+  formula: '14585.15 - 15967.259884300376 - 0 = -1382.1098843003765'
+}
+Year 2 Property Value & Mortgage: {
+  currentPropertyValue: 265225,
+  appreciation: 15225,
+  interestPaid: 13862.291808098975,
+  principalPaid: 2104.9680762014013,
+  currentLoanBalance: 195927.77203949823
+}
+
+--- YEAR 3 CALCULATION ---
+Year 3 Gross Income: 25461.6
+Year 3 Expense Inflation Factor: 1.050625
+Year 3 Basic Expenses: {
+  propertyTax: 3151.8749999999995,
+  insurance: 1050.625,
+  maintenance: 2101.25
+}
+Year 3 Income-Based Expenses: { propertyManagement: 2036.9279999999999 }
+Year 3 Effective Income (after 5% vacancy): 24188.519999999997
+Year 3 Turnover Calculation: {
+  monthlyRentForYear: 2121.7999999999997,
+  inflatedPrepFees: 525.3125,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 793.1062499999999,
+  calculation: { prepFeesPart: 262.65625, commissionPart: 530.4499999999999 }
+}
+Year 3 Capital Improvements: 0
+Year 3 Cash Flow Calculation: {
+  grossIncome: 25461.6,
+  operatingExpenses: 9133.78425,
+  noi: 15054.735749999996,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -912.52413430038,
+  formula: '15054.735749999996 - 15967.259884300376 - 0 = -912.52413430038'
+}
+Year 3 Property Value & Mortgage: {
+  currentPropertyValue: 273181.75,
+  appreciation: 23181.75,
+  interestPaid: 13714.944042764877,
+  principalPaid: 2252.315841535499,
+  currentLoanBalance: 193675.45619796275
+}
+
+--- YEAR 4 CALCULATION ---
+Year 4 Gross Income: 26225.448
+Year 4 Expense Inflation Factor: 1.0768906249999997
+Year 4 Basic Expenses: {
+  propertyTax: 3230.671874999999,
+  insurance: 1076.8906249999995,
+  maintenance: 2153.781249999999
+}
+Year 4 Income-Based Expenses: { propertyManagement: 2098.03584 }
+Year 4 Effective Income (after 5% vacancy): 24914.1756
+Year 4 Turnover Calculation: {
+  monthlyRentForYear: 2185.454,
+  inflatedPrepFees: 538.4453124999998,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 815.5861562499999,
+  calculation: { prepFeesPart: 269.2226562499999, commissionPart: 546.3635 }
+}
+Year 4 Capital Improvements: 0
+Year 4 Cash Flow Calculation: {
+  grossIncome: 26225.448,
+  operatingExpenses: 9374.965746249996,
+  noi: 15539.209853750002,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: -428.0500305503738,
+  formula: '15539.209853750002 - 15967.259884300376 - 0 = -428.0500305503738'
+}
+Year 4 Property Value & Mortgage: {
+  currentPropertyValue: 281377.2025,
+  appreciation: 31377.202500000014,
+  interestPaid: 13557.281933857394,
+  principalPaid: 2409.9779504429825,
+  currentLoanBalance: 191265.47824751976
+}
+
+--- YEAR 5 CALCULATION ---
+Year 5 Gross Income: 27012.211440000003
+Year 5 Expense Inflation Factor: 1.1038128906249995
+Year 5 Basic Expenses: {
+  propertyTax: 3311.438671874999,
+  insurance: 1103.8128906249995,
+  maintenance: 2207.625781249999
+}
+Year 5 Income-Based Expenses: { propertyManagement: 2160.9769152000003 }
+Year 5 Effective Income (after 5% vacancy): 25661.600868
+Year 5 Turnover Calculation: {
+  monthlyRentForYear: 2251.01762,
+  inflatedPrepFees: 551.9064453124997,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 838.7076276562499,
+  calculation: { prepFeesPart: 275.95322265624986, commissionPart: 562.754405 }
+}
+Year 5 Capital Improvements: 0
+Year 5 Cash Flow Calculation: {
+  grossIncome: 27012.211440000003,
+  operatingExpenses: 9622.561886606247,
+  noi: 16039.038981393755,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 71.77909709337837,
+  formula: '16039.038981393755 - 15967.259884300376 - 0 = 71.77909709337837'
+}
+Year 5 Property Value & Mortgage: {
+  currentPropertyValue: 289818.518575,
+  appreciation: 39818.518574999995,
+  interestPaid: 13388.583477326385,
+  principalPaid: 2578.676406973991,
+  currentLoanBalance: 188686.80184054576
+}
+
+--- YEAR 6 CALCULATION ---
+Year 6 Gross Income: 27822.577783200002
+Year 6 Expense Inflation Factor: 1.1314082128906244
+Year 6 Basic Expenses: {
+  propertyTax: 3394.2246386718734,
+  insurance: 1131.4082128906243,
+  maintenance: 2262.8164257812487
+}
+Year 6 Income-Based Expenses: { propertyManagement: 2225.806222656 }
+Year 6 Effective Income (after 5% vacancy): 26431.44889404
+Year 6 Turnover Calculation: {
+  monthlyRentForYear: 2318.5481486000003,
+  inflatedPrepFees: 565.7041064453122,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 862.4890903726562,
+  calculation: {
+    prepFeesPart: 282.8520532226561,
+    commissionPart: 579.6370371500001
+  }
+}
+Year 6 Capital Improvements: 0
+Year 6 Cash Flow Calculation: {
+  grossIncome: 27822.577783200002,
+  operatingExpenses: 9876.744590372402,
+  noi: 16554.704303667597,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 587.4444193672207,
+  formula: '16554.704303667597 - 15967.259884300376 - 0 = 587.4444193672207'
+}
+Year 6 Property Value & Mortgage: {
+  currentPropertyValue: 298513.07413225,
+  appreciation: 48513.07413224998,
+  interestPaid: 13208.076128838204,
+  principalPaid: 2759.1837554621725,
+  currentLoanBalance: 185927.61808508358
+}
+
+--- YEAR 7 CALCULATION ---
+Year 7 Gross Income: 28657.255116696004
+Year 7 Expense Inflation Factor: 1.15969341821289
+Year 7 Basic Expenses: {
+  propertyTax: 3479.08025463867,
+  insurance: 1159.69341821289,
+  maintenance: 2319.38683642578
+}
+Year 7 Income-Based Expenses: { propertyManagement: 2292.5804093356805 }
+Year 7 Effective Income (after 5% vacancy): 27224.392360861202
+Year 7 Turnover Calculation: {
+  monthlyRentForYear: 2388.1045930580003,
+  inflatedPrepFees: 579.846709106445,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 886.9495028177225,
+  calculation: {
+    prepFeesPart: 289.9233545532225,
+    commissionPart: 597.0261482645001
+  }
+}
+Year 7 Capital Improvements: 0
+Year 7 Cash Flow Calculation: {
+  grossIncome: 28657.255116696004,
+  operatingExpenses: 10137.690421430743,
+  noi: 17086.70193943046,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1119.4420551300827,
+  formula: '17086.70193943046 - 15967.259884300376 - 0 = 1119.4420551300827'
+}
+Year 7 Property Value & Mortgage: {
+  currentPropertyValue: 307468.4663562175,
+  appreciation: 57468.46635621751,
+  interestPaid: 13014.933265955851,
+  principalPaid: 2952.326618344525,
+  currentLoanBalance: 182975.29146673906
+}
+
+--- YEAR 8 CALCULATION ---
+Year 8 Gross Income: 29516.972770196884
+Year 8 Expense Inflation Factor: 1.1886857536682123
+Year 8 Basic Expenses: {
+  propertyTax: 3566.057261004637,
+  insurance: 1188.6857536682123,
+  maintenance: 2377.3715073364247
+}
+Year 8 Income-Based Expenses: { propertyManagement: 2361.3578216157507 }
+Year 8 Effective Income (after 5% vacancy): 28041.12413168704
+Year 8 Turnover Calculation: {
+  monthlyRentForYear: 2459.7477308497405,
+  inflatedPrepFees: 594.3428768341062,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 912.1083711294882,
+  calculation: {
+    prepFeesPart: 297.1714384170531,
+    commissionPart: 614.9369327124351
+  }
+}
+Year 8 Capital Improvements: 0
+Year 8 Cash Flow Calculation: {
+  grossIncome: 29516.972770196884,
+  operatingExpenses: 10405.580714754513,
+  noi: 17635.543416932527,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 1668.283532632151,
+  formula: '17635.543416932527 - 15967.259884300376 - 0 = 1668.283532632151'
+}
+Year 8 Property Value & Mortgage: {
+  currentPropertyValue: 316692.52034690406,
+  appreciation: 66692.52034690406,
+  interestPaid: 12808.270402671735,
+  principalPaid: 3158.9894816286414,
+  currentLoanBalance: 179816.30198511042
+}
+
+--- YEAR 9 CALCULATION ---
+Year 9 Gross Income: 30402.48195330279
+Year 9 Expense Inflation Factor: 1.2184028975099173
+Year 9 Basic Expenses: {
+  propertyTax: 3655.2086925297517,
+  insurance: 1218.4028975099172,
+  maintenance: 2436.8057950198345
+}
+Year 9 Income-Based Expenses: { propertyManagement: 2432.1985562642235 }
+Year 9 Effective Income (after 5% vacancy): 28882.35785563765
+Year 9 Turnover Calculation: {
+  monthlyRentForYear: 2533.5401627752326,
+  inflatedPrepFees: 609.2014487549586,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 937.9857650712875,
+  calculation: {
+    prepFeesPart: 304.6007243774793,
+    commissionPart: 633.3850406938082
+  }
+}
+Year 9 Capital Improvements: 0
+Year 9 Cash Flow Calculation: {
+  grossIncome: 30402.48195330279,
+  operatingExpenses: 10680.601706395015,
+  noi: 18201.756149242632,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2234.496264942256,
+  formula: '18201.756149242632 - 15967.259884300376 - 0 = 2234.496264942256'
+}
+Year 9 Property Value & Mortgage: {
+  currentPropertyValue: 326193.2959573112,
+  appreciation: 76193.29595731117,
+  interestPaid: 12587.14113895773,
+  principalPaid: 3380.1187453426464,
+  currentLoanBalance: 176436.18323976776
+}
+
+--- YEAR 10 CALCULATION ---
+Year 10 Gross Income: 31314.556411901878
+Year 10 Expense Inflation Factor: 1.2488629699476652
+Year 10 Basic Expenses: {
+  propertyTax: 3746.5889098429957,
+  insurance: 1248.8629699476653,
+  maintenance: 2497.7259398953306
+}
+Year 10 Income-Based Expenses: { propertyManagement: 2505.1645129521503 }
+Year 10 Effective Income (after 5% vacancy): 29748.82859130678
+Year 10 Turnover Calculation: {
+  monthlyRentForYear: 2609.54636765849,
+  inflatedPrepFees: 624.4314849738327,
+  vacancyAdjustment: 1,
+  turnoverRate: 0.5,
+  turnoverCosts: 964.6023344015389,
+  calculation: {
+    prepFeesPart: 312.2157424869163,
+    commissionPart: 652.3865919146225
+  }
+}
+Year 10 Capital Improvements: 0
+Year 10 Cash Flow Calculation: {
+  grossIncome: 31314.556411901878,
+  operatingExpenses: 10962.944667039681,
+  noi: 18785.883924267102,
+  annualDebtService: 15967.259884300376,
+  capitalImprovements: 0,
+  cashFlow: 2818.624039966726,
+  formula: '18785.883924267102 - 15967.259884300376 - 0 = 2818.624039966726'
+}
+Year 10 Property Value & Mortgage: {
+  currentPropertyValue: 335979.0948360305,
+  appreciation: 85979.0948360305,
+  interestPaid: 12350.532826783745,
+  principalPaid: 3616.7270575166312,
+  currentLoanBalance: 172819.45618225113
+}
+Exit Analysis Calculation: {
+  propertyValue: 335979.0948360305,
+  loanBalance: 172819.45618225113,
+  sellingCosts: 6,
+  totalInvestment: 55000,
+  cumulativeCashFlow: 3940.125475680308,
+  components: { downPayment: 50000, closingCosts: 5000, capitalInvestments: 0 }
+}
+==== SENSITIVITY ANALYSIS DEBUG ====
+Base values:
+Gross Income: 24000
+Operating Expenses: 8670
+Annual Debt Service: 15967.259884300376
+NOI: 15330
+Cash Flow: -637.2598843003761
+Total Investment: 55000
+Best case scenario:
+Income: 25200
+Expenses: 8236.5
+Vacancy Rate: 3
+Interest Rate: 6.5
+NOI: 16207.5
+Cash Flow: 1037.8674361688336
+Cash on Cash Return: 1.887031702125152
+DSCR: 1.0684174406862967
+Total Return: 116450.46023476632
+Worst case scenario:
+Income: 22800
+Expenses: 9537
+Vacancy Rate: 8
+Interest Rate: 8
+NOI: 11439
+Cash Flow: -6171.349773105067
+Cash on Cash Return: -11.220635951100121
+DSCR: 0.6495612039160009
+Total Return: -3963.9456230064534
+==================================
+Normalized analysis structure for frontend: {
+  hasMonthlyExpenses: true,
+  hasExpenseBreakdown: true,
+  hasPropertyTax: true,
+  hasAnnualAnalysis: true,
+  hasLongTermAnalysis: true,
+  hasKeyMetrics: true,
+  hasSensitivityAnalysis: true
+}
+📈 KEY METRICS COMPARISON:
+========================================
+IRR (from keyMetrics):     9.11%
+❌ Error running IRR/ROI debug analysis: Cannot read properties of undefined (reading 'returnOnInvestment')
+TypeError: Cannot read properties of undefined (reading 'returnOnInvestment')
+    at Object.<anonymous> (/Users/parthpatel/real-estate-analyzer/debug-irr-roi-bug.js:55:65)
+    at Module._compile (node:internal/modules/cjs/loader:1734:14)
+    at Object..js (node:internal/modules/cjs/loader:1899:10)
+    at Module.load (node:internal/modules/cjs/loader:1469:32)
+    at Function._load (node:internal/modules/cjs/loader:1286:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:151:5)
+    at node:internal/main/run_main_module:33:47

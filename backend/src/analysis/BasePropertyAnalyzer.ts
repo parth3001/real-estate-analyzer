@@ -132,7 +132,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       const grossIncome = this.calculateGrossIncome(year);
       console.log(`Year ${year} Gross Income:`, grossIncome);
       
-      const expenseInflationFactor = Math.pow(1 + this.assumptions.annualExpenseIncrease / 100, year - 1);
+      const expenseInflationFactor = Math.pow(1 + (this.assumptions.annualExpenseIncrease || 2.5) / 100, year - 1);
       console.log(`Year ${year} Expense Inflation Factor:`, expenseInflationFactor);
       
       const propertyTax = basePropertyTaxForYear1 * expenseInflationFactor;

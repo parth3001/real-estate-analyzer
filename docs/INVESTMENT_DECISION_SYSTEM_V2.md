@@ -3,7 +3,14 @@
 **Version**: 2.2  
 **Last Updated**: January 11, 2025  
 **Author**: Senior RE Analyst Team Lead (20+ years experience)  
-**Status**: Production Ready - Business Logic Enhancement Phase
+**Status**: ⚠️ **DEPRECATED** - Replaced by V3.0 Professional Calibration  
+**Replacement**: See `INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md`
+
+---
+
+## **🚨 DEPRECATION NOTICE**
+
+This version is superseded by V3.0 Professional Calibration based on extensive professional investor feedback identifying penalty stacking and conservative bias issues.
 
 ---
 

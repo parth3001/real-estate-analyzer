@@ -28,6 +28,11 @@ import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
 import MarketDataPage from './pages/MarketDataPage';
 
+// Portfolio Components
+import PortfolioPage from './pages/PortfolioPage';
+import PortfolioDashboard from './pages/PortfolioDashboard';
+import { ApplePortfolioWizard } from './components/Portfolio/ApplePortfolioWizard';
+
 // Analysis Details Component (for viewing saved analyses)
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams();
@@ -132,6 +137,24 @@ function App() {
                 {/* Property Management */}
                 <Route path="/saved-properties" element={<SavedProperties />} />
                 <Route path="/analysis/:id" element={<AnalysisDetails />} />
+                
+                {/* Portfolio Routes */}
+                <Route path="/portfolio" element={<PortfolioDashboard />} />
+                <Route path="/portfolio/create" element={
+                  <Box sx={{ p: 3 }}>
+                    <ApplePortfolioWizard
+                      onComplete={() => window.location.href = '/portfolio'}
+                      onCancel={() => window.location.href = '/portfolio'}
+                    />
+                  </Box>
+                } />
+                <Route path="/portfolio/:id" element={<PortfolioDashboard />} />
+                <Route path="/portfolio/:id/edit" element={
+                  <Box sx={{ p: 3 }}>
+                    <Typography variant="h4">Edit Portfolio</Typography>
+                    <Typography variant="body1">Portfolio editing will be implemented here</Typography>
+                  </Box>
+                } />
                 
                 {/* Market & Tools */}
                 <Route path="/market-data" element={<MarketDataPage />} />

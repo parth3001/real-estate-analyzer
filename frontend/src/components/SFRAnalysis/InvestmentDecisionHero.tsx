@@ -34,8 +34,22 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
-import InvestmentMessagingEngine, { type InvestmentMetrics, type GoalContext, type MessageResult } from '../../utils/investmentMessagingEngine';
-// Professional Scoring Engine removed - all scoring logic in backend
+// Architecture Fix: Removed InvestmentMessagingEngine - all messaging now from backend only
+// This ensures Single Source of Truth principle compliance
+
+// Minimal local interfaces (no business logic)
+interface GoalContext {
+  exitStrategy?: string;
+  portfolioStrategy?: string;
+  experienceLevel?: string;
+}
+
+interface MessageResult {
+  header: string;
+  primaryReason: string;
+  verdictLabel: string;
+  warnings: string[];
+}
 
 interface AnalysisData {
   monthlyAnalysis?: {
@@ -58,16 +72,128 @@ interface AnalysisData {
   rentToPriceRatio?: number;
 }
 
+// V3.0 Professional Assessment Interface
+interface ProfessionalAssessment {
+  dealQuality: number; // 0-100 weighted score of deal fundamentals
+  executionDifficulty: number; // 0-100 complexity of executing this investment
+  dataReliability: number; // 0-100 confidence in input data quality
+  
+  // Factor breakdown (sum = 100%)
+  cashFlowScore: number; // 35% weight - monthly income stability
+  irrScore: number; // 25% weight - total return potential
+  marketStrengthScore: number; // 15% weight - market tier and trends
+  debtStructureScore: number; // 10% weight - financing quality
+  exitStrategyScore: number; // 10% weight - liquidity and exit options
+  capRateScore: number; // 3% weight - current yield vs market
+  propertyRiskScore: number; // 2% weight - property quality and age
+  
+  // Professional recommendations
+  primaryInsight: string;
+  strategicRecommendations: string[];
+  riskMitigation: string[];
+  opportunityMaximization: string[];
+  
+  // Enhanced debt structure analysis
+  debtAnalysis?: {
+    dscr: number;
+    interestRate: number;
+    marketSpread: number; // in basis points
+    leverageRatio: number;
+    loanTerm: number;
+    isBalloonLoan: boolean;
+    balloonYears?: number;
+    riskFactors: string[];
+    strengthFactors: string[];
+  };
+}
+
+// AI-Enhanced Content Interface (80/20 approach)
+interface AIEnhancedContent {
+  reasoning: {
+    explanation: string;
+    keyStrengths: string[];
+    keyConcerns: string[];
+    verdict: string;
+  };
+  actionPlan: {
+    immediateActions: string[];
+    negotiationFocus: string[];
+    preparationItems: string[];
+    timeframe: string;
+  };
+  capitalStrategy: {
+    currentAssessment: string;
+    optimizedApproach: string;
+    alternativeOptions: string[];
+    recommendation: string;
+  };
+  timeline: {
+    optimalHoldPeriod: string;
+    rationale: string;
+    exitIndicators: string[];
+    marketTiming: string;
+  };
+  alternatives: {
+    betterPropertyType: string;
+    marketAlternative: string;
+    timingStrategy: string;
+    riskAdjustment: string;
+  };
+}
+
+// Sensitivity Analysis Interface
+interface SensitivityScenario {
+  parameter: 'price' | 'rent' | 'interestRate' | 'downPayment';
+  currentValue: number;
+  newValue: number;
+  change: number;
+  changePercent: number;
+  newDealQuality: number;
+  newVerdict: 'BUY' | 'NEGOTIATE' | 'PASS';
+  scoreImprovement: number;
+  description: string;
+}
+
+interface SensitivityAnalysis {
+  currentScore: number;
+  currentVerdict: 'BUY' | 'NEGOTIATE' | 'PASS';
+  buyThreshold: number;
+  
+  priceScenarios: SensitivityScenario[];
+  rentScenarios: SensitivityScenario[];
+  interestRateScenarios: SensitivityScenario[];
+  
+  pathToBuy: {
+    easiest: SensitivityScenario;
+    mostRealistic: SensitivityScenario;
+    alternatives: SensitivityScenario[];
+  };
+  
+  negotiationGuidance: {
+    focus: 'price' | 'rent' | 'financing' | 'terms';
+    rationale: string;
+    specificTargets: string[];
+  };
+}
+
 interface InvestmentDecisionHeroProps {
   investmentDecision: {
     verdict: 'BUY' | 'PASS' | 'NEGOTIATE';
-    confidence: number;
-    score?: number; // Property quality score 0-100
+    confidence: number; // LEGACY - deprecated
+    score?: number; // LEGACY - property quality score 0-100
+    professionalAssessment?: ProfessionalAssessment; // V3.0 Professional Calibration
     primaryReason: string;
     secondaryReasons: string[];
     keyRisks: string[];
     confidenceDescription?: string; // Backend-generated confidence explanation
     goalBasedReasoning?: string; // Backend-generated goal-based explanation
+    portfolioContext?: {
+      portfolioName: string;
+      currentProperties: number;
+      portfolioGoal: string;
+      fitAnalysis: string;
+      impactSummary: string;
+    }; // Portfolio context when property analyzed in portfolio
     actionPlan: Array<{
       action: string;
       priority: 'immediate' | 'short-term' | 'long-term';
@@ -116,6 +242,8 @@ interface InvestmentDecisionHeroProps {
       longTermStrategy: string[];
     };
     goalContext?: GoalContext; // Goal context for personalization
+    aiEnhancedContent?: AIEnhancedContent; // AI-enhanced tab content (80/20 approach)
+    sensitivityAnalysis?: SensitivityAnalysis; // Deal sensitivity analysis for negotiation intelligence
   };
   analysis?: AnalysisData; // Analysis data for safe messaging
 }
@@ -132,28 +260,28 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
     if (verdict === 'BUY') {
       if (confidence >= 80) return {
         label: 'Strong Confidence',
-        description: 'High certainty this is a good investment',
+        description: 'Multiple fundamentals align - institutional-quality opportunity',
         color: appleColors.green[600]
       };
       if (confidence >= 65) return {
         label: 'Moderate Confidence',
-        description: 'Good opportunity with standard due diligence',
+        description: 'Solid fundamentals with standard professional due diligence needed',
         color: appleColors.green[500]
       };
       return {
         label: 'Proceed with Caution',
-        description: 'Positive but requires careful review',
+        description: 'Some risk factors present - thorough analysis required',
         color: appleColors.orange[500]
       };
     } else if (verdict === 'NEGOTIATE') {
       if (confidence >= 70) return {
         label: 'Worth Negotiating',
-        description: 'Good potential if terms improve',
+        description: 'Strong fundamentals - specific price/terms adjustments needed',
         color: appleColors.orange[600]
       };
       if (confidence >= 50) return {
         label: 'Consider Carefully',
-        description: 'May work with significant adjustments',
+        description: 'Multiple factors require adjustment for viability',
         color: appleColors.orange[500]
       };
       return {
@@ -186,60 +314,31 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
     }
   };
 
-  // Convert analysis to InvestmentMetrics and generate safe messaging
-  const goalContext = investmentDecision.goalContext || {};
+  // ✅ ARCHITECTURE FIX: Use ONLY backend-generated messages (Single Source of Truth)
+  // Removed all frontend business logic - backend Investment Decision Engine handles everything
   
-  let safeMessage: MessageResult;
+  const getVerdictLabel = (verdict: string): string => {
+    switch (verdict) {
+      case 'BUY': return 'Recommended Investment';
+      case 'NEGOTIATE': return 'Negotiate Terms';
+      case 'CAUTION': return 'Consider With Strategy';
+      case 'PASS': return 'Pass on This Property';
+      default: return 'Investment Analysis';
+    }
+  };
   
-  if (analysis) {
-    // Convert analysis data to InvestmentMetrics format
-    const metrics: InvestmentMetrics = {
-      monthlyFlow: analysis.monthlyAnalysis?.cashFlow || 0,
-      annualFlow: (analysis.monthlyAnalysis?.cashFlow || 0) * 12,
-      capRate: analysis.keyMetrics?.capRate || 0,
-      cashOnCashReturn: analysis.keyMetrics?.cashOnCashReturn || 0,
-      totalInvestment: analysis.financing?.totalInvestment || 0,
-      purchasePrice: analysis.purchasePrice || 0,
-      totalWealth: (analysis.longTermAnalysis?.totalAppreciation || 0) + (analysis.longTermAnalysis?.totalCashFlow || 0),
-      operatingExpenseRatio: analysis.operatingExpenseRatio,
-      dscr: analysis.dscr,
-      rentToPriceRatio: analysis.rentToPriceRatio
-    };
-    
-    // Backend already has all the analysis - no frontend scoring needed
-    // Generate contextual messaging but preserve backend's primary reason
-    const generatedMessage = InvestmentMessagingEngine.generateMessage(
-      investmentDecision.verdict,
-      goalContext,
-      metrics
-    );
-    
-    // CRITICAL FIX: Always use backend's primaryReason over frontend's generic message
-    // The backend has sophisticated market intelligence, property classification, and strategy alignment
-    // that generates specific, actionable reasons. The frontend's generic messages lose this context.
-    safeMessage = {
-      ...generatedMessage,
-      primaryReason: investmentDecision.primaryReason || generatedMessage.primaryReason
-    };
-    
-    // Fix applied: Backend's sophisticated reasoning now preserved over frontend's generic messages
-  } else {
-    // Fallback when no analysis data
-    safeMessage = {
-      header: "Professional Analysis",
-      primaryReason: investmentDecision.primaryReason,
-      verdictLabel: "Investment Analysis",
-      warnings: [],
-      sentiment: 'neutral',
-      confidence: 'medium'
-    };
-  }
+  // Use ONLY backend-generated content - no frontend business logic
+  const safeMessage: MessageResult = {
+    header: "Professional Investment Analysis",
+    primaryReason: investmentDecision.primaryReason,
+    verdictLabel: getVerdictLabel(investmentDecision.verdict),
+    warnings: investmentDecision.keyRisks || []
+  };
   
   // Extract safe messaging values
   const goalContextualHeader = safeMessage.header;
-  const goalContextualReason = safeMessage.primaryReason;
   const goalContextualVerdictLabel = safeMessage.verdictLabel;
-  // Simplified for now - insights come from safeMessage.warnings
+  // primaryReason comes directly from backend, not from safeMessage
 
   // Verdict styling configuration with goal-contextual labels
   const getVerdictConfig = (verdict: string) => {
@@ -261,6 +360,15 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           borderColor: appleColors.orange[200],
           label: goalContextualVerdictLabel,
           description: 'Potential with price adjustment'
+        };
+      case 'CAUTION':
+        return {
+          icon: NegotiateIcon, // Reuse negotiate icon for now
+          color: appleColors.blue[600],
+          bgColor: appleColors.blue[50],
+          borderColor: appleColors.blue[400],
+          label: goalContextualVerdictLabel,
+          description: 'Requires strategic consideration'
         };
       case 'PASS':
         return {
@@ -306,6 +414,8 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
   // Detail tabs
   const detailTabs = [
     { id: 'reasoning', label: 'Reasoning', icon: AIIcon },
+    ...(investmentDecision.professionalAssessment ? [{ id: 'professional', label: 'Professional Analysis', icon: CheckCircle }] : []),
+    ...(investmentDecision.portfolioContext ? [{ id: 'portfolio', label: 'Portfolio Fit', icon: InfoIcon }] : []),
     { id: 'actions', label: 'Action Plan', icon: ActionIcon },
     { id: 'capital', label: 'Capital Strategy', icon: CapitalIcon },
     { id: 'timeline', label: 'Timeline', icon: TimelineIcon },
@@ -373,7 +483,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Tooltip 
-                      title={`Our confidence in the ${investmentDecision.verdict} recommendation. Higher confidence means stronger conviction based on property fundamentals, market conditions, and risk assessment.`}
+                      title={`How confident we are that our ${investmentDecision.verdict} recommendation is correct. Based on 20+ factors including property fundamentals, market conditions, and risk assessment. 80%+ = strong conviction, 50-70% = proceed with caution, <50% = high uncertainty in recommendation.`}
                       arrow
                       placement="top"
                     >
@@ -393,6 +503,48 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                   <Typography variant="caption" sx={{ color: appleColors.gray[600], fontWeight: 500, maxWidth: 300 }}>
                     {investmentDecision.confidenceDescription || getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).description}
                   </Typography>
+                  
+                  {/* V3.0 Professional Assessment Display */}
+                  {investmentDecision.professionalAssessment && (
+                    <Box sx={{ mt: 2, p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px', border: `1px solid ${appleColors.gray[200]}` }}>
+                      <Typography variant="caption" sx={{ color: appleColors.primary[600], fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '10px' }}>
+                        V3.0 Professional Calibration
+                      </Typography>
+                      
+                      <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
+                            Deal Quality
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
+                            {investmentDecision.professionalAssessment.dealQuality}/100
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
+                            Execution
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
+                            {100 - investmentDecision.professionalAssessment.executionDifficulty}/100
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
+                            Data Quality
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
+                            {investmentDecision.professionalAssessment.dataReliability}/100
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="caption" sx={{ color: appleColors.gray[700], fontSize: '11px', fontStyle: 'italic', mt: 1, display: 'block' }}>
+                        {investmentDecision.professionalAssessment.primaryInsight}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Grid>
@@ -412,51 +564,22 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     fontWeight: 500
                   }}
                 >
-{investmentDecision.goalBasedReasoning || goalContextualReason}
+                  {investmentDecision.primaryReason}
                 </Typography>
                 
-                {/* Display backend investment decision insights */}
-                {investmentDecision.secondaryReasons && investmentDecision.secondaryReasons.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    {investmentDecision.secondaryReasons.slice(0, 2).map((reason: string, index: number) => (
-                      <Alert 
-                        key={index}
-                        icon={investmentDecision.verdict === 'BUY' ? <CheckCircle /> : <InfoIcon />}
-                        severity={investmentDecision.verdict === 'BUY' ? 'success' : 'info'}
-                        sx={{ 
-                          mt: 0.5, 
-                          fontSize: '13px',
-                          py: 0.5,
-                          '& .MuiAlert-icon': { fontSize: '16px' },
-                          '& .MuiAlert-message': { py: 0.5 }
-                        }}
-                      >
-                        {reason}
-                      </Alert>
-                    ))}
-                  </Box>
-                )}
-                
-                {/* Display key risks from backend */}
-                {investmentDecision.keyRisks && investmentDecision.keyRisks.length > 0 && (
-                  <Box sx={{ mt: 1 }}>
-                    {investmentDecision.keyRisks.slice(0, 2).map((risk: string, index: number) => (
-                      <Alert 
-                        key={index}
-                        icon={<Warning />}
-                        severity="warning" 
-                        sx={{ 
-                          mt: 1, 
-                          fontSize: '13px',
-                          py: 0.5,
-                          '& .MuiAlert-icon': { fontSize: '16px' },
-                          '& .MuiAlert-message': { py: 0.5 }
-                        }}
-                      >
-                        {risk}
-                      </Alert>
-                    ))}
-                  </Box>
+                {/* Main card shows only primary reason - all details in expandable section */}
+                {investmentDecision.goalBasedReasoning && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      mt: 2,
+                      fontSize: '14px',
+                      fontStyle: 'italic',
+                      color: appleColors.gray[600]
+                    }}
+                  >
+                    {investmentDecision.goalBasedReasoning}
+                  </Typography>
                 )}
               </Box>
             </Grid>
@@ -544,158 +667,756 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
             <Box sx={{ p: 3 }}>
               {activeDetailTab === 'reasoning' && (
                 <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                      <OpportunityIcon sx={{ mr: 1, color: appleColors.green[600] }} />
-                      Supporting Factors
-                    </Typography>
-                    <List dense>
-                      {investmentDecision.secondaryReasons.map((reason, index) => (
-                        <ListItem key={index} sx={{ pl: 0 }}>
-                          <ListItemIcon sx={{ minWidth: 28 }}>
-                            <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={reason} 
-                            primaryTypographyProps={{ fontSize: '14px', fontWeight: 500 }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Grid>
+                  {/* AI-Enhanced Reasoning (80/20 approach) */}
+                  {investmentDecision.aiEnhancedContent?.reasoning ? (
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                          Professional Analysis
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6 }}>
+                          {investmentDecision.aiEnhancedContent.reasoning.explanation}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic', color: appleColors.gray[600], mb: 3 }}>
+                          {investmentDecision.aiEnhancedContent.reasoning.verdict}
+                        </Typography>
+                      </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                      <RiskIcon sx={{ mr: 1, color: appleColors.orange[600] }} />
-                      Key Risks
-                    </Typography>
-                    <List dense>
-                      {investmentDecision.keyRisks.map((risk, index) => (
-                        <ListItem key={index} sx={{ pl: 0 }}>
-                          <ListItemIcon sx={{ minWidth: 28 }}>
-                            <Warning sx={{ fontSize: 20, color: appleColors.orange[500] }} />
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={risk} 
-                            primaryTypographyProps={{ fontSize: '14px', fontWeight: 500 }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <OpportunityIcon sx={{ mr: 1, color: appleColors.green[600] }} />
+                          Key Strengths
+                        </Typography>
+                        <List dense>
+                          {investmentDecision.aiEnhancedContent.reasoning.keyStrengths.map((strength, index) => (
+                            <ListItem key={index} sx={{ pl: 0 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={strength} 
+                                slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <RiskIcon sx={{ mr: 1, color: appleColors.orange[600] }} />
+                          Key Concerns
+                        </Typography>
+                        <List dense>
+                          {investmentDecision.aiEnhancedContent.reasoning.keyConcerns.map((concern, index) => (
+                            <ListItem key={index} sx={{ pl: 0 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                <Warning sx={{ fontSize: 20, color: appleColors.orange[500] }} />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={concern} 
+                                slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Grid>
+                    </>
+                  ) : (
+                    // Fallback to original content if AI enhancement unavailable
+                    <>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <OpportunityIcon sx={{ mr: 1, color: appleColors.green[600] }} />
+                          Supporting Factors
+                        </Typography>
+                        <List dense>
+                          {investmentDecision.secondaryReasons.map((reason, index) => (
+                            <ListItem key={index} sx={{ pl: 0 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={reason} 
+                                slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <RiskIcon sx={{ mr: 1, color: appleColors.orange[600] }} />
+                          Key Risks
+                        </Typography>
+                        <List dense>
+                          {investmentDecision.keyRisks.map((risk, index) => (
+                            <ListItem key={index} sx={{ pl: 0 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                <Warning sx={{ fontSize: 20, color: appleColors.orange[500] }} />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={risk} 
+                                slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
+              )}
+
+              {activeDetailTab === 'professional' && investmentDecision.professionalAssessment && (
+                <Box>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                    <CheckCircle sx={{ mr: 1, color: appleColors.primary[600] }} />
+                    V3.0 Professional Investment Assessment
+                  </Typography>
+                  
+                  {/* Multi-Dimensional Overview */}
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Box sx={{ textAlign: 'center', p: 3, backgroundColor: appleColors.green[50], borderRadius: '12px', border: `2px solid ${appleColors.green[200]}` }}>
+                        <Typography variant="h4" fontWeight={700} color={appleColors.green[700]}>
+                          {investmentDecision.professionalAssessment.dealQuality}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                          Deal Quality (0-100)
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1, fontSize: '12px', color: appleColors.gray[700] }}>
+                          Weighted assessment of investment fundamentals
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Box sx={{ textAlign: 'center', p: 3, backgroundColor: appleColors.blue[50], borderRadius: '12px', border: `2px solid ${appleColors.blue[200]}` }}>
+                        <Typography variant="h4" fontWeight={700} color={appleColors.blue[700]}>
+                          {100 - investmentDecision.professionalAssessment.executionDifficulty}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                          Execution Ease (0-100)
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1, fontSize: '12px', color: appleColors.gray[700] }}>
+                          How easy this investment is to execute
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Box sx={{ textAlign: 'center', p: 3, backgroundColor: appleColors.indigo[50], borderRadius: '12px', border: `2px solid ${appleColors.indigo[200]}` }}>
+                        <Typography variant="h4" fontWeight={700} color={appleColors.indigo[700]}>
+                          {investmentDecision.professionalAssessment.dataReliability}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                          Data Reliability (0-100)
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1, fontSize: '12px', color: appleColors.gray[700] }}>
+                          Quality and completeness of input data
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                  
+                  {/* Professional Insight */}
+                  <Alert severity="info" sx={{ mb: 4, borderRadius: '12px' }}>
+                    <Typography variant="body1" fontWeight={500}>
+                      {investmentDecision.professionalAssessment.primaryInsight}
+                    </Typography>
+                  </Alert>
+                  
+                  {/* Professional Factor Breakdown */}
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                    Professional Factor Weighting
+                  </Typography>
+                  
+                  <Grid container spacing={2} sx={{ mb: 4 }}>
+                    {[
+                      { name: 'Cash Flow', weight: 35, score: investmentDecision.professionalAssessment.cashFlowScore, color: appleColors.green[600] },
+                      { name: 'IRR', weight: 25, score: investmentDecision.professionalAssessment.irrScore, color: appleColors.blue[600] },
+                      { name: 'Market Strength', weight: 15, score: investmentDecision.professionalAssessment.marketStrengthScore, color: appleColors.indigo[600] },
+                      { name: 'Debt Structure', weight: 10, score: investmentDecision.professionalAssessment.debtStructureScore, color: appleColors.orange[600] },
+                      { name: 'Exit Strategy', weight: 10, score: investmentDecision.professionalAssessment.exitStrategyScore, color: appleColors.orange[500] },
+                      { name: 'Cap Rate', weight: 3, score: investmentDecision.professionalAssessment.capRateScore, color: appleColors.red[600] },
+                      { name: 'Property Risk', weight: 2, score: investmentDecision.professionalAssessment.propertyRiskScore, color: appleColors.gray[600] }
+                    ].map((factor) => (
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }} key={factor.name}>
+                        <Box sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '8px' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {factor.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                              {factor.weight}% weight
+                            </Typography>
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box 
+                              sx={{ 
+                                flex: 1,
+                                height: 8,
+                                backgroundColor: appleColors.gray[200],
+                                borderRadius: '4px',
+                                overflow: 'hidden'
+                              }}
+                            >
+                              <Box 
+                                sx={{
+                                  height: '100%',
+                                  width: `${factor.score}%`,
+                                  backgroundColor: factor.color,
+                                  borderRadius: '4px'
+                                }}
+                              />
+                            </Box>
+                            <Typography variant="body2" fontWeight={600} sx={{ color: factor.color, minWidth: '40px' }}>
+                              {factor.score}/100
+                            </Typography>
+                          </Box>
+                          
+                          <Typography variant="caption" sx={{ color: appleColors.gray[600], mt: 0.5, display: 'block' }}>
+                            Contributes: {((factor.score * factor.weight) / 100).toFixed(1)} points
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                  
+                  {/* Professional Recommendations */}
+                  {(investmentDecision.professionalAssessment.strategicRecommendations.length > 0 ||
+                    investmentDecision.professionalAssessment.riskMitigation.length > 0 ||
+                    investmentDecision.professionalAssessment.opportunityMaximization.length > 0) && (
+                    <Grid container spacing={3}>
+                      {investmentDecision.professionalAssessment.strategicRecommendations.length > 0 && (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <ActionIcon sx={{ mr: 1, color: appleColors.blue[600] }} />
+                            Strategic Actions
+                          </Typography>
+                          <List dense>
+                            {investmentDecision.professionalAssessment.strategicRecommendations.map((rec, index) => (
+                              <ListItem key={index}>
+                                <ListItemIcon>
+                                  <CheckCircle fontSize="small" sx={{ color: appleColors.blue[600] }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                  primary={rec}
+                                  primaryTypographyProps={{ 
+                                    fontSize: '14px',
+                                    color: appleColors.gray[700]
+                                  }} 
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Grid>
+                      )}
+                      
+                      {investmentDecision.professionalAssessment.riskMitigation.length > 0 && (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <RiskIcon sx={{ mr: 1, color: appleColors.orange[600] }} />
+                            Risk Mitigation
+                          </Typography>
+                          <List dense>
+                            {investmentDecision.professionalAssessment.riskMitigation.map((risk, index) => (
+                              <ListItem key={index}>
+                                <ListItemIcon>
+                                  <Warning fontSize="small" sx={{ color: appleColors.orange[600] }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                  primary={risk}
+                                  primaryTypographyProps={{ 
+                                    fontSize: '14px',
+                                    color: appleColors.gray[700]
+                                  }} 
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Grid>
+                      )}
+                      
+                      {investmentDecision.professionalAssessment.opportunityMaximization.length > 0 && (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <OpportunityIcon sx={{ mr: 1, color: appleColors.green[600] }} />
+                            Opportunities
+                          </Typography>
+                          <List dense>
+                            {investmentDecision.professionalAssessment.opportunityMaximization.map((opp, index) => (
+                              <ListItem key={index}>
+                                <ListItemIcon>
+                                  <OpportunityIcon fontSize="small" sx={{ color: appleColors.green[600] }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                  primary={opp}
+                                  primaryTypographyProps={{ 
+                                    fontSize: '14px',
+                                    color: appleColors.gray[700]
+                                  }} 
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Grid>
+                      )}
+                    </Grid>
+                  )}
+                  
+                  {/* Enhanced Debt Structure Analysis */}
+                  {investmentDecision.professionalAssessment.debtAnalysis && (
+                    <Box sx={{ mt: 4, p: 3, backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                        <CapitalIcon sx={{ mr: 1, color: appleColors.blue[600] }} />
+                        Professional Debt Structure Analysis
+                      </Typography>
+                      
+                      <Grid container spacing={3}>
+                        <Grid size={{ xs: 12, md: 8 }}>
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
+                              <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                                DSCR
+                              </Typography>
+                              <Typography variant="body1" fontWeight={600}>
+                                {investmentDecision.professionalAssessment.debtAnalysis.dscr.toFixed(2)}x
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid size={{ xs: 6, sm: 3 }}>
+                              <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                                Interest Rate
+                              </Typography>
+                              <Typography variant="body1" fontWeight={600}>
+                                {(investmentDecision.professionalAssessment.debtAnalysis.interestRate * 100).toFixed(2)}%
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid size={{ xs: 6, sm: 3 }}>
+                              <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                                Market Spread
+                              </Typography>
+                              <Typography variant="body1" fontWeight={600}>
+                                {investmentDecision.professionalAssessment.debtAnalysis.marketSpread.toFixed(0)} bps
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid size={{ xs: 6, sm: 3 }}>
+                              <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                                Leverage
+                              </Typography>
+                              <Typography variant="body1" fontWeight={600}>
+                                {(investmentDecision.professionalAssessment.debtAnalysis.leverageRatio * 100).toFixed(1)}%
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                        
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                            Loan Structure
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {investmentDecision.professionalAssessment.debtAnalysis.loanTerm} years
+                            {investmentDecision.professionalAssessment.debtAnalysis.isBalloonLoan && 
+                              ` (${investmentDecision.professionalAssessment.debtAnalysis.balloonYears}yr balloon)`
+                            }
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                      
+                      {(investmentDecision.professionalAssessment.debtAnalysis.strengthFactors.length > 0 ||
+                        investmentDecision.professionalAssessment.debtAnalysis.riskFactors.length > 0) && (
+                        <Grid container spacing={3} sx={{ mt: 2 }}>
+                          {investmentDecision.professionalAssessment.debtAnalysis.strengthFactors.length > 0 && (
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Typography variant="body2" fontWeight={600} sx={{ color: appleColors.green[700], mb: 1 }}>
+                                Debt Strengths:
+                              </Typography>
+                              {investmentDecision.professionalAssessment.debtAnalysis.strengthFactors.map((strength, index) => (
+                                <Typography key={index} variant="body2" sx={{ color: appleColors.gray[700], fontSize: '13px', mb: 0.5 }}>
+                                  + {strength}
+                                </Typography>
+                              ))}
+                            </Grid>
+                          )}
+                          
+                          {investmentDecision.professionalAssessment.debtAnalysis.riskFactors.length > 0 && (
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Typography variant="body2" fontWeight={600} sx={{ color: appleColors.orange[700], mb: 1 }}>
+                                Debt Risk Factors:
+                              </Typography>
+                              {investmentDecision.professionalAssessment.debtAnalysis.riskFactors.map((risk, index) => (
+                                <Typography key={index} variant="body2" sx={{ color: appleColors.gray[700], fontSize: '13px', mb: 0.5 }}>
+                                  - {risk}
+                                </Typography>
+                              ))}
+                            </Grid>
+                          )}
+                        </Grid>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              )}
+
+              {activeDetailTab === 'portfolio' && investmentDecision.portfolioContext && (
+                <Box>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                    <InfoIcon sx={{ mr: 1, color: appleColors.blue[600] }} />
+                    Portfolio Context Analysis
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Card sx={{ p: 3, backgroundColor: appleColors.blue[50], borderRadius: '12px', mb: 2 }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: appleColors.blue[800] }}>
+                          Target Portfolio
+                        </Typography>
+                        <Stack spacing={1}>
+                          <Typography variant="body2">
+                            <strong>Name:</strong> {investmentDecision.portfolioContext.portfolioName}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Current Properties:</strong> {investmentDecision.portfolioContext.currentProperties}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Primary Goal:</strong> {investmentDecision.portfolioContext.portfolioGoal}
+                          </Typography>
+                        </Stack>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Card sx={{ p: 3, backgroundColor: appleColors.green[50], borderRadius: '12px', mb: 2 }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: appleColors.green[800] }}>
+                          Portfolio Fit Analysis
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          {investmentDecision.portfolioContext.fitAnalysis}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 12 }}>
+                      <Alert 
+                        severity="info" 
+                        sx={{ 
+                          backgroundColor: appleColors.gray[50],
+                          border: `1px solid ${appleColors.gray[200]}`,
+                          borderRadius: '12px'
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                          Portfolio Impact
+                        </Typography>
+                        <Typography variant="body2">
+                          {investmentDecision.portfolioContext.impactSummary}
+                        </Typography>
+                      </Alert>
+                    </Grid>
+                  </Grid>
+                </Box>
               )}
 
               {activeDetailTab === 'actions' && (
                 <Box>
-                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
-                    Recommended Action Plan
-                  </Typography>
-                  
-                  <Stack spacing={2}>
-                    {investmentDecision.actionPlan.map((action, index) => (
-                      <Card key={index} sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
-                            {action.action}
-                          </Typography>
-                          <Chip
-                            label={action.priority}
-                            size="small"
-                            color={action.priority === 'immediate' ? 'error' : action.priority === 'short-term' ? 'warning' : 'info'}
-                            sx={{ ml: 2 }}
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          <strong>Impact:</strong> {action.impact}
+                  {/* AI-Enhanced Action Plan with Sensitivity Analysis */}
+                  {investmentDecision.aiEnhancedContent?.actionPlan ? (
+                    <>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                        Strategic Action Plan
+                      </Typography>
+                      
+                      {/* Immediate Actions */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.red[600] }}>
+                          🚨 Immediate Actions (24-48 hours)
                         </Typography>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="caption" color="text.secondary">
-                            Expected: {action.expectedOutcome}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Timeline: {action.timeframe}
-                          </Typography>
-                        </Box>
+                        <Stack spacing={1}>
+                          {investmentDecision.aiEnhancedContent.actionPlan.immediateActions.map((action, index) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                              <Box sx={{ 
+                                minWidth: 6, 
+                                height: 6, 
+                                borderRadius: '50%', 
+                                backgroundColor: appleColors.red[500],
+                                mt: '6px',
+                                mr: 2
+                              }} />
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {action}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Negotiation Focus with Sensitivity Analysis */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.blue[600] }}>
+                          🎯 Negotiation Strategy
+                        </Typography>
+                        
+                        {/* Sensitivity Analysis Summary */}
+                        {investmentDecision.sensitivityAnalysis && (
+                          <Card sx={{ p: 2, mb: 2, backgroundColor: appleColors.blue[50], borderRadius: '12px' }}>
+                            <Typography variant="caption" sx={{ color: appleColors.blue[700], fontWeight: 600, textTransform: 'uppercase' }}>
+                              Deal Sensitivity Analysis
+                            </Typography>
+                            <Typography variant="body2" sx={{ mt: 1, fontWeight: 500 }}>
+                              Current Score: {investmentDecision.sensitivityAnalysis.currentScore}/100 
+                              • Need {investmentDecision.sensitivityAnalysis.buyThreshold - investmentDecision.sensitivityAnalysis.currentScore} points for BUY
+                            </Typography>
+                            {investmentDecision.sensitivityAnalysis.pathToBuy.mostRealistic && (
+                              <Typography variant="body2" sx={{ mt: 1, color: appleColors.gray[700] }}>
+                                <strong>Best Path:</strong> {investmentDecision.sensitivityAnalysis.pathToBuy.mostRealistic.description}
+                              </Typography>
+                            )}
+                          </Card>
+                        )}
+
+                        <Stack spacing={1}>
+                          {investmentDecision.aiEnhancedContent.actionPlan.negotiationFocus.map((focus, index) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                              <Box sx={{ 
+                                minWidth: 6, 
+                                height: 6, 
+                                borderRadius: '50%', 
+                                backgroundColor: appleColors.blue[500],
+                                mt: '6px',
+                                mr: 2
+                              }} />
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {focus}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Preparation Items */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.green[600] }}>
+                          📋 Preparation Checklist
+                        </Typography>
+                        <Stack spacing={1}>
+                          {investmentDecision.aiEnhancedContent.actionPlan.preparationItems.map((item, index) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                              <Box sx={{ 
+                                minWidth: 6, 
+                                height: 6, 
+                                borderRadius: '50%', 
+                                backgroundColor: appleColors.green[500],
+                                mt: '6px',
+                                mr: 2
+                              }} />
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {item}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Timeline */}
+                      <Card sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                          ⏱️ Execution Timeline
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: appleColors.gray[700] }}>
+                          {investmentDecision.aiEnhancedContent.actionPlan.timeframe}
+                        </Typography>
                       </Card>
-                    ))}
-                  </Stack>
+                    </>
+                  ) : (
+                    // Fallback to original action plan if AI enhancement unavailable
+                    <>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                        Recommended Action Plan
+                      </Typography>
+                      
+                      <Stack spacing={2}>
+                        {investmentDecision.actionPlan.map((action, index) => (
+                          <Card key={index} sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                              <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
+                                {action.action}
+                              </Typography>
+                              <Chip
+                                label={action.priority}
+                                size="small"
+                                color={action.priority === 'immediate' ? 'error' : action.priority === 'short-term' ? 'warning' : 'info'}
+                                sx={{ ml: 2 }}
+                              />
+                            </Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                              <strong>Impact:</strong> {action.impact}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography variant="caption" color="text.secondary">
+                                Expected: {action.expectedOutcome}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Timeline: {action.timeframe}
+                              </Typography>
+                            </Box>
+                          </Card>
+                        ))}
+                      </Stack>
+                    </>
+                  )}
                 </Box>
               )}
 
               {activeDetailTab === 'capital' && (
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                      Current Approach
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: appleColors.orange[50], borderRadius: '12px', mb: 2 }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                        {investmentDecision.capitalStrategy.currentApproach.description}
+                <Box>
+                  {/* AI-Enhanced Capital Strategy with Professional Financing Analysis */}
+                  {investmentDecision.aiEnhancedContent?.capitalStrategy ? (
+                    <>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                        Professional Capital Strategy
                       </Typography>
-                      <Stack direction="row" spacing={3} sx={{ mb: 1 }}>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Cash Required</Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatCurrency(investmentDecision.capitalStrategy.currentApproach.cashRequired)}
+                      
+                      {/* Current Assessment */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.blue[600] }}>
+                          📊 Current Structure Assessment
+                        </Typography>
+                        <Card sx={{ p: 2, mb: 2, backgroundColor: appleColors.blue[50], borderRadius: '12px' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {investmentDecision.aiEnhancedContent.capitalStrategy.currentAssessment}
                           </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Expected Return</Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatPercentage(investmentDecision.capitalStrategy.currentApproach.expectedReturn)}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Chip 
-                        label={`${investmentDecision.capitalStrategy.currentApproach.efficiency} efficiency`}
-                        size="small"
-                        color={investmentDecision.capitalStrategy.currentApproach.efficiency === 'excellent' ? 'success' : 'warning'}
-                      />
-                    </Box>
-                  </Grid>
+                        </Card>
+                      </Box>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                      Recommended Approach
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: appleColors.green[50], borderRadius: '12px', mb: 2 }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                        {investmentDecision.capitalStrategy.recommendedApproach.description}
-                      </Typography>
-                      <Stack direction="row" spacing={3} sx={{ mb: 1 }}>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Cash Required</Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatCurrency(investmentDecision.capitalStrategy.recommendedApproach.cashRequired)}
+                      {/* Optimization Approach */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.green[600] }}>
+                          ⚙️ Structure Optimization
+                        </Typography>
+                        <Card sx={{ p: 2, mb: 2, backgroundColor: appleColors.green[50], borderRadius: '12px' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {investmentDecision.aiEnhancedContent.capitalStrategy.optimizedApproach}
                           </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Expected Return</Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatPercentage(investmentDecision.capitalStrategy.recommendedApproach.expectedReturn)}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Chip 
-                        label={`${investmentDecision.capitalStrategy.recommendedApproach.efficiency} efficiency`}
-                        size="small"
-                        color={investmentDecision.capitalStrategy.recommendedApproach.efficiency === 'excellent' ? 'success' : 'warning'}
-                      />
-                    </Box>
-                  </Grid>
+                        </Card>
+                      </Box>
 
-                  <Grid size={{ xs: 12 }}>
-                    <Alert severity="info" sx={{ borderRadius: '12px' }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                        Portfolio Strategy
-                      </Typography>
-                      <Typography variant="body2">
-                        {investmentDecision.capitalStrategy.portfolioStrategy}
-                      </Typography>
-                    </Alert>
-                  </Grid>
-                </Grid>
+                      {/* Alternative Options */}
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: appleColors.purple[600] }}>
+                          💡 Creative Financing Alternatives
+                        </Typography>
+                        <Stack spacing={1}>
+                          {investmentDecision.aiEnhancedContent.capitalStrategy.alternativeOptions.map((option, index) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                              <Box sx={{ 
+                                minWidth: 6, 
+                                height: 6, 
+                                borderRadius: '50%', 
+                                backgroundColor: appleColors.purple[500],
+                                mt: '6px',
+                                mr: 2
+                              }} />
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {option}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+
+                      {/* Final Recommendation */}
+                      <Alert severity="info" sx={{ borderRadius: '12px' }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                          🎯 Professional Recommendation
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {investmentDecision.aiEnhancedContent.capitalStrategy.recommendation}
+                        </Typography>
+                      </Alert>
+                    </>
+                  ) : (
+                    // Fallback to original capital strategy display if AI enhancement unavailable
+                    <Grid container spacing={3}>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                          Current Approach
+                        </Typography>
+                        <Box sx={{ p: 2, backgroundColor: appleColors.orange[50], borderRadius: '12px', mb: 2 }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                            {investmentDecision.capitalStrategy.currentApproach.description}
+                          </Typography>
+                          <Stack direction="row" spacing={3} sx={{ mb: 1 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Cash Required</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {formatCurrency(investmentDecision.capitalStrategy.currentApproach.cashRequired)}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Expected Return</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {formatPercentage(investmentDecision.capitalStrategy.currentApproach.expectedReturn)}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                          <Chip 
+                            label={`${investmentDecision.capitalStrategy.currentApproach.efficiency} efficiency`}
+                            size="small"
+                            color={investmentDecision.capitalStrategy.currentApproach.efficiency === 'excellent' ? 'success' : 'warning'}
+                          />
+                        </Box>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                          Recommended Approach
+                        </Typography>
+                        <Box sx={{ p: 2, backgroundColor: appleColors.green[50], borderRadius: '12px', mb: 2 }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                            {investmentDecision.capitalStrategy.recommendedApproach.description}
+                          </Typography>
+                          <Stack direction="row" spacing={3} sx={{ mb: 1 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Cash Required</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {formatCurrency(investmentDecision.capitalStrategy.recommendedApproach.cashRequired)}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Expected Return</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {formatPercentage(investmentDecision.capitalStrategy.recommendedApproach.expectedReturn)}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                          <Chip 
+                            label={`${investmentDecision.capitalStrategy.recommendedApproach.efficiency} efficiency`}
+                            size="small"
+                            color={investmentDecision.capitalStrategy.recommendedApproach.efficiency === 'excellent' ? 'success' : 'warning'}
+                          />
+                        </Box>
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Alert severity="info" sx={{ borderRadius: '12px' }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                            Portfolio Strategy
+                          </Typography>
+                          <Typography variant="body2">
+                            {investmentDecision.capitalStrategy.portfolioStrategy}
+                          </Typography>
+                        </Alert>
+                      </Grid>
+                    </Grid>
+                  )}
+                </Box>
               )}
 
               {activeDetailTab === 'timeline' && (

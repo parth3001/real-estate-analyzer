@@ -2,7 +2,8 @@
 
 **Version**: 2.1 (PRODUCTION READY)  
 **Last Updated**: August 12, 2025  
-**Implementation Status**: ✅ ALL PHASES COMPLETE  
+**Implementation Status**: ⚠️ **DEPRECATED** - Replaced by V3.0 Professional Calibration  
+**Replacement**: See `INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md`  
 **Test Coverage**: 34/34 tests passed (100%)  
 **Value Validation**: EXCEPTIONAL - Institutional-grade intelligence confirmed
 

@@ -22,6 +22,139 @@ import { InvestmentDecisionEngine } from '../services/investment/investmentDecis
 // Import AI Goal Analysis
 import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiService';
 
+/**
+ * Generate portfolio context for investment decision enhancement
+ * SAFE: This is an optional enhancement that doesn't affect core analysis
+ */
+async function generatePortfolioContext(portfolioId: string, analysis: any) {
+  try {
+    logger.info('generatePortfolioContext: Starting with portfolioId:', portfolioId);
+    
+    // Import services dynamically to avoid circular dependencies
+    const { portfolioService } = require('../services/portfolio/portfolioService');
+    const { portfolioAnalyticsService } = require('../services/portfolio/portfolioAnalyticsService');
+    
+    logger.info('generatePortfolioContext: Services imported successfully');
+    
+    // Fetch portfolio details
+    const portfolio = await portfolioService.getPortfolioById(portfolioId);
+    logger.info('generatePortfolioContext: Portfolio lookup result:', {
+      portfolioFound: !!portfolio,
+      portfolioName: portfolio?.name,
+      portfolioGoal: portfolio?.goals?.primaryGoal
+    });
+    
+    if (!portfolio) {
+      logger.warn('Portfolio not found for ID:', portfolioId);
+      return null;
+    }
+    
+    // Get current portfolio analytics
+    const analytics = await portfolioAnalyticsService.calculatePortfolioAnalytics(portfolioId);
+    
+    logger.info('generatePortfolioContext: Portfolio analytics calculated:', {
+      portfolioId,
+      analyticsExists: !!analytics,
+      hasSummary: !!analytics?.summary,
+      totalProperties: analytics?.summary?.totalProperties || 0,
+      monthlyNetCashFlow: analytics?.summary?.monthlyNetCashFlow || 0,
+      totalValue: analytics?.summary?.totalValue || 0
+    });
+    
+    // Extract property cash flow for smart messaging
+    const monthlyCashFlow = analysis?.monthlyAnalysis?.cashFlow || 0;
+    const portfolioGoal = portfolio.goals?.primaryGoal || 'BALANCED';
+    
+    // Generate smart impact summary based on portfolio goal and property cash flow
+    let impactSummary = '';
+    const capRate = analysis?.keyMetrics?.capRate || 0;
+    const cashOnCashReturn = analysis?.keyMetrics?.cashOnCashReturn || 0;
+    const totalInvestment = analysis?.financing?.totalInvestment || 0;
+    
+    if (portfolioGoal === 'CASH_FLOW') {
+      if (monthlyCashFlow > 500) {
+        impactSummary = `Excellent addition! This property generates $${Math.round(monthlyCashFlow)}/month, significantly boosting your portfolio's cash flow.`;
+      } else if (monthlyCashFlow > 0) {
+        impactSummary = `Supports your cash flow objectives with $${Math.round(monthlyCashFlow)}/month in positive returns.`;
+      } else if (monthlyCashFlow > -200) {
+        impactSummary = `Minor negative cash flow of $${Math.round(Math.abs(monthlyCashFlow))}/month. Consider negotiating price or exploring expense reductions.`;
+      } else {
+        impactSummary = `Warning: Negative cash flow of $${Math.round(Math.abs(monthlyCashFlow))}/month conflicts with your cash flow goals. This property may drain your portfolio.`;
+      }
+    } else if (portfolioGoal === 'WEALTH_BUILDING') {
+      if (capRate > 8) {
+        impactSummary = `Strong wealth builder with ${capRate.toFixed(1)}% cap rate. Excellent appreciation and income combination.`;
+      } else {
+        impactSummary = `Contributes to wealth building with ${capRate.toFixed(1)}% cap rate and long-term appreciation potential.`;
+      }
+    } else if (portfolioGoal === 'ESTATE_BUILDING') {
+      impactSummary = `Adds to your estate portfolio. With ${cashOnCashReturn.toFixed(1)}% cash-on-cash return, this property builds generational wealth.`;
+    } else if (portfolioGoal === 'TAX_BENEFITS') {
+      impactSummary = `Provides depreciation and expense deductions. Initial investment of $${(totalInvestment/1000).toFixed(0)}K offers substantial tax advantages.`;
+    } else if (portfolioGoal === 'HOUSE_HACKING') {
+      if (monthlyCashFlow > 0) {
+        impactSummary = `Perfect for house hacking! Living here while renting other units generates $${Math.round(monthlyCashFlow)}/month.`;
+      } else {
+        impactSummary = `House hacking opportunity: Live for reduced cost while building equity. Net cost: $${Math.round(Math.abs(monthlyCashFlow))}/month.`;
+      }
+    } else if (portfolioGoal === 'GEOGRAPHIC_DIVERSIFICATION') {
+      impactSummary = `Expands your geographic footprint, reducing market concentration risk while generating ${monthlyCashFlow > 0 ? '$' + Math.round(monthlyCashFlow) + '/month' : 'long-term appreciation'}.`;
+    } else {
+      // BALANCED or fallback
+      if (monthlyCashFlow > 0 && capRate > 6) {
+        impactSummary = `Well-balanced addition with $${Math.round(monthlyCashFlow)}/month cash flow and ${capRate.toFixed(1)}% cap rate.`;
+      } else {
+        impactSummary = `Adds diversification to your portfolio. Consider your overall strategy alignment.`;
+      }
+    }
+    
+    // Generate fitAnalysis based on actual property metrics
+    let fitAnalysis = '';
+    const currentPortfolioSize = analytics?.summary?.totalProperties || 0;
+    
+    if (currentPortfolioSize === 0) {
+      fitAnalysis = 'This would be your first property - a great start to building your real estate portfolio!';
+    } else if (monthlyCashFlow > 0 && capRate > 7) {
+      fitAnalysis = `Strong performer that enhances your portfolio with ${capRate.toFixed(1)}% cap rate and positive cash flow.`;
+    } else if (monthlyCashFlow > 0) {
+      fitAnalysis = `Cash flow positive addition that complements your existing ${currentPortfolioSize} propert${currentPortfolioSize === 1 ? 'y' : 'ies'}.`;
+    } else if (capRate > 8) {
+      fitAnalysis = `High-yield opportunity with ${capRate.toFixed(1)}% cap rate, despite initial negative cash flow.`;
+    } else {
+      fitAnalysis = `Adds geographic and asset diversity to your portfolio of ${currentPortfolioSize} propert${currentPortfolioSize === 1 ? 'y' : 'ies'}.`;
+    }
+    
+    // Create portfolio context object following Data Dictionary structure
+    const portfolioContext = {
+      portfolioName: portfolio.name,
+      portfolioGoal: portfolioGoal,
+      currentProperties: analytics?.summary?.totalProperties || 0,
+      monthlyNetCashFlow: analytics?.summary?.monthlyNetCashFlow || 0,
+      totalValue: analytics?.summary?.totalValue || 0,
+      fitAnalysis: fitAnalysis,
+      impactSummary: impactSummary
+    };
+    
+    logger.info('generatePortfolioContext: Generated final context:', {
+      portfolioId,
+      portfolioName: portfolio.name,
+      currentProperties: portfolioContext.currentProperties,
+      monthlyNetCashFlow: portfolioContext.monthlyNetCashFlow,
+      portfolioGoal,
+      monthlyCashFlow,
+      fitAnalysis: portfolioContext.fitAnalysis,
+      impactSummary: portfolioContext.impactSummary,
+      fullContext: portfolioContext
+    });
+    
+    return portfolioContext;
+    
+  } catch (error) {
+    logger.error('Error generating portfolio context:', error);
+    return null;
+  }
+}
+
 // Helper function to convert wizard data to standard format
 const convertWizardData = (dealData: any): any => {
   // Check if this is wizard data and convert it
@@ -162,9 +295,15 @@ const generateAIInsights = async (dealData: SFRData | MultiFamilyData, analysis:
 };
 
 // Get all deals
-export const getAllDeals = async (req: Request, res: Response): Promise<void> => {
+export const getAllDeals = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const deals = await dealService.getAllDeals();
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    
+    const deals = await dealService.getAllDeals(userId);
     res.json(deals);
   } catch (error) {
     logger.error('Error getting all deals:', error);
@@ -177,12 +316,19 @@ export const getAllDeals = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Get a single deal by ID
-export const getDealById = async (req: Request, res: Response): Promise<void> => {
+export const getDealById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    
     const { id } = req.params;
     const deal = await dealService.getDealById(id);
     
-    if (!deal) {
+    // Verify ownership
+    if (!deal || deal.userId?.toString() !== userId) {
       res.status(404).json({ error: 'Deal not found' });
       return;
     }
@@ -209,6 +355,9 @@ export const getDealById = async (req: Request, res: Response): Promise<void> =>
       hasAnnualAnalysis: !!dealData.analysis?.annualAnalysis,
       hasKeyMetrics: !!dealData.analysis?.keyMetrics,
       hasLongTermAnalysis: !!dealData.analysis?.longTermAnalysis,
+      hasInvestmentDecision: !!dealData.analysis?.investmentDecision,
+      hasPortfolioContext: !!dealData.analysis?.investmentDecision?.portfolioContext,
+      portfolioContextData: dealData.analysis?.investmentDecision?.portfolioContext,
       aiScore: dealData.analysis?.aiInsights?.investmentScore,
       dataSource: dealData._dataSource || 'legacy',
       hasTotalInvestment: !!dealData.analysis?.keyMetrics?.totalInvestment
@@ -241,7 +390,16 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
       userId: req.user.id // Add userId from authenticated user
     };
     
+    // Extract portfolioId from either top level or from analysis object
+    const portfolioId = rawDealData.portfolioId || rawDealData.analysis?.portfolioId || null;
+    
     const dealData = convertWizardData(rawDealData);
+    
+    // Ensure portfolioId is at the top level of dealData
+    if (portfolioId) {
+      dealData.portfolioId = portfolioId;
+      logger.info('Including portfolioId in deal:', portfolioId);
+    }
 
     // Auto-generate property name if empty (common with wizard flow)
     if (!dealData.propertyName || dealData.propertyName.trim() === '') {
@@ -260,6 +418,8 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
       propertyType: dealData.propertyType,
       hasAnalysis: !!dealData.analysis,
       userId: dealData.userId,
+      portfolioId: dealData.portfolioId,
+      hasPortfolioId: !!dealData.portfolioId,
       bodyKeys: Object.keys(dealData)
     });
     
@@ -284,7 +444,9 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
     const newDeal = await dealService.saveDeal(dealData);
     logger.info('Deal created successfully:', {
       id: newDeal._id,
-      propertyName: newDeal.propertyName
+      propertyName: newDeal.propertyName,
+      portfolioId: newDeal.portfolioId,
+      hasPortfolioId: !!newDeal.portfolioId
     });
     
     // Log what investment score was actually saved to the database
@@ -310,15 +472,37 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 // Update an existing deal
-export const updateDeal = async (req: Request, res: Response): Promise<void> => {
+export const updateDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    
     const { id } = req.params;
+    
+    // Verify ownership before updating
+    const existingDeal = await dealService.getDealById(id);
+    if (!existingDeal || existingDeal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+    
     const dealData = req.body;
+    
+    // Preserve portfolioId if it exists (from either top level or analysis object)
+    const portfolioId = dealData.portfolioId || dealData.analysis?.portfolioId || existingDeal.portfolioId || null;
+    if (portfolioId) {
+      dealData.portfolioId = portfolioId;
+    }
     
     logger.info(`Updating deal ${id} with data:`, {
       propertyName: dealData.propertyName,
       propertyType: dealData.propertyType,
       hasAnalysis: !!dealData.analysis,
+      portfolioId: dealData.portfolioId,
+      hasPortfolioId: !!dealData.portfolioId,
       bodyKeys: Object.keys(dealData)
     });
     
@@ -346,9 +530,23 @@ export const updateDeal = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Delete a deal
-export const deleteDeal = async (req: Request, res: Response): Promise<void> => {
+export const deleteDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    
     const { id } = req.params;
+    
+    // Verify ownership before deleting
+    const existingDeal = await dealService.getDealById(id);
+    if (!existingDeal || existingDeal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+    
     await dealService.deleteDeal(id);
     res.status(204).end();
   } catch (error) {
@@ -362,9 +560,17 @@ export const deleteDeal = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Analyze a deal
-export const analyzeDeal = async (req: Request, res: Response): Promise<void> => {
+export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     let dealData = req.body;
+    
+    // DEBUG: Log the incoming request data
+    logger.info('ANALYZE REQUEST DEBUG:', {
+      hasPortfolioId: !!dealData.portfolioId,
+      portfolioId: dealData.portfolioId,
+      propertyName: dealData.propertyName,
+      requestKeys: Object.keys(dealData)
+    });
     
     // Convert wizard data to standard format using shared helper function
     dealData = convertWizardData(dealData);
@@ -498,6 +704,29 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
           enhancedGoals // NEW: Pass enhanced goals for personalized messaging
         );
         
+        // SAFE: Add portfolio context if portfolioId is provided (optional enhancement)
+        logger.info('Checking for portfolio context:', {
+          hasPortfolioId: !!dealData.portfolioId,
+          portfolioId: dealData.portfolioId,
+          hasInvestmentDecision: !!analysis.investmentDecision
+        });
+        
+        if (dealData.portfolioId && analysis.investmentDecision) {
+          try {
+            logger.info('Enhancing investment decision with portfolio context:', dealData.portfolioId);
+            const portfolioContext = await generatePortfolioContext(dealData.portfolioId, analysis);
+            if (portfolioContext) {
+              analysis.investmentDecision.portfolioContext = portfolioContext;
+              logger.info('Portfolio context added successfully:', portfolioContext);
+            } else {
+              logger.warn('Portfolio context generation returned null');
+            }
+          } catch (portfolioError) {
+            logger.warn('Portfolio context generation failed (non-critical):', portfolioError);
+            // Continue without portfolio context - this is optional enhancement
+          }
+        }
+        
         logger.info('Investment decision generated:', {
           verdict: analysis.investmentDecision.verdict,
           confidence: analysis.investmentDecision.confidence,
@@ -515,6 +744,37 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
       }
     } else {
       analysis.investmentDecision = null;
+    }
+    
+    // Add portfolio context regardless of AI/investmentDecision status
+    if (dealData.portfolioId) {
+      try {
+        logger.info('Generating portfolio context for portfolioId:', dealData.portfolioId);
+        const portfolioContext = await generatePortfolioContext(dealData.portfolioId, analysis);
+        logger.info('Generated portfolio context result:', {
+          portfolioContextExists: !!portfolioContext,
+          portfolioContext: portfolioContext
+        });
+        
+        if (portfolioContext) {
+          // Create investmentDecision object if it doesn't exist
+          if (!analysis.investmentDecision) {
+            analysis.investmentDecision = {
+              verdict: 'ANALYZE',
+              confidence: 0,
+              primaryReason: 'Portfolio context analysis',
+              warnings: [],
+              opportunities: []
+            };
+          }
+          analysis.investmentDecision.portfolioContext = portfolioContext;
+          logger.info('Portfolio context added successfully to investmentDecision');
+        } else {
+          logger.warn('generatePortfolioContext returned null/undefined');
+        }
+      } catch (portfolioError) {
+        logger.error('Portfolio context generation failed:', portfolioError);
+      }
     }
     
     logger.info('Calculated analysis metrics:', {
@@ -578,8 +838,26 @@ export const analyzeDeal = async (req: Request, res: Response): Promise<void> =>
     
     logger.info('Analysis complete - returning results');
     
-    // Return real analysis
-    res.json(analysis);
+    // Include portfolioId in the response so it can be saved with the deal
+    const responseData = {
+      ...analysis,
+      portfolioId: dealData.portfolioId || null // Include portfolioId from original request
+    };
+    
+    logger.info('Returning analysis with portfolioId:', {
+      hasPortfolioId: !!dealData.portfolioId,
+      portfolioId: dealData.portfolioId
+    });
+    
+    // Debug: Check if portfolio context is in response
+    logger.info('🔍 RESPONSE DEBUG - Portfolio context check:', {
+      hasInvestmentDecision: !!responseData.investmentDecision,
+      hasPortfolioContext: !!responseData.investmentDecision?.portfolioContext,
+      portfolioContext: responseData.investmentDecision?.portfolioContext
+    });
+    
+    // Return analysis with portfolioId
+    res.json(responseData);
   } catch (error) {
     logger.error('Error analyzing deal:', error);
     if (error instanceof Error) {
@@ -810,7 +1088,7 @@ export const getSampleMF = (_req: Request, res: Response): void => {
  * NEW: Fast AI Predictions Endpoint
  * Provides 3-4 second response vs 76+ second mega-prompt
  */
-export const getQuickPredictions = async (req: Request, res: Response): Promise<void> => {
+export const getQuickPredictions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const startTime = Date.now();
   
   try {
@@ -907,7 +1185,7 @@ export const getQuickPredictions = async (req: Request, res: Response): Promise<
  * - Hybrid processing combining both approaches
  * - Enhanced strategic insights and risk adjustments
  */
-export const analyzeGoals = async (req: Request, res: Response): Promise<void> => {
+export const analyzeGoals = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const startTime = Date.now();
   
   try {

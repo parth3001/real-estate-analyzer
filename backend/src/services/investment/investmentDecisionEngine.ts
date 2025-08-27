@@ -15,13 +15,51 @@ import { MarketDataResponse } from '../../types/marketData';
 import { MarketTierService, MarketTier, MarketContext } from './marketTierService';
 import { PropertyClassificationService, PropertyClass, PropertyClassification, PropertyClassRiskAdjustments } from './propertyClassificationService';
 import { StrategyAlignmentService, StrategyAlignment, UserStrategy } from './strategyAlignmentService';
+import { aiEnhancedMessagingService, AIEnhancedContent } from '../aiEnhancedMessaging';
+import { sensitivityAnalysisService, SensitivityAnalysis } from './sensitivityAnalysisService';
 
-export type InvestmentVerdict = 'BUY' | 'PASS' | 'NEGOTIATE';
+export type InvestmentVerdict = 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION'; // V3.0 adds CAUTION (50-64 score range)
+
+// V3.0 Professional Assessment Interface
+export interface ProfessionalAssessment {
+  dealQuality: number; // 0-100 weighted score of deal fundamentals
+  executionDifficulty: number; // 0-100 complexity of executing this investment
+  dataReliability: number; // 0-100 confidence in input data quality
+  
+  // Factor breakdown (sum = 100%)
+  cashFlowScore: number; // 35% weight - monthly income stability
+  irrScore: number; // 25% weight - total return potential
+  marketStrengthScore: number; // 15% weight - market tier and trends
+  debtStructureScore: number; // 10% weight - financing quality
+  exitStrategyScore: number; // 10% weight - liquidity and exit options
+  capRateScore: number; // 3% weight - current yield vs market
+  propertyRiskScore: number; // 2% weight - property quality and age
+  
+  // Professional recommendations
+  primaryInsight: string;
+  strategicRecommendations: string[];
+  riskMitigation: string[];
+  opportunityMaximization: string[];
+  
+  // Enhanced debt structure analysis
+  debtAnalysis?: {
+    dscr: number;
+    interestRate: number;
+    marketSpread: number; // in basis points
+    leverageRatio: number;
+    loanTerm: number;
+    isBalloonLoan: boolean;
+    balloonYears?: number;
+    riskFactors: string[];
+    strengthFactors: string[];
+  };
+}
 
 export interface InvestmentDecision {
   verdict: InvestmentVerdict;
-  confidence: number; // 0-100 confidence in the verdict decision
-  score: number; // 0-100 property quality score
+  confidence: number; // 0-100 confidence in the verdict decision (LEGACY - deprecated)
+  score: number; // 0-100 property quality score (LEGACY - deprecated)
+  professionalAssessment?: ProfessionalAssessment; // V3.0 Professional Calibration
   primaryReason: string;
   secondaryReasons: string[];
   keyRisks: string[];
@@ -31,8 +69,11 @@ export interface InvestmentDecision {
   marketContext: MarketContextAnalysis;
   timeline: InvestmentTimeline;
   goalContext?: GoalContext; // NEW: Goal context for frontend personalization
+  portfolioContext?: PortfolioContext; // Portfolio Fit analysis
   confidenceDescription?: string; // Human-readable confidence explanation
   goalBasedReasoning?: string; // Explanation tied to user's specific goals
+  aiEnhancedContent?: AIEnhancedContent; // AI-generated tab content (80/20 approach)
+  sensitivityAnalysis?: SensitivityAnalysis; // Deal sensitivity analysis for negotiation intelligence
 }
 
 export interface GoalContext {
@@ -42,6 +83,15 @@ export interface GoalContext {
   riskApproach?: 'conservative' | 'balanced' | 'aggressive' | 'opportunistic';
   capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
   projectionYears?: number;
+}
+
+export interface PortfolioContext {
+  fitScore: number; // 0-100 how well this property fits the portfolio strategy
+  fitLevel: 'excellent' | 'good' | 'fair' | 'poor';
+  fitAnalysis: string; // Detailed explanation of portfolio fit
+  diversificationImpact: string; // How this adds to or reduces portfolio diversification
+  riskContribution: 'reduces' | 'maintains' | 'increases'; // Impact on overall portfolio risk
+  recommendations: string[]; // Portfolio-level recommendations
 }
 
 export interface ActionItem {
@@ -98,9 +148,27 @@ export interface InvestmentTimeline {
 
 export class InvestmentDecisionEngine {
   private leverageOptimizer: LeverageOptimizer;
-  private readonly HURDLE_RATE = 0.065; // 6.5% minimum return requirement (will be adjusted by exit strategy)
-  private readonly TREASURY_RATE = 0.045; // 4.5% risk-free rate
-  private readonly MIN_RENT_TO_PRICE_RATIO = 0.004; // 0.4% minimum (PASS threshold)
+  private readonly HURDLE_RATE = 0.055; // 5.5% minimum return requirement (2025 calibration: reduced by 1%)
+  private readonly TREASURY_RATE = 0.050; // 5.0% risk-free rate (2025 market reality)
+  
+  // V3.0 Professional Calibration Constants
+  private readonly PROFESSIONAL_WEIGHTS = {
+    cashFlow: 0.35,      // 35% - Monthly income stability
+    irr: 0.25,           // 25% - Total return potential  
+    marketStrength: 0.15, // 15% - Market tier and trends
+    debtStructure: 0.10,  // 10% - Financing quality
+    exitStrategy: 0.10,   // 10% - Liquidity and exit options
+    capRate: 0.03,        // 3% - Current yield vs market
+    propertyRisk: 0.02    // 2% - Property quality and age
+  };
+  
+  private readonly IRR_THRESHOLDS = {
+    poor: 4,      // 4% - Below investment grade (2025 market reality)
+    fair: 6,      // 6% - Acceptable minimum return
+    good: 8,      // 8% - Good professional standard 
+    excellent: 12  // 12% - Excellent professional standard (percentage format)
+  };
+  private readonly MIN_RENT_TO_PRICE_RATIO = 0.0035; // 0.35% minimum (2025 adjustment: slightly more forgiving)
   private readonly LOW_RENT_TO_PRICE_RATIO = 0.005; // 0.5% risk flag threshold
   private readonly HIGH_CAP_RATE_MULTIPLIER = 1.5; // "Too good to be true" threshold
 
@@ -403,6 +471,125 @@ export class InvestmentDecisionEngine {
   }
 
   /**
+   * V3.0 Professional Assessment - Replace penalty stacking with weighted scoring
+   */
+  private calculateProfessionalAssessment(
+    fundamentals: any,
+    marketIntelligenceAnalysis: any,
+    propertyClassificationAnalysis: any,
+    strategyAlignmentAnalysis: any,
+    leverageAnalysis: any,
+    propertyData: SFRData,
+    userContext: any
+  ): ProfessionalAssessment {
+    const weights = this.PROFESSIONAL_WEIGHTS;
+    const irrThresholds = this.IRR_THRESHOLDS;
+    
+    // 1. Cash Flow Score (35% weight) - Monthly income stability
+    const monthlyNetCashFlow = fundamentals.cashFlow || 0;
+    const cashFlowScore = this.scoreCashFlowStability(
+      monthlyNetCashFlow,
+      fundamentals.totalInvestment || propertyData.purchasePrice * 0.25,
+      marketIntelligenceAnalysis.marketTier
+    );
+    
+    // 2. IRR Score (25% weight) - Total return potential with 2025 reality
+    const irr = fundamentals.irr || 0;
+    const irrScore = this.scoreIRRPotential(irr, irrThresholds);
+    
+    // 3. Market Strength Score (15% weight)  
+    const marketScore = this.scoreMarketStrength(
+      marketIntelligenceAnalysis.marketTier,
+      fundamentals.capRate,
+      marketIntelligenceAnalysis.marketMedianCapRate
+    );
+    
+    // 4. Debt Structure Score (10% weight) - Enhanced with detailed analysis
+    const debtStructureResult = this.scoreDebtStructureWithAnalysis(
+      leverageAnalysis.optimalScenario,
+      fundamentals.dscr || 1.0
+    );
+    const debtScore = debtStructureResult.score;
+    
+    // 5. Exit Strategy Score (10% weight)
+    const exitScore = this.scoreExitStrategy(
+      strategyAlignmentAnalysis.alignment.alignmentScore,
+      propertyData.exitStrategy?.primaryExitStrategy || 'sale'
+    );
+    
+    // 6. Cap Rate Score (3% weight)
+    const capRateScore = this.scoreCapRateCompetitiveness(
+      fundamentals.capRate || 0,
+      marketIntelligenceAnalysis.marketMedianCapRate
+    );
+    
+    // 7. Property Risk Score (2% weight)  
+    const propertyRiskScore = this.scorePropertyRisk(
+      propertyClassificationAnalysis.classification,
+      propertyData.yearBuilt || new Date().getFullYear() - 10
+    );
+    
+    // Calculate weighted deal quality score (no penalty stacking!)
+    const dealQuality = Math.round(
+      (cashFlowScore * weights.cashFlow) +
+      (irrScore * weights.irr) +
+      (marketScore * weights.marketStrength) +  
+      (debtScore * weights.debtStructure) +
+      (exitScore * weights.exitStrategy) +
+      (capRateScore * weights.capRate) +
+      (propertyRiskScore * weights.propertyRisk)
+    );
+    
+    // Execution difficulty (separate from deal quality)
+    const executionDifficulty = this.assessExecutionDifficulty(
+      propertyClassificationAnalysis.classification,
+      userContext.experienceLevel || 'intermediate',
+      strategyAlignmentAnalysis.alignment.misalignments
+    );
+    
+    // Data reliability assessment
+    const dataReliability = this.assessDataReliability(
+      fundamentals,
+      propertyData,
+      marketIntelligenceAnalysis
+    );
+    
+    // Generate professional insights
+    const insights = this.generateProfessionalInsights(
+      dealQuality,
+      executionDifficulty,
+      dataReliability,
+      {
+        cashFlowScore,
+        irrScore,
+        marketScore,
+        debtScore,
+        exitScore,
+        capRateScore,
+        propertyRiskScore
+      }
+    );
+    
+    return {
+      dealQuality,
+      executionDifficulty, 
+      dataReliability,
+      cashFlowScore,
+      irrScore: irrScore,
+      marketStrengthScore: marketScore,
+      debtStructureScore: debtScore,
+      exitStrategyScore: exitScore,
+      capRateScore,
+      propertyRiskScore,
+      primaryInsight: insights.primary,
+      strategicRecommendations: insights.strategic,
+      riskMitigation: insights.riskMitigation,
+      opportunityMaximization: insights.opportunities,
+      debtAnalysis: debtStructureResult.analysis
+    };
+  }
+
+  /**
    * Analyze property classification using Property Classification Service (Phase 2B)
    */
   private analyzePropertyClassification(
@@ -454,7 +641,7 @@ export class InvestmentDecisionEngine {
       propertyAge: new Date().getFullYear() - (propertyData.yearBuilt || new Date().getFullYear() - 10),
       priceVsMarket: (propertyData.purchasePrice / estimatedMarketMedian).toFixed(2),
       riskAdjustments: {
-        capRatePremium: (riskAdjustments.capRatePremium * 100).toFixed(0) + 'bps',
+        capRatePremium: (riskAdjustments.capRatePremium * 10000).toFixed(0) + 'bps',
         maintenanceMultiplier: riskAdjustments.maintenanceMultiplier,
         confidenceBoost: riskAdjustments.confidenceBoost
       }
@@ -498,6 +685,31 @@ export class InvestmentDecisionEngine {
   }
 
   /**
+   * Get market tier from property address (2025 calibration helper)
+   */
+  private getMarketTierFromAddress(address?: { city?: string; state?: string }): 1 | 2 | 3 {
+    if (!address?.city) return 3; // Default to Tier 3 if no address
+    
+    const city = address.city.toLowerCase();
+    const state = address.state?.toLowerCase() || '';
+    
+    // Tier 1: Premium appreciation markets
+    const tier1Cities = ['austin', 'san francisco', 'seattle', 'new york', 'los angeles', 
+                        'boston', 'washington', 'san diego', 'denver', 'portland', 
+                        'miami', 'san jose', 'honolulu', 'santa ana', 'oakland'];
+    
+    // Tier 2: Balanced growth markets  
+    const tier2Cities = ['dallas', 'phoenix', 'atlanta', 'charlotte', 'nashville', 
+                        'tampa', 'orlando', 'raleigh', 'salt lake city', 'minneapolis', 
+                        'houston', 'chicago', 'philadelphia', 'detroit', 'cleveland'];
+    
+    if (tier1Cities.some(t1City => city.includes(t1City))) return 1;
+    if (tier2Cities.some(t2City => city.includes(t2City))) return 2;
+    
+    return 3; // Default to Tier 3 for other cities
+  }
+
+  /**
    * Calculate market-relative cap rate threshold (LEGACY - will be deprecated)
    */
   private getMarketRelativeCapRateThreshold(marketIntelligence: any, propertyData: SFRData): {
@@ -527,25 +739,60 @@ export class InvestmentDecisionEngine {
   }
 
   /**
+   * V2.1 LEGACY METHOD - DISABLED FOR V3.0
    * Calculate walk away price - maximum acceptable purchase price
+   * V3.0 uses Deal Quality scoring instead of rigid price thresholds
    */
   private calculateWalkAwayPrice(propertyData: SFRData, analysis: any): number {
+    // V2.1 LEGACY - This method is disabled in V3.0
+    // V3.0 uses Professional Assessment Deal Quality scoring
+    return propertyData.purchasePrice; // Return current price to avoid breaking existing calls
+    
+    /* V2.1 LEGACY CODE - COMMENTED OUT FOR V3.0
     const noi = analysis.keyMetrics?.noi || (propertyData.monthlyRent * 12 * 0.6); // Fallback NOI estimate
     const monthlyRent = propertyData.monthlyRent || 0;
     
-    // Three price ceilings - adjusted for modern market realities
-    const treasuryBasedPrice = noi / (this.TREASURY_RATE + 0.03); // 300bps spread
+    // 2025 Calibration: Market-intelligent spread based on market tier
+    const marketTier = this.getMarketTierFromAddress(propertyData.propertyAddress);
+    const intelligentSpread = marketTier === 1 ? 0.020 :   // Tier 1: 2% spread (7% target)
+                             marketTier === 2 ? 0.025 :   // Tier 2: 2.5% spread (7.5% target)  
+                             0.030;                       // Tier 3: 3% spread (8% target)
     
-    // Adaptive rent-to-price rule (0.7% to 1% based on market conditions)
-    // In high-cost markets, 0.7% rule is more realistic than strict 1% rule
-    const adaptiveRentMultiplier = monthlyRent < 2000 ? 100 : 143; // 0.7% rule for higher rents
+    const treasuryBasedPrice = noi / (this.TREASURY_RATE + intelligentSpread);
+    
+    // 2025 Calibration V2: More realistic rent multipliers for current market
+    // The 1% rule is completely dead even in Tier 3 markets
+    const adaptiveRentMultiplier = 
+      marketTier === 1 ? (monthlyRent < 2500 ? 200 : 250) :  // Tier 1: 0.50%-0.40% rule
+      marketTier === 2 ? (monthlyRent < 2000 ? 167 : 200) :  // Tier 2: 2.60%-0.50% rule
+      (monthlyRent < 2000 ? 143 : 167);                      // Tier 3: 0.70%-0.60% rule
     const rentBasedCeiling = monthlyRent * adaptiveRentMultiplier;
     
     // Use actual comps or a more realistic discount from asking
     const comparablesCeiling = propertyData.purchasePrice * 1.05; // Allow up to 5% above asking if fundamentals support it
     
-    // Take the minimum of treasury and rent-based, but allow comps to override if property cash flows well
-    const baseWalkAway = Math.min(treasuryBasedPrice, rentBasedCeiling);
+    // 2025 Calibration V2: Use more intelligent price selection
+    // Don't blindly take minimum - consider market reality
+    const baseWalkAway = rentBasedCeiling < treasuryBasedPrice * 0.7 ? 
+      treasuryBasedPrice * 0.85 :  // If rent rule gives unrealistic price, use 85% of treasury
+      Math.min(treasuryBasedPrice, rentBasedCeiling);
+    
+    // DEBUG: Add detailed logging to trace calculation
+    logger.info('🔍 WALK AWAY PRICE CALCULATION DEBUG:', {
+      noi,
+      monthlyRent,
+      marketTier,
+      intelligentSpread: (intelligentSpread * 100).toFixed(1) + '%',
+      treasuryRate: (this.TREASURY_RATE * 100).toFixed(1) + '%',
+      combinedRate: ((this.TREASURY_RATE + intelligentSpread) * 100).toFixed(1) + '%',
+      treasuryBasedPrice: Math.round(treasuryBasedPrice),
+      adaptiveRentMultiplier,
+      rentBasedCeiling: Math.round(rentBasedCeiling),
+      comparablesCeiling: Math.round(comparablesCeiling),
+      rentCeilingVsTreasuryCheck: rentBasedCeiling < treasuryBasedPrice * 0.7,
+      treasurySeventyPercent: Math.round(treasuryBasedPrice * 0.7),
+      calculatedBaseWalkAway: Math.round(baseWalkAway)
+    });
     
     // If property has positive cash flow and decent cap rate, be less restrictive
     const capRate = analysis.keyMetrics?.capRate || 0;
@@ -553,10 +800,26 @@ export class InvestmentDecisionEngine {
     
     if (monthlyCashFlow > 500 && capRate > 0.05) {
       // Strong cash flow properties get more flexibility
-      return Math.max(baseWalkAway, comparablesCeiling);
+      const finalPrice = Math.max(baseWalkAway, comparablesCeiling);
+      logger.info('🔍 WALK AWAY PRICE - STRONG CASH FLOW OVERRIDE:', {
+        monthlyCashFlow,
+        capRate: capRate.toFixed(2) + '%',
+        baseWalkAway: Math.round(baseWalkAway),
+        comparablesCeiling: Math.round(comparablesCeiling),
+        finalPrice: Math.round(finalPrice)
+      });
+      return finalPrice;
     }
     
+    logger.info('🔍 WALK AWAY PRICE - FINAL RESULT:', {
+      monthlyCashFlow,
+      capRate: capRate.toFixed(2) + '%',
+      meetsStrongCashFlowCriteria: false,
+      finalWalkAwayPrice: Math.round(baseWalkAway)
+    });
+    
     return baseWalkAway;
+    */ // End V2.1 legacy code block
   }
 
   /**
@@ -612,7 +875,12 @@ export class InvestmentDecisionEngine {
   } {
     const mortgagePayment = analysis.monthlyAnalysis?.debtService || (propertyData.purchasePrice * 0.8 * 0.07 / 12); // Rough estimate
     const bufferFromMortgage = mortgagePayment * 0.2; // 20% of mortgage payment
-    const absoluteMinimum = 300;
+    
+    // 2025 Calibration: IRR-based buffer requirements
+    const irr = analysis.keyMetrics?.irr || 0;
+    const absoluteMinimum = irr > 0.15 ? 150 :  // High IRR = lower cash flow requirement
+                            irr > 0.12 ? 200 :  // Good IRR = moderate requirement  
+                            250;                // Standard IRR = reduced from 300 to 250
     
     const minimumBuffer = Math.max(bufferFromMortgage, absoluteMinimum);
     const actualCashFlow = analysis.monthlyAnalysis?.cashFlow || 0;
@@ -649,6 +917,411 @@ export class InvestmentDecisionEngine {
     }
   }
 
+  // ===== V3.0 Professional Scoring Methods =====
+  
+  /**
+   * Score cash flow stability (35% weight)
+   * Professional standard: Monthly net income relative to investment and market
+   */
+  private scoreCashFlowStability(
+    monthlyNetCashFlow: number,
+    totalInvestment: number,
+    marketTier: any
+  ): number {
+    if (monthlyNetCashFlow <= 0) return 0;
+    
+    // Calculate monthly return on investment
+    const monthlyROI = monthlyNetCashFlow / totalInvestment;
+    const annualROI = monthlyROI * 12;
+    
+    // Market-adjusted expectations (2025 reality)
+    const tierExpectations = {
+      1: { poor: 0.02, fair: 0.04, good: 0.06, excellent: 0.08 }, // Tier 1: Lower cash expectations
+      2: { poor: 0.04, fair: 0.06, good: 0.08, excellent: 0.10 }, // Tier 2: Balanced
+      3: { poor: 0.06, fair: 0.08, good: 0.10, excellent: 0.12 }  // Tier 3: Cash flow focus
+    };
+    
+    const expectations = tierExpectations[marketTier.tier] || tierExpectations[2];
+    
+    if (annualROI >= expectations.excellent) return 100;
+    if (annualROI >= expectations.good) return 85;
+    if (annualROI >= expectations.fair) return 70;
+    if (annualROI >= expectations.poor) return 50;
+    return 25; // Below professional minimum
+  }
+  
+  /**
+   * Score IRR potential (25% weight)
+   * 2025 Market Reality: 8% good, 12% excellent (realistic post-2022 standards)
+   * Note: IRR is expected in percentage format (e.g., 12 for 12%)
+   */
+  private scoreIRRPotential(irr: number, thresholds: any): number {
+    if (irr >= thresholds.excellent) return 100; // 12%+
+    if (irr >= thresholds.good) return 85;       // 8-12%
+    if (irr >= thresholds.fair) return 70;       // 6-8%  
+    if (irr >= thresholds.poor) return 50;       // 4-6%
+    return Math.max(0, (irr / thresholds.poor) * 50); // Below 4%
+  }
+  
+  /**
+   * Score market strength (15% weight)
+   */
+  private scoreMarketStrength(
+    marketTier: any,
+    propertyCapRate: number,
+    marketMedianCapRate: number
+  ): number {
+    // Base score by market tier quality
+    const tierScore = marketTier.tier === 1 ? 85 : marketTier.tier === 2 ? 70 : 55;
+    
+    // Adjust for property performance vs market
+    const capRateAdvantage = propertyCapRate - marketMedianCapRate;
+    const advantageScore = Math.max(-30, Math.min(30, capRateAdvantage * 1000)); // Convert to basis points effect
+    
+    return Math.max(0, Math.min(100, tierScore + advantageScore));
+  }
+  
+  /**
+   * Score debt structure quality (10% weight)
+   * Enhanced with professional debt analysis: rates, terms, balloon risk
+   */
+  private scoreDebtStructure(optimalScenario: any, dscr: number): number {
+    let score = 50; // Base score
+    
+    // 1. DSCR scoring (40% of debt score - most critical)
+    if (dscr >= 1.5) score += 20;       // Excellent coverage
+    else if (dscr >= 1.25) score += 15; // Good coverage  
+    else if (dscr >= 1.1) score += 5;   // Adequate coverage
+    else score -= 15; // Poor coverage
+    
+    // 2. Interest Rate Competitiveness (25% of debt score)
+    const interestRate = optimalScenario.interestRate || 0.07;
+    const currentTreasuryRate = 0.05; // 5% current rate
+    const marketSpread = interestRate - currentTreasuryRate;
+    
+    if (marketSpread <= 0.015) score += 12;      // Excellent rate (150bps or less)
+    else if (marketSpread <= 0.025) score += 8;  // Good rate (250bps or less)
+    else if (marketSpread <= 0.035) score += 3;  // Market rate (350bps or less)
+    else score -= 7; // High rate (over 350bps)
+    
+    // 3. Leverage Ratio Analysis (20% of debt score)
+    const leverageRatio = optimalScenario.ltvRatio || 0.8;
+    if (leverageRatio <= 0.70) score += 10;      // Conservative leverage - recession resilient
+    else if (leverageRatio <= 0.75) score += 7;  // Prudent leverage
+    else if (leverageRatio <= 0.80) score += 3;  // Standard leverage
+    else if (leverageRatio <= 0.85) score -= 2;  // Aggressive leverage
+    else score -= 8; // Very high leverage risk
+    
+    // 4. Loan Term Structure (10% of debt score)
+    const loanTerm = optimalScenario.loanTermYears || 30;
+    if (loanTerm >= 30) score += 5;              // Long-term stability
+    else if (loanTerm >= 20) score += 3;         // Medium-term acceptable
+    else if (loanTerm >= 15) score -= 2;         // Short-term refinancing risk
+    else score -= 5; // High refinancing risk
+    
+    // 5. Balloon Payment Risk Assessment (5% of debt score)
+    const isBalloonLoan = optimalScenario.isBalloonLoan || false;
+    const balloonYears = optimalScenario.balloonPaymentYears || 0;
+    
+    if (!isBalloonLoan) {
+      score += 2; // No balloon risk
+    } else {
+      if (balloonYears >= 10) score += 1;        // Long balloon acceptable
+      else if (balloonYears >= 7) score -= 1;    // Medium balloon caution
+      else if (balloonYears >= 5) score -= 3;    // Short balloon risky
+      else score -= 5; // Very short balloon - high refinancing risk
+    }
+    
+    // Professional debt structure insights
+    let riskFactors = [];
+    let strengthFactors = [];
+    
+    // Identify risk factors
+    if (dscr < 1.25) riskFactors.push('DSCR below professional standard');
+    if (leverageRatio > 0.8) riskFactors.push('High leverage increases interest rate risk');
+    if (interestRate > 0.08) riskFactors.push('Above-market interest rate');
+    if (isBalloonLoan && balloonYears < 7) riskFactors.push('Short balloon payment creates refinancing risk');
+    
+    // Identify strength factors  
+    if (dscr >= 1.4) strengthFactors.push('Strong debt service coverage');
+    if (leverageRatio <= 0.75) strengthFactors.push('Conservative leverage provides downside protection');
+    if (marketSpread <= 0.02) strengthFactors.push('Competitive interest rate');
+    if (!isBalloonLoan && loanTerm >= 30) strengthFactors.push('Long-term fixed debt eliminates refinancing risk');
+    
+    // Store analysis for insights (would be passed to decision object)
+    const debtAnalysis = {
+      dscr,
+      interestRate,
+      marketSpread: marketSpread * 100, // Convert to basis points
+      leverageRatio,
+      loanTerm,
+      isBalloonLoan,
+      balloonYears,
+      riskFactors,
+      strengthFactors,
+      overallScore: Math.max(0, Math.min(100, score))
+    };
+    
+    return debtAnalysis.overallScore;
+  }
+
+  /**
+   * Enhanced debt structure scoring with detailed analysis
+   * Returns both score and professional debt analysis
+   */
+  private scoreDebtStructureWithAnalysis(optimalScenario: any, dscr: number): {
+    score: number;
+    analysis: {
+      dscr: number;
+      interestRate: number;
+      marketSpread: number;
+      leverageRatio: number;
+      loanTerm: number;
+      isBalloonLoan: boolean;
+      balloonYears?: number;
+      riskFactors: string[];
+      strengthFactors: string[];
+    };
+  } {
+    let score = 50; // Base score
+    
+    // 1. DSCR scoring (40% of debt score - most critical)
+    if (dscr >= 1.5) score += 20;       // Excellent coverage
+    else if (dscr >= 1.25) score += 15; // Good coverage  
+    else if (dscr >= 1.1) score += 5;   // Adequate coverage
+    else score -= 15; // Poor coverage
+    
+    // 2. Interest Rate Competitiveness (25% of debt score)
+    const interestRate = optimalScenario.interestRate || 0.07;
+    const currentTreasuryRate = 0.05; // 5% current rate
+    const marketSpread = interestRate - currentTreasuryRate;
+    
+    if (marketSpread <= 0.015) score += 12;      // Excellent rate (150bps or less)
+    else if (marketSpread <= 0.025) score += 8;  // Good rate (250bps or less)
+    else if (marketSpread <= 0.035) score += 3;  // Market rate (350bps or less)
+    else score -= 7; // High rate (over 350bps)
+    
+    // 3. Leverage Ratio Analysis (20% of debt score)
+    const leverageRatio = optimalScenario.ltvRatio || 0.8;
+    if (leverageRatio <= 0.70) score += 10;      // Conservative leverage - recession resilient
+    else if (leverageRatio <= 0.75) score += 7;  // Prudent leverage
+    else if (leverageRatio <= 0.80) score += 3;  // Standard leverage
+    else if (leverageRatio <= 0.85) score -= 2;  // Aggressive leverage
+    else score -= 8; // Very high leverage risk
+    
+    // 4. Loan Term Structure (10% of debt score)
+    const loanTerm = optimalScenario.loanTermYears || 30;
+    if (loanTerm >= 30) score += 5;              // Long-term stability
+    else if (loanTerm >= 20) score += 3;         // Medium-term acceptable
+    else if (loanTerm >= 15) score -= 2;         // Short-term refinancing risk
+    else score -= 5; // High refinancing risk
+    
+    // 5. Balloon Payment Risk Assessment (5% of debt score)
+    const isBalloonLoan = optimalScenario.isBalloonLoan || false;
+    const balloonYears = optimalScenario.balloonPaymentYears || 0;
+    
+    if (!isBalloonLoan) {
+      score += 2; // No balloon risk
+    } else {
+      if (balloonYears >= 10) score += 1;        // Long balloon acceptable
+      else if (balloonYears >= 7) score -= 1;    // Medium balloon caution
+      else if (balloonYears >= 5) score -= 3;    // Short balloon risky
+      else score -= 5; // Very short balloon - high refinancing risk
+    }
+    
+    // Professional debt structure insights
+    let riskFactors = [];
+    let strengthFactors = [];
+    
+    // Identify risk factors
+    if (dscr < 1.25) riskFactors.push('DSCR below professional standard');
+    if (leverageRatio > 0.8) riskFactors.push('High leverage increases interest rate risk');
+    if (interestRate > 0.08) riskFactors.push('Above-market interest rate');
+    if (isBalloonLoan && balloonYears < 7) riskFactors.push('Short balloon payment creates refinancing risk');
+    
+    // Identify strength factors  
+    if (dscr >= 1.4) strengthFactors.push('Strong debt service coverage');
+    if (leverageRatio <= 0.75) strengthFactors.push('Conservative leverage provides downside protection');
+    if (marketSpread <= 0.02) strengthFactors.push('Competitive interest rate');
+    if (!isBalloonLoan && loanTerm >= 30) strengthFactors.push('Long-term fixed debt eliminates refinancing risk');
+    
+    const finalScore = Math.max(0, Math.min(100, score));
+    
+    return {
+      score: finalScore,
+      analysis: {
+        dscr,
+        interestRate,
+        marketSpread: marketSpread * 10000, // Convert to basis points
+        leverageRatio,
+        loanTerm,
+        isBalloonLoan,
+        balloonYears: isBalloonLoan ? balloonYears : undefined,
+        riskFactors,
+        strengthFactors
+      }
+    };
+  }
+  
+  /**
+   * Score exit strategy alignment (10% weight)
+   */
+  private scoreExitStrategy(alignmentScore: number, exitStrategy: string): number {
+    // Base score from strategy alignment
+    let score = alignmentScore * 0.8; // Convert 0-100 alignment to 0-80
+    
+    // Bonus for liquid exit strategies
+    if (exitStrategy === 'sale') score += 15;           // Most liquid
+    else if (exitStrategy === 'refinance') score += 10; // Moderately liquid
+    else if (exitStrategy === '1031exchange') score += 5; // Tax efficient
+    
+    return Math.max(0, Math.min(100, score));
+  }
+  
+  /**
+   * Score cap rate competitiveness (3% weight)
+   */
+  private scoreCapRateCompetitiveness(propertyCapRate: number, marketMedian: number): number {
+    const spread = propertyCapRate - marketMedian;
+    
+    // Convert spread to score (50 basis points = 10 points)
+    const spreadScore = 50 + (spread * 100 * 0.2); // 20 points per 100 bps
+    
+    return Math.max(0, Math.min(100, spreadScore));
+  }
+  
+  /**
+   * Score property risk factors (2% weight)
+   */
+  private scorePropertyRisk(classification: any, yearBuilt: number): number {
+    let score = 50; // Base score
+    
+    // Property class scoring
+    if (classification.propertyClass === 'A') score += 40;
+    else if (classification.propertyClass === 'B') score += 20;
+    else score -= 20; // Class C penalty
+    
+    // Age scoring
+    const age = new Date().getFullYear() - yearBuilt;
+    if (age <= 10) score += 10;      // New property
+    else if (age <= 20) score += 5;   // Modern property
+    else if (age >= 40) score -= 15; // Old property risk
+    
+    return Math.max(0, Math.min(100, score));
+  }
+  
+  /**
+   * Assess execution difficulty (separate from deal quality)
+   */
+  private assessExecutionDifficulty(
+    classification: any,
+    experienceLevel: string,
+    misalignments: any[]
+  ): number {
+    let difficulty = 30; // Base difficulty
+    
+    // Experience vs property complexity
+    const complexityMap = { 'A': 10, 'B': 30, 'C': 60 };
+    const experienceMap = { 'novice': 0, 'intermediate': 25, 'experienced': 50, 'expert': 75 };
+    
+    const propertyComplexity = complexityMap[classification.propertyClass] || 30;
+    const investorCapability = experienceMap[experienceLevel] || 25;
+    
+    difficulty = propertyComplexity + Math.max(0, 50 - investorCapability);
+    
+    // Misalignment complexity
+    const criticalMisalignments = misalignments.filter(m => m.severity === 'critical').length;
+    difficulty += criticalMisalignments * 15;
+    
+    return Math.max(0, Math.min(100, difficulty));
+  }
+  
+  /**
+   * Assess data reliability
+   */
+  private assessDataReliability(
+    fundamentals: any,
+    propertyData: SFRData,
+    marketIntelligence: any
+  ): number {
+    let reliability = 80; // Base reliability
+    
+    // Required fields check
+    if (!propertyData.monthlyRent) reliability -= 15;
+    if (!propertyData.purchasePrice) reliability -= 15;
+    if (!propertyData.yearBuilt) reliability -= 10;
+    
+    // Market data availability
+    if (!marketIntelligence.marketTier) reliability -= 10;
+    if (!fundamentals.capRate) reliability -= 10;
+    
+    // Reasonable value checks
+    const rentToPrice = propertyData.monthlyRent / propertyData.purchasePrice;
+    if (rentToPrice < 0.003 || rentToPrice > 0.02) reliability -= 15; // Suspicious ratios
+    
+    return Math.max(50, Math.min(100, reliability));
+  }
+  
+  /**
+   * Generate professional insights from scores
+   */
+  private generateProfessionalInsights(
+    dealQuality: number,
+    executionDifficulty: number,
+    dataReliability: number,
+    scores: any
+  ): {
+    primary: string;
+    strategic: string[];
+    riskMitigation: string[];
+    opportunities: string[];
+  } {
+    // Primary insight based on overall assessment
+    let primary = '';
+    if (dealQuality >= 80) primary = 'Institutional-quality investment opportunity';
+    else if (dealQuality >= 65) primary = 'Strong fundamentals with professional potential';  
+    else if (dealQuality >= 50) primary = 'Acceptable deal requiring optimization';
+    else primary = 'Below professional investment standards';
+    
+    const strategic: string[] = [];
+    const riskMitigation: string[] = [];
+    const opportunities: string[] = [];
+    
+    // Strategic recommendations based on factor scores
+    if (scores.cashFlowScore < 60) {
+      strategic.push('Negotiate rent increases or reduce purchase price');
+      riskMitigation.push('Low cash flow increases execution risk');
+    }
+    
+    if (scores.irrScore < 60) {
+      strategic.push('Target longer hold period or value-add opportunities');
+    }
+    
+    if (scores.debtScore < 60) {
+      strategic.push('Improve loan terms or increase down payment');
+      riskMitigation.push('Debt service coverage requires monitoring');
+    }
+    
+    if (executionDifficulty > 70) {
+      riskMitigation.push('High execution complexity - consider professional management');
+    }
+    
+    if (dataReliability < 70) {
+      riskMitigation.push('Verify all financial assumptions with documentation');
+    }
+    
+    // Opportunity identification
+    if (scores.marketScore > 75) {
+      opportunities.push('Strong market position supports portfolio expansion');
+    }
+    
+    if (scores.exitScore > 75) {
+      opportunities.push('Multiple exit strategies provide flexibility');
+    }
+    
+    return { primary, strategic, riskMitigation, opportunities };
+  }
+
   /**
    * Generate comprehensive investment decision
    */
@@ -663,7 +1336,8 @@ export class InvestmentDecisionEngine {
       riskTolerance: 'conservative' | 'moderate' | 'aggressive';
       investmentGoals: 'cash_flow' | 'appreciation' | 'balanced';
     },
-    enhancedGoals?: any // Enhanced goals from Step 5 for personalized messaging
+    enhancedGoals?: any, // Enhanced goals from Step 5 for personalized messaging
+    skipEnhancements: boolean = false // Skip AI content and sensitivity analysis for recursive calls
   ): Promise<InvestmentDecision> {
     const startTime = Date.now();
     logger.info('Investment Decision Engine: Starting analysis', {
@@ -708,6 +1382,64 @@ export class InvestmentDecisionEngine {
         fundamentals
       );
 
+      // 2D. V3.0 Professional Assessment - Replace penalty stacking with weighted scoring
+      const professionalAssessment = this.calculateProfessionalAssessment(
+        fundamentals,
+        marketIntelligenceAnalysis,
+        propertyClassificationAnalysis,
+        strategyAlignmentAnalysis,
+        leverageAnalysis,
+        propertyData,
+        userContext
+      );
+
+      logger.info('V3.0 Professional Assessment Complete', {
+        dealQuality: professionalAssessment.dealQuality,
+        executionDifficulty: professionalAssessment.executionDifficulty,
+        dataReliability: professionalAssessment.dataReliability,
+        primaryInsight: professionalAssessment.primaryInsight,
+        factorBreakdown: {
+          cashFlow: professionalAssessment.cashFlowScore,
+          irr: professionalAssessment.irrScore,
+          market: professionalAssessment.marketStrengthScore,
+          debt: professionalAssessment.debtStructureScore,
+          exit: professionalAssessment.exitStrategyScore,
+          capRate: professionalAssessment.capRateScore,
+          propertyRisk: professionalAssessment.propertyRiskScore
+        }
+      });
+
+      // V3.0 VERDICT MAPPING: Use Professional Assessment Deal Quality as single source of truth
+      let v3Verdict: InvestmentVerdict;
+      let v3Confidence: number;
+      let v3PrimaryReason: string;
+      
+      const dealQuality = professionalAssessment.dealQuality;
+      if (dealQuality >= 80) {
+        v3Verdict = 'BUY';
+        v3Confidence = Math.min(95, 80 + (dealQuality - 80));
+        v3PrimaryReason = `Institutional-quality deal with ${dealQuality}/100 professional score`;
+      } else if (dealQuality >= 65) {
+        v3Verdict = 'NEGOTIATE';
+        v3Confidence = Math.min(85, 65 + (dealQuality - 65));
+        v3PrimaryReason = `Strong fundamentals (${dealQuality}/100) - negotiate for optimal terms`;
+      } else if (dealQuality >= 50) {
+        v3Verdict = 'CAUTION';
+        v3Confidence = Math.min(75, 50 + (dealQuality - 50));
+        v3PrimaryReason = `Acceptable deal (${dealQuality}/100) requiring optimization`;
+      } else {
+        v3Verdict = 'PASS';
+        v3Confidence = Math.max(30, dealQuality);
+        v3PrimaryReason = `Below professional standards (${dealQuality}/100) - seek better opportunities`;
+      }
+      
+      logger.info('V3.0 Verdict Mapping Applied', {
+        dealQuality: `${dealQuality}/100`,
+        v3Verdict,
+        v3Confidence,
+        v3PrimaryReason
+      });
+
       // 3. Analyze market context (legacy + enhanced)
       const marketContext = await this.analyzeMarketContext(
         analysis, 
@@ -716,18 +1448,15 @@ export class InvestmentDecisionEngine {
         propertyData
       );
 
-      // 4. Generate verdict based on all factors
-      const verdict = await this.generateVerdict(
-        fundamentals,
-        leverageAnalysis,
-        marketContext,
-        userContext,
-        propertyData,
-        analysis,
-        marketIntelligenceAnalysis, // Phase 2A
-        propertyClassificationAnalysis, // Phase 2B
-        strategyAlignmentAnalysis // Phase 3
-      );
+      // 4. Use V3.0 Professional Assessment verdict (single source of truth)
+      const verdict = {
+        verdict: v3Verdict,
+        confidence: v3Confidence,
+        primaryReason: v3PrimaryReason,
+        secondaryReasons: [professionalAssessment.primaryInsight],
+        keyRisks: professionalAssessment.riskMitigation.slice(0, 3), // Top 3 risks
+        score: dealQuality // Add Deal Quality as the score for legacy compatibility
+      };
 
       // 5. Create action plan
       const actionPlan = this.createActionPlan(
@@ -774,10 +1503,14 @@ export class InvestmentDecisionEngine {
         enhancedPortfolioStrategy: enhancedGoals?.portfolioStrategy
       });
 
+      // Generate portfolio context for portfolio fit analysis
+      const portfolioContext = this.generatePortfolioContext(propertyData, fundamentals, verdict.verdict, userContext);
+
       const decision: InvestmentDecision = {
         verdict: verdict.verdict,
-        confidence: verdict.confidence,
-        score: verdict.score, // Property quality score
+        confidence: verdict.confidence, // LEGACY - maintained for backwards compatibility
+        score: verdict.score, // LEGACY - property quality score
+        professionalAssessment, // V3.0 Professional Calibration - replaces penalty stacking
         primaryReason: verdict.primaryReason,
         secondaryReasons: verdict.secondaryReasons,
         keyRisks: verdict.keyRisks,
@@ -787,17 +1520,54 @@ export class InvestmentDecisionEngine {
         marketContext,
         timeline,
         goalContext, // NEW: Include goal context for frontend
+        portfolioContext, // Portfolio Fit analysis
         confidenceDescription: this.getConfidenceDescription(verdict.verdict, verdict.confidence),
         goalBasedReasoning: this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals)
       };
 
       const processingTime = Date.now() - startTime;
-      logger.info('Investment Decision Engine: Decision generated', {
+      logger.info('Investment Decision Engine: Decision generated (V3.0 Professional Calibration)', {
         processingTime: `${processingTime}ms`,
         verdict: decision.verdict,
-        confidence: `${decision.confidence}%`,
-        primaryReason: decision.primaryReason
+        legacyConfidence: `${decision.confidence}%`, // Old penalty stacking system
+        legacyScore: decision.score, // Old property score
+        professionalAssessment: {
+          dealQuality: `${professionalAssessment.dealQuality}/100`,
+          executionDifficulty: `${professionalAssessment.executionDifficulty}/100`,
+          dataReliability: `${professionalAssessment.dataReliability}/100`,
+          primaryInsight: professionalAssessment.primaryInsight
+        },
+        primaryReason: decision.primaryReason,
+        v3Enhancement: 'Professional weighted scoring replaces penalty stacking'
       });
+
+      // Generate AI-enhanced content and sensitivity analysis (skip for recursive calls)
+      if (!skipEnhancements) {
+        // Generate AI-enhanced content (20% of 80/20 approach)
+        try {
+          logger.info('Generating AI-enhanced tab content');
+          // FIXED: Pass propertyData to AI service so it has access to original input data
+          const aiEnhancedContent = await aiEnhancedMessagingService.generateAllContent(decision, analysis, propertyData);
+          decision.aiEnhancedContent = aiEnhancedContent;
+          logger.info('AI-enhanced content generation completed');
+        } catch (error) {
+          logger.warn('AI-enhanced content generation failed, using fallback', error);
+          // Fallback is handled within the AI service
+        }
+
+        // Generate sensitivity analysis for negotiation intelligence
+        try {
+          logger.info('Generating sensitivity analysis for negotiation intelligence');
+          const sensitivityAnalysis = await sensitivityAnalysisService.generateSensitivityAnalysis(
+            propertyData, analysis, predictions, marketIntelligence, userContext, enhancedGoals, this
+          );
+          decision.sensitivityAnalysis = sensitivityAnalysis;
+          logger.info('Sensitivity analysis generation completed');
+        } catch (error) {
+          logger.warn('Sensitivity analysis generation failed:', error);
+          // Continue without sensitivity analysis - it's not critical for basic decision
+        }
+      }
 
       return decision;
 
@@ -1032,6 +1802,12 @@ export class InvestmentDecisionEngine {
       if (confidence >= 70) return 'Specific adjustments needed for viability';
       if (confidence >= 50) return 'Multiple factors require adjustment';
       return 'Major adjustments required to make this work';
+    }
+    
+    if (verdict === 'CAUTION') {
+      if (confidence >= 70) return 'Acceptable deal requiring strategic optimization';
+      if (confidence >= 50) return 'Consider with specific investment strategy alignment';
+      return 'Marginal deal - evaluate alternatives first';
     }
     
     // PASS verdict
@@ -1275,8 +2051,7 @@ export class InvestmentDecisionEngine {
     // 2. Check rent-to-price ratio
     const rentToPriceCheck = this.assessRentToPriceRatio(propertyData.monthlyRent || 0, propertyData.purchasePrice);
     
-    // 3. Calculate walk away price
-    const walkAwayPrice = this.calculateWalkAwayPrice(propertyData, analysis);
+    // V2.1 walk-away price calculation removed - V3.0 uses Deal Quality scoring
     
     // 4. Get adjusted hurdle rate based on exit strategy
     const adjustedHurdleRate = this.getAdjustedHurdleRate(propertyData.exitStrategy);
@@ -1305,7 +2080,7 @@ export class InvestmentDecisionEngine {
     const hasPositiveCashFlow = mainMonthlyCashFlow > 0;
     const meetsAdjustedHurdleRate = fundamentals.cashOnCashReturn >= adjustedHurdleRate;
     const capRateBelowMarket = fundamentals.capRate < finalMarketThresholds.passThreshold;
-    const priceAboveWalkAway = propertyData.purchasePrice > (walkAwayPrice * 1.1);
+    // V2.1 walk-away price check removed - V3.0 uses Deal Quality scoring
     const hasLeverageOptions = leverageAnalysis.optimalScenario.leverageScore > 60;
     
     // CRITICAL: Log to ensure we're using updated analysis data
@@ -1320,11 +2095,11 @@ export class InvestmentDecisionEngine {
     
     logger.info('Investment Decision: Enhanced analysis with Phase 2A + 2B', {
       mainMonthlyCashFlow,
-      adjustedHurdleRate: (adjustedHurdleRate * 100).toFixed(1) + '%',
+      adjustedHurdleRate: adjustedHurdleRate.toFixed(1) + '%',
       // Phase 2A - Market Intelligence
       marketTier: marketIntelligenceAnalysis.marketTier.tier,
       marketTierName: marketIntelligenceAnalysis.marketTier.name,
-      marketMedianCapRate: (marketThresholds.marketMedianCapRate * 100).toFixed(1) + '%',
+      marketMedianCapRate: marketThresholds.marketMedianCapRate.toFixed(1) + '%',
       fairMarketValue: marketIntelligenceAnalysis.fairMarketValue?.fairValue,
       overpriced: marketIntelligenceAnalysis.fairMarketValue?.overpriced,
       overpricedBy: marketIntelligenceAnalysis.fairMarketValue?.overpricedBy,
@@ -1333,10 +2108,9 @@ export class InvestmentDecisionEngine {
       classConfidence: propertyClassificationAnalysis.classification.confidence + '%',
       riskLevel: propertyClassificationAnalysis.classification.riskLevel,
       managementIntensity: propertyClassificationAnalysis.classification.managementIntensity,
-      capRateAdjustment: (classRiskAdjustments.capRatePremium * 100).toFixed(0) + 'bps',
+      capRateAdjustment: (classRiskAdjustments.capRatePremium * 10000).toFixed(0) + 'bps',
       confidenceAdjustment: classRiskAdjustments.confidenceBoost,
       // General metrics
-      walkAwayPrice,
       currentPrice: propertyData.purchasePrice,
       rentToPriceRatio: (rentToPriceCheck.ratio * 100).toFixed(2) + '%',
       cashFlowBufferHealth: cashFlowBuffer.bufferPercentage.toFixed(2),
@@ -1355,20 +2129,22 @@ export class InvestmentDecisionEngine {
     }
     
     // 2. Price above walk-away threshold
-    else if (priceAboveWalkAway) {
-      verdict = 'PASS';
-      confidence = 85;
-      primaryReason = `Purchase price exceeds maximum acceptable value of $${Math.round(walkAwayPrice).toLocaleString()}`;
-      secondaryReasons.push('Price fails multiple valuation methodologies');
-      keyRisks.push('Overpaying reduces returns and increases downside risk');
-    }
+    // V3.0 CHANGE: Walk-away price override DISABLED - Professional weighted scoring is the single source of truth
+    // The rigid walk-away price logic was replaced by sophisticated risk/reward balance optimization
+    // else if (priceAboveWalkAway) {
+    //   verdict = 'PASS';
+    //   confidence = 85;
+    //   primaryReason = `Purchase price exceeds maximum acceptable value of $${Math.round(walkAwayPrice).toLocaleString()}`;
+    //   secondaryReasons.push('Price fails multiple valuation methodologies');
+    //   keyRisks.push('Overpaying reduces returns and increases downside risk');
+    // }
     
     // 3. Cap rate significantly below market (enhanced with market tier + property class intelligence)
     else if (capRateBelowMarket) {
       verdict = 'PASS';
       confidence = 80;
-      primaryReason = `Cap rate of ${fundamentals.capRate.toFixed(1)}% is ${((finalMarketThresholds.passThreshold - fundamentals.capRate) * 100).toFixed(1)}bps below ${marketIntelligenceAnalysis.marketTier.name} threshold`;
-      secondaryReasons.push(`${marketIntelligenceAnalysis.cityName}, ${marketIntelligenceAnalysis.stateName} market median: ${(finalMarketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      primaryReason = `Cap rate of ${fundamentals.capRate.toFixed(1)}% is ${((finalMarketThresholds.passThreshold - fundamentals.capRate) * 100).toFixed(0)}bps below ${marketIntelligenceAnalysis.marketTier.name} threshold`;
+      secondaryReasons.push(`${marketIntelligenceAnalysis.cityName}, ${marketIntelligenceAnalysis.stateName} market median: ${finalMarketThresholds.marketMedianCapRate.toFixed(1)}%`);
       secondaryReasons.push(`${marketIntelligenceAnalysis.marketTier.name} focus: ${marketIntelligenceAnalysis.marketTier.focusType}`);
       secondaryReasons.push(`${propertyClassificationAnalysis.classification.classDescription}`);
       keyRisks.push('Significantly underperforming market returns');
@@ -1437,7 +2213,7 @@ export class InvestmentDecisionEngine {
         secondaryReasons.push(`Target price: $${targetPrice.toLocaleString()}`);
       }
       
-      secondaryReasons.push(`Current cap rate: ${fundamentals.capRate.toFixed(1)}% vs ${marketIntelligenceAnalysis.marketTier.name} median: ${(finalMarketThresholds.marketMedianCapRate * 100).toFixed(1)}%`);
+      secondaryReasons.push(`Current cap rate: ${fundamentals.capRate.toFixed(1)}% vs ${marketIntelligenceAnalysis.marketTier.name} median: ${finalMarketThresholds.marketMedianCapRate.toFixed(1)}%`);
       // Add property class context
       if (propertyClassificationAnalysis.classification.propertyClass === 'C') {
         secondaryReasons.push(`${propertyClassificationAnalysis.classification.classDescription} - factor in higher management costs`);
@@ -1458,8 +2234,8 @@ export class InvestmentDecisionEngine {
       // Use current cap rate to calculate price reduction (more accurate than multiplier)
       const priceReduction = Math.round(additionalCashFlowNeeded / fundamentals.capRate);
       
-      primaryReason = `Positive cash flow but ${((adjustedHurdleRate - fundamentals.cashOnCashReturn) * 100).toFixed(1)}% below return target`;
-      secondaryReasons.push(`Negotiate $${priceReduction.toLocaleString()} reduction to meet ${(adjustedHurdleRate * 100).toFixed(1)}% return goal`);
+      primaryReason = `Positive cash flow but ${(adjustedHurdleRate - fundamentals.cashOnCashReturn).toFixed(1)}% below return target`;
+      secondaryReasons.push(`Negotiate $${priceReduction.toLocaleString()} reduction to meet ${adjustedHurdleRate.toFixed(1)}% return goal`);
       secondaryReasons.push(`Monthly cash flow: $${Math.round(mainMonthlyCashFlow)}`);
     }
     
@@ -1477,8 +2253,8 @@ export class InvestmentDecisionEngine {
     else if (hasPositiveCashFlow && meetsAdjustedHurdleRate && fundamentals.capRate >= finalMarketThresholds.buyThreshold) {
       verdict = 'BUY';
       confidence = 80;
-      primaryReason = `Strong fundamentals with ${(fundamentals.cashOnCashReturn * 100).toFixed(1)}% return exceeding ${(adjustedHurdleRate * 100).toFixed(1)}% target`;
-      secondaryReasons.push(`Cap rate of ${fundamentals.capRate.toFixed(1)}% exceeds ${marketIntelligenceAnalysis.marketTier.name} median (${(marketThresholds.marketMedianCapRate * 100).toFixed(1)}%)`);
+      primaryReason = `Strong fundamentals with ${fundamentals.cashOnCashReturn.toFixed(1)}% return exceeding ${adjustedHurdleRate.toFixed(1)}% target`;
+      secondaryReasons.push(`Cap rate of ${fundamentals.capRate.toFixed(1)}% exceeds ${marketIntelligenceAnalysis.marketTier.name} median (${marketThresholds.marketMedianCapRate.toFixed(1)}%)`);
       secondaryReasons.push(`Monthly cash flow: $${Math.round(mainMonthlyCashFlow)}`);
       
       // Add market intelligence insights
@@ -1496,12 +2272,12 @@ export class InvestmentDecisionEngine {
       confidence = 75;
       primaryReason = `Exceptional cash flow of $${Math.round(mainMonthlyCashFlow)}/month with ${fundamentals.capRate.toFixed(1)}% cap rate`;
       secondaryReasons.push('Strong income generation offsets slightly lower returns');
-      secondaryReasons.push(`Property offers ${(fundamentals.cashOnCashReturn * 100).toFixed(1)}% cash-on-cash return`);
+      secondaryReasons.push(`Property offers ${fundamentals.cashOnCashReturn.toFixed(1)}% cash-on-cash return`);
     }
     // Tertiary BUY scenario: Good cash flow with market-appropriate pricing
     else if (hasPositiveCashFlow && mainMonthlyCashFlow >= 750 && 
              fundamentals.capRate >= (marketThresholds.marketMedianCapRate - 0.01) &&
-             !priceAboveWalkAway) {
+             true) { // V2.1 walk-away price condition removed
       verdict = 'BUY';
       confidence = 70;
       primaryReason = `Solid cash flow property with $${Math.round(mainMonthlyCashFlow)}/month income`;
@@ -1700,19 +2476,204 @@ export class InvestmentDecisionEngine {
       propertyScore = 35; // Fallback score instead of potentially undefined
     }
     
-    logger.info('Verdict generation complete:', {
+    // 2025 Calibration: Apply professional investor override logic
+    const professionalOverride = this.applyProfessionalOverride({
+      verdict,
+      confidence,
+      primaryReason,
+      secondaryReasons,
+      keyRisks
+    }, analysis, fundamentals);
+    
+    verdict = professionalOverride.verdict;
+    confidence = professionalOverride.confidence;
+    primaryReason = professionalOverride.primaryReason;
+    secondaryReasons = professionalOverride.secondaryReasons;
+    keyRisks = professionalOverride.keyRisks;
+    
+    logger.info('Verdict generation complete (with 2025 calibration):', {
       verdict,
       confidence: Math.round(confidence),
       propertyScore,
       cashFlow: fundamentals.cashFlow,
       capRate: fundamentals.capRate,
-      dscr: fundamentals.dscr
+      dscr: fundamentals.dscr,
+      professionalOverrideApplied: verdict !== professionalOverride.verdict
+    });
+    
+    // Deduplicate secondary reasons and key risks to prevent repetitive messages
+    const deduplicateMessages = (messages: string[]): string[] => {
+      const seen = new Set<string>();
+      const result: string[] = [];
+      
+      for (const msg of messages) {
+        // Normalize message for comparison (lowercase, trim)
+        const normalized = msg.toLowerCase().trim();
+        
+        // Skip if we've seen this exact message
+        if (seen.has(normalized)) continue;
+        
+        // Skip if a similar message exists (check for substring matches)
+        let isDuplicate = false;
+        for (const existing of seen) {
+          if (normalized.includes('expense ratio') && existing.includes('expense ratio')) {
+            isDuplicate = true;
+            break;
+          }
+          if (normalized.includes('overpaying') && existing.includes('overpaying')) {
+            isDuplicate = true;
+            break;
+          }
+          if (normalized.includes('price fails') && existing.includes('price fails')) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        
+        if (!isDuplicate) {
+          seen.add(normalized);
+          result.push(msg);
+        }
+      }
+      
+      return result;
+    };
+    
+    const finalResult = {
+      verdict,
+      confidence: Math.round(confidence),
+      score: propertyScore,
+      primaryReason,
+      secondaryReasons: deduplicateMessages(secondaryReasons),
+      keyRisks: deduplicateMessages(keyRisks)
+    };
+
+    // DEBUG: Log what we're sending to frontend
+    logger.info('🔍 INVESTMENT DECISION - FINAL MESSAGES BEING SENT:', {
+      verdict: finalResult.verdict,
+      confidence: finalResult.confidence,
+      primaryReason: finalResult.primaryReason,
+      secondaryReasons: finalResult.secondaryReasons,
+      keyRisks: finalResult.keyRisks,
+      secondaryReasonsCount: finalResult.secondaryReasons.length,
+      keyRisksCount: finalResult.keyRisks.length
+    });
+
+    return finalResult;
+  }
+
+  /**
+   * Apply professional investor override logic (2025 calibration)
+   */
+  private applyProfessionalOverride(
+    verdictData: {
+      verdict: InvestmentVerdict;
+      confidence: number;
+      primaryReason: string;
+      secondaryReasons: string[];
+      keyRisks: string[];
+    },
+    analysis: any,
+    fundamentals: any
+  ) {
+    const irr = fundamentals.irr || 0;
+    const monthlyFlow = analysis.monthlyAnalysis?.cashFlow || 0;
+    const capRate = fundamentals.capRate || 0;
+    
+    let { verdict, confidence, primaryReason, secondaryReasons, keyRisks } = verdictData;
+    
+    // Override 1: High IRR exceptional deals (15%+ IRR)
+    if (verdict === 'NEGOTIATE' && 
+        irr >= 0.15 && 
+        monthlyFlow >= 150) {
+      
+      verdict = 'BUY';
+      confidence = Math.min(85, confidence + 10);
+      primaryReason = `Exceptional ${irr.toFixed(1)}% IRR justifies investment despite modest cash flow`;
+      secondaryReasons.unshift('2025 Calibration: Professional investors prioritize total returns over monthly minimums');
+      
+      logger.info('Professional Override Applied: High IRR Deal', {
+        originalVerdict: 'NEGOTIATE',
+        newVerdict: 'BUY',
+        irr: irr.toFixed(1) + '%',
+        monthlyFlow,
+        reason: 'High IRR Override'
+      });
+    }
+    
+    // Override 2a: Very high IRR with positive cash flow (18%+ IRR)
+    else if (verdict === 'PASS' && 
+             irr >= 0.18 && 
+             monthlyFlow > 0) {
+      
+      verdict = 'NEGOTIATE';
+      confidence = 75;
+      primaryReason = `Extraordinary ${irr.toFixed(1)}% IRR with positive cash flow - negotiate price for better returns`;
+      secondaryReasons.unshift('2025 Calibration: Exceptional returns with positive cash flow justify aggressive negotiation');
+      
+      logger.info('Professional Override Applied: Extraordinary IRR + Positive Cash Flow', {
+        originalVerdict: 'PASS',
+        newVerdict: 'NEGOTIATE',
+        irr: irr.toFixed(1) + '%',
+        monthlyFlow,
+        reason: 'Extraordinary IRR + Positive Cash Flow Override'
+      });
+    }
+    
+    // Override 2b: Very high IRR with minimal negative cash flow (18%+ IRR)
+    else if (verdict === 'PASS' && 
+             irr >= 0.18 && 
+             monthlyFlow >= -200 && 
+             monthlyFlow <= 0) {
+      
+      verdict = 'NEGOTIATE';
+      confidence = 70;
+      primaryReason = `Extraordinary ${irr.toFixed(1)}% IRR warrants negotiation despite negative cash flow`;
+      secondaryReasons.unshift('2025 Calibration: Exceptional returns can justify modest monthly contribution in professional portfolios');
+      
+      logger.info('Professional Override Applied: Extraordinary IRR + Negative Cash Flow', {
+        originalVerdict: 'PASS',
+        newVerdict: 'NEGOTIATE',
+        irr: irr.toFixed(1) + '%',
+        monthlyFlow,
+        reason: 'Extraordinary IRR + Negative Cash Flow Override'
+      });
+    }
+    
+    // Override 3: Good IRR with reasonable cash flow (12%+ IRR)
+    else if (verdict === 'NEGOTIATE' && 
+             irr >= 0.12 && 
+             monthlyFlow >= 200 &&
+             capRate >= 0.04) {
+      
+      verdict = 'BUY';
+      confidence = Math.min(80, confidence + 5);
+      primaryReason = `Strong ${irr.toFixed(1)}% IRR with positive cash flow meets professional investment criteria`;
+      secondaryReasons.push('2025 Calibration: Solid total returns with adequate cash flow');
+      
+      logger.info('Professional Override Applied: Good IRR Deal', {
+        originalVerdict: 'NEGOTIATE',
+        newVerdict: 'BUY',
+        irr: irr.toFixed(1) + '%',
+        monthlyFlow,
+        capRate: capRate.toFixed(1) + '%',
+        reason: 'Good IRR Override'
+      });
+    }
+
+    // V3.0 Professional Assessment integration will be handled by the main analysis flow
+    // The key fix here is disabling the V2.1 walk-away price override above
+    
+    logger.info('V2.1 Walk-away Price Override Disabled', {
+      finalVerdict: verdict,
+      confidence,
+      primaryReason,
+      v3Transition: 'Legacy walk-away price logic disabled for V3.0 compatibility'
     });
     
     return {
       verdict,
-      confidence: Math.round(confidence),
-      score: propertyScore,
+      confidence,
       primaryReason,
       secondaryReasons,
       keyRisks
@@ -1919,5 +2880,126 @@ export class InvestmentDecisionEngine {
       shortTermActions,
       longTermStrategy
     };
+  }
+
+  /**
+   * Generate portfolio context analysis
+   */
+  private generatePortfolioContext(
+    propertyData: SFRData, 
+    fundamentals: any, 
+    verdict: InvestmentVerdict,
+    userContext: any
+  ): PortfolioContext {
+    const portfolioStrategy = propertyData.exitStrategy?.portfolioStrategy || 'first';
+    const experienceLevel = userContext.experienceLevel || 'novice';
+    const riskTolerance = userContext.riskTolerance || 'moderate';
+    
+    // Calculate portfolio fit score based on multiple factors
+    let fitScore = 60; // Base score
+    const recommendations: string[] = [];
+    
+    // Strategy alignment scoring
+    if (portfolioStrategy === 'cashflow' && fundamentals.cashFlow > 500) {
+      fitScore += 20;
+    } else if (portfolioStrategy === 'appreciation' && fundamentals.capRate < 0.06) {
+      fitScore += 15;
+    } else if (portfolioStrategy === 'first' && fundamentals.cashFlow > 200) {
+      fitScore += 25;
+    } else if (portfolioStrategy === 'geographic' && verdict === 'BUY') {
+      fitScore += 15;
+    }
+    
+    // Experience level adjustments
+    if (experienceLevel === 'novice' && fundamentals.riskLevel === 'low') {
+      fitScore += 10;
+      recommendations.push('Beginner-friendly property with stable fundamentals');
+    } else if (experienceLevel === 'experienced' && fundamentals.riskLevel === 'high') {
+      fitScore += 15;
+      recommendations.push('Advanced investment opportunity requiring expertise');
+    }
+    
+    // Risk tolerance alignment
+    if (riskTolerance === 'conservative' && fundamentals.riskLevel === 'low') {
+      fitScore += 10;
+    } else if (riskTolerance === 'aggressive' && fundamentals.returnQuality === 'high') {
+      fitScore += 10;
+    }
+    
+    // Cap the score at 100
+    fitScore = Math.min(fitScore, 100);
+    
+    // Determine fit level
+    let fitLevel: 'excellent' | 'good' | 'fair' | 'poor';
+    if (fitScore >= 85) fitLevel = 'excellent';
+    else if (fitScore >= 70) fitLevel = 'good';
+    else if (fitScore >= 55) fitLevel = 'fair';
+    else fitLevel = 'poor';
+    
+    // Generate fit analysis
+    let fitAnalysis = '';
+    if (portfolioStrategy === 'first') {
+      fitAnalysis = `This property serves as a ${fitLevel} starter investment with ${fundamentals.cashFlow > 0 ? 'positive' : 'negative'} cash flow of $${Math.abs(fundamentals.cashFlow)}/month. `;
+    } else if (portfolioStrategy === 'cashflow') {
+      fitAnalysis = `Strong cash flow property generating $${fundamentals.cashFlow}/month aligns ${fitLevel} with your income-focused strategy. `;
+    } else if (portfolioStrategy === 'appreciation') {
+      fitAnalysis = `${fundamentals.capRate < 0.06 ? 'Lower cap rate suggests good' : 'Higher cap rate may limit'} appreciation potential for your growth-focused strategy. `;
+    } else {
+      fitAnalysis = `This property represents a ${fitLevel} addition to your diversified portfolio strategy. `;
+    }
+    
+    // Add experience context
+    if (experienceLevel === 'novice') {
+      fitAnalysis += `As a newer investor, this ${fundamentals.riskLevel}-risk property ${fitLevel === 'excellent' || fitLevel === 'good' ? 'matches' : 'may challenge'} your current expertise level.`;
+    }
+    
+    // Generate diversification impact
+    const diversificationImpact = this.getDiversificationImpact(propertyData, portfolioStrategy, fundamentals);
+    
+    // Determine risk contribution
+    const riskContribution = this.getRiskContribution(fundamentals, portfolioStrategy, experienceLevel);
+    
+    // Add portfolio-specific recommendations
+    if (portfolioStrategy === 'first') {
+      recommendations.push('Consider setting aside 6 months of expenses before purchase');
+      recommendations.push('Focus on building property management skills');
+    } else if (portfolioStrategy === 'cashflow') {
+      recommendations.push('Monitor cash-on-cash returns across your portfolio');
+      recommendations.push('Ensure geographic diversification for income stability');
+    }
+    
+    return {
+      fitScore,
+      fitLevel,
+      fitAnalysis,
+      diversificationImpact,
+      riskContribution,
+      recommendations
+    };
+  }
+  
+  private getDiversificationImpact(propertyData: SFRData, portfolioStrategy: string, fundamentals: any): string {
+    const city = propertyData.propertyAddress?.city || 'Unknown';
+    const state = propertyData.propertyAddress?.state || 'Unknown';
+    
+    if (portfolioStrategy === 'first') {
+      return `Establishes your real estate investment foundation in ${city}, ${state}.`;
+    } else if (portfolioStrategy === 'geographic') {
+      return `Expands geographic diversification by adding ${city}, ${state} market exposure.`;
+    } else if (portfolioStrategy === 'cashflow') {
+      return `Adds consistent income stream to your cash flow-focused portfolio.`;
+    } else {
+      return `Contributes to portfolio diversification across different property types and markets.`;
+    }
+  }
+  
+  private getRiskContribution(fundamentals: any, portfolioStrategy: string, experienceLevel: string): 'reduces' | 'maintains' | 'increases' {
+    if (fundamentals.riskLevel === 'low' && fundamentals.cashFlow > 300) {
+      return 'reduces';
+    } else if (fundamentals.riskLevel === 'high' || fundamentals.cashFlow < 0) {
+      return 'increases';
+    } else {
+      return 'maintains';
+    }
   }
 }

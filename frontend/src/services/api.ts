@@ -156,6 +156,20 @@ export const propertyApi = {
     }
   },
 
+  // Create a property (alias for saveProperty)
+  createProperty: async (propertyData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post('/deals', propertyData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error creating property:', error);
+      throw error;
+    }
+  },
+
   // Update a property
   updateProperty: async (id: string, propertyData: PropertyData): Promise<ApiResponse<any>> => {
     try {
@@ -1158,6 +1172,137 @@ export const scenarioApi = {
           message: error.response?.data?.error || error.message,
         };
       }
+      throw error;
+    }
+  },
+};
+
+// Portfolio-related API calls
+export const portfolioApi = {
+  // Get all portfolios for the authenticated user
+  getPortfolios: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/portfolios');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching portfolios:', error);
+      throw error;
+    }
+  },
+
+  // Get portfolio details by ID
+  getPortfolioDetails: async (portfolioId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get(`/portfolios/${portfolioId}`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching portfolio details:', error);
+      throw error;
+    }
+  },
+
+  // Create a new portfolio
+  createPortfolio: async (portfolioData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post('/portfolios', portfolioData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error creating portfolio:', error);
+      throw error;
+    }
+  },
+
+  // Update an existing portfolio
+  updatePortfolio: async (portfolioId: string, portfolioData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.put(`/portfolios/${portfolioId}`, portfolioData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error updating portfolio:', error);
+      throw error;
+    }
+  },
+
+  // Archive a portfolio (soft delete)
+  archivePortfolio: async (portfolioId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/portfolios/${portfolioId}`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error archiving portfolio:', error);
+      throw error;
+    }
+  },
+
+  // Get available portfolios for adding a property
+  getAvailablePortfolios: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/portfolios/available');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching available portfolios:', error);
+      throw error;
+    }
+  },
+
+  // Add a property to a portfolio
+  addPropertyToPortfolio: async (portfolioId: string, propertyId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(`/portfolios/${portfolioId}/properties`, {
+        propertyId
+      });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error adding property to portfolio:', error);
+      throw error;
+    }
+  },
+
+  // Remove a property from a portfolio
+  removePropertyFromPortfolio: async (portfolioId: string, propertyId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.delete(`/portfolios/${portfolioId}/properties/${propertyId}`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error removing property from portfolio:', error);
+      throw error;
+    }
+  },
+
+  // Manually recalculate portfolio analytics
+  recalculateAnalytics: async (portfolioId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(`/portfolios/${portfolioId}/recalculate-analytics`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error recalculating analytics:', error);
       throw error;
     }
   },

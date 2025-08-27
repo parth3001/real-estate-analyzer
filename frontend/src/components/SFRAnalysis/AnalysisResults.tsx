@@ -39,6 +39,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
 import InvestmentDecisionHero from './InvestmentDecisionHero';
+import SimplePortfolioSelector from './SimplePortfolioSelector';
 import ProMetricsBar from './ProMetricsBar';
 import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
@@ -55,11 +56,19 @@ interface AnalysisResultsProps {
   onApplyFix?: (data: any, description: string) => Promise<void>; // Handler for deal fixes
   onLoadScenario?: (data: any) => Promise<void>; // Handler for loading scenarios
   isRecalculating?: boolean; // Loading state for real-time updates
+  portfolioContext?: {
+    portfolioId: string | null;
+    portfolioName?: string;
+    portfolioGoal?: string;
+    currentProperties?: number;
+    monthlyNetCashFlow?: number;
+  }; // Portfolio context for displaying impact
 }
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ 
   analysis, 
-  propertyData, 
+  propertyData,
+  portfolioContext, 
   dealId,
   onParameterChange,
   onApplyFix,
@@ -360,6 +369,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           maximumFractionDigits: 0
         }).format(value);
       case 'percent':
+        // Backend returns percentages as numbers (e.g., 167.17 for 167.17%)
+        // Display as-is since backend handles the percentage conversion
         return `${value.toFixed(2)}%`;
       case 'decimal':
         return value.toFixed(2);
@@ -668,6 +679,22 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 investmentDecision={analysis.investmentDecision} 
                 analysis={analysis}
               />
+            )}
+            
+            {/* Portfolio Context removed - now shown in Investment Decision Hero tabs */}
+            
+            {/* Explicit Save to Portfolio Section - Only show if portfolio was selected for impact analysis */}
+            {portfolioContext?.portfolioId && !dealId && (
+              <Box sx={{ mb: 3 }}>
+                <SimplePortfolioSelector
+                  onPortfolioSelected={(portfolioId) => {
+                    // TODO: Implement explicit save to portfolio functionality
+                    console.log('User wants to save to portfolio:', portfolioId);
+                  }}
+                  selectedPortfolioId={portfolioContext.portfolioId}
+                  disabled={false}
+                />
+              </Box>
             )}
             
             {/* Pro Mode - Condensed Metrics Bar */}

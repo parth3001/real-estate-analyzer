@@ -317,14 +317,26 @@ export interface Analysis {
       shortTermActions: string[];
       longTermStrategy: string[];
     };
+    portfolioContext?: {
+      portfolioId: string;
+      portfolioName: string;
+      portfolioGoal: string;
+      currentProperties: number;
+      monthlyNetCashFlow: number;
+      totalValue: number;
+      fitAnalysis: string;
+      impactSummary: string;
+    };
   };
 }
 
 // Base deal interface
 export interface IDeal extends Document {
   userId: mongoose.Schema.Types.ObjectId;
+  portfolioId?: mongoose.Schema.Types.ObjectId; // Optional portfolio association
+  ownershipPercentage?: number; // For fractional investments (syndications, partnerships)
   propertyName: string;
-  propertyType: 'SFR' | 'MF';
+  propertyType: 'SFR' | 'MF' | 'CONDO' | 'TOWNHOUSE' | 'APARTMENT' | 'COMMERCIAL_RETAIL' | 'COMMERCIAL_OFFICE' | 'COMMERCIAL_INDUSTRIAL' | 'COMMERCIAL_MIXED' | 'SELF_STORAGE' | 'MOBILE_HOME_PARK' | 'LAND' | 'OTHER';
   propertyAddress: PropertyAddress;
   purchasePrice: number;
   downPayment: number;
@@ -812,6 +824,16 @@ const AnalysisSchema = new Schema({
       immediateActions: [String],
       shortTermActions: [String],
       longTermStrategy: [String]
+    },
+    portfolioContext: {
+      portfolioId: String,
+      portfolioName: String,
+      portfolioGoal: String,
+      currentProperties: Number,
+      monthlyNetCashFlow: Number,
+      totalValue: Number,
+      fitAnalysis: String,
+      impactSummary: String
     }
   }
 });
@@ -824,8 +846,39 @@ const DealSchema = new Schema({
     required: true,
     index: true
   },
+  portfolioId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Portfolio',
+    required: false,
+    index: true
+  },
+  ownershipPercentage: {
+    type: Number,
+    required: false,
+    min: 0.1,
+    max: 100,
+    default: 100 // Default to 100% ownership
+  },
   propertyName: { type: String, required: true },
-  propertyType: { type: String, enum: ['SFR', 'MF'], required: true },
+  propertyType: { 
+    type: String, 
+    enum: [
+      'SFR', 
+      'MF', 
+      'CONDO', 
+      'TOWNHOUSE', 
+      'APARTMENT', 
+      'COMMERCIAL_RETAIL', 
+      'COMMERCIAL_OFFICE', 
+      'COMMERCIAL_INDUSTRIAL', 
+      'COMMERCIAL_MIXED', 
+      'SELF_STORAGE', 
+      'MOBILE_HOME_PARK', 
+      'LAND', 
+      'OTHER'
+    ], 
+    required: true 
+  },
   propertyAddress: { type: AddressSchema, required: true },
   purchasePrice: { type: Number, required: true },
   downPayment: { type: Number, required: true },
@@ -896,7 +949,8 @@ const DealSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 }, {
   timestamps: true,
-  discriminatorKey: 'propertyType'
+  discriminatorKey: 'propertyType',
+  strict: false  // Allow additional fields for new property types (COMMERCIAL, STORAGE, etc.)
 });
 
 // Create the base model

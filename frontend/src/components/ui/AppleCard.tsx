@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 
 interface AppleCardProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface AppleCardProps {
   padding?: 'small' | 'medium' | 'large';
   highlight?: boolean;
   onClick?: () => void;
+  sx?: SxProps<Theme>;
 }
 
 export const AppleCard: React.FC<AppleCardProps> = ({
@@ -23,7 +25,8 @@ export const AppleCard: React.FC<AppleCardProps> = ({
   hover = true,
   padding = 'medium',
   highlight = false,
-  onClick
+  onClick,
+  sx
 }) => {
   const paddingStyles = {
     small: '16px',
@@ -47,7 +50,8 @@ export const AppleCard: React.FC<AppleCardProps> = ({
             boxShadow: '0 8px 25px -8px rgba(0, 0, 0, 0.15)',
             borderColor: highlight ? 'primary.300' : 'grey.200'
           }
-        })
+        }),
+        ...sx
       }}
     >
       <CardContent sx={{ padding: paddingStyles[padding] }}>

@@ -20,6 +20,7 @@ import { propertyApi } from '../services/api';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
+import { SimplePortfolioSelector } from '../components/SFRAnalysis/SimplePortfolioSelector';
 import { AppleCard, AppleButton } from '../components/ui/AppleComponents';
 import { appleColors } from '../theme/appleDesignSystem';
 
@@ -47,6 +48,9 @@ const SFRAnalysis: React.FC = () => {
   
   // Race condition prevention for main analysis
   const [activeAnalysisRequestId, setActiveAnalysisRequestId] = useState<string | null>(null);
+  
+  // Portfolio context state
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
 
 
   // Handle input method change
@@ -94,14 +98,43 @@ const SFRAnalysis: React.FC = () => {
       
       // Use traditional full analysis (includes market intelligence, tax estimation, etc.)
       console.log('Sending property data to full analysis API:', data);
-      const response = await propertyApi.analyzeProperty(data);
+      
+      // Add portfolio context if selected
+      const analysisData = {
+        ...data,
+        portfolioId: selectedPortfolioId || undefined // This enables portfolio-context analysis
+      };
+      
+      const response = await propertyApi.analyzeProperty(analysisData);
       
       if (response.status === 200 && response.data) {
         console.log('Analysis successful:', response.data);
         
+        // Debug: Check if portfolio context is in the response
+        console.log('🔍 ANALYSIS RESPONSE - Portfolio context check:', {
+          hasInvestmentDecision: !!response.data.investmentDecision,
+          hasPortfolioContext: !!response.data.investmentDecision?.portfolioContext,
+          portfolioContext: response.data.investmentDecision?.portfolioContext
+        });
+        
+        // REMOVED AUTO-SAVE: Don't automatically save property to portfolio
+        // This allows investors to compare the same property against multiple portfolios
+        // before deciding which one (if any) to save it to
+        
+        console.log('Analysis completed successfully. Property NOT auto-saved.');
+        console.log('User can now view portfolio impacts and choose to save explicitly.');
+        
         // Set data and show results (using traditional analysis format)
         setPropertyData(data);
         setAnalysis(response.data);
+        
+        // Debug: Verify portfolio context is in state after setting
+        console.log('🔍 STATE AFTER SET - Portfolio context check:', {
+          hasInvestmentDecision: !!response.data.investmentDecision,
+          hasPortfolioContext: !!response.data.investmentDecision?.portfolioContext,
+          portfolioContextInResponse: response.data.investmentDecision?.portfolioContext
+        });
+        
         setActiveSection('results'); // Switch to results section
         return response.data;
       } else {
@@ -163,7 +196,10 @@ const SFRAnalysis: React.FC = () => {
             hasPropertyTax: !!dealAnalysis.monthlyAnalysis?.expenses?.propertyTax,
             hasAnnualAnalysis: !!dealAnalysis.annualAnalysis,
             hasLongTermAnalysis: !!dealAnalysis.longTermAnalysis,
-            hasKeyMetrics: !!dealAnalysis.keyMetrics
+            hasKeyMetrics: !!dealAnalysis.keyMetrics,
+            hasInvestmentDecision: !!dealAnalysis.investmentDecision,
+            hasPortfolioContext: !!dealAnalysis.investmentDecision?.portfolioContext,
+            portfolioContext: dealAnalysis.investmentDecision?.portfolioContext
           });
           
           setAnalysis(dealAnalysis);
@@ -194,6 +230,14 @@ const SFRAnalysis: React.FC = () => {
         ...propertyData,
         analysis
       };
+      
+      // Debug: Check if portfolio context is being saved
+      console.log('🔍 SAVE DEBUG - Portfolio context check:', {
+        hasAnalysis: !!analysis,
+        hasInvestmentDecision: !!analysis?.investmentDecision,
+        hasPortfolioContext: !!analysis?.investmentDecision?.portfolioContext,
+        portfolioContext: analysis?.investmentDecision?.portfolioContext
+      });
       
       let response;
       
@@ -768,6 +812,15 @@ const SFRAnalysis: React.FC = () => {
               </Box>
             )}
 
+            {/* Portfolio Selection for Analysis Context */}
+            <Box sx={{ mb: 3 }}>
+              <SimplePortfolioSelector 
+                selectedPortfolioId={selectedPortfolioId}
+                onPortfolioSelected={setSelectedPortfolioId}
+                disabled={isLoading}
+              />
+            </Box>
+
             {/* Render Wizard or Form */}
             <Fade in={inputMethod === 'wizard'} unmountOnExit>
               <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
@@ -839,14 +892,34 @@ const SFRAnalysis: React.FC = () => {
                     </Box>
                   </AppleCard>
                 ) : (
-                  <AnalysisResults 
-                    analysis={analysis} 
-                    propertyData={propertyData} 
-                    dealId={dealId || undefined}
-                    onParameterChange={handleParameterChange}
-                    onApplyFix={handleApplyFix}
-                    onLoadScenario={handleLoadScenario}
-                  />
+                  <>
+                    <AnalysisResults 
+                      analysis={analysis} 
+                      propertyData={propertyData} 
+                      dealId={dealId || undefined}
+                      onParameterChange={handleParameterChange}
+                      onApplyFix={handleApplyFix}
+                      onLoadScenario={handleLoadScenario}
+                      portfolioContext={(analysis as any)?.investmentDecision?.portfolioContext || (selectedPortfolioId ? {
+                        portfolioId: selectedPortfolioId,
+                        // These will be filled by backend data if available, otherwise placeholders
+                        portfolioName: undefined,
+                        portfolioGoal: undefined,
+                        currentProperties: undefined,
+                        monthlyNetCashFlow: undefined
+                      } : undefined)}
+                    />
+                    
+                    {/* Portfolio Selector */}
+                    <Box sx={{ mt: 3 }}>
+                      <SimplePortfolioSelector 
+                        dealId={dealId || undefined}
+                        selectedPortfolioId={selectedPortfolioId}
+                        onPortfolioSelected={setSelectedPortfolioId}
+                        disabled={activeSection === 'input' && !analysis}
+                      />
+                    </Box>
+                  </>
                 )}
               </React.Fragment>
             )}

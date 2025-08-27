@@ -1,0 +1,3205 @@
+{
+  "executionDate": "2025-08-22T01:51:11.354Z",
+  "executionTime": 56325,
+  "summary": {
+    "total": 198,
+    "passed": 18,
+    "failed": 24,
+    "warnings": 156,
+    "errors": 0
+  },
+  "results": [
+    {
+      "testName": "CASH_COW_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 146,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 55% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 94,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 106,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "CASH_COW_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 106,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 120,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 113,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 154,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 190,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 119,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "APPRECIATION_PLAY_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "FAIL",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "FAIL",
+      "executionTime": 94,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "FAIL",
+      "executionTime": 106,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "FAIL",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "FAIL",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BULL_MARKET_HOUSE_HACKER",
+      "status": "FAIL",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 100,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "FAIL",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "FAIL",
+      "executionTime": 102,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "FAIL",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "FAIL",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "FAIL",
+      "executionTime": 94,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_BEAR_MARKET_HOUSE_HACKER",
+      "status": "FAIL",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "FAIL",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "FAIL",
+      "executionTime": 95,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "FAIL",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "FAIL",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "FAIL",
+      "executionTime": 94,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STABLE_MARKET_HOUSE_HACKER",
+      "status": "FAIL",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "FAIL",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "FAIL",
+      "executionTime": 102,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "FAIL",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "FAIL",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_BALANCED_INVESTOR",
+      "status": "FAIL",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "BALANCED_PERFORMER_STAGFLATION_HOUSE_HACKER",
+      "status": "FAIL",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "NEGOTIATE",
+      "expectedConfidenceRange": [
+        40,
+        60
+      ],
+      "issues": [
+        "Verdict mismatch: Expected NEGOTIATE, got PASS"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 102,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 94,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 112,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 115,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 119,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 93,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "HOUSE_HACK_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        60,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [60, 75]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 111,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 89,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 96,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 125,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 116,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "OVERPRICED_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 111,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        70,
+        90
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [70, 90]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 98,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 102,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 113,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 113,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 102,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 89,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 114,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 115,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 136,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 95,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "DISTRESSED_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 50,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        50,
+        70
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 45% not in [50, 70]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 91,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 101,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BULL_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 99,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 104,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 90,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 114,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 123,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 112,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 134,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 120,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 110,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STABLE_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 108,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 118,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "LUXURY_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 107,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": "PASS",
+      "expectedConfidenceRange": [
+        60,
+        80
+      ],
+      "issues": [
+        "Confidence outside range: 45% not in [60, 80]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_NOVICE_CONSERVATIVE",
+      "status": "PASS",
+      "executionTime": 3998,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "PASS",
+      "executionTime": 103,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_CASH_FLOW_FOCUSED",
+      "status": "PASS",
+      "executionTime": 105,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_APPRECIATION_HUNTER",
+      "status": "PASS",
+      "executionTime": 101,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_BALANCED_INVESTOR",
+      "status": "PASS",
+      "executionTime": 106,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BULL_MARKET_HOUSE_HACKER",
+      "status": "PASS",
+      "executionTime": 111,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 3928,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 118,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 114,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 109,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 92,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_BEAR_MARKET_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 97,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got PASS",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_NOVICE_CONSERVATIVE",
+      "status": "PASS",
+      "executionTime": 3542,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_AGGRESSIVE_FLIPPER",
+      "status": "PASS",
+      "executionTime": 107,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_CASH_FLOW_FOCUSED",
+      "status": "PASS",
+      "executionTime": 97,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_APPRECIATION_HUNTER",
+      "status": "PASS",
+      "executionTime": 115,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_BALANCED_INVESTOR",
+      "status": "PASS",
+      "executionTime": 99,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STABLE_MARKET_HOUSE_HACKER",
+      "status": "PASS",
+      "executionTime": 105,
+      "verdict": "BUY",
+      "confidence": 55,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": []
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_NOVICE_CONSERVATIVE",
+      "status": "WARN",
+      "executionTime": 3259,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_AGGRESSIVE_FLIPPER",
+      "status": "WARN",
+      "executionTime": 100,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_CASH_FLOW_FOCUSED",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_APPRECIATION_HUNTER",
+      "status": "WARN",
+      "executionTime": 103,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_BALANCED_INVESTOR",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "STUDENT_HOUSING_STAGFLATION_HOUSE_HACKER",
+      "status": "WARN",
+      "executionTime": 105,
+      "verdict": "NEGOTIATE",
+      "confidence": 35,
+      "score": 100,
+      "expectedVerdict": "BUY",
+      "expectedConfidenceRange": [
+        55,
+        75
+      ],
+      "issues": [
+        "Verdict mismatch: Expected BUY, got NEGOTIATE",
+        "Confidence outside range: 35% not in [55, 75]"
+      ]
+    },
+    {
+      "testName": "EDGE_ZERO_CAP_RATE",
+      "status": "PASS",
+      "executionTime": 3526,
+      "verdict": "PASS",
+      "confidence": 35,
+      "score": 0,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    },
+    {
+      "testName": "EDGE_NEGATIVE_CASH_FLOW",
+      "status": "PASS",
+      "executionTime": 3114,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 0,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    },
+    {
+      "testName": "EDGE_EXTREME_LEVERAGE",
+      "status": "PASS",
+      "executionTime": 3325,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    },
+    {
+      "testName": "EDGE_CASH_PURCHASE",
+      "status": "PASS",
+      "executionTime": 3553,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 72,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    },
+    {
+      "testName": "EDGE_HIGH_VACANCY",
+      "status": "PASS",
+      "executionTime": 3743,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    },
+    {
+      "testName": "EDGE_RENT_CONTROL",
+      "status": "PASS",
+      "executionTime": 3933,
+      "verdict": "PASS",
+      "confidence": 45,
+      "score": 40,
+      "expectedVerdict": null,
+      "expectedConfidenceRange": null,
+      "issues": []
+    }
+  ]
+}

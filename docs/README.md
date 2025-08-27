@@ -8,7 +8,8 @@ This directory contains comprehensive documentation for the Real Estate Investme
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [**Investment Decision Engine v2.1**](INVESTMENT_DECISION_SYSTEM_V2.md) | **🚀 UPDATED: Professional investment analysis with critical fixes applied** | **✅ Complete** |
+| [**Investment Decision Engine V3.0**](INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md) | **🚀 NEW: Professional weighting system, eliminates penalty stacking** | **🎯 Design Phase** |
+| [~~Investment Decision Engine v2.1~~](INVESTMENT_DECISION_SYSTEM_V2.md) | ⚠️ **DEPRECATED: Over-conservative bias identified by $20M investors** | ❌ **Deprecated** |
 | [Architecture](ARCHITECTURE.md) | System architecture and technical decisions | ✅ Updated |
 | [API Documentation](API.md) | Enhanced API endpoints including Investment Decision Engine | ✅ Updated |
 | [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions including new decision data structures | ✅ Updated |

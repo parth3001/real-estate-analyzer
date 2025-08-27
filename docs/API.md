@@ -1,9 +1,9 @@
 # Real Estate Investment Intelligence Platform API Documentation
 
 ## Overview
-This document outlines the API interfaces for the Real Estate Investment Intelligence Platform, including the enhanced Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
+This document outlines the API interfaces for the Real Estate Investment Intelligence Platform, including the V3.0 Professional Calibration Investment Decision Engine, AI enhanced messaging system, and institutional-grade analysis capabilities.
 
-**Last Updated**: August 12, 2025 - Investment Decision Engine v2.1 Complete Implementation
+**Last Updated**: August 27, 2025 - V3.0 Professional Calibration & AI Content Pipeline Fix Complete
 
 For a comprehensive listing of all data fields, their types, and usage, please refer to the [Data Dictionary](DATA_DICTIONARY.md).
 
@@ -55,6 +55,52 @@ if (requestId === activeRequestId && response.status === 200) {
 ### Enhanced Analysis Endpoints (NEW - August 2025)
 
 The Real Estate Investment Intelligence Platform now provides professional-grade investment analysis through enhanced endpoints powered by the Investment Decision Engine and AI microservices architecture.
+
+### Portfolio Intelligence API (Implemented - August 2025)
+
+Complete portfolio management with multi-property type support and AI-enhanced insights.
+
+#### Portfolio Management
+```
+GET    /api/portfolios           - List user portfolios
+POST   /api/portfolios           - Create new portfolio
+GET    /api/portfolios/:id       - Get portfolio details
+PUT    /api/portfolios/:id       - Update portfolio
+DELETE /api/portfolios/:id       - Delete portfolio
+```
+
+#### Portfolio Analytics
+```
+GET /api/portfolios/:id/analytics - Real-time portfolio analytics
+POST /api/portfolios/:id/properties/:propertyId - Add property to portfolio  
+DELETE /api/portfolios/:id/properties/:propertyId - Remove property from portfolio
+```
+
+**Portfolio Analytics Response:**
+```json
+{
+  "portfolioId": "68af02011e9491a37a8ccaa7",
+  "summary": {
+    "totalProperties": 2,
+    "totalValue": 749000,
+    "monthlyRentalIncome": 4006,
+    "monthlyNetCashFlow": 467.637,
+    "averageCapRate": 2.2,
+    "averageCashOnCash": 2.8,
+    "totalEquity": 494350
+  },
+  "riskAnalysis": {
+    "geographicConcentration": "MODERATE",
+    "concentrationScore": 65,
+    "recommendations": ["Consider geographic diversification"]
+  },
+  "aiInsights": {
+    "portfolioStrength": "Your portfolio shows strong rental income...",
+    "opportunities": ["Consider adding properties in growing markets"],
+    "risks": ["Geographic concentration in single market"]
+  }
+}
+```
 
 #### Professional Investment Analysis
 ```
@@ -192,7 +238,64 @@ POST /api/deals/analyze
 
 ### Investment Decision Response Structure
 
-The enhanced `investmentDecision` object now includes insights from all three phases:
+#### V3.0 Professional Assessment (August 2025)
+
+The `investmentDecision` object now includes professional-grade weighted scoring:
+
+```json
+{
+  "verdict": "CAUTION",
+  "professionalAssessment": {
+    "dealQuality": 61,
+    "executionDifficulty": 70,
+    "dataReliability": 80,
+    
+    "cashFlowScore": 25,
+    "irrScore": 85,
+    "marketStrengthScore": 85,
+    "debtStructureScore": 53,
+    "exitStrategyScore": 83,
+    "capRateScore": 97,
+    "propertyRiskScore": 75,
+    
+    "primaryInsight": "Below professional standards (61/100) - seek better opportunities",
+    "strategicRecommendations": ["Negotiate rent increases or reduce purchase price", "Target longer hold period"],
+    "riskMitigation": ["Low cash flow increases execution risk", "Debt service coverage requires monitoring"],
+    "opportunityMaximization": ["Strong market position supports portfolio expansion"]
+  },
+  "aiEnhancedContent": {
+    "actionPlan": {
+      "immediateActions": ["Assess negative cash flow of $-505", "Address low DSCR of 0.62"],
+      "negotiationFocus": ["Purchase price reduction", "Interest rate improvement"],
+      "preparationItems": ["Secure 6-month reserves", "Verify rent comparables"],
+      "timeframe": "30-45 days for optimization"
+    },
+    "capitalStrategy": {
+      "currentAssessment": "Negative cash flow indicates payment stress risk",
+      "optimizedApproach": "Structure financing to reduce monthly obligations",
+      "alternativeOptions": ["Lower interest rate negotiation", "Extended loan term"],
+      "recommendation": "Optimize capital structure before proceeding"
+    }
+  }
+}
+```
+
+**V3.0 Weighted Professional Factors:**
+- **Cash Flow** (35%): Monthly income stability and payment coverage
+- **IRR Potential** (25%): Total return analysis with market-adjusted thresholds
+- **Market Strength** (15%): Market tier analysis with property performance  
+- **Debt Structure** (10%): DSCR, leverage, and financing quality
+- **Exit Strategy** (10%): Liquidity options and value realization
+- **Cap Rate** (3%): Current yield vs market median
+- **Property Risk** (2%): Property class and age assessment
+
+**Verdict Thresholds:**
+- **BUY**: 80+ Deal Quality (Excellent professional opportunity)
+- **NEGOTIATE**: 65-79 Deal Quality (Good with optimization needed)
+- **CAUTION**: 50-64 Deal Quality (Below standards, high risk)
+- **PASS**: <50 Deal Quality (Reject - seek better opportunities)
+
+The enhanced `investmentDecision` object also includes insights from market intelligence phases:
 
 #### Phase 2A: Market Intelligence in `secondaryReasons`
 ```json

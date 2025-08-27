@@ -13,6 +13,7 @@ import wizardRouter from './routes/wizardRoutes';
 import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
 import quickAnalysisRouter from './routes/quickAnalysis';
+import portfoliosRouter from './routes/portfolios';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
@@ -72,6 +73,7 @@ app.use('/api/census', censusRouter);
 app.use('/api/market-data', marketDataRouter);
 app.use('/api/wizard', wizardRouter);
 app.use('/api/quick', quickAnalysisRouter);
+app.use('/api/portfolios', portfoliosRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

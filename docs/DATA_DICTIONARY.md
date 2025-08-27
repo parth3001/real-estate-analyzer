@@ -1,6 +1,6 @@
 # Real Estate Investment Intelligence Platform - Data Dictionary
 
-**Last Updated**: August 8, 2025 - Investment Decision Engine & AI Enhancement Update
+**Last Updated**: August 27, 2025 - V3.0 Professional Calibration & AI Content Pipeline Integration
 
 This document serves as a central reference for all data fields used throughout the Real Estate Investment Intelligence Platform. This includes the sophisticated Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
 
@@ -402,9 +402,41 @@ When adding new fields to the application, please follow these guidelines:
 | `localTrends` | string[] | Local market trends | Yes |
 | `investorBehavior` | string | Market participant analysis | Yes |
 
-## Investment Decision Engine Data Fields (NEW - August 8, 2025)
+## Investment Decision Engine Data Fields (V3.0 - August 27, 2025)
 
-The Investment Decision Engine represents a major enhancement to the platform, providing professional-grade investment verdicts and sophisticated market-relative analysis.
+The Investment Decision Engine V3.0 Professional Calibration provides institutional-grade weighted scoring system with AI-enhanced content generation and comprehensive financial consistency validation.
+
+### V3.0 Professional Assessment Fields (NEW - August 27, 2025)
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `investmentDecision.professionalAssessment.dealQuality` | number | Weighted professional quality score (0-100) | Yes | Primary scoring metric |
+| `investmentDecision.professionalAssessment.executionDifficulty` | number | Complexity score for executing investment (0-100) | Yes | Execution planning |
+| `investmentDecision.professionalAssessment.dataReliability` | number | Input data confidence score (0-100) | Yes | Analysis confidence |
+| `investmentDecision.professionalAssessment.cashFlowScore` | number | Cash flow stability score (0-100, 35% weight) | Yes | Primary factor |
+| `investmentDecision.professionalAssessment.irrScore` | number | Total return potential score (0-100, 25% weight) | Yes | Return analysis |
+| `investmentDecision.professionalAssessment.marketStrengthScore` | number | Market quality score (0-100, 15% weight) | Yes | Market analysis |
+| `investmentDecision.professionalAssessment.debtStructureScore` | number | Financing quality score (0-100, 10% weight) | Yes | Debt assessment |
+| `investmentDecision.professionalAssessment.exitStrategyScore` | number | Liquidity options score (0-100, 10% weight) | Yes | Exit planning |
+| `investmentDecision.professionalAssessment.capRateScore` | number | Yield competitiveness score (0-100, 3% weight) | Yes | Current yield |
+| `investmentDecision.professionalAssessment.propertyRiskScore` | number | Property risk assessment (0-100, 2% weight) | Yes | Risk evaluation |
+| `investmentDecision.professionalAssessment.primaryInsight` | string | Main professional insight | Yes | Investment summary |
+| `investmentDecision.professionalAssessment.strategicRecommendations` | string[] | Strategic improvement recommendations | Yes | Action guidance |
+| `investmentDecision.professionalAssessment.riskMitigation` | string[] | Risk mitigation strategies | Yes | Risk management |
+| `investmentDecision.professionalAssessment.opportunityMaximization` | string[] | Opportunity enhancement strategies | Yes | Optimization |
+
+### AI Enhanced Content Fields (NEW - August 27, 2025)
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `investmentDecision.aiEnhancedContent.actionPlan.immediateActions` | string[] | 24-48 hour priority actions | Yes | Strategic Action Plan UI |
+| `investmentDecision.aiEnhancedContent.actionPlan.negotiationFocus` | string[] | Key negotiation leverage points | Yes | Deal Sensitivity Analysis |
+| `investmentDecision.aiEnhancedContent.actionPlan.preparationItems` | string[] | Pre-closing preparation checklist | Yes | Execution timeline |
+| `investmentDecision.aiEnhancedContent.actionPlan.timeframe` | string | Recommended execution timeline | Yes | Timeline planning |
+| `investmentDecision.aiEnhancedContent.capitalStrategy.currentAssessment` | string | Current financing structure analysis | Yes | Capital Strategy UI |
+| `investmentDecision.aiEnhancedContent.capitalStrategy.optimizedApproach` | string | Recommended financing optimization | Yes | Structure improvement |
+| `investmentDecision.aiEnhancedContent.capitalStrategy.alternativeOptions` | string[] | Alternative financing strategies | Yes | Creative financing |
+| `investmentDecision.aiEnhancedContent.capitalStrategy.recommendation` | string | Professional capital deployment advice | Yes | Strategic guidance |
 
 ### Core Investment Decision Fields
 
@@ -420,14 +452,94 @@ The Investment Decision Engine represents a major enhancement to the platform, p
 | `investmentDecision.marketContext` | MarketContextAnalysis | Market-relative analysis | No | Market intelligence |
 | `investmentDecision.timeline` | InvestmentTimeline | Recommended timing | No | Timeline guidance |
 | `investmentDecision.goalContext` | GoalContext | Goal-contextual messaging | No | Personalized UI |
+| `investmentDecision.portfolioContext` | PortfolioContext | Portfolio integration analysis | No | Portfolio-aware analysis |
 
-### Investment Verdict Enum Values
+### Portfolio Context Fields (Enhanced - August 25, 2025)
+Portfolio context is generated when analyzing properties with an associated portfolio, providing sophisticated portfolio integration insights.
 
-| Value | Description | Confidence Range | Typical Use Case |
-|-------|-------------|------------------|------------------|
-| `'BUY'` | Strong recommendation to purchase | 70-95% | Property exceeds hurdle rates with good fundamentals |
-| `'NEGOTIATE'` | Conditional purchase with improvements needed | 45-85% | Positive potential with price/terms adjustments |
-| `'PASS'` | Recommendation to avoid investment | 30-60% | Poor fundamentals, overpriced, or high risk |
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `investmentDecision.portfolioContext.portfolioId` | string | Portfolio ObjectId reference | Yes | Portfolio linking |
+| `investmentDecision.portfolioContext.portfolioName` | string | Display name of target portfolio | Yes | UI display |
+| `investmentDecision.portfolioContext.portfolioGoal` | string | Portfolio primary goal (CASH_FLOW, etc.) | Yes | Goal alignment |
+| `investmentDecision.portfolioContext.currentProperties` | number | Current number of properties in portfolio | Yes | Portfolio metrics |
+| `investmentDecision.portfolioContext.monthlyNetCashFlow` | number | Portfolio current monthly cash flow | Yes | Cash flow impact |
+| `investmentDecision.portfolioContext.totalValue` | number | Total portfolio property value | Yes | Value metrics |
+| `investmentDecision.portfolioContext.fitAnalysis` | string | AI-generated portfolio fit analysis | Yes | Strategic insights |
+| `investmentDecision.portfolioContext.impactSummary` | string | Goal-specific impact summary | Yes | Impact messaging |
+
+### V3.0 Investment Verdict Enum Values
+
+| Value | Description | Deal Quality Range | Typical Use Case |
+|-------|-------------|-------------------|------------------|
+| `'BUY'` | Excellent professional opportunity | 80-100 | Property meets professional investment standards |
+| `'NEGOTIATE'` | Good with optimization needed | 65-79 | Strong potential with price/terms improvements |
+| `'CAUTION'` | Below professional standards | 50-64 | High risk, significant issues to address |
+| `'PASS'` | Reject - seek better opportunities | 0-49 | Poor fundamentals, avoid investment |
+
+## Portfolio Intelligence Data Fields (Implemented - August 2025)
+
+The Portfolio Intelligence system enables users to manage multiple properties with real-time analytics, AI insights, and goal tracking.
+
+### Portfolio Model Fields
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `_id` | ObjectId | MongoDB unique identifier | Auto | Portfolio referencing |
+| `userId` | ObjectId | Owner user reference | Yes | User association |
+| `name` | string | Portfolio display name | Yes | UI display |
+| `description` | string | Portfolio description | No | UI display |
+| `goals.primaryGoal` | string enum | Primary investment goal | Yes | Goal-based analysis |
+| `goals.targetMonthlyIncome` | number | Target monthly cash flow | No | Goal tracking |
+| `goals.targetTotalValue` | number | Target portfolio value | No | Goal tracking |
+| `goals.targetPropertyCount` | number | Target number of properties | No | Goal tracking |
+| `preferences.propertyTypes` | string[] | Preferred property types | No | Property matching |
+| `preferences.priceRange.min` | number | Minimum property price | No | Property filtering |
+| `preferences.priceRange.max` | number | Maximum property price | No | Property filtering |
+| `preferences.markets` | string[] | Target markets/cities | No | Market analysis |
+| `createdAt` | Date | Portfolio creation timestamp | Auto | MongoDB timestamp |
+| `updatedAt` | Date | Last update timestamp | Auto | MongoDB timestamp |
+
+### Portfolio Analytics Fields
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `portfolioId` | ObjectId | Portfolio reference | Yes | Analytics association |
+| `summary.totalProperties` | number | Number of properties | Yes | Dashboard metrics |
+| `summary.totalValue` | number | Total portfolio value | Yes | Financial summary |
+| `summary.monthlyRentalIncome` | number | Total monthly rental income | Yes | Cash flow analysis |
+| `summary.monthlyNetCashFlow` | number | Net monthly cash flow | Yes | Performance tracking |
+| `summary.averageCapRate` | number | Portfolio average cap rate | Yes | Yield analysis |
+| `summary.averageCashOnCash` | number | Portfolio average CoC return | Yes | Return analysis |
+| `summary.totalEquity` | number | Total portfolio equity | Yes | Equity tracking |
+| `riskAnalysis.geographicConcentration` | string enum | Risk level: LOW/MODERATE/HIGH | Yes | Risk assessment |
+| `riskAnalysis.concentrationScore` | number | Concentration risk score (0-100) | Yes | Risk quantification |
+| `riskAnalysis.recommendations` | string[] | Risk mitigation recommendations | No | Risk management |
+| `lastCalculated` | Date | Last analytics calculation | Auto | Cache management |
+
+### Portfolio AI Insights Fields
+
+| Field Name | Type | Description | Required | Used In |
+|------------|------|-------------|----------|---------|
+| `portfolioId` | ObjectId | Portfolio reference | Yes | Insights association |
+| `portfolioStrength` | string | AI-generated strength analysis | Yes | Portfolio overview |
+| `opportunities` | string[] | Growth opportunities | Yes | Strategic planning |
+| `risks` | string[] | Portfolio risk factors | Yes | Risk awareness |
+| `marketPosition` | string | Competitive position analysis | No | Market context |
+| `diversificationAdvice` | string | Diversification recommendations | No | Portfolio optimization |
+| `generatedAt` | Date | AI insights generation timestamp | Auto | Content freshness |
+
+### Portfolio Goal Enum Values
+
+| Value | Description | Typical Metrics Focus |
+|-------|-------------|----------------------|
+| `'CASH_FLOW'` | Maximize monthly income | Net cash flow, cap rates |
+| `'WEALTH_BUILDING'` | Long-term appreciation | Total value, equity growth |
+| `'ESTATE_BUILDING'` | Generational wealth | Asset accumulation, debt paydown |
+| `'TAX_BENEFITS'` | Tax optimization | Depreciation, expense deductions |
+| `'HOUSE_HACKING'` | Live-in cost reduction | Personal housing cost offset |
+| `'GEOGRAPHIC_DIVERSIFICATION'` | Market risk spread | Geographic distribution |
+| `'BALANCED'` | Balanced approach | Mixed metrics optimization |
 
 ### ActionItem Object Structure
 
@@ -576,4 +688,53 @@ The system calculates maximum acceptable price using the **minimum** of:
 | **Quick Flip (<2 years)** | 12.0% minimum | Short-term capital gains risk |
 | **Standard Hold** | 6.5% baseline | Standard investment return |
 
-This comprehensive scoring system ensures professional-grade investment analysis that adapts to market conditions, user experience, and investment strategies. 
+This comprehensive scoring system ensures professional-grade investment analysis that adapts to market conditions, user experience, and investment strategies.
+
+## Portfolio Data Fields ✅
+
+### Portfolio Model Fields
+| Field Name | Type | Description | Required | Implementation Status |
+|------------|------|-------------|----------|----------------------|
+| `_id` | ObjectId | MongoDB unique identifier | Auto | ✅ Implemented |
+| `userId` | ObjectId | Reference to User who owns portfolio | Yes | ✅ Implemented |
+| `name` | string | Portfolio name | Yes | ✅ Implemented |
+| `description` | string | Portfolio description | No | ✅ Implemented |
+| `goals.primaryGoal` | enum | CASH_FLOW, WEALTH_BUILDING, etc. | Yes | ✅ Implemented |
+| `goals.targetMonthlyIncome` | number | Target monthly cash flow | Conditional | ✅ Implemented |
+| `goals.targetNetWorth` | number | Target net worth | Conditional | ✅ Implemented |
+| `goals.targetTimeline` | string | Investment timeline | No | ✅ Implemented |
+| `goals.riskTolerance` | enum | CONSERVATIVE, MODERATE, AGGRESSIVE | Yes | ✅ Implemented |
+| `settings.includeInSFRAnalysis` | boolean | Show portfolio context in analysis | Yes | ✅ Implemented |
+| `settings.alertsEnabled` | boolean | Email alerts enabled | Yes | ✅ Implemented |
+| `settings.currency` | string | Currency code (USD) | Yes | ✅ Implemented |
+| `status` | enum | ACTIVE, ARCHIVED | Yes | ✅ Implemented |
+| `createdAt` | Date | Creation timestamp | Auto | ✅ Implemented |
+| `updatedAt` | Date | Last update timestamp | Auto | ✅ Implemented |
+
+### Portfolio Analytics Fields
+| Field Name | Type | Description | Calculation | Implementation Status |
+|------------|------|-------------|-------------|----------------------|
+| `portfolioId` | ObjectId | Reference to Portfolio | - | ✅ Implemented |
+| `summary.totalProperties` | number | Count of properties in portfolio | COUNT(deals WHERE portfolioId) | ✅ Implemented |
+| `summary.totalValue` | number | Sum of property values | SUM(purchasePrice) | ✅ Implemented |
+| `summary.totalEquity` | number | Sum of equity positions | SUM(purchasePrice - loanAmount) | ✅ Implemented |
+| `summary.monthlyNetCashFlow` | number | Sum of monthly cash flows | SUM(analysis.monthlyAnalysis.cashFlow) | ✅ Implemented |
+| `summary.monthlyRentalIncome` | number | Sum of monthly rents | SUM(monthlyRent) | ✅ Implemented |
+| `summary.averageCapRate` | number | Weighted average cap rate | WEIGHTED_AVG(capRate, purchasePrice) | ✅ Implemented |
+| `summary.averageCashOnCash` | number | Weighted average CoC return | WEIGHTED_AVG(cashOnCash, downPayment) | ✅ Implemented |
+| `summary.totalInvestment` | number | Total capital invested | SUM(downPayment + closingCosts) | ✅ Implemented |
+| `risk.geographicConcentration` | number | % of value in top market | MAX(marketValue) / totalValue * 100 | ✅ Implemented |
+| `risk.topMarket` | string | Highest concentration location | "Austin, TX: 67%" | ✅ Implemented |
+| `risk.leverageRatio` | number | Total debt to value ratio | totalDebt / totalValue | ✅ Implemented |
+| `calculatedAt` | Date | Analytics calculation timestamp | Auto | ✅ Implemented |
+
+### Portfolio Context in Property Analysis
+| Field Name | Type | Description | Source | Implementation Status |
+|------------|------|-------------|--------|----------------------|
+| `portfolioContext.portfolioName` | string | Name of selected portfolio | Portfolio.name | ✅ Backend |
+| `portfolioContext.portfolioGoal` | string | Portfolio's primary goal | Portfolio.goals.primaryGoal | ✅ Backend |
+| `portfolioContext.currentProperties` | number | Current property count | PortfolioAnalytics.summary.totalProperties | ✅ Backend |
+| `portfolioContext.monthlyNetCashFlow` | number | Current portfolio cash flow | PortfolioAnalytics.summary.monthlyNetCashFlow | ✅ Backend |
+| `portfolioContext.totalValue` | number | Current portfolio value | PortfolioAnalytics.summary.totalValue | ✅ Backend |
+| `portfolioContext.fitAnalysis` | string | How property fits portfolio | Calculated based on metrics | ✅ Backend |
+| `portfolioContext.impactSummary` | string | Impact on portfolio goals | Goal-specific analysis | ✅ Backend | 

@@ -75,7 +75,8 @@ export class DealService {
         } else if (dealData.propertyType === 'MF') {
           return await this.repository.createMF(dealData as Partial<IMFDeal>);
         } else {
-          throw new Error(`Invalid property type: ${dealData.propertyType}`);
+          // For all other property types, use generic Deal creation
+          return await this.repository.create(dealData);
         }
       }
     } catch (error) {

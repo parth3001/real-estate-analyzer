@@ -1,5 +1,5 @@
 import { DealModel, IDeal, ISFRDeal, IMFDeal, SFRDeal, MFDeal } from '../models/Deal';
-import { FilterQuery, UpdateQuery } from 'mongoose';
+import mongoose, { FilterQuery, UpdateQuery } from 'mongoose';
 import { logger } from '../utils/logger';
 
 export class DealRepository {
@@ -48,8 +48,14 @@ export class DealRepository {
    */
   async createSFR(dealData: Partial<ISFRDeal>): Promise<ISFRDeal> {
     try {
+      // Ensure portfolioId is converted to ObjectId if present
+      const dealToSave = { ...dealData };
+      if (dealToSave.portfolioId && typeof dealToSave.portfolioId === 'string') {
+        dealToSave.portfolioId = new mongoose.Types.ObjectId(dealToSave.portfolioId) as any;
+      }
+      
       const deal = new SFRDeal({
-        ...dealData,
+        ...dealToSave,
         propertyType: 'SFR'
       });
       return await deal.save() as ISFRDeal;
@@ -71,6 +77,28 @@ export class DealRepository {
       return await deal.save() as IMFDeal;
     } catch (error) {
       logger.error('Error creating MF deal:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new generic deal (for all other property types)
+   * Used for portfolio tracking of CONDO, COMMERCIAL, STORAGE, etc.
+   */
+  async create(dealData: Partial<IDeal>): Promise<IDeal> {
+    try {
+      // Ensure portfolioId is converted to ObjectId if present
+      const dealToSave = { ...dealData };
+      if (dealToSave.portfolioId && typeof dealToSave.portfolioId === 'string') {
+        dealToSave.portfolioId = new mongoose.Types.ObjectId(dealToSave.portfolioId) as any;
+      }
+      
+      const deal = new DealModel({
+        ...dealToSave
+      });
+      return await deal.save() as IDeal;
+    } catch (error) {
+      logger.error('Error creating deal:', error);
       throw error;
     }
   }

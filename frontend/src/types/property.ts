@@ -1,4 +1,4 @@
-export type PropertyType = 'SFR' | 'MF';
+export type PropertyType = 'SFR' | 'MF' | 'Commercial' | 'Mixed-Use' | 'Industrial';
 
 export interface PropertyAddress {
   street: string;
@@ -47,6 +47,12 @@ export interface SFRPropertyData extends BasePropertyData {
   maintenanceCost: number;
   repairCosts?: number;
   longTermAssumptions: LongTermAssumptions;
+  // Portfolio context (optional)
+  portfolioId?: string;
+  portfolioContext?: {
+    portfolioName?: string;
+    portfolioStrategy?: string;
+  };
 }
 
 export interface UnitType {
@@ -77,6 +83,12 @@ export interface MultiFamilyPropertyData extends BasePropertyData {
   unitTypes: UnitType[];
   longTermAssumptions: MFLongTermAssumptions;
   commonAreaUtilities: CommonAreaUtilities;
+  // Portfolio context (optional)
+  portfolioId?: string;
+  portfolioContext?: {
+    portfolioName?: string;
+    portfolioStrategy?: string;
+  };
 }
 
 export type PropertyData = SFRPropertyData | MultiFamilyPropertyData;
@@ -165,4 +177,16 @@ export interface SavedProperty {
   };
   createdAt: string;
   updatedAt: string;
-} 
+}
+
+// Re-export Portfolio types for SFR analysis integration
+export type {
+  IPortfolio as Portfolio,
+  PortfolioSummary,
+  IPortfolioAnalytics as PortfolioAnalytics,
+  IPortfolioRecommendation as PortfolioRecommendation,
+  CreatePortfolioRequest
+} from './portfolio';
+
+// Re-export Analysis type from analysis module
+export type { Analysis } from './analysis'; 

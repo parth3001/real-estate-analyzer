@@ -39,7 +39,8 @@ import {
   TrendingUp as TrendingUpIcon,
   Notifications as NotificationsIcon,
   Map as MapIcon,
-  AdminPanelSettings as AdminPanelSettingsIcon
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Business as BusinessIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -90,6 +91,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     icon: BookmarkIcon,
     path: '/saved-properties',
     badge: 3 // Dynamic count - will be populated from API
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfolio Intelligence',
+    icon: BusinessIcon,
+    path: '/portfolio',
+    badge: null
   },
   {
     id: 'market-data',
@@ -484,6 +492,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       '/sfr-analysis': 'Single-Family Rental Analysis',
       '/mf-analysis': 'Multi-Family Analysis',
       '/saved-properties': 'Saved Properties',
+      '/portfolio': 'Portfolio Intelligence',
       '/market-data': 'Market Intelligence',
       '/census-test': 'Census Data Test',
       '/help': 'Help & Documentation',
@@ -491,6 +500,11 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       '/settings': 'Settings',
       '/admin/users': 'User Management'
     };
+    
+    // Handle dynamic portfolio routes
+    if (pathname.startsWith('/portfolio/')) {
+      return 'Portfolio Intelligence';
+    }
     
     return titles[pathname] || 'Real Estate Analyzer';
   };

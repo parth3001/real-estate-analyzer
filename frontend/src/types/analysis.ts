@@ -202,4 +202,19 @@ export interface Analysis {
   // NEW: Fast AI Predictions data
   predictions?: any;
   performance?: any;
+  // Investment Decision Engine results
+  investmentDecision?: {
+    verdict: 'BUY' | 'NEGOTIATE' | 'PASS' | 'CAUTION';
+    confidence: number;
+    score?: number;
+    primaryReason: string;
+    secondaryReasons: string[];
+    keyRisks: string[];
+    confidenceDescription?: string;
+    goalBasedReasoning?: string;
+    portfolioContext?: any;
+    actionPlan?: any;
+    timeline?: any;
+    goalContext?: any;
+  };
 } 

@@ -216,7 +216,14 @@ const StressTestingDashboard: React.FC<StressTestingDashboardProps> = ({
       }).format(value);
     }
     if (format === 'percent') {
-      return `${value.toFixed(2)}%`;
+      // Smart percentage formatting - handle both decimal and percentage formats
+      if (value < 1) {
+        return `${(value * 100).toFixed(2)}%`;
+      } else if (value > 100) {
+        return `${(value / 100).toFixed(2)}%`;
+      } else {
+        return `${value.toFixed(2)}%`;
+      }
     }
     return value.toLocaleString();
   };
