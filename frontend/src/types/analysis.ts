@@ -216,5 +216,24 @@ export interface Analysis {
     actionPlan?: any;
     timeline?: any;
     goalContext?: any;
+    professionalAssessment?: {
+      dealQuality: number;
+      riskLevel: 'LOW' | 'MODERATE' | 'HIGH';
+      marketConditions: 'FAVORABLE' | 'NEUTRAL' | 'UNFAVORABLE';
+      categoryScores: {
+        financial: number;
+        market: number;
+        risk: number;
+      };
+      weightedComponents: {
+        cashFlow: { score: number; weight: number; };
+        capRate: { score: number; weight: number; };
+        irr: { score: number; weight: number; };
+        market: { score: number; weight: number; };
+        risk: { score: number; weight: number; };
+      };
+      reasoning: string;
+      actionableInsights: string[];
+    };
   };
 } 

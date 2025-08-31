@@ -22,43 +22,13 @@ export interface HealthCheckInsights {
 }
 
 export interface PeerComparisonInsights {
-  outperforming: {
-    metrics: string[];
-    advantage: string;
-  };
-  lagging: {
-    metrics: string[];
-    gap: string;
-  };
-  whyItMatters: {
-    strengths: string;
-    concerns: string;
-    longTermImpact: string;
-  };
+  content: string;
+  summary: string;
 }
 
 export interface GoalPathInsights {
-  propertiesNeeded: {
-    count: number;
-    types: string[];
-    avgPrice: number;
-  };
-  targetLocations: {
-    primary: string;
-    secondary: string;
-    reasoning: string;
-  };
-  capitalRequired: {
-    totalInvestment: number;
-    downPayments: number;
-    reserves: number;
-    closingCosts: number;
-  };
-  timeline: {
-    year1: string;
-    year2: string;
-    year3: string;
-  };
+  content: string;
+  summary: string;
 }
 
 export interface ComprehensiveInsights {

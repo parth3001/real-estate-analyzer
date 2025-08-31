@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
           type: prop.propertyType || 'SFR',
           date: prop.updatedAt || prop.createdAt,
           status: 'completed',
-          aiScore: prop.analysis?.aiInsights?.investmentScore || undefined,
+          aiScore: prop.analysis?.investmentDecision?.professionalAssessment?.dealQuality || undefined,
           monthlyFlow: prop.analysis?.cashFlow?.monthlyCashFlow || undefined,
           capRate: prop.analysis?.keyMetrics?.capRate ? prop.analysis.keyMetrics.capRate : undefined
         }));
@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
         // Calculate average AI score
         const totalAnalyses = properties.length;
         const avgAiScore = properties.reduce((sum: number, prop: any) => {
-          return sum + (prop.analysis?.aiInsights?.investmentScore || 0);
+          return sum + (prop.analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0);
         }, 0) / (totalAnalyses || 1);
         
         // Find best cap rate
@@ -110,7 +110,7 @@ const Dashboard: React.FC = () => {
         setQuickStats([
           { label: 'Total Analyses', value: totalAnalyses.toString(), icon: AnalyticsIcon, color: 'primary.500' },
           { label: 'Saved Properties', value: properties.length.toString(), icon: BookmarkIcon, color: 'success.500', change: 0 },
-          { label: 'Avg. AI Score', value: Math.round(avgAiScore).toString(), icon: AIIcon, color: 'purple.500', change: 0 },
+          { label: 'Avg. Deal Quality', value: Math.round(avgAiScore).toString(), icon: AIIcon, color: 'purple.500', change: 0 },
           { label: 'Best Cap Rate', value: `${bestCapRate.toFixed(2)}%`, icon: TrendingUpIcon, color: 'warning.500' }
         ]);
       }
@@ -129,7 +129,7 @@ const Dashboard: React.FC = () => {
       setQuickStats([
         { label: 'Total Analyses', value: '0', icon: AnalyticsIcon, color: 'primary.500' },
         { label: 'Saved Properties', value: '0', icon: BookmarkIcon, color: 'success.500' },
-        { label: 'Avg. AI Score', value: '0', icon: AIIcon, color: 'purple.500' },
+        { label: 'Avg. Deal Quality', value: '0', icon: AIIcon, color: 'purple.500' },
         { label: 'Best Cap Rate', value: '0%', icon: TrendingUpIcon, color: 'warning.500' }
       ]);
     } finally {
@@ -527,7 +527,7 @@ const Dashboard: React.FC = () => {
                               {analysis.aiScore}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              AI Score
+                              Deal Quality
                             </Typography>
                           </Box>
                         </Box>

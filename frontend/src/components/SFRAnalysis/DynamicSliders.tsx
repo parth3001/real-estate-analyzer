@@ -470,10 +470,10 @@ const DynamicSliders: React.FC<DynamicSlidersProps> = ({
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <PreviewMetricCard
-                value={`${Math.round(analysis?.aiInsights?.investmentScore ?? 0)}/100`}
-                label="AI Investment Score"
+                value={`${Math.round(analysis?.investmentDecision?.professionalAssessment?.dealQuality ?? 0)}/100`}
+                label="Deal Quality Score"
                 isPreview={false}
-                valueColor={(analysis?.aiInsights?.investmentScore ?? 0) >= 70 ? appleColors.success[600] : (analysis?.aiInsights?.investmentScore ?? 0) >= 50 ? appleColors.warning[600] : appleColors.error[600]}
+                valueColor={(analysis?.investmentDecision?.professionalAssessment?.dealQuality ?? 0) >= 80 ? appleColors.success[600] : (analysis?.investmentDecision?.professionalAssessment?.dealQuality ?? 0) >= 65 ? appleColors.warning[600] : appleColors.error[600]}
               />
             </Grid>
           </Grid>

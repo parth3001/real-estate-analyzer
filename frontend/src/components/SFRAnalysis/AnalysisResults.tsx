@@ -131,12 +131,12 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       description: 'Annual cash return on invested capital'
     },
     {
-      label: 'AI Investment Score',
-      value: analysis?.aiInsights?.investmentScore || 68,
+      label: 'Deal Quality Score',
+      value: analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0,
       format: 'score' as const,
-      status: (analysis?.aiInsights?.investmentScore || 0) >= 70 ? 'positive' as const : (analysis?.aiInsights?.investmentScore || 0) >= 50 ? 'warning' as const : 'negative' as const,
+      status: (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 80 ? 'positive' as const : (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 65 ? 'warning' as const : 'negative' as const,
       highlight: true,
-      description: 'AI-powered investment quality assessment'
+      description: 'V3.0 Professional weighted assessment of investment quality'
     }
   ];
 

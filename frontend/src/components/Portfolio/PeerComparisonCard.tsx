@@ -4,21 +4,12 @@ import {
   CardContent,
   Typography,
   Box,
-  Chip,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Alert
+  Chip
 } from '@mui/material';
 import {
-  TrendingUp,
-  TrendingDown,
-  Insights,
-  CheckCircle,
-  Warning
+  TrendingUp
 } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
 import type { PeerComparisonInsights } from '../../services/portfolioAIApi';
 
 interface PeerComparisonCardProps {
@@ -29,117 +20,66 @@ const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ insights }) => 
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent sx={{ p: 3 }}>
-        {/* Outperforming Section */}
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <TrendingUp sx={{ color: 'success.main' }} />
-            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'medium' }}>
-              You're Outperforming
-            </Typography>
-            <Chip
-              label="Advantage"
-              color="success"
-              size="small"
-              sx={{ ml: 'auto' }}
-            />
-          </Box>
-          
-          <List dense sx={{ mb: 1 }}>
-            {insights.outperforming.metrics.map((metric, index) => (
-              <ListItem key={index} sx={{ px: 0 }}>
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary={metric}
-                  primaryTypographyProps={{ variant: 'body2' }}
-                />
-              </ListItem>
-            ))}
-          </List>
-          
-          <Alert severity="success" variant="outlined" sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>Your Advantage:</strong> {insights.outperforming.advantage}
-            </Typography>
-          </Alert>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <TrendingUp sx={{ color: 'primary.main' }} />
+          <Typography variant="h6" sx={{ ml: 1, fontWeight: 'medium' }}>
+            Peer Comparison Analysis
+          </Typography>
+          <Chip
+            label="AI Insights"
+            color="primary"
+            size="small"
+            sx={{ ml: 'auto' }}
+          />
         </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* Lagging Section */}
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <TrendingDown sx={{ color: 'warning.main' }} />
-            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'medium' }}>
-              Areas to Improve
-            </Typography>
-            <Chip
-              label="Gap"
-              color="warning"
-              size="small"
-              sx={{ ml: 'auto' }}
-            />
-          </Box>
-          
-          <List dense sx={{ mb: 1 }}>
-            {insights.lagging.metrics.map((metric, index) => (
-              <ListItem key={index} sx={{ px: 0 }}>
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Warning sx={{ color: 'warning.main', fontSize: 20 }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary={metric}
-                  primaryTypographyProps={{ variant: 'body2' }}
-                />
-              </ListItem>
-            ))}
-          </List>
-          
-          <Alert severity="warning" variant="outlined" sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>The Gap:</strong> {insights.lagging.gap}
-            </Typography>
-          </Alert>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* Why It Matters Section */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Insights sx={{ color: 'info.main' }} />
-            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'medium' }}>
-              Why This Matters
-            </Typography>
-          </Box>
-          
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" fontWeight="medium">
-              Your Strengths
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              {insights.whyItMatters.strengths}
-            </Typography>
-          </Box>
-          
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" fontWeight="medium">
-              Key Concerns
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              {insights.whyItMatters.concerns}
-            </Typography>
-          </Box>
-          
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight="medium">
-              Long-term Impact
-            </Typography>
-            <Typography variant="body2" color="info.main" fontWeight="medium">
-              {insights.whyItMatters.longTermImpact}
-            </Typography>
-          </Box>
+        
+        <Box sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => (
+                <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2, mt: 3, color: 'text.primary' }}>
+                  {children}
+                </Typography>
+              ),
+              h2: ({ children }) => (
+                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1.5, mt: 2, color: 'text.primary' }}>
+                  {children}
+                </Typography>
+              ),
+              h3: ({ children }) => (
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, mt: 1.5, color: 'primary.main' }}>
+                  {children}
+                </Typography>
+              ),
+              h4: ({ children }) => (
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, mt: 1, color: 'text.primary' }}>
+                  {children}
+                </Typography>
+              ),
+              p: ({ children }) => (
+                <Typography variant="body2" sx={{ mb: 1.5, lineHeight: 1.6 }}>
+                  {children}
+                </Typography>
+              ),
+              strong: ({ children }) => (
+                <Typography component="span" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                  {children}
+                </Typography>
+              ),
+              ul: ({ children }) => (
+                <Box component="ul" sx={{ pl: 3, mb: 1.5 }}>
+                  {children}
+                </Box>
+              ),
+              li: ({ children }) => (
+                <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                  {children}
+                </Typography>
+              )
+            }}
+          >
+            {insights.content}
+          </ReactMarkdown>
         </Box>
       </CardContent>
     </Card>

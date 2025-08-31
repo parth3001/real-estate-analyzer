@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Container, Typography, Button, CircularProgress, IconButton, Tabs, Tab } from '@mui/material';
-import { ArrowBack, Add, TrendingUp, AttachMoney, Home, Percent, Refresh, Delete, AutoAwesome, Edit } from '@mui/icons-material';
+import { Box, Container, Typography, Button, CircularProgress, IconButton, Tabs, Tab, Menu, MenuItem, ListItemIcon, ListItemText, Chip } from '@mui/material';
+import { ArrowBack, Add, TrendingUp, AttachMoney, Home, Percent, Refresh, Delete, AutoAwesome, Edit, MoreVert, Visibility, Analytics, Person } from '@mui/icons-material';
 import PortfolioList from '../components/Portfolio/PortfolioList';
 import CreatePortfolioModal from '../components/Portfolio/CreatePortfolioModal';
 import AddPropertyModal from '../components/Portfolio/AddPropertyModal';
 import PortfolioAIInsights from '../components/Portfolio/PortfolioAIInsights';
 import EditPortfolioTargets from '../components/Portfolio/EditPortfolioTargets';
+import PropertyDetailModal from '../components/Portfolio/PropertyDetailModal';
 import { portfolioApi } from '../services/api';
 import { appleColors } from '../theme/appleDesignSystem';
 import { AppleCard } from '../components/ui/AppleComponents';
@@ -20,6 +21,10 @@ const PortfolioDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [showEditTargetsModal, setShowEditTargetsModal] = useState(false);
+  const [showPropertyDetailModal, setShowPropertyDetailModal] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuProperty, setMenuProperty] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -81,6 +86,83 @@ const PortfolioDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Property detail modal handlers
+  const handleOpenPropertyMenu = (event: React.MouseEvent<HTMLElement>, property: any) => {
+    setAnchorEl(event.currentTarget);
+    setMenuProperty(property);
+  };
+
+  const handleClosePropertyMenu = () => {
+    setAnchorEl(null);
+    setMenuProperty(null);
+  };
+
+  const handleViewProperty = () => {
+    setSelectedProperty(menuProperty);
+    setShowPropertyDetailModal(true);
+    handleClosePropertyMenu();
+  };
+
+  const handleEditProperty = () => {
+    setSelectedProperty(menuProperty);
+    setShowPropertyDetailModal(true);
+    handleClosePropertyMenu();
+  };
+
+  const handleDeleteProperty = () => {
+    if (menuProperty) {
+      removePropertyFromPortfolio(menuProperty.id);
+    }
+    handleClosePropertyMenu();
+  };
+
+  const handlePropertyUpdate = (_updatedProperty: any) => {
+    // Reload portfolio details after update
+    if (id) {
+      loadPortfolioDetails(id);
+    }
+  };
+
+  const getPropertySource = (property: any) => {
+    console.log('🔍 Checking property source for:', property.propertyName || property.address, {
+      source: property.source,
+      isManualEntry: property.isManualEntry,
+      isPortfolioProperty: property.isPortfolioProperty,
+      manualEntryData: !!property.manualEntryData,
+      monthlyOperatingExpenses: property.monthlyOperatingExpenses,
+      hasAnalysis: !!property.analysis,
+      hasInvestmentDecision: !!property.analysis?.investmentDecision,
+      verdict: property.analysis?.investmentDecision?.verdict
+    });
+    
+    // Check multiple indicators for manual entry
+    if (property.source === 'PORTFOLIO_MANUAL_ENTRY' || 
+        property.isManualEntry || 
+        property.isPortfolioProperty ||
+        property.manualEntryData ||
+        // If it has monthlyOperatingExpenses field, it's likely manual
+        (property.monthlyOperatingExpenses !== undefined) ||
+        // If property type is OTHER and has basic rent/expense data
+        (property.propertyType === 'OTHER' && property.monthlyRent) ||
+        // If it doesn't have a full investment decision verdict
+        (!property.analysis?.investmentDecision?.verdict)) {
+      console.log('✅ Detected as MANUAL property');
+      return 'manual';
+    }
+    
+    // Check if property has full analysis with investment decision
+    if (property.analysis && 
+        property.analysis.investmentDecision && 
+        property.analysis.investmentDecision.verdict &&
+        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.analysis.investmentDecision.verdict)) {
+      console.log('✅ Detected as ANALYZED property');
+      return 'analyzed';
+    }
+    
+    console.log('✅ Default fallback: treating as MANUAL');
+    return 'manual';
   };
 
   const handleCreatePortfolio = () => {
@@ -384,56 +466,83 @@ const PortfolioDashboard: React.FC = () => {
                   </Button>
                 </Box>
                 {portfolioDetails?.properties?.length > 0 ? (
-                  portfolioDetails.properties.map((property: any) => (
-                    <Box 
-                      key={property.id} 
-                      sx={{ 
-                        p: 2, 
-                        mb: 2, 
-                        bgcolor: appleColors.gray[50], 
-                        borderRadius: 2,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {property.propertyName || property.address}
-                        </Typography>
-                        <Typography variant="body2">
-                          Type: {property.propertyType} | Purchase Price: ${property.purchasePrice?.toLocaleString()}
-                          {property.ownershipPercentage && property.ownershipPercentage < 100 && (
-                            <> | Ownership: {property.ownershipPercentage}%</>
-                          )}
-                        </Typography>
-                        {property.analysis && (
+                  portfolioDetails.properties.map((property: any) => {
+                    const propertySource = getPropertySource(property);
+                    
+                    return (
+                      <Box 
+                        key={property.id} 
+                        sx={{ 
+                          p: 3, 
+                          mb: 2, 
+                          bgcolor: 'white',
+                          borderRadius: 3,
+                          border: `1px solid ${appleColors.gray[200]}`,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          '&:hover': {
+                            boxShadow: `0 4px 20px ${appleColors.gray[200]}`,
+                            borderColor: appleColors.blue[200]
+                          },
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              {property.propertyName || property.address}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              icon={propertySource === 'analyzed' ? <Analytics /> : <Person />}
+                              label={propertySource === 'analyzed' ? "Analyzed" : "Manual"}
+                              color={propertySource === 'analyzed' ? "primary" : "default"}
+                              variant="outlined"
+                              sx={{ 
+                                fontWeight: 500,
+                                '& .MuiChip-icon': { fontSize: 16 }
+                              }}
+                            />
+                          </Box>
+                          
+                          <Typography variant="body2" sx={{ color: appleColors.gray[700], mb: 1 }}>
+                            {property.propertyType} • Purchase Price: ${property.purchasePrice?.toLocaleString()}
+                            {property.ownershipPercentage && property.ownershipPercentage < 100 && (
+                              <> • Ownership: {property.ownershipPercentage}%</>
+                            )}
+                          </Typography>
+                          
                           <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
                             Monthly Income: ${(() => {
                               // Try multiple sources for monthly rent
                               const rent = property.monthlyRent || 
+                                         property.analysis?.monthlyAnalysis?.income?.gross ||
+                                         property.analysis?.monthlyAnalysis?.income?.total ||
                                          property.analysis?.monthlyAnalysis?.income?.monthlyRent ||
-                                         property.analysis?.keyMetrics?.monthlyRent ||
-                                         property.analysis?.monthlyAnalysis?.income?.total;
+                                         property.analysis?.keyMetrics?.monthlyRent;
                               return rent ? rent.toLocaleString() : 'N/A';
                             })()}
                           </Typography>
-                        )}
+                        </Box>
+                        
+                        <IconButton
+                          onClick={(e) => handleOpenPropertyMenu(e, property)}
+                          disabled={loading}
+                          sx={{ 
+                            ml: 2,
+                            color: appleColors.gray[600],
+                            '&:hover': { 
+                              backgroundColor: appleColors.gray[100],
+                              color: appleColors.gray[800]
+                            }
+                          }}
+                        >
+                          <MoreVert />
+                        </IconButton>
                       </Box>
-                      <IconButton
-                        onClick={() => removePropertyFromPortfolio(property.id)}
-                        disabled={loading}
-                        sx={{ 
-                          color: appleColors.red[600],
-                          '&:hover': { 
-                            backgroundColor: appleColors.red[50]
-                          }
-                        }}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Box>
-                  ))
+                    );
+                  })
                 ) : (
                   <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
                     No properties added to this portfolio yet. Click "Add Property" to add your saved properties to this portfolio.
@@ -478,6 +587,57 @@ const PortfolioDashboard: React.FC = () => {
             }}
           />
         )}
+
+        {/* Property Action Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClosePropertyMenu}
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              mt: 1,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+            }
+          }}
+        >
+          <MenuItem onClick={handleViewProperty}>
+            <ListItemIcon>
+              <Visibility fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>View Details</ListItemText>
+          </MenuItem>
+          
+          {menuProperty && getPropertySource(menuProperty) === 'manual' && (
+            <MenuItem onClick={handleEditProperty}>
+              <ListItemIcon>
+                <Edit fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Edit Property</ListItemText>
+            </MenuItem>
+          )}
+          
+          <MenuItem 
+            onClick={handleDeleteProperty}
+            sx={{ color: appleColors.red[600] }}
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" sx={{ color: appleColors.red[600] }} />
+            </ListItemIcon>
+            <ListItemText>Remove from Portfolio</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Property Detail Modal */}
+        <PropertyDetailModal
+          open={showPropertyDetailModal}
+          onClose={() => {
+            setShowPropertyDetailModal(false);
+            setSelectedProperty(null);
+          }}
+          property={selectedProperty}
+          onUpdate={handlePropertyUpdate}
+        />
       </Container>
     );
   }

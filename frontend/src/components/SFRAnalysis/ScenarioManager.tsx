@@ -148,8 +148,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
       category: 'risk'
     },
     {
-      label: 'AI Investment Score',
-      getValue: (analysis) => analysis.aiInsights?.investmentScore || 0,
+      label: 'Deal Quality Score',
+      getValue: (analysis) => analysis.investmentDecision?.professionalAssessment?.dealQuality || 0,
       format: (value) => `${value}/100`,
       type: 'number',
       category: 'value'
@@ -490,7 +490,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                 const isSelected = selectedScenarios.has(scenario._id);
                 const cashFlow = scenario.analysis.monthlyAnalysis?.cashFlow || 0;
                 const cocReturn = scenario.analysis.keyMetrics?.cashOnCashReturn || 0;
-                const aiScore = scenario.analysis.aiInsights?.investmentScore || 0;
+                const dealQuality = scenario.analysis.investmentDecision?.professionalAssessment?.dealQuality || 0;
                 
                 return (
                   <Box key={scenario._id}>
@@ -561,7 +561,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                               />
                               <Chip 
                                 size="small" 
-                                label={`Score: ${aiScore}/100`}
+                                label={`Score: ${dealQuality}/100`}
                                 sx={{ 
                                   bgcolor: appleColors.purple[100],
                                   color: appleColors.purple[600]

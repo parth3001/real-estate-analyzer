@@ -55,7 +55,17 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
     squareFootage: '',
     yearBuilt: '',
     unitsDescription: '',
-    propertyType: 'SFR'
+    propertyType: 'SFR',
+    ownershipPercentage: '100',
+    // MF specific fields
+    totalUnits: '',
+    totalSqft: '',
+    commonAreaUtilities: {
+      electric: '',
+      water: '',
+      gas: '',
+      trash: ''
+    }
   });
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -66,6 +76,15 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
         address: {
           ...prev.address,
           [addressField]: value
+        }
+      }));
+    } else if (field.startsWith('commonAreaUtilities.')) {
+      const utilityField = field.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        commonAreaUtilities: {
+          ...prev.commonAreaUtilities,
+          [utilityField]: value
         }
       }));
     } else {
@@ -129,9 +148,9 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
         propertyAddress: formData.address,
         address: formData.address, // Also include flat address for compatibility
         purchasePrice: Number(formData.purchasePrice),
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : (['SFR', 'CONDO', 'TOWNHOUSE'].includes(formData.propertyType) ? 3 : undefined),
-        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : (['SFR', 'CONDO', 'TOWNHOUSE'].includes(formData.propertyType) ? 2 : undefined),
-        squareFootage: formData.squareFootage ? Number(formData.squareFootage) : 1500,
+        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
+        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
+        squareFootage: formData.squareFootage ? Number(formData.squareFootage) : undefined,
         unitsDescription: formData.unitsDescription || undefined,
         portfolioId: portfolioId,
         
@@ -140,35 +159,45 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
         currentEstimatedValue: Number(formData.currentEstimatedValue),
         monthlyOperatingExpenses: Number(formData.monthlyOperatingExpenses),
         mortgageBalance: formData.mortgageBalance ? Number(formData.mortgageBalance) : 0,
+        ownershipPercentage: Number(formData.ownershipPercentage) || 100,
         
-        // Required fields with sensible defaults for manual entry
-        downPayment: Math.round(Number(formData.purchasePrice) * 0.25), // 25% down payment default
-        interestRate: 7.0, // Current typical rate
-        loanTerm: 30, // 30-year mortgage
-        propertyTaxRate: 1.2, // 1.2% typical property tax rate
-        insuranceRate: 0.5, // 0.5% insurance rate
-        propertyManagementRate: formData.propertyType === 'SFR' ? 8.0 : 6.0, // 8% for SFR, 6% for MF
-        yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : 2000, // User input or default
+        // Manual entry fields - NO DEFAULTS, use exactly what user provides
+        downPayment: 0, // User should provide if they have a loan
+        interestRate: 0, // User should provide if they have a loan
+        loanTerm: 0, // User should provide if they have a loan
+        propertyTaxRate: 0, // User should provide actual tax rate
+        insuranceRate: 0, // User should provide actual insurance rate
+        propertyManagementRate: 0, // User should provide if they have management
+        yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : 0, // User input or 0
         
-        // SFR specific required fields - use actual user input
+        // Use actual user inputs - the skinny calculator will use these exact values
         monthlyRent: Number(formData.monthlyRent),
-        maintenanceCost: Math.round(Number(formData.monthlyOperatingExpenses) * 0.3), // 30% of operating expenses for maintenance
+        maintenanceCost: 0, // User should break this out from operating expenses if needed
         
         // Multi-family specific (if needed)
-        maintenanceCostPerUnit: formData.propertyType === 'MF' ? 150 : undefined,
+        maintenanceCostPerUnit: 0, // User should provide if applicable
+        totalUnits: formData.totalUnits ? Number(formData.totalUnits) : undefined,
+        totalSqft: formData.totalSqft ? Number(formData.totalSqft) : undefined,
+        commonAreaUtilities: (formData.commonAreaUtilities.electric || formData.commonAreaUtilities.water || 
+                             formData.commonAreaUtilities.gas || formData.commonAreaUtilities.trash) ? {
+          electric: Number(formData.commonAreaUtilities.electric) || 0,
+          water: Number(formData.commonAreaUtilities.water) || 0,
+          gas: Number(formData.commonAreaUtilities.gas) || 0,
+          trash: Number(formData.commonAreaUtilities.trash) || 0
+        } : undefined,
         
-        // Long term assumptions with defaults
+        // Long term assumptions - zeros for manual entry (skinny calc doesn't use these)
         longTermAssumptions: {
-          projectionYears: 10,
-          annualRentIncrease: 3.0,
-          annualPropertyValueIncrease: 3.0,
-          sellingCostsPercentage: 6.0,
-          inflationRate: 2.5,
-          vacancyRate: 5.0,
-          turnoverFrequency: 2,
+          projectionYears: 0,
+          annualRentIncrease: 0,
+          annualPropertyValueIncrease: 0,
+          sellingCostsPercentage: 0,
+          inflationRate: 0,
+          vacancyRate: 0,
+          turnoverFrequency: 0,
           ...(formData.propertyType === 'MF' && {
-            capitalExpenditureRate: 5.0,
-            commonAreaMaintenanceRate: 2.0
+            capitalExpenditureRate: 0,
+            commonAreaMaintenanceRate: 0
           })
         },
         
@@ -206,7 +235,16 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
           squareFootage: '',
           yearBuilt: '',
           unitsDescription: '',
-          propertyType: 'SFR'
+          propertyType: 'SFR',
+          ownershipPercentage: '100',
+          totalUnits: '',
+          totalSqft: '',
+          commonAreaUtilities: {
+            electric: '',
+            water: '',
+            gas: '',
+            trash: ''
+          }
         });
       } else {
         setError('Failed to create property');
@@ -434,6 +472,23 @@ export const AddManualPropertyModal: React.FC<AddManualPropertyModalProps> = ({
               }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               helperText="Current market value estimate"
+            />
+          </Grid>
+
+          {/* Ownership Percentage */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Ownership Percentage"
+              type="number"
+              value={formData.ownershipPercentage}
+              onChange={(e) => handleInputChange('ownershipPercentage', e.target.value)}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
+              inputProps={{ min: 1, max: 100 }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              helperText="Your ownership share (100% for full ownership)"
             />
           </Grid>
 

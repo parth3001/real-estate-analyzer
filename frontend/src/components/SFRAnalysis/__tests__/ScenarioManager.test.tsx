@@ -116,8 +116,33 @@ const mockAnalysis: Analysis = {
     summary: 'Good investment with positive cash flow',
     strengths: ['Good cash flow', 'Strong returns'],
     weaknesses: ['Market dependent'],
-    recommendations: ['Hold long term'],
-    investmentScore: 72
+    recommendations: ['Hold long term']
+  },
+  investmentDecision: {
+    verdict: 'BUY' as const,
+    confidence: 85,
+    primaryReason: 'Strong cash flow and returns',
+    secondaryReasons: ['Good market conditions'],
+    keyRisks: ['Market volatility'],
+    professionalAssessment: {
+      dealQuality: 72,
+      riskLevel: 'MODERATE' as const,
+      marketConditions: 'FAVORABLE' as const,
+      categoryScores: {
+        financial: 80,
+        market: 70,
+        risk: 65
+      },
+      weightedComponents: {
+        cashFlow: { score: 85, weight: 0.3 },
+        capRate: { score: 75, weight: 0.2 },
+        irr: { score: 80, weight: 0.2 },
+        market: { score: 70, weight: 0.15 },
+        risk: { score: 65, weight: 0.15 }
+      },
+      reasoning: 'Strong overall performance with good cash flow',
+      actionableInsights: ['Consider long-term hold strategy']
+    }
   }
 };
 
@@ -630,7 +655,7 @@ describe('ScenarioManager', () => {
       expect(screen.getByText('Cash-on-Cash Return')).toBeInTheDocument();
       expect(screen.getByText('Cap Rate')).toBeInTheDocument();
       expect(screen.getByText('DSCR')).toBeInTheDocument();
-      expect(screen.getByText('AI Investment Score')).toBeInTheDocument();
+      expect(screen.getByText('Deal Quality Score')).toBeInTheDocument();
     });
   });
 });

@@ -75,7 +75,7 @@ const DealFixer: React.FC<DealFixerProps> = ({
   const [previewMetrics, setPreviewMetrics] = useState<any>(null);
 
   // Calculate current deal score and identify issues
-  const currentScore = analysis?.aiInsights?.investmentScore || 0;
+  const currentScore = analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0;
   const isDealPoor = currentScore < 55;
   const currentCashFlow = analysis?.monthlyAnalysis?.cashFlow || 0;
   const currentCoCReturn = analysis?.keyMetrics?.cashOnCashReturn || 0;
@@ -283,8 +283,10 @@ const DealFixer: React.FC<DealFixerProps> = ({
           cashOnCashReturn: currentCoCReturn + combinedCoCImprovement,
           capRate: analysis?.keyMetrics?.capRate || 0 // Cap rate doesn't change with these fixes
         },
-        aiInsights: {
-          investmentScore: Math.min(100, currentScore + combinedScoreImprovement)
+        investmentDecision: {
+          professionalAssessment: {
+            dealQuality: Math.min(100, currentScore + combinedScoreImprovement)
+          }
         }
       });
     } else {
@@ -388,7 +390,7 @@ const DealFixer: React.FC<DealFixerProps> = ({
               Great Deal! No Optimization Needed
             </Typography>
             <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 2 }}>
-              Current score: {currentScore}/100 - This deal is performing well
+              Current Deal Quality: {currentScore}/100 - This deal is performing well
             </Typography>
             <Box sx={{ 
               bgcolor: appleColors.success[50], 
@@ -398,7 +400,7 @@ const DealFixer: React.FC<DealFixerProps> = ({
               mt: 3
             }}>
               <Typography variant="body2" sx={{ color: appleColors.success[800] }}>
-                ✅ Investment score above 55/100<br/>
+                ✅ Deal Quality above 55/100<br/>
                 ✅ Deal metrics are within acceptable ranges<br/>
                 ✅ No immediate optimization required
               </Typography>
@@ -421,7 +423,7 @@ const DealFixer: React.FC<DealFixerProps> = ({
                 Deal Optimization Suggestions
               </Typography>
               <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
-                Current score: {currentScore}/100 - Here's how to improve this deal
+                Current Deal Quality: {currentScore}/100 - Here's how to improve this deal
               </Typography>
             </Box>
           </Stack>
@@ -657,10 +659,10 @@ const DealFixer: React.FC<DealFixerProps> = ({
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <PreviewMetricCard
-                  value={`${Math.round(previewMetrics.aiInsights?.investmentScore || 0)}/100`}
-                  label="AI Investment Score (After Fixes)"
+                  value={`${Math.round(previewMetrics.investmentDecision?.professionalAssessment?.dealQuality || 0)}/100`}
+                  label="Deal Quality Score (After Fixes)"
                   isPreview={true}
-                  valueColor={(previewMetrics.aiInsights?.investmentScore || 0) >= 70 ? appleColors.success[600] : (previewMetrics.aiInsights?.investmentScore || 0) >= 50 ? appleColors.warning[600] : appleColors.error[600]}
+                  valueColor={(previewMetrics.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 80 ? appleColors.success[600] : (previewMetrics.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 65 ? appleColors.warning[600] : appleColors.error[600]}
                 />
               </Grid>
             </Grid>

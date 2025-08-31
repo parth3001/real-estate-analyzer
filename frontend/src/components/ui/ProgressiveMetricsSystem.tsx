@@ -86,7 +86,7 @@ const ProgressiveMetricsSystem: React.FC<ProgressiveMetricsSystemProps> = ({ ana
         { key: 'operatingExpenseRatio', label: 'Operating Expense Ratio', value: analysis?.keyMetrics?.operatingExpenseRatio || 0, format: 'percentage', benchmark: 45 },
         { key: 'grossRentMultiplier', label: 'Gross Rent Multiplier', value: analysis?.keyMetrics?.grossRentMultiplier || 0, format: 'ratio', benchmark: 12 },
         { key: 'totalInvestment', label: 'Total Investment', value: analysis?.keyMetrics?.totalInvestment || analysis?.annualAnalysis?.totalInvestment || 0, format: 'currency', benchmark: 0 },
-        { key: 'aiInvestmentScore', label: 'AI Investment Score', value: analysis?.aiInsights?.investmentScore || 0, format: 'number', benchmark: 75 }
+        { key: 'dealQuality', label: 'Deal Quality Score', value: analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0, format: 'number', benchmark: 80 }
       ]
     },
     

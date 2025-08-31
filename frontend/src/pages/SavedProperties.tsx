@@ -24,6 +24,7 @@ import {
 import { Link } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Analytics as AnalyticsIcon, Person as PersonIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
@@ -197,6 +198,28 @@ const SavedProperties: React.FC = () => {
     return true;
   };
 
+  // Property source detection logic (same as Portfolio dashboard)
+  const getPropertySource = (property: any) => {
+    if (property.source === 'PORTFOLIO_MANUAL_ENTRY' || 
+        property.isManualEntry || 
+        property.isPortfolioProperty ||
+        property.manualEntryData ||
+        (property.monthlyOperatingExpenses !== undefined) ||
+        (property.propertyType === 'OTHER' && property.monthlyRent) ||
+        (!property.analysis?.investmentDecision?.verdict)) {
+      return 'manual';
+    }
+    
+    if (property.analysis && 
+        property.analysis.investmentDecision && 
+        property.analysis.investmentDecision.verdict &&
+        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.analysis.investmentDecision.verdict)) {
+      return 'analyzed';
+    }
+    
+    return 'manual'; // Default to manual for safety
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -262,7 +285,7 @@ const SavedProperties: React.FC = () => {
                   <TableCell align="right">Cap Rate</TableCell>
                   <TableCell align="right">CoC Return</TableCell>
                   <TableCell align="right">IRR</TableCell>
-                  <TableCell align="right">AI Score</TableCell>
+                  <TableCell align="right">Deal Quality</TableCell>
                   <TableCell>Last Updated</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -279,19 +302,31 @@ const SavedProperties: React.FC = () => {
                     );
                   }
 
+                  const isManualProperty = getPropertySource(property) === 'manual';
+
                   return (
                     <TableRow 
                       key={property._id}
                       sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                     >
                       <TableCell component="th" scope="row">
-                        {property.propertyName || 'Unnamed Property'}
-                        <Chip 
-                          label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
-                          color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
-                          size="small" 
-                          sx={{ ml: 1 }}
-                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {property.propertyName || 'Unnamed Property'}
+                          </Typography>
+                          <Chip 
+                            label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
+                            color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
+                            size="small"
+                          />
+                          <Chip
+                            size="small"
+                            icon={isManualProperty ? <PersonIcon /> : <AnalyticsIcon />}
+                            label={isManualProperty ? "Manual" : "Analyzed"}
+                            color={isManualProperty ? "default" : "primary"}
+                            variant="outlined"
+                          />
+                        </Box>
                       </TableCell>
                       <TableCell>
                         {property.propertyAddress ? 
@@ -321,8 +356,8 @@ const SavedProperties: React.FC = () => {
                         }
                       </TableCell>
                       <TableCell align="right">
-                        {typeof property.analysis?.aiInsights?.investmentScore === 'number' ? 
-                          `${property.analysis.aiInsights.investmentScore}/100` : 
+                        {typeof property.analysis?.investmentDecision?.professionalAssessment?.dealQuality === 'number' ? 
+                          `${property.analysis.investmentDecision.professionalAssessment.dealQuality}/100` : 
                           'N/A'
                         }
                       </TableCell>

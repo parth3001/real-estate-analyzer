@@ -67,7 +67,7 @@ export class PersonaDataTransformer {
       },
       summary: {
         verdict: this.getVerdict(analysisData),
-        score: analysisData.aiInsights?.investmentScore || 0,
+        score: analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0,
         confidence: 85,
         keyPoints: this.getKeyPointsForLearning(analysisData),
         riskAlerts: this.getRiskAlerts(analysisData),
@@ -112,7 +112,7 @@ export class PersonaDataTransformer {
       },
       summary: {
         verdict: this.getVerdict(analysisData),
-        score: analysisData.aiInsights?.investmentScore || 0,
+        score: analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0,
         confidence: 85,
         keyPoints: this.getKeyPointsForExperienced(analysisData),
         riskAlerts: this.getRiskAlerts(analysisData),
@@ -148,7 +148,7 @@ export class PersonaDataTransformer {
       },
       summary: {
         verdict: this.getVerdict(analysisData),
-        score: analysisData.aiInsights?.investmentScore || 0,
+        score: analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0,
         confidence: 85,
         keyPoints: this.getKeyPointsForAnalyst(analysisData),
         riskAlerts: this.getRiskAlerts(analysisData),
@@ -184,7 +184,7 @@ export class PersonaDataTransformer {
       },
       summary: {
         verdict: this.getVerdict(analysisData),
-        score: analysisData.aiInsights?.investmentScore || 0,
+        score: analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0,
         confidence: 85,
         keyPoints: this.getKeyPointsForSpeed(analysisData),
         riskAlerts: this.getRiskAlerts(analysisData),
@@ -239,12 +239,12 @@ export class PersonaDataTransformer {
       },
       {
         id: 'investment_score',
-        name: 'AI Investment Score',
-        value: `${analysisData.aiInsights?.investmentScore || 0}/100`,
-        status: (analysisData.aiInsights?.investmentScore || 0) > 70 ? 'positive' : 'neutral',
+        name: 'Deal Quality Score',
+        value: `${analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0}/100`,
+        status: (analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0) > 80 ? 'positive' : 'neutral',
         importance: 'high',
         educationalContent: {
-          tooltip: 'Our AI analyzes all factors and gives this property an overall investment score',
+          tooltip: 'Professional assessment analyzes all factors and gives this property an overall deal quality score',
           whyItMatters: 'This score considers market conditions, financials, and risks to give you a quick assessment',
           learnMoreUrl: '/learn/investment-score'
         }
@@ -291,9 +291,9 @@ export class PersonaDataTransformer {
       },
       {
         id: 'investment_score',
-        name: 'AI Investment Score',
-        value: `${analysisData.aiInsights?.investmentScore || 0}/100`,
-        status: (analysisData.aiInsights?.investmentScore || 0) > 70 ? 'positive' : 'neutral',
+        name: 'Deal Quality Score',
+        value: `${analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0}/100`,
+        status: (analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0) > 80 ? 'positive' : 'neutral',
         importance: 'high'
       }
     ];
@@ -334,8 +334,8 @@ export class PersonaDataTransformer {
       {
         id: 'investment_score',
         name: 'Score',
-        value: `${analysisData.aiInsights?.investmentScore || 0}`,
-        status: (analysisData.aiInsights?.investmentScore || 0) > 70 ? 'positive' : 'neutral',
+        value: `${analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0}`,
+        status: (analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0) > 80 ? 'positive' : 'neutral',
         importance: 'critical'
       }
     ];
@@ -415,12 +415,12 @@ export class PersonaDataTransformer {
       });
     }
     
-    if (analysisData.aiInsights?.investmentScore && analysisData.aiInsights.investmentScore > 70) {
+    if (analysisData.investmentDecision?.professionalAssessment?.dealQuality && analysisData.investmentDecision.professionalAssessment.dealQuality > 80) {
       insights.push({
-        id: 'strong_investment_score',
+        id: 'strong_deal_quality',
         type: 'strength',
-        title: 'Strong Investment Score',
-        description: `AI analysis gives this property a ${analysisData.aiInsights.investmentScore}/100 score`,
+        title: 'Strong Deal Quality',
+        description: `Professional assessment gives this property a ${analysisData.investmentDecision.professionalAssessment.dealQuality}/100 quality score`,
         impact: 'high',
         urgency: 'immediate',
         confidence: 80,
@@ -592,7 +592,7 @@ export class PersonaDataTransformer {
    * Utility methods
    */
   private static getVerdict(analysisData: Analysis): 'strong_buy' | 'buy' | 'hold' | 'pass' | 'avoid' {
-    const score = analysisData.aiInsights?.investmentScore || 0;
+    const score = analysisData.investmentDecision?.professionalAssessment?.dealQuality || 0;
     const cashFlow = analysisData.monthlyAnalysis?.cashFlow || 0;
     const capRate = analysisData.keyMetrics?.capRate || 0;
     const cocReturn = analysisData.keyMetrics?.cashOnCashReturn || 0;
