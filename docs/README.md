@@ -1,6 +1,6 @@
 # Real Estate Investment Intelligence Platform Documentation
 
-**Last Updated**: January 10, 2025 - Critical Investment Decision Engine Fixes Applied
+**Last Updated**: August 29, 2025 - V3.0 Professional Calibration & Portfolio Intelligence Complete
 
 This directory contains comprehensive documentation for the Real Estate Investment Intelligence Platform, which has evolved from a basic property analyzer into a sophisticated investment decision system with professional-grade AI analysis capabilities.
 
@@ -8,17 +8,34 @@ This directory contains comprehensive documentation for the Real Estate Investme
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [**Investment Decision Engine V3.0**](INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md) | **🚀 NEW: Professional weighting system, eliminates penalty stacking** | **🎯 Design Phase** |
-| [~~Investment Decision Engine v2.1~~](INVESTMENT_DECISION_SYSTEM_V2.md) | ⚠️ **DEPRECATED: Over-conservative bias identified by $20M investors** | ❌ **Deprecated** |
+| [**Analysis Workflow V3.0**](ANALYSIS_WORKFLOW_DATA_FLOW_V3.md) | **🔥 NEW: Complete V3.0 data flow with Professional Assessment & Portfolio** | **✅ LIVE** |
+| [**Investment Decision Engine V3.0**](INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md) | **Professional weighting system with Deal Quality scoring** | **✅ IMPLEMENTED** |
+| [**Portfolio Intelligence**](PORTFOLIO_EPIC_TECHNICAL_PLAN.md) | **Portfolio management with skinny metrics calculator** | **✅ IMPLEMENTED** |
+| [**Complete Test Inventory**](COMPLETE_TEST_INVENTORY.md) | **All test suites including bulletproof edge cases** | **✅ Updated Aug 29** |
 | [Architecture](ARCHITECTURE.md) | System architecture and technical decisions | ✅ Updated |
-| [API Documentation](API.md) | Enhanced API endpoints including Investment Decision Engine | ✅ Updated |
-| [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions including new decision data structures | ✅ Updated |
-| [Data Mapping](DATA_MAPPING.md) | Enhanced data flows with Investment Decision Engine integration | ✅ Updated |
-| [Investment Decision Logic](INVESTMENT_DECISION_LOGIC.md) | Complete algorithmic logic documentation | ✅ Complete |
-| [Product Requirements](PRD.md) | Product requirements document | 📋 Legacy |
+| [API Documentation](API.md) | Enhanced API endpoints including Investment Decision Engine | 📋 Needs V3.0 Update |
+| [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions including V3.0 Professional Assessment | ✅ Has V3.0 Fields |
+| [Data Mapping](DATA_MAPPING.md) | Enhanced data flows with Investment Decision Engine integration | 📋 Needs Update |
 | [**Phase 1 Completion Summary**](PHASE_1_COMPLETION_SUMMARY.md) | **✅ Complete overview of Phase 1 achievements** | ✅ Historical |
 
-## 🚀 Latest Critical Fixes (January 2025)
+## 🎯 V3.0 Professional Calibration Complete (August 2025)
+
+### Major Features Implemented
+- **✅ Professional Assessment Scoring**: Deal Quality score (0-100) with weighted factor breakdown
+- **✅ Portfolio Intelligence**: Complete portfolio management with multi-property support
+- **✅ Skinny Metrics Calculator**: Fast calculations for manual portfolio properties
+- **✅ Database Schema Updates**: Added professionalAssessment fields to Deal model
+- **✅ Bulletproof Edge Cases**: Fixed $Infinity expenses bug, zero loan parameter handling
+- **✅ Enhanced Property Detection**: Manual vs analyzed property classification
+- **✅ SavedProperties Display**: Shows Deal Quality score instead of deprecated AI Score
+
+### Critical Bug Fixes
+- **Fixed**: Deal Quality score was being lost on save (missing DB fields)
+- **Fixed**: $Infinity expenses for properties with zero loan parameters
+- **Fixed**: Manual properties showing as "Analyzed" instead of "Manual"
+- **Fixed**: Portfolio cash flow calculations not including manual properties
+
+## 🚀 Previous Updates (January 2025)
 
 ### Investment Decision Engine v2.1 - Critical Issues Resolved
 The platform's Investment Decision Engine received critical fixes to eliminate contradictory messaging and ensure accurate recommendations:

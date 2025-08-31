@@ -477,6 +477,66 @@ Response: {
 
 ---
 
+### **User Story P-1.1: Multi-Property Type Portfolio Support**
+```
+As a diversified real estate investor,
+I want to add different property types to my portfolio with appropriate metrics calculation,
+So that I can track performance across my entire investment portfolio regardless of asset class.
+```
+
+**Business Context**: *"My portfolio includes SFR rentals, a small apartment building, a retail strip center, and I'm considering self-storage. I need one platform to track everything, not separate tools for each asset class."*
+
+**Acceptance Criteria**:
+- [ ] **Supported Property Types for Manual Portfolio Entry**:
+  - **Residential**: SFR, Multi-Family, Condo, Townhouse, Apartment
+  - **Commercial**: Retail, Office, Industrial, Mixed-Use
+  - **Alternative**: Self-Storage, Mobile Home Park, Land, Other
+  
+- [ ] **Lightweight Metrics Calculation (Non-SFR Properties)**:
+  - Basic cap rate calculation: NOI / Purchase Price
+  - Cash-on-cash return: Annual cash flow / Total investment
+  - Monthly cash flow: Income - Expenses (type-appropriate)
+  - Portfolio aggregation compatibility
+
+- [ ] **Analysis Type System (Internal)**:
+  - `isFullAnalysis: true` for properties analyzed via SFR analyzer
+  - `isFullAnalysis: false` for manually added portfolio properties
+  - Backward compatibility with existing SFR analysis data
+
+**Definition of Done**:
+- [ ] Users can manually add 10+ property types to portfolios
+- [ ] All property types calculate essential metrics for portfolio analytics
+- [ ] Portfolio dashboard aggregates metrics across all property types seamlessly
+
+---
+
+### **User Story P-1.2: Portfolio AI Quality Assurance**
+```
+As a portfolio owner relying on AI insights,
+I want accurate, property-specific AI recommendations based on real data,
+So that I can trust the system's strategic guidance for my investment decisions.
+```
+
+**Business Context**: *"AI recommendations must use actual portfolio metrics, not generic templates. If my portfolio has $2,726 negative cash flow, AI should recommend fixing that specific issue, not generic advice."*
+
+**Acceptance Criteria**:
+- [ ] **AI Data Integrity**:
+  - Portfolio AI uses real calculated metrics as prompt variables
+  - No generic "Portfolio Performance Metrics" responses
+  - Property-specific insights based on actual financial data
+
+- [ ] **Professional Validation System**:
+  - Automated AI validation using professional RE investor personas
+  - Structured PASS/FAIL/QUESTIONABLE assessment of AI insights
+  - Real-time validation during portfolio analysis generation
+
+**Definition of Done**:
+- [ ] Portfolio AI generates property-specific insights using real metrics data
+- [ ] Professional AI validation passes 80%+ of test scenarios
+- [ ] Zero generic responses in production
+
+---
+
 ### **User Story FI-1.2: Portfolio-Level Financial Intelligence**
 ```
 As an experienced real estate investor,

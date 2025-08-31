@@ -61,6 +61,8 @@ export class PortfolioAnalyticsService {
           console.log(`  Property ${i + 1}: ${prop.propertyName || prop.propertyAddress || 'Unnamed'} - $${prop.purchasePrice}`);
           console.log(`    Type: ${prop.propertyType}, Has analysis: ${!!prop.analysis}`);
           console.log(`    PortfolioId type: ${typeof prop.portfolioId}, value: ${prop.portfolioId}`);
+          console.log(`    Monthly Rent: $${(prop as any).monthlyRent || 0}, Operating Expenses: $${(prop as any).monthlyOperatingExpenses || 0}`);
+          console.log(`    Source: ${(prop as any).source}, isManualEntry: ${(prop as any).isManualEntry}`);
         });
       } else {
         console.log('⚠️ No properties found for this portfolio!');
@@ -121,20 +123,42 @@ export class PortfolioAnalyticsService {
           let monthlyExpenses = 0;
           let monthlyNetCashFlow = 0;
           
-          // For analyzed properties - use the final calculated results
-          if (property.analysis?.monthlyAnalysis?.cashFlow !== undefined) {
+          // Check if this is a manual property first (takes priority over analysis)
+          const isManualProperty = (property as any).source === 'PORTFOLIO_MANUAL_ENTRY' || 
+                                   (property as any).isManualEntry || 
+                                   (property as any).monthlyOperatingExpenses !== undefined;
+          
+          // For analyzed properties - use the final calculated results (only if NOT manual)
+          if (!isManualProperty && property.analysis?.monthlyAnalysis?.cashFlow !== undefined) {
             monthlyNetCashFlow = property.analysis.monthlyAnalysis.cashFlow;
             monthlyRent = property.analysis.monthlyAnalysis.income?.gross || (property as any).monthlyRent || 0;
             monthlyExpenses = property.analysis.monthlyAnalysis.expenses?.total || 0;
             console.log(`    ANALYZED Property ${property.propertyName}: cashFlow = $${monthlyNetCashFlow}, rent = $${monthlyRent}, expenses = $${monthlyExpenses}`);
           }
-          // For manual properties - use simple calculation
+          // For manual properties - use user-provided values directly
           else {
             // Use basic monthlyRent from property data
             monthlyRent = (property as any).monthlyRent || 0;
-            monthlyExpenses = this.calculateMonthlyExpenses(property);
+            
+            // For manual properties, use monthlyOperatingExpenses directly (not calculated)
+            const manualProperty = property as any;
+            console.log(`    🔍 MANUAL Property Debug - ${property.propertyName}:`);
+            console.log(`      monthlyOperatingExpenses value: ${manualProperty.monthlyOperatingExpenses}`);
+            console.log(`      monthlyOperatingExpenses type: ${typeof manualProperty.monthlyOperatingExpenses}`);
+            console.log(`      monthlyOperatingExpenses undefined check: ${manualProperty.monthlyOperatingExpenses !== undefined}`);
+            
+            if (manualProperty.monthlyOperatingExpenses !== undefined && manualProperty.monthlyOperatingExpenses !== null) {
+              monthlyExpenses = Number(manualProperty.monthlyOperatingExpenses) || 0;
+              console.log(`      ✅ Using user-provided expenses: $${monthlyExpenses}`);
+            } else {
+              // Fallback to calculated expenses only if user didn't provide operating expenses
+              console.log(`      ⚠️ User expenses not found, calculating fallback...`);
+              monthlyExpenses = this.calculateMonthlyExpenses(property);
+              console.log(`      📊 Calculated expenses: $${monthlyExpenses}`);
+            }
+            
             monthlyNetCashFlow = monthlyRent - monthlyExpenses;
-            console.log(`    MANUAL Property ${property.propertyName}: rent = $${monthlyRent}, expenses = $${monthlyExpenses}, cashFlow = $${monthlyNetCashFlow}`);
+            console.log(`    MANUAL Property ${property.propertyName}: rent = $${monthlyRent}, userExpenses = ${manualProperty.monthlyOperatingExpenses}, finalExpenses = $${monthlyExpenses}, cashFlow = $${monthlyNetCashFlow}`);
           }
           
           // Apply ownership percentage (for fractional investments)
@@ -173,7 +197,7 @@ export class PortfolioAnalyticsService {
             console.log(`    Found cap rate: ${capRate}% for ${property.propertyName}`);
           }
           
-          if (cashOnCash > 0) {
+          if (cashOnCash !== 0 && isFinite(cashOnCash)) {
             totalCashOnCash += cashOnCash;
             validCashOnCashCount++;
             console.log(`    Found cash-on-cash: ${cashOnCash}% for ${property.propertyName}`);
@@ -298,50 +322,83 @@ export class PortfolioAnalyticsService {
     // Fallback calculation if analysis not available
     let totalExpenses = 0;
 
-    // Calculate mortgage payment
+    // Calculate mortgage payment - with proper validation to prevent Infinity
     const purchasePrice = property.purchasePrice || 0;
     const downPayment = property.downPayment || 0;
     const loanAmount = purchasePrice - downPayment;
-    const monthlyRate = (property.interestRate || 0) / 100 / 12;
-    const loanTermMonths = (property.loanTerm || 30) * 12;
+    const interestRate = property.interestRate || 0;
+    const loanTerm = property.loanTerm || 0;
     
-    if (loanAmount > 0 && monthlyRate > 0) {
-      const monthlyPayment = loanAmount * 
-        (monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) / 
-        (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
-      totalExpenses += monthlyPayment;
+    // Only calculate mortgage if we have valid loan parameters
+    if (loanAmount > 0 && interestRate > 0 && loanTerm > 0) {
+      const monthlyRate = interestRate / 100 / 12;
+      const loanTermMonths = loanTerm * 12;
+      
+      if (monthlyRate > 0 && loanTermMonths > 0 && isFinite(monthlyRate) && isFinite(loanTermMonths)) {
+        const monthlyPayment = loanAmount * 
+          (monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) / 
+          (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
+        
+        // Validate the result before adding
+        if (isFinite(monthlyPayment) && monthlyPayment > 0) {
+          totalExpenses += monthlyPayment;
+        }
+      }
     }
 
-    // Operating expenses (convert annual to monthly)
-    const propertyTax = (purchasePrice * (property.propertyTaxRate || 0) / 100) / 12;
-    const insurance = (purchasePrice * (property.insuranceRate || 0) / 100) / 12;
+    // Operating expenses (convert annual to monthly) - with validation
+    const propertyTaxRate = property.propertyTaxRate || 0;
+    const insuranceRate = property.insuranceRate || 0;
     
-    totalExpenses += propertyTax;
-    totalExpenses += insurance;
+    if (purchasePrice > 0 && propertyTaxRate >= 0 && isFinite(propertyTaxRate)) {
+      const propertyTax = (purchasePrice * propertyTaxRate / 100) / 12;
+      if (isFinite(propertyTax)) {
+        totalExpenses += propertyTax;
+      }
+    }
+    
+    if (purchasePrice > 0 && insuranceRate >= 0 && isFinite(insuranceRate)) {
+      const insurance = (purchasePrice * insuranceRate / 100) / 12;
+      if (isFinite(insurance)) {
+        totalExpenses += insurance;
+      }
+    }
 
-    // Property management (percentage of monthly rent)
+    // Property management (percentage of monthly rent) - with validation
     let monthlyRent = 0;
     if (property.propertyType === 'SFR') {
       monthlyRent = property.monthlyRent || 0;
     } else if (property.propertyType === 'MF') {
       const unitTypes = property.unitTypes || [];
       monthlyRent = unitTypes.reduce((total: number, unit: any) => 
-        total + (unit.monthlyRent * unit.occupied), 0);
+        total + ((unit.monthlyRent || 0) * (unit.occupied || 0)), 0);
     }
     
-    const propertyManagement = monthlyRent * (property.propertyManagementRate || 0) / 100;
-    totalExpenses += propertyManagement;
+    const propertyManagementRate = property.propertyManagementRate || 0;
+    if (monthlyRent > 0 && propertyManagementRate >= 0 && isFinite(propertyManagementRate)) {
+      const propertyManagement = monthlyRent * propertyManagementRate / 100;
+      if (isFinite(propertyManagement)) {
+        totalExpenses += propertyManagement;
+      }
+    }
 
-    // Maintenance (for SFR it's a fixed monthly cost, for MF it's per unit)
+    // Maintenance - with validation
     if (property.propertyType === 'SFR') {
-      totalExpenses += property.maintenanceCost || 0;
+      const maintenanceCost = property.maintenanceCost || 0;
+      if (isFinite(maintenanceCost) && maintenanceCost >= 0) {
+        totalExpenses += maintenanceCost;
+      }
     } else if (property.propertyType === 'MF') {
       const totalUnits = property.totalUnits || 1;
       const maintenancePerUnit = property.maintenanceCostPerUnit || 0;
-      totalExpenses += totalUnits * maintenancePerUnit;
+      const maintenanceTotal = totalUnits * maintenancePerUnit;
+      if (isFinite(maintenanceTotal) && maintenanceTotal >= 0) {
+        totalExpenses += maintenanceTotal;
+      }
     }
 
-    return totalExpenses;
+    // Final validation to ensure we never return Infinity or NaN
+    return isFinite(totalExpenses) && totalExpenses >= 0 ? totalExpenses : 0;
   }
 
   /**
@@ -413,18 +470,27 @@ export class PortfolioAnalyticsService {
       // Calculate operating expenses (excluding debt service)
       const totalMonthlyExpenses = this.calculateMonthlyExpenses(property);
       
-      // Calculate mortgage payment separately
+      // Calculate mortgage payment separately - with proper validation
       const purchasePrice = property.purchasePrice || 0;
       const downPayment = property.downPayment || 0;
       const loanAmount = purchasePrice - downPayment;
-      const monthlyRate = (property.interestRate || 0) / 100 / 12;
-      const loanTermMonths = (property.loanTerm || 30) * 12;
+      const interestRate = property.interestRate || 0;
+      const loanTerm = property.loanTerm || 0;
       
       let monthlyDebtService = 0;
-      if (loanAmount > 0 && monthlyRate > 0) {
-        monthlyDebtService = loanAmount * 
-          (monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) / 
-          (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
+      if (loanAmount > 0 && interestRate > 0 && loanTerm > 0) {
+        const monthlyRate = interestRate / 100 / 12;
+        const loanTermMonths = loanTerm * 12;
+        
+        if (monthlyRate > 0 && loanTermMonths > 0 && isFinite(monthlyRate) && isFinite(loanTermMonths)) {
+          const payment = loanAmount * 
+            (monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) / 
+            (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
+          
+          if (isFinite(payment) && payment > 0) {
+            monthlyDebtService = payment;
+          }
+        }
       }
 
       // NOI = Rental Income - Operating Expenses (excluding debt service)

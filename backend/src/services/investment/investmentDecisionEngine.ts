@@ -1411,27 +1411,31 @@ export class InvestmentDecisionEngine {
 
       // V3.0 VERDICT MAPPING: Use Professional Assessment Deal Quality as single source of truth
       let v3Verdict: InvestmentVerdict;
-      let v3Confidence: number;
       let v3PrimaryReason: string;
       
       const dealQuality = professionalAssessment.dealQuality;
       if (dealQuality >= 80) {
         v3Verdict = 'BUY';
-        v3Confidence = Math.min(95, 80 + (dealQuality - 80));
         v3PrimaryReason = `Institutional-quality deal with ${dealQuality}/100 professional score`;
       } else if (dealQuality >= 65) {
         v3Verdict = 'NEGOTIATE';
-        v3Confidence = Math.min(85, 65 + (dealQuality - 65));
         v3PrimaryReason = `Strong fundamentals (${dealQuality}/100) - negotiate for optimal terms`;
       } else if (dealQuality >= 50) {
         v3Verdict = 'CAUTION';
-        v3Confidence = Math.min(75, 50 + (dealQuality - 50));
         v3PrimaryReason = `Acceptable deal (${dealQuality}/100) requiring optimization`;
       } else {
         v3Verdict = 'PASS';
-        v3Confidence = Math.max(30, dealQuality);
         v3PrimaryReason = `Below professional standards (${dealQuality}/100) - seek better opportunities`;
       }
+      
+      // V3.0 CONFIDENCE CALCULATION: Independent from Deal Quality, based on analysis certainty
+      let v3Confidence = this.calculateAnalysisConfidence(
+        professionalAssessment,
+        marketIntelligence,
+        fundamentals,
+        propertyData,
+        analysis
+      );
       
       logger.info('V3.0 Verdict Mapping Applied', {
         dealQuality: `${dealQuality}/100`,
@@ -1786,6 +1790,110 @@ export class InvestmentDecisionEngine {
       competitiveIntensity,
       recommendedStrategy
     };
+  }
+
+  /**
+   * V3.0 Calculate analysis confidence independent from Deal Quality
+   * Confidence measures certainty in our analysis, not property quality
+   */
+  private calculateAnalysisConfidence(
+    professionalAssessment: ProfessionalAssessment,
+    marketIntelligence: any,
+    fundamentals: any,
+    propertyData: SFRData,
+    analysis: any
+  ): number {
+    let baseConfidence = 75; // Start with moderate confidence
+    
+    // Factor 1: Data Quality & Completeness (0-20 points adjustment)
+    let dataQualityScore = 0;
+    
+    // Required property data completeness
+    if (propertyData.purchasePrice > 0) dataQualityScore += 3;
+    if (propertyData.monthlyRent > 0) dataQualityScore += 3;
+    if (propertyData.downPayment > 0) dataQualityScore += 2;
+    if (propertyData.propertyTaxRate > 0) dataQualityScore += 2;
+    
+    // Market data availability
+    if (marketIntelligence?.marketTrends?.averageRent) dataQualityScore += 3;
+    if (marketIntelligence?.economicIndicators?.medianHomePrice) dataQualityScore += 3;
+    if (marketIntelligence?.marketData?.capRates?.length > 0) dataQualityScore += 2;
+    if (marketIntelligence?.marketData?.demographics) dataQualityScore += 2;
+    
+    baseConfidence += Math.min(20, dataQualityScore);
+    
+    // Factor 2: Input Validation Results (0-15 points adjustment)
+    let validationScore = 0;
+    
+    // Property fundamentals validation
+    const rentToPriceRatio = (propertyData.monthlyRent * 12) / propertyData.purchasePrice;
+    if (rentToPriceRatio >= 0.005 && rentToPriceRatio <= 0.02) validationScore += 5; // Reasonable range
+    else validationScore -= 5; // Suspicious ratio
+    
+    // Operating expense validation
+    const operatingExpenseRatio = fundamentals?.operatingExpenseRatio || 0;
+    if (operatingExpenseRatio >= 0.25 && operatingExpenseRatio <= 0.55) validationScore += 5; // Reasonable range
+    else validationScore -= 5; // Suspicious expenses
+    
+    // Cash flow reasonableness
+    const cashFlow = analysis?.monthlyAnalysis?.cashFlow || 0;
+    const grossRent = propertyData.monthlyRent || 0;
+    if (grossRent > 0) {
+      const cashFlowRatio = Math.abs(cashFlow) / grossRent;
+      if (cashFlowRatio <= 0.8) validationScore += 5; // Reasonable cash flow vs rent
+      else validationScore -= 5; // Suspicious cash flow
+    }
+    
+    baseConfidence += Math.min(15, validationScore);
+    
+    // Factor 3: Market Context Certainty (0-10 points adjustment) 
+    let marketContextScore = 0;
+    
+    // Market tier confidence
+    if (marketIntelligence?.marketTier?.tier) {
+      marketContextScore += 3; // We have market tier classification
+    }
+    
+    // Economic data availability
+    if (marketIntelligence?.economicIndicators?.unemployment !== undefined) marketContextScore += 2;
+    if (marketIntelligence?.economicIndicators?.populationGrowth !== undefined) marketContextScore += 2;
+    if (marketIntelligence?.marketTrends?.priceGrowth !== undefined) marketContextScore += 3;
+    
+    baseConfidence += Math.min(10, marketContextScore);
+    
+    // Factor 4: Analysis Complexity Penalty (0-10 points reduction)
+    let complexityPenalty = 0;
+    
+    // Unusual property characteristics reduce confidence
+    if (propertyData.yearBuilt && (new Date().getFullYear() - propertyData.yearBuilt) > 50) complexityPenalty += 3;
+    if (fundamentals?.dscr && fundamentals.dscr < 1.1) complexityPenalty += 3;
+    if (operatingExpenseRatio > 0.60 || operatingExpenseRatio < 0.20) complexityPenalty += 4;
+    
+    baseConfidence -= Math.min(10, complexityPenalty);
+    
+    // Factor 5: Professional Assessment Internal Consistency (0-5 points adjustment)
+    let consistencyScore = 0;
+    
+    // Check if component scores align with overall assessment
+    const avgComponentScore = (
+      professionalAssessment.cashFlowScore + 
+      professionalAssessment.irrScore + 
+      professionalAssessment.marketStrengthScore + 
+      professionalAssessment.debtStructureScore + 
+      professionalAssessment.exitStrategyScore + 
+      professionalAssessment.capRateScore + 
+      professionalAssessment.propertyRiskScore
+    ) / 7;
+    
+    const scoreDifference = Math.abs(professionalAssessment.dealQuality - avgComponentScore);
+    if (scoreDifference <= 5) consistencyScore += 5; // High consistency
+    else if (scoreDifference <= 10) consistencyScore += 2; // Moderate consistency
+    else consistencyScore -= 3; // Poor consistency reduces confidence
+    
+    baseConfidence += consistencyScore;
+    
+    // Ensure confidence stays within reasonable bounds (30-95)
+    return Math.max(30, Math.min(95, Math.round(baseConfidence)));
   }
 
   /**

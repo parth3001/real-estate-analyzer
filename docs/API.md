@@ -56,53 +56,79 @@ if (requestId === activeRequestId && response.status === 200) {
 
 The Real Estate Investment Intelligence Platform now provides professional-grade investment analysis through enhanced endpoints powered by the Investment Decision Engine and AI microservices architecture.
 
-### Portfolio Intelligence API (Implemented - August 2025)
+### Portfolio Intelligence API (V3.0 - Implemented August 2025)
 
-Complete portfolio management with multi-property type support and AI-enhanced insights.
+Complete portfolio management with multi-property type support, skinny metrics calculator, and AI-enhanced insights.
 
 #### Portfolio Management
 ```
-GET    /api/portfolios           - List user portfolios
-POST   /api/portfolios           - Create new portfolio
-GET    /api/portfolios/:id       - Get portfolio details
-PUT    /api/portfolios/:id       - Update portfolio
-DELETE /api/portfolios/:id       - Delete portfolio
+GET    /api/portfolios                              - List user portfolios
+POST   /api/portfolios                              - Create new portfolio
+GET    /api/portfolios/:id                          - Get portfolio details
+PUT    /api/portfolios/:id                          - Update portfolio
+DELETE /api/portfolios/:id                          - Archive portfolio (soft delete)
+POST   /api/portfolios/:id/recalculate-analytics    - Force recalculation of analytics
+```
+
+#### Property-Portfolio Integration
+```
+POST   /api/deals                                   - Create deal (with optional portfolioId)
+PUT    /api/deals/:id                               - Update deal (can add/remove portfolioId)
+GET    /api/deals?portfolioId=:id                   - Get portfolio properties
+GET    /api/portfolios/available/:propertyId        - Get available portfolios for property
 ```
 
 #### Portfolio Analytics
 ```
-GET /api/portfolios/:id/analytics - Real-time portfolio analytics
-POST /api/portfolios/:id/properties/:propertyId - Add property to portfolio  
-DELETE /api/portfolios/:id/properties/:propertyId - Remove property from portfolio
+GET    /api/portfolios/:id/analytics                - Real-time portfolio analytics
+POST   /api/portfolios/:id/properties/:propertyId   - Add property to portfolio  
+DELETE /api/portfolios/:id/properties/:propertyId   - Remove property from portfolio
 ```
 
-**Portfolio Analytics Response:**
+**Portfolio Analytics Response (V3.0):**
 ```json
 {
   "portfolioId": "68af02011e9491a37a8ccaa7",
   "summary": {
-    "totalProperties": 2,
-    "totalValue": 749000,
-    "monthlyRentalIncome": 4006,
-    "monthlyNetCashFlow": 467.637,
-    "averageCapRate": 2.2,
-    "averageCashOnCash": 2.8,
-    "totalEquity": 494350
+    "totalProperties": 3,
+    "totalValue": 950000,
+    "monthlyRentalIncome": 5200,
+    "monthlyNetCashFlow": 1250,
+    "averageCapRate": 4.8,
+    "averageCashOnCash": 8.2,
+    "totalEquity": 580000,
+    "fullAnalysisProperties": 2,
+    "skinnyAnalysisProperties": 1
   },
   "riskAnalysis": {
     "geographicConcentration": "MODERATE",
     "concentrationScore": 65,
-    "recommendations": ["Consider geographic diversification"]
+    "propertyTypeDistribution": {
+      "SFR": 2,
+      "COMMERCIAL_RETAIL": 1
+    },
+    "recommendations": ["Consider geographic diversification", "Strong property type mix"]
+  },
+  "goalProgress": {
+    "primaryGoal": "CASH_FLOW_FOCUSED",
+    "targetMonthlyIncome": 5000,
+    "actualMonthlyIncome": 5200,
+    "progressPercentage": 104,
+    "onTrack": true
   },
   "aiInsights": {
-    "portfolioStrength": "Your portfolio shows strong rental income...",
-    "opportunities": ["Consider adding properties in growing markets"],
-    "risks": ["Geographic concentration in single market"]
+    "portfolioHealth": "STRONG",
+    "healthScore": 85,
+    "portfolioStrength": "Excellent cash flow generation exceeding targets by 4%",
+    "peerComparison": "Outperforming 78% of similar portfolios",
+    "goalPathAnalysis": "On track to achieve $10K monthly income within 18 months",
+    "opportunities": ["Consider refinancing Property A to improve leverage"],
+    "risks": ["Single market concentration - consider expansion"]
   }
 }
 ```
 
-#### Professional Investment Analysis
+#### Professional Investment Analysis (V3.0 Enhanced)
 ```
 POST /api/deals/analyze
 ```
@@ -118,11 +144,13 @@ POST /api/deals/analyze
 - Leverage optimization analysis
 - AI-powered Intelligence Multiplier insights
 
-**Request Body:**
+**Request Body (V3.0 with Portfolio Context):**
 ```json
 {
   "propertyType": "SFR",
   "propertyName": "Investment Property Analysis",
+  "portfolioId": "68af02011e9491a37a8ccaa7",
+  "ownershipPercentage": 100,
   "propertyAddress": {
     "street": "123 Investment St",
     "city": "Austin",
@@ -158,18 +186,55 @@ POST /api/deals/analyze
 }
 ```
 
-**Enhanced Response Structure:**
+**Enhanced Response Structure (V3.0):**
 ```json
 {
   "success": true,
+  "_id": "deal123",
   "analysis": {
+    "isFullAnalysis": true,
     "monthlyAnalysis": { /* standard monthly analysis */ },
     "keyMetrics": { /* enhanced key metrics */ },
     "longTermAnalysis": { /* long-term projections */ },
     "investmentDecision": {
       "verdict": "NEGOTIATE",
       "confidence": 72,
-      "primaryReason": "Positive cash flow of $983/month with 8.6% cap rate above market median, but 2.8% cash-on-cash return below 5.5% target for 1031 exchange strategy",
+      "score": 68,
+      "professionalAssessment": {
+        "dealQuality": 68,
+        "executionDifficulty": 45,
+        "dataReliability": 90,
+        "cashFlowScore": 75,
+        "irrScore": 82,
+        "marketStrengthScore": 65,
+        "debtStructureScore": 70,
+        "exitStrategyScore": 60,
+        "capRateScore": 55,
+        "propertyRiskScore": 80,
+        "primaryInsight": "Solid opportunity with negotiation potential (68/100)",
+        "strategicRecommendations": [
+          "Negotiate 5-8% price reduction to improve returns",
+          "Consider longer hold period for appreciation"
+        ],
+        "riskMitigation": [
+          "Establish maintenance reserves",
+          "Verify rent comparables"
+        ],
+        "opportunityMaximization": [
+          "Refinance when rates improve",
+          "Add value through strategic improvements"
+        ]
+      },
+      "portfolioContext": {
+        "portfolioId": "68af02011e9491a37a8ccaa7",
+        "portfolioName": "Cash Flow Portfolio",
+        "fitScore": 85,
+        "fitLevel": "excellent",
+        "fitAnalysis": "Aligns perfectly with cash flow goals",
+        "diversificationImpact": "Reduces geographic concentration",
+        "riskContribution": "reduces"
+      },
+      "primaryReason": "Deal Quality 68/100 indicates solid opportunity with negotiation potential",
       "secondaryReasons": [
         "Tier 2 - Balanced Growth Market: Dallas provides balanced appreciation and cash flow potential",
         "Class B - Standard investment-grade property (85% classification confidence)",
@@ -193,6 +258,24 @@ POST /api/deals/analyze
           "timeframe": "During contract negotiation"
         }
       ],
+      "aiEnhancedContent": {
+        "actionPlan": {
+          "immediateActions": ["Review comparable sales for negotiation leverage"],
+          "negotiationFocus": ["Price reduction", "Seller financing options"],
+          "preparationItems": ["Secure financing pre-approval"],
+          "timeframe": "30-45 days for optimization"
+        },
+        "capitalStrategy": {
+          "currentAssessment": "Solid financing structure with room for improvement",
+          "optimizedApproach": "Consider portfolio refinancing strategies",
+          "recommendation": "Proceed with negotiated terms"
+        },
+        "timeline": {
+          "phase1": "Negotiation and due diligence (30 days)",
+          "phase2": "Closing and initial management setup (30 days)",
+          "phase3": "Stabilization and optimization (90 days)"
+        }
+      },
       "marketContext": {
         "marketPosition": "Above median performance",
         "capRateComparison": 8.6,
@@ -289,11 +372,11 @@ The `investmentDecision` object now includes professional-grade weighted scoring
 - **Cap Rate** (3%): Current yield vs market median
 - **Property Risk** (2%): Property class and age assessment
 
-**Verdict Thresholds:**
-- **BUY**: 80+ Deal Quality (Excellent professional opportunity)
-- **NEGOTIATE**: 65-79 Deal Quality (Good with optimization needed)
-- **CAUTION**: 50-64 Deal Quality (Below standards, high risk)
-- **PASS**: <50 Deal Quality (Reject - seek better opportunities)
+**V3.0 Verdict Thresholds (Deal Quality Based):**
+- **BUY**: 80+ Deal Quality (Exceptional opportunity - proceed confidently)
+- **NEGOTIATE**: 65-79 Deal Quality (Good opportunity with improvements needed)
+- **CAUTION**: 50-64 Deal Quality (Marginal - proceed carefully with risk mitigation)
+- **PASS**: <50 Deal Quality (Below investment grade - seek better opportunities)
 
 The enhanced `investmentDecision` object also includes insights from market intelligence phases:
 
@@ -1455,22 +1538,31 @@ GET /api/deals/sample-sfr
 
 **Response:** A complete SFR property data object with sample values
 
-### Saved Properties
+### Saved Properties (V3.0 Enhanced)
 
 #### Get All Properties
 ```
 GET /api/deals
+GET /api/deals?portfolioId=:id
 ```
 
-**Purpose:** Retrieve all saved properties
+**Purpose:** Retrieve all saved properties or filter by portfolio
 
-**Response:**
+**Query Parameters:**
+- `portfolioId` (optional): Filter properties by portfolio ID
+- `propertyType` (optional): Filter by property type (SFR, MF, COMMERCIAL_*, etc.)
+- `isFullAnalysis` (optional): Filter by analysis type (true/false)
+
+**Response (V3.0):**
 ```json
 [
   {
     "_id": "655e1a2bc3f7b8d4e9f0a1b2",
     "propertyName": "Sample SFR Property",
     "propertyType": "SFR",
+    "portfolioId": "68af02011e9491a37a8ccaa7",
+    "ownershipPercentage": 100,
+    "source": "FULL_ANALYSIS",
     "propertyAddress": {
       "street": "123 Main St",
       "city": "Anytown",
@@ -1481,12 +1573,48 @@ GET /api/deals
     "downPayment": 60000,
     // Additional property data...
     "analysis": {
-      // Full analysis object
+      "isFullAnalysis": true,
+      "keyMetrics": {
+        "capRate": 5.9,
+        "cashOnCashReturn": 4.78,
+        "monthlyRoi": 0.4
+      },
+      "investmentDecision": {
+        "verdict": "NEGOTIATE",
+        "professionalAssessment": {
+          "dealQuality": 68
+        }
+      }
     },
     "createdAt": "2025-06-15T14:30:00.000Z",
-    "updatedAt": "2025-06-15T14:30:00.000Z"
+    "updatedAt": "2025-08-30T14:30:00.000Z"
   },
-  // Additional properties...
+  {
+    "_id": "655e1a2bc3f7b8d4e9f0a1b3",
+    "propertyName": "Manual Retail Property",
+    "propertyType": "COMMERCIAL_RETAIL",
+    "portfolioId": "68af02011e9491a37a8ccaa7",
+    "ownershipPercentage": 100,
+    "source": "PORTFOLIO_MANUAL_ENTRY",
+    "purchasePrice": 450000,
+    "monthlyRent": 3200,
+    "monthlyOperatingExpenses": 850,
+    "analysis": {
+      "isFullAnalysis": false,
+      "keyMetrics": {
+        "capRate": 6.2,
+        "cashOnCashReturn": 8.1,
+        "monthlyRoi": 0.68
+      },
+      "monthlyAnalysis": {
+        "income": { "gross": 3200, "net": 3200 },
+        "expenses": { "total": 1150 },
+        "cashFlow": 2050
+      }
+    },
+    "createdAt": "2025-08-28T10:15:00.000Z",
+    "updatedAt": "2025-08-28T10:15:00.000Z"
+  }
 ]
 ```
 
@@ -1499,20 +1627,92 @@ GET /api/deals/:id
 
 **Response:** Complete property and analysis object
 
-#### Create Property
+#### Create Property (V3.0 Enhanced)
 ```
 POST /api/deals
 ```
 
-**Purpose:** Save a new property analysis
+**Purpose:** Save a new property analysis (full or skinny)
 
-**Request Body:** Complete property data with analysis
+**Request Body for Full Analysis:**
+```json
+{
+  "propertyType": "SFR",
+  "propertyName": "Investment Property",
+  "portfolioId": "68af02011e9491a37a8ccaa7",
+  "purchasePrice": 300000,
+  "monthlyRent": 2500,
+  // ... complete property data
+  "analysis": {
+    "isFullAnalysis": true,
+    // ... complete analysis object
+  }
+}
+```
 
-**Response:**
+**Request Body for Manual Portfolio Property (Skinny Analysis):**
+```json
+{
+  "propertyType": "COMMERCIAL_RETAIL",
+  "propertyName": "Manual Retail Store",
+  "portfolioId": "68af02011e9491a37a8ccaa7",
+  "ownershipPercentage": 100,
+  "source": "PORTFOLIO_MANUAL_ENTRY",
+  "purchasePrice": 450000,
+  "monthlyRent": 3200,
+  "monthlyOperatingExpenses": 850,
+  "downPayment": 90000,
+  "interestRate": 6.5,
+  "loanTerm": 25
+}
+```
+
+**Response (V3.0):**
 ```json
 {
   "_id": "655e1a2bc3f7b8d4e9f0a1b2",
-  "message": "Property saved successfully"
+  "message": "Property saved successfully",
+  "analysisType": "full",
+  "portfolioUpdated": true,
+  "analysis": {
+    "isFullAnalysis": true,
+    "keyMetrics": {
+      "capRate": 5.9,
+      "cashOnCashReturn": 4.78,
+      "totalReturn": 12.3,
+      "monthlyRoi": 0.4
+    },
+    "investmentDecision": {
+      "verdict": "NEGOTIATE",
+      "professionalAssessment": {
+        "dealQuality": 68
+      }
+    }
+  }
+}
+```
+
+**Response for Manual Property:**
+```json
+{
+  "_id": "655e1a2bc3f7b8d4e9f0a1b3",
+  "message": "Manual property added to portfolio successfully",
+  "analysisType": "skinny",
+  "portfolioUpdated": true,
+  "analysis": {
+    "isFullAnalysis": false,
+    "keyMetrics": {
+      "capRate": 6.2,
+      "cashOnCashReturn": 8.1,
+      "totalReturn": 14.8,
+      "monthlyRoi": 0.68
+    },
+    "monthlyAnalysis": {
+      "income": { "gross": 3200 },
+      "expenses": { "total": 1150 },
+      "cashFlow": 2050
+    }
+  }
 }
 ```
 

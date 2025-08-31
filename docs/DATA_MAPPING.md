@@ -1,8 +1,8 @@
 # Real Estate Investment Intelligence Platform - Data Mapping
 
-**Last Updated**: August 25, 2025 - Portfolio Context Integration & Deal Model Schema Enhancement
+**Last Updated**: August 30, 2025 - V3.0 Professional Assessment & Portfolio Intelligence Integration
 
-This document describes how data is mapped between different layers of the Real Estate Investment Intelligence Platform, including the enhanced Investment Decision Engine, AI microservices architecture, and professional analysis capabilities.
+This document describes how data is mapped between different layers of the Real Estate Investment Intelligence Platform, including V3.0 Professional Assessment, Portfolio Intelligence system, skinny metrics calculator, and AI microservices architecture.
 
 ## System Overview
 
@@ -14,85 +14,149 @@ The platform has evolved into a sophisticated investment intelligence system wit
 │   (React 19)    │    │                                              │    │   (MongoDB)     │
 │                 │    │  ┌─────────────────────────────────────────┐ │    │                 │
 │ Investment      │    │  │           Core Services                 │ │    │ • Deal Storage  │
-│ Decision Hero   │◄───┤  │                                         │ │    │ • AI Insights   │
-│                 │    │  │ • InvestmentDecisionEngine              │ │    │ • Market Data   │
-│ Intelligence    │    │  │ • LeverageOptimizer                     │ │    │ • User Data     │
-│ Multiplier      │    │  │ • MarketIntelligenceService             │ │    │                 │
-│                 │    │  │ • PropertyTaxEstimationService          │ │◄───┤                 │
-│ Enhanced        │    │  └─────────────────────────────────────────┘ │    │                 │
-│ Analysis UI     │    │                                              │    │                 │
-│                 │    │  ┌─────────────────────────────────────────┐ │    │                 │
-└─────────────────┘    │  │         AI Microservices                │ │    │                 │
-                       │  │                                         │ │    │                 │
-┌─────────────────┐    │  │ • AI Orchestrator                      │ │    │                 │
-│  External APIs  │    │  │ • Core Analysis Service                 │ │    │                 │
-│                 │    │  │ • Market Analysis Service               │ │    │                 │
-│ • FRED API      │◄───┤  │ • Prediction Orchestrator              │ │    │                 │
-│ • RentCast API  │    │  │ • Enhancement Service                   │ │    │                 │
-│ • Census API    │    │  └─────────────────────────────────────────┘ │    │                 │
-│ • OpenAI API    │    └──────────────────────────────────────────────┘    │                 │
+│ Decision Hero   │◄───┤  │                                         │ │    │ • Portfolio     │
+│ (V3.0)          │    │  │ • InvestmentDecisionEngine (V3.0)       │ │    │ • AI Insights   │
+│                 │    │  │ • PortfolioAnalyticsService             │ │    │ • Market Data   │
+│ Portfolio       │    │  │ • PortfolioPropertyMetricsService       │ │    │ • User Data     │
+│ Dashboard       │    │  │ • EnhancedPortfolioAI                   │ │◄───┤                 │
+│                 │    │  │ • MarketIntelligenceService             │ │    │                 │
+│ Professional    │    │  └─────────────────────────────────────────┘ │    │                 │
+│ Assessment      │    │                                              │    │                 │
+│ (0-100 Deal     │    │  ┌─────────────────────────────────────────┐ │    │                 │
+│ Quality)        │    │  │         AI Microservices                │ │    │                 │
+└─────────────────┘    │  │                                         │ │    │                 │
+                       │  │ • AI Orchestrator                      │ │    │                 │
+┌─────────────────┐    │  │ • Core Analysis Service                 │ │    │                 │
+│  External APIs  │    │  │ • Market Analysis Service               │ │    │                 │
+│                 │    │  │ • Enhanced Portfolio AI Service         │ │    │                 │
+│ • FRED API      │◄───┤  │ • Professional Assessment Engine       │ │    │                 │
+│ • RentCast API  │    │  └─────────────────────────────────────────┘ │    │                 │
+│ • Census API    │    └──────────────────────────────────────────────┘    │                 │
+│ • OpenAI API    │                                                        │                 │
 └─────────────────┘                                                        └─────────────────┘
 ```
 
 ## Data Flow Patterns
 
-### Portfolio Context Schema Integration (August 25, 2025)
+### V3.0 Professional Assessment Integration (August 30, 2025)
 
-**Critical Fix Applied**: The Deal model was enhanced to include the `portfolioContext` field in both TypeScript interface and Mongoose schema definitions. This resolved the issue where portfolio context was being generated correctly by the backend but stripped during MongoDB save operations.
+**Critical V3.0 Enhancements Applied**: The system now includes professional-grade Deal Quality scoring and comprehensive portfolio intelligence.
 
-**Key Schema Changes**:
-- Added `portfolioContext` field to `IAnalysisResult` interface in Deal.ts
-- Added `portfolioContext` to Mongoose `analysisResultSchema` 
-- Portfolio context now persists through complete save/load cycle
-- Investment Decision Hero Portfolio Fit tab displays correctly after property save
+**Key V3.0 Schema Changes**:
+- Added `professionalAssessment` fields to Deal model with complete weighted scoring system
+- Added `isFullAnalysis` flag distinguishing full vs skinny analysis
+- Enhanced `portfolioContext` with fit scoring and diversification impact
+- Added support for multi-property types (SFR, MF, Commercial, Self-Storage, etc.)
+- Implemented skinny metrics calculator for manual portfolio properties
+
+**V3.0 Professional Assessment Fields**:
+- `dealQuality` (0-100) - Primary weighted score
+- `cashFlowScore`, `irrScore`, `marketStrengthScore` - Component scores
+- `strategicRecommendations`, `riskMitigation`, `opportunityMaximization` - AI insights
+- Complete persistence through save/load cycles
 
 ## Data Flow Patterns
 
-### 1. Portfolio-Aware Property Analysis Flow
+### 1. V3.0 Portfolio-Aware Analysis Flow (Full Analysis)
 
-When analyzing a property with portfolio context:
+When analyzing a property with V3.0 Professional Assessment and optional portfolio context:
 
 ```
 Frontend Wizard/Form
     ↓
-Collect: propertyData + portfolioId (optional)
+Collect: propertyData + portfolioId (optional) + ownershipPercentage
     ↓
 POST /api/deals/analyze
     ↓
 Backend Controller (deals.ts)
     ├─→ Run Property Analysis (SFRAnalyzer)
-    ├─→ Run Investment Decision Engine
+    ├─→ V3.0 Professional Assessment Engine:
+    │    ├─→ Calculate Deal Quality Score (0-100)
+    │    ├─→ Calculate Component Scores (Cash Flow, IRR, Market Strength, etc.)
+    │    ├─→ Generate Strategic Recommendations
+    │    ├─→ Generate Risk Mitigation Plans
+    │    └─→ Generate Opportunity Maximization Strategies
     └─→ IF portfolioId:
          ├─→ Load Portfolio (portfolioService.getPortfolioById)
          ├─→ Calculate Portfolio Analytics (portfolioAnalyticsService)
-         └─→ Generate Portfolio Context (generatePortfolioContext)
-              ├─→ Create investmentDecision if needed
-              └─→ Attach portfolioContext to investmentDecision
+         ├─→ Generate Portfolio Context (generatePortfolioContext)
+         └─→ Calculate Portfolio Fit Score
     ↓
-Response includes:
-    - analysis (standard property analysis)
-    - investmentDecision (buy/negotiate/pass verdict + portfolioContext)
-    - investmentDecision.portfolioContext (if portfolioId provided):
-        - portfolioId (ObjectId reference)
-        - portfolioName
-        - portfolioGoal (CASH_FLOW, WEALTH_BUILDING, etc.)
-        - currentProperties (from analytics.summary.totalProperties)
-        - monthlyNetCashFlow (from analytics.summary.monthlyNetCashFlow)
-        - totalValue (from analytics.summary.totalValue)
-        - fitAnalysis (AI-generated portfolio fit analysis)
-        - impactSummary (goal-specific impact summary)
+Response includes (V3.0):
+    - analysis.isFullAnalysis: true
+    - analysis.keyMetrics (recalculated)
+    - analysis.investmentDecision.verdict (BUY/NEGOTIATE/CAUTION/PASS)
+    - analysis.investmentDecision.professionalAssessment:
+        - dealQuality: 68 (0-100 weighted score)
+        - executionDifficulty: 45
+        - dataReliability: 90
+        - cashFlowScore: 75 (35% weight)
+        - irrScore: 82 (25% weight)
+        - marketStrengthScore: 65 (15% weight)
+        - debtStructureScore: 70 (10% weight)
+        - exitStrategyScore: 60 (10% weight)
+        - capRateScore: 55 (3% weight)
+        - propertyRiskScore: 80 (2% weight)
+        - primaryInsight: "Solid opportunity with negotiation potential"
+        - strategicRecommendations: [array]
+        - riskMitigation: [array]
+        - opportunityMaximization: [array]
+    - analysis.investmentDecision.portfolioContext (if portfolioId):
+        - portfolioId, portfolioName, fitScore, fitLevel
+        - fitAnalysis, diversificationImpact, riskContribution
     ↓
-Frontend displays portfolio context in Investment Decision Hero tabs
+Frontend displays V3.0 Professional Investment Analysis with Deal Quality gauge
 ```
 
-### 2. Frontend to Backend (Analysis Request)
+### 2. V3.0 Skinny Metrics Flow (Manual Portfolio Properties)
+
+When adding manual properties to portfolios using the skinny calculator:
+
+```
+Frontend AddManualPropertyModal
+    ↓
+Collect: Basic property data (propertyType, purchasePrice, monthlyRent, monthlyOperatingExpenses, portfolioId)
+    ↓
+POST /api/deals (with source: 'PORTFOLIO_MANUAL_ENTRY')
+    ↓
+Backend Controller (deals.ts createDeal)
+    ├─→ Detect manual portfolio property
+    ├─→ PortfolioPropertyMetricsService.calculatePortfolioMetrics():
+    │    ├─→ Calculate basic metrics (Cap Rate, Cash-on-Cash, Monthly ROI)
+    │    ├─→ Handle zero loan parameters (prevent $Infinity bug)
+    │    ├─→ Support all property types (SFR, MF, Commercial, Self-Storage, etc.)
+    │    └─→ Use EXACTLY user-provided values (no smart defaults/overrides)
+    └─→ Update Portfolio Analytics (portfolioAnalyticsService)
+    ↓
+Response includes (V3.0 Skinny):
+    - analysis.isFullAnalysis: false
+    - analysis.keyMetrics:
+        - capRate: 6.2 (calculated from NOI / Purchase Price)
+        - cashOnCashReturn: 8.1 (calculated from cash flow)
+        - totalReturn: 14.8 (combined metrics)
+        - monthlyRoi: 0.68
+    - analysis.monthlyAnalysis:
+        - income: { gross: 3200, net: 3200 }
+        - expenses: { total: 1150 }
+        - cashFlow: 2050
+    - No AI insights (skinny analysis)
+    - No market intelligence (skinny analysis)
+    ↓
+Portfolio Analytics updated with new property metrics
+Frontend Portfolio Dashboard shows updated aggregated metrics
+```
+
+### 3. Frontend to Backend (Analysis Request)
 
 When a user submits property data for analysis:
 
 | Frontend Field | Backend Field | Transformation |
 |----------------|---------------|----------------|
-| `propertyType` | `propertyType` | None |
+| `propertyType` | `propertyType` | V3.0: Now supports SFR, MF, COMMERCIAL_*, SELF_STORAGE, MOBILE_HOME_PARK, OTHER |
 | `propertyName` | `propertyName` | None |
+| `portfolioId` | `portfolioId` | V3.0: Optional ObjectId reference to portfolio |
+| `ownershipPercentage` | `ownershipPercentage` | V3.0: Defaults to 100% if not specified |
+| `source` | `source` | V3.0: Auto-detected ('FULL_ANALYSIS' or 'PORTFOLIO_MANUAL_ENTRY') |
 | `propertyAddress` | `propertyAddress` | None |
 | `purchasePrice` | `purchasePrice` | None |
 | `downPayment` | `downPayment` | None |
@@ -116,37 +180,42 @@ When a user submits property data for analysis:
 | `exitStrategy.primaryExitStrategy` | `exitStrategy.primaryExitStrategy` | Maps to: 'sale', 'refinance', '1031exchange', 'estate', 'flexible' |
 | `exitStrategy.portfolioStrategy` | `exitStrategy.portfolioStrategy` | Maps to: 'first', 'geographic', 'cashflow', 'appreciation', 'diversification' |
 
-### 2. Backend to Frontend (Analysis Response)
+### 4. Backend to Frontend (V3.0 Analysis Response)
 
-When the backend returns analysis results:
+When the backend returns V3.0 analysis results:
 
 | Backend Field | Frontend Field | Transformation |
 |---------------|----------------|----------------|
+| `analysis.isFullAnalysis` | Used for UI conditionals | V3.0: Boolean flag (true=full, false=skinny) |
 | `monthlyAnalysis` | `monthlyAnalysis` | Ensure all properties exist, normalize structure |
 | `annualAnalysis` | `annualAnalysis` | Calculate from monthly if missing |
-| `longTermAnalysis.projections` | `longTermAnalysis.projections` | Always recalculated for consistency |
-| `longTermAnalysis.returns` | `longTermAnalysis.returns` | Recalculated based on projections |
-| `longTermAnalysis.exitAnalysis` | `longTermAnalysis.exitAnalysis` | Recalculated based on projections |
+| `longTermAnalysis.projections` | `longTermAnalysis.projections` | Always recalculated for consistency (full analysis only) |
 | `keyMetrics` | `keyMetrics` | Ensure all metrics are present |
-| `aiInsights` | `aiInsights` | Enhanced with Intelligence Multiplier analysis |
-| **`investmentDecision`** (NEW) | **`investmentDecision`** | **Professional investment verdict and analysis** |
-| `investmentDecision.verdict` | Displayed in InvestmentDecisionHero | Maps to: 'BUY', 'NEGOTIATE', 'PASS' |
-| `investmentDecision.confidence` | Confidence percentage display | Numeric 0-100 score |
-| `investmentDecision.primaryReason` | Main reasoning text | Professional explanation of verdict |
-| `investmentDecision.secondaryReasons` | Additional factors list | Array of supporting reasons |
-| `investmentDecision.keyRisks` | Risk assessment display | Array of identified risks |
-| `investmentDecision.actionPlan` | Actionable next steps | Array of ActionItem objects |
-| `investmentDecision.capitalStrategy` | Capital deployment advice | CapitalDeploymentAdvice object |
-| `investmentDecision.marketContext` | Market analysis | MarketContextAnalysis object |
-| `investmentDecision.goalContext` | Goal-contextual messaging | GoalContext for personalized UI |
-| **`leverageAnalysis`** (NEW) | **`leverageAnalysis`** | **Leverage optimization analysis** |
-| `leverageAnalysis.scenarios` | Leverage scenario comparison | Array of LeverageScenario objects |
-| `leverageAnalysis.optimalScenario` | Best leverage recommendation | Single LeverageScenario object |
-| `leverageAnalysis.opportunityCost` | Capital efficiency analysis | OpportunityCostAnalysis object |
+| `aiInsights` | `aiInsights` | Enhanced with Intelligence Multiplier analysis (full analysis only) |
+| **`investmentDecision`** | **`investmentDecision`** | **V3.0 Professional investment verdict and analysis** |
+| `investmentDecision.verdict` | InvestmentDecisionHero display | V3.0: Maps to 'BUY', 'NEGOTIATE', 'CAUTION', 'PASS' |
+| `investmentDecision.confidence` | Percentage display (deprecated) | V3.0: Use professionalAssessment.dealQuality instead |
+| `investmentDecision.score` | Score display (deprecated) | V3.0: Use professionalAssessment.dealQuality instead |
+| **`investmentDecision.professionalAssessment`** | **Professional Assessment Tab** | **V3.0 NEW: Complete weighted scoring system** |
+| `professionalAssessment.dealQuality` | Deal Quality gauge (0-100) | V3.0: Primary weighted score replaces confidence/score |
+| `professionalAssessment.cashFlowScore` | Component breakdown | V3.0: 35% weight - cash flow stability |
+| `professionalAssessment.irrScore` | Component breakdown | V3.0: 25% weight - total return potential |
+| `professionalAssessment.marketStrengthScore` | Component breakdown | V3.0: 15% weight - market tier analysis |
+| `professionalAssessment.strategicRecommendations` | Recommendations list | V3.0: AI-generated strategic advice |
+| `professionalAssessment.riskMitigation` | Risk mitigation list | V3.0: Professional risk management |
+| `professionalAssessment.opportunityMaximization` | Opportunity list | V3.0: Value optimization strategies |
+| **`investmentDecision.portfolioContext`** | **Portfolio Fit Tab** | **V3.0: Portfolio-specific analysis** |
+| `portfolioContext.fitScore` | Portfolio fit percentage | V3.0: How well property fits portfolio (0-100) |
+| `portfolioContext.fitLevel` | Fit description | V3.0: excellent/good/fair/poor |
+| `portfolioContext.diversificationImpact` | Impact description | V3.0: Reduces/increases/neutral concentration |
+| **`investmentDecision.aiEnhancedContent`** | **AI-Enhanced Tabs** | **V3.0: AI-generated tab content** |
+| `aiEnhancedContent.actionPlan` | Strategic Action Plan tab | V3.0: Immediate actions, negotiation focus |
+| `aiEnhancedContent.capitalStrategy` | Capital Strategy tab | V3.0: Financing optimization advice |
+| `aiEnhancedContent.timeline` | Timeline tab | V3.0: Implementation phases |
 
-### 3. Investment Decision Engine Data Flow (NEW)
+### 5. V3.0 Investment Decision Engine Data Flow
 
-The Investment Decision Engine processes property and market data to generate professional investment recommendations:
+The V3.0 Investment Decision Engine processes property and market data to generate professional-grade weighted scoring and investment recommendations:
 
 **Input Data Sources:**
 ```typescript
@@ -181,53 +250,96 @@ UserContext {
 6. **Experience Adjustments**: Apply novice/intermediate/expert modifications
 7. **Confidence Scoring**: Generate 30-95% confidence based on all factors
 
-**Output Data Structure:**
+**V3.0 Processing Pipeline:**
+1. **Calculate Component Scores**: Cash Flow (35%), IRR (25%), Market Strength (15%), Debt Structure (10%), Exit Strategy (10%), Cap Rate (3%), Property Risk (2%)
+2. **Generate Deal Quality Score**: Weighted average of all components (0-100)
+3. **Determine Verdict**: BUY (80+), NEGOTIATE (65-79), CAUTION (50-64), PASS (<50)
+4. **Generate Professional Insights**: Strategic recommendations, risk mitigation, opportunity maximization
+5. **Portfolio Context**: If portfolioId provided, calculate fit score and impact analysis
+
+**V3.0 Output Data Structure:**
 ```typescript
 InvestmentDecision {
-  verdict: 'BUY' | 'NEGOTIATE' | 'PASS',
-  confidence: number,
-  primaryReason: string,
-  actionPlan: ActionItem[],
-  marketContext: MarketContextAnalysis,
-  goalContext: GoalContext
+  verdict: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS',
+  confidence: number, // Deprecated - use professionalAssessment.dealQuality
+  score: number, // Deprecated - use professionalAssessment.dealQuality
+  professionalAssessment: {
+    dealQuality: number, // 0-100 weighted score
+    executionDifficulty: number,
+    dataReliability: number,
+    cashFlowScore: number, // Component scores
+    irrScore: number,
+    marketStrengthScore: number,
+    debtStructureScore: number,
+    exitStrategyScore: number,
+    capRateScore: number,
+    propertyRiskScore: number,
+    primaryInsight: string,
+    strategicRecommendations: string[],
+    riskMitigation: string[],
+    opportunityMaximization: string[]
+  },
+  portfolioContext?: { // If portfolioId provided
+    portfolioId: string,
+    portfolioName: string,
+    fitScore: number,
+    fitLevel: string,
+    fitAnalysis: string,
+    diversificationImpact: string,
+    riskContribution: string
+  },
+  aiEnhancedContent: {
+    actionPlan: {...},
+    capitalStrategy: {...},
+    timeline: {...}
+  }
 }
 ```
 
-### 4. Frontend to Database (Save Property)
+### 6. Frontend to Database (V3.0 Save Property)
 
-When saving a property with optional portfolio context:
+When saving a V3.0 property with professional assessment and optional portfolio context:
 
 | Frontend Field | Database Field | Transformation |
 |----------------|----------------|----------------|
 | All property data | Property document | Flattened into a single document |
-| `analysis` | `analysis` embedded document | Full analysis is stored |
-| `analysis.investmentDecision` | `analysis.investmentDecision` | Investment decision with optional portfolio context |
-| `analysis.investmentDecision.portfolioContext` | `analysis.investmentDecision.portfolioContext` | **Portfolio context persisted** (Added August 25, 2025) |
-| `portfolioId` (if selected) | `portfolioId` | Optional ObjectId reference linking property to portfolio |
+| `portfolioId` (if selected) | `portfolioId` | V3.0: Optional ObjectId reference linking property to portfolio |
+| `ownershipPercentage` | `ownershipPercentage` | V3.0: Ownership stake (default 100%) |
+| `source` | `source` | V3.0: 'FULL_ANALYSIS' or 'PORTFOLIO_MANUAL_ENTRY' |
+| `analysis` | `analysis` embedded document | V3.0: Full or skinny analysis is stored |
+| `analysis.isFullAnalysis` | `analysis.isFullAnalysis` | V3.0: Boolean flag distinguishing analysis types |
+| `analysis.investmentDecision` | `analysis.investmentDecision` | V3.0: Investment decision with professional assessment |
+| **`analysis.investmentDecision.professionalAssessment`** | **`analysis.investmentDecision.professionalAssessment`** | **V3.0: Complete weighted scoring system persisted** |
+| `professionalAssessment.dealQuality` | `professionalAssessment.dealQuality` | V3.0: Primary 0-100 score stored |
+| `professionalAssessment.strategicRecommendations` | `professionalAssessment.strategicRecommendations` | V3.0: AI recommendations persisted |
+| `analysis.investmentDecision.portfolioContext` | `analysis.investmentDecision.portfolioContext` | V3.0: Portfolio fit analysis persisted |
+| `portfolioContext.fitScore` | `portfolioContext.fitScore` | V3.0: Portfolio fit score (0-100) |
 | (none) | `createdAt` | Added automatically |
 | (none) | `updatedAt` | Added automatically |
 | (none) | `_id` | Generated by MongoDB |
 
-### 5. Database to Frontend (Load Property)
+### 7. Database to Frontend (V3.0 Load Property)
 
-When loading a saved property with portfolio context:
+When loading a V3.0 saved property with professional assessment and portfolio context:
 
 | Database Field | Frontend Field | Transformation | Notes |
 |----------------|----------------|----------------|-------|
 | Property document | Property form data | Restructured to match form structure | Base property data preserved |
-| `analysis.investmentDecision.portfolioContext` | Investment Decision Hero → Portfolio Fit tab | **PRESERVED AND DISPLAYED** (Fixed August 25, 2025) | **Portfolio context now persists through save/load cycle** |
 | `portfolioId` | Used for portfolio operations | Preserved ObjectId reference | Links property to specific portfolio |
+| `ownershipPercentage` | Portfolio operations | V3.0: Preserved ownership stake | Default 100% if missing |
+| `source` | Property detection | V3.0: Used to distinguish manual vs analyzed | Determines UI behavior |
+| `analysis.isFullAnalysis` | UI conditionals | V3.0: Controls analysis depth display | true=full, false=skinny |
+| **`analysis.investmentDecision.professionalAssessment`** | **Professional Assessment Tab** | **V3.0: PRESERVED AND DISPLAYED** | **Complete weighted scoring persists** |
+| `professionalAssessment.dealQuality` | Deal Quality gauge | V3.0: Primary 0-100 score display | Replaces deprecated confidence/score |
+| `professionalAssessment.strategicRecommendations` | Recommendations list | V3.0: AI-generated advice preserved | Professional insights maintained |
+| `analysis.investmentDecision.portfolioContext` | Portfolio Fit tab | V3.0: Portfolio analysis preserved | Fit score and impact analysis |
+| `portfolioContext.fitScore` | Portfolio fit display | V3.0: Fit percentage (0-100) | How well property fits portfolio |
+| `analysis.investmentDecision.aiEnhancedContent` | AI-Enhanced tabs | V3.0: Action plan, capital strategy, timeline | AI-generated tab content |
 | `analysis.marketData` | `analysis.marketData` | Preserved if exists, otherwise re-fetched from cache | **CACHED DATA** |
-| `analysis.marketInsights` | `analysis.marketInsights` | Preserved if exists, otherwise regenerated | **CACHED DATA** |
-| `analysis.investmentTiming` | `analysis.investmentTiming` | Preserved if exists, otherwise regenerated | **CACHED DATA** |
 | `analysis.aiInsights` | `analysis.aiInsights` | **ALWAYS REGENERATED** with current market data | **RECALCULATED** |
-| `analysis.monthlyAnalysis` | `analysis.monthlyAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
-| `analysis.annualAnalysis` | `analysis.annualAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
-| `analysis.keyMetrics` | `analysis.keyMetrics` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
-| `analysis.keyMetrics.totalInvestment` | `analysis.keyMetrics.totalInvestment` | **CALCULATED** as downPayment + closingCosts + capitalInvestments | **NEW FIELD** |
-| `analysis.longTermAnalysis` | `analysis.longTermAnalysis` | **RECALCULATED** using SFRAnalyzer | **RECALCULATED** |
-| `analysis.longTermAnalysis.returns.totalInvestment` | `analysis.longTermAnalysis.returns.totalInvestment` | **CALCULATED** same as keyMetrics.totalInvestment | **NEW FIELD** |
-| `analysis.longTermAnalysis.returns.totalAdditionalInvestment` | `analysis.longTermAnalysis.returns.totalAdditionalInvestment` | **CALCULATED** as capitalInvestments only | **NEW FIELD** |
+| `analysis.monthlyAnalysis` | `analysis.monthlyAnalysis` | **RECALCULATED** using appropriate analyzer | **RECALCULATED** |
+| `analysis.keyMetrics` | `analysis.keyMetrics` | **RECALCULATED** (SFRAnalyzer or PortfolioPropertyMetricsService) | **RECALCULATED** |
+| `analysis.longTermAnalysis` | `analysis.longTermAnalysis` | **RECALCULATED** using SFRAnalyzer (full analysis only) | **RECALCULATED** |
 | `createdAt` | Displayed in UI | Formatted date | Preserved |
 | `updatedAt` | Displayed in UI | Formatted date | Preserved |
 | `_id` | Used for updates | Preserved for API calls | Preserved |

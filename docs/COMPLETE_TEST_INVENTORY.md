@@ -156,6 +156,30 @@ cd backend && npm run test:integration
   - **Run:** `OPENAI_API_KEY=your_key node intelligent-verdict-testing.js`
   - **Purpose:** Professional validation of V3.0 verdict reasoning
 
+#### **🛡️ BULLETPROOF Edge Case Tests** ✅ CRITICAL (NEW - August 2025)
+- `test-portfolio-complete-workflow.js` - **MASTER TEST SUITE**: Enhanced with critical edge cases
+  - **Enhanced Edge Case Testing (Phase 8):**
+    - 🔥 **CRITICAL: Zero Loan Parameters Test** - Reproduces the $Infinity expenses bug
+      - ✅ Tests property with interestRate: 0, loanTerm: 0, downPayment: 0
+      - ✅ Validates no Infinity/NaN values in financial calculations
+      - ✅ Ensures user-provided expenses are used correctly ($1000 expense → $2000 cash flow)
+      - ✅ Prevents mortgage calculation division by zero errors
+    - 🔥 **CRITICAL: Undefined Loan Parameters Test** - NaN protection validation
+      - ✅ Tests property with undefined interestRate, loanTerm, downPayment
+      - ✅ Validates no Infinity/NaN propagation in expense calculations
+      - ✅ Ensures fallback to user-provided operating expenses
+    - ➕➖ **Add/Remove Property Impact Test** - Portfolio aggregation accuracy
+      - ✅ Tests property addition impact on portfolio totals (+$200K value, +$1K cash flow)
+      - ✅ Tests property removal impact (returns to original values)
+      - ✅ Validates financial precision in portfolio calculations
+    - 💰 **Financial Accuracy Validation** - Manual calculation verification
+      - ✅ Cross-references portfolio analytics with manual calculations
+      - ✅ Validates expense breakdown components don't contain Infinity
+      - ✅ Ensures all financial metrics are finite and realistic
+  - **Status:** Enhanced with bulletproof validation - would have caught $Infinity bug
+  - **Run:** `node test-portfolio-complete-workflow.js`
+  - **Purpose:** MASTER comprehensive test that prevents critical financial calculation bugs
+
 #### **Portfolio Intelligence Tests** 📅 PLANNED (NOT YET IMPLEMENTED)
 **Note**: Portfolio backend models and services need to be created before these tests can be implemented.
 
@@ -396,7 +420,17 @@ curl -X GET http://localhost:3001/api/portfolios \
    - Goal-based portfolio configuration
    - Performance: All operations <100ms
 
-6. **Display Accuracy** 🔍
+6. **🛡️ Bulletproof Edge Cases** ✅ CRITICAL (NEW)
+   ```bash
+   node test-portfolio-complete-workflow.js
+   ```
+   - Zero/undefined loan parameter handling ($Infinity bug prevention)
+   - Add/remove property financial impact accuracy
+   - Portfolio aggregation precision validation
+   - Manual expense calculation verification
+   - **Purpose:** Prevents critical financial calculation bugs like $Infinity expenses
+
+7. **Display Accuracy** 🔍
    ```bash
    npm run test:display-bugs
    ```
@@ -517,6 +551,8 @@ open frontend/coverage/index.html
 | **Backend Financial** | ✅ PASSING | 7/7 (100%) | P0 |
 | **Backend Performance** | ✅ PASSING | 6/6 (100%) | P0 |
 | **Portfolio Intelligence** | ✅ PASSING | 24/24 (100%) | P0 |
+| **🛡️ Bulletproof Edge Cases** | ✅ PASSING | 5/5 (100%) | P0 |
+| **V3.0 Professional Calibration** | ✅ PASSING | 19/21 (90%) | P0 |
 | **Frontend Unit** | ✅ PASSING | 30/30 (100%) | P1 |
 | **Backend Integration** | 🔍 MIXED | ~80% | P1 |
 | **Cypress E2E** | 🚨 FAILING | ~40% | P2 |
@@ -725,6 +761,20 @@ cd backend && node test-ai-content-fix.js
 cd backend && OPENAI_API_KEY=your_key node intelligent-verdict-testing.js
 ```
 
+### **🛡️ Run Bulletproof Edge Case Tests** (NEW)
+```bash
+# MASTER comprehensive test suite with critical edge case validation
+cd backend && node test-portfolio-complete-workflow.js
+
+# Includes:
+# - Zero loan parameter testing ($Infinity bug prevention)
+# - Undefined loan parameter testing (NaN validation)  
+# - Add/remove property impact accuracy
+# - Financial calculation precision validation
+# - Portfolio aggregation accuracy testing
+# - Manual vs calculated expense verification
+```
+
 ### **Run Core Financial Tests**
 ```bash
 # All financial accuracy tests (MUST PASS)
@@ -770,11 +820,16 @@ cd frontend && npm run test:e2e
 
 ---
 
-**Last Updated:** August 27, 2025
+**Last Updated:** August 29, 2025
+- 🛡️ **ENHANCED**: `test-portfolio-complete-workflow.js` with bulletproof edge case validation
+- ✅ **CRITICAL**: Added zero/undefined loan parameter testing (prevents $Infinity bug)
+- ✅ **NEW**: Add/remove property impact accuracy validation
+- ✅ **NEW**: Financial calculation precision validation with manual cross-checks
 - Added V3.0 Professional Calibration test suite with 4 comprehensive test files
 - Added metrics-consistency-test.js for financial calculation format validation
 - Portfolio tests documented and passing (100% backend API coverage)
 - V3.0 verdict calibration achieved 75-100% pass rates across all test scenarios
 - Resolved decimal vs percentage consistency issues across entire system
+- **BUG PREVENTION**: Enhanced master test suite now catches critical edge cases like $Infinity expenses
   
-**Test Coverage Target:** 80% overall, 95% critical paths, 100% portfolio regression
+**Test Coverage Target:** 80% overall, 95% critical paths, 100% portfolio regression, 100% critical edge cases

@@ -264,12 +264,46 @@ export interface Analysis {
   };
   // Investment Decision from Investment Decision Engine
   investmentDecision?: {
-    verdict: 'BUY' | 'PASS' | 'NEGOTIATE';
+    verdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION'; // V3.0 adds CAUTION
     confidence: number;
-    score: number; // Property quality score 0-100
+    score: number; // LEGACY - Property quality score 0-100 (deprecated, use professionalAssessment.dealQuality)
     primaryReason: string;
     secondaryReasons: string[];
     keyRisks: string[];
+    // V3.0 Professional Assessment - Critical for Deal Quality scoring
+    professionalAssessment?: {
+      dealQuality: number; // 0-100 weighted score of deal fundamentals
+      executionDifficulty: number; // 0-100 complexity of executing this investment
+      dataReliability: number; // 0-100 confidence in input data quality
+      
+      // Factor breakdown (sum = 100%)
+      cashFlowScore: number; // 35% weight - monthly income stability
+      irrScore: number; // 25% weight - total return potential
+      marketStrengthScore: number; // 15% weight - market tier and trends
+      debtStructureScore: number; // 10% weight - financing quality
+      exitStrategyScore: number; // 10% weight - liquidity and exit options
+      capRateScore: number; // 3% weight - current yield vs market
+      propertyRiskScore: number; // 2% weight - property quality and age
+      
+      // Professional recommendations
+      primaryInsight: string;
+      strategicRecommendations: string[];
+      riskMitigation: string[];
+      opportunityMaximization: string[];
+      
+      // Enhanced debt structure analysis
+      debtAnalysis?: {
+        dscr: number;
+        interestRate: number;
+        marketSpread: number; // in basis points
+        leverageRatio: number;
+        loanTerm: number;
+        isBalloonLoan: boolean;
+        balloonYears?: number;
+        riskFactors: string[];
+        strengthFactors: string[];
+      };
+    };
     actionPlan: Array<{
       action: string;
       priority: 'immediate' | 'short-term' | 'long-term';
@@ -772,12 +806,46 @@ const AnalysisSchema = new Schema({
   
   // Professional Investment Decision (Investment Decision Engine)
   investmentDecision: {
-    verdict: { type: String, enum: ['BUY', 'PASS', 'NEGOTIATE'] },
+    verdict: { type: String, enum: ['BUY', 'PASS', 'NEGOTIATE', 'CAUTION'] }, // V3.0 adds CAUTION
     confidence: Number,
-    score: Number, // Property quality score 0-100
+    score: Number, // LEGACY - Property quality score 0-100 (deprecated, use professionalAssessment.dealQuality)
     primaryReason: String,
     secondaryReasons: [String],
     keyRisks: [String],
+    // V3.0 Professional Assessment - Critical for Deal Quality scoring
+    professionalAssessment: {
+      dealQuality: Number, // 0-100 weighted score of deal fundamentals
+      executionDifficulty: Number, // 0-100 complexity of executing this investment
+      dataReliability: Number, // 0-100 confidence in input data quality
+      
+      // Factor breakdown (sum = 100%)
+      cashFlowScore: Number, // 35% weight - monthly income stability
+      irrScore: Number, // 25% weight - total return potential
+      marketStrengthScore: Number, // 15% weight - market tier and trends
+      debtStructureScore: Number, // 10% weight - financing quality
+      exitStrategyScore: Number, // 10% weight - liquidity and exit options
+      capRateScore: Number, // 3% weight - current yield vs market
+      propertyRiskScore: Number, // 2% weight - property quality and age
+      
+      // Professional recommendations
+      primaryInsight: String,
+      strategicRecommendations: [String],
+      riskMitigation: [String],
+      opportunityMaximization: [String],
+      
+      // Enhanced debt structure analysis
+      debtAnalysis: {
+        dscr: Number,
+        interestRate: Number,
+        marketSpread: Number, // in basis points
+        leverageRatio: Number,
+        loanTerm: Number,
+        isBalloonLoan: Boolean,
+        balloonYears: Number,
+        riskFactors: [String],
+        strengthFactors: [String]
+      }
+    },
     actionPlan: [{
       action: String,
       priority: { type: String, enum: ['immediate', 'short-term', 'long-term'] },

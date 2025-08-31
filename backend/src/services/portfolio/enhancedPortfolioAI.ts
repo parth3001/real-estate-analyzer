@@ -135,16 +135,20 @@ export class EnhancedPortfolioAI {
   private buildHealthCheckPrompt(portfolio: any, marketData: any, userProfile: any): string {
     const monthlyFlow = portfolio.analytics?.summary?.monthlyNetCashFlow || 0;
     const isNegative = monthlyFlow < 0;
+    const propertyDetails = this.getDetailedPropertyInfo(portfolio);
     
     return `ROLE: You are an experienced real estate investment advisor analyzing a portfolio.
 
-PORTFOLIO DATA:
+PORTFOLIO OVERVIEW:
 - Properties: ${portfolio.analytics?.summary?.totalProperties || 0}
 - Total Value: $${(portfolio.analytics?.summary?.totalValue || 0).toLocaleString()}
 - Monthly Cash Flow: $${monthlyFlow.toLocaleString()} ${isNegative ? '(NEGATIVE - BLEEDING MONEY)' : '(POSITIVE)'}
 - Cap Rate: ${(portfolio.analytics?.summary?.averageCapRate || 0).toFixed(1)}%
 - Geographic Distribution: ${this.formatGeographicDistribution(portfolio.analytics?.risk)}
 - Leverage: ${((portfolio.analytics?.risk?.leverageRatio || 0) * 100).toFixed(1)}%
+
+SPECIFIC PROPERTIES:
+${propertyDetails}
 
 MARKET CONDITIONS:
 - Current Interest Rates: ${marketData.currentRates || '7.0'}%
@@ -176,14 +180,28 @@ ${isNegative ? 'IMPORTANT: Do NOT recommend acquiring more properties when cash 
    * Build Peer Comparison prompt
    */
   private buildPeerComparisonPrompt(portfolio: any, benchmarks: any): string {
+    // Extract detailed property information
+    const propertyDetails = this.getDetailedPropertyInfo(portfolio);
+    console.log(`Portfolio analytics summary:`, {
+      totalValue: portfolio.analytics?.summary?.totalValue || 0,
+      totalProperties: portfolio.analytics?.summary?.totalProperties || 0,
+      monthlyNetCashFlow: portfolio.analytics?.summary?.monthlyNetCashFlow || 0
+    });
+    console.log('Properties found:', portfolio.properties?.length || 0);
+    console.log('Property details generated:', propertyDetails);
+    
     return `ROLE: You are a real estate market analyst comparing investor performance.
 
-THIS INVESTOR:
+THIS INVESTOR'S PORTFOLIO:
 - Portfolio Value: $${(portfolio.analytics?.summary?.totalValue || 0).toLocaleString()}
 - Properties: ${portfolio.analytics?.summary?.totalProperties || 0}
 - Monthly Cash Flow: $${(portfolio.analytics?.summary?.monthlyNetCashFlow || 0).toLocaleString()}
 - Cap Rate: ${(portfolio.analytics?.summary?.averageCapRate || 0).toFixed(1)}%
 - Cash-on-Cash: ${(portfolio.analytics?.summary?.averageCashOnCash || 0).toFixed(1)}%
+
+SPECIFIC PROPERTIES:
+${propertyDetails}
+
 - Geographic Focus: ${this.getTopMarkets(portfolio.analytics?.risk)}
 
 SIMILAR INVESTOR BENCHMARKS:
@@ -193,12 +211,13 @@ SIMILAR INVESTOR BENCHMARKS:
 - Typical Cap Rate: ${benchmarks.averageCapRate.toFixed(1)}%
 - Typical Cash-on-Cash: ${benchmarks.averageCashOnCash.toFixed(1)}%
 
-EXPLAIN IN PLAIN ENGLISH:
-**Outperforming**: Where this investor beats similar portfolios and by how much
-**Lagging**: Where this investor falls behind peers and the gap size  
-**Why It Matters**: What these differences mean for long-term wealth building
+ANALYZE THIS INVESTOR'S PROPERTY STRATEGY:
+**Outperforming**: Where this investor beats similar portfolios (mention specific property types and locations)
+**Lagging**: Where this investor falls behind peers (identify which properties or strategies need improvement)
+**Strategic Advantages**: What makes this portfolio unique (property mix, locations, financing approach)
+**Opportunity Gaps**: What property types or markets peer investors use that this investor could consider
 
-Keep explanations simple and avoid jargon. Focus on practical implications.`;
+Be specific about property types (SFR, Multi-Family, Commercial, Self-Storage, etc.) and geographic markets. Reference actual properties in the analysis.`;
   }
   
   /**
@@ -207,6 +226,7 @@ Keep explanations simple and avoid jargon. Focus on practical implications.`;
   private buildGoalPathPrompt(portfolio: any, userProfile: any): string {
     const monthlyFlow = portfolio.analytics?.summary?.monthlyNetCashFlow || 0;
     const isNegative = monthlyFlow < 0;
+    const propertyDetails = this.getDetailedPropertyInfo(portfolio);
     
     return `ROLE: You are a real estate investment strategist creating a specific action plan.
 
@@ -214,8 +234,10 @@ CURRENT SITUATION:
 - Monthly Passive Income: $${monthlyFlow.toLocaleString()} ${isNegative ? '(LOSING MONEY)' : ''}
 - Portfolio Value: $${(portfolio.analytics?.summary?.totalValue || 0).toLocaleString()}
 - Properties: ${portfolio.analytics?.summary?.totalProperties || 0}
-- Current Property Mix: ${this.getPropertyMix(portfolio)}
 - Current Cap Rate: ${(portfolio.analytics?.summary?.averageCapRate || 0).toFixed(1)}%
+
+CURRENT PROPERTY DETAILS:
+${propertyDetails}
 
 GOAL & TIMELINE:
 - Target: ${this.formatGoalTargetForPath(portfolio.goals)}
@@ -228,7 +250,7 @@ ${isNegative ? 'CRITICAL: Portfolio currently LOSES money monthly. FIRST PRIORIT
 PROVIDE SPECIFIC PATH:
 
 **Properties Needed**: ${isNegative ? 'ZERO new properties until existing ones are fixed' : 'Exact number and types of properties to acquire'}
-**Target Locations**: ${isNegative ? 'Focus on optimizing current properties in existing markets' : 'Best markets based on current portfolio and goals'}
+**Target Locations**: ${isNegative ? 'Focus on optimizing current properties in existing markets' : this.getPreferredMarkets(portfolio)}
 **Capital Required**: ${isNegative ? 'Capital for property improvements and expense reduction' : 'Total investment needed including down payments and reserves'}
 
 **Year 1 Action Plan**: ${isNegative ? 'Fix cash flow on existing properties' : 'Strategic growth planning'}
@@ -335,9 +357,55 @@ Make recommendations realistic. If portfolio loses money, focus on improvement, 
     return risk.topMarket;
   }
   
+  private getPreferredMarkets(portfolio: any): string {
+    // Get current property locations
+    const currentLocations = (portfolio.properties || [])
+      .map((prop: any) => {
+        const city = prop.propertyAddress?.city || prop.city;
+        const state = prop.propertyAddress?.state || prop.state;
+        return city && state ? `${city}, ${state}` : null;
+      })
+      .filter(Boolean);
+    
+    // Get user's geographic preferences from portfolio if available
+    const preferences = portfolio.portfolio?.geographicPreferences || [];
+    
+    if (currentLocations.length > 0 && preferences.length > 0) {
+      return `Continue expansion in current markets (${currentLocations.join(', ')}) and preferred regions (${preferences.join(', ')})`;
+    } else if (currentLocations.length > 0) {
+      return `Expand in similar markets to current locations: ${currentLocations.join(', ')}`;
+    } else if (preferences.length > 0) {
+      return `Focus on preferred geographic regions: ${preferences.join(', ')}`;
+    }
+    
+    return 'Best markets based on current portfolio and goals';
+  }
+  
   private getPropertyMix(portfolio: any): string {
     const count = portfolio.analytics?.summary?.totalProperties || 0;
     return count > 1 ? `${count} properties` : `${count} property`;
+  }
+  
+  private getDetailedPropertyInfo(portfolio: any): string {
+    const properties = portfolio.properties || [];
+    
+    if (properties.length === 0) {
+      return 'No properties in portfolio yet';
+    }
+    
+    return properties.slice(0, 10).map((prop: any, index: number) => {
+      const propertyType = prop.propertyType || 'Unknown';
+      const city = prop.propertyAddress?.city || prop.city || 'Unknown';
+      const state = prop.propertyAddress?.state || prop.state || 'Unknown';
+      const purchasePrice = prop.purchasePrice || 0;
+      const monthlyRent = prop.monthlyRent || prop.averageRentPerUnit || 0;
+      const units = prop.totalUnits || 1;
+      
+      return `${index + 1}. ${propertyType} in ${city}, ${state}:
+   - Purchase Price: $${purchasePrice.toLocaleString()}
+   - Monthly Rent: $${monthlyRent.toLocaleString()}${units > 1 ? ` (${units} units)` : ''}
+   - Cap Rate: ${prop.analysis?.keyMetrics?.capRate?.toFixed(1) || 'N/A'}%`;
+    }).join('\n');
   }
   
   
@@ -383,70 +451,57 @@ Make recommendations realistic. If portfolio loses money, focus on improvement, 
   }
   
   private parsePeerComparisonResponse(content: string): PeerComparisonInsights {
-    // Improved parsing for peer comparison
     console.log('Raw AI Peer Comparison Response:', content);
     
-    const outperformingMatch = content.match(/\*\*Outperforming\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    const laggingMatch = content.match(/\*\*Lagging\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    const whyItMattersMatch = content.match(/\*\*Why It Matters\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    
+    // Return the raw AI content directly - no complex parsing needed
     return {
-      outperforming: {
-        metrics: ['Portfolio Performance Metrics'],
-        advantage: outperformingMatch?.[1]?.trim() || 'Performance analysis in progress'
-      },
-      lagging: {
-        metrics: ['Areas for Improvement'],
-        gap: laggingMatch?.[1]?.trim() || 'Gap analysis in progress'
-      },
-      whyItMatters: {
-        strengths: this.extractFirstSentence(whyItMattersMatch?.[1] || 'Strengths assessment pending'),
-        concerns: this.extractDescription(whyItMattersMatch?.[1] || 'Concerns assessment pending'),
-        longTermImpact: 'Focus on portfolio balance for sustainable growth'
-      }
+      content: content.trim(),
+      summary: content.length > 200 ? content.substring(0, 200) + '...' : content.trim()
     };
   }
   
   private parseGoalPathResponse(content: string): GoalPathInsights {
-    // Improved parsing for goal path with better timeline extraction
     console.log('Raw AI Goal Path Response:', content);
     
-    const propertiesMatch = content.match(/\*\*Properties Needed\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    const locationsMatch = content.match(/\*\*Target Locations\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    const capitalMatch = content.match(/\*\*Capital Required\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    
-    // Better timeline extraction for action plans
-    const year1Match = content.match(/\*\*Year 1 Action Plan\*\*[:\s]*(.*?)(?=\*\*Year 2|\*\*|$)/is);
-    const year2Match = content.match(/\*\*Year 2 Action Plan\*\*[:\s]*(.*?)(?=\*\*Year 3|\*\*|$)/is);
-    const year3Match = content.match(/\*\*Year 3 Action Plan\*\*[:\s]*(.*?)(?=\*\*|$)/is);
-    
-    // Extract numbers from content
-    const propertyCount = this.extractNumber(propertiesMatch?.[1] || '', 4);
-    const avgPrice = this.extractNumber(propertiesMatch?.[1] || '', 350000);
-    
+    // Return the raw AI content directly - no complex parsing needed
     return {
-      propertiesNeeded: {
-        count: propertyCount,
-        types: [this.extractDescription(propertiesMatch?.[1] || 'Mixed property types')],
-        avgPrice: avgPrice
-      },
-      targetLocations: {
-        primary: this.extractFirstSentence(locationsMatch?.[1] || 'Primary growth markets'),
-        secondary: 'Secondary growth markets',
-        reasoning: this.extractDescription(locationsMatch?.[1] || 'Strategic market selection')
-      },
-      capitalRequired: {
-        totalInvestment: avgPrice * propertyCount,
-        downPayments: Math.round((avgPrice * propertyCount) * 0.2),
-        reserves: Math.round((avgPrice * propertyCount) * 0.05),
-        closingCosts: Math.round((avgPrice * propertyCount) * 0.02)
-      },
-      timeline: {
-        year1: this.cleanActionPlan(year1Match?.[1]) || 'Research target markets and prepare financing for first acquisition',
-        year2: this.cleanActionPlan(year2Match?.[1]) || 'Execute strategic acquisition based on market analysis',
-        year3: this.cleanActionPlan(year3Match?.[1]) || 'Evaluate portfolio performance and plan next phase'
-      }
+      content: content.trim(),
+      summary: content.length > 200 ? content.substring(0, 200) + '...' : content.trim()
     };
+  }
+  
+  private extractPropertyTypes(text: string): string[] {
+    const types: string[] = [];
+    
+    // Common property type patterns
+    const patterns = [
+      /single[- ]family/gi,
+      /multi[- ]family/gi,
+      /duplex|triplex|fourplex/gi,
+      /commercial/gi,
+      /self[- ]storage/gi,
+      /mobile home/gi,
+      /apartment/gi,
+      /condo/gi,
+      /townhouse/gi
+    ];
+    
+    patterns.forEach(pattern => {
+      if (pattern.test(text)) {
+        const match = text.match(pattern)?.[0];
+        if (match && !types.some(t => t.toLowerCase() === match.toLowerCase())) {
+          types.push(match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
+        }
+      }
+    });
+    
+    return types.slice(0, 3); // Return top 3 property types
+  }
+  
+  private extractSecondaryLocation(text: string): string {
+    // Extract second sentence or location mention
+    const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 10);
+    return sentences[1]?.trim() || 'Secondary growth markets';
   }
   
   // ==================== TEXT EXTRACTION HELPERS ====================
@@ -474,6 +529,25 @@ Make recommendations realistic. If portfolio loses money, focus on improvement, 
   private extractNumber(text: string, fallback: number): number {
     const match = text.match(/\$?(\d{1,3}(?:,\d{3})*)/);
     return match ? parseInt(match[1].replace(/,/g, '')) : fallback;
+  }
+  
+  private extractMetricsList(text: string): string[] {
+    // Extract metrics from bullet points or comma-separated lists
+    if (text.includes('•') || text.includes('-')) {
+      return text.split(/[•\-]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 3)
+        .slice(0, 3); // Max 3 metrics
+    } else if (text.includes(',')) {
+      return text.split(',')
+        .map(item => item.trim()) 
+        .filter(item => item.length > 3)
+        .slice(0, 3);
+    } else {
+      // Single metric or sentence
+      const cleaned = text.trim();
+      return cleaned.length > 3 ? [cleaned] : [];
+    }
   }
   
   private extractTimelineYear(text: string, year: number): string | null {
@@ -530,43 +604,13 @@ export interface HealthCheckInsights {
 }
 
 export interface PeerComparisonInsights {
-  outperforming: {
-    metrics: string[];
-    advantage: string;
-  };
-  lagging: {
-    metrics: string[];
-    gap: string;
-  };
-  whyItMatters: {
-    strengths: string;
-    concerns: string;
-    longTermImpact: string;
-  };
+  content: string;
+  summary: string;
 }
 
 export interface GoalPathInsights {
-  propertiesNeeded: {
-    count: number;
-    types: string[];
-    avgPrice: number;
-  };
-  targetLocations: {
-    primary: string;
-    secondary: string;
-    reasoning: string;
-  };
-  capitalRequired: {
-    totalInvestment: number;
-    downPayments: number;
-    reserves: number;
-    closingCosts: number;
-  };
-  timeline: {
-    year1: string;
-    year2: string;
-    year3: string;
-  };
+  content: string;
+  summary: string;
 }
 
 export interface ComprehensiveInsights {

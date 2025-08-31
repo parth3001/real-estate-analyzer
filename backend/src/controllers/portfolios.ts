@@ -420,6 +420,7 @@ export const getPeerComparison = async (req: AuthenticatedRequest, res: Response
 
     console.log(`Generating peer comparison for portfolio: ${portfolioId}`);
     const peerComparison = await enhancedPortfolioAI.generatePeerComparison(portfolioId);
+    console.log('Generated peer comparison result:', peerComparison);
 
     res.json({
       success: true,

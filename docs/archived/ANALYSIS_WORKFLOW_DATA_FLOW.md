@@ -1,8 +1,10 @@
 # Real Estate Analysis Workflow & Data Flow Documentation
 
-**Version**: 1.0  
-**Last Updated**: January 2025  
+**Version**: 3.0  
+**Last Updated**: August 2025  
 **Purpose**: Complete step-by-step workflow showing how data flows through the system during property analysis
+
+> ⚠️ **IMPORTANT**: This document has been updated to V3.0. For the complete V3.0 documentation with Professional Assessment and Portfolio features, see [ANALYSIS_WORKFLOW_DATA_FLOW_V3.md](./ANALYSIS_WORKFLOW_DATA_FLOW_V3.md)
 
 ---
 

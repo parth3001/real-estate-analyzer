@@ -1,0 +1,224 @@
+[
+  {
+    "scenario": {
+      "name": "NEGATIVE_CASH_FLOW_SCENARIO",
+      "description": "Portfolio bleeding $1,500+/month - should recommend fixing existing properties first",
+      "expectedValidation": {
+        "healthCheck": "Should identify negative cash flow as primary risk and recommend fixes before expansion",
+        "goalPath": "Should recommend ZERO new acquisitions until existing properties are profitable",
+        "peerComparison": "Should show poor performance vs typical portfolios"
+      },
+      "portfolioData": {
+        "name": "Negative Cash Flow Test Portfolio",
+        "goals": {
+          "primaryGoal": "CASH_FLOW",
+          "targetMonthlyIncome": 5000,
+          "targetTimeline": "5 years",
+          "riskTolerance": "MODERATE"
+        }
+      },
+      "properties": [
+        {
+          "propertyName": "Houston Overpriced Property",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "123 Test St",
+            "city": "Houston",
+            "state": "TX",
+            "zipCode": "77001"
+          },
+          "purchasePrice": 450000,
+          "downPayment": 90000,
+          "interestRate": 7.5,
+          "loanTerm": 30,
+          "propertyTaxRate": 2.2,
+          "insuranceRate": 0.8,
+          "propertyManagementRate": 10,
+          "yearBuilt": 1995,
+          "monthlyRent": 2400,
+          "squareFootage": 1800,
+          "maintenanceCost": 400
+        },
+        {
+          "propertyName": "Dallas Underperformer",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "456 Test Ave",
+            "city": "Dallas",
+            "state": "TX",
+            "zipCode": "75201"
+          },
+          "purchasePrice": 520000,
+          "downPayment": 104000,
+          "interestRate": 7.2,
+          "loanTerm": 30,
+          "propertyTaxRate": 2,
+          "insuranceRate": 0.7,
+          "propertyManagementRate": 9,
+          "yearBuilt": 2000,
+          "monthlyRent": 2600,
+          "squareFootage": 2000,
+          "maintenanceCost": 350
+        }
+      ]
+    },
+    "error": "Failed to create test portfolio: Request failed with status code 400",
+    "success": false,
+    "timestamp": "2025-08-28T02:38:56.633Z"
+  },
+  {
+    "scenario": {
+      "name": "HIGH_LEVERAGE_CONCENTRATION_SCENARIO",
+      "description": "95% LTV portfolio concentrated in Dallas - should warn about leverage and geographic risk",
+      "expectedValidation": {
+        "healthCheck": "Should identify high leverage and geographic concentration as major risks",
+        "goalPath": "Should recommend risk reduction before growth",
+        "peerComparison": "Should show higher leverage than typical investor portfolios"
+      },
+      "portfolioData": {
+        "name": "High Leverage Test Portfolio",
+        "goals": {
+          "primaryGoal": "WEALTH_BUILDING",
+          "targetNetWorth": 2000000,
+          "targetTimeline": "10 years",
+          "riskTolerance": "AGGRESSIVE"
+        }
+      },
+      "properties": [
+        {
+          "propertyName": "Dallas High Leverage #1",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "789 Risk St",
+            "city": "Dallas",
+            "state": "TX",
+            "zipCode": "75202"
+          },
+          "purchasePrice": 400000,
+          "downPayment": 20000,
+          "interestRate": 7.8,
+          "loanTerm": 30,
+          "propertyTaxRate": 2.1,
+          "insuranceRate": 0.6,
+          "propertyManagementRate": 8,
+          "yearBuilt": 2010,
+          "monthlyRent": 3200,
+          "squareFootage": 2200,
+          "maintenanceCost": 250
+        },
+        {
+          "propertyName": "Dallas High Leverage #2",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "101 Risk Ave",
+            "city": "Dallas",
+            "state": "TX",
+            "zipCode": "75203"
+          },
+          "purchasePrice": 380000,
+          "downPayment": 19000,
+          "interestRate": 7.9,
+          "loanTerm": 30,
+          "propertyTaxRate": 2.1,
+          "insuranceRate": 0.6,
+          "propertyManagementRate": 8,
+          "yearBuilt": 2008,
+          "monthlyRent": 3100,
+          "squareFootage": 2100,
+          "maintenanceCost": 280
+        },
+        {
+          "propertyName": "Dallas High Leverage #3",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "202 Risk Blvd",
+            "city": "Dallas",
+            "state": "TX",
+            "zipCode": "75204"
+          },
+          "purchasePrice": 420000,
+          "downPayment": 21000,
+          "interestRate": 8,
+          "loanTerm": 30,
+          "propertyTaxRate": 2.1,
+          "insuranceRate": 0.6,
+          "propertyManagementRate": 8,
+          "yearBuilt": 2012,
+          "monthlyRent": 3300,
+          "squareFootage": 2300,
+          "maintenanceCost": 300
+        }
+      ]
+    },
+    "error": "Failed to create test portfolio: Request failed with status code 500",
+    "success": false,
+    "timestamp": "2025-08-28T02:38:57.700Z"
+  },
+  {
+    "scenario": {
+      "name": "STRONG_PERFORMER_SCENARIO",
+      "description": "Healthy portfolio with positive cash flow - should recommend strategic growth",
+      "expectedValidation": {
+        "healthCheck": "Should identify strengths and suggest optimization or growth opportunities",
+        "goalPath": "Should provide realistic acquisition timeline and capital requirements",
+        "peerComparison": "Should show competitive performance vs peers"
+      },
+      "portfolioData": {
+        "name": "Strong Performance Test Portfolio",
+        "goals": {
+          "primaryGoal": "WEALTH_BUILDING",
+          "targetNetWorth": 1500000,
+          "targetTimeline": "8 years",
+          "riskTolerance": "MODERATE"
+        }
+      },
+      "properties": [
+        {
+          "propertyName": "Charlotte Strong Performer",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "555 Success St",
+            "city": "Charlotte",
+            "state": "NC",
+            "zipCode": "28201"
+          },
+          "purchasePrice": 320000,
+          "downPayment": 64000,
+          "interestRate": 6.5,
+          "loanTerm": 30,
+          "propertyTaxRate": 1.1,
+          "insuranceRate": 0.4,
+          "propertyManagementRate": 8,
+          "yearBuilt": 2015,
+          "monthlyRent": 2800,
+          "squareFootage": 2000,
+          "maintenanceCost": 200
+        },
+        {
+          "propertyName": "Raleigh Cash Cow",
+          "propertyType": "SFR",
+          "propertyAddress": {
+            "street": "777 Profit Ave",
+            "city": "Raleigh",
+            "state": "NC",
+            "zipCode": "27601"
+          },
+          "purchasePrice": 280000,
+          "downPayment": 56000,
+          "interestRate": 6.3,
+          "loanTerm": 30,
+          "propertyTaxRate": 1,
+          "insuranceRate": 0.4,
+          "propertyManagementRate": 8,
+          "yearBuilt": 2018,
+          "monthlyRent": 2500,
+          "squareFootage": 1900,
+          "maintenanceCost": 180
+        }
+      ]
+    },
+    "error": "Failed to create test portfolio: Request failed with status code 500",
+    "success": false,
+    "timestamp": "2025-08-28T02:38:58.759Z"
+  }
+]
