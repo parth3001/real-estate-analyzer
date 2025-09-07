@@ -32,6 +32,9 @@ import MarketDataPage from './pages/MarketDataPage';
 import PortfolioDashboard from './pages/PortfolioDashboard';
 import { ApplePortfolioWizard } from './components/Portfolio/ApplePortfolioWizard';
 
+// Pipeline Components
+import PipelinePage from './pages/PipelinePage';
+
 // Analysis Details Component (for viewing saved analyses)
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams();
@@ -151,6 +154,9 @@ function App() {
                     <Typography variant="body1">Portfolio editing will be implemented here</Typography>
                   </Box>
                 } />
+                
+                {/* Pipeline Routes */}
+                <Route path="/pipeline" element={<PipelinePage />} />
                 
                 {/* Market & Tools */}
                 <Route path="/market-data" element={<MarketDataPage />} />

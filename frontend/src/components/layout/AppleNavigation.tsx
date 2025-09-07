@@ -100,6 +100,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     badge: null
   },
   {
+    id: 'pipeline',
+    label: 'Deal Pipeline',
+    icon: TrendingUpIcon,
+    path: '/pipeline',
+    badge: null
+  },
+  {
     id: 'market-data',
     label: 'Market Intelligence',
     icon: AssessmentIcon,

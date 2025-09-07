@@ -365,6 +365,13 @@ export interface Analysis {
 }
 
 // Base deal interface
+export interface AnalysisConfidence {
+  level: 1 | 2 | 3;
+  lastUpdated: Date;
+  dataSource: 'MANUAL' | 'QUICK_CALC' | 'FULL_ANALYSIS' | 'PIPELINE' | 'PORTFOLIO';
+  calculationMethod: 'NONE' | 'BASIC' | 'QUICK_METRICS' | 'FULL_SFR';
+}
+
 export interface IDeal extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   portfolioId?: mongoose.Schema.Types.ObjectId; // Optional portfolio association
@@ -388,6 +395,7 @@ export interface IDeal extends Document {
     realtorCommission: number;
   };
   analysis: Analysis;
+  confidence?: AnalysisConfidence;
   notes?: Array<{
     text: string;
     createdAt: Date;
@@ -436,7 +444,32 @@ const AddressSchema = new Schema({
   street: { type: String, required: true },
   city: { type: String, required: true },
   state: { type: String, required: true },
-  zipCode: { type: String, required: true }
+  zipCode: { type: String, required: false }
+});
+
+// Confidence schema
+const ConfidenceSchema = new Schema({
+  level: { 
+    type: Number, 
+    required: true, 
+    min: 1, 
+    max: 3,
+    default: 1
+  },
+  lastUpdated: { 
+    type: Date, 
+    default: Date.now 
+  },
+  dataSource: { 
+    type: String, 
+    enum: ['MANUAL', 'QUICK_CALC', 'FULL_ANALYSIS', 'PIPELINE', 'PORTFOLIO'],
+    default: 'MANUAL'
+  },
+  calculationMethod: { 
+    type: String, 
+    enum: ['NONE', 'BASIC', 'QUICK_METRICS', 'FULL_SFR'],
+    default: 'NONE'
+  }
 });
 
 // Analysis schema
@@ -1011,6 +1044,7 @@ const DealSchema = new Schema({
   // Common fields for both types
   longTermAssumptions: { type: Schema.Types.Mixed, required: true },
   analysis: { type: AnalysisSchema },
+  confidence: { type: ConfidenceSchema },
   
   // Metadata
   createdAt: { type: Date, default: Date.now },

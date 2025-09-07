@@ -2322,4 +2322,253 @@ Accept: application/json
 - FRED economic data: 1 day
 - Market intelligence: Tied to underlying data cache
 
-This comprehensive API documentation ensures developers can successfully integrate with the Real Estate Investment Intelligence Platform's enhanced capabilities. 
+---
+
+## Pipeline Deal Management API
+
+### Overview
+The Pipeline API provides CRM-like functionality for managing deal flow and tracking potential investments through various stages.
+
+### Base Endpoint
+```
+/api/pipeline
+```
+
+### Pipeline Deal Endpoints
+
+#### Get All Pipeline Deals
+```http
+GET /api/pipeline/deals
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "dealId",
+      "userId": "userId",
+      "dealName": "123 Main St Property",
+      "currentStage": "ANALYSIS",
+      "propertyType": "SFR",
+      "strategy": "BUY_HOLD",
+      "askingPrice": 350000,
+      "address": {
+        "street": "123 Main St",
+        "city": "Fayetteville",
+        "state": "NC",
+        "zipCode": "28303"
+      },
+      "analysisStatus": "COMPLETE",
+      "analysisId": "linkedDealId",
+      "quickMetrics": {
+        "cashFlow": 464,
+        "capRate": 3.48,
+        "cashOnCashReturn": 3.34,
+        "verdict": "NEGOTIATE",
+        "dealQuality": 68
+      },
+      "confidence": {
+        "level": 3,
+        "dataSource": "FULL_ANALYSIS"
+      },
+      "createdAt": "2025-09-04T10:00:00Z",
+      "updatedAt": "2025-09-04T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create New Pipeline Deal
+```http
+POST /api/pipeline/deals
+```
+
+**Request Body:**
+```json
+{
+  "dealName": "456 Oak Avenue",
+  "propertyType": "SFR",
+  "strategy": "BUY_HOLD",
+  "askingPrice": 280000,
+  "address": {
+    "street": "456 Oak Avenue",
+    "city": "Raleigh",
+    "state": "NC",
+    "zipCode": "27601"
+  },
+  "currentStage": "LEAD"
+}
+```
+
+**Response:** Same as GET response for single deal
+
+#### Update Pipeline Deal
+```http
+PUT /api/pipeline/deals/:id
+```
+
+**Request Body:**
+```json
+{
+  "currentStage": "NEGOTIATION",
+  "quickMetrics": {
+    "cashFlow": 425,
+    "capRate": 4.2,
+    "cashOnCashReturn": 3.8,
+    "verdict": "BUY"
+  }
+}
+```
+
+#### Delete Pipeline Deal
+```http
+DELETE /api/pipeline/deals/:id
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Pipeline deal deleted successfully"
+}
+```
+
+#### Update Deal Stage
+```http
+PUT /api/pipeline/deals/:id/stage
+```
+
+**Request Body:**
+```json
+{
+  "stage": "CONTRACT"
+}
+```
+
+#### Import Analyzed Deal to Pipeline
+```http
+POST /api/pipeline/convert-analysis
+```
+
+**Request Body:**
+```json
+{
+  "dealId": "analyzedDealId",
+  "dealName": "Custom Pipeline Name",
+  "stage": "ANALYSIS"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "newPipelineDealId",
+    "analysisId": "analyzedDealId",
+    "confidence": {
+      "level": 3,
+      "dataSource": "FULL_ANALYSIS"
+    },
+    // ... full pipeline deal object
+  }
+}
+```
+
+#### Link Full Analysis to Pipeline Deal
+```http
+POST /api/pipeline/deals/:id/link-analysis
+```
+
+**Request Body:**
+```json
+{
+  "analysisId": "fullAnalysisDealId"
+}
+```
+
+### Pipeline Deal Model
+
+```typescript
+interface PipelineDeal {
+  _id: ObjectId;
+  userId: ObjectId;
+  dealName: string;
+  currentStage: 'LEAD' | 'ANALYSIS' | 'NEGOTIATION' | 'CONTRACT' | 'CLOSED' | 'LOST';
+  propertyType: 'SFR' | 'MF' | 'COMMERCIAL_RETAIL' | 'COMMERCIAL_OFFICE' | 
+                'COMMERCIAL_INDUSTRIAL' | 'SELF_STORAGE' | 'MOBILE_HOME_PARK' | 'OTHER';
+  strategy: 'BUY_HOLD' | 'FIX_FLIP' | 'HOUSE_HACK' | 'COMMERCIAL' | 'OTHER';
+  askingPrice: number;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  
+  // Analysis tracking
+  analysisStatus: 'NOT_ANALYZED' | 'IN_PROGRESS' | 'COMPLETE';
+  analysisId?: ObjectId; // Link to full Deal analysis
+  
+  // Quick metrics from skinny calculator
+  quickMetrics?: {
+    cashFlow: number;
+    capRate: number;
+    cashOnCashReturn: number;
+    verdict?: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS';
+    dealQuality?: number; // 0-100 from V3.0 engine
+  };
+  
+  // Confidence indicator
+  confidence: {
+    level: 1 | 2 | 3;
+    dataSource: 'BASIC_INFO' | 'QUICK_METRICS' | 'FULL_ANALYSIS';
+  };
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Pipeline Stage Definitions
+
+| Stage | Description | Typical Actions |
+|-------|-------------|-----------------|
+| LEAD | Initial property identified | Basic research, initial contact |
+| ANALYSIS | Financial analysis in progress | Skinny calculator, full analysis |
+| NEGOTIATION | Actively negotiating terms | Offer submission, counteroffers |
+| CONTRACT | Under contract | Due diligence, inspections |
+| CLOSED | Deal completed successfully | Property acquired |
+| LOST | Deal no longer viable | Moved to archive |
+
+### Pipeline Confidence Levels
+
+| Level | Icon | Data Source | Description |
+|-------|------|-------------|-------------|
+| 1 | ⚪ | BASIC_INFO | Basic property information only |
+| 2 | 🟡 | QUICK_METRICS | Skinny calculator results available |
+| 3 | 🟢 | FULL_ANALYSIS | Complete Deal Quality analysis |
+
+### Error Handling
+
+Pipeline API follows the same error handling patterns as the main API:
+
+```json
+{
+  "success": false,
+  "error": "Pipeline deal not found",
+  "code": "PIPELINE_DEAL_NOT_FOUND"
+}
+```
+
+### Integration with Deal Analysis
+
+Pipeline deals can be linked to full Deal analysis:
+- `analysisId` field references Deal collection
+- Skinny calculator can load full analysis data when available
+- Pipeline → SFR Analysis flow pre-fills forms
+- Confidence level automatically updates based on analysis depth
+
+This comprehensive API documentation ensures developers can successfully integrate with the Real Estate Investment Intelligence Platform's enhanced capabilities including Pipeline deal management. 

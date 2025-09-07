@@ -332,12 +332,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const monthlyTurnoverCost = annualTurnoverCost / 12;
 
     return {
-      propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100) / 12,
-      insurance: this.data.purchasePrice * (this.data.insuranceRate / 100) / 12,
-      maintenance: this.data.maintenanceCost / 12,
-      propertyManagement: grossIncome * (this.data.propertyManagementRate / 100) / 12,
+      propertyTax: Math.round((this.data.purchasePrice * (this.data.propertyTaxRate / 100) / 12) * 100) / 100,
+      insurance: Math.round((this.data.purchasePrice * (this.data.insuranceRate / 100) / 12) * 100) / 100,
+      maintenance: Math.round((this.data.maintenanceCost / 12) * 100) / 100,
+      propertyManagement: Math.round((grossIncome * (this.data.propertyManagementRate / 100) / 12) * 100) / 100,
       vacancy: 0, // FIXED - Vacancy reduces income, not an expense
-      tenantTurnover: monthlyTurnoverCost,
+      tenantTurnover: Math.round(monthlyTurnoverCost * 100) / 100,
       utilities: 0,
       commonAreaElectricity: 0,
       landscaping: 0,

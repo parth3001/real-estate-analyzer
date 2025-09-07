@@ -34,6 +34,7 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
+import { formatCurrency as standardFormatCurrency, formatPercent } from '../../utils/formatters';
 // Architecture Fix: Removed InvestmentMessagingEngine - all messaging now from backend only
 // This ensures Single Source of Truth principle compliance
 
@@ -395,20 +396,8 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
   const verdictConfig = getVerdictConfig(investmentDecision.verdict);
   const VerdictIcon = verdictConfig.icon;
 
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  // Format percentage
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(2)}%`;
-  };
+  // Use standardized currency formatting from utils
+  const formatCurrency = standardFormatCurrency;
 
   // Detail tabs
   const detailTabs = [
@@ -1361,7 +1350,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                             <Box>
                               <Typography variant="caption" color="text.secondary">Expected Return</Typography>
                               <Typography variant="body2" fontWeight={600}>
-                                {formatPercentage(investmentDecision.capitalStrategy.currentApproach.expectedReturn)}
+                                {formatPercent(investmentDecision.capitalStrategy.currentApproach.expectedReturn, 1)}%
                               </Typography>
                             </Box>
                           </Stack>
@@ -1391,7 +1380,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                             <Box>
                               <Typography variant="caption" color="text.secondary">Expected Return</Typography>
                               <Typography variant="body2" fontWeight={600}>
-                                {formatPercentage(investmentDecision.capitalStrategy.recommendedApproach.expectedReturn)}
+                                {formatPercent(investmentDecision.capitalStrategy.recommendedApproach.expectedReturn, 1)}%
                               </Typography>
                             </Box>
                           </Stack>

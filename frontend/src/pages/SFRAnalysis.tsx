@@ -12,17 +12,19 @@ import {
   Fade
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { AutoAwesome, Edit, DataUsage as SampleDataIcon } from '@mui/icons-material';
+import { AutoAwesome, Edit, DataUsage as SampleDataIcon, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
 import PropertyWizard from '../components/SFRAnalysis/PropertyWizard';
 import { propertyApi } from '../services/api';
+import { pipelineApi } from '../services/pipelineApi';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SimplePortfolioSelector } from '../components/SFRAnalysis/SimplePortfolioSelector';
 import { AppleCard, AppleButton } from '../components/ui/AppleComponents';
 import { appleColors } from '../theme/appleDesignSystem';
+import { SFR_PROPERTY_DEFAULTS, DEFAULT_ENHANCED_GOALS } from '../constants/sfrPropertyDefaults';
 
 const SFRAnalysis: React.FC = () => {
   const navigate = useNavigate();
@@ -37,6 +39,8 @@ const SFRAnalysis: React.FC = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [sampleLoading, setSampleLoading] = useState(false);
   const [dealId, setDealId] = useState<string | null>(null);
+  const [pipelineDealId, setPipelineDealId] = useState<string | null>(null); // Track Pipeline deal ID separately
+  const [isAddingToPipeline, setIsAddingToPipeline] = useState(false);
   
   // Input method state
   const [inputMethod, setInputMethod] = useState<'wizard' | 'manual'>('wizard');
@@ -48,6 +52,32 @@ const SFRAnalysis: React.FC = () => {
   
   // Race condition prevention for main analysis
   const [activeAnalysisRequestId, setActiveAnalysisRequestId] = useState<string | null>(null);
+  
+  // Helper function to safely extract string ID from any response
+  const extractStringId = (idValue: any): string => {
+    if (!idValue) return '';
+    
+    // If it's already a string, return it
+    if (typeof idValue === 'string') return idValue;
+    
+    // If it's an object with _id property (nested ObjectId)
+    if (typeof idValue === 'object' && idValue._id) {
+      return extractStringId(idValue._id);
+    }
+    
+    // If it's an object with id property
+    if (typeof idValue === 'object' && idValue.id) {
+      return extractStringId(idValue.id);
+    }
+    
+    // If it's an object with toString method (MongoDB ObjectId)
+    if (typeof idValue === 'object' && typeof idValue.toString === 'function') {
+      return idValue.toString();
+    }
+    
+    // Fallback: convert to string
+    return String(idValue);
+  };
   
   // Portfolio context state
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
@@ -105,10 +135,66 @@ const SFRAnalysis: React.FC = () => {
         portfolioId: selectedPortfolioId || undefined // This enables portfolio-context analysis
       };
       
-      const response = await propertyApi.analyzeProperty(analysisData);
+      let response;
+      
+      // CRITICAL FIX: Check if we're updating existing analysis or creating new one
+      if (dealId) {
+        // Updating existing analysis - dealId should already be a string from state
+        console.log('🔄 Updating existing analysis:', dealId, 'type:', typeof dealId);
+        response = await propertyApi.updateProperty(dealId, analysisData);
+        console.log('📊 UPDATE API RESPONSE:', response.data);
+      } else if (pipelineDealId) {
+        // Check if pipeline deal already has linked analysis to avoid duplicates
+        console.log('🔍 Checking if pipeline deal already has analysis:', pipelineDealId);
+        try {
+          const pipelineResponse = await pipelineApi.getDealById(pipelineDealId);
+          if (pipelineResponse?.analysisId) {
+            // Convert MongoDB ObjectId to string if needed
+            console.log('🔍 pipelineResponse.analysisId type:', typeof pipelineResponse.analysisId, 'value:', pipelineResponse.analysisId);
+            
+            let analysisId: string;
+            if (typeof pipelineResponse.analysisId === 'object' && pipelineResponse.analysisId !== null) {
+              // Handle MongoDB ObjectId which might be an object with _id
+              const idObj = pipelineResponse.analysisId as any;
+              analysisId = idObj._id?.toString() || idObj.id?.toString() || idObj.toString();
+            } else {
+              analysisId = String(pipelineResponse.analysisId);
+            }
+            
+            console.log('⚠️ Pipeline deal already has analysis, updating existing:', analysisId, 'type:', typeof analysisId);
+            // Update the existing analysis instead of creating new one
+            const cleanDealId = extractStringId(analysisId);
+            setDealId(cleanDealId);
+            response = await propertyApi.updateProperty(cleanDealId, analysisData);
+            console.log('📊 PIPELINE UPDATE API RESPONSE:', response.data);
+          } else {
+            // Pipeline deal has no analysis yet, create new one
+            console.log('✨ Creating new analysis for pipeline deal');
+            response = await propertyApi.analyzeProperty(analysisData);
+            console.log('📊 PIPELINE CREATE API RESPONSE:', response.data);
+          }
+        } catch (error) {
+          console.warn('Could not check pipeline deal status, creating new analysis');
+          response = await propertyApi.analyzeProperty(analysisData);
+          console.log('📊 FALLBACK CREATE API RESPONSE:', response.data);
+        }
+      } else {
+        // Creating completely new analysis
+        console.log('✨ Creating new analysis');
+        response = await propertyApi.analyzeProperty(analysisData);
+        console.log('📊 CREATE API RESPONSE:', response.data);
+      }
       
       if (response.status === 200 && response.data) {
         console.log('Analysis successful:', response.data);
+        
+        // CRITICAL DEBUG: Check investmentDecision structure for hero card issue
+        console.log('🎯 HERO CARD DEBUG - investmentDecision check:', {
+          hasInvestmentDecision: !!response.data.investmentDecision,
+          investmentDecisionKeys: response.data.investmentDecision ? Object.keys(response.data.investmentDecision) : 'MISSING',
+          dealQuality: response.data.investmentDecision?.dealQuality || 'MISSING',
+          verdict: response.data.investmentDecision?.verdict || 'MISSING'
+        });
         
         // Debug: Check if portfolio context is in the response
         console.log('🔍 ANALYSIS RESPONSE - Portfolio context check:', {
@@ -126,7 +212,18 @@ const SFRAnalysis: React.FC = () => {
         
         // Set data and show results (using traditional analysis format)
         setPropertyData(data);
-        setAnalysis(response.data);
+        
+        // CRITICAL FIX: Handle different response structures from UPDATE vs CREATE endpoints
+        // UPDATE endpoint returns: { analysis: {...}, propertyData: {...} }
+        // CREATE endpoint returns: { monthlyAnalysis: {...}, keyMetrics: {...} } (analysis at root)
+        const analysisData = response.data.analysis || response.data;
+        console.log('🔧 ANALYSIS DATA EXTRACTED:', {
+          hasNestedAnalysis: !!response.data.analysis,
+          extractedAnalysisKeys: Object.keys(analysisData),
+          hasKeyMetrics: !!analysisData.keyMetrics,
+          hasInvestmentDecision: !!analysisData.investmentDecision
+        });
+        setAnalysis(analysisData);
         
         // Debug: Verify portfolio context is in state after setting
         console.log('🔍 STATE AFTER SET - Portfolio context check:', {
@@ -153,12 +250,92 @@ const SFRAnalysis: React.FC = () => {
 
   // Load deal data from URL parameters
   useEffect(() => {
+    console.log('📍 SFRAnalysis useEffect triggered');
+    console.log('🔍 Checking sessionStorage for pipelineDealData...');
+    
     const id = searchParams.get('id');
+    console.log('URL id parameter:', id);
+    
     if (id) {
-      setDealId(id);
-      loadDealData(id);
+      console.log('Loading existing deal with ID:', id);
+      const cleanId = extractStringId(id);
+      setDealId(cleanId);
+      loadDealData(cleanId);
+    } else {
+      // Check for pipeline deal data in sessionStorage
+      const pipelineDealData = sessionStorage.getItem('pipelineDealData');
+      console.log('sessionStorage pipelineDealData:', pipelineDealData);
+      
+      if (pipelineDealData) {
+        try {
+          const data = JSON.parse(pipelineDealData);
+          console.log('🎯 Found and parsed pipeline deal data:', data);
+          
+          // Pre-populate the form with pipeline data (only for new analysis)
+          const prefilledData: Partial<SFRPropertyData> = {
+            purchasePrice: data.purchasePrice,
+            monthlyRent: data.monthlyRent || 0,
+            propertyAddress: {
+              street: data.propertyAddress.street,
+              city: data.propertyAddress.city,
+              state: data.propertyAddress.state,
+              zipCode: data.propertyAddress.zipCode
+            },
+            downPayment: data.downPayment || (data.purchasePrice * 0.25),
+            loanTerm: data.loanTermYears || SFR_PROPERTY_DEFAULTS.loanTerm,
+            interestRate: data.interestRate || SFR_PROPERTY_DEFAULTS.interestRate,
+            // Map monthly expenses to maintenance cost (approximate)
+            maintenanceCost: data.monthlyExpenses || 0,
+            // Property details from pipeline
+            squareFootage: data.propertyDetails?.squareFootage || SFR_PROPERTY_DEFAULTS.squareFootage,
+            bedrooms: data.propertyDetails?.bedrooms || SFR_PROPERTY_DEFAULTS.bedrooms,
+            bathrooms: data.propertyDetails?.bathrooms || SFR_PROPERTY_DEFAULTS.bathrooms,
+            yearBuilt: data.propertyDetails?.yearBuilt || SFR_PROPERTY_DEFAULTS.yearBuilt,
+            // Use centralized default rates for consistency
+            propertyTaxRate: SFR_PROPERTY_DEFAULTS.propertyTaxRate,
+            insuranceRate: SFR_PROPERTY_DEFAULTS.insuranceRate,
+            propertyManagementRate: SFR_PROPERTY_DEFAULTS.propertyManagementRate,
+            propertyName: `${data.propertyAddress.street} - ${data.propertyAddress.city}`,
+            // Use centralized long term assumptions for consistency
+            longTermAssumptions: {
+              ...SFR_PROPERTY_DEFAULTS.longTermAssumptions
+            },
+            // Preserve enhanced goals if they exist in the pipeline data, otherwise use defaults
+            enhancedGoals: data.enhancedGoals || {
+              ...DEFAULT_ENHANCED_GOALS,
+              freeTextStrategy: data.strategyNotes || ''
+            }
+          };
+          
+          console.log('📝 Setting pre-filled data:', prefilledData);
+          setPropertyData(prefilledData as SFRPropertyData);
+          console.log('✅ PropertyData state updated');
+          setPipelineDealId(data.dealId); // Track the pipeline deal ID separately
+          
+          // Don't clear session storage immediately - let's keep it for debugging
+          console.log('🗑️ Clearing sessionStorage after successful pre-fill');
+          sessionStorage.removeItem('pipelineDealData');
+          
+            // Show a message to the user
+          setSuccessMessage('Property data pre-filled from pipeline. Please complete the remaining fields for full analysis.');
+          console.log('🎉 Pre-population complete!');
+          
+        } catch (error) {
+          console.error('❌ Error parsing pipeline deal data:', error);
+        }
+      } else {
+        console.log('❌ No pipelineDealData found in sessionStorage');
+      }
     }
   }, [location.search]);
+
+  // Debug useEffect to monitor propertyData changes
+  useEffect(() => {
+    console.log('🔄 PropertyData state changed:', propertyData);
+    if (propertyData?.propertyAddress) {
+      console.log('📍 Address in state:', propertyData.propertyAddress);
+    }
+  }, [propertyData]);
 
   // Load deal data from API
   const loadDealData = async (id: string) => {
@@ -166,7 +343,7 @@ const SFRAnalysis: React.FC = () => {
     setError(null);
     
     try {
-      console.log('Loading deal data for ID:', id);
+      console.log('Loading deal data for ID:', id, 'type:', typeof id);
       const response = await propertyApi.getProperty(id);
       
       if (response.status === 200 && response.data) {
@@ -186,12 +363,12 @@ const SFRAnalysis: React.FC = () => {
         // Set property data
         setPropertyData(dealPropertyData as SFRPropertyData);
         
-        // If analysis data exists, set it and switch to results tab
+        // If analysis data exists, validate completeness before using
         if (dealAnalysis) {
           console.log('Setting analysis data:', dealAnalysis);
           
           // Log analysis structure for debugging
-          console.log('Analysis structure check:', {
+          const structureCheck = {
             hasMonthlyExpenses: !!dealAnalysis.monthlyAnalysis?.expenses,
             hasPropertyTax: !!dealAnalysis.monthlyAnalysis?.expenses?.propertyTax,
             hasAnnualAnalysis: !!dealAnalysis.annualAnalysis,
@@ -200,10 +377,30 @@ const SFRAnalysis: React.FC = () => {
             hasInvestmentDecision: !!dealAnalysis.investmentDecision,
             hasPortfolioContext: !!dealAnalysis.investmentDecision?.portfolioContext,
             portfolioContext: dealAnalysis.investmentDecision?.portfolioContext
-          });
+          };
+          console.log('Analysis structure check:', structureCheck);
           
-          setAnalysis(dealAnalysis);
-          setActiveSection('results'); // Switch to results section
+          // Check if analysis data is complete (has the critical components)
+          const isAnalysisComplete = dealAnalysis.keyMetrics && 
+                                   dealAnalysis.monthlyAnalysis && 
+                                   dealAnalysis.longTermAnalysis && 
+                                   dealAnalysis.investmentDecision;
+          
+          if (isAnalysisComplete) {
+            setAnalysis(dealAnalysis);
+            setActiveSection('results'); // Switch to results section
+          } else {
+            console.warn('🔍 Analysis data is incomplete, user will need to re-analyze');
+            console.warn('Missing components:', {
+              keyMetrics: !dealAnalysis.keyMetrics,
+              monthlyAnalysis: !dealAnalysis.monthlyAnalysis,
+              longTermAnalysis: !dealAnalysis.longTermAnalysis,
+              investmentDecision: !dealAnalysis.investmentDecision
+            });
+            // Stay on input tab so user can re-analyze
+            setActiveSection('input');
+            setError('This property has incomplete analysis data. Please re-analyze to see results.');
+          }
         }
       } else {
         console.error('Failed to load deal data:', response);
@@ -242,9 +439,20 @@ const SFRAnalysis: React.FC = () => {
       let response;
       
       if (dealId) {
-        // Update existing deal
-        console.log('Updating existing deal:', dealId);
-        response = await propertyApi.updateProperty(dealId, dealData);
+        // Update existing deal - dealId should already be a string from state
+        console.log('💾 CRITICAL DEBUG - dealId details:', {
+          dealId: dealId,
+          dealIdType: typeof dealId,
+          dealIdString: String(dealId),
+          dealIdJSON: JSON.stringify(dealId),
+          isObject: typeof dealId === 'object'
+        });
+        
+        // Force string conversion as safety net
+        const cleanDealId = extractStringId(dealId);
+        console.log('💾 Using cleaned ID for update:', cleanDealId, 'type:', typeof cleanDealId);
+        
+        response = await propertyApi.updateProperty(cleanDealId, dealData);
       } else {
         // Create new deal
         console.log('Saving new deal to database:', dealData);
@@ -253,12 +461,55 @@ const SFRAnalysis: React.FC = () => {
       
       if ((response.status === 201 || response.status === 200) && response.data) {
         console.log('Deal saved successfully:', response.data);
-        setSuccessMessage(dealId ? 'Deal updated successfully!' : 'Deal saved successfully!');
+        
+        // If this deal came from Pipeline, link the analysis back to the Pipeline deal
+        if (pipelineDealId && response.data._id) {
+          const cleanAnalysisId = extractStringId(response.data._id);
+          console.log('🔗 Linking analysis back to Pipeline deal:', {
+            pipelineDealId,
+            analysisId: cleanAnalysisId
+          });
+          
+          try {
+            // Call Pipeline API to link the analysis
+            const linkResponse = await fetch(`/api/pipeline/deals/${pipelineDealId}/link-analysis`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              },
+              body: JSON.stringify({
+                analysisId: cleanAnalysisId
+              })
+            });
+            
+            if (linkResponse.ok) {
+              console.log('✅ Successfully linked analysis to Pipeline deal');
+              setSuccessMessage('Deal saved and linked to Pipeline successfully!');
+            } else {
+              console.warn('⚠️ Failed to link analysis to Pipeline deal:', linkResponse.status);
+              setSuccessMessage(dealId ? 'Deal updated successfully!' : 'Deal saved successfully!');
+            }
+          } catch (linkError) {
+            console.error('❌ Error linking analysis to Pipeline deal:', linkError);
+            setSuccessMessage(dealId ? 'Deal updated successfully!' : 'Deal saved successfully!');
+          }
+        } else {
+          setSuccessMessage(dealId ? 'Deal updated successfully!' : 'Deal saved successfully!');
+        }
+        
+        // Set flag to refresh Pipeline data when user navigates back
+        if (dealId || pipelineDealId) {
+          console.log('🏷️ Setting flag for Pipeline refresh after deal save');
+          sessionStorage.setItem('returnedFromSFRAnalysis', 'true');
+        }
         
         // If this was a new deal, update the URL with the new ID
         if (!dealId && response.data._id) {
-          setDealId(response.data._id);
-          navigate(`/sfr-analysis?id=${response.data._id}`, { replace: true });
+          // CRITICAL: Use helper to ensure proper ID extraction
+          const newDealId = extractStringId(response.data._id);
+          setDealId(newDealId);
+          navigate(`/sfr-analysis?id=${newDealId}`, { replace: true });
         }
       } else {
         console.error('Failed to save deal:', response);
@@ -269,6 +520,46 @@ const SFRAnalysis: React.FC = () => {
       setError('Error saving deal: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle adding existing deal to Pipeline
+  const handleAddToPipeline = async () => {
+    if (!dealId || !analysis || !propertyData) {
+      setError('No deal data to add to Pipeline');
+      return;
+    }
+    
+    setIsAddingToPipeline(true);
+    setError(null);
+    
+    try {
+      console.log('Adding existing deal to Pipeline:', dealId);
+      
+      const result = await pipelineApi.convertAnalysisToPipeline(
+        dealId,
+        {
+          channel: 'OTHER', // Default source for converted deals
+          contact: 'Imported from Analysis',
+          notes: 'Converted from existing SFR analysis'
+        },
+        `Imported from analyzed deal: ${propertyData.propertyName || propertyData.propertyAddress?.street || 'Unknown Property'}`
+      );
+      
+      console.log('Successfully added deal to Pipeline:', result);
+      setSuccessMessage('Deal successfully added to Pipeline! You can now manage it in your deal flow.');
+      
+      // Optionally navigate to Pipeline page after a delay
+      setTimeout(() => {
+        if (confirm('Would you like to go to the Pipeline to see your newly added deal?')) {
+          navigate('/pipeline');
+        }
+      }, 2000);
+    } catch (err) {
+      console.error('Error adding deal to Pipeline:', err);
+      setError('Error adding deal to Pipeline: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsAddingToPipeline(false);
     }
   };
 
@@ -578,6 +869,18 @@ const SFRAnalysis: React.FC = () => {
                     >
                       Edit Property
                     </AppleButton>
+                    
+                    {/* Add to Pipeline Button - Only show for existing saved deals */}
+                    {dealId && !pipelineDealId && (
+                      <AppleButton
+                        variant="secondary"
+                        onClick={handleAddToPipeline}
+                        disabled={isAddingToPipeline}
+                        icon={<AddIcon />}
+                      >
+                        {isAddingToPipeline ? 'Adding...' : 'Add to Pipeline'}
+                      </AppleButton>
+                    )}
                   </>
                 ) : (
                   <>
@@ -826,6 +1129,7 @@ const SFRAnalysis: React.FC = () => {
               <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
                 {inputMethod === 'wizard' && wizardEnabled && (
                   <PropertyWizard
+                    key={propertyData?.propertyName || 'wizard-default'} 
                     onComplete={handleAnalyzeProperty}
                     initialData={propertyData || undefined}
                     onCancel={() => handleInputMethodChange('manual')}
@@ -838,6 +1142,7 @@ const SFRAnalysis: React.FC = () => {
               <Box sx={{ display: inputMethod === 'manual' ? 'block' : 'none' }}>
                 {inputMethod === 'manual' && (
                   <SFRPropertyForm
+                    key={propertyData?.propertyName || 'form-default'}
                     onSubmit={handleAnalyzeProperty}
                     initialData={propertyData || undefined}
                     isLoading={isLoading}
@@ -893,6 +1198,7 @@ const SFRAnalysis: React.FC = () => {
                   </AppleCard>
                 ) : (
                   <>
+                    
                     <AnalysisResults 
                       analysis={analysis} 
                       propertyData={propertyData} 

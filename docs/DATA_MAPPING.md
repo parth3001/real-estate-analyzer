@@ -636,6 +636,184 @@ When a user loads a saved deal, the system now:
 - Intelligent fallbacks when cache misses occur
 - Graceful degradation when external APIs are unavailable
 
+## Pipeline Deal Flow Data Mapping (August 30, 2025)
+
+The Pipeline system manages deal flow separately from analyzed deals, with its own data flow patterns and collection structure.
+
+### Pipeline Deal Collection Structure
+
+Pipeline deals are stored in a separate `PipelineDeal` collection with the following key differences from analyzed `Deal` documents:
+
+```typescript
+PipelineDeal {
+  _id: ObjectId,
+  userId: ObjectId,
+  dealName: string,
+  askingPrice: number,
+  propertyType: PropertyType, // Supports all types (SFR, MF, Commercial, etc.)
+  address: {
+    street: string,
+    city: string,
+    state: string,
+    zipCode: string
+  },
+  sourceInfo: {
+    channel: DealSource, // MLS, AGENT, DIRECT_MARKETING, etc.
+    contact: string,
+    notes: string
+  },
+  propertyDetails: {
+    // Property-specific details based on type
+    bedrooms?: number, // SFR
+    bathrooms?: number, // SFR
+    squareFootage?: number,
+    units?: number, // Multi-family
+    // ... other type-specific fields
+  },
+  stage: PipelineStage, // LEAD, ANALYSIS, NEGOTIATION, etc.
+  analysisStatus: 'NOT_ANALYZED' | 'IN_PROGRESS' | 'COMPLETE',
+  analysisId?: ObjectId, // Reference to full Deal analysis if completed
+  quickMetrics?: {
+    cashFlow: number,
+    capRate: number,
+    cashOnCashReturn: number,
+    verdict: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS',
+    dealQuality: number // 0-100 professional assessment score
+  },
+  confidence: {
+    level: 1 | 2 | 3, // Investment insights level
+    dataSource: 'BASIC_INFO' | 'QUICK_METRICS' | 'FULL_ANALYSIS'
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Pipeline-to-SFR Analysis Data Flow
+
+When a Pipeline deal is analyzed using the full SFR Analysis system:
+
+```
+Pipeline Deal (PipelineDeal collection)
+    ↓
+User clicks "Analyze Deal" → PipelineSkinnyCalculator
+    ↓
+Check if deal.analysisStatus === 'COMPLETE' && deal.analysisId exists
+    ├─→ YES: Navigate to existing analysis (/sfr-analysis?id=${analysisId})
+    └─→ NO: Extract deal data for new analysis
+    ↓
+Extract Pipeline data to SFR format:
+    - dealName → propertyName
+    - askingPrice → purchasePrice
+    - address → propertyAddress
+    - propertyDetails → bedrooms, bathrooms, squareFootage, etc.
+    ↓
+SessionStorage transfer for form population:
+    sessionStorage.setItem('pipelineDealData', JSON.stringify(extractedData))
+    ↓
+Navigate to SFR Analysis page (/sfr-analysis)
+    ↓
+SFR Analysis loads sessionStorage data and populates form
+    ↓
+User completes analysis → Full Deal document created (Deal collection)
+    ↓
+Update Pipeline deal:
+    - analysisStatus = 'COMPLETE'
+    - analysisId = newDeal._id
+    - quickMetrics = extracted from analysis
+    - confidence.level = 3, confidence.dataSource = 'FULL_ANALYSIS'
+```
+
+### Pipeline Data Extraction Patterns
+
+When extracting data from Pipeline deals for analysis or display:
+
+| Pipeline Field | Extraction Target | Transformation Notes |
+|----------------|------------------|---------------------|
+| `dealName` | `propertyName` | Direct mapping |
+| `askingPrice` | `purchasePrice` | Direct mapping |
+| `address` | `propertyAddress` | Object structure preserved |
+| `propertyDetails.bedrooms` | `bedrooms` | SFR properties only |
+| `propertyDetails.bathrooms` | `bathrooms` | SFR properties only |
+| `propertyDetails.squareFootage` | `squareFootage` | All property types |
+| `propertyDetails.units` | `units` | Multi-family properties |
+| `quickMetrics.*` | Display values | From completed analysis |
+| `analysisId` | Deal reference | ObjectId for full analysis lookup |
+
+### Confidence Level Calculation for Pipeline Deals
+
+The confidence indicator system uses a 3-level approach:
+
+```javascript
+// Level 1: Basic deal information only
+if (!deal.quickMetrics && deal.analysisStatus !== 'COMPLETE') {
+  return 1;
+}
+
+// Level 2: Quick metrics calculated (skinny calculator)
+if (deal.quickMetrics && deal.analysisStatus !== 'COMPLETE') {
+  return 2;
+}
+
+// Level 3: Full analysis completed and linked
+if (deal.analysisStatus === 'COMPLETE' && deal.analysisId) {
+  return 3;
+}
+```
+
+### Pipeline Deal Update Flow
+
+When updating Pipeline deals with analysis results:
+
+```
+SFR Analysis Complete → Extract key metrics
+    ↓
+Prepare Pipeline update data:
+    {
+      analysisStatus: 'COMPLETE',
+      analysisId: dealId,
+      quickMetrics: {
+        cashFlow: analysis.monthlyAnalysis.cashFlow,
+        capRate: analysis.keyMetrics.capRate,
+        cashOnCashReturn: analysis.keyMetrics.cashOnCashReturn,
+        verdict: analysis.investmentDecision.verdict,
+        dealQuality: analysis.investmentDecision.professionalAssessment?.dealQuality
+      },
+      confidence: {
+        level: 3,
+        dataSource: 'FULL_ANALYSIS'
+      }
+    }
+    ↓
+Update both collections:
+    - Update PipelineDeal document with quick metrics
+    - Create/update Deal document with full analysis
+```
+
+### Data Consistency Rules
+
+1. **Single Source of Truth**: Full analysis data is stored in Deal collection
+2. **Pipeline Summary**: PipelineDeal stores summary metrics for dashboard display
+3. **Reference Integrity**: analysisId links Pipeline deal to full Deal document
+4. **Status Synchronization**: analysisStatus must match actual analysis state
+5. **Confidence Accuracy**: confidence.level must reflect actual data completeness
+
+### Pipeline-Specific API Endpoints
+
+| Endpoint | Purpose | Data Flow |
+|----------|---------|-----------|
+| `GET /api/pipeline/deals` | Load pipeline deals | PipelineDeal collection → UI |
+| `PUT /api/pipeline/deals/:id` | Update pipeline deal | UI → PipelineDeal collection |
+| `POST /api/deals/analyze` | Create full analysis | Pipeline data → Deal collection |
+| `PUT /api/deals/:id` | Update existing analysis | Deal collection (both Pipeline + regular) |
+
+### Error Handling and Edge Cases
+
+1. **Missing analysisId**: Handle cases where Pipeline deal claims completion but has no linked analysis
+2. **Orphaned references**: Deal exists but Pipeline deal analysisId is invalid
+3. **Status mismatch**: analysisStatus doesn't match actual analysis state
+4. **Data corruption**: Handle null/undefined values gracefully in extraction
+
 ### 7. Future Considerations
 
 #### Potential Optimizations

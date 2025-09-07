@@ -7,6 +7,7 @@ import {
   Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import { formatCurrency } from '../../utils/formatters';
 
 interface AdvancedMetricsSectionProps {
   metrics: {
@@ -24,17 +25,12 @@ interface AdvancedMetricsSectionProps {
   };
 }
 
-// Format number as currency
-const formatCurrency = (amount: number | null | undefined): string => {
+// Format number as currency with null handling
+const formatCurrencyWithNulls = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '$0';
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
+  return formatCurrency(amount);
 };
 
 // Format number as percentage
@@ -171,7 +167,7 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({ metrics
               </Tooltip>
             </Typography>
             <Typography variant="h5" component="div">
-              {formatCurrency(metrics.pricePerBedroom)}
+              {formatCurrencyWithNulls(metrics.pricePerBedroom)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Market comparison metric

@@ -17,6 +17,7 @@ import {
   ToggleButton,
   useTheme,
 } from '@mui/material';
+import { formatCurrency } from '../../utils/formatters';
 
 // Types for the component props
 interface ExpenseBreakdownChartProps {
@@ -28,15 +29,7 @@ interface ExpenseBreakdownChartProps {
   title?: string;
 }
 
-// Format currency for tooltips and labels
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
+// Using standardized formatCurrency from utils
 
 // Format percentage for tooltips and labels
 const formatPercent = (value: number, total: number): string => {

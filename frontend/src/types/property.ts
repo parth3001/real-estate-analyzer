@@ -53,6 +53,16 @@ export interface SFRPropertyData extends BasePropertyData {
     portfolioName?: string;
     portfolioStrategy?: string;
   };
+  // Investment goals and strategy (optional)
+  enhancedGoals?: {
+    exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+    portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+    experienceLevel?: 'novice' | 'intermediate' | 'expert';
+    riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+    freeTextStrategy?: string;
+    aiEnhancedStrategy?: string;
+    strategicInsights?: string[];
+  };
 }
 
 export interface UnitType {

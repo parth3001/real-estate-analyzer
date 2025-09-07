@@ -16,6 +16,7 @@ import type { SFRPropertyData } from '../../types/property';
 import type { Analysis } from '../../types/analysis';
 import { useDualMode } from '../../contexts/DualModeContext';
 import { EducationalTooltip } from '../common/EducationalTooltip';
+import { SFR_PROPERTY_DEFAULTS } from '../../constants/sfrPropertyDefaults';
 
 interface SFRPropertyFormProps {
   onSubmit: (data: SFRPropertyData) => Promise<Analysis | null>;
@@ -24,45 +25,10 @@ interface SFRPropertyFormProps {
   error?: string;
 }
 
-// Default values for form fields
+// Default values for form fields - uses centralized constants for consistency
 const defaultFormValues: SFRPropertyData = {
-  propertyType: 'SFR',
-  propertyName: '',
-  propertyAddress: {
-    street: '',
-    city: '',
-    state: '',
-    zipCode: ''
-  },
-  purchasePrice: 0,
-  downPayment: 0,
-  interestRate: 5.5,
-  loanTerm: 30,
-  propertyTaxRate: 1.2,
-  insuranceRate: 0.5,
-  propertyManagementRate: 8,
-  yearBuilt: new Date().getFullYear() - 20,
-  monthlyRent: 0,
-  squareFootage: 0,
-  bedrooms: 3,
-  bathrooms: 2,
-  maintenanceCost: 0,
-  longTermAssumptions: {
-    projectionYears: 10,
-    annualRentIncrease: 3,
-    annualPropertyValueIncrease: 3,
-    sellingCostsPercentage: 6,
-    inflationRate: 2,
-    vacancyRate: 5,
-    turnoverFrequency: 2
-  },
-  closingCosts: 0,
-  capitalInvestments: 0,
-  tenantTurnoverFees: {
-    prepFees: 500,
-    realtorCommission: 0.5
-  }
-};
+  ...SFR_PROPERTY_DEFAULTS
+} as SFRPropertyData;
 
 // Validation rules
 type ValidationErrors = {

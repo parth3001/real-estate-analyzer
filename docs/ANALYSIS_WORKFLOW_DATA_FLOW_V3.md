@@ -411,4 +411,110 @@ Generate portfolio-level insights
 
 ---
 
+## 🔄 Pipeline Deal Management Workflow (September 2025)
+
+### **Overview**
+The Pipeline system manages deal flow separately from analyzed deals, providing a CRM-like experience for tracking potential investments through various stages.
+
+### **Pipeline-Specific Workflows**
+
+#### **1. Manual Deal Entry to Pipeline**
+```
+User clicks "Add Deal" → 
+AddDealModal opens → 
+User chooses "Add New Manual Deal" → 
+QuickAddDeal form → 
+Create PipelineDeal document → 
+Display in Kanban board
+```
+
+#### **2. Import from Saved Properties**
+```
+User clicks "Add Deal" → 
+AddDealModal opens → 
+User selects from saved properties → 
+convertAnalysisToPipeline API → 
+Create PipelineDeal with analysisId reference → 
+Display with confidence level 3
+```
+
+#### **3. Pipeline Deal Analysis (Skinny Calculator)**
+```
+User clicks "Analyze Deal" on card → 
+PipelineSkinnyCalculator opens → 
+Check if analysisId exists:
+  ├─→ YES: Load full analysis data from Deal collection
+  │        Display with actual metrics
+  └─→ NO: User inputs financial data
+          Calculate skinny metrics
+          Save to quickMetrics field
+```
+
+#### **4. Pipeline to Full Analysis Flow**
+```
+Pipeline Deal (Skinny Calculator) → 
+User clicks "Get Deal Score" → 
+Navigate to SFR Analysis with pre-filled data → 
+Complete full analysis → 
+Save Deal document → 
+Link back to Pipeline (analysisId) → 
+Update confidence level to 3
+```
+
+### **Pipeline Data Model**
+
+```javascript
+PipelineDeal {
+  _id: ObjectId,
+  userId: ObjectId,
+  dealName: string,
+  currentStage: 'LEAD' | 'ANALYSIS' | 'NEGOTIATION' | 'CONTRACT' | 'CLOSED' | 'LOST',
+  propertyType: 'SFR' | 'MF' | 'COMMERCIAL_*' | etc,
+  strategy: 'BUY_HOLD' | 'FIX_FLIP' | etc,
+  askingPrice: number,
+  address: { street, city, state, zipCode },
+  
+  // Analysis tracking
+  analysisStatus: 'NOT_ANALYZED' | 'IN_PROGRESS' | 'COMPLETE',
+  analysisId?: ObjectId, // Link to full Deal analysis
+  
+  // Quick metrics from skinny calculator
+  quickMetrics?: {
+    cashFlow: number,
+    capRate: number,
+    cashOnCashReturn: number,
+    verdict?: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS',
+    dealQuality?: number // 0-100 from V3.0 engine
+  },
+  
+  // Confidence indicator
+  confidence: {
+    level: 1 | 2 | 3,
+    dataSource: 'BASIC_INFO' | 'QUICK_METRICS' | 'FULL_ANALYSIS'
+  }
+}
+```
+
+### **Key Pipeline Features**
+
+1. **Kanban Board**: Drag-and-drop deal management across stages
+2. **Confidence Indicators**: Visual representation of analysis depth
+3. **Skinny Calculator**: Quick financial analysis without full workflow
+4. **Import/Export**: Bidirectional flow between Pipeline and Saved Properties
+5. **Deal Scoring**: Integration with V3.0 Professional Assessment
+
+### **API Endpoints**
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/pipeline/deals` | Load all pipeline deals |
+| `POST /api/pipeline/deals` | Create new pipeline deal |
+| `PUT /api/pipeline/deals/:id` | Update deal (stage, metrics, etc) |
+| `DELETE /api/pipeline/deals/:id` | Remove deal from pipeline |
+| `POST /api/pipeline/convert-analysis` | Import analyzed deal to pipeline |
+| `PUT /api/pipeline/deals/:id/stage` | Update deal stage |
+| `POST /api/pipeline/deals/:id/link-analysis` | Link full analysis to pipeline deal |
+
+---
+
 **End of V3.0 Documentation**

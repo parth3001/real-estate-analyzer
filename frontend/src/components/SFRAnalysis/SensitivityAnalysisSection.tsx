@@ -14,6 +14,7 @@ import {
   TableRow
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import { formatCurrency } from '../../utils/formatters';
 
 interface SensitivityAnalysisSectionProps {
   sensitivityAnalysis?: {
@@ -30,17 +31,12 @@ interface SensitivityAnalysisSectionProps {
   };
 }
 
-// Format number as currency
-const formatCurrency = (amount: number | null | undefined): string => {
+// Format number as currency with null handling
+const formatCurrencyWithNulls = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '$0';
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
+  return formatCurrency(amount);
 };
 
 // Format number as percentage
@@ -101,13 +97,13 @@ const SensitivityAnalysisSection: React.FC<SensitivityAnalysisSectionProps> = ({
                 </Tooltip>
               </TableCell>
               <TableCell align="right" sx={{ color: 'success.main' }}>
-                {formatCurrency(bestCase.cashFlow)}
+                {formatCurrencyWithNulls(bestCase.cashFlow)}
               </TableCell>
               <TableCell align="right" sx={{ color: (worstCase.cashFlow || 0) < 0 ? 'error.main' : 'text.primary' }}>
-                {formatCurrency(worstCase.cashFlow)}
+                {formatCurrencyWithNulls(worstCase.cashFlow)}
               </TableCell>
               <TableCell align="right">
-                {formatCurrency(cashFlowDiff)} ({cashFlowDiffPercent.toFixed(1)}%)
+                {formatCurrencyWithNulls(cashFlowDiff)} ({cashFlowDiffPercent.toFixed(1)}%)
               </TableCell>
             </TableRow>
             <TableRow>
@@ -135,13 +131,13 @@ const SensitivityAnalysisSection: React.FC<SensitivityAnalysisSectionProps> = ({
                 </Tooltip>
               </TableCell>
               <TableCell align="right" sx={{ color: 'success.main' }}>
-                {formatCurrency(bestCase.totalReturn)}
+                {formatCurrencyWithNulls(bestCase.totalReturn)}
               </TableCell>
               <TableCell align="right" sx={{ color: (worstCase.totalReturn || 0) < 0 ? 'error.main' : 'text.primary' }}>
-                {formatCurrency(worstCase.totalReturn)}
+                {formatCurrencyWithNulls(worstCase.totalReturn)}
               </TableCell>
               <TableCell align="right">
-                {formatCurrency(totalReturnDiff)}
+                {formatCurrencyWithNulls(totalReturnDiff)}
               </TableCell>
             </TableRow>
           </TableBody>

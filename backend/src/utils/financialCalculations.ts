@@ -12,9 +12,11 @@ export class FinancialCalculations {
   static calculateMortgage(principal: number, annualRate: number, years: number): number {
     const monthlyRate = annualRate / 12 / 100;
     const numPayments = years * 12;
-    if (monthlyRate === 0) return principal / numPayments;
-    return (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+    if (monthlyRate === 0) return Math.round(principal / numPayments * 100) / 100;
+    const payment = (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
            (Math.pow(1 + monthlyRate, numPayments) - 1);
+    // Round to 2 decimal places for clean currency display
+    return Math.round(payment * 100) / 100;
   }
 
   /**
@@ -35,14 +37,16 @@ export class FinancialCalculations {
    * Calculate Net Operating Income (NOI)
    */
   static calculateNOI(effectiveGrossIncome: number, operatingExpenses: number): number {
-    return effectiveGrossIncome - operatingExpenses;
+    // Round to 2 decimal places for clean currency display
+    return Math.round((effectiveGrossIncome - operatingExpenses) * 100) / 100;
   }
 
   /**
    * Calculate Cash Flow
    */
   static calculateCashFlow(noi: number, debtService: number): number {
-    return noi - debtService;
+    // Round to 2 decimal places for clean currency display
+    return Math.round((noi - debtService) * 100) / 100;
   }
 
   /**
@@ -50,7 +54,8 @@ export class FinancialCalculations {
    */
   static calculateCapRate(noi: number, purchasePrice: number): number {
     if (!purchasePrice) return 0;
-    return (noi / purchasePrice) * 100;
+    // Round to 2 decimal places for clean display
+    return Math.round((noi / purchasePrice) * 10000) / 100;
   }
 
   /**
@@ -58,7 +63,8 @@ export class FinancialCalculations {
    */
   static calculateCashOnCashReturn(annualCashFlow: number, totalInvestment: number): number {
     if (!totalInvestment) return 0;
-    return (annualCashFlow / totalInvestment) * 100;
+    // Round to 2 decimal places for clean display
+    return Math.round((annualCashFlow / totalInvestment) * 10000) / 100;
   }
 
   /**
@@ -66,7 +72,8 @@ export class FinancialCalculations {
    */
   static calculateDSCR(noi: number, debtService: number): number {
     if (!debtService) return 0;
-    return noi / debtService;
+    // Round to 2 decimal places for clean display (e.g., 1.25)
+    return Math.round((noi / debtService) * 100) / 100;
   }
 
   /**
@@ -177,7 +184,9 @@ export class FinancialCalculations {
    * Shows how much income property generates relative to loan amount
    */
   static calculateDebtYield(noi: number, loanAmount: number): number {
-    return loanAmount > 0 ? (noi / loanAmount) * 100 : 0;
+    if (loanAmount <= 0) return 0;
+    // Round to 2 decimal places for clean display
+    return Math.round((noi / loanAmount) * 10000) / 100;
   }
 
   /**
@@ -185,7 +194,9 @@ export class FinancialCalculations {
    * Quick metric for initial property screening
    */
   static calculateGrossYield(annualRent: number, purchasePrice: number): number {
-    return purchasePrice > 0 ? (annualRent / purchasePrice) * 100 : 0;
+    if (purchasePrice <= 0) return 0;
+    // Round to 2 decimal places for clean display
+    return Math.round((annualRent / purchasePrice) * 10000) / 100;
   }
 
   /**
@@ -266,7 +277,9 @@ export class FinancialCalculations {
    * Calculate Operating Expense Ratio
    */
   static calculateOperatingExpenseRatio(operatingExpenses: number, effectiveGrossIncome: number): number {
-    return effectiveGrossIncome > 0 ? (operatingExpenses / effectiveGrossIncome) * 100 : 0;
+    if (effectiveGrossIncome <= 0) return 0;
+    // Round to 2 decimal places for clean display
+    return Math.round((operatingExpenses / effectiveGrossIncome) * 10000) / 100;
   }
 
   /**

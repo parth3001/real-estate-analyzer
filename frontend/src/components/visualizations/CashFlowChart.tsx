@@ -20,6 +20,7 @@ import {
   useTheme,
   Divider,
 } from '@mui/material';
+import { formatCurrency } from '../../utils/formatters';
 
 // Types for the component props
 interface CashFlowChartProps {
@@ -38,15 +39,7 @@ interface CashFlowChartProps {
   title?: string;
 }
 
-// Format currency for tooltips and labels
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
+// Using standardized formatCurrency from utils
 
 /**
  * Cash Flow Chart Component

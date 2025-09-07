@@ -1,6 +1,16 @@
 import { SFRData } from '../types/propertyTypes';
 import { FinancialCalculations } from '../utils/financialCalculations';
 
+// Precision utilities for clean calculations
+const roundCurrency = (value: number): number => {
+  return Math.round(value * 100) / 100;
+};
+
+const roundPercent = (value: number, decimals: number = 2): number => {
+  const multiplier = Math.pow(10, decimals);
+  return Math.round(value * multiplier) / multiplier;
+};
+
 interface QuickMetrics {
   monthlyAnalysis: {
     income: { gross: number; effective: number };
@@ -57,42 +67,43 @@ export class QuickCalculationService {
     const loanAmount = purchasePrice - downPayment;
     const monthlyPayment = FinancialCalculations.calculateMortgage(loanAmount, interestRate, loanTerm);
     
-    // Monthly income
-    const grossMonthlyIncome = monthlyRent;
-    const vacancyLoss = (grossMonthlyIncome * vacancyRate) / 100;
-    const effectiveMonthlyIncome = grossMonthlyIncome - vacancyLoss;
+    // Monthly income (with precision)
+    const grossMonthlyIncome = roundCurrency(monthlyRent);
+    const vacancyLoss = roundCurrency((grossMonthlyIncome * vacancyRate) / 100);
+    const effectiveMonthlyIncome = roundCurrency(grossMonthlyIncome - vacancyLoss);
     
-    // Monthly expenses
-    const monthlyPropertyTax = (purchasePrice * propertyTaxRate / 100) / 12;
-    const monthlyInsurance = (purchasePrice * insuranceRate / 100) / 12;
-    const monthlyMaintenance = maintenanceCost / 12;
-    const monthlyManagement = (grossMonthlyIncome * propertyManagementRate) / 100;
+    // Monthly expenses (with precision)
+    const monthlyPropertyTax = roundCurrency((purchasePrice * propertyTaxRate / 100) / 12);
+    const monthlyInsurance = roundCurrency((purchasePrice * insuranceRate / 100) / 12);
+    const monthlyMaintenance = roundCurrency(maintenanceCost / 12);
+    const monthlyManagement = roundCurrency((grossMonthlyIncome * propertyManagementRate) / 100);
     
-    const totalOperatingExpenses = 
+    const totalOperatingExpenses = roundCurrency(
       monthlyPropertyTax + 
       monthlyInsurance + 
       monthlyMaintenance + 
       monthlyManagement + 
-      vacancyLoss;
+      vacancyLoss
+    );
     
-    const totalExpenses = totalOperatingExpenses + monthlyPayment;
-    const monthlyCashFlow = effectiveMonthlyIncome - totalExpenses;
+    const totalExpenses = roundCurrency(totalOperatingExpenses + monthlyPayment);
+    const monthlyCashFlow = roundCurrency(effectiveMonthlyIncome - totalExpenses);
     
-    // Annual calculations
-    const annualNOI = (effectiveMonthlyIncome - totalOperatingExpenses) * 12;
-    const annualDebtService = monthlyPayment * 12;
-    const annualCashFlow = monthlyCashFlow * 12;
+    // Annual calculations (with precision)
+    const annualNOI = roundCurrency((effectiveMonthlyIncome - totalOperatingExpenses) * 12);
+    const annualDebtService = roundCurrency(monthlyPayment * 12);
+    const annualCashFlow = roundCurrency(monthlyCashFlow * 12);
     
-    // Key metrics
-    const totalInvestment = downPayment + (closingCosts || 0) + (capitalInvestments || 0);
-    const capRate = purchasePrice > 0 ? (annualNOI / purchasePrice) : 0;
-    const cashOnCashReturn = totalInvestment > 0 ? (annualCashFlow / totalInvestment) : 0;
-    const dscr = annualDebtService > 0 ? annualNOI / annualDebtService : Infinity;
+    // Key metrics (consistent percentage format with FinancialCalculations.ts)
+    const totalInvestment = roundCurrency(downPayment + (closingCosts || 0) + (capitalInvestments || 0));
+    const capRate = purchasePrice > 0 ? roundPercent((annualNOI / purchasePrice) * 100) : 0;
+    const cashOnCashReturn = totalInvestment > 0 ? roundPercent((annualCashFlow / totalInvestment) * 100) : 0;
+    const dscr = annualDebtService > 0 ? Math.round((annualNOI / annualDebtService) * 100) / 100 : 0; // DSCR is a ratio (e.g., 1.25), not percentage
     
-    // New metrics for enhanced calculation accuracy
-    const debtYield = loanAmount > 0 ? (annualNOI / loanAmount) : 0;
-    const grossYield = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) : 0;
-    const operatingExpenseRatio = effectiveMonthlyIncome > 0 ? (totalOperatingExpenses / effectiveMonthlyIncome) : 0;
+    // New metrics for enhanced calculation accuracy (all as percentages with precision)
+    const debtYield = loanAmount > 0 ? roundPercent((annualNOI / loanAmount) * 100) : 0;
+    const grossYield = purchasePrice > 0 ? roundPercent(((monthlyRent * 12) / purchasePrice) * 100) : 0;
+    const operatingExpenseRatio = effectiveMonthlyIncome > 0 ? roundPercent((totalOperatingExpenses / effectiveMonthlyIncome) * 100) : 0;
     
     return {
       monthlyAnalysis: {

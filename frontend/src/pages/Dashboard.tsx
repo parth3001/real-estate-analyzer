@@ -26,6 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AppleButton, AppleCard, AppleMetricCard } from '../components/ui/AppleComponents';
+import { ConfidenceIndicator } from '../components/ui/ConfidenceIndicator';
 import { propertyApi } from '../services/api';
 
 // Dashboard data interfaces
@@ -38,6 +39,10 @@ interface RecentAnalysis {
   aiScore?: number;
   monthlyFlow?: number;
   capRate?: number;
+  confidence?: {
+    level: 1 | 2 | 3;
+    source: string;
+  };
 }
 
 interface MarketTrend {
@@ -64,6 +69,33 @@ const Dashboard: React.FC = () => {
   const [marketTrends, setMarketTrends] = useState<MarketTrend[]>([]);
   const [savedPropertiesCount, setSavedPropertiesCount] = useState(0);
 
+  // Calculate investment insights level for saved properties
+  const calculateSavedPropertyInsightsLevel = (property: any): 1 | 2 | 3 => {
+    // Check if backend confidence level is available
+    if (property.confidence?.level) {
+      return property.confidence.level as 1 | 2 | 3;
+    }
+    
+    // Fallback calculation based on property analysis data
+    // Level 3: Full analysis with complete metrics and AI insights
+    if (property.analysis?.investmentDecision?.professionalAssessment?.dealQuality &&
+        property.analysis?.cashFlow?.monthlyCashFlow !== undefined &&
+        property.analysis?.keyMetrics?.capRate &&
+        property.analysis?.aiEnhancedInsights) {
+      return 3;
+    }
+    
+    // Level 2: Basic analysis with some key metrics
+    if (property.analysis?.cashFlow?.monthlyCashFlow !== undefined ||
+        property.analysis?.keyMetrics?.capRate ||
+        property.analysis?.investmentDecision?.professionalAssessment?.dealQuality) {
+      return 2;
+    }
+    
+    // Level 1: Basic property info only
+    return 1;
+  };
+
   // Load dashboard data
   useEffect(() => {
     loadDashboardData();
@@ -80,18 +112,25 @@ const Dashboard: React.FC = () => {
         setSavedPropertiesCount(properties.length);
         
         // Convert saved properties to recent analyses format
-        const analyses: RecentAnalysis[] = properties.slice(0, 3).map((prop: any) => ({
-          id: prop._id,
-          address: prop.propertyAddress ? 
-            `${prop.propertyAddress.street || ''}, ${prop.propertyAddress.city || ''}, ${prop.propertyAddress.state || ''}` : 
-            prop.propertyName || 'Unknown Property',
-          type: prop.propertyType || 'SFR',
-          date: prop.updatedAt || prop.createdAt,
-          status: 'completed',
-          aiScore: prop.analysis?.investmentDecision?.professionalAssessment?.dealQuality || undefined,
-          monthlyFlow: prop.analysis?.cashFlow?.monthlyCashFlow || undefined,
-          capRate: prop.analysis?.keyMetrics?.capRate ? prop.analysis.keyMetrics.capRate : undefined
-        }));
+        const analyses: RecentAnalysis[] = properties.slice(0, 3).map((prop: any) => {
+          const confidenceLevel = calculateSavedPropertyInsightsLevel(prop);
+          return {
+            id: prop._id,
+            address: prop.propertyAddress ? 
+              `${prop.propertyAddress.street || ''}, ${prop.propertyAddress.city || ''}, ${prop.propertyAddress.state || ''}` : 
+              prop.propertyName || 'Unknown Property',
+            type: prop.propertyType || 'SFR',
+            date: prop.updatedAt || prop.createdAt,
+            status: 'completed',
+            aiScore: prop.analysis?.investmentDecision?.professionalAssessment?.dealQuality || undefined,
+            monthlyFlow: prop.analysis?.cashFlow?.monthlyCashFlow || undefined,
+            capRate: prop.analysis?.keyMetrics?.capRate ? prop.analysis.keyMetrics.capRate : undefined,
+            confidence: {
+              level: confidenceLevel,
+              source: 'Direct Analysis'
+            }
+          };
+        });
         
         setRecentAnalyses(analyses);
         
@@ -512,9 +551,18 @@ const Dashboard: React.FC = () => {
                     </Box>
                   </Box>
                   
-                  <IconButton size="small">
-                    <MoreVertIcon />
-                  </IconButton>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                    {analysis.confidence && (
+                      <ConfidenceIndicator
+                        level={analysis.confidence.level}
+                        size="small"
+                        source={analysis.confidence.source}
+                      />
+                    )}
+                    <IconButton size="small">
+                      <MoreVertIcon />
+                    </IconButton>
+                  </Box>
                 </Box>
 
                 {analysis.status === 'completed' && (
@@ -529,6 +577,16 @@ const Dashboard: React.FC = () => {
                             <Typography variant="caption" color="text.secondary">
                               Deal Quality
                             </Typography>
+                            {analysis.confidence?.level === 3 && (
+                              <Typography variant="caption" sx={{ 
+                                fontSize: '0.6rem',
+                                color: 'text.secondary',
+                                display: 'block',
+                                mt: 0.25
+                              }}>
+                                ●●● Complete
+                              </Typography>
+                            )}
                           </Box>
                         </Box>
                       )}

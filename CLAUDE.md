@@ -88,6 +88,27 @@ User Input (Frontend) → Backend Decision Engine → Single Verdict + Score →
                     No Duplicate Logic, No Contradictory Messages
 ```
 
+### **Financial Precision Principle** 💰
+- 🔢 **Calculations**: ALWAYS maintain full floating-point precision
+- 📊 **Backend**: Never round intermediate calculation values
+- 💾 **Database**: Store values with full precision
+- 🖥️ **Frontend Display**: Round ONLY for user presentation
+- 📐 **Formula**: "Round for display, never for calculation"
+
+**Implementation Strategy:**
+```javascript
+// ✅ CORRECT - Backend calculation
+const monthlyTax = (purchasePrice * taxRate / 100) / 12; // Full precision
+const totalExpenses = monthlyTax + insurance + maintenance; // Full precision
+
+// ✅ CORRECT - Frontend display only
+display: formatCurrency(totalExpenses) // Rounds for display
+calculate: totalExpenses - income // Uses full precision
+
+// ❌ WRONG - Rounding in calculations
+const monthlyTax = Math.round((purchasePrice * taxRate / 100) / 12 * 100) / 100; // Loss of precision
+```
+
 [... rest of the existing file content remains the same ...]
 
 ## 📝 **Claude's Memory Log**

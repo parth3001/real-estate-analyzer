@@ -16,6 +16,7 @@ import {
   Assessment,
   People
 } from '@mui/icons-material';
+import { formatCurrency } from '../../utils/formatters';
 
 // Define proper TypeScript interfaces following architecture principles
 interface MarketContextProps {
@@ -100,12 +101,7 @@ export const MarketContextSection: React.FC<MarketContextProps> = ({
     );
   }
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      maximumFractionDigits: 0 
-    }).format(value);
+  // Using standardized formatCurrency from utils
 
   const formatPercent = (value: number) =>
     new Intl.NumberFormat('en-US', {

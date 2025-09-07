@@ -24,10 +24,11 @@ import {
 import { Link } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Analytics as AnalyticsIcon, Person as PersonIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
+import { pipelineApi } from '../services/pipelineApi';
 import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
+import { ConfidenceIndicator, calculateConfidence } from '../components/ui/ConfidenceIndicator';
 
 interface SavedProperty {
   _id: string;
@@ -49,8 +50,24 @@ interface SavedProperty {
       cashOnCashReturn?: number;
       dscr?: number;
     };
+    monthlyAnalysis?: {
+      cashFlow?: number;
+    };
+    investmentDecision?: {
+      verdict?: string;
+    };
     // Other analysis fields might be present
     [key: string]: any;
+  };
+  confidence?: {
+    level: 1 | 2 | 3;
+    dataSource: string;
+    calculationMethod: string;
+  };
+  quickMetrics?: {
+    cashFlow?: number;
+    capRate?: number;
+    cashOnCashReturn?: number;
   };
   // Allow other fields that might be in the response
   [key: string]: any;
@@ -65,6 +82,7 @@ const SavedProperties: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedDeal] = useState<any>(null);
+  const [isImportingToPipeline, setIsImportingToPipeline] = useState<{[key: string]: boolean}>({});
 
   // Fetch saved properties on component mount
   useEffect(() => {
@@ -189,6 +207,34 @@ const SavedProperties: React.FC = () => {
     setPropertyToDelete(null);
   };
 
+  // Handle importing property to Pipeline
+  const handleImportToPipeline = async (property: SavedProperty) => {
+    setIsImportingToPipeline(prev => ({...prev, [property._id]: true}));
+    setError(null);
+    
+    try {
+      console.log('Importing property to Pipeline:', property._id);
+      
+      const result = await pipelineApi.convertAnalysisToPipeline(
+        property._id,
+        {
+          channel: 'OTHER',
+          contact: 'Imported from Saved Properties',
+          notes: 'Converted from existing analysis'
+        },
+        `Imported saved property: ${property.propertyName || 'Unknown Property'}`
+      );
+      
+      console.log('Successfully imported to Pipeline:', result);
+      setSuccessMessage(`"${property.propertyName}" successfully added to Pipeline!`);
+    } catch (err) {
+      console.error('Error importing to Pipeline:', err);
+      setError('Error importing to Pipeline: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsImportingToPipeline(prev => ({...prev, [property._id]: false}));
+    }
+  };
+
   // Add a function to check if property has valid structure
   const isValidProperty = (property: any): boolean => {
     if (!property || typeof property !== 'object') return false;
@@ -281,11 +327,65 @@ const SavedProperties: React.FC = () => {
                 <TableRow>
                   <TableCell>Property Name</TableCell>
                   <TableCell>Address</TableCell>
+                  <TableCell align="center">
+                    <Tooltip 
+                      title={
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Investment Insights
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                            ●○○ Basic Insights - Address, price, basic info
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                            ●●○ Good Insights - Cash flow and metrics calculated
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            ●●● Complete Insights - Full analysis with AI recommendations
+                          </Typography>
+                        </Box>
+                      }
+                      placement="top"
+                      arrow
+                    >
+                      <Typography component="span" sx={{ cursor: 'help', borderBottom: '1px dotted' }}>
+                        Investment Insights
+                      </Typography>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell align="right">Price</TableCell>
                   <TableCell align="right">Cap Rate</TableCell>
                   <TableCell align="right">CoC Return</TableCell>
                   <TableCell align="right">IRR</TableCell>
-                  <TableCell align="right">Deal Quality</TableCell>
+                  <TableCell align="right">
+                    <Tooltip 
+                      title={
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Investment Rating
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                            Our V3.0 Investment Engine's quality assessment:
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                            ●○○ Basic - Property info available
+                          </Typography>
+                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+                            ●●○ Good - Financial metrics calculated
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            ●●● Excellent - Full professional analysis with deal quality score
+                          </Typography>
+                        </Box>
+                      }
+                      placement="top"
+                      arrow
+                    >
+                      <Typography component="span" sx={{ cursor: 'help', borderBottom: '1px dotted' }}>
+                        Investment Rating
+                      </Typography>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell>Last Updated</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -295,7 +395,7 @@ const SavedProperties: React.FC = () => {
                   if (!isValidProperty(property)) {
                     return (
                       <TableRow key={property._id || 'invalid-' + Math.random()}>
-                        <TableCell colSpan={9}>
+                        <TableCell colSpan={10}>
                           <Typography color="error">Invalid property data</Typography>
                         </TableCell>
                       </TableRow>
@@ -310,29 +410,50 @@ const SavedProperties: React.FC = () => {
                       sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                     >
                       <TableCell component="th" scope="row">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        <Box>
+                          <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.3 }}>
                             {property.propertyName || 'Unnamed Property'}
                           </Typography>
-                          <Chip 
-                            label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
-                            color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
-                            size="small"
-                          />
-                          <Chip
-                            size="small"
-                            icon={isManualProperty ? <PersonIcon /> : <AnalyticsIcon />}
-                            label={isManualProperty ? "Manual" : "Analyzed"}
-                            color={isManualProperty ? "default" : "primary"}
-                            variant="outlined"
-                          />
+                          <Box sx={{ mt: 0.5 }}>
+                            <Chip 
+                              label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
+                              color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
+                              size="small"
+                              sx={{ height: 20, fontSize: '0.7rem' }}
+                            />
+                          </Box>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {property.propertyAddress ? 
-                          `${property.propertyAddress.street || ''}, ${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}` : 
+                        {property.propertyAddress ? (
+                          <Box>
+                            <Typography variant="body2" sx={{ lineHeight: 1.3 }}>
+                              {property.propertyAddress.street || 'Street not available'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.3 }}>
+                              {`${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}`.trim()}
+                            </Typography>
+                          </Box>
+                        ) : (
                           'Address not available'
-                        }
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        {(() => {
+                          // Calculate investment insights level
+                          const insightsLevel = calculateConfidence(property);
+                          
+                          // Determine source for tooltip
+                          const source = isManualProperty ? 'Manual Entry' : 'Full Analysis';
+                          
+                          return (
+                            <ConfidenceIndicator 
+                              level={insightsLevel} 
+                              size="small" 
+                              source={source}
+                            />
+                          );
+                        })()}
                       </TableCell>
                       <TableCell align="right">
                         {formatCurrency(property.purchasePrice)}
@@ -356,10 +477,31 @@ const SavedProperties: React.FC = () => {
                         }
                       </TableCell>
                       <TableCell align="right">
-                        {typeof property.analysis?.investmentDecision?.professionalAssessment?.dealQuality === 'number' ? 
-                          `${property.analysis.investmentDecision.professionalAssessment.dealQuality}/100` : 
-                          'N/A'
-                        }
+                        {(() => {
+                          const dealQuality = (property.analysis?.investmentDecision as any)?.professionalAssessment?.dealQuality;
+                          const verdict = (property.analysis?.investmentDecision as any)?.verdict;
+                          
+                          if (typeof dealQuality === 'number') {
+                            return (
+                              <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {dealQuality}/100
+                                </Typography>
+                                {verdict && (
+                                  <Typography variant="caption" sx={{ 
+                                    color: verdict === 'BUY' ? 'success.main' : 
+                                           verdict === 'NEGOTIATE' ? 'warning.main' :
+                                           verdict === 'CAUTION' ? 'info.main' : 'error.main',
+                                    fontWeight: 500
+                                  }}>
+                                    {verdict}
+                                  </Typography>
+                                )}
+                              </Box>
+                            );
+                          }
+                          return 'N/A';
+                        })()}
                       </TableCell>
                       <TableCell>
                         {formatDate(property.updatedAt)}
@@ -374,6 +516,21 @@ const SavedProperties: React.FC = () => {
                             <VisibilityIcon />
                           </IconButton>
                         </Tooltip>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => handleImportToPipeline(property)}
+                          disabled={isImportingToPipeline[property._id]}
+                          sx={{ 
+                            minWidth: 'auto',
+                            fontSize: '0.75rem',
+                            px: 1.5,
+                            py: 0.5,
+                            textTransform: 'none'
+                          }}
+                        >
+                          {isImportingToPipeline[property._id] ? 'Adding...' : 'Add to Pipeline'}
+                        </Button>
                         <Tooltip title="Delete">
                           <IconButton 
                             color="error" 

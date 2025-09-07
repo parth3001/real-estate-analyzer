@@ -2361,3 +2361,1011 @@ Investment decisions should adapt to market cycles. Early cycle (recovery) allow
 - **Documentation Updates**: User-facing and technical documentation maintained
 
 **Status**: 📋 **APPROVED STRATEGIC PLAN - PHASE 1 IMPLEMENTATION READY**
+
+---
+
+# Epic: Platform Trust & Credibility
+
+**Priority**: P3 (Post Deal Pipeline & MF Analysis)  
+**Business Impact**: Medium (User confidence and conversion optimization)  
+**User Perspective**: New visitors and trial users evaluating platform credibility  
+**Timeline**: 8-10 weeks (After core features complete)  
+**Approach**: Build user confidence through transparency, metrics, and social proof
+
+## 🎯 **EPIC OVERVIEW**
+
+### **Problem Statement**
+*"I'm considering using this platform for my real estate investments, but I need to know if I can trust the calculations and if other investors are successfully using this tool. I want transparency about how calculations work and evidence that this isn't just another unreliable calculator."*
+
+### **Solution Vision**
+Build comprehensive trust indicators and transparency features:
+- **Social Proof** (30%): Usage metrics, activity indicators, user feedback
+- **Transparency** (40%): Calculation methodology, data sources, accuracy badges
+- **Credibility Signals** (30%): Security badges, platform updates, professional standards
+
+### **Target Users**
+- **Primary**: First-time visitors evaluating platform credibility
+- **Secondary**: Trial users deciding whether to upgrade to paid plans
+- **Tertiary**: Existing users seeking deeper calculation understanding
+
+---
+
+## 🏗️ **PLATFORM TRUST FEATURES**
+
+### **User Story PT-1: Analysis Counter Implementation**
+```
+As an investor visiting Analyzr,
+I want to see how many analyses have been completed on the platform,
+So that I can trust that others are successfully using this tool.
+```
+
+**Business Context**: *"When I see '12,847 analyses completed,' I know this isn't some abandoned side project. I want proof that real investors are using this daily."*
+
+**Acceptance Criteria**:
+- [ ] Counter displays on homepage header bar
+- [ ] Counter increments after each completed analysis
+- [ ] Counter persists in database (not reset on deploy)
+- [ ] Counter shows with comma formatting (e.g., "1,234")
+- [ ] Counter has animated count-up effect on page load
+
+**Technical Requirements**:
+- [ ] Add total_analyses field to platform stats collection
+- [ ] Increment on successful analysis completion
+- [ ] Cache value for performance
+
+**Priority**: High - immediate credibility signal  
+**Effort**: 3-5 days  
+**Business Value**: High - social proof for new visitors
+
+---
+
+### **User Story PT-2: Live Activity Indicator**
+```
+As an investor,
+I want to see current platform activity,
+So that I know the platform is actively used and maintained.
+```
+
+**Business Context**: *"'Active Today: 47 analyses' tells me this platform has a real user base. 'Last Analysis: 12 minutes ago' shows it's not dormant."*
+
+**Acceptance Criteria**:
+- [ ] Show "Active Today" count on dashboard
+- [ ] Show "Last Analysis: X minutes ago" indicator
+- [ ] Display green "Live" badge when system operational
+- [ ] Update counts in real-time or every 5 minutes
+- [ ] Reset daily counter at midnight UTC
+
+**Technical Requirements**:
+- [ ] Track daily active analyses
+- [ ] Use Redis for real-time counters
+- [ ] Implement WebSocket for live updates (optional)
+
+**Priority**: Medium - activity proof  
+**Effort**: 1 week  
+**Business Value**: Medium - shows platform vitality
+
+---
+
+### **User Story PT-3: Calculation Accuracy Badge**
+```
+As an investor,
+I want to see accuracy and reliability indicators,
+So that I can trust the calculations are professional-grade.
+```
+
+**Business Context**: *"'99.9% Calculation Accuracy' and '23 Metrics Calculated' badges give me confidence this isn't some basic calculator cobbled together."*
+
+**Acceptance Criteria**:
+- [ ] Display "99.9% Calculation Accuracy" badge on analysis results
+- [ ] Add "23 Metrics Calculated" indicator
+- [ ] Show "Institutional-Grade Formulas" badge
+- [ ] Include tooltip explaining accuracy verification
+- [ ] Link to methodology page from badges
+
+**Technical Requirements**:
+- [ ] Static badges initially
+- [ ] Design consistent badge component
+- [ ] Ensure mobile responsive
+
+**Priority**: High - calculation confidence  
+**Effort**: 3-5 days  
+**Business Value**: High - professional credibility
+
+---
+
+### **User Story PT-4: Methodology Transparency Page**
+```
+As an investor,
+I want to understand how calculations are performed,
+So that I can verify the platform uses industry standards.
+```
+
+**Business Context**: *"I want to see the actual formulas used. If they're hiding the math, I can't trust the results. Show me it's real IRR, not some made-up metric."*
+
+**Acceptance Criteria**:
+- [ ] Create /methodology or /how-we-calculate page
+- [ ] List all major formulas with explanations
+- [ ] Show example calculations
+- [ ] Include data source citations
+- [ ] Add "Last Updated" date
+- [ ] Link from analysis results page
+
+**Technical Requirements**:
+- [ ] Create new route and page component
+- [ ] Use LaTeX or MathJax for formula rendering
+- [ ] Include SEO optimization
+
+**Priority**: High - transparency requirement  
+**Effort**: 1-2 weeks  
+**Business Value**: High - builds deep trust
+
+---
+
+### **User Story PT-5: Platform Update Indicators**
+```
+As an investor,
+I want to see when data and platform were last updated,
+So that I know I'm working with current information.
+```
+
+**Business Context**: *"'Market Data Updated: 6 hours ago' shows me the data is fresh. 'Platform Version: 3.1.2' tells me it's actively maintained."*
+
+**Acceptance Criteria**:
+- [ ] Show "Market Data Updated: X hours ago" on analysis page
+- [ ] Display "Platform Version: X.X.X" in footer
+- [ ] Add "Last Updated" timestamp to key data points
+- [ ] Show update log or changelog link
+- [ ] Green/yellow/red status for data freshness
+
+**Technical Requirements**:
+- [ ] Track last Census API call timestamp
+- [ ] Version number from package.json
+- [ ] Implement data freshness logic
+
+**Priority**: Medium - maintenance proof  
+**Effort**: 5-7 days  
+**Business Value**: Medium - shows active development
+
+---
+
+### **User Story PT-6: Simple Feedback Widget**
+```
+As a platform owner,
+I want to collect user success stories,
+So that I can build authentic case studies.
+```
+
+**Business Context**: *"Collecting 'This helped me avoid a bad deal' stories creates authentic testimonials that build trust for future users."*
+
+**Acceptance Criteria**:
+- [ ] Add "Was this helpful?" widget after analysis
+- [ ] Include quick Yes/No/Maybe response
+- [ ] Optional text field for details
+- [ ] Email follow-up capability (with permission)
+- [ ] Store feedback in database
+
+**Technical Requirements**:
+- [ ] Non-intrusive placement
+- [ ] Mobile-friendly design
+- [ ] GDPR compliant if storing emails
+
+**Priority**: Medium - feedback collection  
+**Effort**: 1 week  
+**Business Value**: High - testimonial generation
+
+---
+
+### **User Story PT-7: Platform Statistics Dashboard**
+```
+As an investor,
+I want to see aggregate platform performance metrics,
+So that I can gauge platform reliability and usage.
+```
+
+**Business Context**: *"'127 analyses this week, 99.8% uptime, 2.3s average analysis time' gives me concrete evidence this platform performs reliably."*
+
+**Acceptance Criteria**:
+- [ ] Create stats section on homepage or about page
+- [ ] Display total analyses, active users this week
+- [ ] Show average analysis time
+- [ ] Include uptime percentage (when available)
+- [ ] Update automatically daily
+
+**Technical Requirements**:
+- [ ] Aggregate stats collection
+- [ ] Consider caching for performance
+- [ ] Design clean stats cards
+
+**Priority**: Medium - comprehensive metrics  
+**Effort**: 1-2 weeks  
+**Business Value**: Medium-High - full transparency
+
+---
+
+### **User Story PT-8: Trust Bar Component**
+```
+As an investor,
+I want to see key trust indicators prominently,
+So that I immediately feel confident in the platform.
+```
+
+**Business Context**: *"A trust bar with '12,847 Analyses | 99.9% Accurate | Last Updated: 3hrs ago' gives me instant confidence without digging through pages."*
+
+**Acceptance Criteria**:
+- [ ] Create horizontal trust bar for homepage
+- [ ] Include 3-4 key metrics/badges
+- [ ] Responsive design (stack on mobile)
+- [ ] Subtle animation on scroll into view
+- [ ] A/B test placement (header vs hero section)
+
+**Technical Requirements**:
+- [ ] Reusable component
+- [ ] Performance optimized
+- [ ] Configurable metrics
+
+**Priority**: High - immediate trust signal  
+**Effort**: 5-7 days  
+**Business Value**: High - first impression optimization
+
+---
+
+### **User Story PT-9: Progress Indicators**
+```
+As a returning user,
+I want to see platform growth and improvements,
+So that I know the platform is actively developed.
+```
+
+**Business Context**: *"Seeing 'New: Deal Optimizer' and 'Coming Soon: Multi-Family Analysis' shows me this platform is growing and improving."*
+
+**Acceptance Criteria**:
+- [ ] Show version history/changelog
+- [ ] Display "New features" badge for recent additions
+- [ ] Include "Coming soon" section for roadmap
+- [ ] Add growth metrics (if impressive)
+- [ ] Update monthly
+
+**Technical Requirements**:
+- [ ] Link to GitHub releases
+- [ ] Highlight last 3 updates
+- [ ] Keep promises realistic
+
+**Priority**: Low - development transparency  
+**Effort**: 3-5 days  
+**Business Value**: Medium - shows progress
+
+---
+
+### **User Story PT-10: Security & Privacy Badges**
+```
+As an investor concerned about data security,
+I want to see security certifications and privacy commitments,
+So that I feel safe entering property data.
+```
+
+**Business Context**: *"'SSL Secured,' 'Your Data is Private,' and 'We Never Sell Data' badges give me confidence to enter sensitive financial information."*
+
+**Acceptance Criteria**:
+- [ ] Display SSL/HTTPS badge
+- [ ] Add "Your Data is Private" commitment
+- [ ] Include "No Data Sold" promise
+- [ ] Show encryption indicator on forms
+- [ ] Link to privacy policy
+
+**Technical Requirements**:
+- [ ] Verify SSL certificate
+- [ ] Create clear privacy policy
+- [ ] Consider SOC2 in future
+
+**Priority**: Medium - data security trust  
+**Effort**: 3-5 days  
+**Business Value**: Medium-High - privacy assurance
+
+---
+
+### **User Story PT-11: Beta User Program**
+```
+As a platform owner,
+I want to recruit early power users,
+So that I can gather authentic success stories.
+```
+
+**Business Context**: *"Beta users who save $50K by avoiding bad deals become powerful testimonials and case studies for marketing."*
+
+**Acceptance Criteria**:
+- [ ] Create beta user application form
+- [ ] Offer 10 free pro accounts
+- [ ] Set up success tracking system
+- [ ] Design follow-up email sequence
+- [ ] Create beta user badge/recognition
+
+**Technical Requirements**:
+- [ ] Track beta user cohort
+- [ ] Automate follow-up emails
+- [ ] Build relationship management
+
+**Priority**: Low - testimonial generation  
+**Effort**: 1-2 weeks  
+**Business Value**: High - case study creation
+
+---
+
+### **User Story PT-12: Achievement System (Future)**
+```
+As a regular user,
+I want to earn achievements for platform usage,
+So that I feel recognized and build platform loyalty.
+```
+
+**Business Context**: *"'10 Analyses Completed' and 'Deal Optimizer Expert' badges gamify the experience and encourage continued usage."*
+
+**Acceptance Criteria**:
+- [ ] Design achievement milestones
+- [ ] Create badge visual system
+- [ ] Track user progress
+- [ ] Display on user profile
+- [ ] Share achievements socially (optional)
+
+**Technical Requirements**:
+- [ ] Gamification framework
+- [ ] Database schema for achievements
+- [ ] Consider notification system
+
+**Priority**: Future - engagement optimization  
+**Effort**: 2-3 weeks  
+**Business Value**: Medium - user retention
+
+---
+
+## **📊 IMPLEMENTATION ROADMAP**
+
+### **Phase 1: Immediate Trust Signals** (Weeks 1-2)
+- [ ] User Story PT-1: Analysis Counter Implementation
+- [ ] User Story PT-3: Calculation Accuracy Badge
+- [ ] User Story PT-8: Trust Bar Component
+- [ ] **Success Metric**: Increased homepage engagement and trial conversion
+
+### **Phase 2: Transparency & Credibility** (Weeks 3-5)
+- [ ] User Story PT-4: Methodology Transparency Page
+- [ ] User Story PT-5: Platform Update Indicators
+- [ ] User Story PT-10: Security & Privacy Badges
+- [ ] **Success Metric**: Reduced "how do you calculate" support tickets
+
+### **Phase 3: Social Proof & Activity** (Weeks 6-7)
+- [ ] User Story PT-2: Live Activity Indicator
+- [ ] User Story PT-6: Simple Feedback Widget
+- [ ] User Story PT-7: Platform Statistics Dashboard
+- [ ] **Success Metric**: Increased user confidence and longer session times
+
+### **Phase 4: Engagement & Growth** (Weeks 8-10)
+- [ ] User Story PT-9: Progress Indicators
+- [ ] User Story PT-11: Beta User Program
+- [ ] User Story PT-12: Achievement System (if resources allow)
+- [ ] **Success Metric**: Higher user retention and referral rates
+
+---
+
+## **🎯 SUCCESS METRICS & VALIDATION**
+
+### **Trust & Credibility KPIs**:
+- **Conversion**: 20% improvement in trial-to-paid conversion rate
+- **Engagement**: 30% increase in time spent on platform by new users
+- **Support**: 40% reduction in "how accurate are calculations" tickets
+- **Retention**: 15% improvement in 30-day user retention
+
+### **Business Validation Checkpoints**:
+- **A/B Testing**: Trust bar placement and messaging optimization
+- **User Feedback**: 85%+ users report increased confidence in platform
+- **Competitive Analysis**: Trust signals match or exceed competitor offerings
+
+### **Technical Performance Standards**:
+- **Load Impact**: <50ms additional page load time for trust indicators
+- **Uptime**: 99.9% availability maintained for all trust features
+- **Privacy**: GDPR/CCPA compliant data handling for feedback collection
+
+---
+
+## **💰 ROI & COST-BENEFIT**
+
+### **Development Investment**:
+- **Phase 1**: 2 developer-weeks ($4,000) - Immediate trust signals
+- **Phase 2**: 3 developer-weeks ($6,000) - Transparency features
+- **Phase 3**: 2 developer-weeks ($4,000) - Social proof
+- **Phase 4**: 3 developer-weeks ($6,000) - Engagement features
+- **Total**: ~10 weeks development, $20,000 investment
+
+### **Expected Business Returns**:
+- **Conversion Optimization**: +20% trial-to-paid conversion = +$15K/month recurring
+- **User Confidence**: Reduced churn and higher LTV
+- **Market Position**: "Most transparent" competitive positioning
+- **Support Reduction**: 40% fewer credibility-related support tickets
+
+### **Break-Even Analysis**:
+- **Target**: 30 additional paid subscribers to break even (achievable within 4-6 months)
+- **12-Month ROI**: 400-600% return on development investment
+- **Strategic Value**: Foundation for premium pricing and enterprise sales
+
+---
+
+## **🚀 COMMITMENT & QUALITY GATES**
+
+### **Non-Negotiable Requirements**:
+1. **No fake metrics** - All counters and statistics must be genuine
+2. **Privacy compliance** - GDPR/CCPA adherent feedback collection
+3. **Performance standards** - Trust indicators must not slow down platform
+4. **Transparency accuracy** - Methodology page must match actual calculations
+5. **Mobile optimization** - All trust signals work perfectly on mobile devices
+
+### **Quality Gate Checkpoints**:
+- **Accuracy Verification**: All displayed metrics verified against actual data
+- **Legal Review**: Privacy policies and data handling practices reviewed
+- **Performance Testing**: Trust features don't impact core platform performance
+- **User Testing**: A/B testing for optimal trust signal placement and messaging
+
+**Status**: 📋 **PLANNED FOR POST-CORE FEATURES - READY FOR FUTURE IMPLEMENTATION**
+
+---
+
+# Epic: Deal Pipeline Management System ✅ **~90% COMPLETED**
+
+**Goal**: Create a comprehensive deal tracking and management system that follows investors through their entire deal lifecycle, from initial discovery through closing, with multi-asset support and portfolio integration.
+
+## **🎉 IMPLEMENTATION SUCCESS SUMMARY**
+
+**Achievement**: Successfully delivered professional-grade deal pipeline system with advanced multi-asset support, V3.0 AI integration, and portfolio impact analysis - significantly exceeding initial scope expectations.
+
+### **✅ FULLY OPERATIONAL FEATURES:**
+- **Complete Kanban Workflow**: Drag-and-drop deal management with 6-stage pipeline
+- **Multi-Asset Support**: 15+ property types (SFR, Commercial, Self-Storage, Mobile Home Parks, etc.)  
+- **V3.0 Scoring Integration**: Universal Deal Quality scoring (0-100) across all asset types
+- **Professional Analysis**: Full integration with V3.0 Investment Decision Engine
+- **AI-Powered Insights**: Strategic recommendations, risk assessment, market positioning
+- **Portfolio Impact**: Individual deal analysis includes portfolio context and fit scoring
+- **Quick Analysis**: Skinny Calculator for rapid deal screening
+- **Source Tracking**: Full deal attribution with cost analysis and ROI tracking
+
+### **📊 CURRENT IMPLEMENTATION STATUS:**
+- **Tiers 1-3**: ✅ **100% Complete** (Foundation, Analysis, Multi-Asset)  
+- **Tier 4**: 🟡 **Core Features Complete** (AI Insights ✅, Market Alerts planned)
+- **Tier 5**: ✅ **100% Complete** (Portfolio Integration via individual deal analysis)
+- **Tier 6**: 📋 **Planned** (Document Management, Team Collaboration)
+
+**Production Readiness**: ✅ **FULLY OPERATIONAL** - Core investor workflow complete
+
+## **Epic Overview**
+
+**Business Context**: Real estate investors typically track 10-50 deals simultaneously across multiple stages (watching, analyzing, negotiating, under contract, closed/lost). Current solutions force investors to use multiple tools or manual tracking methods, leading to missed opportunities and inefficient deal management.
+
+**Target Users**: 
+- **Primary**: Individual investors with 1-10 properties seeking systematic deal management
+- **Secondary**: Small investment groups and emerging syndicators tracking multiple opportunities
+- **Growth Path**: Scales from individual tracking (Tier 1-2) to professional operations (Tier 5-6)
+
+**Strategic Value**: Positions platform as comprehensive real estate investment management solution, not just analysis tool. Creates sticky user engagement through daily workflow integration.
+
+---
+
+## **🏗️ PROPERTY TYPES & ARCHITECTURE DEFINITIONS**
+
+### **Core Property Types (Multi-Asset Support)**
+```typescript
+enum PropertyType {
+  // Residential
+  SFR = 'SINGLE_FAMILY',           // Single-family rentals
+  MULTIFAMILY = 'MULTIFAMILY',     // 2-4 units, small apartments
+  LARGE_MULTIFAMILY = 'LARGE_MF',  // 50+ units, complexes
+  
+  // Commercial  
+  RETAIL = 'RETAIL',               // Strip malls, restaurants, stores
+  OFFICE = 'OFFICE',               // Office buildings, co-working
+  INDUSTRIAL = 'INDUSTRIAL',        // Warehouses, manufacturing
+  MIXED_USE = 'MIXED_USE',         // Residential + commercial
+  
+  // Alternative Assets
+  SELF_STORAGE = 'SELF_STORAGE',   // Storage facilities
+  MOBILE_HOME_PARK = 'MHP',        // Mobile home communities  
+  RV_PARK = 'RV_PARK',            // RV and camping facilities
+  DATA_CENTER = 'DATA_CENTER',     // Technology infrastructure
+  HEALTHCARE = 'HEALTHCARE',       // Medical facilities, senior housing
+  
+  // Investment Strategies
+  BRRR = 'BRRR',                  // Buy-Rehab-Rent-Refinance strategy
+  FIX_FLIP = 'FIX_FLIP',          // Fix and flip properties
+  WHOLESALE = 'WHOLESALE',         // Wholesale contracts
+  
+  // Business Assets
+  BUSINESS = 'BUSINESS',           // Operating businesses with real estate
+  FRANCHISE = 'FRANCHISE',         // Franchise opportunities
+  
+  // Future Expansion Ready
+  OTHER = 'OTHER'                  // Custom/emerging asset types
+}
+
+enum PropertyStrategy {
+  BUY_HOLD = 'BUY_HOLD',          // Long-term rental income
+  BRRR = 'BRRR',                  // Buy-Rehab-Rent-Refinance cycle
+  FIX_FLIP = 'FIX_FLIP',          // Renovation and resale
+  WHOLESALE = 'WHOLESALE',         // Contract assignment
+  HOUSE_HACK = 'HOUSE_HACK',      // Owner-occupied rental
+  COMMERCIAL_LEASE = 'COMMERCIAL', // Commercial rental income
+  DEVELOPMENT = 'DEVELOPMENT',     // Ground-up development
+  VALUE_ADD = 'VALUE_ADD',        // Improvement and repositioning
+}
+```
+
+### **Deal Pipeline Stages**
+```typescript
+enum DealStage {
+  // Pre-Analysis
+  WATCHING = 'WATCHING',           // Monitoring for changes
+  INITIAL_REVIEW = 'INITIAL_REVIEW', // Quick evaluation
+  
+  // Analysis Phase  
+  ANALYZING = 'ANALYZING',         // Full financial analysis
+  UNDERWRITING = 'UNDERWRITING',   // Detailed due diligence
+  
+  // Active Negotiation
+  NEGOTIATING = 'NEGOTIATING',     // Price/terms discussion
+  LOI_SUBMITTED = 'LOI_SUBMITTED', // Letter of intent sent
+  
+  // Under Contract
+  UNDER_CONTRACT = 'UNDER_CONTRACT', // Contract executed
+  DUE_DILIGENCE = 'DUE_DILIGENCE',  // Inspection period
+  FINANCING = 'FINANCING',          // Loan processing
+  
+  // Resolution
+  CLOSING = 'CLOSING',             // Final settlement preparation
+  CLOSED_WON = 'CLOSED_WON',       // Successfully purchased
+  CLOSED_LOST = 'CLOSED_LOST',     // Deal fell through
+  PASSED = 'PASSED',               // Decided not to pursue
+}
+```
+
+---
+
+## **Tier 1: Deal Tracking Foundation** ✅ **COMPLETED**
+
+### **User Story DP-1: Basic Deal Pipeline Creation** ✅ **COMPLETED**
+**As an** investor tracking multiple property opportunities  
+**I want** to organize deals by their current stage in a visual pipeline  
+**So that** I can see all opportunities at a glance and track progress
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] Create new pipeline deals with essential information (name, address, price, type, source) ✅
+- [x] Visual Kanban board with 6 primary stages: Watching → Analyzing → Negotiating → Under Contract → Closed → Lost ✅
+- [x] Drag-and-drop deals between stages with automatic status updates ✅
+- [x] Deal cards show: property name, asking price, days in current stage, property type ✅
+- [x] Quick-add modal for rapid deal entry (max 5 required fields) ✅
+- [x] Mobile-responsive design supporting touch interactions ✅
+- [x] Filter deals by property type, price range, and date added ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] New `PipelineDeal` collection with polymorphic property support ✅
+- [x] RESTful API endpoints: GET, POST, PUT, DELETE `/api/pipeline/deals` ✅
+- [x] Drag-drop state management with optimistic UI updates using react-beautiful-dnd ✅
+- [x] Data validation for required fields and stage transition rules ✅
+
+**Status**: ✅ **PRODUCTION READY** - Full Kanban workflow with drag-and-drop operational
+
+---
+
+### **User Story DP-2: Deal Source Tracking** ✅ **COMPLETED**
+**As an** investor evaluating deal sources  
+**I want** to track where each deal originated  
+**So that** I can identify my most productive lead sources
+
+#### **Acceptance Criteria**: ✅ **FOUNDATION COMPLETED**
+- [x] Categorize deals by source: MLS, Agent, Direct Marketing, Online Platform, Referral, Cold Calling ✅
+- [x] Source attribution tracking with optional sub-categories (referrer, cost, notes) ✅
+- [x] Basic analytics support with source analysis data structure ✅
+- [x] Cost tracking per source for ROI analysis ✅
+- [x] Deal stage tracking: Won/Lost/Passed outcomes ✅
+- [ ] **Future Enhancement**: Advanced reporting dashboard and export functionality
+
+#### **Technical Requirements**: ✅ **IMPLEMENTED**
+- [x] Source taxonomy with hierarchical categories (DealSource enum) ✅
+- [x] Source attribution in PipelineDeal model with cost tracking ✅
+- [x] Analytics aggregation pipeline for conversion metrics ✅
+
+**Status**: ✅ **CORE FUNCTIONALITY COMPLETE** - Source tracking operational, advanced reporting planned
+
+---
+
+## **Tier 2: Analysis Integration** ✅ **COMPLETED**
+
+### **User Story DP-3: Seamless Analysis Integration** ✅ **COMPLETED**
+**As an** investor managing deal flow  
+**I want** to launch property analysis directly from pipeline deals  
+**So that** I can maintain context while performing detailed evaluation
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] "Analyze Deal" button on pipeline cards launches existing SFR/MF analysis flow ✅
+- [x] Analysis results automatically sync back to pipeline deal via analysisId linking ✅
+- [x] Deal cards display key metrics: Deal Quality Score, Verdict (BUY/NEGOTIATE/PASS), Cash Flow, Cap Rate ✅
+- [x] Analysis status tracking: Not Analyzed → In Progress → Complete ✅
+- [x] Quick analysis mode for rapid screening (Skinny Calculator vs full analysis) ✅
+- [x] Import from Saved Properties to Pipeline with full analysis integration ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] Bi-directional integration between Pipeline and Deal analysis systems ✅
+- [x] Analysis result caching and sync mechanisms via analysisId references ✅
+- [x] Quick analysis endpoints (Skinny Calculator) for rapid calculations ✅
+- [x] Status tracking and confidence indicators (1-3 levels) ✅
+
+**Status**: ✅ **PRODUCTION READY** - Full integration between Pipeline and V3.0 Analysis Engine
+
+---
+
+### **User Story DP-4: Deal Scoring and Prioritization** ✅ **COMPLETED**
+**As an** investor with limited time  
+**I want** deals automatically scored and ranked  
+**So that** I can focus on the highest-potential opportunities first
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] Universal scoring system (0-100 Deal Quality) across all property types via V3.0 Investment Decision Engine ✅
+- [x] Automatic deal ranking with Deal Quality scores displayed on cards ✅
+- [x] Color-coded priority indicators: Green (BUY), Yellow (NEGOTIATE/CAUTION), Red (PASS) ✅
+- [x] Strategy-based scoring via V3.0 professional assessment with investor goals integration ✅
+- [x] Deal quality scores integrated with confidence levels for prioritization ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] Universal scoring algorithm (V3.0 Investment Decision Engine) adaptable to different property types ✅
+- [x] Strategy-based scoring customization via portfolio context and investor goals ✅
+- [x] Quality scoring with weighted factors (Cash Flow 35%, IRR 25%, Market 15%, etc.) ✅
+
+**Status**: ✅ **PRODUCTION READY** - V3.0 Deal Quality scoring fully operational across all asset types
+
+---
+
+## **Tier 3: Multi-Asset Pipeline Support** ✅ **COMPLETED**
+
+### **User Story DP-5: Multi-Asset Deal Management** ✅ **COMPLETED**
+**As an** investor diversifying across property types  
+**I want** to track SFR, multifamily, commercial, and alternative assets in one pipeline  
+**So that** I can manage my entire investment strategy cohesively
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] Support for 15+ property types: SFR, MF, Commercial (Retail/Office/Industrial/Mixed), Self-Storage, Mobile Home Parks, Land, etc. ✅
+- [x] Asset-specific deal cards showing relevant metrics per type with confidence indicators ✅
+- [x] Universal comparison scoring across different asset types via V3.0 Deal Quality scoring ✅
+- [x] Asset type filtering and grouping capabilities in Pipeline filters ✅
+- [x] Strategy-based deal categorization: Buy-Hold, BRRR, Fix-Flip, Wholesale, House Hack, Value-Add ✅
+- [x] Extensible architecture supporting new asset types via PropertyType enum ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] Polymorphic data model supporting asset-specific attributes in PipelineDeal schema ✅
+- [x] Universal scoring adapters via V3.0 Investment Decision Engine for each asset type ✅
+- [x] Strategy classification system with PropertyStrategy enum ✅
+- [x] Extensible architecture for future asset types without code changes ✅
+
+**Status**: ✅ **PRODUCTION READY** - Full multi-asset support operational
+
+---
+
+### **User Story DP-6: Asset-Specific Quick Analysis** ✅ **COMPLETED**
+**As an** commercial/multifamily investor  
+**I want** appropriate analysis tools for each property type  
+**So that** I can quickly evaluate deals using industry-standard metrics
+
+#### **Acceptance Criteria**: ✅ **CORE FUNCTIONALITY COMPLETED**
+- [x] **Universal Metrics**: Cap rate, cash flow, cash-on-cash return calculations for all property types ✅
+- [x] **Asset-Agnostic Calculator**: Skinny Calculator adapts to different property types ✅
+- [x] **Professional Assessment**: V3.0 Deal Quality scoring with asset-specific considerations ✅
+- [x] **Industry Standards**: Proper NOI, DSCR, and investment ratio calculations ✅
+- [x] **Quick Analysis**: Rapid screening via Skinny Calculator with full analysis integration ✅
+
+#### **Technical Requirements**: ✅ **IMPLEMENTED**
+- [x] Asset-agnostic calculator modules via Skinny Calculator and V3.0 engine ✅
+- [x] Industry-standard metric calculations with precision handling ✅
+- [x] Validation rules and data handling per asset type ✅
+- [x] Metric normalization for cross-asset comparison via Deal Quality scoring ✅
+
+**Status**: ✅ **PRODUCTION READY** - Universal quick analysis operational for all asset types
+
+---
+
+## **Tier 4: Market Intelligence Integration** 🟡 **PARTIALLY COMPLETE**
+
+### **User Story DP-7: Market Alerts and Monitoring** 📋 **PLANNED**
+**As an** active deal hunter  
+**I want** automatic alerts for significant changes to deals I'm tracking  
+**So that** I can respond quickly to market developments
+
+#### **Acceptance Criteria**: 📋 **FUTURE ENHANCEMENT**
+- [ ] **Price Change Alerts**: Notify when asking price increases/decreases  
+- [ ] **Market Activity Alerts**: Days on market milestones, comparable sales
+- [ ] **Opportunity Alerts**: Market conditions favor negotiation
+- [ ] **Competition Alerts**: Multiple offers, bidding war indicators
+- [ ] Real-time dashboard with alert feed and priority indicators
+- [ ] Customizable alert thresholds per deal and investor preference
+
+#### **Current Foundation**: 🟡 **READY FOR IMPLEMENTATION**
+- [x] **Price History Tracking**: PipelineDeal model includes priceHistory array ✅
+- [x] **Market Data Integration**: RentCast API integration available ✅
+- [x] **User Preference System**: User settings infrastructure available ✅
+- [x] **Deal Tracking**: Complete pipeline system for monitoring deals ✅
+
+#### **Technical Requirements**:
+- Background monitoring services with scheduled data updates
+- Integration with market data APIs (RentCast, future ATTOM integration)
+- Real-time notification system (email, in-app, push)
+- Alert preference management system
+
+**Data Sources for Price Monitoring**:
+- **Manual Updates**: User-entered price changes from agents/brokers
+- **RentCast API**: Rental market changes and comparable properties
+- **Public Records**: Sold comparables affecting market pricing
+- **Future Integrations**: MLS feeds, ATTOM Data API, web monitoring services
+
+---
+
+### **User Story DP-8: Deal Intelligence and Insights** ✅ **COMPLETED**
+**As an** strategic investor  
+**I want** AI-powered insights for each deal  
+**So that** I can make more informed decisions and develop better negotiation strategies
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] AI-generated deal summaries highlighting key strengths/weaknesses via V3.0 AI Content Pipeline ✅
+- [x] Negotiation strategy suggestions based on deal characteristics via Strategic Action Plan ✅
+- [x] Risk assessment specific to deal stage and property type via Professional Assessment ✅
+- [x] Market positioning analysis (overpriced, fairly valued, opportunity) via Investment Decision Engine ✅
+- [x] Actionable next steps recommendations via AI-Enhanced Content tabs ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] Integration with existing AI service infrastructure (V3.0 AI Content Pipeline) ✅
+- [x] Deal-specific context generation for AI analysis with real property data ✅
+- [x] Insight generation pipeline with V3.0 data integrity fixes ✅
+
+**Status**: ✅ **PRODUCTION READY** - Full AI insights operational via V3.0 AI Content Pipeline
+
+---
+
+## **Tier 5: Portfolio Impact Integration** ✅ **COMPLETED**
+
+### **User Story DP-9: Portfolio-Aware Deal Evaluation** ✅ **COMPLETED**
+**As an** portfolio-building investor  
+**I want** to see how each potential deal affects my overall portfolio  
+**So that** I can make strategic acquisition decisions
+
+#### **Acceptance Criteria**: ✅ **ALL COMPLETED**
+- [x] **Portfolio Impact Analysis**: Individual deal analysis includes portfolio context and fit scoring ✅
+- [x] **Strategic Fit Analysis**: Portfolio fit score (0-100) with fit level assessment (excellent/good/poor) ✅
+- [x] **Geographic Diversification**: Portfolio context includes diversification impact analysis ✅
+- [x] **Risk Assessment**: How each deal changes overall portfolio risk profile via riskContribution field ✅
+- [x] **Goal Progress Integration**: Portfolio context integrated with V3.0 Investment Decision Engine ✅
+
+#### **Technical Requirements**: ✅ **ALL IMPLEMENTED**
+- [x] Integration with existing portfolio analysis system via portfolioId references ✅
+- [x] Portfolio context generation in Investment Decision Engine ✅
+- [x] Portfolio-aware deal evaluation with fit scoring ✅
+
+**Status**: ✅ **PRODUCTION READY** - Portfolio impact analysis fully operational in individual deal analysis
+
+---
+
+### **User Story DP-10: Deal Comparison and Ranking** 🟡 **PARTIALLY COMPLETE**
+**As an** investor with limited capital  
+**I want** to compare and rank multiple deals by their portfolio impact  
+**So that** I can prioritize the most strategic acquisitions
+
+#### **Acceptance Criteria**: 🟡 **CORE FUNCTIONALITY AVAILABLE**
+- [x] **Individual Deal Ranking**: Deal Quality scores (0-100) provide ranking capability ✅
+- [x] **Portfolio Impact Scoring**: Each deal includes portfolio fit score for strategic ranking ✅
+- [x] **ROI Comparison**: Deal Quality incorporates risk and strategy alignment ✅
+- [ ] **Future Enhancement**: Side-by-side comparison UI, export reports
+
+#### **Technical Requirements**: 🟡 **FOUNDATION COMPLETE**
+- [x] Ranking capability via Deal Quality scoring system ✅
+- [x] Portfolio optimization via fit scoring in decision engine ✅
+- [ ] **Future Enhancement**: Dedicated comparison UI and reporting features
+
+**Status**: 🟡 **CORE FUNCTIONALITY OPERATIONAL** - Deal ranking available via scoring, advanced comparison UI planned
+
+---
+
+## **Tier 6: Professional Operations**
+
+### **User Story DP-11: Document and Workflow Management**
+**As a** professional real estate investor  
+**I want** organized document storage and automated workflows  
+**So that** I can manage deals efficiently and never miss critical deadlines
+
+#### **Acceptance Criteria**:
+- [ ] **Document Library**: Upload and organize LOIs, contracts, inspections, appraisals
+- [ ] **Version Control**: Track document revisions with timestamps and notes
+- [ ] **Workflow Automation**: Automated checklists and reminders per deal stage
+- [ ] **Critical Path Tracking**: Visual timeline with dependencies and milestones
+- [ ] **Team Collaboration**: Task assignments and progress tracking
+- [ ] **Deadline Management**: Automatic alerts for inspection periods, financing deadlines
+
+#### **Technical Requirements**:
+- Document storage system with cloud backup
+- Workflow engine with customizable templates
+- Task management system with assignments
+- Calendar integration for deadline tracking
+
+---
+
+### **User Story DP-12: Team Collaboration and Reporting**
+**As an** investor working with partners and team members  
+**I want** multi-user access and professional reporting  
+**So that** I can collaborate effectively and track team performance
+
+#### **Acceptance Criteria**:
+- [ ] **User Roles**: Admin, Analyst, Broker, View-Only permissions
+- [ ] **Activity Feed**: Real-time updates on deal progress and team actions
+- [ ] **Professional Reports**: Pipeline velocity, conversion rates, deal source ROI
+- [ ] **Performance Metrics**: Time in stage, win rates, team productivity
+- [ ] **Client Presentations**: Generate LP-ready deal summaries and portfolio impact reports
+- [ ] **Audit Trail**: Complete history of all deal activities and decisions
+
+#### **Technical Requirements**:
+- Multi-tenant architecture with role-based permissions
+- Activity logging and audit trail system
+- Report generation engine with professional templates
+- Real-time collaboration features
+
+---
+
+## **📊 BUSINESS IMPACT & SUCCESS METRICS**
+
+### **User Engagement KPIs**:
+- **Deal Tracking**: 90% of active deals maintained in pipeline system
+- **Analysis Integration**: 75% of pipeline deals receive full analysis
+- **Portfolio Impact**: 60% of users utilize portfolio integration features
+- **Team Collaboration**: 40% of Professional+ users utilize multi-user features
+
+### **Business Value Metrics**:
+- **Subscription Tier Movement**: 25% of Free users upgrade to Professional within 6 months
+- **User Retention**: 35% improvement in 90-day retention for pipeline users
+- **Deal Closure Rate**: Users report 20% improvement in deal closing success
+- **Time Savings**: Users report 15 hours/month saved on deal management
+
+### **Revenue Impact Projections**:
+- **Professional Tier Adoption**: +40% conversion rate for users with 5+ pipeline deals
+- **Enterprise Tier Creation**: New $299/month tier for team collaboration features
+- **Total Revenue Impact**: +55% ARR growth from pipeline feature adoption
+
+---
+
+## **🏗️ TECHNICAL IMPLEMENTATION STRATEGY**
+
+### **Architecture Principles**:
+- **Extensibility**: Asset types and workflows easily configurable without code changes
+- **Performance**: Real-time updates with <100ms latency for pipeline operations
+- **Integration**: Seamless connection with existing analysis and portfolio systems
+- **Scalability**: Support for 1000+ deals per user without performance degradation
+
+### **Database Design**:
+```typescript
+// Core Pipeline Schema
+PipelineDeal {
+  id: ObjectId,
+  userId: ObjectId,
+  dealName: string,
+  propertyType: PropertyType,
+  strategy: PropertyStrategy,
+  currentStage: DealStage,
+  stageHistory: [{ stage, date, notes, userId }],
+  
+  // Basic Property Info
+  address: AddressObject,
+  askingPrice: number,
+  propertyDetails: PropertyTypeSpecificDetails, // Polymorphic
+  
+  // Analysis Integration
+  analysisId: ObjectId, // Reference to Deal model
+  analysisStatus: 'NOT_ANALYZED' | 'IN_PROGRESS' | 'COMPLETE',
+  quickMetrics: {
+    universalScore: number,
+    verdict: 'BUY' | 'NEGOTIATE' | 'PASS',
+    keyMetrics: AssetSpecificMetrics
+  },
+  
+  // Market Intelligence
+  sourceInfo: {
+    channel: DealSource,
+    referrer: string,
+    cost: number,
+    notes: string
+  },
+  marketAlerts: [AlertObject],
+  priceHistory: [{ price, date, source }],
+  
+  // Portfolio Integration
+  portfolioImpact: {
+    strategicFit: 'CORE' | 'OPPORTUNISTIC' | 'DIVERSIFICATION',
+    impactScore: number,
+    riskContribution: number
+  },
+  
+  // Professional Features
+  documents: [DocumentObject],
+  team: [TeamMemberObject],
+  workflow: WorkflowObject,
+  
+  timestamps: { created, updated, lastActivity }
+}
+```
+
+### **API Architecture**:
+```typescript
+// RESTful Pipeline API
+GET    /api/pipeline/deals              // List deals with filtering
+POST   /api/pipeline/deals              // Create new deal
+PUT    /api/pipeline/deals/:id          // Update deal
+DELETE /api/pipeline/deals/:id          // Remove deal
+PUT    /api/pipeline/deals/:id/stage    // Update stage
+POST   /api/pipeline/deals/:id/analyze  // Launch analysis
+
+// Analysis Integration
+POST   /api/pipeline/convert-analysis   // Convert analysis to pipeline
+GET    /api/pipeline/analysis-status    // Check analysis progress
+
+// Multi-Asset Support
+GET    /api/pipeline/asset-types        // Available asset types
+POST   /api/pipeline/quick-analyze      // Asset-specific quick calc
+
+// Market Intelligence
+GET    /api/pipeline/alerts             // Get market alerts
+PUT    /api/pipeline/alert-preferences  // Update alert settings
+GET    /api/pipeline/market-data        // Market intelligence
+
+// Portfolio Integration
+GET    /api/pipeline/portfolio-impact   // Impact simulation
+POST   /api/pipeline/compare-deals      // Deal comparison
+GET    /api/pipeline/strategic-fit      // Strategy alignment
+
+// Professional Features
+POST   /api/pipeline/documents          // Upload documents
+GET    /api/pipeline/reports           // Generate reports
+PUT    /api/pipeline/team-access       // Manage team permissions
+```
+
+---
+
+## **💰 INVESTMENT & ROI ANALYSIS**
+
+### **Development Investment**:
+- **Tier 1-2**: 4 developer-weeks ($8,000) - Foundation + Analysis Integration
+- **Tier 3-4**: 4 developer-weeks ($8,000) - Multi-Asset + Market Intelligence  
+- **Tier 5-6**: 4 developer-weeks ($8,000) - Portfolio Integration + Professional
+- **Total Development**: 12 weeks, $24,000 investment
+
+### **Expected Returns**:
+- **Professional Tier**: +40% conversion rate improvement
+- **New Enterprise Tier**: $299/month for team features (targeting 50 subscribers)
+- **User Retention**: +35% improvement in 90-day retention
+- **Break-Even Timeline**: 8-10 months from completion
+
+### **Strategic Value**:
+- **Platform Stickiness**: Daily workflow tool vs occasional analysis
+- **Market Position**: Only comprehensive pipeline + analysis platform
+- **Enterprise Sales**: Foundation for institutional customer acquisition
+- **Data Network Effects**: More deals = better market intelligence for all users
+
+---
+
+## **🚀 IMPLEMENTATION TIMELINE**
+
+### **Phase 1: Foundation (Weeks 1-4)**
+- Tier 1: Basic pipeline creation and deal tracking
+- Tier 2: Analysis integration and deal scoring
+- **Deliverable**: MVP pipeline with existing analysis integration
+
+### **Phase 2: Intelligence (Weeks 5-8)**  
+- Tier 3: Multi-asset support and asset-specific analysis
+- Tier 4: Market intelligence and automated alerts
+- **Deliverable**: Comprehensive deal management platform
+
+### **Phase 3: Professional (Weeks 9-12)**
+- Tier 5: Portfolio impact integration and strategic analysis
+- Tier 6: Document management and team collaboration
+- **Deliverable**: Professional-grade investment management system
+
+### **Success Gates**:
+- **Week 4**: 85% user adoption of basic pipeline features
+- **Week 8**: 60% usage of market intelligence features  
+- **Week 12**: 40% Professional+ users utilizing advanced features
+
+**Status**: 📋 **READY FOR IMPLEMENTATION - COMPREHENSIVE PLAN COMPLETE**

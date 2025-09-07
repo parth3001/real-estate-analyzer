@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import type { CensusDataResponse, CensusQueryParams, MarketInsight } from '../types/censusData';
 import * as censusService from '../services/censusService';
+import { formatCurrency } from '../utils/formatters';
 
 interface CensusDataDisplayProps {
   zip?: string;
@@ -37,13 +38,9 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
   const [customState, setCustomState] = useState<string>(state || '');
   
   // Format currency values
-  const formatCurrency = (value: number | undefined): string => {
+  const formatCurrencyValue = (value: number | undefined): string => {
     if (value === undefined) return 'N/A';
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(value);
+    return formatCurrency(value);
   };
   
   // Format percentage values
@@ -141,10 +138,10 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
             <CardHeader title="Income" />
             <CardContent>
               <Typography variant="body1">
-                <strong>Median Household Income:</strong> {formatCurrency(income.medianHouseholdIncome)}
+                <strong>Median Household Income:</strong> {formatCurrencyValue(income.medianHouseholdIncome)}
               </Typography>
               <Typography variant="body1">
-                <strong>Per Capita Income:</strong> {formatCurrency(income.perCapitaIncome)}
+                <strong>Per Capita Income:</strong> {formatCurrencyValue(income.perCapitaIncome)}
               </Typography>
             </CardContent>
           </Card>
@@ -174,10 +171,10 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
                 <strong>Vacancy Rate:</strong> {formatPercentage(housing.vacancyRate)}
               </Typography>
               <Typography variant="body1">
-                <strong>Median Home Value:</strong> {formatCurrency(housing.medianHomeValue)}
+                <strong>Median Home Value:</strong> {formatCurrencyValue(housing.medianHomeValue)}
               </Typography>
               <Typography variant="body1">
-                <strong>Median Rent:</strong> {formatCurrency(housing.medianRent)}
+                <strong>Median Rent:</strong> {formatCurrencyValue(housing.medianRent)}
               </Typography>
             </CardContent>
           </Card>
@@ -217,7 +214,7 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
         type: 'housing',
         title: 'Median Home Value',
         value: censusData.housing.medianHomeValue,
-        insight: `The median home value in this area is ${formatCurrency(censusData.housing.medianHomeValue)}.`
+        insight: `The median home value in this area is ${formatCurrencyValue(censusData.housing.medianHomeValue)}.`
       });
     }
     
@@ -236,7 +233,7 @@ const CensusDataDisplay: React.FC<CensusDataDisplayProps> = ({
         type: 'income',
         title: 'Median Household Income',
         value: censusData.income.medianHouseholdIncome,
-        insight: `The median household income in this area is ${formatCurrency(censusData.income.medianHouseholdIncome)}.`
+        insight: `The median household income in this area is ${formatCurrencyValue(censusData.income.medianHouseholdIncome)}.`
       });
     }
     

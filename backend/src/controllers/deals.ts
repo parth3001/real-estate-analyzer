@@ -325,10 +325,30 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
     }
     
     const { id } = req.params;
+    logger.info(`getDealById: Looking for deal ${id} for user ${userId}`);
+    
     const deal = await dealService.getDealById(id);
+    
+    // Log deal details for debugging
+    if (deal) {
+      logger.info(`getDealById: Found deal ${id}`, {
+        dealId: deal._id,
+        dealUserId: deal.userId?.toString(),
+        requestUserId: userId,
+        dealProperty: deal.propertyName || 'No name',
+        ownershipMatch: deal.userId?.toString() === userId
+      });
+    } else {
+      logger.warn(`getDealById: No deal found with ID ${id}`);
+    }
     
     // Verify ownership
     if (!deal || deal.userId?.toString() !== userId) {
+      logger.warn(`getDealById: Access denied for deal ${id}`, {
+        dealExists: !!deal,
+        dealUserId: deal?.userId?.toString(),
+        requestUserId: userId
+      });
       res.status(404).json({ error: 'Deal not found' });
       return;
     }
@@ -482,9 +502,60 @@ export const updateDeal = async (req: AuthenticatedRequest, res: Response): Prom
     
     const { id } = req.params;
     
-    // Verify ownership before updating
+    logger.info(`🔍 UPDATE DEAL REQUEST for ID: ${id}`);
+    logger.info(`🔍 Request body preview:`, {
+      hasAnalysis: !!req.body.analysis,
+      propertyName: req.body.propertyName,
+      purchasePrice: req.body.purchasePrice,
+      bodyKeysCount: Object.keys(req.body).length
+    });
+    
+    // Check if deal exists in Deal collection
     const existingDeal = await dealService.getDealById(id);
-    if (!existingDeal || existingDeal.userId?.toString() !== userId) {
+    
+    // If not found in Deal collection, check Pipeline collection
+    let isPipelineDeal = false;
+    let existingPipelineDeal = null;
+    
+    if (!existingDeal) {
+      // Try to find in Pipeline collection
+      const pipelineService = require('../services/pipeline/pipelineService').pipelineService;
+      try {
+        existingPipelineDeal = await pipelineService.getDealById(userId, id);
+        if (existingPipelineDeal) {
+          isPipelineDeal = true;
+          logger.info(`🎯 Found Pipeline deal ${id}, will update Pipeline collection`);
+        } else {
+          logger.info(`❌ Deal ${id} not found in Pipeline collection either`);
+        }
+      } catch (err) {
+        logger.error(`Error checking Pipeline collection for deal ${id}:`, err);
+        // Pipeline deal not found either
+      }
+    }
+    
+    // If neither exists, create new deal
+    if (!existingDeal && !existingPipelineDeal) {
+      logger.warn(`Deal ${id} not found in either collection, creating new deal instead`);
+      const dealData = {
+        ...req.body,
+        userId,
+        _id: undefined // Remove the ID so it gets a new one
+      };
+      
+      const newDeal = await dealService.saveDeal(dealData);
+      logger.info('Deal created successfully:', {
+        id: newDeal._id,
+        propertyName: newDeal.propertyName
+      });
+      
+      res.json(newDeal);
+      return;
+    }
+    
+    // Verify ownership
+    const dealForVerification = existingDeal || existingPipelineDeal;
+    if (dealForVerification?.userId?.toString() !== userId) {
       res.status(404).json({ error: 'Deal not found' });
       return;
     }
@@ -492,31 +563,131 @@ export const updateDeal = async (req: AuthenticatedRequest, res: Response): Prom
     const dealData = req.body;
     
     // Preserve portfolioId if it exists (from either top level or analysis object)
-    const portfolioId = dealData.portfolioId || dealData.analysis?.portfolioId || existingDeal.portfolioId || null;
+    const portfolioId = dealData.portfolioId || dealData.analysis?.portfolioId || dealForVerification?.portfolioId || null;
     if (portfolioId) {
       dealData.portfolioId = portfolioId;
     }
     
+    // Debug: Check what data we're receiving
+    logger.info(`🔍 Deal update debug:`, {
+      dealId: id,
+      hasAnalysis: !!dealData.analysis,
+      hasInvestmentDecision: !!dealData.analysis?.investmentDecision,
+      analysisKeys: dealData.analysis ? Object.keys(dealData.analysis) : 'no analysis',
+      bodyKeys: Object.keys(dealData)
+    });
+
+    // If this deal has analysis results, update Pipeline-specific fields
+    if (dealData.analysis && dealData.analysis.investmentDecision) {
+      const analysis = dealData.analysis;
+      
+      // Extract input values from the original deal data (not analysis results)
+      // Following DATA_MAPPING.md guidelines for proper field extraction
+      const extractedInputs = {
+        monthlyRent: dealData.monthlyRent || dealData.rentalIncome || 0,
+        monthlyExpenses: dealData.totalMonthlyExpenses || 
+                        (dealData.propertyTaxRate + dealData.insuranceRate + dealData.maintenanceCost + dealData.propertyManagementRate) / 12 || 
+                        dealData.monthlyOperatingExpenses || 0,
+        downPayment: dealData.downPayment || 0,
+        interestRate: dealData.interestRate || 7.0,
+        loanTermYears: dealData.loanTerm || 30
+      };
+      
+      logger.info(`📊 Extracting input values for Skinny Calculator:`, {
+        monthlyRent: extractedInputs.monthlyRent,
+        monthlyExpenses: extractedInputs.monthlyExpenses,
+        downPayment: extractedInputs.downPayment,
+        interestRate: extractedInputs.interestRate,
+        loanTermYears: extractedInputs.loanTermYears,
+        purchasePrice: dealData.purchasePrice,
+        askingPrice: dealData.askingPrice
+      });
+      
+      // Update Pipeline quick metrics from analysis results
+      dealData.quickMetrics = {
+        dealQuality: analysis.investmentDecision.professionalAssessment?.dealQuality,
+        verdict: analysis.investmentDecision.verdict,
+        monthlyCashFlow: analysis.cashFlow?.monthlyCashFlow,
+        monthlyIncome: analysis.rentalIncome?.monthly,
+        capRate: analysis.keyMetrics?.capRate,
+        cashOnCashReturn: analysis.keyMetrics?.cashOnCashReturn,
+        inputValues: extractedInputs
+      };
+      
+      // Update analysis status
+      dealData.analysisStatus = 'COMPLETE';
+      dealData.analysisId = dealData._id || id;
+      
+      // Update confidence to level 3 for complete analysis
+      dealData.confidence = {
+        level: 3,
+        lastUpdated: new Date().toISOString(),
+        dataSource: 'FULL_ANALYSIS',
+        calculationMethod: 'FULL_SFR'
+      };
+      
+      // Update asking price if purchase price was changed
+      if (dealData.purchasePrice) {
+        dealData.askingPrice = dealData.purchasePrice;
+      }
+      
+      logger.info(`🎯 Updated Pipeline quick metrics:`, {
+        dealId: id,
+        dealQuality: dealData.quickMetrics.dealQuality,
+        verdict: dealData.quickMetrics.verdict,
+        monthlyCashFlow: dealData.quickMetrics.monthlyCashFlow,
+        analysisStatus: dealData.analysisStatus,
+        askingPrice: dealData.askingPrice,
+        confidenceLevel: dealData.confidence.level,
+        confidenceSource: dealData.confidence.dataSource,
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      logger.warn(`⚠️ No analysis data found to update Pipeline fields for deal ${id}`);
+      
+      // Check if we can still update basic fields like asking price
+      if (dealData.purchasePrice) {
+        dealData.askingPrice = dealData.purchasePrice;
+        logger.info(`📝 Updated asking price to ${dealData.purchasePrice}`);
+      }
+    }
+
     logger.info(`Updating deal ${id} with data:`, {
       propertyName: dealData.propertyName,
       propertyType: dealData.propertyType,
       hasAnalysis: !!dealData.analysis,
       portfolioId: dealData.portfolioId,
       hasPortfolioId: !!dealData.portfolioId,
-      bodyKeys: Object.keys(dealData)
+      bodyKeys: Object.keys(dealData),
+      hasQuickMetrics: !!dealData.quickMetrics,
+      analysisStatus: dealData.analysisStatus
     });
     
     // Log the full data for debugging
     logger.info('Full update data:', JSON.stringify(dealData));
     
-    // Add id to the deal data
-    dealData._id = id;
-    const updatedDeal = await dealService.saveDeal(dealData);
+    // Update the deal using appropriate service
+    let updatedDeal;
     
-    logger.info('Deal updated successfully:', {
-      id: updatedDeal._id,
-      propertyName: updatedDeal.propertyName
-    });
+    if (isPipelineDeal) {
+      // Update Pipeline deal
+      const pipelineService = require('../services/pipeline/pipelineService').pipelineService;
+      updatedDeal = await pipelineService.updateDeal(userId, id, dealData);
+      logger.info('Pipeline deal updated successfully:', {
+        id: updatedDeal._id,
+        propertyName: updatedDeal.dealName || updatedDeal.propertyName,
+        askingPrice: updatedDeal.askingPrice,
+        analysisStatus: updatedDeal.analysisStatus
+      });
+    } else {
+      // Update regular deal
+      dealData._id = id;
+      updatedDeal = await dealService.saveDeal(dealData);
+      logger.info('Deal updated successfully:', {
+        id: updatedDeal._id,
+        propertyName: updatedDeal.propertyName
+      });
+    }
     
     res.json(updatedDeal);
   } catch (error) {
@@ -547,7 +718,33 @@ export const deleteDeal = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
     
+    logger.info(`Starting cascade deletion for deal ${id}`);
+    
+    // CASCADE DELETE: Clean up related records
+    try {
+      // 1. Remove from any portfolios that contain this property
+      const portfolioService = require('../services/portfolio/portfolioService').portfolioService;
+      await portfolioService.removePropertyFromAllPortfolios(userId, id);
+      logger.info(`Removed deal ${id} from all portfolios`);
+    } catch (error) {
+      logger.warn(`Failed to remove deal ${id} from portfolios:`, error);
+      // Continue with deletion even if portfolio cleanup fails
+    }
+    
+    try {
+      // 2. Unlink or delete pipeline deals that reference this analysis
+      const pipelineService = require('../services/pipeline/pipelineService').pipelineService;
+      await pipelineService.unlinkAnalysisFromAllDeals(userId, id);
+      logger.info(`Unlinked analysis ${id} from all pipeline deals`);
+    } catch (error) {
+      logger.warn(`Failed to unlink analysis ${id} from pipeline deals:`, error);
+      // Continue with deletion even if pipeline cleanup fails
+    }
+    
+    // 3. Delete the main deal record
     await dealService.deleteDeal(id);
+    logger.info(`Successfully deleted deal ${id} with cascade cleanup`);
+    
     res.status(204).end();
   } catch (error) {
     logger.error(`Error deleting deal ${req.params.id}:`, error);

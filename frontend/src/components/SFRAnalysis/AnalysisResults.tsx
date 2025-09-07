@@ -674,6 +674,17 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         return (
           <Box>
             {/* Investment Decision Hero Card - BOTH PRO AND LEARNING MODES */}
+            {(() => {
+              // CRITICAL DEBUG: Check what AnalysisResults component is receiving
+              console.log('🎯 ANALYSIS RESULTS DEBUG - Hero card check:', {
+                hasAnalysis: !!analysis,
+                hasInvestmentDecision: !!analysis?.investmentDecision,
+                investmentDecisionKeys: analysis?.investmentDecision ? Object.keys(analysis.investmentDecision) : 'MISSING',
+                dealQuality: analysis?.investmentDecision?.dealQuality || 'MISSING',
+                verdict: analysis?.investmentDecision?.verdict || 'MISSING'
+              });
+              return null;
+            })()}
             {analysis?.investmentDecision && (
               <InvestmentDecisionHero 
                 investmentDecision={analysis.investmentDecision} 

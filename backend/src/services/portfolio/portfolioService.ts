@@ -4,6 +4,7 @@ import { PortfolioRecommendation, IPortfolioRecommendation } from '../../models/
 import { DealModel } from '../../models/Deal';
 import mongoose from 'mongoose';
 import { portfolioAnalyticsService } from './portfolioAnalyticsService';
+import { logger } from '../../utils/logger';
 
 // Request/Response Interfaces
 export interface CreatePortfolioRequest {
@@ -213,6 +214,48 @@ export class PortfolioService {
     } catch (error: any) {
       console.error('Error getting portfolio details:', error);
       throw new Error(`Failed to get portfolio details: ${error.message}`);
+    }
+  }
+
+  /**
+   * Remove a property from all portfolios (used during cascade deletion)
+   */
+  async removePropertyFromAllPortfolios(userId: string, propertyId: string): Promise<void> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+        throw new Error('Invalid property ID');
+      }
+
+      logger.info(`Removing property ${propertyId} from all portfolios for user ${userId}`);
+
+      // The Portfolio model doesn't store properties in an array
+      // Instead, properties have a portfolioId field that links them to portfolios
+      // When a property is deleted, we need to unset the portfolioId from the deal
+      // This is already handled by the Deal deletion process where portfolioId gets removed
+      
+      // For proper cascade deletion, we should update the Deal model to remove portfolioId
+      // This is handled in the deleteDeal function by unsetting the portfolioId field
+      
+      const result = await DealModel.updateOne(
+        {
+          _id: new mongoose.Types.ObjectId(propertyId),
+          userId: new mongoose.Types.ObjectId(userId)
+        },
+        {
+          $unset: { portfolioId: 1 },
+          updatedAt: new Date()
+        }
+      );
+
+      if (result.matchedCount > 0) {
+        logger.info(`Successfully removed portfolioId reference from property ${propertyId}`);
+      } else {
+        logger.info(`Property ${propertyId} was not associated with any portfolio or not found`);
+      }
+
+    } catch (error) {
+      logger.error('Error removing property from all portfolios:', error);
+      throw error;
     }
   }
 
