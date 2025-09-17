@@ -1,5 +1,6 @@
 // Cypress E2E support file
 import './commands';
+import './auth-commands'; // Import session-based authentication
 
 // Hide fetch/XHR requests from command log
 Cypress.on('window:before:load', (win) => {

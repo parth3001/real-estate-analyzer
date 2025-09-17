@@ -15,7 +15,7 @@
 const { TestFramework, TestConfig } = require('./test-framework-core');
 const { EnhancedFinancialWrapper } = require('../wrappers/enhanced-financial-wrapper');
 const { EnhancedAIValidationWrapper } = require('../wrappers/enhanced-ai-validation-wrapper');
-const { ExpertDomainValidator } = require('../expert-validation/expert-domain-validator');
+const { ConservativeExpertDomainValidator } = require('../expert-validation/expert-domain-validator');
 const fs = require('fs');
 const path = require('path');
 
@@ -60,7 +60,7 @@ class MasterTestOrchestrator {
       {
         name: 'Expert Domain Validation',
         description: '20-year veteran investor validation of business logic',
-        executor: () => new ExpertDomainValidator().run(),
+        executor: () => new ConservativeExpertDomainValidator().run(),
         critical: true,
         weight: 0.30 // 30% of overall score
       },

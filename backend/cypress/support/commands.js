@@ -1,7 +1,9 @@
 // Custom Cypress commands for real estate analysis testing
 
-// Authentication commands
+// LEGACY Authentication commands - DEPRECATED
+// Use loginWithSession() from auth-commands.js instead
 Cypress.Commands.add('login', (email = 'test@example.com', password = 'password123') => {
+  cy.log('⚠️ DEPRECATED: Use cy.loginWithSession() for better reliability');
   cy.request({
     method: 'POST',
     url: `${Cypress.env('apiUrl')}/auth/login`,

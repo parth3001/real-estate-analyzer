@@ -117,7 +117,8 @@ async function generatePortfolioContext(portfolioId: string, analysis: any) {
     } else if (monthlyCashFlow > 0 && capRate > 7) {
       fitAnalysis = `Strong performer that enhances your portfolio with ${capRate.toFixed(1)}% cap rate and positive cash flow.`;
     } else if (monthlyCashFlow > 0) {
-      fitAnalysis = `Cash flow positive addition that complements your existing ${currentPortfolioSize} propert${currentPortfolioSize === 1 ? 'y' : 'ies'}.`;
+      const roundedCashFlow = Math.round(monthlyCashFlow * 100) / 100;
+      fitAnalysis = `Cash flow positive addition generating $${roundedCashFlow.toFixed(2)}/month that complements your existing ${currentPortfolioSize} propert${currentPortfolioSize === 1 ? 'y' : 'ies'}.`;
     } else if (capRate > 8) {
       fitAnalysis = `High-yield opportunity with ${capRate.toFixed(1)}% cap rate, despite initial negative cash flow.`;
     } else {

@@ -35,6 +35,7 @@ import {
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
 import { formatCurrency as standardFormatCurrency, formatPercent } from '../../utils/formatters';
+import { roundCurrency } from '../../utils/precision';
 // Architecture Fix: Removed InvestmentMessagingEngine - all messaging now from backend only
 // This ensures Single Source of Truth principle compliance
 
@@ -254,6 +255,21 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
+  
+  // Fix floating-point precision in monetary values within text
+  const formatPortfolioFitText = (text: string): string => {
+    if (!text) return '';
+    
+    // Match monetary values like $19.650000000000002 and format them properly
+    return text.replace(/\$(\d+\.?\d*)/g, (match, amount) => {
+      const numericValue = parseFloat(amount);
+      if (isNaN(numericValue)) return match;
+      
+      // Use roundCurrency to fix floating-point precision
+      const roundedValue = roundCurrency(numericValue);
+      return `$${roundedValue.toFixed(2)}`;
+    });
+  };
   
   // Helper function to get user-friendly confidence context
   const getConfidenceContext = (confidence: number, verdict: string): { label: string; description: string; color: string } => {
@@ -1086,7 +1102,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                           Portfolio Fit Analysis
                         </Typography>
                         <Typography variant="body2" sx={{ mb: 2 }}>
-                          {investmentDecision.portfolioContext.fitAnalysis}
+                          {formatPortfolioFitText(investmentDecision.portfolioContext.fitAnalysis)}
                         </Typography>
                       </Card>
                     </Grid>

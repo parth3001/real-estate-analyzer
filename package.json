@@ -1,17 +1,35 @@
 {
+  "name": "real-estate-analyzer",
+  "version": "1.0.0",
+  "description": "Real Estate Investment Analysis Platform",
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:headless": "cypress run --headless --browser chrome",
+    "test:e2e": "cypress run --spec 'cypress/e2e/property-wizard-complete-flow.cy.js'",
+    "test:e2e:comprehensive": "cypress run --spec 'cypress/e2e/comprehensive-property-wizard-test.cy.js'",
+    "test:e2e:open": "cypress open --e2e",
+    "test:e2e:all": "cypress run --spec 'cypress/e2e/*.cy.js'",
+    "test": "echo 'Running comprehensive E2E tests...' && npm run test:e2e:all",
+    "dev:all": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start:test": "concurrently \"npm run start --prefix backend\" \"npm run preview --prefix frontend\"",
+    "validate:test-infrastructure": "echo '✅ Cypress installed:' && npx cypress version && echo '✅ Test files available:' && ls -la cypress/e2e/ && echo '✅ Test infrastructure ready for beta launch!'"
+  },
   "devDependencies": {
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.15.29",
     "@types/uuid": "^10.0.0",
-    "chalk": "^5.4.1",
+    "chalk": "^4.1.2",
+    "cypress": "^15.2.0",
     "eslint-plugin-jest": "^28.12.0",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
     "@mui/icons-material": "^5.15.11",
     "@mui/material": "^5.15.11",
-    "@mui/system": "^5.15.11"
+    "@mui/system": "^5.15.11",
+    "axios": "^1.11.0"
   }
 }

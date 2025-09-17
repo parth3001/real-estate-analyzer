@@ -1,0 +1,44 @@
+{
+  "testSuite": "Expert Validation Data Capture",
+  "timestamp": "2025-09-14T23:25:30.980Z",
+  "duration": 1739,
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "successRate": "NaN%"
+  },
+  "performance": {
+    "avgTestTime": 0,
+    "minTestTime": 0,
+    "maxTestTime": 0,
+    "totalSuiteTime": 1739
+  },
+  "errors": [
+    {
+      "timestamp": "2025-09-14T23:25:30.746Z",
+      "message": "Analysis failed"
+    },
+    {
+      "timestamp": "2025-09-14T23:25:30.844Z",
+      "message": "Analysis failed"
+    },
+    {
+      "timestamp": "2025-09-14T23:25:30.942Z",
+      "message": "Analysis failed"
+    }
+  ],
+  "qualityGates": {
+    "testReliability": {
+      "actual": null,
+      "threshold": 0.99,
+      "passed": false
+    },
+    "errorRate": {
+      "actual": null,
+      "threshold": 0.01,
+      "passed": false
+    }
+  }
+}

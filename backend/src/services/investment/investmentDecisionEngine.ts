@@ -1185,7 +1185,8 @@ export class InvestmentDecisionEngine {
     const spread = propertyCapRate - marketMedian;
     
     // Convert spread to score (50 basis points = 10 points)
-    const spreadScore = 50 + (spread * 100 * 0.2); // 20 points per 100 bps
+    // Fixed: Corrected multiplier to match comment - 50 bps (0.005) = 10 points, so multiplier = 2000
+    const spreadScore = 50 + (spread * 2000); // 10 points per 50 bps as intended
     
     return Math.max(0, Math.min(100, spreadScore));
   }
@@ -3044,12 +3045,26 @@ export class InvestmentDecisionEngine {
     else if (fitScore >= 55) fitLevel = 'fair';
     else fitLevel = 'poor';
     
-    // Generate fit analysis
+    // Generate fit analysis with proper number formatting
     let fitAnalysis = '';
+    console.log('🔧 PORTFOLIO FIT DEBUG:', {
+      originalCashFlow: fundamentals.cashFlow,
+      cashFlowType: typeof fundamentals.cashFlow,
+      isNumber: !isNaN(fundamentals.cashFlow)
+    });
+    
+    // More aggressive rounding to handle floating-point precision issues
+    const roundedCashFlow = Number(Math.round(fundamentals.cashFlow * 100) / 100);
+    console.log('🔧 ROUNDING DEBUG:', {
+      original: fundamentals.cashFlow,
+      rounded: roundedCashFlow,
+      formatted: roundedCashFlow.toFixed(2)
+    });
+    
     if (portfolioStrategy === 'first') {
-      fitAnalysis = `This property serves as a ${fitLevel} starter investment with ${fundamentals.cashFlow > 0 ? 'positive' : 'negative'} cash flow of $${Math.abs(fundamentals.cashFlow)}/month. `;
+      fitAnalysis = `This property serves as a ${fitLevel} starter investment with ${fundamentals.cashFlow > 0 ? 'positive' : 'negative'} cash flow of $${Math.abs(roundedCashFlow).toFixed(2)}/month. `;
     } else if (portfolioStrategy === 'cashflow') {
-      fitAnalysis = `Strong cash flow property generating $${fundamentals.cashFlow}/month aligns ${fitLevel} with your income-focused strategy. `;
+      fitAnalysis = `Strong cash flow property generating $${roundedCashFlow.toFixed(2)}/month aligns ${fitLevel} with your income-focused strategy. `;
     } else if (portfolioStrategy === 'appreciation') {
       fitAnalysis = `${fundamentals.capRate < 0.06 ? 'Lower cap rate suggests good' : 'Higher cap rate may limit'} appreciation potential for your growth-focused strategy. `;
     } else {

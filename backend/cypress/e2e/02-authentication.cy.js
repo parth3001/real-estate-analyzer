@@ -31,90 +31,74 @@ describe('User Authentication', () => {
       cy.log('Setting up login test environment')
     })
 
-    it('should login with valid credentials via API', () => {
-      // Use the custom login command that handles user creation
-      cy.login('test@example.com', 'TestPassword123!')
+    it('should login with valid credentials using session caching', () => {
+      // Use the new session-based login for reliability
+      cy.loginWithSession(
+        Cypress.env('TEST_USER_EMAIL'), 
+        Cypress.env('TEST_USER_PASSWORD')
+      );
       
       // Check if logged in by verifying localStorage
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-        expect(win.localStorage.getItem('user')).to.exist
-      })
+      cy.assertLoggedIn();
       
       // Navigate to a protected route to verify login state
-      cy.visit('/sfr-analysis')
-      cy.url().should('contain', '/sfr-analysis')
+      cy.visit('/sfr-analysis');
+      cy.url().should('contain', '/sfr-analysis');
     })
 
-    it('should maintain auth state after page refresh', () => {
-      // Login first
-      cy.login('test@example.com', 'TestPassword123!')
-      
-      // Verify login state
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-      })
+    it('should maintain auth state after page refresh with session', () => {
+      // Login with session caching
+      cy.quickLogin();
+      cy.assertLoggedIn();
       
       // Refresh page
-      cy.reload()
+      cy.reload();
       
-      // Should still be authenticated
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-      })
+      // Should still be authenticated due to session persistence
+      cy.assertLoggedIn();
     })
 
     it('should handle login with invalid credentials gracefully', () => {
-      // Try login with wrong credentials - should not crash
-      cy.login('nonexistent@example.com', 'wrongpassword')
+      // Try login with wrong credentials - should create test session
+      cy.loginWithSession('nonexistent@example.com', 'wrongpassword');
       
-      // Should have created a guest session for testing
-      cy.window().then((win) => {
-        const token = win.localStorage.getItem('authToken')
-        expect(token).to.exist // Should have test token from login command
-      })
+      // Should have created a test session for E2E reliability
+      cy.assertLoggedIn();
     })
   })
 
   describe('Session Management', () => {
-    it('should maintain user session across page refreshes', () => {
-      // Login first using simplified login command
-      cy.login('session-test@example.com', 'TestPassword123!')
+    it('should maintain user session across page navigation', () => {
+      // Login with session caching
+      cy.quickLogin();
+      cy.assertLoggedIn();
       
-      // Verify logged in by checking localStorage
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-      })
+      // Navigate to different pages
+      const pages = ['/dashboard', '/sfr-analysis', '/pipeline', '/portfolio'];
       
-      // Refresh page
-      cy.reload()
+      pages.forEach(page => {
+        cy.visit(page);
+        cy.assertLoggedIn();
+      });
       
-      // Should still be logged in
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-      })
+      // Verify user data persists
+      cy.visit('/dashboard');
+      cy.get('body').should('contain.text', 'Test'); // Should show user name
     })
 
     it('should clear session data on logout', () => {
       // Login first
-      cy.login('logout-test@example.com', 'TestPassword123!')
+      cy.quickLogin();
+      cy.assertLoggedIn();
       
-      // Verify logged in
-      cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.exist
-      })
-      
-      // Clear localStorage to simulate logout
-      cy.window().then((win) => {
-        win.localStorage.removeItem('authToken')
-        win.localStorage.removeItem('user')
-      })
+      // Use logout command
+      cy.logout();
       
       // Should not have auth token
       cy.window().then((win) => {
-        expect(win.localStorage.getItem('authToken')).to.be.null
-        expect(win.localStorage.getItem('user')).to.be.null
-      })
+        expect(win.localStorage.getItem('authToken')).to.be.null;
+        expect(win.localStorage.getItem('user')).to.be.null;
+      });
     })
   })
 })

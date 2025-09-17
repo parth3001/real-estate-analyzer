@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-09-08
+
+### 🔧 Critical Bug Fixes
+
+**Cap Rate Scoring Formula Fix**
+- **Issue**: Cap rate professional assessment always showing ~50/100 regardless of property performance
+- **Root Cause**: Mathematical error in scoring formula - multiplier was 100x too small (20 instead of 2000)
+- **Impact**: No differentiation between 3% and 10% cap rates in professional scoring
+- **Solution**: Corrected multiplier in `investmentDecisionEngine.ts` line 1189
+- **Result**: Proper 0-100 scoring range with meaningful differentiation (10 points per 50 basis points)
+
+**Portfolio Fit Analysis Precision Fix**
+- **Issue**: Floating-point precision errors displaying "$19.650000000000002/month" instead of "$19.65/month"
+- **Root Cause**: JavaScript floating-point arithmetic not handled in frontend display layer
+- **Solution**: Added `formatPortfolioFitText()` utility in `InvestmentDecisionHero.tsx` using `roundCurrency()` precision helper
+- **Result**: All monetary values in portfolio context properly formatted to 2 decimal places
+
 ## [2.3.0] - 2025-08-03
 
 ### 🎯 **Phase 1: Real Market Data Integration - MAJOR ACCURACY IMPROVEMENT**

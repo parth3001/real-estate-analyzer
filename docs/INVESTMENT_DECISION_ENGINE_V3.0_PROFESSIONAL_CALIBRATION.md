@@ -321,6 +321,8 @@ interface ProfessionalAssessment {
 - **Bug Fixes**: `/backend/src/analysis/BasePropertyAnalyzer.ts`
   - Fixed missing `annualExpenseIncrease` default causing NaN calculations
   - Resolved ROI display formatting in AnalysisResults.tsx
+  - **Cap Rate Scoring**: Fixed multiplier from 20 to 2000 (line 1189 in investmentDecisionEngine.ts)
+    - Now properly differentiates: 3% → 0/100, 6% → 50/100, 9% → 100/100
 
 ### **Professional Weighting Implementation**
 ```typescript
@@ -347,6 +349,7 @@ private readonly PROFESSIONAL_WEIGHTS = {
 - ✅ **IRR Bug Resolved**: Accurate calculation across all projection years
 - ✅ **ROI Display Fixed**: Correct percentage formatting (167.17% vs 1.67%)
 - ✅ **Architecture Compliance**: Single Source of Truth maintained
+- ✅ **Cap Rate Scoring Fixed**: Corrected 100x multiplier error for proper 0-100 differentiation
 
 ---
 

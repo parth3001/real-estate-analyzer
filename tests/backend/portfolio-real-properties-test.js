@@ -115,6 +115,7 @@ async function authenticate() {
   }
 }
 
+// Original function for analyzing properties without portfolio context (like UI does first)
 async function createDealFromProperty(property) {
   const propertyData = {
     propertyName: property.name,
@@ -146,6 +147,56 @@ async function createDealFromProperty(property) {
       turnoverFrequency: 2,
       inflationRate: 2.5
     }
+    // NO portfolioId - analyze first, then add to portfolio later
+  };
+
+  try {
+    // TEST ENGINEER FIX: Use POST /api/deals to create and save deals (not just analyze)
+    const response = await axios.post(`${CONFIG.backendUrl}/api/deals`, propertyData, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Failed to create deal for ${property.name}:`, error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// TEST ENGINEER FIX: Create deal with portfolio context (mirrors real platform workflow)
+async function createDealFromPropertyWithPortfolio(property, portfolioId) {
+  const propertyData = {
+    propertyName: property.name,
+    propertyType: property.propertyType,
+    propertyAddress: parseAddress(property.address),
+    purchasePrice: property.purchasePrice,
+    monthlyRent: property.monthlyRent,
+    downPayment: Math.round(property.purchasePrice * 0.20), // 20% down
+    interestRate: 7.25,
+    loanTerm: 30,
+    squareFootage: 1800,
+    bedrooms: 3,
+    bathrooms: 2,
+    yearBuilt: 2005,
+    propertyTaxRate: 1.2,
+    insuranceRate: 0.7,
+    maintenanceCost: Math.round(property.monthlyRent * 12 * 0.08), // 8% of rent
+    propertyManagementRate: 8,
+    vacancyRate: 5,
+    hoaFees: 0,
+    closingCosts: Math.round(property.purchasePrice * 0.025),
+    capitalInvestments: 0,
+    longTermAssumptions: {
+      projectionYears: 10,
+      annualRentIncrease: 3,
+      annualPropertyValueIncrease: 3.5,
+      sellingCostsPercentage: 6,
+      vacancyRate: 5,
+      turnoverFrequency: 2,
+      inflationRate: 2.5
+    },
+    // CRITICAL: Include portfolioId like real platform does
+    portfolioId: portfolioId
   };
 
   try {
@@ -153,10 +204,9 @@ async function createDealFromProperty(property) {
       headers: { Authorization: `Bearer ${authToken}` }
     });
     
-    console.log(`✅ Created deal for ${property.name}`);
     return response.data;
   } catch (error) {
-    console.error(`❌ Failed to create deal for ${property.name}:`, error.response?.data || error.message);
+    console.error(`❌ Failed to analyze property ${property.name} with portfolio:`, error.response?.data || error.message);
     throw error;
   }
 }
@@ -171,12 +221,11 @@ function parseAddress(addressString) {
   };
 }
 
-async function createPortfolio(config, dealIds) {
+async function createPortfolio(config) {
   const portfolioData = {
     name: config.name,
     description: config.description,
-    goals: config.goals,
-    deals: dealIds
+    goals: config.goals
   };
 
   try {
@@ -211,11 +260,47 @@ async function testPortfolioAIEndpoint(endpoint, portfolioId, portfolioName) {
 
     const aiContent = response.data;
     
+    // SHOW AI CONTENT: Log what the AI is actually generating
+    console.log(`\n📝 AI Content for ${endpoint} - ${portfolioName}:`);
+    console.log(JSON.stringify(aiContent, null, 2));
+    
     // Validate AI content quality
     const validation = validateAIContent(aiContent, endpoint, portfolioName);
     
     // CRITICAL QE FIX: Add expert validation to Portfolio AI testing
-    const expertValidation = await validatePortfolioAIWithExpert(aiContent, { goals: { primaryGoal: portfolioName.includes('Cash Flow') ? 'CASH_FLOW' : 'WEALTH_BUILDING' } }, endpoint);
+    // Get real portfolio data for expert validation
+    let portfolioData = { goals: { primaryGoal: portfolioName.includes('Cash Flow') ? 'CASH_FLOW' : 'WEALTH_BUILDING' } };
+    try {
+      const portfolioDetailsResponse = await axios.get(`${CONFIG.backendUrl}/api/portfolios/${portfolioId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      // DEBUG: Check actual response structure
+      console.log(`🔍 Portfolio details response structure:`, {
+        hasData: !!portfolioDetailsResponse.data,
+        keys: Object.keys(portfolioDetailsResponse.data),
+        hasAnalytics: !!portfolioDetailsResponse.data.analytics,
+        analyticsKeys: portfolioDetailsResponse.data.analytics ? Object.keys(portfolioDetailsResponse.data.analytics) : 'none'
+      });
+      
+      if (portfolioDetailsResponse.data) {
+        portfolioData = portfolioDetailsResponse.data;
+      }
+    } catch (error) {
+      console.warn(`Failed to get portfolio details for expert validation: ${error.message}`);
+    }
+    
+    // SENIOR TEST ENGINEER FIX: Extract real analytics values for expert validation
+    const realAnalytics = {
+      portfolioStrategy: portfolioData.portfolio?.goals?.primaryGoal || 'UNKNOWN',
+      portfolioValue: portfolioData.analytics?.summary?.totalValue || 0,
+      monthlyFlow: portfolioData.analytics?.summary?.monthlyNetCashFlow || 0,
+      capRate: portfolioData.analytics?.summary?.averageCapRate || 0
+    };
+    
+    console.log(`🔍 Real analytics being passed to expert:`, realAnalytics);
+    
+    const expertValidation = await validatePortfolioAIWithExpert(aiContent, realAnalytics, endpoint);
     
     console.log(`✅ ${endpoint} endpoint working - Content quality: ${validation.score}%`);
     console.log(`🧠 Sarah Mitchell Expert Approval: ${expertValidation.expertApproved ? 'APPROVED' : 'REJECTED'} (${expertValidation.expertScore}%)`);
@@ -317,10 +402,10 @@ async function validatePortfolioAIWithExpert(aiContent, portfolioData, endpoint)
     // Run expert validation using Sarah Mitchell's investment philosophy
     const expertValidation = await expertValidator.validateAIRecommendations({
       aiRecommendations: aiRecommendations,
-      portfolioStrategy: portfolioData.goals?.primaryGoal || 'UNKNOWN',
-      portfolioValue: portfolioData.analytics?.summary?.totalValue || 0,
-      monthlyFlow: portfolioData.analytics?.summary?.monthlyNetCashFlow || 0,
-      capRate: portfolioData.analytics?.summary?.averageCapRate || 0,
+      portfolioStrategy: portfolioData.portfolioStrategy,
+      portfolioValue: portfolioData.portfolioValue,
+      monthlyFlow: portfolioData.monthlyFlow,
+      capRate: portfolioData.capRate,
       endpoint: endpoint
     });
     
@@ -352,43 +437,52 @@ async function runPortfolioAITests() {
   // Step 1: Authenticate
   await authenticate();
   
-  // Step 2: Create deals from real properties
-  console.log('\n📊 Creating deals from real Zillow properties...');
-  const deals = [];
+  // Step 2: Analyze properties FIRST (without portfolio context - like UI does)
+  console.log('\n📊 Analyzing properties (without portfolio context)...');
+  const analyzedDeals = [];
   
   for (const property of REAL_ZILLOW_PROPERTIES) {
     try {
       const deal = await createDealFromProperty(property);
-      deals.push({
-        dealId: deal._id || deal.id,
+      
+      // TEST ENGINEER DEBUG: Check deal response format
+      console.log(`🔍 Deal response format for ${property.name}:`, {
+        hasId: !!(deal._id || deal.id),
+        hasDealId: !!deal.dealId,
+        keys: Object.keys(deal).slice(0, 10) // Show first 10 keys
+      });
+      
+      const dealId = deal._id || deal.id || deal.dealId;
+      analyzedDeals.push({
+        dealId: dealId,
         property: property,
         analysis: deal
       });
+      console.log(`✅ Analyzed ${property.name} (ID: ${dealId})`);
     } catch (error) {
-      console.error(`Failed to create deal for ${property.name}, skipping...`);
+      console.error(`❌ Failed to analyze ${property.name}:`, error.message);
     }
   }
   
-  if (deals.length === 0) {
-    console.error('❌ No deals created successfully. Exiting.');
+  if (analyzedDeals.length === 0) {
+    console.error('❌ No properties analyzed successfully. Exiting.');
     process.exit(1);
   }
   
-  console.log(`✅ Created ${deals.length} deals from real properties`);
-  
-  // Step 3: Create portfolios with different strategies
-  console.log('\n📁 Creating portfolios with real properties...');
-  const dealIds = deals.map(d => d.dealId);
+  console.log(`✅ Analyzed ${analyzedDeals.length} properties`);
+
+  // Step 3: Create portfolios (like UI does)
+  console.log('\n📁 Creating portfolios...');
   const portfolios = [];
   
   for (const config of PORTFOLIO_CONFIGS) {
     try {
-      const portfolioResponse = await createPortfolio(config, dealIds);
+      const portfolioResponse = await createPortfolio(config);
       // Handle response format: {success: true, portfolio: {...}}
       const portfolio = portfolioResponse.portfolio || portfolioResponse;
       const portfolioId = portfolio._id || portfolio.id;
       
-      console.log(`📋 Created portfolio with ID: ${portfolioId}`);
+      console.log(`✅ Created ${config.strategy} portfolio: ${config.name} (ID: ${portfolioId})`);
       
       portfolios.push({
         portfolioId: portfolioId,
@@ -397,6 +491,73 @@ async function runPortfolioAITests() {
       });
     } catch (error) {
       console.error(`Failed to create ${config.strategy} portfolio, skipping...`);
+    }
+  }
+  
+  if (portfolios.length === 0) {
+    console.error('❌ No portfolios created successfully. Exiting.');
+    process.exit(1);
+  }
+
+  // Step 4: Add existing analyzed properties to portfolios (REAL UI WORKFLOW)
+  console.log('\n🔗 Adding existing analyzed properties to portfolios (like UI does)...');
+  
+  for (const portfolio of portfolios) {
+    console.log(`\n📋 Adding properties to ${portfolio.config.name}...`);
+    
+    for (const deal of analyzedDeals) {
+      try {
+        await axios.post(`${CONFIG.backendUrl}/api/portfolios/${portfolio.portfolioId}/properties`, {
+          propertyId: deal.dealId
+        }, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        console.log(`  ✅ Added ${deal.property.name} to portfolio`);
+      } catch (error) {
+        console.error(`  ❌ Failed to add ${deal.property.name}:`, error.response?.data || error.message);
+      }
+    }
+  }
+  
+  // TEST ENGINEER DEBUG: Wait for analytics calculation and verify
+  console.log('\n⏱️ Waiting for portfolio analytics calculation...');
+  await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for analytics
+  
+  console.log('🔍 Verifying portfolio analytics calculation...');
+  for (const portfolio of portfolios) {
+    try {
+      const detailsResponse = await axios.get(`${CONFIG.backendUrl}/api/portfolios/${portfolio.portfolioId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      const analytics = detailsResponse.data.analytics;
+      console.log(`📊 ${portfolio.config.name} Analytics:`, {
+        totalProperties: analytics?.summary?.totalProperties || 0,
+        totalValue: analytics?.summary?.totalValue || 0,
+        monthlyFlow: analytics?.summary?.monthlyNetCashFlow || 0,
+        propertiesCount: detailsResponse.data.properties?.length || 0
+      });
+      
+      // If analytics are still empty, try manual recalculation
+      if ((analytics?.summary?.totalProperties || 0) === 0) {
+        console.log(`🔄 Manually triggering analytics recalculation for ${portfolio.config.name}...`);
+        await axios.post(`${CONFIG.backendUrl}/api/portfolios/${portfolio.portfolioId}/recalculate-analytics`, {}, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        
+        // Wait a bit more and check again
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const recheck = await axios.get(`${CONFIG.backendUrl}/api/portfolios/${portfolio.portfolioId}`, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        console.log(`📊 ${portfolio.config.name} After Recalculation:`, {
+          totalProperties: recheck.data.analytics?.summary?.totalProperties || 0,
+          totalValue: recheck.data.analytics?.summary?.totalValue || 0,
+          monthlyFlow: recheck.data.analytics?.summary?.monthlyNetCashFlow || 0
+        });
+      }
+    } catch (error) {
+      console.error(`❌ Failed to get analytics for ${portfolio.config.name}:`, error.message);
     }
   }
   

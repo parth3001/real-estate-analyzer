@@ -16,7 +16,7 @@
  * Amazon Best Practice: Domain Expert Validation Pattern
  */
 
-const { TestFramework, PropertyDataGenerator, TestConfig } = require('../core/test-framework-core');
+const { TestFramework, TestConfig } = require('../core/test-framework-core');
 const axios = require('axios');
 
 // ====================
@@ -26,6 +26,7 @@ const axios = require('axios');
 const EXPERT_PERSONAS = {
   SARAH_MITCHELL: {
     name: 'Sarah Mitchell, CRE',
+    type: 'CONSERVATIVE',
     experience: '20 years',
     aum: '$10M+',
     expertise: [
@@ -50,15 +51,79 @@ const EXPERT_PERSONAS = {
       avoidMarkets: ['San Francisco', 'New York'], // Too expensive for cash flow
       emergingMarkets: ['Boise', 'Salt Lake City', 'Spokane']
     }
+  },
+  
+  MIKE_CHEN: {
+    name: 'Mike Chen',
+    type: 'AGGRESSIVE',
+    experience: '8 years',
+    aum: '$3M+',
+    expertise: [
+      'House hacking specialist',
+      'BRRRR strategy expert',
+      'High leverage deals',
+      'Appreciation-focused investing',
+      'Tech market specialist (Bay Area, Seattle, Austin)'
+    ],
+    investmentPhilosophy: {
+      cashFlowMinimum: -200, // Accepts negative flow for appreciation
+      capRateMinimum: 2.0, // Will buy for appreciation potential
+      dscrMinimum: 0.9, // Takes more leverage risk
+      leverageMaximum: 95, // Uses FHA, VA loans aggressively
+      marketDiversification: false, // Focuses on high-growth markets
+      exitStrategyRequired: false // Banks on long-term appreciation
+    },
+    marketKnowledge: {
+      tier1Markets: ['San Francisco', 'Seattle', 'Austin', 'Boston'],
+      tier2Markets: ['Denver', 'Portland', 'San Diego'],
+      tier3Markets: [], // Avoids tier 3 markets
+      avoidMarkets: ['Detroit', 'Cleveland'], // Avoids declining markets
+      emergingMarkets: ['Miami', 'Phoenix', 'Las Vegas']
+    }
+  },
+  
+  JENNIFER_RODRIGUEZ: {
+    name: 'Jennifer Rodriguez',
+    type: 'BALANCED',
+    experience: '12 years',
+    aum: '$5M+',
+    expertise: [
+      'Mixed portfolio strategy',
+      'Section 8 housing specialist',
+      'Tax optimization expert',
+      'Mid-term rental specialist',
+      'Value-add renovations'
+    ],
+    investmentPhilosophy: {
+      cashFlowMinimum: 50, // Modest positive flow requirement
+      capRateMinimum: 3.5, // Balanced approach
+      dscrMinimum: 1.1, // Moderate coverage
+      leverageMaximum: 85, // Comfortable with moderate leverage
+      marketDiversification: true, // Some diversification
+      exitStrategyRequired: true // Multiple exit strategies
+    },
+    marketKnowledge: {
+      tier1Markets: ['Nashville', 'Atlanta', 'Dallas'],
+      tier2Markets: ['Tampa', 'Charlotte', 'Raleigh'],
+      tier3Markets: ['Memphis', 'Birmingham'],
+      avoidMarkets: [], // Considers all markets
+      emergingMarkets: ['Jacksonville', 'Orlando', 'San Antonio']
+    }
   }
 };
 
-class ExpertDomainValidator {
+class ConservativeExpertDomainValidator {
   constructor() {
-    this.framework = new TestFramework('Expert Domain Validator');
+    this.framework = new TestFramework('Conservative Expert Domain Validator');
     this.logger = this.framework.logger;
-    this.expert = EXPERT_PERSONAS.SARAH_MITCHELL;
+    this.experts = [
+      EXPERT_PERSONAS.SARAH_MITCHELL,
+      EXPERT_PERSONAS.MIKE_CHEN,
+      EXPERT_PERSONAS.JENNIFER_RODRIGUEZ
+    ];
+    this.currentExpert = EXPERT_PERSONAS.SARAH_MITCHELL; // Default
     this.validationResults = [];
+    this.multiExpertResults = [];
   }
 
   async run() {
@@ -89,33 +154,27 @@ class ExpertDomainValidator {
 
   async validateInvestmentDecisions() {
     await this.framework.runTest('Expert Investment Decision Validation', async () => {
-      this.logger.info(`Validating investment decisions with ${this.expert.name}`);
+      this.logger.info(`Validating investment decisions with multiple expert personas`);
       
       // Real market properties from Zillow for end-to-end platform testing
       const realProperties = [
         {
-          name: 'Anna, TX Single Family',
-          address: '2110 Sweet Gum Dr, Anna, TX 75409',
-          purchasePrice: 319999,
-          expectedApproval: true // Texas market, reasonable price
+          name: 'Jersey City, NJ Condo',
+          address: '16 Belvidere Ave APT 3F, Jersey City, NJ 07304',
+          purchasePrice: 255000,
+          expectedApproval: 'conditional' // Urban market, depends on rent
         },
         {
-          name: 'Jersey City, NJ Condo', 
-          address: '250 Van Horne St #2, Jersey City, NJ 07304',
-          purchasePrice: 425000,
-          expectedApproval: 'conditional' // Higher price, depends on rent
+          name: 'Tampa, FL Single Family',
+          address: '9476 Forest Hills Pl, Tampa, FL 33612',
+          purchasePrice: 259000,
+          expectedApproval: true // Florida growth market
         },
         {
-          name: 'East Lansing, MI Property',
-          address: '3040 Hamlet Cir, East Lansing, MI 48823', 
-          purchasePrice: 349900,
-          expectedApproval: true // College town fundamentals
-        },
-        {
-          name: 'Tampa, FL Property',
-          address: '10915 N Newport Ave, Tampa, FL 33612',
-          purchasePrice: 469000,
-          expectedApproval: 'conditional' // Florida market, higher price
+          name: 'Anna, TX Property',
+          address: '1837 Walnut Way, Anna, TX 75409',
+          purchasePrice: 255000,
+          expectedApproval: true // Texas suburban growth
         }
       ];
       
@@ -182,8 +241,28 @@ class ExpertDomainValidator {
           smartDefaultsSuccess: smartDefaultsResult?.success
         });
         
-        // Step 5: Expert validation of wizard pipeline results  
-        const expertValidation = await this.validateWithExpertLogic(propertyData, analysis);
+        // Step 5: Multi-expert validation of wizard pipeline results
+        this.logger.info('Running multi-expert validation for ' + realProperty.name);
+        
+        const multiExpertValidation = [];
+        
+        // Test with each expert persona
+        for (const expert of this.experts) {
+          this.currentExpert = expert;
+          const expertValidation = await this.validateWithExpertLogic(propertyData, analysis);
+          
+          multiExpertValidation.push({
+            expertName: expert.name,
+            expertType: expert.type,
+            verdict: expertValidation.expertVerdict,
+            approved: expertValidation.approved,
+            reasoning: expertValidation.reasoning,
+            concerns: expertValidation.concerns
+          });
+          
+          this.logger.info(`${expert.name} (${expert.type}): ${expertValidation.approved ? 'APPROVED' : 'REJECTED'}`);
+        }
+        
         const aiContentValidation = await this.validateAIContentQuality(propertyData, analysis);
         
         this.validationResults.push({
@@ -192,11 +271,8 @@ class ExpertDomainValidator {
           purchasePrice: realProperty.purchasePrice,
           estimatedRent: propertyData.monthlyRent,
           systemVerdict: analysis.investmentDecision.verdict,
-          expertVerdict: expertValidation.expertVerdict,
-          expertApproval: expertValidation.approved,
-          expertReasoning: expertValidation.reasoning,
-          concerns: expertValidation.concerns,
-          verdictAlignment: expertValidation.verdictAlignment,
+          multiExpertValidation: multiExpertValidation,
+          expertConsensus: this.calculateExpertConsensus(multiExpertValidation),
           aiContentQuality: aiContentValidation,
           keyMetrics: {
             cashFlow: analysis.keyMetrics?.cashFlow,
@@ -213,17 +289,17 @@ class ExpertDomainValidator {
         // Log expert perspective
         this.logger.info(`Expert review: ${realProperty.name}`, {
           systemVerdict: analysis.investmentDecision.verdict,
-          expertVerdict: expertValidation.expertVerdict,
-          verdictAlignment: expertValidation.verdictAlignment ? 'ALIGNED' : 'MISALIGNED',
-          reasoning: expertValidation.reasoning
+          expertVerdict: multiExpertValidation[0].expertVerdict,
+          verdictAlignment: multiExpertValidation[0].verdictAlignment ? 'ALIGNED' : 'MISALIGNED',
+          reasoning: multiExpertValidation[0].reasoning
         });
         
         // Validate verdict alignment
-        if (!expertValidation.verdictAlignment) {
+        if (!multiExpertValidation[0].verdictAlignment) {
           this.logger.warn(`Verdict misalignment detected for ${realProperty.name}`, {
             platformVerdict: analysis.investmentDecision.verdict,
-            expertVerdict: expertValidation.expertVerdict,
-            expertConcerns: expertValidation.concerns
+            expertVerdict: multiExpertValidation[0].expertVerdict,
+            expertConcerns: multiExpertValidation[0].concerns
           });
         }
       }
@@ -251,7 +327,19 @@ class ExpertDomainValidator {
     await this.framework.runTest('Expert Financial Accuracy Validation', async () => {
       this.logger.info('Validating financial calculations from institutional perspective');
       
-      const testProperty = PropertyDataGenerator.generateProperty('TURNKEY');
+      // Use realistic Fayetteville property from realistic-verdict-test.js
+      const testProperty = {
+        propertyType: 'SFR',
+        propertyAddress: { city: 'Fayetteville', state: 'NC', zipCode: '28314' },
+        purchasePrice: 220000,
+        monthlyRent: 1495,
+        downPayment: 55000,
+        interestRate: 4.0,
+        propertyTaxRate: 0.84,
+        insuranceRate: 0.7,
+        maintenanceCost: 149,
+        propertyManagementRate: 5
+      };
       const analysis = await this.analyzeProperty(testProperty);
       
       // Expert validates key metrics
@@ -383,22 +471,58 @@ class ExpertDomainValidator {
     await this.framework.runTest('Expert Risk Assessment Validation', async () => {
       this.logger.info('Validating risk identification and mitigation');
       
-      // Test risk scenarios
+      // Test risk scenarios using realistic property data
       const riskScenarios = [
         {
           name: 'High Leverage Risk',
-          property: { ...PropertyDataGenerator.generateProperty('CASH_FLOW_POSITIVE'), downPayment: 10000 },
+          property: {
+            // Based on veteran-deal-scenarios.js "CASH COW" with high leverage
+            propertyType: 'SFR',
+            propertyAddress: { city: 'Fayetteville', state: 'NC', zipCode: '28301' },
+            purchasePrice: 80000,
+            monthlyRent: 1100,
+            downPayment: 10000, // High leverage scenario
+            interestRate: 8.0,
+            propertyTaxRate: 0.84,
+            insuranceRate: 0.7,
+            maintenanceCost: 110,
+            propertyManagementRate: 8
+          },
           expectedRisks: ['leverage', 'cash_flow_stress', 'rate_sensitivity']
         },
         {
           name: 'Market Concentration Risk',
-          property: PropertyDataGenerator.generateProperty('HIGH_APPRECIATION'),
+          property: {
+            // Based on test-pipeline-portfolio-flow.js Raleigh property
+            propertyType: 'SFR',
+            propertyAddress: { city: 'Raleigh', state: 'NC', zipCode: '27601' },
+            purchasePrice: 220000,
+            monthlyRent: 1800,
+            downPayment: 55000,
+            interestRate: 7.25,
+            propertyTaxRate: 0.9,
+            insuranceRate: 0.6,
+            maintenanceCost: 180,
+            propertyManagementRate: 8
+          },
           portfolio: { geographicConcentration: 'high', marketExposure: 'tier1' },
           expectedRisks: ['geographic_concentration', 'market_correction', 'liquidity']
         },
         {
           name: 'Negative Cash Flow Risk',
-          property: PropertyDataGenerator.generateProperty('CASH_FLOW_NEGATIVE'),
+          property: {
+            // Based on veteran-deal-scenarios.js "ROOKIE TRAP"
+            propertyType: 'SFR',
+            propertyAddress: { city: 'Charlotte', state: 'NC', zipCode: '28202' },
+            purchasePrice: 250000,
+            monthlyRent: 1600,
+            downPayment: 62500,
+            interestRate: 7.0,
+            propertyTaxRate: 1.2, // Higher in nice area
+            insuranceRate: 0.8,
+            maintenanceCost: 160,
+            propertyManagementRate: 8
+          },
           expectedRisks: ['negative_cash_flow', 'sustainability', 'forced_sale']
         }
       ];
@@ -502,8 +626,8 @@ class ExpertDomainValidator {
     // SARAH MITCHELL'S EXPERT ANALYSIS
     
     // 1. Cash Flow Analysis (Critical for Sarah)
-    if (monthlyFlow < this.expert.investmentPhilosophy.cashFlowMinimum) {
-      concerns.push(`Monthly cash flow $${monthlyFlow} below Sarah's $${this.expert.investmentPhilosophy.cashFlowMinimum} minimum`);
+    if (monthlyFlow < this.currentExpert.investmentPhilosophy.cashFlowMinimum) {
+      concerns.push(`Monthly cash flow $${monthlyFlow} below Sarah's $${this.currentExpert.investmentPhilosophy.cashFlowMinimum} minimum`);
       
       // Check if AI recommends more acquisitions despite negative cash flow
       if (aiRecommendations.toLowerCase().includes('acquire') || 
@@ -517,8 +641,8 @@ class ExpertDomainValidator {
     }
     
     // 2. Cap Rate Standards 
-    if (capRate < this.expert.investmentPhilosophy.capRateMinimum) {
-      concerns.push(`Portfolio cap rate ${capRate.toFixed(1)}% below Sarah's ${this.expert.investmentPhilosophy.capRateMinimum}% minimum`);
+    if (capRate < this.currentExpert.investmentPhilosophy.capRateMinimum) {
+      concerns.push(`Portfolio cap rate ${capRate.toFixed(1)}% below Sarah's ${this.currentExpert.investmentPhilosophy.capRateMinimum}% minimum`);
       score -= 15;
     } else {
       score += 20;
@@ -581,13 +705,30 @@ class ExpertDomainValidator {
       concerns,
       reasoning,
       verdict: approved ? 'EXPERT_APPROVED' : 'EXPERT_REJECTED',
-      expertName: this.expert.name,
+      expertName: expert.name,
       validatedBy: 'Sarah Mitchell Expert Domain Validator'
     };
   }
   // ====================
 
+  calculateExpertConsensus(multiExpertValidation) {
+    const approved = multiExpertValidation.filter(v => v.approved).length;
+    const total = multiExpertValidation.length;
+    const percentage = (approved / total * 100).toFixed(0);
+    
+    return {
+      approved: approved,
+      rejected: total - approved,
+      total: total,
+      approvalRate: percentage + '%',
+      consensus: approved > total / 2 ? 'MAJORITY_APPROVE' : 
+                 approved === 0 ? 'UNANIMOUS_REJECT' :
+                 approved === total ? 'UNANIMOUS_APPROVE' : 'SPLIT'
+    };
+  }
+
   async validateWithExpertLogic(property, analysis) {
+    const expert = this.currentExpert; // Use current expert being tested
     const cashFlow = analysis.monthlyAnalysis.cashFlow;
     const capRate = analysis.keyMetrics.capRate;
     const dscr = analysis.keyMetrics.dscr;
@@ -599,27 +740,27 @@ class ExpertDomainValidator {
     let reasoning = '';
     
     // Check cash flow minimum (PASS level concern)
-    if (cashFlow < this.expert.investmentPhilosophy.cashFlowMinimum) {
-      concerns.push(`Cash flow $${cashFlow} below my $${this.expert.investmentPhilosophy.cashFlowMinimum} minimum`);
+    if (cashFlow < expert.investmentPhilosophy.cashFlowMinimum) {
+      concerns.push(`Cash flow $${cashFlow} below my $${expert.investmentPhilosophy.cashFlowMinimum} minimum`);
       expertVerdict = 'PASS';
     }
     
     // Check cap rate minimum (CAUTION level concern)
-    if (capRate < this.expert.investmentPhilosophy.capRateMinimum) {
-      concerns.push(`Cap rate ${capRate.toFixed(2)}% below my ${this.expert.investmentPhilosophy.capRateMinimum}% minimum`);
+    if (capRate < expert.investmentPhilosophy.capRateMinimum) {
+      concerns.push(`Cap rate ${capRate.toFixed(2)}% below my ${expert.investmentPhilosophy.capRateMinimum}% minimum`);
       if (expertVerdict !== 'PASS') expertVerdict = 'CAUTION';
     }
     
     // Check DSCR minimum (NEGOTIATE level concern)
-    if (dscr < this.expert.investmentPhilosophy.dscrMinimum) {
-      concerns.push(`DSCR ${dscr.toFixed(2)} below my ${this.expert.investmentPhilosophy.dscrMinimum} minimum`);
+    if (dscr < expert.investmentPhilosophy.dscrMinimum) {
+      concerns.push(`DSCR ${dscr.toFixed(2)} below my ${expert.investmentPhilosophy.dscrMinimum} minimum`);
       if (expertVerdict === 'BUY') expertVerdict = 'NEGOTIATE';
     }
     
     // Check leverage (CAUTION level concern)
     const ltv = ((property.purchasePrice - property.downPayment) / property.purchasePrice) * 100;
-    if (ltv > this.expert.investmentPhilosophy.leverageMaximum) {
-      concerns.push(`LTV ${ltv.toFixed(1)}% exceeds my ${this.expert.investmentPhilosophy.leverageMaximum}% maximum`);
+    if (ltv > expert.investmentPhilosophy.leverageMaximum) {
+      concerns.push(`LTV ${ltv.toFixed(1)}% exceeds my ${expert.investmentPhilosophy.leverageMaximum}% maximum`);
       if (expertVerdict === 'BUY') expertVerdict = 'CAUTION';
     }
     
@@ -651,15 +792,31 @@ class ExpertDomainValidator {
   // ====================
 
   assessVerdictAlignment(platformVerdict, expertVerdict) {
+    // PASS (platform) = REJECTED (expert) = don't invest - perfect alignment
+    if ((platformVerdict === 'PASS' && expertVerdict === 'REJECTED') || 
+        (platformVerdict === 'REJECTED' && expertVerdict === 'PASS')) {
+      return true;
+    }
+    
     // Exact verdict match
     if (platformVerdict === expertVerdict) {
       return true;
     }
     
+    // Map expert verdicts to platform verdicts for comparison
+    const expertToPlatform = {
+      'REJECTED': 'PASS',
+      'BUY': 'BUY', 
+      'NEGOTIATE': 'NEGOTIATE',
+      'CAUTION': 'CAUTION'
+    };
+    
+    const normalizedExpertVerdict = expertToPlatform[expertVerdict] || expertVerdict;
+    
     // Allow some flexibility for close verdicts
     const verdictHierarchy = ['PASS', 'CAUTION', 'NEGOTIATE', 'BUY'];
     const platformIndex = verdictHierarchy.indexOf(platformVerdict);
-    const expertIndex = verdictHierarchy.indexOf(expertVerdict);
+    const expertIndex = verdictHierarchy.indexOf(normalizedExpertVerdict);
     
     // Within one level is acceptable alignment
     return Math.abs(platformIndex - expertIndex) <= 1;
@@ -801,12 +958,12 @@ class ExpertDomainValidator {
     let capRateRange = [5.0, 7.0];
     let expectedAppreciation = 3.5;
     
-    if (this.expert.marketKnowledge.tier1Markets.includes(city)) {
+    if (this.currentExpert.marketKnowledge.tier1Markets.includes(city)) {
       tier = 1;
       summary = 'high_appreciation_low_yield';
       capRateRange = [3.5, 5.5];
       expectedAppreciation = 5.0;
-    } else if (this.expert.marketKnowledge.tier3Markets.includes(city)) {
+    } else if (this.currentExpert.marketKnowledge.tier3Markets.includes(city)) {
       tier = 3;
       summary = 'high_yield_low_appreciation';
       capRateRange = [6.0, 9.0];
@@ -1308,9 +1465,9 @@ class ExpertDomainValidator {
     
     // Add expert-specific metrics
     report.expertValidation = {
-      persona: this.expert.name,
-      experience: this.expert.experience,
-      aum: this.expert.aum,
+      persona: this.currentExpert.name,
+      experience: this.currentExpert.experience,
+      aum: this.currentExpert.aum,
       validationResults: this.validationResults,
       approvalRate: this.validationResults.filter(r => r.alignment).length / this.validationResults.length,
       keyInsights: this.generateKeyInsights()
@@ -1335,7 +1492,7 @@ class ExpertDomainValidator {
 // ====================
 
 async function runExpertDomainValidation() {
-  const validator = new ExpertDomainValidator();
+  const validator = new ConservativeExpertDomainValidator();
   
   try {
     const report = await validator.run();
@@ -1401,7 +1558,7 @@ async function runExpertDomainValidation() {
 }
 
 // Export for use in other test suites
-module.exports = { ExpertDomainValidator, EXPERT_PERSONAS };
+module.exports = { ConservativeExpertDomainValidator, EXPERT_PERSONAS };
 
 // Run if called directly
 if (require.main === module) {

@@ -1,0 +1,274 @@
+{
+  "testSuite": "Expert Validation Data Capture",
+  "timestamp": "2025-09-14T23:31:51.400Z",
+  "purpose": "Document actual inputs/outputs used in expert validation tests",
+  "totalProperties": 3,
+  "properties": [
+    {
+      "name": "Jersey City, NJ Condo",
+      "address": "16 Belvidere Ave APT 3F, Jersey City, NJ 07304",
+      "purchasePrice": 255000,
+      "lookupSuccess": true,
+      "analysisSuccess": false
+    },
+    {
+      "name": "Tampa, FL Single Family",
+      "address": "9476 Forest Hills Pl, Tampa, FL 33612",
+      "purchasePrice": 259000,
+      "lookupSuccess": true,
+      "analysisSuccess": false
+    },
+    {
+      "name": "Anna, TX Property",
+      "address": "1837 Walnut Way, Anna, TX 75409",
+      "purchasePrice": 255000,
+      "lookupSuccess": true,
+      "analysisSuccess": false
+    }
+  ],
+  "detailedData": [
+    {
+      "property": {
+        "name": "Jersey City, NJ Condo",
+        "address": "16 Belvidere Ave APT 3F, Jersey City, NJ 07304",
+        "purchasePrice": 255000,
+        "source": "Zillow",
+        "notes": "Urban market test case"
+      },
+      "lookup": {
+        "success": true,
+        "data": {
+          "success": true,
+          "apiCalls": {
+            "successful": [
+              "RentCast Enhanced"
+            ],
+            "failed": [],
+            "cached": [
+              "RentCast"
+            ]
+          },
+          "errors": [],
+          "propertyDetails": {
+            "address": {
+              "formatted": "16 Belvidere Ave APT 3F, Jersey City, NJ 07304",
+              "standardized": {
+                "street": "16 Belvidere Ave APT 3F",
+                "city": "Jersey City",
+                "state": "NJ 07304",
+                "zipCode": "",
+                "formattedAddress": "16 Belvidere Ave APT 3F, Jersey City, NJ 07304"
+              }
+            },
+            "squareFootage": null,
+            "bedrooms": null,
+            "bathrooms": null,
+            "yearBuilt": null,
+            "propertyType": null,
+            "marketValue": null,
+            "assessedValue": null,
+            "annualPropertyTax": null,
+            "actualPropertyTaxRate": null,
+            "dataConfidence": {
+              "squareFootage": {
+                "score": 0,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.119Z"
+              },
+              "bedrooms": {
+                "score": 0,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.119Z"
+              },
+              "bathrooms": {
+                "score": 0,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.119Z"
+              },
+              "yearBuilt": {
+                "score": 0,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.119Z"
+              },
+              "currentMortgageRate": {
+                "score": 100,
+                "source": "FRED",
+                "lastUpdated": "2025-09-14T23:31:51.119Z"
+              }
+            }
+          }
+        },
+        "apiCall": "POST /api/wizard/property-lookup",
+        "timestamp": "2025-09-14T23:31:51.120Z"
+      },
+      "analysis": {
+        "success": false,
+        "error": "Request failed with status code 400",
+        "apiCall": "POST /api/deals/analyze"
+      },
+      "timestamp": "2025-09-14T23:31:51.173Z"
+    },
+    {
+      "property": {
+        "name": "Tampa, FL Single Family",
+        "address": "9476 Forest Hills Pl, Tampa, FL 33612",
+        "purchasePrice": 259000,
+        "source": "Zillow",
+        "notes": "Florida growth market test case"
+      },
+      "lookup": {
+        "success": true,
+        "data": {
+          "success": true,
+          "apiCalls": {
+            "successful": [
+              "RentCast Enhanced"
+            ],
+            "failed": [],
+            "cached": [
+              "RentCast"
+            ]
+          },
+          "errors": [],
+          "propertyDetails": {
+            "address": {
+              "formatted": "9476 Forest Hills Pl, Tampa, FL 33612",
+              "standardized": {
+                "street": "9476 Forest Hills Pl",
+                "city": "Tampa",
+                "state": "FL 33612",
+                "zipCode": "",
+                "formattedAddress": "9476 Forest Hills Pl, Tampa, FL 33612"
+              }
+            },
+            "squareFootage": 1244,
+            "bedrooms": 3,
+            "bathrooms": 2,
+            "yearBuilt": 1984,
+            "propertyType": "Single Family",
+            "marketValue": null,
+            "assessedValue": null,
+            "annualPropertyTax": null,
+            "actualPropertyTaxRate": null,
+            "dataConfidence": {
+              "squareFootage": {
+                "score": 85,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.222Z"
+              },
+              "bedrooms": {
+                "score": 90,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.222Z"
+              },
+              "bathrooms": {
+                "score": 90,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.222Z"
+              },
+              "yearBuilt": {
+                "score": 95,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.222Z"
+              },
+              "currentMortgageRate": {
+                "score": 100,
+                "source": "FRED",
+                "lastUpdated": "2025-09-14T23:31:51.222Z"
+              }
+            }
+          }
+        },
+        "apiCall": "POST /api/wizard/property-lookup",
+        "timestamp": "2025-09-14T23:31:51.223Z"
+      },
+      "analysis": {
+        "success": false,
+        "error": "Request failed with status code 400",
+        "apiCall": "POST /api/deals/analyze"
+      },
+      "timestamp": "2025-09-14T23:31:51.273Z"
+    },
+    {
+      "property": {
+        "name": "Anna, TX Property",
+        "address": "1837 Walnut Way, Anna, TX 75409",
+        "purchasePrice": 255000,
+        "source": "Zillow",
+        "notes": "Texas suburban growth test case"
+      },
+      "lookup": {
+        "success": true,
+        "data": {
+          "success": true,
+          "apiCalls": {
+            "successful": [
+              "RentCast Enhanced"
+            ],
+            "failed": [],
+            "cached": [
+              "RentCast"
+            ]
+          },
+          "errors": [],
+          "propertyDetails": {
+            "address": {
+              "formatted": "1837 Walnut Way, Anna, TX 75409",
+              "standardized": {
+                "street": "1837 Walnut Way",
+                "city": "Anna",
+                "state": "TX 75409",
+                "zipCode": "",
+                "formattedAddress": "1837 Walnut Way, Anna, TX 75409"
+              }
+            },
+            "squareFootage": 1268,
+            "bedrooms": 3,
+            "bathrooms": 2,
+            "yearBuilt": 2007,
+            "propertyType": "Single Family",
+            "marketValue": null,
+            "assessedValue": null,
+            "annualPropertyTax": null,
+            "actualPropertyTaxRate": null,
+            "dataConfidence": {
+              "squareFootage": {
+                "score": 85,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.324Z"
+              },
+              "bedrooms": {
+                "score": 90,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.324Z"
+              },
+              "bathrooms": {
+                "score": 90,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.324Z"
+              },
+              "yearBuilt": {
+                "score": 95,
+                "source": "RentCast",
+                "lastUpdated": "2025-09-14T23:31:51.324Z"
+              },
+              "currentMortgageRate": {
+                "score": 100,
+                "source": "FRED",
+                "lastUpdated": "2025-09-14T23:31:51.324Z"
+              }
+            }
+          }
+        },
+        "apiCall": "POST /api/wizard/property-lookup",
+        "timestamp": "2025-09-14T23:31:51.325Z"
+      },
+      "analysis": {
+        "success": false,
+        "error": "Request failed with status code 400",
+        "apiCall": "POST /api/deals/analyze"
+      },
+      "timestamp": "2025-09-14T23:31:51.400Z"
+    }
+  ]
+}
