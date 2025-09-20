@@ -151,10 +151,10 @@ export class InvestmentDecisionEngine {
   private readonly HURDLE_RATE = 0.055; // 5.5% minimum return requirement (2025 calibration: reduced by 1%)
   private readonly TREASURY_RATE = 0.050; // 5.0% risk-free rate (2025 market reality)
   
-  // V3.0 Professional Calibration Constants
+  // V3.0 Professional Calibration Constants - Base weights for moderate risk tolerance
   private readonly PROFESSIONAL_WEIGHTS = {
     cashFlow: 0.35,      // 35% - Monthly income stability
-    irr: 0.25,           // 25% - Total return potential  
+    irr: 0.25,           // 25% - Total return potential
     marketStrength: 0.15, // 15% - Market tier and trends
     debtStructure: 0.10,  // 10% - Financing quality
     exitStrategy: 0.10,   // 10% - Liquidity and exit options
@@ -165,9 +165,59 @@ export class InvestmentDecisionEngine {
   private readonly IRR_THRESHOLDS = {
     poor: 4,      // 4% - Below investment grade (2025 market reality)
     fair: 6,      // 6% - Acceptable minimum return
-    good: 8,      // 8% - Good professional standard 
+    good: 8,      // 8% - Good professional standard
     excellent: 12  // 12% - Excellent professional standard (percentage format)
   };
+
+  /**
+   * Strategy-aware weights based on AI-enhanced user context
+   * Adapts scoring to match investor risk tolerance and goals
+   */
+  private getStrategyAwareWeights(userContext: any) {
+    const baseWeights = this.PROFESSIONAL_WEIGHTS;
+
+    // Default to moderate (base weights) if no context or unknown risk tolerance
+    if (!userContext || !userContext.riskTolerance) {
+      console.log('🔍 STRATEGY WEIGHTS DEBUG: No userContext or riskTolerance, using base weights');
+      return baseWeights;
+    }
+
+    console.log(`🔍 STRATEGY WEIGHTS DEBUG: Risk tolerance detected: ${userContext.riskTolerance}`);
+
+    switch (userContext.riskTolerance) {
+      case 'conservative':
+        // Conservative investors prioritize cash flow stability and safety
+        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using CONSERVATIVE weights - cash flow emphasis');
+        return {
+          cashFlow: 0.45,        // +10% emphasis on monthly income stability
+          debtStructure: 0.15,   // +5% emphasis on safe financing
+          irr: 0.15,            // -10% de-emphasis on total return speculation
+          marketStrength: 0.10,  // -5% de-emphasis on market timing
+          exitStrategy: 0.10,    // Maintain liquidity importance
+          capRate: 0.03,         // Maintain current yield focus
+          propertyRisk: 0.02     // Maintain property quality focus
+        };
+
+      case 'aggressive':
+        // Aggressive investors prioritize total returns and growth potential
+        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using AGGRESSIVE weights - IRR emphasis');
+        return {
+          irr: 0.35,            // +10% emphasis on total return potential
+          marketStrength: 0.20,  // +5% emphasis on market opportunities
+          cashFlow: 0.25,       // -10% de-emphasis on immediate cash flow
+          debtStructure: 0.05,   // -5% de-emphasis on conservative financing
+          exitStrategy: 0.10,    // Maintain exit strategy importance
+          capRate: 0.03,         // Maintain current yield focus
+          propertyRisk: 0.02     // Maintain property quality focus
+        };
+
+      case 'moderate':
+      default:
+        // Moderate investors use balanced approach (base weights)
+        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using MODERATE weights (base weights)');
+        return baseWeights;
+    }
+  }
   private readonly MIN_RENT_TO_PRICE_RATIO = 0.0035; // 0.35% minimum (2025 adjustment: slightly more forgiving)
   private readonly LOW_RENT_TO_PRICE_RATIO = 0.005; // 0.5% risk flag threshold
   private readonly HIGH_CAP_RATE_MULTIPLIER = 1.5; // "Too good to be true" threshold
@@ -471,6 +521,122 @@ export class InvestmentDecisionEngine {
   }
 
   /**
+   * Map AI-extracted intent to enhanced user context for algorithmic decision making
+   *
+   * This bridges the AI extraction (Step 5 wizard) to the algorithmic engine,
+   * maintaining the 80/20 rule: Algorithm decides, AI detects intent.
+   */
+  private mapAIIntentToUserContext(
+    baseUserContext: {
+      availableCash: number;
+      experienceLevel: 'novice' | 'intermediate' | 'experienced';
+      riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+      investmentGoals: 'cash_flow' | 'appreciation' | 'balanced';
+    },
+    enhancedGoals?: any
+  ): typeof baseUserContext {
+    // Start with dropdown selections as base
+    const enhanced = { ...baseUserContext };
+
+    // Only apply AI overrides when we have high-confidence AI extraction
+    if (!enhancedGoals?.strategicInsights?.length && !enhancedGoals?.riskAdjustments?.length) {
+      logger.info('AI Intent Mapping: No AI insights available, using dropdown selections only');
+      return enhanced;
+    }
+
+    logger.info('AI Intent Mapping: Processing AI-extracted insights', {
+      originalRiskTolerance: baseUserContext.riskTolerance,
+      originalInvestmentGoals: baseUserContext.investmentGoals,
+      aiInsightsCount: enhancedGoals.strategicInsights?.length || 0,
+      aiRiskAdjustments: enhancedGoals.riskAdjustments?.length || 0
+    });
+
+    // Combine all AI text for pattern detection
+    const allAIText = [
+      ...(enhancedGoals.strategicInsights || []),
+      ...(enhancedGoals.riskAdjustments || []),
+      enhancedGoals.aiEnhancedStrategy || '',
+      enhancedGoals.freeTextStrategy || ''
+    ].join(' ').toLowerCase();
+
+    // Investment Goals Pattern Detection (AI intent → algorithm input)
+    if (allAIText.includes('cash flow') ||
+        allAIText.includes('monthly income') ||
+        allAIText.includes('passive income') ||
+        allAIText.includes('replace w2') ||
+        allAIText.includes('rental income')) {
+      enhanced.investmentGoals = 'cash_flow';
+      logger.info('AI Intent Mapping: Detected cash flow focus strategy');
+    }
+
+    if (allAIText.includes('appreciation') ||
+        allAIText.includes('growth') ||
+        allAIText.includes('brrrr') ||
+        allAIText.includes('equity buildup') ||
+        allAIText.includes('wealth building') ||
+        allAIText.includes('force appreciation')) {
+      enhanced.investmentGoals = 'appreciation';
+      logger.info('AI Intent Mapping: Detected appreciation focus strategy');
+    }
+
+    if (allAIText.includes('balanced') ||
+        allAIText.includes('diversif') ||
+        allAIText.includes('mix of') ||
+        allAIText.includes('both cash flow and appreciation')) {
+      enhanced.investmentGoals = 'balanced';
+      logger.info('AI Intent Mapping: Detected balanced strategy');
+    }
+
+    // Risk Tolerance Refinement (AI insights → refined risk profile)
+    const riskIndicators = enhancedGoals.riskAdjustments || [];
+    const conservativeIndicators = riskIndicators.filter(risk =>
+      risk.toLowerCase().includes('conservative') ||
+      risk.toLowerCase().includes('safe') ||
+      risk.toLowerCase().includes('low risk') ||
+      risk.toLowerCase().includes('stability')
+    );
+
+    const aggressiveIndicators = riskIndicators.filter(risk =>
+      risk.toLowerCase().includes('aggressive') ||
+      risk.toLowerCase().includes('high risk') ||
+      risk.toLowerCase().includes('leverage') ||
+      risk.toLowerCase().includes('risky')
+    );
+
+    // Apply risk tolerance adjustments based on AI confidence
+    if (conservativeIndicators.length > aggressiveIndicators.length && conservativeIndicators.length >= 2) {
+      enhanced.riskTolerance = 'conservative';
+      logger.info('AI Intent Mapping: Adjusted to conservative risk tolerance based on AI analysis');
+    } else if (aggressiveIndicators.length > conservativeIndicators.length && aggressiveIndicators.length >= 2) {
+      enhanced.riskTolerance = 'aggressive';
+      logger.info('AI Intent Mapping: Adjusted to aggressive risk tolerance based on AI analysis');
+    }
+
+    // Experience Level Refinement (AI strategy complexity → experience adjustment)
+    if (allAIText.includes('brrrr') ||
+        allAIText.includes('syndication') ||
+        allAIText.includes('1031 exchange') ||
+        allAIText.includes('complex') ||
+        allAIText.includes('portfolio') && enhanced.experienceLevel === 'novice') {
+      enhanced.experienceLevel = 'intermediate';
+      logger.info('AI Intent Mapping: Upgraded experience level based on strategy complexity');
+    }
+
+    logger.info('AI Intent Mapping: Final enhanced context', {
+      enhancedRiskTolerance: enhanced.riskTolerance,
+      enhancedInvestmentGoals: enhanced.investmentGoals,
+      enhancedExperienceLevel: enhanced.experienceLevel,
+      changesApplied: {
+        riskChanged: enhanced.riskTolerance !== baseUserContext.riskTolerance,
+        goalsChanged: enhanced.investmentGoals !== baseUserContext.investmentGoals,
+        experienceChanged: enhanced.experienceLevel !== baseUserContext.experienceLevel
+      }
+    });
+
+    return enhanced;
+  }
+
+  /**
    * V3.0 Professional Assessment - Replace penalty stacking with weighted scoring
    */
   private calculateProfessionalAssessment(
@@ -482,10 +648,11 @@ export class InvestmentDecisionEngine {
     propertyData: SFRData,
     userContext: any
   ): ProfessionalAssessment {
-    const weights = this.PROFESSIONAL_WEIGHTS;
+    console.log('🔍 PROFESSIONAL ASSESSMENT DEBUG: userContext received:', JSON.stringify(userContext, null, 2));
+    const weights = this.getStrategyAwareWeights(userContext);
     const irrThresholds = this.IRR_THRESHOLDS;
     
-    // 1. Cash Flow Score (35% weight) - Monthly income stability
+    // 1. Cash Flow Score (strategy-aware weight) - Monthly income stability
     const monthlyNetCashFlow = fundamentals.cashFlow || 0;
     const cashFlowScore = this.scoreCashFlowStability(
       monthlyNetCashFlow,
@@ -493,11 +660,11 @@ export class InvestmentDecisionEngine {
       marketIntelligenceAnalysis.marketTier
     );
     
-    // 2. IRR Score (25% weight) - Total return potential with 2025 reality
+    // 2. IRR Score (strategy-aware weight) - Total return potential with 2025 reality
     const irr = fundamentals.irr || 0;
     const irrScore = this.scoreIRRPotential(irr, irrThresholds);
     
-    // 3. Market Strength Score (15% weight)  
+    // 3. Market Strength Score (strategy-aware weight)  
     const marketScore = this.scoreMarketStrength(
       marketIntelligenceAnalysis.marketTier,
       fundamentals.capRate,
@@ -1383,7 +1550,16 @@ export class InvestmentDecisionEngine {
         fundamentals
       );
 
-      // 2D. V3.0 Professional Assessment - Replace penalty stacking with weighted scoring
+      // 2D. V3.0 Professional Assessment with AI-Enhanced Context
+      // Bridge AI-extracted intent to algorithmic decision making (80/20 rule)
+      console.log('🔧 QE DEBUG: About to call mapAIIntentToUserContext');
+      console.log('🔧 QE DEBUG: Original userContext:', JSON.stringify(userContext, null, 2));
+      console.log('🔧 QE DEBUG: Enhanced goals received:', JSON.stringify(enhancedGoals, null, 2));
+
+      const enhancedUserContext = this.mapAIIntentToUserContext(userContext, enhancedGoals);
+
+      console.log('🔧 QE DEBUG: Enhanced userContext result:', JSON.stringify(enhancedUserContext, null, 2));
+
       const professionalAssessment = this.calculateProfessionalAssessment(
         fundamentals,
         marketIntelligenceAnalysis,
@@ -1391,7 +1567,7 @@ export class InvestmentDecisionEngine {
         strategyAlignmentAnalysis,
         leverageAnalysis,
         propertyData,
-        userContext
+        enhancedUserContext  // Use AI-enhanced context instead of basic userContext
       );
 
       logger.info('V3.0 Professional Assessment Complete', {
@@ -1468,13 +1644,13 @@ export class InvestmentDecisionEngine {
         verdict,
         leverageAnalysis,
         fundamentals,
-        userContext
+        enhancedUserContext
       );
 
       // 6. Develop capital strategy
       const capitalStrategy = this.developCapitalStrategy(
         leverageAnalysis,
-        userContext,
+        enhancedUserContext,
         propertyData.purchasePrice
       );
 
@@ -1483,7 +1659,7 @@ export class InvestmentDecisionEngine {
         verdict,
         fundamentals,
         marketContext,
-        userContext
+        enhancedUserContext
       );
 
       // 8. Create timeline
@@ -1509,7 +1685,20 @@ export class InvestmentDecisionEngine {
       });
 
       // Generate portfolio context for portfolio fit analysis
-      const portfolioContext = this.generatePortfolioContext(propertyData, fundamentals, verdict.verdict, userContext);
+      const portfolioContext = this.generatePortfolioContext(propertyData, fundamentals, verdict.verdict, enhancedUserContext);
+
+      // Generate AI-enhanced goal reasoning (V3.0 80/20 Architecture)
+      let goalBasedReasoning: string;
+      try {
+        goalBasedReasoning = await aiEnhancedMessagingService.generatePersonalizedGoalReasoning(
+          { verdict: verdict.verdict, professionalAssessment } as InvestmentDecision,
+          analysis,
+          propertyData
+        );
+      } catch (error) {
+        logger.warn('AI goal-based reasoning failed, using fallback', error);
+        goalBasedReasoning = this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals, professionalAssessment);
+      }
 
       const decision: InvestmentDecision = {
         verdict: verdict.verdict,
@@ -1527,7 +1716,7 @@ export class InvestmentDecisionEngine {
         goalContext, // NEW: Include goal context for frontend
         portfolioContext, // Portfolio Fit analysis
         confidenceDescription: this.getConfidenceDescription(verdict.verdict, verdict.confidence),
-        goalBasedReasoning: this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals)
+        goalBasedReasoning
       };
 
       const processingTime = Date.now() - startTime;
@@ -1564,7 +1753,7 @@ export class InvestmentDecisionEngine {
         try {
           logger.info('Generating sensitivity analysis for negotiation intelligence');
           const sensitivityAnalysis = await sensitivityAnalysisService.generateSensitivityAnalysis(
-            propertyData, analysis, predictions, marketIntelligence, userContext, enhancedGoals, this
+            propertyData, analysis, predictions, marketIntelligence, enhancedUserContext, enhancedGoals, this
           );
           decision.sensitivityAnalysis = sensitivityAnalysis;
           logger.info('Sensitivity analysis generation completed');
@@ -1928,13 +2117,103 @@ export class InvestmentDecisionEngine {
   }
 
   /**
-   * Generate goal-based reasoning explanation
+   * Generate strategy-aware personalized message templates
+   * 80/20 Architecture: Algorithm decides (dealQuality), messaging personalizes
+   */
+  private getPersonalizedMessageTemplate(
+    verdict: InvestmentVerdict,
+    dealQuality: number,
+    riskTolerance: string,
+    timelineDisplayText: string,
+    investmentGoal: string,
+    fundamentals: any
+  ): string {
+    const capRate = fundamentals.capRate.toFixed(1);
+    const cashFlow = Math.round(fundamentals.cashFlow);
+
+    // Strategy-aware thresholds based on risk tolerance
+    const getThresholds = (riskTolerance: string) => {
+      switch (riskTolerance) {
+        case 'conservative': return { good: 65, acceptable: 50 };
+        case 'moderate': return { good: 60, acceptable: 45 };
+        case 'aggressive': return { good: 55, acceptable: 40 };
+        default: return { good: 60, acceptable: 45 };
+      }
+    };
+
+    const thresholds = getThresholds(riskTolerance);
+
+    // Generate persona-specific messaging based on actual deal quality score
+    const verdictStr = verdict.toString();
+    if (verdictStr === 'PASS' || verdictStr === 'CAUTION') {
+      if (dealQuality >= thresholds.acceptable) {
+        // Marginal deal - persona affects advice
+        switch (riskTolerance) {
+          case 'conservative':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality suggests seeking safer opportunities with stronger cash flow buffers and lower risk exposure.`;
+          case 'moderate':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality requires careful evaluation of market timing risks and potential for improvement.`;
+          case 'aggressive':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality shows acceptable risk for aggressive growth strategies, but significant price reduction would improve prospects.`;
+          default:
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality requires careful risk assessment.`;
+        }
+      } else {
+        // Poor deal - universal avoid but different reasoning
+        switch (riskTolerance) {
+          case 'conservative':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality falls well below conservative investment standards. Seek properties with stronger fundamentals and safety margins.`;
+          case 'moderate':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality indicates excessive risk relative to potential returns. Better balanced opportunities available.`;
+          case 'aggressive':
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality suggests poor fundamentals that even aggressive risk tolerance cannot justify. Pass and seek better opportunities.`;
+          default:
+            return `With your ${timelineDisplayText} ${investmentGoal} strategy, this property's ${dealQuality}/100 deal quality is below investment standards.`;
+        }
+      }
+    }
+
+    if (verdictStr === 'BUY') {
+      switch (riskTolerance) {
+        case 'conservative':
+          return `Excellent match for your ${timelineDisplayText} ${investmentGoal} strategy. This property's ${dealQuality}/100 deal quality provides strong safety margins and reliable returns that align with conservative investment principles.`;
+        case 'moderate':
+          return `Strong opportunity for your ${timelineDisplayText} ${investmentGoal} strategy. This property's ${dealQuality}/100 deal quality offers balanced risk-return profile with solid fundamentals and growth potential.`;
+        case 'aggressive':
+          return `Outstanding potential for your ${timelineDisplayText} ${investmentGoal} strategy. This property's ${dealQuality}/100 deal quality justifies aggressive positioning with excellent growth prospects relative to risk.`;
+        default:
+          return `Strong opportunity for your ${timelineDisplayText} ${investmentGoal} strategy with ${dealQuality}/100 deal quality.`;
+      }
+    }
+
+    if (verdictStr === 'NEGOTIATE') {
+      switch (riskTolerance) {
+        case 'conservative':
+          return `This property could work for your ${timelineDisplayText} ${investmentGoal} strategy with significant improvements. Current ${dealQuality}/100 deal quality requires price reduction to meet conservative safety standards.`;
+        case 'moderate':
+          return `Potential fit for your ${timelineDisplayText} ${investmentGoal} strategy with right adjustments. Current ${dealQuality}/100 deal quality needs optimization to balance risk and return appropriately.`;
+        case 'aggressive':
+          return `Viable opportunity for your ${timelineDisplayText} ${investmentGoal} strategy with strategic negotiation. Current ${dealQuality}/100 deal quality can be improved to maximize aggressive growth potential.`;
+        default:
+          return `This property could work for your ${timelineDisplayText} ${investmentGoal} strategy with price adjustments to improve the ${dealQuality}/100 deal quality.`;
+      }
+    }
+
+    // Fallback with persona consideration
+    const meetsCriteria = verdictStr === 'BUY' || verdictStr === 'NEGOTIATE' ? 'aligns with' : 'does not meet';
+    return `Based on your ${riskTolerance} approach to ${investmentGoal} investing over ${timelineDisplayText}, this property's ${dealQuality}/100 deal quality ${meetsCriteria} your investment criteria.`;
+  }
+
+  /**
+   * Generate goal-based reasoning explanation with strategy-aware messaging
+   * Enhanced to use 80/20 architecture: Algorithm decides, messaging personalizes
    */
   private getGoalBasedReasoning(
     verdict: InvestmentVerdict,
     propertyData: SFRData,
     fundamentals: any,
-    enhancedGoals: any
+    enhancedGoals: any,
+    professionalAssessment?: any
   ): string {
     const exitStrategy = enhancedGoals?.processedGoals?.exitStrategy?.strategy || 
                         propertyData.exitStrategy?.primaryExitStrategy || 
@@ -1982,68 +2261,35 @@ export class InvestmentDecisionEngine {
     if (enhancedGoals?.portfolioStrategy === 'cashflow') investmentGoal = 'cashflow';
     else if (enhancedGoals?.portfolioStrategy === 'appreciation') investmentGoal = 'appreciation';
     else if (enhancedGoals?.portfolioStrategy === 'first' || enhancedGoals?.portfolioStrategy === 'geographic' || enhancedGoals?.portfolioStrategy === 'diversification') investmentGoal = 'balanced';
-    
-    // Basic hold period business logic context
-    let holdPeriodContext = '';
-    if (strategicHoldPeriod <= 3) {
-      holdPeriodContext = 'short-term hold requires premium returns due to market timing risk';
-    } else if (strategicHoldPeriod >= 8) {
-      holdPeriodContext = 'long-term hold allows for time arbitrage and appreciation focus';  
-    } else {
-      holdPeriodContext = 'medium-term hold offers balanced risk/return profile';
-    }
-    
-    logger.info('Goal-based reasoning context:', {
+
+    // Extract risk tolerance for strategy-aware messaging
+    const riskTolerance = enhancedGoals?.riskTolerance || 'moderate';
+
+    // Get deal quality score from professional assessment (80% algorithmic foundation)
+    const dealQuality = professionalAssessment?.dealQuality || 50;
+
+    logger.info('Strategy-aware goal-based reasoning context:', {
       verdict,
+      dealQuality,
+      riskTolerance,
       strategicHoldPeriod,
       timelineDisplayText,
       financialProjectionYears,
       exitStrategy,
       investmentGoal,
-      holdPeriodContext,
       capRate: fundamentals.capRate.toFixed(1) + '%',
       cashFlow: Math.round(fundamentals.cashFlow)
     });
-    
-    if (verdict === 'PASS') {
-      if (exitStrategy === 'sale' && strategicHoldPeriod <= 7) {
-        return `With your ${timelineDisplayText} appreciation strategy, this property's ${fundamentals.capRate.toFixed(1)}% cap rate is too low for the risk. Better opportunities exist in growing markets.`;
-      }
-      if (investmentGoal === 'cashflow') {
-        return `For cash flow focused investing, the monthly cash flow of $${Math.round(fundamentals.cashFlow)} doesn't justify the investment risk and capital requirements.`;
-      }
-      if (investmentGoal === 'appreciation') {
-        return `While you're focused on appreciation, the market indicators and property fundamentals suggest limited growth potential relative to the risk.`;
-      }
-      // Short-term hold specific messaging
-      if (strategicHoldPeriod <= 3) {
-        return `Short-term ${timelineDisplayText} strategy requires premium returns and strong market timing - this property's fundamentals insufficient for timing risk.`;
-      }
-    }
-    
-    if (verdict === 'BUY') {
-      if (exitStrategy === 'sale' && strategicHoldPeriod <= 7) {
-        return `Strong opportunity for your ${timelineDisplayText} hold strategy with projected appreciation and positive cash flow buffering market volatility.`;
-      }
-      if (investmentGoal === 'cashflow') {
-        return `Excellent cash flow property generating $${Math.round(fundamentals.cashFlow)}/month with stable tenant demand and manageable expenses.`;
-      }
-      // Long-term hold specific messaging
-      if (strategicHoldPeriod >= 8) {
-        return `Excellent long-term ${timelineDisplayText} opportunity with time to benefit from appreciation and cash flow compound growth.`;
-      }
-    }
-    
-    if (verdict === 'NEGOTIATE') {
-      if (strategicHoldPeriod <= 3) {
-        return `Short-term ${timelineDisplayText} strategy could work with significant price reduction to justify timing risk.`;
-      }
-      // Include timeline in all NEGOTIATE messaging
-      return `This property could work for your ${timelineDisplayText} ${investmentGoal} strategy with the right price adjustments. Focus negotiation on improving the ${fundamentals.capRate < 0.05 ? 'cap rate' : 'cash flow'}.`;
-    }
-    
-    // Default fallback - use strategic timeline for messaging
-    return `Based on your ${investmentGoal} investment goals and ${timelineDisplayText} timeline, this property ${verdict === 'PASS' ? 'does not meet' : 'meets'} your investment criteria.`;
+
+    // 80/20 Architecture: Use algorithmic deal quality to drive personalized messaging (20%)
+    return this.getPersonalizedMessageTemplate(
+      verdict,
+      dealQuality,
+      riskTolerance,
+      timelineDisplayText,
+      investmentGoal,
+      fundamentals
+    );
   }
 
   /**

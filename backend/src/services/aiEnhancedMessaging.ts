@@ -387,6 +387,138 @@ Format as JSON:
   }
 
   /**
+   * Generate personalized goal-based reasoning (V3.0 80/20 Architecture)
+   * 80% Algorithmic Foundation + 20% AI Enhancement for user context
+   */
+  async generatePersonalizedGoalReasoning(
+    decision: InvestmentDecision,
+    analysis: any,
+    propertyData?: any
+  ): Promise<string> {
+    // Extract algorithmic context (80% foundation)
+    const algorithmicContext = {
+      verdict: decision.verdict,
+      dealQuality: decision.professionalAssessment?.dealQuality ?? 0,
+      cashFlowScore: decision.professionalAssessment?.cashFlowScore ?? 0,
+      irrScore: decision.professionalAssessment?.irrScore ?? 0,
+      marketStrengthScore: decision.professionalAssessment?.marketStrengthScore ?? 0,
+      debtStructureScore: decision.professionalAssessment?.debtStructureScore ?? 0,
+      exitStrategyScore: decision.professionalAssessment?.exitStrategyScore ?? 0,
+      capRateScore: decision.professionalAssessment?.capRateScore ?? 0,
+      propertyRiskScore: decision.professionalAssessment?.propertyRiskScore ?? 0
+    };
+
+    // Extract user context (20% AI enhancement)
+    const userContext = {
+      freeTextStrategy: propertyData?.enhancedGoals?.strategy || propertyData?.exitStrategy?.strategy || 'Not specified',
+      primaryExitStrategy: propertyData?.exitStrategy?.primaryExitStrategy || 'sale',
+      portfolioStrategy: propertyData?.enhancedGoals?.portfolioStrategy || 'balanced',
+      riskApproach: propertyData?.enhancedGoals?.riskTolerance || 'balanced',
+      holdPeriod: propertyData?.enhancedGoals?.holdPeriod || propertyData?.exitStrategy?.holdPeriod || 10,
+      experienceLevel: propertyData?.enhancedGoals?.experienceLevel || 'intermediate'
+    };
+
+    // Extract financial metrics for context
+    const cashFlow = analysis?.monthlyAnalysis?.cashFlow ?? 0;
+    const capRate = analysis?.keyMetrics?.capRate ?? 0;
+    const irr = analysis?.keyMetrics?.irr ?? 0;
+    const purchasePrice = propertyData?.purchasePrice ?? 0;
+
+    const prompt = `
+You are a $20M portfolio manager explaining WHY our professional algorithm reached its ${algorithmicContext.verdict} verdict to a client with specific investment goals.
+
+ALGORITHMIC FOUNDATION (80% - CANNOT BE CHANGED):
+- VERDICT: ${algorithmicContext.verdict} (Deal Quality: ${algorithmicContext.dealQuality}/100)
+- SCORING BREAKDOWN (Weighted Professional Assessment):
+  • Cash Flow (35% weight): ${algorithmicContext.cashFlowScore}/100
+  • IRR (25% weight): ${algorithmicContext.irrScore}/100
+  • Market Strength (15% weight): ${algorithmicContext.marketStrengthScore}/100
+  • Debt Structure (10% weight): ${algorithmicContext.debtStructureScore}/100
+  • Exit Strategy (10% weight): ${algorithmicContext.exitStrategyScore}/100
+  • Cap Rate (3% weight): ${algorithmicContext.capRateScore}/100
+  • Property Risk (2% weight): ${algorithmicContext.propertyRiskScore}/100
+
+PROPERTY FINANCIAL METRICS:
+- Monthly Cash Flow: $${Math.round(cashFlow)}
+- Cap Rate: ${capRate.toFixed(2)}%
+- 10-Year IRR: ${irr.toFixed(1)}%
+- Purchase Price: $${purchasePrice.toLocaleString()}
+
+USER'S INVESTMENT STRATEGY (20% - YOUR FOCUS):
+- Exit Strategy: ${userContext.primaryExitStrategy}
+- Portfolio Goal: ${userContext.portfolioStrategy}
+- Risk Approach: ${userContext.riskApproach}
+- Hold Period: ${userContext.holdPeriod} years
+- Experience: ${userContext.experienceLevel}
+- Personal Strategy Notes: "${userContext.freeTextStrategy}"
+
+CRITICAL INSTRUCTIONS:
+1. RESPECT the algorithmic ${algorithmicContext.verdict} verdict - it cannot be changed
+2. EXPLAIN WHY the algorithm reached this conclusion using the weighted scores
+3. CONNECT the algorithmic reasoning to the user's personal strategy and notes
+4. USE ONLY the actual numbers provided - no fictional data
+5. BE SPECIFIC about which scoring factors drove the verdict
+6. ACKNOWLEDGE the user's personal strategy context in your explanation
+
+TASK: Write a single paragraph (2-3 sentences) that explains WHY our algorithm recommended ${algorithmicContext.verdict} and HOW this aligns with (or conflicts with) the user's stated investment goals and strategy notes.
+
+FORMAT: Return ONLY the explanation text, no JSON wrapper.
+
+EXAMPLE APPROACH:
+"With your [user strategy context], this property's ${algorithmicContext.dealQuality}/100 deal quality driven primarily by [specific low/high scoring factors] results in our ${algorithmicContext.verdict} recommendation because [algorithmic reasoning that connects to user goals]."
+`;
+
+    try {
+      const openai = getOpenAIClient();
+      if (!openai) {
+        logger.warn('OpenAI client not available, using fallback goal-based reasoning');
+        return this.getFallbackGoalReasoning(algorithmicContext, userContext);
+      }
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 200
+      });
+
+      const content = response.choices[0]?.message?.content?.trim();
+      if (!content) throw new Error('No AI response received');
+
+      return content;
+    } catch (error) {
+      logger.error('AI Goal-based reasoning generation failed:', error);
+      return this.getFallbackGoalReasoning(algorithmicContext, userContext);
+    }
+  }
+
+  /**
+   * Fallback goal-based reasoning when AI service fails
+   */
+  private getFallbackGoalReasoning(
+    algorithmicContext: { verdict: string; dealQuality: number; cashFlowScore: number; irrScore: number },
+    userContext: { portfolioStrategy?: string; riskApproach?: string; primaryExitStrategy?: string }
+  ): string {
+    const strategy = userContext.portfolioStrategy || 'investment';
+    const risk = userContext.riskApproach || 'balanced';
+    const exit = userContext.primaryExitStrategy || 'sale';
+
+    if (algorithmicContext.verdict === 'BUY') {
+      return `With your ${strategy} strategy and ${risk} risk approach targeting ${exit}, this property's ${algorithmicContext.dealQuality}/100 deal quality driven by strong fundamentals results in our BUY recommendation because the algorithmic assessment aligns with professional investment standards.`;
+    }
+
+    if (algorithmicContext.verdict === 'NEGOTIATE') {
+      return `With your ${strategy} strategy targeting ${exit}, this property's ${algorithmicContext.dealQuality}/100 deal quality shows potential but requires negotiation to reach professional investment thresholds aligned with your ${risk} risk approach.`;
+    }
+
+    if (algorithmicContext.verdict === 'CAUTION') {
+      return `With your ${risk} risk approach targeting ${exit}, this property's ${algorithmicContext.dealQuality}/100 deal quality suggests proceeding carefully as the algorithmic assessment indicates marginal returns that may not align with your ${strategy} strategy.`;
+    }
+
+    return `With your ${strategy} strategy targeting ${exit}, this property's ${algorithmicContext.dealQuality}/100 deal quality falls below professional investment standards, making our PASS recommendation the prudent choice for your ${risk} risk approach.`;
+  }
+
+  /**
    * Generate complete AI-enhanced content for all tabs
    */
   async generateAllContent(decision: InvestmentDecision, analysis: any, propertyData?: any): Promise<AIEnhancedContent> {

@@ -268,6 +268,7 @@ export interface Analysis {
     confidence: number;
     score: number; // LEGACY - Property quality score 0-100 (deprecated, use professionalAssessment.dealQuality)
     primaryReason: string;
+    goalBasedReasoning?: string; // V3.0 AI-enhanced reasoning based on user strategy
     secondaryReasons: string[];
     keyRisks: string[];
     // V3.0 Professional Assessment - Critical for Deal Quality scoring
@@ -843,6 +844,7 @@ const AnalysisSchema = new Schema({
     confidence: Number,
     score: Number, // LEGACY - Property quality score 0-100 (deprecated, use professionalAssessment.dealQuality)
     primaryReason: String,
+    goalBasedReasoning: String, // V3.0 AI-enhanced reasoning based on user strategy
     secondaryReasons: [String],
     keyRisks: [String],
     // V3.0 Professional Assessment - Critical for Deal Quality scoring

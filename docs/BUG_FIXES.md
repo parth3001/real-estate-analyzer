@@ -1,5 +1,47 @@
 # Bug Fixes Documentation
 
+## Property Wizard Re-Analysis Bug (2025-09-20)
+
+### Issue Description
+**Problem**: When users load a saved property and modify data in the Property Wizard, the system returns cached analysis instead of performing fresh analysis with new data.
+
+**Symptoms**:
+- Load saved deal → Navigate to Property Wizard → Modify values → Get old cached results ❌
+- Backend logs show "Loading deal 66f0a... - returning saved data with complete analysis"
+- Fresh analysis not performed despite data changes
+
+### Root Cause Analysis
+**Frontend Logic Error**: `handleAnalyzeProperty` function used conditional logic:
+```javascript
+// WRONG: Called updateProperty instead of analyzeProperty when dealId exists
+if (dealId) {
+  response = await propertyApi.updateProperty(dealId, analysisData); // ❌ No analysis
+} else {
+  response = await propertyApi.analyzeProperty(analysisData);         // ✅ Fresh analysis
+}
+```
+
+### Architecture Solution
+**Clean Separation of Concerns**: Frontend orchestrates, backend provides focused services.
+
+**Fixed Logic**:
+```javascript
+// ALWAYS perform fresh analysis first
+const response = await propertyApi.analyzeProperty(analysisData);
+
+// THEN save to existing deal if needed
+if (dealId && response.status === 200) {
+  await propertyApi.updateProperty(dealId, { ...analysisData, analysis: response.data });
+}
+```
+
+**Result**:
+- ✅ Fresh analysis always performed when wizard completes
+- ✅ Existing deals properly updated with fresh results
+- ✅ Clean architectural separation maintained
+
+---
+
 ## Saved Deal Loading Performance Issue (2025-07-18)
 
 ### Issue Description

@@ -62,18 +62,31 @@ User Input → Portfolio Context (Optional) → Backend Analysis → Professiona
 ---
 
 ### **Step 2: Frontend API Call**
-**Location**: `/frontend/src/pages/SFRAnalysis.tsx`  
-**Endpoint**: `POST /api/deals/analyze` (Full analysis)
-**Alternative**: `POST /api/deals` (Manual portfolio property - triggers skinny metrics)
+**Location**: `/frontend/src/pages/SFRAnalysis.tsx`
+**Primary Endpoint**: `POST /api/deals/analyze` (Always performs fresh analysis)
+**Secondary Endpoint**: `PUT /api/deals/:id` (Updates existing deal with fresh analysis)
+
+**Analysis Flow**:
+```javascript
+// ALWAYS perform fresh analysis first (regardless of existing dealId)
+const response = await propertyApi.analyzeProperty(analysisData);
+
+// If updating existing deal, save fresh analysis back to it
+if (dealId && response.status === 200) {
+  await propertyApi.updateProperty(dealId, {
+    ...analysisData,
+    analysis: response.data,
+    updatedAt: new Date()
+  });
+}
+```
 
 **Request Payload**:
 ```javascript
 {
   ...propertyData,
-  portfolioId: selectedPortfolioId,  // NEW: Optional portfolio context
-  isInteractiveUpdate: true,          // For re-analysis
-  skipAI: false,                      // For quick calculations
-  enhancedGoals: {                    // From Step 4
+  portfolioId: selectedPortfolioId,  // Optional portfolio context
+  enhancedGoals: {                    // From Step 4 of wizard
     exitStrategy,
     portfolioStrategy,
     experienceLevel,
