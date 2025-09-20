@@ -1,6 +1,6 @@
 {
   "testSuite": "Comprehensive E2E Validation",
-  "timestamp": "2025-09-14T16:29:27.667Z",
+  "timestamp": "2025-09-19T02:53:53.480Z",
   "totalProperties": 3,
   "successfulAnalyses": 3,
   "summary": [
@@ -8,7 +8,7 @@
       "property": "Jersey City, NJ Condo",
       "analysisSuccess": true,
       "systemVerdict": "CAUTION",
-      "monthlyFlow": -22.78,
+      "monthlyFlow": -11.549999999999999,
       "capRate": 5.49,
       "expertConsensus": "PASS",
       "alignment": "33.3%"
@@ -17,7 +17,7 @@
       "property": "Tampa, FL Single Family",
       "analysisSuccess": true,
       "systemVerdict": "NEGOTIATE",
-      "monthlyFlow": 120.56,
+      "monthlyFlow": 131.96,
       "capRate": 6.16,
       "expertConsensus": "BUY",
       "alignment": "66.7%"
@@ -26,7 +26,7 @@
       "property": "Anna, TX Property",
       "analysisSuccess": true,
       "systemVerdict": "NEGOTIATE",
-      "monthlyFlow": 253.47,
+      "monthlyFlow": 264.7,
       "capRate": 6.79,
       "expertConsensus": "BUY",
       "alignment": "100.0%"
@@ -40,7 +40,7 @@
         "purchasePrice": 255000,
         "source": "Zillow"
       },
-      "timestamp": "2025-09-14T16:28:54.864Z",
+      "timestamp": "2025-09-19T02:53:20.341Z",
       "steps": {
         "propertyLookup": {
           "success": true,
@@ -68,27 +68,27 @@
               "squareFootage": {
                 "score": 0,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:28:54.911Z"
+                "lastUpdated": "2025-09-19T02:53:20.409Z"
               },
               "bedrooms": {
                 "score": 0,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:28:54.911Z"
+                "lastUpdated": "2025-09-19T02:53:20.409Z"
               },
               "bathrooms": {
                 "score": 0,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:28:54.911Z"
+                "lastUpdated": "2025-09-19T02:53:20.409Z"
               },
               "yearBuilt": {
                 "score": 0,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:28:54.911Z"
+                "lastUpdated": "2025-09-19T02:53:20.409Z"
               },
               "currentMortgageRate": {
                 "score": 100,
                 "source": "FRED",
-                "lastUpdated": "2025-09-14T16:28:54.911Z"
+                "lastUpdated": "2025-09-19T02:53:20.409Z"
               }
             }
           },
@@ -128,27 +128,27 @@
                 "squareFootage": {
                   "score": 0,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:28:54.911Z"
+                  "lastUpdated": "2025-09-19T02:53:20.409Z"
                 },
                 "bedrooms": {
                   "score": 0,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:28:54.911Z"
+                  "lastUpdated": "2025-09-19T02:53:20.409Z"
                 },
                 "bathrooms": {
                   "score": 0,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:28:54.911Z"
+                  "lastUpdated": "2025-09-19T02:53:20.409Z"
                 },
                 "yearBuilt": {
                   "score": 0,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:28:54.911Z"
+                  "lastUpdated": "2025-09-19T02:53:20.409Z"
                 },
                 "currentMortgageRate": {
                   "score": 100,
                   "source": "FRED",
-                  "lastUpdated": "2025-09-14T16:28:54.911Z"
+                  "lastUpdated": "2025-09-19T02:53:20.409Z"
                 }
               }
             }
@@ -159,7 +159,7 @@
           "defaults": {
             "downPaymentPercentage": 25,
             "closingCostPercentage": 2.5,
-            "currentMortgageRate": 6.35,
+            "currentMortgageRate": 6.26,
             "managementFeePercentage": 8,
             "maintenanceReservePercentage": 5,
             "vacancyRatePercentage": 4,
@@ -178,7 +178,7 @@
               "market": 80,
               "regional": 70
             },
-            "lastUpdated": "2025-09-14T16:28:55.762Z"
+            "lastUpdated": "2025-09-19T02:53:21.299Z"
           }
         },
         "propertyData": {
@@ -198,7 +198,7 @@
           "yearBuilt": 2000,
           "monthlyRent": 2200,
           "downPayment": 63750,
-          "interestRate": 6.35,
+          "interestRate": 6.26,
           "loanTerm": 30,
           "propertyTaxRate": 2.5,
           "insuranceRate": 0.7,
@@ -223,8 +223,8 @@
               },
               "expenses": {
                 "operating": 922.75,
-                "debt": 1190.03,
-                "total": 2046.11,
+                "debt": 1178.8,
+                "total": 2034.8799999999999,
                 "breakdown": {
                   "propertyTax": 531.25,
                   "insurance": 148.75,
@@ -248,23 +248,23 @@
                 "propertyManagement": 176,
                 "vacancy": 0,
                 "mortgage": {
-                  "total": 1190.03
+                  "total": 1178.8
                 }
               },
-              "cashFlow": -22.78
+              "cashFlow": -11.549999999999999
             },
             "annualAnalysis": {
               "income": 26400,
               "expenses": 11073,
               "noi": 14007,
-              "debtService": 14280.36,
-              "cashFlow": -273.36
+              "debtService": 14145.599999999999,
+              "cashFlow": -138.6
             },
             "keyMetrics": {
               "noi": 14007,
               "capRate": 5.49,
-              "cashOnCashReturn": -0.43,
-              "dscr": 0.98,
+              "cashOnCashReturn": -0.22,
+              "dscr": 0.99,
               "operatingExpenseRatio": 44.15,
               "debtYield": 7.32,
               "grossYield": 10.35,
@@ -275,17 +275,17 @@
               "onePercentRuleValue": 0.8627450980392156,
               "rentToPriceRatio": 0.8627450980392156,
               "pricePerBedroom": 85000,
-              "breakEvenOccupancy": 96.03545454545454,
-              "equityMultiple": 1.848679786718883,
+              "breakEvenOccupancy": 95.52499999999999,
+              "equityMultiple": 1.8757421379929806,
               "fiftyRuleAnalysis": true,
-              "debtToIncomeRatio": 54.09227272727273,
+              "debtToIncomeRatio": 53.58181818181818,
               "returnOnImprovements": 0,
               "turnoverCostImpact": 3.0303030303030303,
-              "irr": 10.488646424687424,
+              "irr": 10.645113013329134,
               "reservesAnalysis": {
-                "minimumReserves": 6338.339999999999,
-                "recommendedReserves": 10563.899999999998,
-                "optimalReserves": 14789.46,
+                "minimumReserves": 6304.650000000001,
+                "recommendedReserves": 10507.75,
+                "optimalReserves": 14710.850000000002,
                 "breakdown": {
                   "baseMonths": 3,
                   "ageAdjustment": 1,
@@ -301,11 +301,11 @@
                   "grossIncome": 26400,
                   "operatingExpenses": 11073,
                   "noi": 14007,
-                  "debtService": 14280.36,
-                  "cashFlow": -273.36,
-                  "equity": 73535.98499999999,
-                  "mortgageBalance": 189114.015,
-                  "totalReturn": 7376.64,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": -138.6,
+                  "equity": 73573.35,
+                  "mortgageBalance": 189076.65,
+                  "totalReturn": 7511.4,
                   "propertyTax": 6375,
                   "insurance": 1784.9999999999998,
                   "maintenance": 1,
@@ -323,11 +323,11 @@
                   "grossIncome": 27192,
                   "operatingExpenses": 11321.080000000002,
                   "noi": 14511.32,
-                  "debtService": 14280.36,
-                  "cashFlow": 230.96,
-                  "equity": 83687.1050475,
-                  "mortgageBalance": 186842.3949525,
-                  "totalReturn": 15760.46,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 365.72,
+                  "equity": 83762.25171000001,
+                  "mortgageBalance": 186767.24829,
+                  "totalReturn": 15895.22,
                   "propertyTax": 6502.5,
                   "insurance": 1820.6999999999998,
                   "maintenance": 1.02,
@@ -345,11 +345,11 @@
                   "grossIncome": 28007.76,
                   "operatingExpenses": 11574.9202,
                   "noi": 15032.45,
-                  "debtService": 14280.36,
-                  "cashFlow": 752.09,
-                  "equity": 94218.85796801627,
-                  "mortgageBalance": 184426.52703198374,
-                  "totalReturn": 24397.47500000001,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 886.85,
+                  "equity": 94332.10696704601,
+                  "mortgageBalance": 184313.278032954,
+                  "totalReturn": 24532.235000000008,
                   "propertyTax": 6632.55,
                   "insurance": 1857.1139999999998,
                   "maintenance": 1.0404,
@@ -367,11 +367,11 @@
                   "grossIncome": 28847.9928,
                   "operatingExpenses": 11834.659762,
                   "noi": 15570.93,
-                  "debtService": 14280.36,
-                  "cashFlow": 1290.57,
-                  "equity": 105147.49505148534,
-                  "mortgageBalance": 181857.2514985147,
-                  "totalReturn": 33295.31655000004,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 1425.33,
+                  "equity": 105299.05731218311,
+                  "mortgageBalance": 181705.68923781693,
+                  "totalReturn": 33430.07655000004,
                   "propertyTax": 6765.201000000001,
                   "insurance": 1894.25628,
                   "maintenance": 1.0612080000000002,
@@ -389,11 +389,11 @@
                   "grossIncome": 29713.432584000002,
                   "operatingExpenses": 12100.44134998,
                   "noi": 16127.32,
-                  "debtService": 14280.36,
-                  "cashFlow": 1846.96,
-                  "equity": 116490.06197782964,
-                  "mortgageBalance": 179124.8269686704,
-                  "totalReturn": 42461.848946500024,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 1981.72,
+                  "equity": 116680.02356239574,
+                  "mortgageBalance": 178934.86538410428,
+                  "totalReturn": 42596.608946500026,
                   "propertyTax": 6900.50502,
                   "insurance": 1932.1414055999996,
                   "maintenance": 1.08243216,
@@ -411,11 +411,11 @@
                   "grossIncome": 30604.83556152,
                   "operatingExpenses": 12372.4112215018,
                   "noi": 16702.18,
-                  "debtService": 14280.36,
-                  "cashFlow": 2421.82,
-                  "equity": 128264.4421337141,
-                  "mortgageBalance": 176218.89348118094,
-                  "totalReturn": 51905.15561489504,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 2556.58,
+                  "equity": 128492.74765774581,
+                  "mortgageBalance": 175990.58795714923,
+                  "totalReturn": 52039.91561489504,
                   "propertyTax": 7038.5151204,
                   "insurance": 1970.7842337119998,
                   "maintenance": 1.1040808032,
@@ -433,11 +433,11 @@
                   "grossIncome": 31522.980628365603,
                   "operatingExpenses": 12650.719321789704,
                   "noi": 17296.11,
-                  "debtService": 14280.36,
-                  "cashFlow": 3015.75,
-                  "equity": 140489.40246610597,
-                  "mortgageBalance": 173128.43321723593,
-                  "totalReturn": 61633.585683341895,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 3150.51,
+                  "equity": 140755.83692007512,
+                  "mortgageBalance": 172861.99876326678,
+                  "totalReturn": 61768.3456833419,
                   "propertyTax": 7179.2854228080005,
                   "insurance": 2010.19991838624,
                   "maintenance": 1.126162419264,
@@ -455,11 +455,11 @@
                   "grossIncome": 32468.670047216572,
                   "operatingExpenses": 12935.519380359097,
                   "noi": 17909.72,
-                  "debtService": 14280.36,
-                  "cashFlow": 3629.36,
-                  "equity": 153184.64202731175,
-                  "mortgageBalance": 169841.72872653042,
-                  "totalReturn": 71655.73075384217,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 3764.12,
+                  "equity": 153488.8108679949,
+                  "mortgageBalance": 169537.55988584727,
+                  "totalReturn": 71790.49075384217,
                   "propertyTax": 7322.87113126416,
                   "insurance": 2050.4039167539645,
                   "maintenance": 1.14868566764928,
@@ -477,11 +477,11 @@
                   "grossIncome": 33442.73014863307,
                   "operatingExpenses": 13226.96901026389,
                   "noi": 18543.62,
-                  "debtService": 14280.36,
-                  "cashFlow": 4263.26,
-                  "equity": 166370.84337579235,
-                  "mortgageBalance": 166346.3185006651,
-                  "totalReturn": 81980.42187645745,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 4398.02,
+                  "equity": 166712.15074175614,
+                  "mortgageBalance": 166005.01113470132,
+                  "totalReturn": 82115.18187645746,
                   "propertyTax": 7469.328553889444,
                   "insurance": 2091.411995089044,
                   "maintenance": 1.1716593810022657,
@@ -499,11 +499,11 @@
                   "grossIncome": 34446.01205309207,
                   "operatingExpenses": 13525.229810035707,
                   "noi": 19198.48,
-                  "debtService": 14280.36,
-                  "cashFlow": 4918.12,
-                  "equity": 180069.72700729384,
-                  "mortgageBalance": 162628.94972545735,
-                  "totalReturn": 92616.79673275119,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 5052.88,
+                  "equity": 180447.35190101757,
+                  "mortgageBalance": 162251.32483173363,
+                  "totalReturn": 92751.5567327512,
                   "propertyTax": 7618.715124967233,
                   "insurance": 2133.240234990825,
                   "maintenance": 1.195092568622311,
@@ -519,16 +519,16 @@
               "exitAnalysis": {
                 "projectedSalePrice": 342698.6767327512,
                 "sellingCosts": 20561.92060396507,
-                "mortgagePayoff": 162628.94972545735,
-                "netProceedsFromSale": 159507.80640332878,
-                "totalReturn": 117853.33640332878,
-                "returnOnInvestment": 184.8679786718883
+                "mortgagePayoff": 162251.32483173363,
+                "netProceedsFromSale": 159885.4312970525,
+                "totalReturn": 119578.56129705251,
+                "returnOnInvestment": 187.57421379929806
               },
               "returns": {
-                "irr": 10.488646424687424,
-                "totalCashFlow": 22095.530000000002,
+                "irr": 10.645113013329134,
+                "totalCashFlow": 23443.13,
                 "totalAppreciation": 87698.67673275119,
-                "totalReturn": 117853.33640332878,
+                "totalReturn": 119578.56129705251,
                 "totalInvestment": 63750,
                 "totalAdditionalInvestment": 0
               },
@@ -536,23 +536,23 @@
             },
             "sensitivityAnalysis": {
               "bestCase": {
-                "cashFlow": 2829.9299999999985,
-                "cashOnCashReturn": 4.44,
-                "totalReturn": 136492.52159053955,
+                "cashFlow": 2961.449999999999,
+                "cashOnCashReturn": 4.65,
+                "totalReturn": 137807.72159053956,
                 "noi": 16369.049999999997,
-                "dscr": 1.21,
+                "dscr": 1.22,
                 "vacancyRate": 3,
-                "interestRate": 5.85,
+                "interestRate": 5.76,
                 "appreciationRate": 3.5999999999999996
               },
               "worstCase": {
-                "cashFlow": -4918.620000000001,
-                "cashOnCashReturn": -7.72,
-                "totalReturn": 9718.343150205095,
+                "cashFlow": -4778.219999999999,
+                "cashOnCashReturn": -7.5,
+                "totalReturn": 11122.34315020511,
                 "noi": 10893.300000000001,
-                "dscr": 0.69,
+                "dscr": 0.7,
                 "vacancyRate": 8,
-                "interestRate": 7.35,
+                "interestRate": 7.26,
                 "appreciationRate": 2.0999999999999996
               }
             },
@@ -565,7 +565,7 @@
                 },
                 "marketPosition": "At Market",
                 "confidence": 80,
-                "lastUpdated": "2025-09-14T16:28:55.920Z",
+                "lastUpdated": "2025-09-19T02:53:21.499Z",
                 "dataSource": "RentCast"
               },
               "comparables": [
@@ -734,20 +734,20 @@
                   "rentals": 0,
                   "sales": 0
                 },
-                "lastUpdated": "2025-09-14T16:28:56.099Z",
+                "lastUpdated": "2025-09-19T02:53:21.545Z",
                 "dataSource": "Fallback"
               },
               "economicIndicators": {
-                "currentMortgageRate": 6.35,
-                "mortgageRateTrend": "Falling",
-                "mortgageRateChange": -0.15000000000000036,
+                "currentMortgageRate": 6.26,
+                "mortgageRateTrend": "Stable",
+                "mortgageRateChange": -0.08999999999999986,
                 "inflationRate": 2.9392196249335485,
                 "unemploymentRate": 4.3,
                 "housingIndex": 331.515,
                 "housingIndexChange": 1.8879928205254206,
                 "economicGrowth": 4.6083371121898855,
                 "federalFundsRate": 4.33,
-                "lastUpdated": "2025-09-14T16:28:56.099Z",
+                "lastUpdated": "2025-09-19T02:53:21.540Z",
                 "dataSource": "FRED"
               },
               "location": {
@@ -756,7 +756,7 @@
                 "city": "Jersey City",
                 "state": "NJ 07304"
               },
-              "lastUpdated": "2025-09-14T16:28:56.099Z",
+              "lastUpdated": "2025-09-19T02:53:21.545Z",
               "dataSource": [
                 "RentCast",
                 "FRED"
@@ -790,15 +790,15 @@
               },
               {
                 "category": "Economic Climate",
-                "insight": "Mixed economic signals with mortgage rates at 6.35% and unemployment at 4.3%. Market conditions are moderately supportive.",
+                "insight": "Mixed economic signals with mortgage rates at 6.26% and unemployment at 4.3%. Market conditions are moderately supportive.",
                 "impact": "Neutral",
                 "confidence": 85,
                 "dataSource": "FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "inflation": 2.9392196249335485,
                   "unemployment": 4.3,
-                  "trend": "Falling"
+                  "trend": "Stable"
                 }
               },
               {
@@ -822,10 +822,10 @@
                 "confidence": 75,
                 "dataSource": "RentCast + FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "rentGrowth": 3,
                   "priceGrowth": 5,
-                  "mortgageTrend": "Falling"
+                  "mortgageTrend": "Stable"
                 }
               }
             ],
@@ -844,19 +844,19 @@
                 "Positive market momentum favors investment"
               ],
               "marketSignals": {
-                "interestRateSignal": 0.04285714285714293,
+                "interestRateSignal": 0.06857142857142862,
                 "inflationSignal": 0.020260125022150466,
                 "housingSupplySignal": 0.1428571428571429,
                 "economicGrowthSignal": 0.6520842780474714,
-                "overallSignal": 0.21451467219597692
+                "overallSignal": 0.22094324362454834
               },
-              "nextReviewDate": "2025-12-13T16:28:56.099Z"
+              "nextReviewDate": "2025-12-18T02:53:21.547Z"
             },
             "aiInsights": {
-              "summary": "Property shows 5.5% cap rate with $-23/month cash flow.",
+              "summary": "Property shows 5.5% cap rate with $-12/month cash flow.",
               "strengths": [],
               "weaknesses": [
-                "Negative cash flow of $23/month",
+                "Negative cash flow of $12/month",
                 "Below-average cash-on-cash return"
               ],
               "recommendations": [
@@ -867,7 +867,7 @@
                 "cashFlow": {
                   "score": 5,
                   "max": 100,
-                  "reason": "NEGATIVE cash flow of $23/month creates wealth drain - requires immediate attention"
+                  "reason": "NEGATIVE cash flow of $12/month creates wealth drain - requires immediate attention"
                 },
                 "marketPosition": {
                   "score": 55,
@@ -882,12 +882,12 @@
                 "riskAssessment": {
                   "score": 5,
                   "max": 100,
-                  "reason": "Risk assessment based on DANGEROUS: DSCR of 0.98 means insufficient income to cover debt payments"
+                  "reason": "Risk assessment based on DANGEROUS: DSCR of 0.99 means insufficient income to cover debt payments"
                 },
                 "dealKillers": {
                   "score": 10,
                   "max": 100,
-                  "reason": "CRITICAL ISSUES: Negative cash flow: $23/month; Negative cash-on-cash return: -0.43%; Insufficient debt coverage: DSCR 0.98. This property has fundamental problems that make it a poor investment."
+                  "reason": "CRITICAL ISSUES: Negative cash flow: $12/month; Negative cash-on-cash return: -0.22%; Insufficient debt coverage: DSCR 0.99. This property has fundamental problems that make it a poor investment."
                 }
               },
               "metricIntelligence": [
@@ -902,10 +902,10 @@
                 },
                 {
                   "metricName": "Cash Flow",
-                  "noviceView": "$-23/month cash flow",
+                  "noviceView": "$-12/month cash flow",
                   "proInsight": "Cash flow challenges requiring operational optimization",
                   "actionItem": "Explore rent increases or expense reduction strategies",
-                  "benchmark": "Annual: $-273",
+                  "benchmark": "Annual: $-139",
                   "warning": "Negative cash flow requires immediate attention",
                   "riskLevel": "high"
                 }
@@ -933,7 +933,7 @@
                   "category": "real_estate",
                   "title": "Value-Add Repositioning",
                   "description": "Strategic improvements to increase NOI and property value",
-                  "expectedReturn": "2.6% - 5.6%",
+                  "expectedReturn": "2.8% - 5.8%",
                   "riskLevel": "medium",
                   "benefit": "Higher returns through operational improvements and market positioning"
                 },
@@ -941,7 +941,7 @@
                   "category": "investment",
                   "title": "Portfolio Scaling Strategy",
                   "description": "Use property as collateral for additional acquisitions",
-                  "expectedReturn": "-0.6% - -0.9%",
+                  "expectedReturn": "-0.3% - -0.4%",
                   "riskLevel": "high",
                   "benefit": "Leverage optimization and portfolio diversification"
                 }
@@ -1018,7 +1018,7 @@
                   "Strong market position supports portfolio expansion"
                 ],
                 "debtAnalysis": {
-                  "dscr": 0.98,
+                  "dscr": 0.99,
                   "interestRate": 0.07,
                   "marketSpread": 200.00000000000003,
                   "leverageRatio": 0.8,
@@ -1054,18 +1054,18 @@
                 "currentApproach": {
                   "description": "20% down payment approach",
                   "cashRequired": 58650,
-                  "expectedReturn": -21.63682864450128,
+                  "expectedReturn": -21.323785166240405,
                   "efficiency": "poor"
                 },
                 "recommendedApproach": {
                   "description": "90% down payment for optimal leverage",
                   "cashRequired": 237150,
-                  "expectedReturn": -0.5714737507906389,
+                  "expectedReturn": -0.5617963314358,
                   "efficiency": "poor"
                 },
                 "opportunityCost": {
-                  "annualCost": 1133475,
-                  "description": "Suboptimal capital deployment costs $1133475/year in lost returns",
+                  "annualCost": 1117409.9999999998,
+                  "description": "Suboptimal capital deployment costs $1117410/year in lost returns",
                   "alternativeUse": "Deploy excess capital across 1 properties"
                 },
                 "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
@@ -1101,55 +1101,55 @@
               "goalBasedReasoning": "Based on your balanced investment goals and 6-year timeline, this property meets your investment criteria.",
               "aiEnhancedContent": {
                 "reasoning": {
-                  "explanation": "The algorithm recommended 'CAUTION' primarily due to the negative monthly cash flow and the overall Deal Quality Score of 50/100, indicating potential risks in the investment.",
+                  "explanation": "The algorithm recommended 'CAUTION' primarily due to the negative monthly cash flow of $-12, which significantly impacts the overall deal quality despite a decent 10-Year IRR of 10.6%.",
                   "keyStrengths": [
-                    "The 10-Year IRR of 10.5% suggests a reasonable long-term return on investment.",
-                    "Market Strength scored 85/100, indicating a favorable market environment for potential growth."
+                    "The 10-Year IRR of 10.6% indicates potential for good long-term returns.",
+                    "The market strength score of 85/100 suggests a favorable investment environment."
                   ],
                   "keyConcerns": [
-                    "The monthly cash flow is at $-23, which indicates that the property is currently not generating positive cash flow.",
-                    "The Cash Flow score of 0/100 reflects significant concerns about the property's immediate financial performance."
+                    "The monthly cash flow of $-12 indicates that the property is currently not generating positive income.",
+                    "The deal quality score of 50/100 reflects a balance of strengths and weaknesses, but leans towards caution."
                   ],
-                  "verdict": "Given the negative cash flow and moderate overall score, caution is warranted in proceeding with this investment."
+                  "verdict": "Overall, the combination of negative cash flow and moderate deal quality necessitates a cautious approach to this investment."
                 },
                 "actionPlan": {
                   "immediateActions": [
-                    "Conduct a thorough review of the property's condition and market comparables to justify the current purchase price of $255,000.",
-                    "Prioritize assessing the potential for increasing monthly rent above $2,200 to improve cash flow."
+                    "Monitor the property closely due to a caution score of 50/100, indicating potential risks.",
+                    "Prioritize evaluating the local rental market to ensure the monthly rent of $2,200 is sustainable."
                   ],
                   "negotiationFocus": [
-                    "Negotiate a lower purchase price based on the negative monthly cash flow of $-23 and the DSCR of 0.98, aiming for a reduction that could improve cash flow.",
-                    "Consider proposing seller financing or a rent-to-own option to mitigate upfront costs and improve cash flow management."
+                    "Negotiate the purchase price of $255,000, aiming for a reduction to improve the DSCR from 0.99.",
+                    "Consider proposing a seller concession to offset the total investment required of $63,750."
                   ],
                   "preparationItems": [
-                    "Prepare a detailed budget for the total investment required of $63,750, ensuring funds are allocated for potential repairs and improvements.",
-                    "Establish a reserve fund to cover negative cash flow of $-23 per month for at least 6 months to ensure financial stability during the initial investment period."
+                    "Prepare for the total investment of $63,750, ensuring funds are available for closing costs and potential repairs.",
+                    "Establish a reserve fund to cover the negative monthly cash flow of $-12 for at least the first few months of ownership."
                   ],
-                  "timeframe": "Aim for a decision within 30 days to evaluate the feasibility of the investment and implement the action plan."
+                  "timeframe": "Evaluate and implement these actions within the next 3 to 6 months, given the cautionary nature of the investment."
                 },
                 "capitalStrategy": {
-                  "currentAssessment": "The current structure shows a negative monthly cash flow of $-23 and a low DSCR of 0.98, indicating that the property is not generating sufficient income to cover debt obligations, which poses a significant risk to the investment.",
-                  "optimizedApproach": "To minimize risk, consider negotiating a lower purchase price, which could decrease the loan amount and monthly payment. Additionally, exploring options for a lower interest rate or extending the loan term could help improve cash flow and DSCR.",
+                  "currentAssessment": "The current structure shows a negative monthly cash flow of $-12 and a low DSCR of 0.99, indicating potential payment stress risk. The monthly principal and interest payment of $1,179 is not being covered by the cash flow, necessitating additional contributions.",
+                  "optimizedApproach": "To improve the financial stability of the deal, consider negotiating a lower interest rate or refinancing options to reduce the monthly payment. Additionally, exploring ways to increase cash flow, such as enhancing property management or increasing rental income, could help mitigate the negative cash flow.",
                   "alternativeOptions": [
-                    "Alternative 1: Reduce the purchase price to $240,000, resulting in a new loan amount of $176,250 (75% financing). This would lower the monthly payment to approximately $1,100, potentially improving cash flow and DSCR.",
-                    "Alternative 2: Maintain the purchase price at $255,000 but increase the down payment to $75,000 (29.41%), resulting in a loan amount of $180,000. This would reduce the monthly payment to approximately $1,150, which could help alleviate cash flow issues."
+                    "Alternative 1: Increase the down payment to 30% ($76,500), resulting in a reduced loan amount of $178,500. This would lower the monthly P&I payment to approximately $1,103, which could help improve cash flow.",
+                    "Alternative 2: Consider a longer loan term (e.g., 30 years instead of 15 years) which could reduce the monthly payment to approximately $1,179, thus potentially improving cash flow by extending the repayment period."
                   ],
-                  "recommendation": "The best capital strategy for this CAUTION deal is to pursue Alternative 1, which focuses on negotiating a lower purchase price to improve cash flow and reduce financial stress. This approach directly addresses the negative cash flow and low DSCR concerns while maintaining a sustainable investment strategy."
+                  "recommendation": "The best capital strategy for this CAUTION deal is to either increase the down payment to lower the loan amount and monthly payment or restructure the loan to a longer term to reduce monthly obligations. Additionally, actively work on increasing cash flow through property enhancements or rental adjustments."
                 },
                 "timeline": {
                   "optimalHoldPeriod": "5-10 years",
-                  "rationale": "The 10.5% IRR suggests a solid return potential over a medium to long-term horizon. Given the negative monthly cash flow of $-23, holding for 5-10 years allows for the investment to appreciate further while minimizing the impact of cash flow losses. The total appreciation of 34.4% over 10 years indicates that the property has the potential to continue increasing in value, making a longer holding period more favorable.",
+                  "rationale": "Given the 10-year IRR of 10.6% and total appreciation of 34.4% over the same period, a holding period of 5-10 years allows for a balance between capturing further appreciation while mitigating the negative monthly cash flow of $-12. This period provides time for potential market recovery or growth, which could enhance overall returns.",
                   "exitIndicators": [
-                    "Improvement in monthly cash flow towards positive or break-even",
-                    "Sustained appreciation trend beyond the current 34.4% over the next few years"
+                    "Improvement in monthly cash flow performance, moving towards positive cash flow",
+                    "Sustained appreciation trend that exceeds the current 34.4% over the next few years"
                   ],
-                  "marketTiming": "Monitor market conditions and cash flow performance regularly. Consider exiting if cash flow does not improve significantly within the first 5 years or if appreciation trends show signs of reversal."
+                  "marketTiming": "Monitor market conditions and economic indicators closely during the holding period. Consider exiting if cash flow does not improve or if appreciation stagnates, ideally aligning with market peaks."
                 },
                 "alternatives": {
-                  "betterPropertyType": "Multi-family units to improve cash flow and reduce vacancy risk, leveraging potential economies of scale.",
-                  "marketAlternative": "Consider investing in a property in a higher-demand rental market to increase the cap rate above 5.49%, or explore value-add opportunities to enhance property value and cash flow.",
-                  "timingStrategy": "Monitor market trends and interest rates closely; consider waiting for a potential dip in rates or an increase in property values to maximize the 10.5% IRR.",
-                  "riskAdjustment": "Implement a cost-cutting strategy to address the $-23 monthly cash flow, such as reducing management fees or increasing efficiencies, while also preparing for potential market fluctuations."
+                  "betterPropertyType": "Multi-family units, which can provide higher occupancy rates and improved cash flow stability compared to SFR.",
+                  "marketAlternative": "Consider investing in properties in emerging neighborhoods with higher demand, which may offer better cap rates than the current 5.49%.",
+                  "timingStrategy": "Monitor market trends closely for a potential downturn in interest rates or increased demand, allowing for a strategic entry point to maximize the 10.6% IRR.",
+                  "riskAdjustment": "Implement cost-cutting measures or seek additional revenue streams, such as short-term rentals, to mitigate the $-12 monthly cash flow."
                 }
               },
               "sensitivityAnalysis": {
@@ -1251,10 +1251,10 @@
                 "interestRateScenarios": [
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6,
-                    "change": -0.34999999999999964,
-                    "changePercent": -5.511811023622042,
+                    "change": -0.2599999999999998,
+                    "changePercent": -4.153354632587856,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1262,10 +1262,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1273,10 +1273,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 5.5,
-                    "change": -0.8499999999999996,
-                    "changePercent": -13.385826771653539,
+                    "change": -0.7599999999999998,
+                    "changePercent": -12.140575079872201,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1284,10 +1284,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 8,
-                    "change": 1.6500000000000004,
-                    "changePercent": 25.984251968503948,
+                    "change": 1.7400000000000002,
+                    "changePercent": 27.795527156549525,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1297,10 +1297,10 @@
                 "pathToBuy": {
                   "easiest": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1308,10 +1308,10 @@
                   },
                   "mostRealistic": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 86,
                     "newVerdict": "BUY",
                     "scoreImprovement": 86,
@@ -1330,15 +1330,15 @@
                       "description": "10k reduction: Score 86/100 (BUY)"
                     },
                     {
-                      "parameter": "rent",
-                      "currentValue": 2200,
-                      "newValue": 2300,
-                      "change": 100,
-                      "changePercent": 4.545454545454546,
+                      "parameter": "interestRate",
+                      "currentValue": 6.26,
+                      "newValue": 6,
+                      "change": -0.2599999999999998,
+                      "changePercent": -4.153354632587856,
                       "newDealQuality": 86,
                       "newVerdict": "BUY",
                       "scoreImprovement": 86,
-                      "description": "+$100/month rent: Score 86/100 (BUY)"
+                      "description": "6% interest rate: Score 86/100 (BUY)"
                     }
                   ]
                 },
@@ -1358,9 +1358,9 @@
           "keyMetrics": {
             "verdict": "CAUTION",
             "score": 50,
-            "monthlyFlow": -22.78,
+            "monthlyFlow": -11.549999999999999,
             "capRate": 5.49,
-            "dscr": 0.98
+            "dscr": 0.99
           }
         },
         "expertValidation": {
@@ -1369,7 +1369,7 @@
             {
               "expert": "Sarah Mitchell (Conservative)",
               "verdict": "PASS",
-              "reasoning": "Cash flow -22.78 or cap rate 5.49% too low for conservative standards",
+              "reasoning": "Cash flow -11.549999999999999 or cap rate 5.49% too low for conservative standards",
               "alignment": false
             },
             {
@@ -1401,7 +1401,7 @@
         "purchasePrice": 259000,
         "source": "Zillow"
       },
-      "timestamp": "2025-09-14T16:29:05.884Z",
+      "timestamp": "2025-09-19T02:53:32.495Z",
       "steps": {
         "propertyLookup": {
           "success": true,
@@ -1429,27 +1429,27 @@
               "squareFootage": {
                 "score": 85,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:05.937Z"
+                "lastUpdated": "2025-09-19T02:53:32.547Z"
               },
               "bedrooms": {
                 "score": 90,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:05.937Z"
+                "lastUpdated": "2025-09-19T02:53:32.547Z"
               },
               "bathrooms": {
                 "score": 90,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:05.937Z"
+                "lastUpdated": "2025-09-19T02:53:32.547Z"
               },
               "yearBuilt": {
                 "score": 95,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:05.937Z"
+                "lastUpdated": "2025-09-19T02:53:32.547Z"
               },
               "currentMortgageRate": {
                 "score": 100,
                 "source": "FRED",
-                "lastUpdated": "2025-09-14T16:29:05.937Z"
+                "lastUpdated": "2025-09-19T02:53:32.547Z"
               }
             }
           },
@@ -1489,27 +1489,27 @@
                 "squareFootage": {
                   "score": 85,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:05.937Z"
+                  "lastUpdated": "2025-09-19T02:53:32.547Z"
                 },
                 "bedrooms": {
                   "score": 90,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:05.937Z"
+                  "lastUpdated": "2025-09-19T02:53:32.547Z"
                 },
                 "bathrooms": {
                   "score": 90,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:05.937Z"
+                  "lastUpdated": "2025-09-19T02:53:32.547Z"
                 },
                 "yearBuilt": {
                   "score": 95,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:05.937Z"
+                  "lastUpdated": "2025-09-19T02:53:32.547Z"
                 },
                 "currentMortgageRate": {
                   "score": 100,
                   "source": "FRED",
-                  "lastUpdated": "2025-09-14T16:29:05.937Z"
+                  "lastUpdated": "2025-09-19T02:53:32.547Z"
                 }
               }
             }
@@ -1520,7 +1520,7 @@
           "defaults": {
             "downPaymentPercentage": 25,
             "closingCostPercentage": 2.5,
-            "currentMortgageRate": 6.35,
+            "currentMortgageRate": 6.26,
             "managementFeePercentage": 8,
             "maintenanceReservePercentage": 5,
             "vacancyRatePercentage": 4,
@@ -1539,7 +1539,7 @@
               "market": 80,
               "regional": 70
             },
-            "lastUpdated": "2025-09-14T16:29:06.600Z"
+            "lastUpdated": "2025-09-19T02:53:33.092Z"
           }
         },
         "propertyData": {
@@ -1559,7 +1559,7 @@
           "yearBuilt": 1984,
           "monthlyRent": 2200,
           "downPayment": 64750,
-          "interestRate": 6.35,
+          "interestRate": 6.26,
           "loanTerm": 30,
           "propertyTaxRate": 1.2,
           "insuranceRate": 1.2,
@@ -1584,8 +1584,8 @@
               },
               "expenses": {
                 "operating": 760.75,
-                "debt": 1208.69,
-                "total": 1902.77,
+                "debt": 1197.29,
+                "total": 1891.37,
                 "breakdown": {
                   "propertyTax": 259,
                   "insurance": 259,
@@ -1609,23 +1609,23 @@
                 "propertyManagement": 176,
                 "vacancy": 0,
                 "mortgage": {
-                  "total": 1208.69
+                  "total": 1197.29
                 }
               },
-              "cashFlow": 120.56
+              "cashFlow": 131.96
             },
             "annualAnalysis": {
               "income": 26400,
               "expenses": 9129,
               "noi": 15951,
-              "debtService": 14504.28,
-              "cashFlow": 1446.72
+              "debtService": 14367.48,
+              "cashFlow": 1583.52
             },
             "keyMetrics": {
               "noi": 15951,
               "capRate": 6.16,
-              "cashOnCashReturn": 2.23,
-              "dscr": 1.1,
+              "cashOnCashReturn": 2.45,
+              "dscr": 1.11,
               "operatingExpenseRatio": 36.4,
               "debtYield": 8.21,
               "grossYield": 10.19,
@@ -1636,17 +1636,17 @@
               "onePercentRuleValue": 0.8494208494208495,
               "rentToPriceRatio": 0.8494208494208495,
               "pricePerBedroom": 86333.33333333333,
-              "breakEvenOccupancy": 89.52,
-              "equityMultiple": 2.1374724635752984,
+              "breakEvenOccupancy": 89.00181818181818,
+              "equityMultiple": 2.1645387040592015,
               "fiftyRuleAnalysis": true,
-              "debtToIncomeRatio": 54.94045454545456,
+              "debtToIncomeRatio": 54.42227272727273,
               "returnOnImprovements": 0,
               "turnoverCostImpact": 3.0303030303030303,
-              "irr": 12.34123466341179,
+              "irr": 12.500949812220819,
               "reservesAnalysis": {
-                "minimumReserves": 5908.32,
-                "recommendedReserves": 11816.64,
-                "optimalReserves": 15755.52,
+                "minimumReserves": 5874.12,
+                "recommendedReserves": 11748.24,
+                "optimalReserves": 15664.32,
                 "breakdown": {
                   "baseMonths": 3,
                   "ageAdjustment": 2,
@@ -1662,11 +1662,11 @@
                   "grossIncome": 26400,
                   "operatingExpenses": 9129,
                   "noi": 15951,
-                  "debtService": 14504.28,
-                  "cashFlow": 1446.72,
-                  "equity": 74689.405,
-                  "mortgageBalance": 192080.595,
-                  "totalReturn": 9216.72,
+                  "debtService": 14367.48,
+                  "cashFlow": 1583.52,
+                  "equity": 74727.43,
+                  "mortgageBalance": 192042.57,
+                  "totalReturn": 9353.52,
                   "propertyTax": 3108,
                   "insurance": 3108,
                   "maintenance": 1,
@@ -1684,11 +1684,11 @@
                   "grossIncome": 27192,
                   "operatingExpenses": 9338.2,
                   "noi": 16494.2,
-                  "debtService": 14504.28,
-                  "cashFlow": 1989.92,
-                  "equity": 84999.66721750004,
-                  "mortgageBalance": 189773.4327825,
-                  "totalReturn": 17763.020000000033,
+                  "debtService": 14367.48,
+                  "cashFlow": 2126.72,
+                  "equity": 85076.14511800001,
+                  "mortgageBalance": 189696.95488200002,
+                  "totalReturn": 17899.820000000036,
                   "propertyTax": 3170.16,
                   "insurance": 3170.16,
                   "maintenance": 1.02,
@@ -1706,11 +1706,11 @@
                   "grossIncome": 28007.76,
                   "operatingExpenses": 9552.382599999999,
                   "noi": 17054.99,
-                  "debtService": 14504.28,
-                  "cashFlow": 2550.71,
-                  "equity": 95696.52723581131,
-                  "mortgageBalance": 187319.76576418875,
-                  "totalReturn": 26567.003000000062,
+                  "debtService": 14367.48,
+                  "cashFlow": 2687.51,
+                  "equity": 95811.78874238685,
+                  "mortgageBalance": 187204.5042576132,
+                  "totalReturn": 26703.803000000065,
                   "propertyTax": 3233.5632,
                   "insurance": 3233.5632,
                   "maintenance": 1.0404,
@@ -1728,11 +1728,11 @@
                   "grossIncome": 28847.9928,
                   "operatingExpenses": 9771.67141,
                   "noi": 17633.92,
-                  "debtService": 14504.28,
-                  "cashFlow": 3129.64,
-                  "equity": 106796.49089978536,
-                  "mortgageBalance": 184710.29089021473,
-                  "totalReturn": 35636.421790000095,
+                  "debtService": 14367.48,
+                  "cashFlow": 3266.44,
+                  "equity": 106950.75556586031,
+                  "mortgageBalance": 184556.0262241398,
+                  "totalReturn": 35773.2217900001,
                   "propertyTax": 3298.2344640000006,
                   "insurance": 3298.2344640000006,
                   "maintenance": 1.0612080000000002,
@@ -1750,11 +1750,11 @@
                   "grossIncome": 29713.432584000002,
                   "operatingExpenses": 9996.19323094,
                   "noi": 18231.57,
-                  "debtService": 14504.28,
-                  "cashFlow": 3727.29,
-                  "equity": 118316.87088195674,
-                  "mortgageBalance": 181935.11436174336,
-                  "totalReturn": 44979.275243700096,
+                  "debtService": 14367.48,
+                  "cashFlow": 3864.09,
+                  "equity": 118510.23177792915,
+                  "mortgageBalance": 181741.75346577095,
+                  "totalReturn": 45116.07524370009,
                   "propertyTax": 3364.19915328,
                   "insurance": 3364.19915328,
                   "maintenance": 1.08243216,
@@ -1772,11 +1772,11 @@
                   "grossIncome": 30604.83556152,
                   "operatingExpenses": 10226.078140081001,
                   "noi": 18848.52,
-                  "debtService": 14504.28,
-                  "cashFlow": 4344.24,
-                  "equity": 130275.83067729705,
-                  "mortgageBalance": 178983.71412371405,
-                  "totalReturn": 54603.7848010111,
+                  "debtService": 14367.48,
+                  "cashFlow": 4481.04,
+                  "equity": 130508.2375682829,
+                  "mortgageBalance": 178751.3072327282,
+                  "totalReturn": 54740.5848010111,
                   "propertyTax": 3431.4831363456,
                   "insurance": 3431.4831363456,
                   "maintenance": 1.1040808032,
@@ -1794,11 +1794,11 @@
                   "grossIncome": 31522.980628365603,
                   "operatingExpenses": 10461.459578740487,
                   "noi": 19485.37,
-                  "debtService": 14504.28,
-                  "cashFlow": 4981.09,
-                  "equity": 142692.43117447157,
-                  "mortgageBalance": 175844.89997056988,
-                  "totalReturn": 64518.421145041444,
+                  "debtService": 14367.48,
+                  "cashFlow": 5117.89,
+                  "equity": 142963.67207954446,
+                  "mortgageBalance": 175573.659065497,
+                  "totalReturn": 64655.22114504145,
                   "propertyTax": 3500.112799072512,
                   "insurance": 3500.112799072512,
                   "maintenance": 1.126162419264,
@@ -1816,11 +1816,11 @@
                   "grossIncome": 32468.670047216572,
                   "operatingExpenses": 10702.474442448898,
                   "noi": 20142.76,
-                  "debtService": 14504.28,
-                  "cashFlow": 5638.48,
-                  "equity": 155586.67996069163,
-                  "mortgageBalance": 172506.77111870106,
-                  "totalReturn": 74731.93107939269,
+                  "debtService": 14367.48,
+                  "cashFlow": 5775.28,
+                  "equity": 155896.3609563956,
+                  "mortgageBalance": 172197.0901229971,
+                  "totalReturn": 74868.73107939269,
                   "propertyTax": 3570.1150550539624,
                   "insurance": 3570.1150550539624,
                   "maintenance": 1.14868566764928,
@@ -1838,11 +1838,11 @@
                   "grossIncome": 33442.73014863307,
                   "operatingExpenses": 10949.263173595487,
                   "noi": 20821.33,
-                  "debtService": 14504.28,
-                  "cashFlow": 6317.05,
-                  "equity": 168979.5835270359,
-                  "mortgageBalance": 168956.67108473857,
-                  "totalReturn": 85253.30461177447,
+                  "debtService": 14367.48,
+                  "cashFlow": 6453.85,
+                  "equity": 169327.10664707774,
+                  "mortgageBalance": 168609.14796469672,
+                  "totalReturn": 85390.10461177447,
                   "propertyTax": 3641.517356155042,
                   "insurance": 3641.517356155042,
                   "maintenance": 1.1716593810022657,
@@ -1860,11 +1860,11 @@
                   "grossIncome": 34446.01205309207,
                   "operatingExpenses": 11201.969856633938,
                   "noi": 21521.74,
-                  "debtService": 14504.28,
-                  "cashFlow": 7017.46,
-                  "equity": 182893.20255150824,
-                  "mortgageBalance": 165181.13969861946,
-                  "totalReturn": 96091.8022501277,
+                  "debtService": 14367.48,
+                  "cashFlow": 7154.26,
+                  "equity": 183277.74162284096,
+                  "mortgageBalance": 164796.60062728674,
+                  "totalReturn": 96228.60225012769,
                   "propertyTax": 3714.347703278143,
                   "insurance": 3714.347703278143,
                   "maintenance": 1.195092568622311,
@@ -1880,16 +1880,16 @@
               "exitAnalysis": {
                 "projectedSalePrice": 348074.3422501277,
                 "sellingCosts": 20884.46053500766,
-                "mortgagePayoff": 165181.13969861946,
-                "netProceedsFromSale": 162008.74201650056,
-                "totalReturn": 138401.34201650057,
-                "returnOnInvestment": 213.74724635752983
+                "mortgagePayoff": 164796.60062728674,
+                "netProceedsFromSale": 162393.28108783328,
+                "totalReturn": 140153.8810878333,
+                "returnOnInvestment": 216.45387040592016
               },
               "returns": {
-                "irr": 12.34123466341179,
-                "totalCashFlow": 41142.6,
+                "irr": 12.500949812220819,
+                "totalCashFlow": 42510.6,
                 "totalAppreciation": 89074.3422501277,
-                "totalReturn": 138401.34201650057,
+                "totalReturn": 140153.8810878333,
                 "totalInvestment": 64750,
                 "totalAdditionalInvestment": 0
               },
@@ -1897,23 +1897,23 @@
             },
             "sensitivityAnalysis": {
               "bestCase": {
-                "cashFlow": 4464.329999999998,
-                "cashOnCashReturn": 6.89,
-                "totalReturn": 154533.67016450875,
+                "cashFlow": 4598.009999999998,
+                "cashOnCashReturn": 7.1,
+                "totalReturn": 155870.47016450873,
                 "noi": 18215.85,
-                "dscr": 1.32,
+                "dscr": 1.34,
                 "vacancyRate": 3,
-                "interestRate": 5.85,
+                "interestRate": 5.76,
                 "appreciationRate": 3.5999999999999996
               },
               "worstCase": {
-                "cashFlow": -3028.2599999999984,
-                "cashOnCashReturn": -4.68,
-                "totalReturn": 29545.93598393385,
+                "cashFlow": -2885.7000000000007,
+                "cashOnCashReturn": -4.46,
+                "totalReturn": 30971.535983933827,
                 "noi": 13031.7,
-                "dscr": 0.81,
+                "dscr": 0.82,
                 "vacancyRate": 8,
-                "interestRate": 7.35,
+                "interestRate": 7.26,
                 "appreciationRate": 2.0999999999999996
               }
             },
@@ -1926,7 +1926,7 @@
                 },
                 "marketPosition": "At Market",
                 "confidence": 80,
-                "lastUpdated": "2025-09-14T16:29:06.717Z",
+                "lastUpdated": "2025-09-19T02:53:33.215Z",
                 "dataSource": "RentCast"
               },
               "comparables": [
@@ -2109,20 +2109,20 @@
                   "rentals": 0,
                   "sales": 0
                 },
-                "lastUpdated": "2025-09-14T16:29:07.010Z",
+                "lastUpdated": "2025-09-19T02:53:33.307Z",
                 "dataSource": "Fallback"
               },
               "economicIndicators": {
-                "currentMortgageRate": 6.35,
-                "mortgageRateTrend": "Falling",
-                "mortgageRateChange": -0.15000000000000036,
+                "currentMortgageRate": 6.26,
+                "mortgageRateTrend": "Stable",
+                "mortgageRateChange": -0.08999999999999986,
                 "inflationRate": 2.9392196249335485,
                 "unemploymentRate": 4.3,
                 "housingIndex": 331.515,
                 "housingIndexChange": 1.8879928205254206,
                 "economicGrowth": 4.6083371121898855,
                 "federalFundsRate": 4.33,
-                "lastUpdated": "2025-09-14T16:29:07.009Z",
+                "lastUpdated": "2025-09-19T02:53:33.305Z",
                 "dataSource": "FRED"
               },
               "location": {
@@ -2131,7 +2131,7 @@
                 "city": "Tampa",
                 "state": "FL 33612"
               },
-              "lastUpdated": "2025-09-14T16:29:07.010Z",
+              "lastUpdated": "2025-09-19T02:53:33.307Z",
               "dataSource": [
                 "RentCast",
                 "FRED"
@@ -2165,15 +2165,15 @@
               },
               {
                 "category": "Economic Climate",
-                "insight": "Mixed economic signals with mortgage rates at 6.35% and unemployment at 4.3%. Market conditions are moderately supportive.",
+                "insight": "Mixed economic signals with mortgage rates at 6.26% and unemployment at 4.3%. Market conditions are moderately supportive.",
                 "impact": "Neutral",
                 "confidence": 85,
                 "dataSource": "FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "inflation": 2.9392196249335485,
                   "unemployment": 4.3,
-                  "trend": "Falling"
+                  "trend": "Stable"
                 }
               },
               {
@@ -2197,10 +2197,10 @@
                 "confidence": 75,
                 "dataSource": "RentCast + FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "rentGrowth": 3,
                   "priceGrowth": 5,
-                  "mortgageTrend": "Falling"
+                  "mortgageTrend": "Stable"
                 }
               }
             ],
@@ -2219,40 +2219,32 @@
                 "Positive market momentum favors investment"
               ],
               "marketSignals": {
-                "interestRateSignal": 0.04285714285714293,
+                "interestRateSignal": 0.06857142857142862,
                 "inflationSignal": 0.020260125022150466,
                 "housingSupplySignal": 0.1428571428571429,
                 "economicGrowthSignal": 0.6520842780474714,
-                "overallSignal": 0.21451467219597692
+                "overallSignal": 0.22094324362454834
               },
-              "nextReviewDate": "2025-12-13T16:29:07.010Z"
+              "nextReviewDate": "2025-12-18T02:53:33.307Z"
             },
             "aiInsights": {
-              "summary": "This SFR investment offers moderate returns with a solid cap rate but limited cash flow. Market Position: Market Rate.",
+              "summary": "Property shows 6.2% cap rate with $132/month cash flow.",
               "strengths": [
-                "Cap Rate of 6.16% indicates a decent return on investment relative to purchase price.",
-                "IRR of 12.3% suggests strong long-term growth potential.",
-                "Monthly rent of $2,200 provides a good rental income relative to the purchase price."
+                "Strong cap rate of 6.2%",
+                "Positive cash flow of $132/month"
               ],
               "weaknesses": [
-                "Cash-on-Cash Return of 2.23% is relatively low, indicating less immediate cash benefit.",
-                "Monthly Cash Flow of $121 is minimal and may not cover unexpected expenses.",
-                "DSCR of 1.10 is close to the break-even point, indicating limited financial cushion."
+                "Below-average cash-on-cash return"
               ],
               "recommendations": [
-                "Negotiate a lower purchase price to improve cash-on-cash return.",
-                "Consider strategies to increase rent, such as property improvements, to boost cash flow.",
-                "Evaluate and minimize operating expenses to improve overall profitability.",
-                "Market Timing: Buy now (75% confidence)",
-                "Consider market timing for optimal entry"
+                "Consider reviewing the full analysis for detailed insights."
               ],
-              "riskAssessment": "Risk Score: 45/100",
-              "investmentScore": 70,
+              "investmentScore": 73.85,
               "scoreBreakdown": {
                 "cashFlow": {
-                  "score": 62,
+                  "score": 63,
                   "max": 100,
-                  "reason": "Break-even cash flow of $121/month - minimal rental returns"
+                  "reason": "Break-even cash flow of $132/month - minimal rental returns"
                 },
                 "marketPosition": {
                   "score": 70,
@@ -2270,31 +2262,6 @@
                   "reason": "Risk assessment based on marginal debt coverage"
                 }
               },
-              "marketPositionAnalysis": "Property is positioned competitively in the local market.",
-              "marketTrendPrediction": "Buy now",
-              "optimalExitStrategy": {
-                "optimalExitDate": "Year 5",
-                "expectedSalePrice": 300252,
-                "totalReturn": 41252,
-                "reasoning": "Given the projected value after five years is approximately $300,252, selling at this time would yield a significant profit over the purchase price of $259,000. The cash flow generated during this period, although modest, contributes to the overall return. Holding for five years aligns with the projected appreciation in value and allows for the realization of capital gains.",
-                "alternativeStrategies": [
-                  "Refinance to extract equity",
-                  "Hold indefinitely for rental income"
-                ]
-              },
-              "competitiveAdvantage": "Strong location with growth potential",
-              "boldPredictions": {
-                "rentGrowthForecast": {
-                  "currentRent": "$2200",
-                  "year3Rent": "$2400",
-                  "year5Rent": "$2500"
-                },
-                "exitStrategy": {
-                  "optimalExitYear": "Year 5",
-                  "predictedSalePrice": "$300,252",
-                  "totalProfit": "$41,252"
-                }
-              },
               "metricIntelligence": [
                 {
                   "metricName": "Cap Rate",
@@ -2307,10 +2274,10 @@
                 },
                 {
                   "metricName": "Cash Flow",
-                  "noviceView": "$121/month cash flow",
+                  "noviceView": "$132/month cash flow",
                   "proInsight": "Positive cash flow with moderate expansion potential",
                   "actionItem": "Explore rent increases or expense reduction strategies",
-                  "benchmark": "Annual: $1447",
+                  "benchmark": "Annual: $1584",
                   "warning": "",
                   "riskLevel": "medium"
                 }
@@ -2338,7 +2305,7 @@
                   "category": "real_estate",
                   "title": "Value-Add Repositioning",
                   "description": "Strategic improvements to increase NOI and property value",
-                  "expectedReturn": "5.2% - 8.2%",
+                  "expectedReturn": "5.5% - 8.4%",
                   "riskLevel": "medium",
                   "benefit": "Higher returns through operational improvements and market positioning"
                 },
@@ -2346,7 +2313,7 @@
                   "category": "investment",
                   "title": "Portfolio Scaling Strategy",
                   "description": "Use property as collateral for additional acquisitions",
-                  "expectedReturn": "3.3% - 4.5%",
+                  "expectedReturn": "3.7% - 4.9%",
                   "riskLevel": "high",
                   "benefit": "Leverage optimization and portfolio diversification"
                 }
@@ -2354,29 +2321,29 @@
               "advancedStrategies": [
                 {
                   "strategyType": "Financial Engineering",
-                  "title": "Rate-Lock Strategy with Refinance Trigger",
-                  "description": "Strategic refinancing approach to optimize debt structure and cash flow",
-                  "implementation": "Set refinance trigger at 5.5% to capture $75/month savings",
-                  "costEstimate": "$5,000-15,000",
-                  "expectedROI": "15-25%",
-                  "timeframe": "6-12 months",
+                  "title": "Hold-and-Optimize Strategy",
+                  "description": "Focus on operational improvements to maximize property performance",
+                  "implementation": "Implement systematic NOI optimization through expense reduction and revenue enhancement",
+                  "costEstimate": "$2,000-8,000",
+                  "expectedROI": "8-15%",
+                  "timeframe": "3-6 months",
                   "difficulty": "advanced"
                 },
                 {
                   "strategyType": "Exit Optimization",
-                  "title": "Strategic Exit in Year 5",
+                  "title": "Hold for Long-term Appreciation",
                   "description": "Optimized exit strategy based on market cycle analysis and property performance",
-                  "implementation": "Target sale price: $300,252, Expected total return: $41,252",
+                  "implementation": "Maintain property for steady cash flow and long-term appreciation",
                   "costEstimate": "$8,000-25,000",
-                  "expectedROI": "20-40%",
-                  "timeframe": "Year 5",
+                  "expectedROI": "12-20%",
+                  "timeframe": "5-7 years",
                   "difficulty": "advanced"
                 }
               ],
               "competitiveIntelligence": {
-                "marketInsight": "Property is positioned competitively in the local market.",
+                "marketInsight": "Property positioned at 6.2% cap rate vs market average",
                 "winningStrategies": [
-                  "Strong location with growth potential",
+                  "Location-based competitive positioning",
                   "Focus on operational optimization"
                 ],
                 "losingPatterns": [
@@ -2390,7 +2357,7 @@
                 ],
                 "investorBehavior": "Growth-focused competition driving prices"
               },
-              "intelligenceScore": 93,
+              "intelligenceScore": 78,
               "sophisticationLevel": "intermediate",
               "transformationInsights": "This analysis elevates your investment evaluation from basic metrics to institutional-grade intelligence. Key transformations: (1) Strategic risk identification beyond standard analysis, (2) Professional-level alternative strategy evaluation, (3) Market cycle positioning awareness.",
               "professionalEquivalent": "Analysis quality equivalent to: Commercial Investment Advisor level assessment"
@@ -2423,7 +2390,7 @@
                   "Multiple exit strategies provide flexibility"
                 ],
                 "debtAnalysis": {
-                  "dscr": 1.1,
+                  "dscr": 1.11,
                   "interestRate": 0.07,
                   "marketSpread": 200.00000000000003,
                   "leverageRatio": 0.8,
@@ -2467,18 +2434,18 @@
                 "currentApproach": {
                   "description": "20% down payment approach",
                   "cashRequired": 59570,
-                  "expectedReturn": -21.64378042638912,
+                  "expectedReturn": -21.33073694812825,
                   "efficiency": "poor"
                 },
                 "recommendedApproach": {
                   "description": "90% down payment for optimal leverage",
                   "cashRequired": 240870,
-                  "expectedReturn": -0.5731930086768796,
+                  "expectedReturn": -0.5635155893220409,
                   "efficiency": "poor"
                 },
                 "opportunityCost": {
-                  "annualCost": 1151255,
-                  "description": "Suboptimal capital deployment costs $1151255/year in lost returns",
+                  "annualCost": 1134938,
+                  "description": "Suboptimal capital deployment costs $1134938/year in lost returns",
                   "alternativeUse": "Deploy excess capital across 1 properties"
                 },
                 "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
@@ -2525,55 +2492,55 @@
               "goalBasedReasoning": "This property could work for your 6-year balanced strategy with the right price adjustments. Focus negotiation on improving the cash flow.",
               "aiEnhancedContent": {
                 "reasoning": {
-                  "explanation": "The algorithm recommended 'NEGOTIATE' due to a relatively low Deal Quality Score of 67/100, primarily driven by the cash flow score of 25/100, which indicates limited immediate cash generation despite a strong IRR of 12.3%.",
+                  "explanation": "The algorithm recommended 'NEGOTIATE' primarily due to the low Cash Flow score of 25/100, which significantly impacts the overall deal quality despite strong performance in IRR and Market Strength.",
                   "keyStrengths": [
-                    "The 10-Year IRR of 12.3% indicates strong long-term profitability potential.",
-                    "The market strength score of 100/100 suggests a robust investment environment."
+                    "10-Year IRR of 12.5% indicates strong potential for returns.",
+                    "Market Strength score of 100/100 suggests a favorable investment environment."
                   ],
                   "keyConcerns": [
-                    "The monthly cash flow of $121 is low, which may impact liquidity.",
-                    "The cash flow score of 25/100 reflects significant concerns regarding immediate returns."
+                    "Monthly Cash Flow of $132 is relatively low, leading to a Cash Flow score of only 25/100.",
+                    "Cap Rate of 6.16% is slightly below the interest rate of 6.26%, indicating potential challenges in cash flow generation."
                   ],
-                  "verdict": "Overall, negotiating the purchase terms could enhance the investment's viability given the current financial metrics."
+                  "verdict": "Given the strengths and concerns, negotiating the terms of the deal is advisable to enhance overall investment viability."
                 },
                 "actionPlan": {
                   "immediateActions": [
-                    "Initiate negotiations with the seller to lower the purchase price from $259,000 based on the current cash flow metrics.",
-                    "Prioritize securing a purchase price that enhances the overall cash flow and improves the DSCR."
+                    "Initiate negotiations with the seller to lower the purchase price from $259,000 based on the current cash flow of $132 per month.",
+                    "Prioritize the negotiation to improve the DSCR from 1.11, which is slightly above the break-even point."
                   ],
                   "negotiationFocus": [
-                    "Target a reduction in the purchase price to increase monthly cash flow, ideally aiming for a purchase price below $250,000 to improve overall investment returns.",
-                    "Consider proposing a seller concession or financing terms that could lower the total investment required of $64,750."
+                    "Target a purchase price reduction to improve monthly cash flow, aiming for a price closer to $250,000 to increase profitability.",
+                    "Consider offering a lower upfront investment or requesting seller concessions to cover part of the total investment required of $64,750."
                   ],
                   "preparationItems": [
-                    "Prepare financial projections based on the total investment of $64,750 to ensure sufficient reserves for unexpected expenses.",
-                    "Establish a cash reserve strategy that accounts for the current monthly cash flow of $121, ensuring coverage for at least 6 months of operational expenses."
+                    "Prepare financial documentation to support the negotiation, including the current monthly cash flow of $132 and the monthly rent of $2,200.",
+                    "Set aside reserves based on the verified cash flow to cover unexpected expenses, ideally aiming for at least 3-6 months of cash flow reserves."
                   ],
-                  "timeframe": "Aim to complete negotiations and finalize the acquisition within the next 30-45 days to capitalize on current market conditions."
+                  "timeframe": "Aim to complete negotiations within the next 30-45 days to capitalize on the current market conditions."
                 },
                 "capitalStrategy": {
-                  "currentAssessment": "The current monthly cash flow of $121 is positive, but the DSCR of 1.10 indicates a low margin for error, suggesting payment stress risk. The monthly payment of $1,209 is significantly higher than the cash flow, which could lead to difficulties in meeting obligations.",
-                  "optimizedApproach": "To improve the situation, consider negotiating a lower purchase price or interest rate. If the purchase price can be reduced, the loan amount would decrease, resulting in lower monthly payments. Alternatively, refinancing to a lower interest rate could also reduce monthly payments, improving cash flow and DSCR.",
+                  "currentAssessment": "The current monthly cash flow of $132 against a monthly payment of $1,197 results in a negative cash flow situation, indicating a potential payment stress risk due to the low DSCR of 1.11. This structure is not sustainable in the long term.",
+                  "optimizedApproach": "To improve the cash flow situation, consider refinancing for a lower interest rate or extending the loan term to reduce the monthly payment. For example, if the interest rate could be reduced to 5.5%, the new monthly payment would be approximately $1,100, resulting in a more manageable cash flow situation.",
                   "alternativeOptions": [
-                    "Alternative 1: Reduce the purchase price to $240,000. This would lead to a new loan amount of $175,250 (Purchase Price - Down Payment) and a monthly P&I payment of approximately $1,078, improving cash flow and DSCR.",
-                    "Alternative 2: Maintain the purchase price at $259,000 but increase the down payment to 30% ($77,700). This would result in a loan amount of $181,300 and a monthly P&I payment of approximately $1,122, again improving cash flow and DSCR."
+                    "Alternative 1: Increase the down payment to 30% ($77,700) which would reduce the loan amount to $181,300. This could lower the monthly payment to approximately $1,130, improving cash flow.",
+                    "Alternative 2: Explore a loan with a longer amortization period (e.g., 30 years) while keeping the current down payment, which could reduce the monthly payment to around $1,180, easing the cash flow pressure."
                   ],
-                  "recommendation": "The best capital strategy for this NEGOTIATE deal is to explore reducing the purchase price or increasing the down payment to lower the loan amount and monthly payments. This will enhance cash flow and improve the DSCR, reducing payment stress risk."
+                  "recommendation": "The best capital strategy is to either increase the down payment to reduce the loan amount and monthly payment or refinance to a lower interest rate. These adjustments would help to achieve a more favorable cash flow situation and mitigate payment stress risk."
                 },
                 "timeline": {
                   "optimalHoldPeriod": "5-10 years",
-                  "rationale": "The 12.3% IRR indicates a strong return potential over a longer duration, while the monthly cash flow of $121 provides consistent income. Holding for 5-10 years allows for capitalizing on both cash flow and appreciation, which has already shown a total of 34.4% over 10 years. This period balances the benefits of cash flow with the potential for further appreciation.",
+                  "rationale": "Holding the investment for 5-10 years allows for the compounding effect of the 12.5% IRR to significantly enhance overall returns while benefiting from the steady monthly cash flow of $132. This period also aligns with the total appreciation of 34.4% over 10 years, suggesting that a longer holding period could maximize the investment's value before considering an exit.",
                   "exitIndicators": [
-                    "Sustained increase in monthly cash flow beyond current levels",
-                    "Significant changes in the appreciation trend, such as a plateau or decline"
+                    "Consistent monthly cash flow performance exceeding inflation rates, indicating sustained investment viability",
+                    "A trend of appreciation that stabilizes or begins to decline, suggesting it may be time to sell"
                   ],
-                  "marketTiming": "Monitor market conditions and economic indicators that could affect property values and cash flow, aiming to exit when appreciation trends show signs of slowing or if cash flow becomes inconsistent."
+                  "marketTiming": "Monitor market conditions and economic indicators closely during the holding period; consider exiting if cash flow performance weakens or if appreciation trends reverse significantly."
                 },
                 "alternatives": {
-                  "betterPropertyType": "Consider transitioning to a multi-family property (e.g., duplex or triplex) that may provide higher cash flow potential while leveraging the same purchase price of $0.",
-                  "marketAlternative": "Explore value-add opportunities in the current market, such as renovations or upgrades, to increase the cap rate beyond 6.16% while managing financing at the 7% interest rate.",
-                  "timingStrategy": "Evaluate the timing of the investment, considering market cycles and potential appreciation trends over the next decade to optimize the 12.3% IRR.",
-                  "riskAdjustment": "Implement a conservative approach to cash flow management, ensuring that the $121 monthly cash flow is bolstered by exploring additional income streams or cost reduction strategies."
+                  "betterPropertyType": "Consider transitioning to a multi-family property to leverage economies of scale and potentially increase cash flow while maintaining similar risk profiles.",
+                  "marketAlternative": "Explore opportunities in emerging markets where cap rates are higher than 6.16%, potentially allowing for better cash flow and appreciation in value.",
+                  "timingStrategy": "Evaluate the market cycle and consider holding off on negotiations until interest rates stabilize or decrease, improving financing terms and overall deal attractiveness.",
+                  "riskAdjustment": "Implement a contingency plan to mitigate risks associated with the $132 monthly cash flow, such as increasing rental rates gradually or exploring short-term rental options to enhance income."
                 }
               },
               "sensitivityAnalysis": {
@@ -2675,10 +2642,10 @@
                 "interestRateScenarios": [
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6,
-                    "change": -0.34999999999999964,
-                    "changePercent": -5.511811023622042,
+                    "change": -0.2599999999999998,
+                    "changePercent": -4.153354632587856,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2686,10 +2653,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2697,10 +2664,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 5.5,
-                    "change": -0.8499999999999996,
-                    "changePercent": -13.385826771653539,
+                    "change": -0.7599999999999998,
+                    "changePercent": -12.140575079872201,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2708,10 +2675,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 8,
-                    "change": 1.6500000000000004,
-                    "changePercent": 25.984251968503948,
+                    "change": 1.7400000000000002,
+                    "changePercent": 27.795527156549525,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2721,10 +2688,10 @@
                 "pathToBuy": {
                   "easiest": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2732,10 +2699,10 @@
                   },
                   "mostRealistic": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 93,
                     "newVerdict": "BUY",
                     "scoreImprovement": 93,
@@ -2754,15 +2721,15 @@
                       "description": "10k reduction: Score 93/100 (BUY)"
                     },
                     {
-                      "parameter": "rent",
-                      "currentValue": 2200,
-                      "newValue": 2300,
-                      "change": 100,
-                      "changePercent": 4.545454545454546,
+                      "parameter": "interestRate",
+                      "currentValue": 6.26,
+                      "newValue": 6,
+                      "change": -0.2599999999999998,
+                      "changePercent": -4.153354632587856,
                       "newDealQuality": 93,
                       "newVerdict": "BUY",
                       "scoreImprovement": 93,
-                      "description": "+$100/month rent: Score 93/100 (BUY)"
+                      "description": "6% interest rate: Score 93/100 (BUY)"
                     }
                   ]
                 },
@@ -2782,9 +2749,9 @@
           "keyMetrics": {
             "verdict": "NEGOTIATE",
             "score": 67,
-            "monthlyFlow": 120.56,
+            "monthlyFlow": 131.96,
             "capRate": 6.16,
-            "dscr": 1.1
+            "dscr": 1.11
           }
         },
         "expertValidation": {
@@ -2793,7 +2760,7 @@
             {
               "expert": "Sarah Mitchell (Conservative)",
               "verdict": "PASS",
-              "reasoning": "Cash flow 120.56 or cap rate 6.16% too low for conservative standards",
+              "reasoning": "Cash flow 131.96 or cap rate 6.16% too low for conservative standards",
               "alignment": false
             },
             {
@@ -2825,7 +2792,7 @@
         "purchasePrice": 255000,
         "source": "Zillow"
       },
-      "timestamp": "2025-09-14T16:29:16.324Z",
+      "timestamp": "2025-09-19T02:53:43.018Z",
       "steps": {
         "propertyLookup": {
           "success": true,
@@ -2853,27 +2820,27 @@
               "squareFootage": {
                 "score": 85,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:16.380Z"
+                "lastUpdated": "2025-09-19T02:53:43.063Z"
               },
               "bedrooms": {
                 "score": 90,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:16.380Z"
+                "lastUpdated": "2025-09-19T02:53:43.063Z"
               },
               "bathrooms": {
                 "score": 90,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:16.380Z"
+                "lastUpdated": "2025-09-19T02:53:43.063Z"
               },
               "yearBuilt": {
                 "score": 95,
                 "source": "RentCast",
-                "lastUpdated": "2025-09-14T16:29:16.380Z"
+                "lastUpdated": "2025-09-19T02:53:43.063Z"
               },
               "currentMortgageRate": {
                 "score": 100,
                 "source": "FRED",
-                "lastUpdated": "2025-09-14T16:29:16.380Z"
+                "lastUpdated": "2025-09-19T02:53:43.063Z"
               }
             }
           },
@@ -2913,27 +2880,27 @@
                 "squareFootage": {
                   "score": 85,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:16.380Z"
+                  "lastUpdated": "2025-09-19T02:53:43.063Z"
                 },
                 "bedrooms": {
                   "score": 90,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:16.380Z"
+                  "lastUpdated": "2025-09-19T02:53:43.063Z"
                 },
                 "bathrooms": {
                   "score": 90,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:16.380Z"
+                  "lastUpdated": "2025-09-19T02:53:43.063Z"
                 },
                 "yearBuilt": {
                   "score": 95,
                   "source": "RentCast",
-                  "lastUpdated": "2025-09-14T16:29:16.380Z"
+                  "lastUpdated": "2025-09-19T02:53:43.063Z"
                 },
                 "currentMortgageRate": {
                   "score": 100,
                   "source": "FRED",
-                  "lastUpdated": "2025-09-14T16:29:16.380Z"
+                  "lastUpdated": "2025-09-19T02:53:43.063Z"
                 }
               }
             }
@@ -2944,7 +2911,7 @@
           "defaults": {
             "downPaymentPercentage": 25,
             "closingCostPercentage": 2.5,
-            "currentMortgageRate": 6.35,
+            "currentMortgageRate": 6.26,
             "managementFeePercentage": 8,
             "maintenanceReservePercentage": 5,
             "vacancyRatePercentage": 4,
@@ -2963,7 +2930,7 @@
               "market": 80,
               "regional": 70
             },
-            "lastUpdated": "2025-09-14T16:29:17.129Z"
+            "lastUpdated": "2025-09-19T02:53:43.827Z"
           }
         },
         "propertyData": {
@@ -2983,7 +2950,7 @@
           "yearBuilt": 2007,
           "monthlyRent": 2200,
           "downPayment": 63750,
-          "interestRate": 6.35,
+          "interestRate": 6.26,
           "loanTerm": 30,
           "propertyTaxRate": 1.2,
           "insuranceRate": 0.7,
@@ -3008,8 +2975,8 @@
               },
               "expenses": {
                 "operating": 646.5,
-                "debt": 1190.03,
-                "total": 1769.86,
+                "debt": 1178.8,
+                "total": 1758.6299999999999,
                 "breakdown": {
                   "propertyTax": 255,
                   "insurance": 148.75,
@@ -3033,23 +3000,23 @@
                 "propertyManagement": 176,
                 "vacancy": 0,
                 "mortgage": {
-                  "total": 1190.03
+                  "total": 1178.8
                 }
               },
-              "cashFlow": 253.47
+              "cashFlow": 264.7
             },
             "annualAnalysis": {
               "income": 26400,
               "expenses": 7758,
               "noi": 17322,
-              "debtService": 14280.36,
-              "cashFlow": 3041.64
+              "debtService": 14145.599999999999,
+              "cashFlow": 3176.4
             },
             "keyMetrics": {
               "noi": 17322,
               "capRate": 6.79,
-              "cashOnCashReturn": 4.77,
-              "dscr": 1.21,
+              "cashOnCashReturn": 4.98,
+              "dscr": 1.22,
               "operatingExpenseRatio": 30.93,
               "debtYield": 9.06,
               "grossYield": 10.35,
@@ -3060,17 +3027,17 @@
               "onePercentRuleValue": 0.8627450980392156,
               "rentToPriceRatio": 0.8627450980392156,
               "pricePerBedroom": 85000,
-              "breakEvenOccupancy": 83.47863636363635,
-              "equityMultiple": 2.418065512209079,
+              "breakEvenOccupancy": 82.9681818181818,
+              "equityMultiple": 2.445127863483177,
               "fiftyRuleAnalysis": true,
-              "debtToIncomeRatio": 54.09227272727273,
+              "debtToIncomeRatio": 53.58181818181818,
               "returnOnImprovements": 0,
               "turnoverCostImpact": 3.0303030303030303,
-              "irr": 14.189144059821496,
+              "irr": 14.351963615157038,
               "reservesAnalysis": {
-                "minimumReserves": 5509.59,
-                "recommendedReserves": 9182.65,
-                "optimalReserves": 12855.71,
+                "minimumReserves": 5475.9,
+                "recommendedReserves": 9126.5,
+                "optimalReserves": 12777.1,
                 "breakdown": {
                   "baseMonths": 3,
                   "ageAdjustment": 1,
@@ -3086,11 +3053,11 @@
                   "grossIncome": 26400,
                   "operatingExpenses": 7758,
                   "noi": 17322,
-                  "debtService": 14280.36,
-                  "cashFlow": 3041.64,
-                  "equity": 73535.98499999999,
-                  "mortgageBalance": 189114.015,
-                  "totalReturn": 10691.64,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 3176.4,
+                  "equity": 73573.35,
+                  "mortgageBalance": 189076.65,
+                  "totalReturn": 10826.4,
                   "propertyTax": 3060,
                   "insurance": 1784.9999999999998,
                   "maintenance": 1,
@@ -3108,11 +3075,11 @@
                   "grossIncome": 27192,
                   "operatingExpenses": 7939.780000000001,
                   "noi": 17892.62,
-                  "debtService": 14280.36,
-                  "cashFlow": 3612.26,
-                  "equity": 83687.1050475,
-                  "mortgageBalance": 186842.3949525,
-                  "totalReturn": 19141.760000000002,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 3747.02,
+                  "equity": 83762.25171000001,
+                  "mortgageBalance": 186767.24829,
+                  "totalReturn": 19276.52,
                   "propertyTax": 3121.2000000000003,
                   "insurance": 1820.6999999999998,
                   "maintenance": 1.02,
@@ -3130,11 +3097,11 @@
                   "grossIncome": 28007.76,
                   "operatingExpenses": 8125.9942,
                   "noi": 18481.38,
-                  "debtService": 14280.36,
-                  "cashFlow": 4201.02,
-                  "equity": 94218.85796801627,
-                  "mortgageBalance": 184426.52703198374,
-                  "totalReturn": 27846.40500000001,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 4335.78,
+                  "equity": 94332.10696704601,
+                  "mortgageBalance": 184313.278032954,
+                  "totalReturn": 27981.165000000008,
                   "propertyTax": 3183.624,
                   "insurance": 1857.1139999999998,
                   "maintenance": 1.0404,
@@ -3152,11 +3119,11 @@
                   "grossIncome": 28847.9928,
                   "operatingExpenses": 8316.755242000001,
                   "noi": 19088.84,
-                  "debtService": 14280.36,
-                  "cashFlow": 4808.48,
-                  "equity": 105147.49505148534,
-                  "mortgageBalance": 181857.2514985147,
-                  "totalReturn": 36813.226550000036,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 4943.24,
+                  "equity": 105299.05731218311,
+                  "mortgageBalance": 181705.68923781693,
+                  "totalReturn": 36947.98655000004,
                   "propertyTax": 3247.2964800000004,
                   "insurance": 1894.25628,
                   "maintenance": 1.0612080000000002,
@@ -3174,11 +3141,11 @@
                   "grossIncome": 29713.432584000002,
                   "operatingExpenses": 8512.17873958,
                   "noi": 19715.58,
-                  "debtService": 14280.36,
-                  "cashFlow": 5435.22,
-                  "equity": 116490.06197782964,
-                  "mortgageBalance": 179124.8269686704,
-                  "totalReturn": 46050.108946500026,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 5569.98,
+                  "equity": 116680.02356239574,
+                  "mortgageBalance": 178934.86538410428,
+                  "totalReturn": 46184.86894650002,
                   "propertyTax": 3312.2424096,
                   "insurance": 1932.1414055999996,
                   "maintenance": 1.08243216,
@@ -3196,11 +3163,11 @@
                   "grossIncome": 30604.83556152,
                   "operatingExpenses": 8712.3833588938,
                   "noi": 20362.21,
-                  "debtService": 14280.36,
-                  "cashFlow": 6081.85,
-                  "equity": 128264.4421337141,
-                  "mortgageBalance": 176218.89348118094,
-                  "totalReturn": 55565.18561489504,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 6216.61,
+                  "equity": 128492.74765774581,
+                  "mortgageBalance": 175990.58795714923,
+                  "totalReturn": 55699.94561489504,
                   "propertyTax": 3378.487257792,
                   "insurance": 1970.7842337119998,
                   "maintenance": 1.1040808032,
@@ -3218,11 +3185,11 @@
                   "grossIncome": 31522.980628365603,
                   "operatingExpenses": 8917.490901929543,
                   "noi": 21029.34,
-                  "debtService": 14280.36,
-                  "cashFlow": 6748.98,
-                  "equity": 140489.40246610597,
-                  "mortgageBalance": 173128.43321723593,
-                  "totalReturn": 65366.81568334189,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 6883.74,
+                  "equity": 140755.83692007512,
+                  "mortgageBalance": 172861.99876326678,
+                  "totalReturn": 65501.57568334189,
                   "propertyTax": 3446.0570029478404,
                   "insurance": 2010.19991838624,
                   "maintenance": 1.126162419264,
@@ -3240,11 +3207,11 @@
                   "grossIncome": 32468.670047216572,
                   "operatingExpenses": 9127.626392101734,
                   "noi": 21717.61,
-                  "debtService": 14280.36,
-                  "cashFlow": 7437.25,
-                  "equity": 153184.64202731175,
-                  "mortgageBalance": 169841.72872653042,
-                  "totalReturn": 75463.62075384217,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 7572.01,
+                  "equity": 153488.8108679949,
+                  "mortgageBalance": 169537.55988584727,
+                  "totalReturn": 75598.38075384217,
                   "propertyTax": 3514.978143006797,
                   "insurance": 2050.4039167539645,
                   "maintenance": 1.14868566764928,
@@ -3262,11 +3229,11 @@
                   "grossIncome": 33442.73014863307,
                   "operatingExpenses": 9342.91816224138,
                   "noi": 22427.68,
-                  "debtService": 14280.36,
-                  "cashFlow": 8147.32,
-                  "equity": 166370.84337579235,
-                  "mortgageBalance": 166346.3185006651,
-                  "totalReturn": 85864.48187645746,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 8282.08,
+                  "equity": 166712.15074175614,
+                  "mortgageBalance": 166005.01113470132,
+                  "totalReturn": 85999.24187645745,
                   "propertyTax": 3585.277705866933,
                   "insurance": 2091.411995089044,
                   "maintenance": 1.1716593810022657,
@@ -3284,11 +3251,11 @@
                   "grossIncome": 34446.01205309207,
                   "operatingExpenses": 9563.497945052748,
                   "noi": 23160.21,
-                  "debtService": 14280.36,
-                  "cashFlow": 8879.85,
-                  "equity": 180069.72700729384,
-                  "mortgageBalance": 162628.94972545735,
-                  "totalReturn": 96578.5267327512,
+                  "debtService": 14145.599999999999,
+                  "cashFlow": 9014.61,
+                  "equity": 180447.35190101757,
+                  "mortgageBalance": 162251.32483173363,
+                  "totalReturn": 96713.28673275119,
                   "propertyTax": 3656.9832599842716,
                   "insurance": 2133.240234990825,
                   "maintenance": 1.195092568622311,
@@ -3304,16 +3271,16 @@
               "exitAnalysis": {
                 "projectedSalePrice": 342698.6767327512,
                 "sellingCosts": 20561.92060396507,
-                "mortgagePayoff": 162628.94972545735,
-                "netProceedsFromSale": 159507.80640332878,
-                "totalReturn": 154151.67640332878,
-                "returnOnInvestment": 241.80655122090792
+                "mortgagePayoff": 162251.32483173363,
+                "netProceedsFromSale": 159885.4312970525,
+                "totalReturn": 155876.9012970525,
+                "returnOnInvestment": 244.5127863483177
               },
               "returns": {
-                "irr": 14.189144059821496,
-                "totalCashFlow": 58393.869999999995,
+                "irr": 14.351963615157038,
+                "totalCashFlow": 59741.47,
                 "totalAppreciation": 87698.67673275119,
-                "totalReturn": 154151.67640332878,
+                "totalReturn": 155876.9012970525,
                 "totalInvestment": 63750,
                 "totalAdditionalInvestment": 0
               },
@@ -3321,23 +3288,23 @@
             },
             "sensitivityAnalysis": {
               "bestCase": {
-                "cashFlow": 5979.18,
-                "cashOnCashReturn": 9.38,
-                "totalReturn": 167985.02159053955,
+                "cashFlow": 6110.700000000001,
+                "cashOnCashReturn": 9.59,
+                "totalReturn": 169300.22159053956,
                 "noi": 19518.3,
-                "dscr": 1.44,
+                "dscr": 1.46,
                 "vacancyRate": 3,
-                "interestRate": 5.85,
+                "interestRate": 5.76,
                 "appreciationRate": 3.5999999999999996
               },
               "worstCase": {
-                "cashFlow": -1272.1200000000008,
-                "cashOnCashReturn": -2,
-                "totalReturn": 46183.343150205095,
+                "cashFlow": -1131.7199999999993,
+                "cashOnCashReturn": -1.78,
+                "totalReturn": 47587.34315020511,
                 "noi": 14539.800000000001,
-                "dscr": 0.92,
+                "dscr": 0.93,
                 "vacancyRate": 8,
-                "interestRate": 7.35,
+                "interestRate": 7.26,
                 "appreciationRate": 2.0999999999999996
               }
             },
@@ -3350,7 +3317,7 @@
                 },
                 "marketPosition": "At Market",
                 "confidence": 80,
-                "lastUpdated": "2025-09-14T16:29:17.243Z",
+                "lastUpdated": "2025-09-19T02:53:43.947Z",
                 "dataSource": "RentCast"
               },
               "comparables": [
@@ -3533,20 +3500,20 @@
                   "rentals": 0,
                   "sales": 0
                 },
-                "lastUpdated": "2025-09-14T16:29:17.517Z",
+                "lastUpdated": "2025-09-19T02:53:44.118Z",
                 "dataSource": "Fallback"
               },
               "economicIndicators": {
-                "currentMortgageRate": 6.35,
-                "mortgageRateTrend": "Falling",
-                "mortgageRateChange": -0.15000000000000036,
+                "currentMortgageRate": 6.26,
+                "mortgageRateTrend": "Stable",
+                "mortgageRateChange": -0.08999999999999986,
                 "inflationRate": 2.9392196249335485,
                 "unemploymentRate": 4.3,
                 "housingIndex": 331.515,
                 "housingIndexChange": 1.8879928205254206,
                 "economicGrowth": 4.6083371121898855,
                 "federalFundsRate": 4.33,
-                "lastUpdated": "2025-09-14T16:29:17.517Z",
+                "lastUpdated": "2025-09-19T02:53:44.118Z",
                 "dataSource": "FRED"
               },
               "location": {
@@ -3555,7 +3522,7 @@
                 "city": "Anna",
                 "state": "TX 75409"
               },
-              "lastUpdated": "2025-09-14T16:29:17.517Z",
+              "lastUpdated": "2025-09-19T02:53:44.118Z",
               "dataSource": [
                 "RentCast",
                 "FRED"
@@ -3589,15 +3556,15 @@
               },
               {
                 "category": "Economic Climate",
-                "insight": "Mixed economic signals with mortgage rates at 6.35% and unemployment at 4.3%. Market conditions are moderately supportive.",
+                "insight": "Mixed economic signals with mortgage rates at 6.26% and unemployment at 4.3%. Market conditions are moderately supportive.",
                 "impact": "Neutral",
                 "confidence": 85,
                 "dataSource": "FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "inflation": 2.9392196249335485,
                   "unemployment": 4.3,
-                  "trend": "Falling"
+                  "trend": "Stable"
                 }
               },
               {
@@ -3621,10 +3588,10 @@
                 "confidence": 75,
                 "dataSource": "RentCast + FRED",
                 "metrics": {
-                  "mortgageRate": 6.35,
+                  "mortgageRate": 6.26,
                   "rentGrowth": 3,
                   "priceGrowth": 5,
-                  "mortgageTrend": "Falling"
+                  "mortgageTrend": "Stable"
                 }
               }
             ],
@@ -3643,32 +3610,40 @@
                 "Positive market momentum favors investment"
               ],
               "marketSignals": {
-                "interestRateSignal": 0.04285714285714293,
+                "interestRateSignal": 0.06857142857142862,
                 "inflationSignal": 0.020260125022150466,
                 "housingSupplySignal": 0.1428571428571429,
                 "economicGrowthSignal": 0.6520842780474714,
-                "overallSignal": 0.21451467219597692
+                "overallSignal": 0.22094324362454834
               },
-              "nextReviewDate": "2025-12-13T16:29:17.518Z"
+              "nextReviewDate": "2025-12-18T02:53:44.118Z"
             },
             "aiInsights": {
-              "summary": "Property shows 6.8% cap rate with $253/month cash flow.",
+              "summary": "This SFR investment property presents a solid opportunity with a decent cash flow and strong IRR. Market Position: Market Rate.",
               "strengths": [
-                "Strong cap rate of 6.8%",
-                "Positive cash flow of $253/month"
+                "Cap Rate of 6.79% indicates a good return relative to the purchase price.",
+                "Healthy DSCR of 1.22 supports borrowing potential.",
+                "IRR of 14.4% suggests strong long-term growth potential."
               ],
               "weaknesses": [
-                "Below-average cash-on-cash return"
+                "Cash-on-Cash Return of 4.98% is relatively low, indicating less immediate cash income.",
+                "Operating Expense Ratio of 30.9% could be optimized for better returns.",
+                "Monthly Cash Flow of $265 may not be sufficient to cover unexpected expenses."
               ],
               "recommendations": [
-                "Consider reviewing the full analysis for detailed insights."
+                "Consider increasing rent to market rates to boost monthly cash flow.",
+                "Review and reduce operating expenses to improve overall profitability.",
+                "Explore refinancing options to take advantage of lower interest rates, enhancing cash-on-cash return.",
+                "Market Timing: Buy now (80% confidence)",
+                "Consider market timing for optimal entry"
               ],
-              "investmentScore": 91.75,
+              "riskAssessment": "Risk Score: 35/100",
+              "investmentScore": 75,
               "scoreBreakdown": {
                 "cashFlow": {
                   "score": 74,
                   "max": 100,
-                  "reason": "Good cash flow of $253/month shows solid rental performance"
+                  "reason": "Good cash flow of $265/month shows solid rental performance"
                 },
                 "marketPosition": {
                   "score": 70,
@@ -3686,6 +3661,31 @@
                   "reason": "Risk assessment based on marginal debt coverage"
                 }
               },
+              "marketPositionAnalysis": "Property is positioned competitively in the local market.",
+              "marketTrendPrediction": "Buy now",
+              "optimalExitStrategy": {
+                "optimalExitDate": "Year 5",
+                "expectedSalePrice": 295614.89,
+                "totalReturn": 40614.89,
+                "reasoning": "The projected value after 5 years is expected to increase to $295,614.89, providing a total return of $40,614.89, which is a solid gain relative to the initial investment of $255,000. Exiting at this point maximizes capital appreciation while allowing for consistent cash flow during the holding period.",
+                "alternativeStrategies": [
+                  "Refinance to access equity and reduce monthly payments, holding the property for additional cash flow.",
+                  "Sell the property sooner if market conditions indicate a peak to lock in profits."
+                ]
+              },
+              "competitiveAdvantage": "Strong location with growth potential",
+              "boldPredictions": {
+                "rentGrowthForecast": {
+                  "currentRent": "$2200",
+                  "year3Rent": "$2400",
+                  "year5Rent": "$2500"
+                },
+                "exitStrategy": {
+                  "optimalExitYear": "Year 5",
+                  "predictedSalePrice": "$295,614.89",
+                  "totalProfit": "$40,614.89"
+                }
+              },
               "metricIntelligence": [
                 {
                   "metricName": "Cap Rate",
@@ -3698,10 +3698,10 @@
                 },
                 {
                   "metricName": "Cash Flow",
-                  "noviceView": "$253/month cash flow",
+                  "noviceView": "$265/month cash flow",
                   "proInsight": "Positive cash flow with moderate expansion potential",
                   "actionItem": "Maintain current operations",
-                  "benchmark": "Annual: $3042",
+                  "benchmark": "Annual: $3176",
                   "warning": "",
                   "riskLevel": "medium"
                 }
@@ -3729,7 +3729,7 @@
                   "category": "real_estate",
                   "title": "Value-Add Repositioning",
                   "description": "Strategic improvements to increase NOI and property value",
-                  "expectedReturn": "7.8% - 10.8%",
+                  "expectedReturn": "8.0% - 11.0%",
                   "riskLevel": "medium",
                   "benefit": "Higher returns through operational improvements and market positioning"
                 },
@@ -3737,7 +3737,7 @@
                   "category": "investment",
                   "title": "Portfolio Scaling Strategy",
                   "description": "Use property as collateral for additional acquisitions",
-                  "expectedReturn": "7.2% - 9.5%",
+                  "expectedReturn": "7.5% - 10.0%",
                   "riskLevel": "high",
                   "benefit": "Leverage optimization and portfolio diversification"
                 }
@@ -3745,29 +3745,29 @@
               "advancedStrategies": [
                 {
                   "strategyType": "Financial Engineering",
-                  "title": "Hold-and-Optimize Strategy",
-                  "description": "Focus on operational improvements to maximize property performance",
-                  "implementation": "Implement systematic NOI optimization through expense reduction and revenue enhancement",
-                  "costEstimate": "$2,000-8,000",
-                  "expectedROI": "8-15%",
-                  "timeframe": "3-6 months",
+                  "title": "Rate-Lock Strategy with Refinance Trigger",
+                  "description": "Strategic refinancing approach to optimize debt structure and cash flow",
+                  "implementation": "Set refinance trigger at 5.5% to capture $150/month savings",
+                  "costEstimate": "$5,000-15,000",
+                  "expectedROI": "15-25%",
+                  "timeframe": "6-12 months",
                   "difficulty": "advanced"
                 },
                 {
                   "strategyType": "Exit Optimization",
-                  "title": "Hold for Long-term Appreciation",
+                  "title": "Strategic Exit in Year 5",
                   "description": "Optimized exit strategy based on market cycle analysis and property performance",
-                  "implementation": "Maintain property for steady cash flow and long-term appreciation",
+                  "implementation": "Target sale price: $295,614.89, Expected total return: $40,614.89",
                   "costEstimate": "$8,000-25,000",
-                  "expectedROI": "12-20%",
-                  "timeframe": "5-7 years",
+                  "expectedROI": "20-40%",
+                  "timeframe": "Year 5",
                   "difficulty": "advanced"
                 }
               ],
               "competitiveIntelligence": {
-                "marketInsight": "Property positioned at 6.8% cap rate vs market average",
+                "marketInsight": "Property is positioned competitively in the local market.",
                 "winningStrategies": [
-                  "Location-based competitive positioning",
+                  "Strong location with growth potential",
                   "Focus on operational optimization"
                 ],
                 "losingPatterns": [
@@ -3781,7 +3781,7 @@
                 ],
                 "investorBehavior": "Growth-focused competition driving prices"
               },
-              "intelligenceScore": 83,
+              "intelligenceScore": 94,
               "sophisticationLevel": "advanced",
               "transformationInsights": "This analysis elevates your investment evaluation from basic metrics to institutional-grade intelligence. Key transformations: (1) Strategic risk identification beyond standard analysis, (2) Professional-level alternative strategy evaluation, (3) Market cycle positioning awareness.",
               "professionalEquivalent": "Analysis quality equivalent to: Commercial Investment Advisor level assessment"
@@ -3812,7 +3812,7 @@
                   "Strong market position supports portfolio expansion"
                 ],
                 "debtAnalysis": {
-                  "dscr": 1.21,
+                  "dscr": 1.22,
                   "interestRate": 0.07,
                   "marketSpread": 200.00000000000003,
                   "leverageRatio": 0.8,
@@ -3847,18 +3847,18 @@
                 "currentApproach": {
                   "description": "20% down payment approach",
                   "cashRequired": 58650,
-                  "expectedReturn": -21.63682864450128,
+                  "expectedReturn": -21.323785166240405,
                   "efficiency": "poor"
                 },
                 "recommendedApproach": {
                   "description": "90% down payment for optimal leverage",
                   "cashRequired": 237150,
-                  "expectedReturn": -0.5714737507906389,
+                  "expectedReturn": -0.5617963314358,
                   "efficiency": "poor"
                 },
                 "opportunityCost": {
-                  "annualCost": 1133475,
-                  "description": "Suboptimal capital deployment costs $1133475/year in lost returns",
+                  "annualCost": 1117409.9999999998,
+                  "description": "Suboptimal capital deployment costs $1117410/year in lost returns",
                   "alternativeUse": "Deploy excess capital across 1 properties"
                 },
                 "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
@@ -3903,55 +3903,55 @@
               "goalBasedReasoning": "This property could work for your 6-year balanced strategy with the right price adjustments. Focus negotiation on improving the cash flow.",
               "aiEnhancedContent": {
                 "reasoning": {
-                  "explanation": "The algorithm recommended 'NEGOTIATE' primarily due to a low Cash Flow score of 25/100, which significantly impacts the overall deal quality despite a strong IRR of 100/100.",
+                  "explanation": "The algorithm recommended 'NEGOTIATE' due to a moderate Deal Quality Score of 65/100, indicating potential for improvement in the investment terms, particularly in cash flow.",
                   "keyStrengths": [
-                    "The 10-Year IRR of 14.2% indicates a strong potential return on investment.",
+                    "The 10-Year IRR of 14.4% is strong, reflecting a high potential return on investment.",
                     "The market strength score of 85/100 suggests a favorable environment for real estate investment."
                   ],
                   "keyConcerns": [
-                    "The Cash Flow score of 25/100 indicates that the monthly cash flow of $253 is relatively low compared to expectations.",
-                    "The overall Deal Quality Score of 65/100 suggests that there are several areas for improvement in this investment."
+                    "The monthly cash flow of $265 is relatively low, which may limit immediate cash returns.",
+                    "The cash flow weighted score of 25/100 indicates significant room for improvement in this area."
                   ],
-                  "verdict": "Given the strengths and concerns, negotiating the purchase terms is advisable to enhance the investment's viability."
+                  "verdict": "Overall, negotiating the terms could enhance the investment's viability and cash flow potential."
                 },
                 "actionPlan": {
                   "immediateActions": [
-                    "Initiate negotiations with the seller to lower the purchase price from $255,000, aiming for a reduction that improves cash flow and overall deal quality.",
-                    "Prioritize the negotiation process based on the current cash flow of $253, which indicates a need for improved financial viability."
+                    "Initiate negotiations with the seller to lower the purchase price from $255,000 based on the current cash flow metrics.",
+                    "Prioritize negotiations to achieve a purchase price that improves the cash flow situation and increases the investment return."
                   ],
                   "negotiationFocus": [
-                    "Target a purchase price reduction to improve the DSCR, ideally aiming for a price closer to $240,000 to enhance cash flow.",
-                    "Consider proposing a seller concession that covers part of the total investment required ($63,750), which could improve the overall investment return."
+                    "Target a purchase price reduction to improve the monthly cash flow and overall investment return, aiming for a price closer to $240,000.",
+                    "Consider offering a lower upfront payment to reduce the total investment required from $63,750, potentially negotiating seller financing options."
                   ],
                   "preparationItems": [
-                    "Prepare financial projections based on the total investment of $63,750 to ensure sufficient cash reserves for operational expenses and unexpected costs.",
-                    "Establish a reserve fund based on the monthly cash flow of $253 to cover at least 3-6 months of operating expenses, ensuring financial stability during the initial investment phase."
+                    "Prepare financial documentation to support negotiations, including the current monthly cash flow of $265 and DSCR of 1.22.",
+                    "Establish a reserve fund based on the verified monthly cash flow to ensure coverage for unexpected expenses, ideally targeting at least 3 months of cash flow ($795)."
                   ],
-                  "timeframe": "Aim to complete negotiations and finalize the acquisition within 1-2 months, allowing time for due diligence and financial assessments."
+                  "timeframe": "Aim to complete negotiations and finalize the purchase within the next 30 to 45 days."
                 },
                 "capitalStrategy": {
-                  "currentAssessment": "The current monthly cash flow of $253 is positive, but with a DSCR of 1.21, there is a low payment stress risk. The monthly P&I payment of $1,190 exceeds the available cash flow, indicating a potential strain on the investment's sustainability.",
-                  "optimizedApproach": "To reach a more favorable cash flow situation, consider refinancing options to lower the interest rate below 6.35%, which would reduce the monthly payment. Alternatively, increasing the down payment to reduce the loan amount could also help improve cash flow and DSCR.",
+                  "currentAssessment": "The actual monthly cash flow of $265 is positive; however, with a debt service coverage ratio (DSCR) of 1.22, there is a low payment stress risk. The monthly principal and interest (P&I) payment of $1,179 significantly exceeds the cash flow, indicating a potential shortfall in covering debt obligations.",
+                  "optimizedApproach": "To optimize the structure, consider negotiating a lower interest rate or extending the loan term to reduce the monthly P&I payment. For example, reducing the interest rate from 6.26% to 5.5% could lower the monthly payment, improving cash flow stability.",
                   "alternativeOptions": [
-                    "Alternative 1: Increase down payment to 30% ($76,500) which would reduce the loan amount to $178,500. At the same interest rate, the new monthly payment would be approximately $1,107. This would improve cash flow to $253 - $1,107 = -$854, still negative but less than current payment stress.",
-                    "Alternative 2: Explore a loan with a lower interest rate of 5.5%. Keeping the original down payment of $63,750, the loan amount would remain $191,250. The new monthly payment would be approximately $1,090, improving cash flow to $253 - $1,090 = -$837, a slight improvement but still negative."
+                    "Alternative 1: Increase the down payment to 30% ($76,500) which would reduce the loan amount to $178,500. This could lower the monthly P&I payment to approximately $1,093, improving the DSCR.",
+                    "Alternative 2: Explore a seller financing option that may allow for a lower interest rate or deferred payments, potentially reducing the immediate monthly cash outlay."
                   ],
-                  "recommendation": "The best capital strategy for this NEGOTIATE deal is to either seek a lower interest rate to decrease monthly payments or increase the down payment to reduce the loan amount. Both strategies aim to enhance cash flow and improve the DSCR, thereby reducing payment stress risks."
+                  "recommendation": "The best capital strategy for this NEGOTIATE deal is to either negotiate a lower interest rate or increase the down payment to reduce the loan amount, thereby decreasing the monthly payment and improving the DSCR. This will help mitigate payment stress and enhance the overall financial viability of the investment."
                 },
                 "timeline": {
                   "optimalHoldPeriod": "5-10 years",
-                  "rationale": "The 14.2% IRR indicates a strong return potential, and the $253 monthly cash flow provides consistent income. Holding for 5-10 years allows for the investment to benefit from both cash flow and appreciation, which has already shown a total of 34.4% over 10 years. This period balances the benefits of compounding returns and market stability.",
+                  "rationale": "Holding the investment for 5-10 years allows for the compounding effect of the 14.4% IRR to significantly enhance total returns, while also benefiting from the monthly cash flow of $265. This period aligns with the appreciation trend of 34.4% over 10 years, providing a balanced approach to maximizing both cash flow and capital gains.",
                   "exitIndicators": [
-                    "Sustained monthly cash flow above $253 for at least 12 consecutive months",
-                    "Appreciation trend stabilizing or declining after reaching a certain threshold"
+                    "Consistent monthly cash flow exceeding initial expectations",
+                    "Significant appreciation trends indicating potential market saturation or downturn"
                   ],
-                  "marketTiming": "Monitor market conditions and economic indicators closely; consider exiting if cash flow begins to decline or if appreciation plateaus significantly, ideally within the 5-10 year window."
+                  "marketTiming": "Consider exiting the investment if cash flow begins to decline or if appreciation rates slow significantly, typically after 5 years, while monitoring broader market conditions for optimal timing."
                 },
                 "alternatives": {
-                  "betterPropertyType": "Consider transitioning to a multi-family property to leverage economies of scale and potentially increase cash flow and overall return metrics.",
-                  "marketAlternative": "Explore opportunities in emerging neighborhoods where cap rates may be higher than 6.79%, thus providing better cash flow potential and a more favorable financing environment.",
-                  "timingStrategy": "Evaluate the market cycle to identify the optimal time for acquisition, ideally during a buyer's market when competition is lower, which could enhance negotiation leverage and improve deal quality.",
-                  "riskAdjustment": "Implement a conservative cash reserve strategy to buffer against potential fluctuations in monthly cash flow, ensuring sustainability in periods of lower occupancy or unexpected expenses."
+                  "betterPropertyType": "Consider multi-family properties (e.g., duplex or triplex) to leverage economies of scale and potentially increase monthly cash flow beyond $265.",
+                  "marketAlternative": "Explore refinancing options to secure a lower interest rate than 7%, or consider partnerships to share investment costs and reduce individual risk while maintaining the current cap rate of 6.79%.",
+                  "timingStrategy": "Assess market trends for potential appreciation in property values; consider holding for a shorter term if market conditions are favorable to capitalize on the 14.4% IRR sooner.",
+                  "riskAdjustment": "Implement a reserve fund to cover any potential fluctuations in cash flow, ensuring that the $265 monthly performance remains stable while exploring ways to increase occupancy rates or rental income."
                 }
               },
               "sensitivityAnalysis": {
@@ -4053,10 +4053,10 @@
                 "interestRateScenarios": [
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6,
-                    "change": -0.34999999999999964,
-                    "changePercent": -5.511811023622042,
+                    "change": -0.2599999999999998,
+                    "changePercent": -4.153354632587856,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4064,10 +4064,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4075,10 +4075,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 5.5,
-                    "change": -0.8499999999999996,
-                    "changePercent": -13.385826771653539,
+                    "change": -0.7599999999999998,
+                    "changePercent": -12.140575079872201,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4086,10 +4086,10 @@
                   },
                   {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 8,
-                    "change": 1.6500000000000004,
-                    "changePercent": 25.984251968503948,
+                    "change": 1.7400000000000002,
+                    "changePercent": 27.795527156549525,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4099,10 +4099,10 @@
                 "pathToBuy": {
                   "easiest": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4110,10 +4110,10 @@
                   },
                   "mostRealistic": {
                     "parameter": "interestRate",
-                    "currentValue": 6.35,
+                    "currentValue": 6.26,
                     "newValue": 6.5,
-                    "change": 0.15000000000000036,
-                    "changePercent": 2.362204724409455,
+                    "change": 0.2400000000000002,
+                    "changePercent": 3.833865814696489,
                     "newDealQuality": 91,
                     "newVerdict": "BUY",
                     "scoreImprovement": 91,
@@ -4132,15 +4132,15 @@
                       "description": "10k reduction: Score 91/100 (BUY)"
                     },
                     {
-                      "parameter": "rent",
-                      "currentValue": 2200,
-                      "newValue": 2300,
-                      "change": 100,
-                      "changePercent": 4.545454545454546,
+                      "parameter": "interestRate",
+                      "currentValue": 6.26,
+                      "newValue": 6,
+                      "change": -0.2599999999999998,
+                      "changePercent": -4.153354632587856,
                       "newDealQuality": 91,
                       "newVerdict": "BUY",
                       "scoreImprovement": 91,
-                      "description": "+$100/month rent: Score 91/100 (BUY)"
+                      "description": "6% interest rate: Score 91/100 (BUY)"
                     }
                   ]
                 },
@@ -4160,9 +4160,9 @@
           "keyMetrics": {
             "verdict": "NEGOTIATE",
             "score": 65,
-            "monthlyFlow": 253.47,
+            "monthlyFlow": 264.7,
             "capRate": 6.79,
-            "dscr": 1.21
+            "dscr": 1.22
           }
         },
         "expertValidation": {

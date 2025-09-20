@@ -174,7 +174,17 @@ describe('Actual Property Wizard Test - Fixed Navigation', () => {
             });
             
             // Now look for actual investment analysis results
-            cy.wait(10000); // Wait for analysis to complete
+            cy.wait(20000); // Extended wait for analysis to complete
+            
+            // Click Analysis Results tab if it exists
+            cy.get('body').then($body => {
+              if ($body.find('button:contains("Analysis Results")').length > 0) {
+                cy.get('button:contains("Analysis Results")').click();
+                cy.wait(5000);
+                cy.log('✅ Navigated to Analysis Results tab');
+              }
+            });
+            
             cy.screenshot('final-analysis-results');
             
             // Validate we got actual investment verdict

@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-09-20T02:37:03.543Z",
+  "testType": "QE_Anna_Property_Direct_Backend_Validation",
+  "property": {
+    "address": "1837 Walnut Way, Anna, TX 75409",
+    "purchasePrice": 245000,
+    "monthlyRent": 1590,
+    "investorProfile": "Aggressive"
+  },
+  "financialMetrics": {
+    "monthlyCashFlow": -560.2516666666667,
+    "capRate": 3.97,
+    "cashOnCashReturn": -12.47,
+    "irr": 0
+  },
+  "investmentDecision": {
+    "verdict": "PASS",
+    "dealQualityScore": 31,
+    "componentScores": {
+      "cashFlowScore": 0,
+      "irrScore": 0,
+      "marketStrengthScore": 85,
+      "debtStructureScore": 53,
+      "capRateScore": 100
+    },
+    "actionPlan": [
+      {
+        "action": "Continue property search with refined criteria",
+        "priority": "immediate",
+        "impact": "Avoid poor investment and find better opportunities",
+        "effort": "medium",
+        "expectedOutcome": "Higher quality investment alternatives",
+        "timeframe": "2-8 weeks"
+      },
+      {
+        "action": "Establish larger cash reserves (6-12 months expenses)",
+        "priority": "short-term",
+        "impact": "Reduces financial stress during vacancy or repairs",
+        "effort": "low",
+        "expectedOutcome": "Enhanced financial stability",
+        "timeframe": "1-3 months"
+      }
+    ],
+    "capitalStrategy": {
+      "currentApproach": {
+        "description": "20% down payment approach",
+        "cashRequired": null,
+        "expectedReturn": 0,
+        "efficiency": "good"
+      },
+      "recommendedApproach": {
+        "description": "0% down payment for optimal leverage",
+        "cashRequired": null,
+        "expectedReturn": 0,
+        "efficiency": "fair"
+      },
+      "opportunityCost": {
+        "annualCost": null,
+        "description": "Suboptimal capital deployment costs $NaN/year in lost returns",
+        "alternativeUse": "Deploy excess capital across NaN properties"
+      },
+      "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
+    }
+  },
+  "validation": {
+    "analysisCompleted": true,
+    "investmentDecisionGenerated": true,
+    "verdictPresent": true,
+    "scoreGenerated": true,
+    "financialMetricsCalculated": true,
+    "aiContentGenerated": true,
+    "validVerdict": true,
+    "reasonableScore": true,
+    "logicalCashFlow": true,
+    "validCapRate": true
+  }
+}

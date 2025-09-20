@@ -1,0 +1,63 @@
+{
+  "timestamp": "2025-09-19T17:20:00.000Z",
+  "testType": "QE_Investment_Decision_Engine_AI_Audit_Simulation",
+  "property": {
+    "address": "1837 Walnut Way, Anna, TX 75409",
+    "purchasePrice": 245000,
+    "downPayment": 20,
+    "interestRate": 7.5,
+    "loanTerm": 30,
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "yearBuilt": 2005
+  },
+  "verdict": "NEGOTIATE",
+  "dealQualityScore": 73,
+  "financialMetrics": {
+    "capRate": 7.2,
+    "monthlyCashFlow": 285,
+    "irr": 12.8,
+    "cashOnCashReturn": 8.1,
+    "monthlyRent": 2150,
+    "dscr": 1.34,
+    "totalMonthlyExpenses": 1865,
+    "netOperatingIncome": 25800,
+    "walkAwayPrice": 235000
+  },
+  "investorProfile": {
+    "riskTolerance": "High",
+    "investmentGoal": "Wealth Building",
+    "timeHorizon": "Medium-term",
+    "strategy": "Aggressive"
+  },
+  "aiContent": {
+    "strategicActionPlan": "This property shows strong fundamentals for wealth building. The 7.2% cap rate exceeds the local market average of 6.8%. Monthly cash flow of $285 provides steady income while building equity. Consider negotiating purchase price down to $235,000 for optimal returns.",
+    "capitalStrategy": "With aggressive investor profile, leverage the strong rental market in Anna, TX. The property's positive cash flow and above-market cap rate make it suitable for portfolio expansion. Consider BRRRR strategy after value-add improvements.",
+    "riskFactors": "Higher interest rate environment (7.5%) pressures cash flow. Monitor local rental market trends as Anna experiences rapid growth. Property age (2005) may require maintenance reserves."
+  },
+  "marketContext": {
+    "localCapRateAverage": 6.8,
+    "rentGrowthRate": 4.2,
+    "marketCondition": "Strong rental demand",
+    "neighborhoodTrend": "Appreciating"
+  },
+  "engineReasoningLog": {
+    "scoringBreakdown": {
+      "cashFlowScore": 78,
+      "capRateScore": 82,
+      "irrScore": 71,
+      "marketScore": 75,
+      "riskScore": 65
+    },
+    "verdictRationale": "High risk tolerance allows acceptance of borderline metrics. Strong cap rate (7.2%) and positive cash flow ($285) support NEGOTIATE verdict. Walk-away price at $235k improves all metrics significantly.",
+    "strategyAdaptation": "Aggressive profile increases tolerance for thin margins in exchange for growth potential. Engine weighted cash flow and appreciation higher than conservative analysis."
+  },
+  "dataQuality": {
+    "verdictExtracted": true,
+    "scoreExtracted": true,
+    "metricsCount": 9,
+    "aiContentAvailable": true,
+    "extractionComplete": true,
+    "confidenceLevel": "High"
+  }
+}

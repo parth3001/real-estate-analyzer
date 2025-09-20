@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-09-19T17:18:02.953Z",
+  "validationTests": [
+    {
+      "testName": "Financial Calculation Accuracy",
+      "status": "WARNING",
+      "details": [
+        "Cash flow ratio 13.3% within reasonable range",
+        "DSCR 1.34 indicates healthy debt coverage"
+      ],
+      "issues": [
+        "Cap rate 7.2% seems inconsistent with calculated 9.3%"
+      ]
+    },
+    {
+      "testName": "Investment Verdict Logic",
+      "status": "PASS",
+      "details": [
+        "Verdict NEGOTIATE logically consistent with score 73 and High risk tolerance"
+      ],
+      "issues": []
+    },
+    {
+      "testName": "Market Context Validation",
+      "status": "PASS",
+      "details": [
+        "Cap rate 7.2% within reasonable market range",
+        "Rent $716.6666666666666/bedroom within reasonable range for market"
+      ],
+      "issues": []
+    },
+    {
+      "testName": "Investment Strategy Adaptation",
+      "status": "PASS",
+      "details": [
+        "Strategy adaptation appropriate for Aggressive investor profile"
+      ],
+      "issues": []
+    }
+  ],
+  "overallStatus": "WARNING",
+  "criticalIssues": [],
+  "recommendations": [
+    "Review warning-level issues for potential improvements",
+    "Consider expanding validation with larger dataset of properties",
+    "Implement automated regression testing for financial calculations"
+  ]
+}

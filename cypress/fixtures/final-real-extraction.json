@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-09-19T18:06:59.479Z",
+  "testType": "QE_FINAL_REAL_EXTRACTION",
+  "property": {
+    "address": "1837 Walnut Way, Anna, TX 75409",
+    "purchasePrice": 245000
+  },
+  "pageContent": "\n    Real EstateDeal AnalyzerDashboardProperty AnalysisSingle-Family RentalAnalyze SFR propertiesMulti-FamilyAnalyze multi-family propertiesSaved Properties3Portfolio IntelligenceDeal PipelineMarket IntelligenceCensus Data TestAdministrationHelp & DocumentationAUAdmin Useradmin@realestateanalyzer.comSingle-Family Rental AnalysisLearningProWelcome, AdminAdminAUSingle-Family Rental AnalysisAnalyze your single family rental investment with comprehensive market intelligence, AI-powered insights, and detailed financial projections.Load SampleProperty InputAnalysis ResultsChoose Analysis MethodSelect how you'd like to input your property information for analysisSmart WizardManual FormGuided Analysis (Recommended)Step-by-step property analysis with auto-population from market data, smart defaults, and intelligent suggestions. Perfect for all experience levels.Portfolio SelectionChoose a portfolio to analyze this property in context:Analyze without portfolio context​Manage Portfolios →Property Analysis WizardGuided property analysis with intelligent data auto-population0/5 Steps0% Data Quality~13 min remainingProperty AddressEnter property address and basic detailsPurchase & FinancingPurchase price, down payment, and financingRental AnalysisRent estimates and operating expensesLong-term AssumptionsGrowth rates and investment timelineInvestment Goals & StrategyYour investment approach and goalsProperty Address & DetailsEnter the property address to automatically look up property detailspropertyAddress.city: City is requiredpropertyAddress.state: State is requiredProperty AddressStreet Address​Street AddressCityCityCity is requiredStateStateState is requiredZIP CodeZIP CodeLook up PropertyProperty DetailsSquare Footage​Square FootageBedroomsBedroomsBathroomsBathroomsYear Built​Year BuiltProperty Name (Optional)Property Name (Optional)Friendly name for this property💡 Smart Data PopulationPhase 2: We now use real RentCast API data to automatically populate property details. This leverages comprehensive property databases with cached results to provide accurate property information while minimizing API costs.CancelNext\n    \n  \n\n",
+  "hasResults": {
+    "verdict": false,
+    "score": false,
+    "financials": false,
+    "analysisResults": true,
+    "investmentDecision": false
+  }
+}

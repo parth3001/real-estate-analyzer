@@ -33,21 +33,27 @@ module.exports = defineConfig({
     env: {
       // Backend API URL
       API_BASE_URL: 'http://localhost:3001/api',
-      
+
       // Test user credentials (using admin that works in expert validation)
       TEST_USER_EMAIL: 'admin@realestateanalyzer.com',
       TEST_USER_PASSWORD: 'Spring@2025',
-      
+
       // Test property data
       TEST_PROPERTY_ADDRESS: '16 Belvidere Ave APT 3F, Jersey City, NJ 07304',
       TEST_PROPERTY_PRICE: 255000,
-      
+
+      // AI Validation
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
       // Feature flags
       ENABLE_PROPERTY_WIZARD: true,
       SKIP_AUTH_TESTS: false
     },
 
     setupNodeEvents(on, config) {
+      // Load AI Expert Validation plugin
+      require('./cypress/plugins/index')(on, config);
+
       // Task for logging
       on('task', {
         log(message) {
@@ -64,11 +70,11 @@ module.exports = defineConfig({
           launchOptions.args.push('--disable-web-security');
           launchOptions.args.push('--allow-running-insecure-content');
           launchOptions.args.push('--disable-features=VizDisplayCompositor');
-          
+
           // Window size for consistent testing
           launchOptions.args.push('--window-size=1280,720');
         }
-        
+
         return launchOptions;
       });
 
