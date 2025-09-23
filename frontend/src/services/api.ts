@@ -1179,6 +1179,20 @@ export const scenarioApi = {
 
 // Portfolio-related API calls
 export const portfolioApi = {
+  // Get dashboard summary for portfolio-first dashboard
+  getDashboardSummary: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/portfolios/dashboard-summary');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard summary:', error);
+      throw error;
+    }
+  },
+
   // Get all portfolios for the authenticated user
   getPortfolios: async (): Promise<ApiResponse<any>> => {
     try {
@@ -1306,6 +1320,165 @@ export const portfolioApi = {
       throw error;
     }
   },
+};
+
+// Pipeline-related API calls for dashboard integration
+export const pipelineApi = {
+  // Get pipeline summary for dashboard
+  getDashboardSummary: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/pipeline/dashboard-summary');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching pipeline dashboard summary:', error);
+      throw error;
+    }
+  },
+
+  // Get recent pipeline deals for dashboard display
+  getRecentDeals: async (limit: number = 5): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get(`/pipeline/deals?limit=${limit}&sortBy=updatedAt&sortOrder=desc`);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching recent pipeline deals:', error);
+      throw error;
+    }
+  },
+
+  // Get deals requiring action for dashboard alerts
+  getDealsRequiringAction: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/pipeline/deals/requiring-action');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching deals requiring action:', error);
+      throw error;
+    }
+  },
+
+  // Get pipeline analytics for dashboard metrics
+  getAnalytics: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/pipeline/analytics');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching pipeline analytics:', error);
+      throw error;
+    }
+  },
+
+  // Get all pipeline deals with optional filters
+  getDeals: async (filters?: {
+    stage?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<any>> => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters?.stage) queryParams.append('stage', filters.stage);
+      if (filters?.status) queryParams.append('status', filters.status);
+      if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+      if (filters?.offset) queryParams.append('offset', filters.offset.toString());
+
+      const url = `/pipeline/deals${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await api.get(url);
+
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching pipeline deals:', error);
+      throw error;
+    }
+  },
+
+  // Create new pipeline deal
+  createDeal: async (dealData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post('/pipeline/deals', dealData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error creating pipeline deal:', error);
+      throw error;
+    }
+  },
+
+  // Update pipeline deal
+  updateDeal: async (dealId: string, dealData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.put(`/pipeline/deals/${dealId}`, dealData);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error updating pipeline deal:', error);
+      throw error;
+    }
+  },
+
+  // Update deal stage
+  updateDealStage: async (dealId: string, stage: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.put(`/pipeline/deals/${dealId}/stage`, { stage });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error updating deal stage:', error);
+      throw error;
+    }
+  }
+};
+
+// Command Center API for dashboard aggregation
+export const commandCenterApi = {
+  // Get command center dashboard data (detailed view)
+  getCommandCenterData: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/command-center');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching command center data:', error);
+      throw error;
+    }
+  },
+
+  // Get focused dashboard data for Investment Decision Center
+  getFocusedDashboardData: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.get('/command-center?view=focused');
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Error fetching focused dashboard data:', error);
+      throw error;
+    }
+  }
 };
 
 export default api; 

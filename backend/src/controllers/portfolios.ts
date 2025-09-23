@@ -3,6 +3,7 @@ import { portfolioService, CreatePortfolioRequest, UpdatePortfolioRequest } from
 import { AuthenticatedRequest } from '../middleware/auth';
 import { portfolioAnalyticsService } from '../services/portfolio/portfolioAnalyticsService';
 import { enhancedPortfolioAI } from '../services/portfolio/enhancedPortfolioAI';
+import { DealModel } from '../models/Deal';
 
 /**
  * Portfolio Controller - Handles portfolio-related API requests
@@ -505,8 +506,228 @@ export const getComprehensiveInsights = async (req: AuthenticatedRequest, res: R
     });
   } catch (error: any) {
     console.error('Error in getComprehensiveInsights:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to generate comprehensive insights' 
+    res.status(500).json({
+      error: error.message || 'Failed to generate comprehensive insights'
+    });
+  }
+};
+
+/**
+ * Get dashboard summary for portfolio-first dashboard
+ * GET /api/portfolios/dashboard-summary
+ */
+export const getDashboardSummary = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    console.log(`Generating dashboard summary for user: ${userId}`);
+
+    // Get all user portfolios with basic info
+    const portfolios = await portfolioService.getUserPortfolios(userId);
+
+    // If no portfolios exist, return empty state data
+    if (!portfolios || portfolios.length === 0) {
+      return res.json({
+        success: true,
+        hasPortfolios: false,
+        portfolioCount: 0,
+        totalValue: 0,
+        monthlyNetCashFlow: 0,
+        totalProperties: 0,
+        alerts: [],
+        recommendations: [
+          {
+            type: 'ONBOARDING',
+            priority: 'high',
+            title: 'Create Your First Portfolio',
+            description: 'Start building your real estate empire by creating your first investment portfolio',
+            action: 'CREATE_PORTFOLIO'
+          }
+        ],
+        quickStats: {
+          totalAnalyses: 0,
+          avgDealQuality: 0,
+          bestCapRate: 0,
+          portfolioGrowth: 0
+        }
+      });
+    }
+
+    // Aggregate data across all portfolios
+    let aggregatedData = {
+      totalValue: 0,
+      monthlyNetCashFlow: 0,
+      totalProperties: 0,
+      totalEquity: 0,
+      totalDebt: 0,
+      avgDealQuality: 0,
+      bestCapRate: 0,
+      portfolioCount: portfolios.length
+    };
+
+    const alerts = [];
+    const recommendations = [];
+    let allProperties = [];
+
+    // Process each portfolio
+    for (const portfolio of portfolios) {
+      try {
+        // Get detailed analytics for each portfolio
+        const analytics = await portfolioAnalyticsService.calculatePortfolioAnalytics(portfolio.id);
+
+        if (analytics && analytics.summary) {
+          aggregatedData.totalValue += analytics.summary.totalValue || 0;
+          aggregatedData.monthlyNetCashFlow += analytics.summary.monthlyNetCashFlow || 0;
+          aggregatedData.totalProperties += analytics.summary.totalProperties || 0;
+          aggregatedData.totalEquity += analytics.summary.totalEquity || 0;
+          // Calculate debt from value - equity
+          const debt = (analytics.summary.totalValue || 0) - (analytics.summary.totalEquity || 0);
+          aggregatedData.totalDebt += Math.max(0, debt);
+
+          // Generate portfolio-specific alerts
+          if (analytics.summary.monthlyNetCashFlow < 0) {
+            alerts.push({
+              type: 'NEGATIVE_CASH_FLOW',
+              severity: 'warning',
+              portfolio: portfolio.name,
+              message: `${portfolio.name} has negative monthly cash flow: $${Math.round(analytics.summary.monthlyNetCashFlow)}`
+            });
+          }
+
+          if (analytics.summary.totalProperties > 0 && analytics.summary.averageCapRate < 5) {
+            alerts.push({
+              type: 'LOW_CAP_RATE',
+              severity: 'info',
+              portfolio: portfolio.name,
+              message: `${portfolio.name} has below-average cap rates (${analytics.summary.averageCapRate.toFixed(1)}%)`
+            });
+          }
+        }
+
+        // Add portfolio-specific recommendations based on goals
+        if (analytics && analytics.goalProgress) {
+          // Check monthly income progress
+          if (analytics.goalProgress.monthlyIncomeProgress && !analytics.goalProgress.monthlyIncomeProgress.onTrack) {
+            recommendations.push({
+              type: 'GOAL_ACCELERATION',
+              priority: 'medium',
+              portfolio: portfolio.name,
+              title: `Accelerate ${portfolio.primaryGoal} Progress`,
+              description: `${analytics.goalProgress.monthlyIncomeProgress.projection}`,
+              action: 'VIEW_PORTFOLIO',
+              portfolioId: portfolio.id
+            });
+          }
+
+          // Check net worth progress
+          if (analytics.goalProgress.netWorthProgress && !analytics.goalProgress.netWorthProgress.onTrack) {
+            recommendations.push({
+              type: 'GOAL_ACCELERATION',
+              priority: 'medium',
+              portfolio: portfolio.name,
+              title: `Accelerate Wealth Building`,
+              description: `${analytics.goalProgress.netWorthProgress.projection}`,
+              action: 'VIEW_PORTFOLIO',
+              portfolioId: portfolio.id
+            });
+          }
+        }
+
+        // Get properties for deal quality analysis
+        const portfolioProperties = await DealModel.find({ portfolioId: portfolio.id });
+        if (portfolioProperties && portfolioProperties.length > 0) {
+          allProperties.push(...portfolioProperties);
+        }
+
+      } catch (portfolioError) {
+        console.warn(`Error processing portfolio ${portfolio.id}:`, portfolioError);
+        // Continue processing other portfolios
+      }
+    }
+
+    // Calculate aggregate metrics
+    if (allProperties.length > 0) {
+      const dealQualities = allProperties
+        .map(p => p.analysis?.investmentDecision?.professionalAssessment?.dealQuality)
+        .filter(q => q !== undefined && q !== null);
+
+      if (dealQualities.length > 0) {
+        aggregatedData.avgDealQuality = dealQualities.reduce((sum, q) => sum + q, 0) / dealQualities.length;
+      }
+
+      const capRates = allProperties
+        .map(p => p.analysis?.keyMetrics?.capRate)
+        .filter(rate => rate !== undefined && rate !== null && rate > 0);
+
+      if (capRates.length > 0) {
+        aggregatedData.bestCapRate = Math.max(...capRates);
+      }
+    }
+
+    // Add general recommendations
+    if (aggregatedData.totalProperties < 3) {
+      recommendations.push({
+        type: 'PORTFOLIO_GROWTH',
+        priority: 'medium',
+        title: 'Scale Your Portfolio',
+        description: 'Consider adding more properties to achieve better diversification and cash flow stability',
+        action: 'START_ANALYSIS'
+      });
+    }
+
+    if (aggregatedData.monthlyNetCashFlow > 2000) {
+      recommendations.push({
+        type: 'REINVESTMENT',
+        priority: 'low',
+        title: 'Reinvestment Opportunity',
+        description: `Strong monthly cash flow ($${Math.round(aggregatedData.monthlyNetCashFlow)}) creates opportunity for next acquisition`,
+        action: 'START_ANALYSIS'
+      });
+    }
+
+    // Calculate portfolio growth (placeholder - would need historical data)
+    const portfolioGrowth = aggregatedData.totalValue > 0 ?
+      ((aggregatedData.totalEquity / aggregatedData.totalValue) * 100) : 0;
+
+    const response = {
+      success: true,
+      hasPortfolios: true,
+      portfolioCount: aggregatedData.portfolioCount,
+      portfolioHealth: {
+        totalValue: Math.round(aggregatedData.totalValue),
+        monthlyNetCashFlow: Math.round(aggregatedData.monthlyNetCashFlow),
+        totalEquity: Math.round(aggregatedData.totalEquity),
+        totalDebt: Math.round(aggregatedData.totalDebt),
+        equityRatio: aggregatedData.totalValue > 0 ?
+          ((aggregatedData.totalEquity / aggregatedData.totalValue) * 100) : 0
+      },
+      quickStats: {
+        totalProperties: aggregatedData.totalProperties,
+        avgDealQuality: Math.round(aggregatedData.avgDealQuality),
+        bestCapRate: Number(aggregatedData.bestCapRate.toFixed(2)),
+        portfolioGrowth: Number(portfolioGrowth.toFixed(1))
+      },
+      alerts: alerts.slice(0, 5), // Limit to top 5 alerts
+      recommendations: recommendations.slice(0, 4), // Limit to top 4 recommendations
+      lastUpdated: new Date().toISOString()
+    };
+
+    console.log('Dashboard summary generated successfully:', {
+      portfolioCount: response.portfolioCount,
+      totalValue: response.portfolioHealth.totalValue,
+      alertCount: response.alerts.length,
+      recommendationCount: response.recommendations.length
+    });
+
+    res.json(response);
+  } catch (error: any) {
+    console.error('Error in getDashboardSummary:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to generate dashboard summary',
+      hasPortfolios: false
     });
   }
 };

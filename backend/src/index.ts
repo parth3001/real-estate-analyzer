@@ -15,6 +15,7 @@ import adminRouter from './routes/admin';
 import quickAnalysisRouter from './routes/quickAnalysis';
 import portfoliosRouter from './routes/portfolios';
 import pipelineRouter from './routes/pipeline';
+import commandCenterRouter from './routes/commandCenter';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
@@ -76,6 +77,7 @@ app.use('/api/wizard', wizardRouter);
 app.use('/api/quick', quickAnalysisRouter);
 app.use('/api/portfolios', portfoliosRouter);
 app.use('/api/pipeline', pipelineRouter);
+app.use('/api/command-center', commandCenterRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

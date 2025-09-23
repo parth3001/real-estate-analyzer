@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appleTheme } from './theme/appleTheme';
@@ -27,6 +27,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
 import MarketDataPage from './pages/MarketDataPage';
+import AnalysisDetails from './pages/AnalysisDetails';
 
 // Portfolio Components
 import PortfolioDashboard from './pages/PortfolioDashboard';
@@ -35,17 +36,7 @@ import { ApplePortfolioWizard } from './components/Portfolio/ApplePortfolioWizar
 // Pipeline Components
 import PipelinePage from './pages/PipelinePage';
 
-// Analysis Details Component (for viewing saved analyses)
-const AnalysisDetails: React.FC = () => {
-  const { id } = useParams();
-  return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4">Analysis Details</Typography>
-      <Typography>Analysis ID: {id}</Typography>
-      {/* Your existing AnalysisResults component can be used here */}
-    </Box>
-  );
-};
+// Analysis Details Component is now imported from pages
 
 // Authentication Layout (for login/register pages)
 const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

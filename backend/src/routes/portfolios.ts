@@ -10,6 +10,8 @@ import {
   removePropertyFromPortfolio,
   getAvailablePortfolios,
   recalculatePortfolioAnalytics,
+  // Dashboard endpoint
+  getDashboardSummary,
   // Phase 4: Enhanced AI Insights
   getPortfolioHealthCheck,
   getPeerComparison,
@@ -27,6 +29,7 @@ const router = Router();
 // Portfolio CRUD operations
 router.post('/', authMiddleware, createPortfolio);              // Create portfolio
 router.get('/', authMiddleware, getUserPortfolios);             // List user portfolios
+router.get('/dashboard-summary', authMiddleware, getDashboardSummary); // Dashboard summary for portfolio-first UI
 router.get('/available', authMiddleware, getAvailablePortfolios); // Get portfolios for property addition
 router.get('/:id', authMiddleware, getPortfolioDetails);        // Get portfolio details
 router.put('/:id', authMiddleware, updatePortfolio);            // Update portfolio

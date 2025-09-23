@@ -397,6 +397,31 @@ export interface IDeal extends Document {
   };
   analysis: Analysis;
   confidence?: AnalysisConfidence;
+  investmentDecision?: {
+    verdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION';
+    confidence: number;
+    score: number;
+    primaryReason: string;
+    goalBasedReasoning?: string;
+    secondaryReasons: string[];
+    keyRisks: string[];
+    professionalAssessment?: {
+      dealQuality: number;
+      executionDifficulty: number;
+      dataReliability: number;
+      cashFlowScore: number;
+      irrScore: number;
+      marketStrengthScore: number;
+      debtStructureScore: number;
+      exitStrategyScore: number;
+      capRateScore: number;
+      propertyRiskScore: number;
+      primaryInsight: string;
+      strategicRecommendations: string[];
+      riskMitigation: string[];
+      opportunityMaximization: string[];
+    };
+  };
   notes?: Array<{
     text: string;
     createdAt: Date;

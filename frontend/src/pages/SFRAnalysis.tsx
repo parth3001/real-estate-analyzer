@@ -137,12 +137,30 @@ const SFRAnalysis: React.FC = () => {
       
       let response;
       
-      // CRITICAL FIX: Check if we're updating existing analysis or creating new one
-      if (dealId) {
-        // Updating existing analysis - dealId should already be a string from state
-        console.log('🔄 Updating existing analysis:', dealId, 'type:', typeof dealId);
-        response = await propertyApi.updateProperty(dealId, analysisData);
-        console.log('📊 UPDATE API RESPONSE:', response.data);
+      // CLEAN ARCHITECTURE: Always perform fresh analysis, then save appropriately
+      console.log('🧮 Performing fresh analysis...');
+      response = await propertyApi.analyzeProperty(analysisData);
+      console.log('📊 FRESH ANALYSIS RESPONSE:', response.data);
+
+      // If this was for an existing deal, update it with the fresh analysis
+      if (dealId && response.status === 200 && response.data) {
+        console.log('💾 Saving fresh analysis to existing deal:', dealId);
+        try {
+          const updateData = {
+            ...analysisData,
+            analysis: response.data,
+            updatedAt: new Date()
+          };
+          await propertyApi.updateProperty(dealId, updateData);
+          console.log('✅ Successfully updated existing deal with fresh analysis');
+
+          // Include dealId in response so frontend knows which deal was updated
+          response.data._id = dealId;
+          response.data.dealId = dealId;
+        } catch (updateError) {
+          console.warn('⚠️ Fresh analysis succeeded but failed to update existing deal:', updateError);
+          // Continue - user still gets fresh analysis results
+        }
       } else if (pipelineDealId) {
         // Check if pipeline deal already has linked analysis to avoid duplicates
         console.log('🔍 Checking if pipeline deal already has analysis:', pipelineDealId);
