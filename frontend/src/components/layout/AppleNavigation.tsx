@@ -185,8 +185,9 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
   const { user, logout } = useAuth();
   const { mode } = useDualMode();
   
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Responsive default
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Initialize drawer state - always closed on mobile initially
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Desktop sidebar open by default
+  const [mobileOpen, setMobileOpen] = useState(false); // Mobile drawer closed by default
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [notificationMenuAnchor, setNotificationMenuAnchor] = useState<null | HTMLElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({
@@ -253,7 +254,8 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         p: 3,
         display: 'flex',
         alignItems: 'center',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        borderBottom: '1px solid',
+        borderColor: 'divider'
       }}
     >
       <Box
@@ -268,7 +270,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           mr: (sidebarOpen && !isMobile) ? 2 : 0
         }}
       >
-        <TrendingUpIcon sx={{ color: 'white', fontSize: 24 }} />
+        <TrendingUpIcon sx={{ color: 'primary.main', fontSize: 24 }} />
       </Box>
       
       {(sidebarOpen && !isMobile) && (
@@ -276,13 +278,13 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           <Typography
             variant="h6"
             fontWeight={700}
-            sx={{ color: 'white', lineHeight: 1.2 }}
+            sx={{ color: 'text.primary', lineHeight: 1.2 }}
           >
             Real Estate
           </Typography>
           <Typography
             variant="body2"
-            sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px' }}
+            sx={{ color: 'text.secondary', fontSize: '12px' }}
           >
             Deal Analyzer
           </Typography>
@@ -312,9 +314,9 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             mx: 1,
             borderRadius: appleBorderRadius.lg,
             mb: 0.5,
-            backgroundColor: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+            backgroundColor: isActive ? 'primary.50' : 'transparent',
             '&:hover': {
-              backgroundColor: isActive ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.1)'
+              backgroundColor: isActive ? 'primary.100' : 'action.hover'
             },
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             cursor: 'pointer'
@@ -322,7 +324,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         >
           <ListItemIcon
             sx={{
-              color: isActive ? 'primary.300' : 'rgba(255, 255, 255, 0.7)',
+              color: isActive ? 'primary.main' : 'text.secondary',
               minWidth: (sidebarOpen && !isMobile) ? 40 : 'auto',
               mr: (sidebarOpen && !isMobile) ? 2 : 0
             }}
@@ -335,7 +337,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
               <ListItemText
                 primary={item.label}
                 sx={{
-                  color: isActive ? 'white' : 'rgba(255, 255, 255, 0.9)',
+                  color: isActive ? 'primary.main' : 'text.primary',
                   '& .MuiTypography-root': {
                     fontWeight: isActive ? 600 : 500,
                     fontSize: '14px'
@@ -350,7 +352,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
                   sx={{
                     '& .MuiBadge-badge': {
                       backgroundColor: 'primary.500',
-                      color: 'white',
+                      color: 'background.paper',
                       fontSize: '11px',
                       height: '18px',
                       minWidth: '18px'
@@ -382,16 +384,16 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
                   sx={{
                     mx: 1,
                     borderRadius: '8px',
-                    backgroundColor: isPathActive(subItem.path) ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    backgroundColor: isPathActive(subItem.path) ? 'primary.50' : 'transparent',
                     '&:hover': {
-                      backgroundColor: isPathActive(subItem.path) ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.1)'
+                      backgroundColor: isPathActive(subItem.path) ? 'primary.100' : 'action.hover'
                     },
                     cursor: 'pointer'
                   }}
                 >
                   <ListItemIcon
                     sx={{
-                      color: isPathActive(subItem.path) ? 'primary.300' : 'rgba(255, 255, 255, 0.6)',
+                      color: isPathActive(subItem.path) ? 'primary.main' : 'text.secondary',
                       minWidth: 32
                     }}
                   >
@@ -401,13 +403,13 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
                     primary={subItem.label}
                     secondary={subItem.description}
                     sx={{
-                      color: isPathActive(subItem.path) ? 'white' : 'rgba(255, 255, 255, 0.8)',
+                      color: isPathActive(subItem.path) ? 'primary.main' : 'text.primary',
                       '& .MuiTypography-root': {
                         fontSize: '13px'
                       },
                       '& .MuiTypography-body2': {
                         fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.5)'
+                        color: 'text.secondary'
                       }
                     }}
                   />
@@ -425,7 +427,8 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
     <Box
       sx={{
         p: 2,
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        borderTop: '1px solid',
+        borderColor: 'divider',
         mt: 'auto'
       }}
     >
@@ -439,7 +442,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+            backgroundColor: 'action.hover'
           }
         }}
       >
@@ -460,13 +463,13 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             <Typography
               variant="body2"
               fontWeight={600}
-              sx={{ color: 'white', lineHeight: 1.2 }}
+              sx={{ color: 'text.primary', lineHeight: 1.2 }}
             >
               {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'User'}
             </Typography>
             <Typography
               variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+              sx={{ color: 'text.secondary' }}
             >
               {user?.email || 'user@example.com'}
             </Typography>
@@ -611,7 +614,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             '& .MuiDrawer-paper': {
               width: sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
               boxSizing: 'border-box',
-              backgroundColor: 'grey.900', // Dark theme as requested
+              backgroundColor: 'background.paper', // Light theme for consistency
               border: 'none',
               transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               overflowX: 'hidden'
@@ -633,7 +636,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             '& .MuiDrawer-paper': {
               width: SIDEBAR_WIDTH,
               boxSizing: 'border-box',
-              backgroundColor: 'grey.900', // Dark theme as requested
+              backgroundColor: 'background.paper', // Light theme for consistency
               border: 'none'
             }
           }}
