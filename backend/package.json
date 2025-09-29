@@ -1,7 +1,7 @@
 {
-  "name": "real-estate-analyzer-backend",
+  "name": "reanalyzr-backend",
   "version": "1.0.0",
-  "description": "Backend for Real Estate Deal Analyzer",
+  "description": "Backend for reanalyzr Platform",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

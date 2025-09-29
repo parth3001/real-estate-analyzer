@@ -153,10 +153,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 <Home sx={{ fontSize: 32 }} />
               </Box>
               <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>
-                PropTech Analytics
+                reanalyzr
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Professional Real Estate Investment Analysis
+                Professional Property Investment Intelligence
               </Typography>
             </Box>
 

@@ -280,13 +280,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             fontWeight={700}
             sx={{ color: 'text.primary', lineHeight: 1.2 }}
           >
-            Real Estate
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: 'text.secondary', fontSize: '12px' }}
-          >
-            Deal Analyzer
+            reanalyzr
           </Typography>
         </Box>
       )}
@@ -516,7 +510,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       return 'Portfolio Intelligence';
     }
     
-    return titles[pathname] || 'Real Estate Analyzer';
+    return titles[pathname] || 'reanalyzr';
   };
 
   // Top App Bar
