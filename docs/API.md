@@ -135,8 +135,13 @@ POST /api/deals/analyze
 
 **Purpose:** Complete professional property analysis with Investment Decision Engine and AI insights.
 
+**Analysis Behavior:**
+- Always performs fresh analysis with current data (never returns cached results)
+- Suitable for new property analysis and re-analysis of existing deals
+- Frontend should handle saving results to existing deals when needed
+
 **Enhanced Features:**
-- Professional investment verdict (BUY/NEGOTIATE/PASS) 
+- Professional investment verdict (BUY/NEGOTIATE/PASS)
 - Market-relative analysis using local median cap rates
 - Walk-away price calculation using 3 methodologies
 - Experience-level adjustments for novice/intermediate/expert investors

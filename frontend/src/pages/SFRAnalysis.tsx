@@ -394,7 +394,12 @@ const SFRAnalysis: React.FC = () => {
             hasKeyMetrics: !!dealAnalysis.keyMetrics,
             hasInvestmentDecision: !!dealAnalysis.investmentDecision,
             hasPortfolioContext: !!dealAnalysis.investmentDecision?.portfolioContext,
-            portfolioContext: dealAnalysis.investmentDecision?.portfolioContext
+            portfolioContext: dealAnalysis.investmentDecision?.portfolioContext,
+            // TAX INTELLIGENCE LOAD DEBUGGING
+            hasTaxAnalysis: !!dealAnalysis.investmentDecision?.taxAnalysis,
+            taxAnalysisKeys: dealAnalysis.investmentDecision?.taxAnalysis ? Object.keys(dealAnalysis.investmentDecision.taxAnalysis) : [],
+            optimalHoldPeriod: dealAnalysis.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+            taxSavings: dealAnalysis.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal
           };
           console.log('Analysis structure check:', structureCheck);
           
@@ -406,6 +411,15 @@ const SFRAnalysis: React.FC = () => {
           
           if (isAnalysisComplete) {
             setAnalysis(dealAnalysis);
+
+            // TAX INTELLIGENCE STATE VERIFICATION
+            console.log('🔍 TAX LOAD VERIFY - Analysis set in state:', {
+              dealId: id,
+              hasTaxAnalysis: !!dealAnalysis.investmentDecision?.taxAnalysis,
+              optimalHoldPeriod: dealAnalysis.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+              taxSavings: dealAnalysis.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal,
+              willShowTaxTab: !!dealAnalysis.investmentDecision?.taxAnalysis
+            });
             setActiveSection('results'); // Switch to results section
           } else {
             console.warn('🔍 Analysis data is incomplete, user will need to re-analyze');
@@ -446,12 +460,17 @@ const SFRAnalysis: React.FC = () => {
         analysis
       };
       
-      // Debug: Check if portfolio context is being saved
-      console.log('🔍 SAVE DEBUG - Portfolio context check:', {
+      // Debug: Check if portfolio context and tax analysis are being saved
+      console.log('🔍 SAVE DEBUG - Investment Decision data check:', {
         hasAnalysis: !!analysis,
         hasInvestmentDecision: !!analysis?.investmentDecision,
         hasPortfolioContext: !!analysis?.investmentDecision?.portfolioContext,
-        portfolioContext: analysis?.investmentDecision?.portfolioContext
+        portfolioContext: analysis?.investmentDecision?.portfolioContext,
+        // TAX INTELLIGENCE FRONTEND SAVE DEBUG
+        hasTaxAnalysis: !!analysis?.investmentDecision?.taxAnalysis,
+        taxAnalysisKeys: analysis?.investmentDecision?.taxAnalysis ? Object.keys(analysis.investmentDecision.taxAnalysis) : [],
+        optimalHoldPeriod: analysis?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+        taxSavings: analysis?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal
       });
       
       let response;
@@ -479,6 +498,14 @@ const SFRAnalysis: React.FC = () => {
       
       if ((response.status === 201 || response.status === 200) && response.data) {
         console.log('Deal saved successfully:', response.data);
+
+        // TAX INTELLIGENCE POST-SAVE VERIFICATION
+        console.log('🔍 TAX SAVE VERIFY - Check saved deal contains tax analysis:', {
+          hasTaxAnalysis: !!response.data.analysis?.investmentDecision?.taxAnalysis,
+          optimalHoldPeriod: response.data.analysis?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+          taxSavings: response.data.analysis?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal,
+          savedDealId: response.data._id
+        });
         
         // If this deal came from Pipeline, link the analysis back to the Pipeline deal
         if (pipelineDealId && response.data._id) {

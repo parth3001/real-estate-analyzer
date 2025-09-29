@@ -23,6 +23,7 @@ import {
   Home,
   TrendingUp,
   Psychology as GoalsIcon,
+  AccountBalance as TaxIcon,
   ArrowBack,
   ArrowForward,
   Check
@@ -49,6 +50,8 @@ import FinancialsStep from './FinancialsStep';
 import RentalStep from './RentalStep';
 import AssumptionsStep from './AssumptionsStep';
 import GoalsStrategyStep from './GoalsStrategyStep';
+// DEPRECATED: Tax profile collection being replaced with educational content
+// import TaxProfileStep from './TaxProfileStep';
 
 interface PropertyWizardProps {
   onComplete: (data: SFRPropertyData) => Promise<Analysis | null>;
@@ -67,8 +70,11 @@ interface PropertyWizardProps {
 //   apiTimeout: 10000
 // };
 
+// Feature flag for tax step (disabled - tax optimization being replaced with educational content)
+const SHOW_TAX_STEP = false;
+
 // Step definitions
-const steps = [
+const baseSteps = [
   {
     label: 'Property Address',
     description: 'Enter property address and basic details',
@@ -96,6 +102,13 @@ const steps = [
   }
 ];
 
+// Only add tax step if feature flag is enabled (deprecated)
+const steps = SHOW_TAX_STEP ? [...baseSteps, {
+  label: 'Tax Intelligence Profile',
+  description: 'Tax optimization and after-tax analysis',
+  icon: TaxIcon
+}] : baseSteps;
+
 const PropertyWizard: React.FC<PropertyWizardProps> = ({
   onComplete,
   initialData,
@@ -108,7 +121,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   // Wizard state management
   const [state, setState] = useState<WizardState>({
     currentStep: WizardStep.ADDRESS,
-    completed: [false, false, false, false, false],
+    completed: [false, false, false, false, false, false],
     data: {
       // Use centralized defaults for consistency across all entry methods
       ...SFR_PROPERTY_DEFAULTS,
@@ -137,8 +150,8 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState<WizardProgress>({
     completedSteps: 0,
-    totalSteps: 5,
-    estimatedTimeRemaining: 12,
+    totalSteps: 6,
+    estimatedTimeRemaining: 15,
     dataQualityScore: 60
   });
 
@@ -177,10 +190,11 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
 
   // Navigation handlers
   const handleNext = useCallback(() => {
-    if (state.currentStep < WizardStep.GOALS) {
+    const lastStep = SHOW_TAX_STEP ? WizardStep.TAX : WizardStep.GOALS;
+    if (state.currentStep < lastStep) {
       const newCompleted = [...state.completed];
       newCompleted[state.currentStep] = true;
-      
+
       setState(prev => ({
         ...prev,
         currentStep: (prev.currentStep + 1) as WizardStep,
@@ -219,7 +233,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     try {
       // Mark final step as completed
       const finalCompleted = [...state.completed];
-      finalCompleted[WizardStep.GOALS] = true;
+      finalCompleted[WizardStep.TAX] = true;
       
       setState(prev => ({
         ...prev,
@@ -305,13 +319,40 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
           if (!state.data.enhancedGoals?.portfolioStrategy) {
             errors.portfolioStrategy = 'Portfolio strategy is required';
           }
-          
+
           // Optional but helpful warnings
           if (!state.data.enhancedGoals?.experienceLevel) {
             warnings.experienceLevel = 'Experience level helps personalize recommendations';
           }
           if (!state.data.enhancedGoals?.riskTolerance) {
             warnings.riskTolerance = 'Risk tolerance helps optimize investment advice';
+          }
+          break;
+
+        case WizardStep.TAX:
+          // DEPRECATED: Tax profile collection disabled
+          if (SHOW_TAX_STEP && state.data.taxProfile) {
+            // Legacy validation code (not used when SHOW_TAX_STEP is false)
+            /*
+            if (!state.data.taxProfile.filingStatus) {
+              errors.filingStatus = 'Filing status is required';
+            }
+            if (!state.data.taxProfile.state) {
+              errors.state = 'State is required for tax calculations';
+            }
+            if (!state.data.taxProfile.capitalGainsHoldingStrategy) {
+              errors.capitalGainsHoldingStrategy = 'Capital gains strategy is required';
+            }
+
+            // Warnings for tax optimization
+            if (state.data.taxProfile.state &&
+                ['CA', 'NY', 'NJ', 'HI', 'OR', 'MN'].includes(state.data.taxProfile.state)) {
+              warnings.highTaxState = 'High tax state - consider tax optimization strategies';
+            }
+            if (state.data.taxProfile.capitalGainsHoldingStrategy === 'short_term') {
+              warnings.shortTermStrategy = 'Short-term capital gains are taxed at higher ordinary income rates';
+            }
+            */
           }
           break;
       }
@@ -362,6 +403,42 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
             }));
           }}
         />;
+
+      case WizardStep.TAX:
+        // DEPRECATED: Tax step disabled
+        if (SHOW_TAX_STEP) {
+          // Legacy tax step (not rendered when SHOW_TAX_STEP is false)
+          return null;
+          /*
+          return <TaxProfileStep
+            data={state.data}
+            onUpdate={(updates) => {
+              setState(prev => ({
+                ...prev,
+                data: {
+                  ...prev.data,
+                  ...updates
+                }
+              }));
+            }}
+            validation={validation}
+            onValidationChange={setValidation}
+            state={state}
+          />;
+          */
+        }
+        // When tax step is disabled, show completion message
+        return (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Analysis Ready
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Click "Complete Analysis" to see your investment analysis.
+              Tax education content will be available in the results.
+            </Typography>
+          </Box>
+        );
 
       default:
         return <Typography>Unknown step</Typography>;
@@ -474,7 +551,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
         </Button>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {state.currentStep === WizardStep.GOALS ? (
+          {state.currentStep === (SHOW_TAX_STEP ? WizardStep.TAX : WizardStep.GOALS) ? (
             <Button
               variant="contained"
               onClick={handleComplete}

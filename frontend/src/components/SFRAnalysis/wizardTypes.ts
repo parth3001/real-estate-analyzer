@@ -11,7 +11,8 @@ export const WizardStep = {
   FINANCIALS: 1,
   RENTAL: 2,
   ASSUMPTIONS: 3,
-  GOALS: 4
+  GOALS: 4,
+  TAX: 5
 } as const;
 
 export type WizardStep = typeof WizardStep[keyof typeof WizardStep];
@@ -133,6 +134,20 @@ export interface ExitStrategyData {
   capitalDeployment?: 'reinvest_re' | 'diversify' | 'lifestyle' | 'business' | 'debt';
 }
 
+// Tax profile interface for Tax Intelligence
+export interface TaxProfile {
+  filingStatus: 'single' | 'married_joint' | 'married_separate' | 'head_household';
+  state: string;
+  federalTaxBracket?: number;
+  stateTaxRate?: number;
+  capitalGainsHoldingStrategy: 'short_term' | 'long_term' | 'flexible';
+  depreciation: {
+    method: 'straight_line';
+    personalUsePercentage: number;
+  };
+  investorType: 'individual' | 'entity';
+}
+
 // Import enhanced goal context from GoalsStrategyStep
 import type { EnhancedGoalContext } from './GoalsStrategyStep';
 
@@ -147,6 +162,8 @@ export interface WizardPropertyData extends Partial<SFRPropertyData> {
   exitStrategy?: ExitStrategyData;
   // NEW: Enhanced goals with AI analysis
   enhancedGoals?: EnhancedGoalContext;
+  // NEW: Tax Intelligence Profile
+  taxProfile?: TaxProfile;
 }
 
 // Wizard state management

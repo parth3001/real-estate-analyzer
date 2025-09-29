@@ -3228,6 +3228,140 @@ enum DealStage {
 
 ---
 
+## **Epic: Tax Intelligence Layer**
+
+> **📋 UPDATED Expert Validation & Strategic Pivot**
+> **Real Estate Investment Expert Assessment**: Current approach (tax optimization for all deals) is
+> **DANGEROUS** and would harm platform credibility by optimizing taxes on bad investments.
+>
+> **NEW APPROACH**: Tax Intelligence - Educational tax context for **GOOD DEALS ONLY**
+> **Expert Rating**: 8.5/10 - "Critical pivot needed for platform credibility"
+> **Revenue Impact**: 15-20% Professional tier conversion increase (maintained)
+> **Competitive Advantage**: First platform with investment-quality-gated tax analysis
+> **Priority**: Ship Tax Intelligence v2.0 before Multi-Family features
+
+### **User Story TAX-1.1: Investment-Quality Tax Intelligence Integration**
+
+**As a** real estate investor evaluating profitable investment opportunities,
+**I want to** understand the tax implications of good deals I'm considering,
+**So that** I can make informed decisions about hold periods and tax strategies for deals worth pursuing.
+
+#### **BUSINESS CONTEXT:**
+Tax implications significantly impact returns on **profitable** real estate investments. However, tax optimization should NEVER drive investment decisions on poor-performing properties. Our Tax Intelligence provides:
+- Tax education for investment-quality deals (70+ deal score, 5%+ IRR)
+- Clear disclaimers directing users to tax professionals
+- Educational context, not tax-driven optimization
+- Protection from tax-optimizing poor investments
+
+#### **USER PERSONA:**
+Intermediate to advanced real estate investors (2+ years experience) who have identified profitable deals and want to understand tax implications. These users understand that good investments come first, tax optimization second.
+
+#### **ACCEPTANCE CRITERIA:**
+
+##### **INVESTMENT DECISION ENGINE PROTECTION:**
+- [ ] **ZERO CHANGES** to existing Investment Decision Engine logic, scoring, or verdicts
+- [ ] **ZERO IMPACT** on Deal Quality scores, BUY/NEGOTIATE/PASS verdicts, or Professional Assessment
+- [ ] Tax insights run as **completely separate parallel service** with no decision influence
+- [ ] Maintain existing Investment Decision Engine as single source of truth for investment quality
+
+##### **EDUCATIONAL TAX INTELLIGENCE SERVICE:**
+- [ ] Create standalone TaxEducationService that provides tax context (not optimization)
+- [ ] Calculate tax implications for 1, 2, and 5+ year hold periods (educational comparison)
+- [ ] Implement basic federal tax calculations: short-term vs long-term capital gains rates
+- [ ] Provide simple state tax context for major states (TX, FL, CA, NY - covers 60% of users)
+- [ ] **NO "optimal hold period" recommendations** - purely educational information
+
+##### **OPTIONAL TAX PROFILE COLLECTION:**
+- [ ] Add optional Tax Profile collection in separate section (not part of Property Wizard)
+- [ ] Collect: Federal tax bracket, State of residence (optional, basic info only)
+- [ ] **Default to "Skip Tax Context"** - make tax education opt-in, not required
+- [ ] Clear messaging: "This is educational information only - consult a tax professional"
+- [ ] **NO storage of sensitive tax data** - calculate and display only
+
+##### **EDUCATIONAL DISPLAY COMPONENTS:**
+- [ ] Add separate "Tax Education" tab/section alongside existing analysis results
+- [ ] Show simple tax rate comparisons (short-term 37% vs long-term 20% example)
+- [ ] Display **educational context only**: "If you hold 1 year vs 2+ years, here's the tax difference"
+- [ ] **NO recommendations or optimization** - pure educational information
+- [ ] Include prominent disclaimers and CPA referral suggestions
+
+##### **EDUCATIONAL TAX INSIGHTS:**
+- [ ] Explain 1031 exchange eligibility criteria (educational, not recommendation)
+- [ ] Show depreciation recapture concepts with examples
+- [ ] Provide basic state tax education (e.g., "TX has no state income tax")
+- [ ] **Focus on tax education, not tax optimization**
+
+#### **TECHNICAL REQUIREMENTS:**
+- [ ] Create **completely separate TaxEducationService** - no integration with Investment Decision Engine
+- [ ] **NO CHANGES** to existing Investment Decision Engine, Deal Quality scoring, or verdict logic
+- [ ] Build as optional parallel service that can be enabled/disabled independently
+- [ ] Add basic unit tests for tax calculations (educational accuracy, not precision trading)
+- [ ] Ensure mobile responsiveness for new tax education components
+- [ ] Performance impact: <100ms additional load time (optional component)
+
+#### **COMPLIANCE & DISCLAIMERS:**
+- [ ] **Prominent disclaimers**: "Educational purposes only - NOT investment advice"
+- [ ] **CPA referral required**: "Consult qualified tax professional for tax advice"
+- [ ] Include "Tax laws change - verify current rates" language
+- [ ] **NO sensitive tax data storage** - calculate for display only
+- [ ] Clear separation from investment recommendations
+
+#### **SUCCESS METRICS:**
+- [ ] **Investment Decision Engine remains unchanged** - no impact on existing verdict accuracy
+- [ ] Tax education accessed by 30%+ of users (opt-in feature)
+- [ ] **ZERO degradation** in existing Investment Decision Engine performance
+- [ ] User feedback: "Helpful educational context" (not "changed my investment decision")
+- [ ] Professional tier conversion maintained through added educational value
+
+#### **USER WORKFLOW:**
+1. User completes existing Property Wizard steps 1-5 (**unchanged**)
+2. Investment Decision Engine generates verdict (**unchanged**)
+3. User sees BUY/NEGOTIATE/PASS recommendation (**unchanged**)
+4. **Optional**: User clicks "Tax Education" tab for educational tax context
+5. **Optional**: User provides basic tax bracket for personalized examples
+6. User views educational tax information alongside (not integrated with) investment decision
+
+#### **EDGE CASES TO HANDLE:**
+- [ ] User skips tax education - **NO IMPACT** on investment analysis (education is optional)
+- [ ] Invalid tax inputs - show generic examples instead of personalized calculations
+- [ ] Tax education service unavailable - **NO IMPACT** on core investment analysis
+- [ ] State not in database - show federal examples only with appropriate messaging
+
+#### **INTEGRATION POINTS:**
+- **ZERO integration** with existing InvestmentDecisionEngine (completely parallel)
+- **NO CHANGES** to existing Professional Assessment scoring framework
+- **NO CHANGES** to existing InvestmentDecisionHero React component
+- **NO CHANGES** to existing MongoDB Deal model schema
+- Uses existing Material-UI v7 + TypeScript frontend patterns for new educational components only
+
+#### **FUTURE ENHANCEMENT HOOKS:**
+- [ ] Tax education service designed as standalone module for future asset types
+- [ ] State tax education expandable for all 50 states
+- [ ] Framework ready for advanced educational content (1031 exchanges, depreciation)
+- [ ] Educational content structure prepared for CPA partnership content
+
+#### **METADATA:**
+- **Story Points**: 13 (reduced from 21 - simpler educational-only approach)
+- **Priority**: P2 - Nice-to-Have Educational Feature
+- **Epic**: Tax Intelligence Layer
+- **Dependencies**: None (completely independent of existing platform)
+- **Estimated Effort**: 2 weeks (educational service + optional UI components)
+- **Status**: 📋 **PLANNED - EDUCATIONAL APPROACH**
+
+#### **DEFINITION OF DONE:**
+- [ ] All acceptance criteria completed and tested
+- [ ] **ZERO IMPACT** verified on existing Investment Decision Engine functionality
+- [ ] Unit tests for educational tax calculations (basic accuracy sufficient)
+- [ ] **NO INTEGRATION TESTS** required (parallel service)
+- [ ] Mobile responsive design verified for educational components only
+- [ ] Educational tax content reviewed by CPA for basic accuracy
+- [ ] Code review completed and approved
+- [ ] Documentation updated for optional tax education features
+- [ ] **NO privacy policy changes** required (no sensitive data storage)
+- [ ] Feature deployed to staging as optional educational component
+
+---
+
 ## **🏗️ TECHNICAL IMPLEMENTATION STRATEGY**
 
 ### **Architecture Principles**:

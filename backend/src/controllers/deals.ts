@@ -381,7 +381,13 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
       portfolioContextData: dealData.analysis?.investmentDecision?.portfolioContext,
       aiScore: dealData.analysis?.aiInsights?.investmentScore,
       dataSource: dealData._dataSource || 'legacy',
-      hasTotalInvestment: !!dealData.analysis?.keyMetrics?.totalInvestment
+      hasTotalInvestment: !!dealData.analysis?.keyMetrics?.totalInvestment,
+      // TAX INTELLIGENCE DEBUGGING
+      hasTaxAnalysis: !!(dealData.analysis as any)?.investmentDecision?.taxAnalysis,
+      taxAnalysisKeys: (dealData.analysis as any)?.investmentDecision?.taxAnalysis ? Object.keys((dealData.analysis as any).investmentDecision.taxAnalysis) : [],
+      optimalHoldPeriod: (dealData.analysis as any)?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+      taxSavings: (dealData.analysis as any)?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal,
+      holdPeriodAnalysisCount: (dealData.analysis as any)?.investmentDecision?.taxAnalysis?.holdPeriodAnalysis?.length || 0
     });
     
     res.json(dealData);
@@ -461,6 +467,26 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
     } else {
       logger.warn('No aiInsights found in analysis during save');
     }
+
+    // TAX INTELLIGENCE SAVE DEBUGGING
+    const saveTaxAnalysis = (dealData.analysis as any)?.investmentDecision?.taxAnalysis;
+    if (saveTaxAnalysis) {
+      logger.info('🔍 TAX SAVE DEBUG - Tax analysis being saved:', {
+        hasTaxAnalysis: true,
+        optimalHoldPeriod: saveTaxAnalysis.optimalHoldPeriod,
+        taxSavings: saveTaxAnalysis.totalTaxSavingsAtOptimal,
+        holdPeriodCount: saveTaxAnalysis.holdPeriodAnalysis?.length || 0,
+        userState: saveTaxAnalysis.userTaxProfile?.state,
+        taxAnalysisKeys: Object.keys(saveTaxAnalysis)
+      });
+    } else {
+      logger.warn('🔍 TAX SAVE DEBUG - No tax analysis found in deal data being saved');
+      logger.info('🔍 TAX SAVE DEBUG - Available analysis keys:', {
+        hasAnalysis: !!dealData.analysis,
+        hasInvestmentDecision: !!(dealData.analysis as any)?.investmentDecision,
+        investmentDecisionKeys: (dealData.analysis as any)?.investmentDecision ? Object.keys((dealData.analysis as any).investmentDecision) : []
+      });
+    }
     
     const newDeal = await dealService.saveDeal(dealData);
     logger.info('Deal created successfully:', {
@@ -479,6 +505,26 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
       });
     } else {
       logger.warn('No aiInsights found in saved deal');
+    }
+
+    // TAX INTELLIGENCE POST-SAVE VERIFICATION
+    const taxAnalysis = (newDeal.analysis as any)?.investmentDecision?.taxAnalysis;
+    if (taxAnalysis) {
+      logger.info('🔍 TAX SAVE VERIFY - Tax analysis successfully saved to DB:', {
+        hasTaxAnalysis: true,
+        optimalHoldPeriod: taxAnalysis.optimalHoldPeriod,
+        taxSavings: taxAnalysis.totalTaxSavingsAtOptimal,
+        holdPeriodCount: taxAnalysis.holdPeriodAnalysis?.length || 0,
+        taxAnalysisKeys: Object.keys(taxAnalysis),
+        dealId: newDeal._id
+      });
+    } else {
+      logger.error('🔍 TAX SAVE VERIFY - Tax analysis NOT found in saved deal!', {
+        dealId: newDeal._id,
+        hasAnalysis: !!newDeal.analysis,
+        hasInvestmentDecision: !!(newDeal.analysis as any)?.investmentDecision,
+        investmentDecisionKeys: (newDeal.analysis as any)?.investmentDecision ? Object.keys((newDeal.analysis as any).investmentDecision) : []
+      });
     }
     
     res.status(201).json(newDeal);
@@ -1047,11 +1093,16 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
       portfolioId: dealData.portfolioId
     });
     
-    // Debug: Check if portfolio context is in response
-    logger.info('🔍 RESPONSE DEBUG - Portfolio context check:', {
+    // Debug: Check if portfolio context and tax analysis are in response
+    logger.info('🔍 RESPONSE DEBUG - Investment Decision check:', {
       hasInvestmentDecision: !!responseData.investmentDecision,
       hasPortfolioContext: !!responseData.investmentDecision?.portfolioContext,
-      portfolioContext: responseData.investmentDecision?.portfolioContext
+      portfolioContext: responseData.investmentDecision?.portfolioContext,
+      // TAX INTELLIGENCE DEBUGGING
+      hasTaxAnalysis: !!(responseData.investmentDecision as any)?.taxAnalysis,
+      taxAnalysisKeys: (responseData.investmentDecision as any)?.taxAnalysis ? Object.keys((responseData.investmentDecision as any).taxAnalysis) : [],
+      optimalHoldPeriod: (responseData.investmentDecision as any)?.taxAnalysis?.optimalHoldPeriod,
+      taxSavings: (responseData.investmentDecision as any)?.taxAnalysis?.totalTaxSavingsAtOptimal
     });
     
     // Return analysis with portfolioId

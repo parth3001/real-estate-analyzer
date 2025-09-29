@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Container,
   Card,
   CardContent,
   Chip,
@@ -16,7 +15,8 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Container,
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -40,6 +40,11 @@ import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
 import InvestmentDecisionHero from './InvestmentDecisionHero';
 import SimplePortfolioSelector from './SimplePortfolioSelector';
+// Tax components replaced with educational versions
+import TaxEducationSummary from '../AnalysisResults/TaxEducationSummary';
+// import TaxImpactSummary from '../AnalysisResults/TaxImpactSummary'; // DEPRECATED
+// import HoldPeriodOptimizer from '../AnalysisResults/HoldPeriodOptimizer'; // DEPRECATED
+// import TaxStrategies from '../AnalysisResults/TaxStrategies'; // DEPRECATED
 import ProMetricsBar from './ProMetricsBar';
 import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
@@ -65,15 +70,15 @@ interface AnalysisResultsProps {
   }; // Portfolio context for displaying impact
 }
 
-const AnalysisResults: React.FC<AnalysisResultsProps> = ({ 
-  analysis, 
+const AnalysisResults: React.FC<AnalysisResultsProps> = ({
+  analysis,
   propertyData,
-  portfolioContext, 
+  portfolioContext,
   dealId,
   onParameterChange,
   onApplyFix,
   onLoadScenario
-}) => {
+}): React.ReactElement => {
   const { mode } = useDualMode();
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
@@ -85,11 +90,24 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   console.log('AnalysisResults - annualAnalysis (removed - using longTermAnalysis):', 'REMOVED');
   console.log('AnalysisResults - longTermAnalysis:', analysis?.longTermAnalysis);
 
+  // Tax Intelligence debugging - correct data path
+  console.log('🔍 TAX COMPONENT DEBUG - Investment Decision Tax Analysis:', {
+    hasInvestmentDecision: !!analysis?.investmentDecision,
+    hasTaxAnalysis: !!analysis?.investmentDecision?.taxAnalysis,
+    taxAnalysisKeys: analysis?.investmentDecision?.taxAnalysis ? Object.keys(analysis.investmentDecision.taxAnalysis) : [],
+    optimalHoldPeriod: analysis?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
+    taxSavings: analysis?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal,
+    willRenderTaxTab: !!analysis?.investmentDecision?.taxAnalysis || !!propertyData?.taxProfile,
+    hasTaxProfile: !!propertyData?.taxProfile,
+    hasTaxOptimization: !!analysis?.investmentDecision?.professionalAssessment?.taxOptimization
+  });
+
   // Analysis sections for horizontal navigation - filter based on mode
   const allAnalysisSections = [
     { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights' },
     { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis' },
-    { id: 'projections', label: 'Long-term Projections', icon: TrendingUpIcon, description: '10-year forecasts' },
+    { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights' },
+    { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections' },
     { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time' },
     { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns' },
     { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios' },
@@ -100,8 +118,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   ];
 
   // Filter sections based on mode
-  const analysisSections = mode === 'novice' 
-    ? allAnalysisSections.filter(section => ['overview', 'financial', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
+  const analysisSections = mode === 'novice'
+    ? allAnalysisSections.filter(section => ['overview', 'financial', 'tax', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
     : allAnalysisSections;
 
   // Hero Metrics (Top 4 most important)
@@ -686,12 +704,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               return null;
             })()}
             {analysis?.investmentDecision && (
-              <InvestmentDecisionHero 
-                investmentDecision={analysis.investmentDecision} 
+              <InvestmentDecisionHero
+                investmentDecision={analysis.investmentDecision}
                 analysis={analysis}
               />
             )}
-            
+
+
             {/* Portfolio Context removed - now shown in Investment Decision Hero tabs */}
             
             {/* Explicit Save to Portfolio Section - Only show if portfolio was selected for impact analysis */}
@@ -913,30 +932,86 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             </Grid>
           </Box>
         );
-        
+
+      case 'tax':
+        return (
+          <Box>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+              Tax Intelligence
+            </Typography>
+
+            {/* Educational Disclaimer Card */}
+            <Card sx={{
+              borderRadius: '16px',
+              border: `2px solid ${appleColors.blue[100]}`,
+              backgroundColor: appleColors.blue[50],
+              mb: 3
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{
+                  display: 'flex',
+                  gap: 2
+                }}>
+                  <Box sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    backgroundColor: appleColors.blue[100],
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mt: 0.5
+                  }}>
+                    <Typography sx={{ fontSize: '1.2rem' }}>🎓</Typography>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{
+                      fontWeight: 600,
+                      color: appleColors.blue[800],
+                      mb: 1
+                    }}>
+                      Professional Tax Education
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: appleColors.gray[700],
+                      lineHeight: 1.5,
+                      mb: 2
+                    }}>
+                      This content provides <strong>professional-grade tax education</strong> using your specific property data for context. This is not tax advice or investment recommendations.
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: appleColors.gray[700],
+                      lineHeight: 1.5,
+                      fontWeight: 500
+                    }}>
+                      📋 <strong>Always consult with a qualified CPA or tax professional</strong> before making tax-related investment decisions.
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Tax Education Content */}
+            <TaxEducationSummary
+              purchasePrice={propertyData?.purchasePrice}
+              propertyData={propertyData}
+            />
+          </Box>
+        );
+
       case 'projections':
         return (
           <Box>
             <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-              Long-term Projections
+              Long-term Analysis
             </Typography>
-            
-            {/* Year-by-Year Projections Table */}
-            <Card sx={{ borderRadius: '16px', mb: 4 }}>
+
+            {/* Financial Projections Content */}
+            <Card sx={{ borderRadius: '16px', mb: 3 }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
                   Year-by-Year Projections
                 </Typography>
-                
-                {/* Debug info */}
-                <Box sx={{ mb: 2, p: 2, backgroundColor: appleColors.gray[50], borderRadius: '8px' }}>
-                  <Typography variant="caption">
-                    Debug: Has longTermAnalysis: {analysis?.longTermAnalysis ? 'Yes' : 'No'} | 
-                    Has projections: {analysis?.longTermAnalysis?.projections ? 'Yes' : 'No'} | 
-                    Projections length: {analysis?.longTermAnalysis?.projections?.length || 0}
-                  </Typography>
-                </Box>
-                
                 {analysis?.longTermAnalysis?.projections && analysis.longTermAnalysis.projections.length > 0 ? (
                   <TableContainer>
                     <Table size="small">
@@ -1037,230 +1112,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                     </Typography>
                   </Box>
                 )}
-              </CardContent>
-            </Card>
-            
-            {projectionData.length > 0 && (
-              <Card sx={{ borderRadius: '16px', mb: 4 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
-                    Cash Flow & Property Value Growth Chart
-                  </Typography>
-                  
-                  <Box sx={{ height: 400 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={projectionData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={appleColors.gray[200]} />
-                        <XAxis 
-                          dataKey="year" 
-                          stroke={appleColors.gray[600]}
-                          fontSize={12}
-                        />
-                        <YAxis 
-                          stroke={appleColors.gray[600]}
-                          fontSize={12}
-                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                        />
-                        <Tooltip 
-                          formatter={(value: any) => [formatValue(value, 'currency'), '']}
-                          labelStyle={{ color: appleColors.gray[900] }}
-                        />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="cashFlow" 
-                          stroke={appleColors.green[500]} 
-                          strokeWidth={3}
-                          name="Annual Cash Flow"
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="propertyValue" 
-                          stroke={appleColors.blue[500]} 
-                          strokeWidth={3}
-                          name="Property Value"
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="equity" 
-                          stroke={appleColors.purple[500]} 
-                          strokeWidth={3}
-                          name="Equity"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Exit Analysis Summary - Tabular Format */}
-            <Card sx={{ borderRadius: '16px' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
-                  Exit Analysis Summary (Year {propertyData?.longTermAssumptions?.projectionYears || 10})
-                </Typography>
-                
-                <TableContainer>
-                  <Table>
-                    <TableBody>
-                      {/* Property Sale Section */}
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, borderBottom: 'none' }}>Projected Sale Price</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 700, 
-                          fontSize: '1.1rem',
-                          color: appleColors.green[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.projectedSalePrice || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Selling Costs (6%)</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.red[600],
-                          borderBottom: 'none'
-                        }}>
-                          -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.sellingCosts || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: '2px solid', borderColor: appleColors.gray[300] }}>Mortgage Payoff</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.orange[600],
-                          borderBottom: '2px solid',
-                          borderColor: appleColors.gray[300]
-                        }}>
-                          -{formatValue(analysis?.longTermAnalysis?.exitAnalysis?.mortgagePayoff || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Net Proceeds - Highlighted */}
-                      <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
-                        <TableCell sx={{ 
-                          fontWeight: 700, 
-                          fontSize: '1.1rem',
-                          borderBottom: 'none'
-                        }}>
-                          Net Proceeds from Sale
-                        </TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 700,
-                          fontSize: '1.3rem',
-                          color: appleColors.blue[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.netProceedsFromSale || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Spacer Row */}
-                      <TableRow>
-                        <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 1 }}></TableCell>
-                      </TableRow>
-                      
-                      {/* Investment Returns Breakdown Header */}
-                      <TableRow>
-                        <TableCell colSpan={2} sx={{ 
-                          fontWeight: 600, 
-                          fontSize: '1.1rem',
-                          borderBottom: '1px solid',
-                          borderColor: appleColors.gray[300],
-                          pb: 1
-                        }}>
-                          Total Investment Returns Breakdown
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Initial Investment</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.gray[700],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.returns?.totalInvestment || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Total Cash Flow</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.green[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.returns?.totalCashFlow || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Property Appreciation</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.purple[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.returns?.totalAppreciation || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Total Return - Highlighted */}
-                      <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
-                        <TableCell sx={{ 
-                          fontWeight: 700, 
-                          fontSize: '1.1rem',
-                          borderBottom: 'none'
-                        }}>
-                          <strong>Total Return</strong>
-                        </TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 700,
-                          fontSize: '1.2rem',
-                          color: appleColors.blue[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.returns?.totalReturn || 0, 'currency')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Spacer Row */}
-                      <TableRow>
-                        <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 1 }}></TableCell>
-                      </TableRow>
-                      
-                      {/* Performance Metrics */}
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Total ROI ({propertyData?.longTermAssumptions?.projectionYears || 10} years)</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 700,
-                          fontSize: '1.1rem',
-                          color: appleColors.green[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue(analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0, 'percent')}
-                        </TableCell>
-                      </TableRow>
-                      
-                      <TableRow>
-                        <TableCell sx={{ borderBottom: 'none' }}>Equity Multiple</TableCell>
-                        <TableCell align="right" sx={{ 
-                          fontWeight: 700,
-                          fontSize: '1.1rem',
-                          color: appleColors.purple[600],
-                          borderBottom: 'none'
-                        }}>
-                          {formatValue((analysis?.longTermAnalysis?.returns?.totalReturn || 0) / (analysis?.longTermAnalysis?.returns?.totalInvestment || 1), 'multiplier')}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
               </CardContent>
             </Card>
           </Box>

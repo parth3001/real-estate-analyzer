@@ -1,0 +1,1127 @@
+{
+  "conservative": {
+    "persona": "Conservative",
+    "verdict": "PASS",
+    "dealQualityScore": 31,
+    "financialMetrics": {
+      "monthlyCashFlow": -560.2516666666667,
+      "capRate": 3.97,
+      "cashOnCashReturn": -12.47,
+      "irr": 0
+    },
+    "investmentDecision": {
+      "verdict": "PASS",
+      "confidence": 59,
+      "score": 31,
+      "professionalAssessment": {
+        "dealQuality": 31,
+        "executionDifficulty": 55,
+        "dataReliability": 50,
+        "cashFlowScore": 0,
+        "irrScore": 0,
+        "marketStrengthScore": 85,
+        "debtStructureScore": 53,
+        "exitStrategyScore": 83,
+        "capRateScore": 100,
+        "propertyRiskScore": 80,
+        "primaryInsight": "Below professional investment standards",
+        "strategicRecommendations": [
+          "Negotiate rent increases or reduce purchase price",
+          "Target longer hold period or value-add opportunities",
+          "Improve loan terms or increase down payment"
+        ],
+        "riskMitigation": [
+          "Low cash flow increases execution risk",
+          "Debt service coverage requires monitoring",
+          "Verify all financial assumptions with documentation"
+        ],
+        "opportunityMaximization": [
+          "Strong market position supports portfolio expansion",
+          "Multiple exit strategies provide flexibility"
+        ],
+        "debtAnalysis": {
+          "dscr": 0.59,
+          "interestRate": 0.07,
+          "marketSpread": 200.00000000000003,
+          "leverageRatio": 0.8,
+          "loanTerm": 30,
+          "isBalloonLoan": false,
+          "riskFactors": [
+            "DSCR below professional standard"
+          ],
+          "strengthFactors": [
+            "Long-term fixed debt eliminates refinancing risk"
+          ]
+        }
+      },
+      "primaryReason": "Below professional standards (31/100) - seek better opportunities",
+      "secondaryReasons": [
+        "Below professional investment standards"
+      ],
+      "keyRisks": [
+        "Low cash flow increases execution risk",
+        "Debt service coverage requires monitoring",
+        "Verify all financial assumptions with documentation"
+      ],
+      "actionPlan": [
+        {
+          "action": "Continue property search with refined criteria",
+          "priority": "immediate",
+          "impact": "Avoid poor investment and find better opportunities",
+          "effort": "medium",
+          "expectedOutcome": "Higher quality investment alternatives",
+          "timeframe": "2-8 weeks"
+        },
+        {
+          "action": "Establish larger cash reserves (6-12 months expenses)",
+          "priority": "short-term",
+          "impact": "Reduces financial stress during vacancy or repairs",
+          "effort": "low",
+          "expectedOutcome": "Enhanced financial stability",
+          "timeframe": "1-3 months"
+        }
+      ],
+      "capitalStrategy": {
+        "currentApproach": {
+          "description": "20% down payment approach",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "good"
+        },
+        "recommendedApproach": {
+          "description": "0% down payment for optimal leverage",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "fair"
+        },
+        "opportunityCost": {
+          "annualCost": null,
+          "description": "Suboptimal capital deployment costs $NaN/year in lost returns",
+          "alternativeUse": "Deploy excess capital across NaN properties"
+        },
+        "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
+      },
+      "alternativeOptions": [
+        {
+          "type": "better_deal",
+          "title": "Search for Higher Cap Rate Properties",
+          "description": "Target properties with 6%+ cap rates in similar markets",
+          "expectedReturn": "8-12% total return",
+          "riskLevel": "similar",
+          "timeframe": "2-6 months search time"
+        }
+      ],
+      "marketContext": {
+        "marketStage": "mid",
+        "pricingContext": "undervalued",
+        "competitiveIntensity": "low",
+        "recommendedStrategy": "Standard buy-and-hold approach"
+      },
+      "timeline": {
+        "immediateActions": [
+          "Continue property search with refined criteria"
+        ],
+        "shortTermActions": [
+          "Establish larger cash reserves (6-12 months expenses)"
+        ],
+        "longTermStrategy": []
+      },
+      "goalContext": {},
+      "portfolioContext": {
+        "fitScore": 60,
+        "fitLevel": "fair",
+        "fitAnalysis": "This property serves as a fair starter investment with negative cash flow of $560.25/month. As a newer investor, this very_high-risk property may challenge your current expertise level.",
+        "diversificationImpact": "Establishes your real estate investment foundation in Unknown, Unknown.",
+        "riskContribution": "increases",
+        "recommendations": [
+          "Consider setting aside 6 months of expenses before purchase",
+          "Focus on building property management skills"
+        ]
+      },
+      "confidenceDescription": "May work for specific strategies but has significant risks",
+      "goalBasedReasoning": "With your 6-year appreciation strategy, this property's 4.0% cap rate is too low for the risk. Better opportunities exist in growing markets.",
+      "aiEnhancedContent": {
+        "reasoning": {
+          "explanation": "The algorithm recommended a 'PASS' due to the low Deal Quality Score of 31/100, primarily driven by negative cash flow and an IRR of 0.0%, indicating insufficient returns.",
+          "keyStrengths": [
+            "Market Strength scored 85/100, indicating a strong market environment.",
+            "Debt Structure scored 53/100, suggesting moderate viability in financing."
+          ],
+          "keyConcerns": [
+            "Monthly Cash Flow is $-560, indicating a negative cash flow situation.",
+            "The 10-Year IRR of 0.0% suggests no expected return on investment over the long term."
+          ],
+          "verdict": "Overall, the investment does not meet the necessary financial criteria for a viable opportunity."
+        },
+        "actionPlan": {
+          "immediateActions": [
+            "Assess the current property status and determine why the monthly cash flow is negative at $-560.",
+            "Prioritize reducing the total investment required of $53,900 to improve deal viability."
+          ],
+          "negotiationFocus": [
+            "Focus on negotiating terms that could potentially reduce the total investment of $53,900 given the current negative cash flow and low DSCR of 0.59.",
+            "Consider offering a lower upfront payment or seeking seller financing to mitigate the immediate cash outflow."
+          ],
+          "preparationItems": [
+            "Prepare a detailed financial analysis to justify the total investment of $53,900 and explore potential cost-saving measures.",
+            "Establish a reserve fund to cover the negative monthly cash flow of $-560 for at least 6 months, totaling $3,360."
+          ],
+          "timeframe": "Immediate action required within the next 30 days to reassess the property and negotiate terms."
+        },
+        "capitalStrategy": {
+          "currentAssessment": "The current structure shows a monthly cash flow of $-560 and a DSCR of 0.59, indicating a significant risk of payment stress. The monthly P&I payment of $1,370 is unsustainable given the negative cash flow.",
+          "optimizedApproach": "To optimize this structure, consider reducing the monthly payment obligation. This could involve negotiating a lower interest rate or restructuring the loan terms to extend the repayment period, thus lowering the monthly payment. Additionally, exploring options for temporary interest-only payments could provide immediate relief.",
+          "alternativeOptions": [
+            "Alternative 1: Seek a loan restructuring that allows for a temporary interest-only period, which would reduce the monthly payment to only cover interest, thus alleviating cash flow stress.",
+            "Alternative 2: Explore financing options that allow for a deferred payment plan or a grace period, which would delay the need for full payments while the cash flow situation improves."
+          ],
+          "recommendation": "The best capital strategy for this PASS deal is to renegotiate the loan terms to lower the monthly payment and possibly implement a temporary interest-only payment structure to better align with the current negative cash flow situation."
+        },
+        "timeline": {
+          "optimalHoldPeriod": "10+ years",
+          "rationale": "Given the 0.0% IRR and consistent negative cash flow of $-560 monthly, a longer holding period may be necessary to potentially recover costs or wait for market conditions to improve. The lack of appreciation over the past 10 years suggests that immediate exit may not yield better results.",
+          "exitIndicators": [
+            "Sustained positive cash flow for multiple consecutive months",
+            "Significant improvement in appreciation metrics beyond 0.0%"
+          ],
+          "marketTiming": "Monitor for any signs of market recovery or changes in cash flow dynamics, aiming for a strategic exit if conditions improve significantly over the long term."
+        },
+        "alternatives": {
+          "betterPropertyType": "Multi-family units or duplexes that can increase cash flow and reduce vacancy risk compared to a single-family residence.",
+          "marketAlternative": "Consider investing in properties in emerging neighborhoods with higher cap rates, potentially above 5%, to improve cash flow and investment returns.",
+          "timingStrategy": "Explore opportunities to acquire properties at a lower interest rate in the near future or consider refinancing options once rates decrease, aiming for a hold period of 5-10 years to ride out market fluctuations.",
+          "riskAdjustment": "Implement a strategy to reduce monthly expenses, such as property management costs, or explore rental assistance programs to stabilize cash flow and mitigate the effects of negative cash flow."
+        }
+      },
+      "sensitivityAnalysis": {
+        "currentScore": 31,
+        "currentVerdict": "PASS",
+        "buyThreshold": 65,
+        "priceScenarios": [
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -25000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "25k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -50000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "50k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -75000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "75k reduction: Score 31/100 (PASS)"
+          }
+        ],
+        "rentScenarios": [
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 100,
+            "change": 100,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$100/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 200,
+            "change": 200,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$200/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 350,
+            "change": 350,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$350/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 500,
+            "change": 500,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$500/month rent: Score 31/100 (PASS)"
+          }
+        ],
+        "interestRateScenarios": [
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6,
+            "change": -1,
+            "changePercent": -14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6.5,
+            "change": -0.5,
+            "changePercent": -7.142857142857142,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 5.5,
+            "change": -1.5,
+            "changePercent": -21.428571428571427,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "5.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 8,
+            "change": 1,
+            "changePercent": 14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "8% interest rate: Score 31/100 (PASS)"
+          }
+        ],
+        "pathToBuy": {
+          "easiest": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "mostRealistic": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "alternatives": []
+        },
+        "negotiationGuidance": {
+          "focus": "price",
+          "rationale": "Significant improvements needed - focus on price reduction",
+          "specificTargets": [
+            "Target 68000 reduction",
+            "Consider walking away if seller inflexible",
+            "Look for motivated seller situations"
+          ]
+        }
+      }
+    },
+    "userContext": {
+      "riskTolerance": "moderate",
+      "investmentGoals": "balanced",
+      "timeHorizon": "Long-term",
+      "strategy": "Conservative",
+      "availableCash": 50000,
+      "experienceLevel": "novice"
+    }
+  },
+  "moderate": {
+    "persona": "Moderate",
+    "verdict": "PASS",
+    "dealQualityScore": 31,
+    "financialMetrics": {
+      "monthlyCashFlow": -560.2516666666667,
+      "capRate": 3.97,
+      "cashOnCashReturn": -12.47,
+      "irr": 0
+    },
+    "investmentDecision": {
+      "verdict": "PASS",
+      "confidence": 59,
+      "score": 31,
+      "professionalAssessment": {
+        "dealQuality": 31,
+        "executionDifficulty": 55,
+        "dataReliability": 50,
+        "cashFlowScore": 0,
+        "irrScore": 0,
+        "marketStrengthScore": 85,
+        "debtStructureScore": 53,
+        "exitStrategyScore": 83,
+        "capRateScore": 100,
+        "propertyRiskScore": 80,
+        "primaryInsight": "Below professional investment standards",
+        "strategicRecommendations": [
+          "Negotiate rent increases or reduce purchase price",
+          "Target longer hold period or value-add opportunities",
+          "Improve loan terms or increase down payment"
+        ],
+        "riskMitigation": [
+          "Low cash flow increases execution risk",
+          "Debt service coverage requires monitoring",
+          "Verify all financial assumptions with documentation"
+        ],
+        "opportunityMaximization": [
+          "Strong market position supports portfolio expansion",
+          "Multiple exit strategies provide flexibility"
+        ],
+        "debtAnalysis": {
+          "dscr": 0.59,
+          "interestRate": 0.07,
+          "marketSpread": 200.00000000000003,
+          "leverageRatio": 0.8,
+          "loanTerm": 30,
+          "isBalloonLoan": false,
+          "riskFactors": [
+            "DSCR below professional standard"
+          ],
+          "strengthFactors": [
+            "Long-term fixed debt eliminates refinancing risk"
+          ]
+        }
+      },
+      "primaryReason": "Below professional standards (31/100) - seek better opportunities",
+      "secondaryReasons": [
+        "Below professional investment standards"
+      ],
+      "keyRisks": [
+        "Low cash flow increases execution risk",
+        "Debt service coverage requires monitoring",
+        "Verify all financial assumptions with documentation"
+      ],
+      "actionPlan": [
+        {
+          "action": "Continue property search with refined criteria",
+          "priority": "immediate",
+          "impact": "Avoid poor investment and find better opportunities",
+          "effort": "medium",
+          "expectedOutcome": "Higher quality investment alternatives",
+          "timeframe": "2-8 weeks"
+        },
+        {
+          "action": "Establish larger cash reserves (6-12 months expenses)",
+          "priority": "short-term",
+          "impact": "Reduces financial stress during vacancy or repairs",
+          "effort": "low",
+          "expectedOutcome": "Enhanced financial stability",
+          "timeframe": "1-3 months"
+        }
+      ],
+      "capitalStrategy": {
+        "currentApproach": {
+          "description": "20% down payment approach",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "good"
+        },
+        "recommendedApproach": {
+          "description": "0% down payment for optimal leverage",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "fair"
+        },
+        "opportunityCost": {
+          "annualCost": null,
+          "description": "Suboptimal capital deployment costs $NaN/year in lost returns",
+          "alternativeUse": "Deploy excess capital across NaN properties"
+        },
+        "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
+      },
+      "alternativeOptions": [
+        {
+          "type": "better_deal",
+          "title": "Search for Higher Cap Rate Properties",
+          "description": "Target properties with 6%+ cap rates in similar markets",
+          "expectedReturn": "8-12% total return",
+          "riskLevel": "similar",
+          "timeframe": "2-6 months search time"
+        }
+      ],
+      "marketContext": {
+        "marketStage": "mid",
+        "pricingContext": "undervalued",
+        "competitiveIntensity": "low",
+        "recommendedStrategy": "Standard buy-and-hold approach"
+      },
+      "timeline": {
+        "immediateActions": [
+          "Continue property search with refined criteria"
+        ],
+        "shortTermActions": [
+          "Establish larger cash reserves (6-12 months expenses)"
+        ],
+        "longTermStrategy": []
+      },
+      "goalContext": {},
+      "portfolioContext": {
+        "fitScore": 60,
+        "fitLevel": "fair",
+        "fitAnalysis": "This property serves as a fair starter investment with negative cash flow of $560.25/month. As a newer investor, this very_high-risk property may challenge your current expertise level.",
+        "diversificationImpact": "Establishes your real estate investment foundation in Unknown, Unknown.",
+        "riskContribution": "increases",
+        "recommendations": [
+          "Consider setting aside 6 months of expenses before purchase",
+          "Focus on building property management skills"
+        ]
+      },
+      "confidenceDescription": "May work for specific strategies but has significant risks",
+      "goalBasedReasoning": "With your 5-7 years appreciation strategy, this property's 4.0% cap rate is too low for the risk. Better opportunities exist in growing markets.",
+      "aiEnhancedContent": {
+        "reasoning": {
+          "explanation": "The algorithm recommended a 'PASS' due to the significantly negative cash flow and an IRR of 0.0%, which heavily impacted the overall deal quality score.",
+          "keyStrengths": [
+            "Market Strength scored 85/100, indicating a robust market environment.",
+            "Debt Structure scored 53/100, suggesting a moderate level of risk in financing."
+          ],
+          "keyConcerns": [
+            "Monthly Cash Flow is -$560, indicating a loss rather than a profit.",
+            "The 10-Year IRR is 0.0%, showing no expected return on investment over the long term."
+          ],
+          "verdict": "Given the negative cash flow and lack of return, the investment is not advisable."
+        },
+        "actionPlan": {
+          "immediateActions": [
+            "Assess the current market conditions to understand why the property has a PASS recommendation score of 31/100.",
+            "Prioritize addressing the negative monthly cash flow of $-560 to improve financial viability."
+          ],
+          "negotiationFocus": [
+            "Target negotiations to reduce the total investment required of $53,900 based on the property's current cash flow situation.",
+            "Consider proposing a seller financing option or a rent-to-own structure to mitigate upfront costs given the cash flow issues."
+          ],
+          "preparationItems": [
+            "Prepare a detailed budget plan for the total investment of $53,900 to ensure all costs are accounted for and manageable.",
+            "Establish a reserve fund to cover the negative cash flow of $-560 for at least 6 months to maintain financial stability."
+          ],
+          "timeframe": "Given the PASS recommendation, a realistic timeframe for further evaluation and potential acquisition actions is 3-6 months."
+        },
+        "capitalStrategy": {
+          "currentAssessment": "The current structure shows a negative monthly cash flow of $-560 and a low debt service coverage ratio (DSCR) of 0.59. This indicates significant payment stress risk, as the monthly loan payment of $1,370 exceeds the cash flow generated by the investment.",
+          "optimizedApproach": "Given the actual $0 purchase price, the focus should be on reducing or eliminating the monthly payment burden. This can be achieved by negotiating a lower interest rate or restructuring the financing to include interest-only payments for an initial period, thereby reducing immediate cash flow pressure.",
+          "alternativeOptions": [
+            "Alternative 1: Explore a partnership or joint venture that allows for shared financing responsibilities, potentially reducing the monthly payment requirement.",
+            "Alternative 2: Investigate the possibility of seller financing with a lower interest rate or deferred payment structure to minimize immediate cash flow impact."
+          ],
+          "recommendation": "The best capital strategy for this PASS deal involves exploring options to reduce the monthly payment obligations, either through negotiation for better financing terms or restructuring the deal to share financial responsibilities. This will help mitigate the risks associated with the current negative cash flow and low DSCR."
+        },
+        "timeline": {
+          "optimalHoldPeriod": "10+ years",
+          "rationale": "Given the 0.0% IRR and negative monthly cash flow of $-560, holding for a longer period may allow for potential market recovery or changes in circumstances that could improve cash flow. Since there is no appreciation over the past 10 years, a longer holding period might be necessary to wait for any future positive shifts.",
+          "exitIndicators": [
+            "Sustained positive cash flow for at least 6 consecutive months",
+            "Any indication of appreciation in property value or market conditions"
+          ],
+          "marketTiming": "Monitor for signs of market recovery or improvement in cash flow, with a focus on long-term trends rather than short-term fluctuations."
+        },
+        "alternatives": {
+          "betterPropertyType": "Multi-family units or small apartment buildings, which may provide better cash flow and occupancy rates compared to SFR.",
+          "marketAlternative": "Consider investing in properties in emerging neighborhoods or areas with higher demand, aiming for a higher cap rate than 3.97%.",
+          "timingStrategy": "Evaluate market conditions for potential appreciation and consider holding for a longer term to improve IRR, especially if interest rates stabilize or decrease.",
+          "riskAdjustment": "Implement strategies to reduce monthly cash flow losses, such as increasing rental rates, reducing operating expenses, or exploring short-term rental options."
+        }
+      },
+      "sensitivityAnalysis": {
+        "currentScore": 31,
+        "currentVerdict": "PASS",
+        "buyThreshold": 65,
+        "priceScenarios": [
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -25000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "25k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -50000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "50k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -75000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "75k reduction: Score 31/100 (PASS)"
+          }
+        ],
+        "rentScenarios": [
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 100,
+            "change": 100,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$100/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 200,
+            "change": 200,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$200/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 350,
+            "change": 350,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$350/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 500,
+            "change": 500,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$500/month rent: Score 31/100 (PASS)"
+          }
+        ],
+        "interestRateScenarios": [
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6,
+            "change": -1,
+            "changePercent": -14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6.5,
+            "change": -0.5,
+            "changePercent": -7.142857142857142,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 5.5,
+            "change": -1.5,
+            "changePercent": -21.428571428571427,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "5.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 8,
+            "change": 1,
+            "changePercent": 14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "8% interest rate: Score 31/100 (PASS)"
+          }
+        ],
+        "pathToBuy": {
+          "easiest": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "mostRealistic": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "alternatives": []
+        },
+        "negotiationGuidance": {
+          "focus": "price",
+          "rationale": "Significant improvements needed - focus on price reduction",
+          "specificTargets": [
+            "Target 68000 reduction",
+            "Consider walking away if seller inflexible",
+            "Look for motivated seller situations"
+          ]
+        }
+      }
+    },
+    "userContext": {
+      "riskTolerance": "aggressive",
+      "investmentGoals": "appreciation",
+      "timeHorizon": "Medium-term",
+      "strategy": "Balanced",
+      "availableCash": 50000,
+      "experienceLevel": "novice"
+    }
+  },
+  "aggressive": {
+    "persona": "Aggressive",
+    "verdict": "PASS",
+    "dealQualityScore": 31,
+    "financialMetrics": {
+      "monthlyCashFlow": -560.2516666666667,
+      "capRate": 3.97,
+      "cashOnCashReturn": -12.47,
+      "irr": 0
+    },
+    "investmentDecision": {
+      "verdict": "PASS",
+      "confidence": 59,
+      "score": 31,
+      "professionalAssessment": {
+        "dealQuality": 31,
+        "executionDifficulty": 55,
+        "dataReliability": 50,
+        "cashFlowScore": 0,
+        "irrScore": 0,
+        "marketStrengthScore": 85,
+        "debtStructureScore": 53,
+        "exitStrategyScore": 83,
+        "capRateScore": 100,
+        "propertyRiskScore": 80,
+        "primaryInsight": "Below professional investment standards",
+        "strategicRecommendations": [
+          "Negotiate rent increases or reduce purchase price",
+          "Target longer hold period or value-add opportunities",
+          "Improve loan terms or increase down payment"
+        ],
+        "riskMitigation": [
+          "Low cash flow increases execution risk",
+          "Debt service coverage requires monitoring",
+          "Verify all financial assumptions with documentation"
+        ],
+        "opportunityMaximization": [
+          "Strong market position supports portfolio expansion",
+          "Multiple exit strategies provide flexibility"
+        ],
+        "debtAnalysis": {
+          "dscr": 0.59,
+          "interestRate": 0.07,
+          "marketSpread": 200.00000000000003,
+          "leverageRatio": 0.8,
+          "loanTerm": 30,
+          "isBalloonLoan": false,
+          "riskFactors": [
+            "DSCR below professional standard"
+          ],
+          "strengthFactors": [
+            "Long-term fixed debt eliminates refinancing risk"
+          ]
+        }
+      },
+      "primaryReason": "Below professional standards (31/100) - seek better opportunities",
+      "secondaryReasons": [
+        "Below professional investment standards"
+      ],
+      "keyRisks": [
+        "Low cash flow increases execution risk",
+        "Debt service coverage requires monitoring",
+        "Verify all financial assumptions with documentation"
+      ],
+      "actionPlan": [
+        {
+          "action": "Continue property search with refined criteria",
+          "priority": "immediate",
+          "impact": "Avoid poor investment and find better opportunities",
+          "effort": "medium",
+          "expectedOutcome": "Higher quality investment alternatives",
+          "timeframe": "2-8 weeks"
+        },
+        {
+          "action": "Establish larger cash reserves (6-12 months expenses)",
+          "priority": "short-term",
+          "impact": "Reduces financial stress during vacancy or repairs",
+          "effort": "low",
+          "expectedOutcome": "Enhanced financial stability",
+          "timeframe": "1-3 months"
+        }
+      ],
+      "capitalStrategy": {
+        "currentApproach": {
+          "description": "20% down payment approach",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "good"
+        },
+        "recommendedApproach": {
+          "description": "0% down payment for optimal leverage",
+          "cashRequired": null,
+          "expectedReturn": 0,
+          "efficiency": "fair"
+        },
+        "opportunityCost": {
+          "annualCost": null,
+          "description": "Suboptimal capital deployment costs $NaN/year in lost returns",
+          "alternativeUse": "Deploy excess capital across NaN properties"
+        },
+        "portfolioStrategy": "Conservative approach: Focus on single property ownership with minimal leverage risk"
+      },
+      "alternativeOptions": [
+        {
+          "type": "better_deal",
+          "title": "Search for Higher Cap Rate Properties",
+          "description": "Target properties with 6%+ cap rates in similar markets",
+          "expectedReturn": "8-12% total return",
+          "riskLevel": "similar",
+          "timeframe": "2-6 months search time"
+        }
+      ],
+      "marketContext": {
+        "marketStage": "mid",
+        "pricingContext": "undervalued",
+        "competitiveIntensity": "low",
+        "recommendedStrategy": "Standard buy-and-hold approach"
+      },
+      "timeline": {
+        "immediateActions": [
+          "Continue property search with refined criteria"
+        ],
+        "shortTermActions": [
+          "Establish larger cash reserves (6-12 months expenses)"
+        ],
+        "longTermStrategy": []
+      },
+      "goalContext": {},
+      "portfolioContext": {
+        "fitScore": 60,
+        "fitLevel": "fair",
+        "fitAnalysis": "This property serves as a fair starter investment with negative cash flow of $560.25/month. As a newer investor, this very_high-risk property may challenge your current expertise level.",
+        "diversificationImpact": "Establishes your real estate investment foundation in Unknown, Unknown.",
+        "riskContribution": "increases",
+        "recommendations": [
+          "Consider setting aside 6 months of expenses before purchase",
+          "Focus on building property management skills"
+        ]
+      },
+      "confidenceDescription": "May work for specific strategies but has significant risks",
+      "goalBasedReasoning": "With your 6-year appreciation strategy, this property's 4.0% cap rate is too low for the risk. Better opportunities exist in growing markets.",
+      "aiEnhancedContent": {
+        "reasoning": {
+          "explanation": "The algorithm recommended 'PASS' primarily due to the negative monthly cash flow of $-560 and a 10-Year IRR of 0.0%, which significantly impacted the overall deal quality score.",
+          "keyStrengths": [
+            "Market Strength scored 85/100, indicating a favorable environment for real estate investment.",
+            "Debt Structure scored 53/100, suggesting some level of acceptability in financing."
+          ],
+          "keyConcerns": [
+            "Monthly Cash Flow of $-560 indicates that the property is currently not generating positive cash flow.",
+            "A 10-Year IRR of 0.0% suggests no expected return on investment over the long term."
+          ],
+          "verdict": "Given the negative cash flow and lack of expected returns, the investment is not advisable."
+        },
+        "actionPlan": {
+          "immediateActions": [
+            "Reassess the property investment due to a negative monthly cash flow of $-560 and a low score of 31/100, indicating poor deal quality.",
+            "Prioritize exploring alternative investment opportunities that may yield positive cash flow."
+          ],
+          "negotiationFocus": [
+            "Target a significant reduction in the total investment required of $53,900 to improve the overall cash flow situation.",
+            "Consider negotiating for seller financing or other creative financing options to mitigate upfront costs."
+          ],
+          "preparationItems": [
+            "Prepare a detailed analysis of potential alternative properties that require lower total investments or have better cash flow prospects.",
+            "Establish a reserve fund to cover the negative cash flow of $-560 until a more favorable investment opportunity is secured."
+          ],
+          "timeframe": "Immediate reassessment and exploration of alternatives should begin within the next 30 days."
+        },
+        "capitalStrategy": {
+          "currentAssessment": "The current structure shows a negative monthly cash flow of $-560 and a low debt service coverage ratio (DSCR) of 0.59, indicating significant payment stress risk. The monthly principal and interest payment of $1,370 is not sustainable given the negative cash flow.",
+          "optimizedApproach": "To optimize the capital allocation, consider restructuring the financing to reduce the monthly payment. Since the purchase price is $0 and the down payment is also $0, explore options for a loan with lower interest rates or extended terms to decrease the monthly payment burden.",
+          "alternativeOptions": [
+            "Alternative 1: Seek a loan with a lower interest rate, potentially reducing the monthly payment to a more manageable level. For example, at a 5% interest rate, the monthly payment would be approximately $1,000.",
+            "Alternative 2: Explore options for a deferred payment plan where the principal amount is not due until the cash flow improves, potentially alleviating immediate cash flow issues."
+          ],
+          "recommendation": "The best capital strategy for this PASS deal is to restructure the financing to either secure a lower interest rate or defer payments until the cash flow situation improves. This approach minimizes risk associated with negative cash flow and enhances the likelihood of stabilizing the investment."
+        },
+        "timeline": {
+          "optimalHoldPeriod": "10+ years",
+          "rationale": "Given the 0.0% IRR and consistent negative cash flow of $-560 per month, a longer holding period may allow for potential recovery or stabilization of the investment. Holding for 10+ years could provide opportunities for future market improvements, even if current metrics are stagnant.",
+          "exitIndicators": [
+            "Sustained positive cash flow for at least 6-12 months",
+            "Any signs of appreciation in the asset value, moving away from the current 0.0% trend"
+          ],
+          "marketTiming": "Monitor the investment annually for any shifts in cash flow and appreciation trends; consider exiting if performance does not improve after the 10-year mark."
+        },
+        "alternatives": {
+          "betterPropertyType": "Multi-family units or duplexes that can generate higher cash flow and reduce vacancy risks compared to a single-family residence.",
+          "marketAlternative": "Consider investing in properties in emerging neighborhoods where cap rates are higher than 3.97%, providing better potential returns with the same financing rate.",
+          "timingStrategy": "Explore the opportunity for a strategic hold until market conditions improve, potentially at least 1-2 years, to allow for appreciation and improved cash flow.",
+          "riskAdjustment": "Implement a cash reserve strategy to cover the negative cash flow of $-560 monthly, while seeking to refinance or improve property management to reduce expenses and increase rental income."
+        }
+      },
+      "sensitivityAnalysis": {
+        "currentScore": 31,
+        "currentVerdict": "PASS",
+        "buyThreshold": 65,
+        "priceScenarios": [
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -25000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "25k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -50000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "50k reduction: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "price",
+            "newValue": null,
+            "change": -75000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "75k reduction: Score 31/100 (PASS)"
+          }
+        ],
+        "rentScenarios": [
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 100,
+            "change": 100,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$100/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 200,
+            "change": 200,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$200/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 350,
+            "change": 350,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$350/month rent: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "rent",
+            "currentValue": 0,
+            "newValue": 500,
+            "change": 500,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "+$500/month rent: Score 31/100 (PASS)"
+          }
+        ],
+        "interestRateScenarios": [
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6,
+            "change": -1,
+            "changePercent": -14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 6.5,
+            "change": -0.5,
+            "changePercent": -7.142857142857142,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "6.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 5.5,
+            "change": -1.5,
+            "changePercent": -21.428571428571427,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "5.5% interest rate: Score 31/100 (PASS)"
+          },
+          {
+            "parameter": "interestRate",
+            "currentValue": 7,
+            "newValue": 8,
+            "change": 1,
+            "changePercent": 14.285714285714285,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "8% interest rate: Score 31/100 (PASS)"
+          }
+        ],
+        "pathToBuy": {
+          "easiest": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "mostRealistic": {
+            "parameter": "price",
+            "newValue": null,
+            "change": -10000,
+            "changePercent": null,
+            "newDealQuality": 31,
+            "newVerdict": "PASS",
+            "scoreImprovement": 31,
+            "description": "10k reduction: Score 31/100 (PASS)"
+          },
+          "alternatives": []
+        },
+        "negotiationGuidance": {
+          "focus": "price",
+          "rationale": "Significant improvements needed - focus on price reduction",
+          "specificTargets": [
+            "Target 68000 reduction",
+            "Consider walking away if seller inflexible",
+            "Look for motivated seller situations"
+          ]
+        }
+      }
+    },
+    "userContext": {
+      "riskTolerance": "conservative",
+      "investmentGoals": "balanced",
+      "timeHorizon": "Medium-term",
+      "strategy": "Aggressive",
+      "availableCash": 50000,
+      "experienceLevel": "novice"
+    }
+  }
+}

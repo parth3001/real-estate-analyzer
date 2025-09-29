@@ -1,5 +1,6 @@
 import { PropertyType } from '../types/propertyTypes';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
+import { CalculationAuditTrail } from './CalculationAuditTrail';
 
 export class FinancialCalculations {
   /**
@@ -78,28 +79,65 @@ export class FinancialCalculations {
 
   /**
    * Calculate Internal Rate of Return (IRR)
+   * Enhanced with audit trail support for debugging and transparency
    */
-  static calculateIRR(cashFlows: number[]): number {
+  static calculateIRR(cashFlows: number[], audit?: CalculationAuditTrail): number {
     const maxIterations = 1000;
     const tolerance = 0.000001;
 
     // Check if we have a valid IRR scenario (at least one sign change)
     let signChanges = 0;
     for (let i = 1; i < cashFlows.length; i++) {
-      if ((cashFlows[i] >= 0 && cashFlows[i-1] < 0) || 
+      if ((cashFlows[i] >= 0 && cashFlows[i-1] < 0) ||
           (cashFlows[i] < 0 && cashFlows[i-1] >= 0)) {
         signChanges++;
       }
     }
-    
+
+    // Log to audit trail if available
+    if (audit) {
+      audit.logStep(
+        'irr_initialization',
+        'Initialize IRR calculation with cash flows validation',
+        {
+          cashFlowsLength: cashFlows.length,
+          firstCashFlow: cashFlows[0],
+          lastCashFlow: cashFlows[cashFlows.length - 1],
+          totalPositiveCF: cashFlows.filter(cf => cf > 0).length,
+          totalNegativeCF: cashFlows.filter(cf => cf < 0).length,
+          signChanges,
+          maxIterations,
+          tolerance
+        },
+        `Newton-Raphson method convergence with sign change validation`,
+        {
+          signChanges,
+          validForIRR: signChanges > 0 ? 1 : 0
+        },
+        signChanges === 0 ? ['No sign changes detected - IRR calculation may not be meaningful'] : undefined
+      );
+    }
+
     console.log('==== IRR CALCULATION PROCESS ====');
     console.log('Cash Flows:', cashFlows);
     console.log('Sign Changes:', signChanges);
-    
+
     // If there are no sign changes, IRR cannot be calculated
     if (signChanges === 0) {
       console.log('No sign changes in cash flows, IRR calculation not possible');
       console.log('==============================');
+
+      if (audit) {
+        audit.logStep(
+          'irr_no_solution',
+          'IRR calculation terminated - no valid solution exists',
+          { signChanges: 0, cashFlows },
+          'No sign changes in cash flow sequence',
+          0,
+          ['IRR requires at least one positive and one negative cash flow']
+        );
+      }
+
       return 0;
     }
 
@@ -113,14 +151,40 @@ export class FinancialCalculations {
     let upperRate = 10;
     let guess = (lowerRate + upperRate) / 2;
     let currentNPV = 0;
+    let iterationsUsed = 0;
 
     for (let i = 0; i < maxIterations; i++) {
+      iterationsUsed = i;
       currentNPV = npv(guess);
 
       if (Math.abs(currentNPV) < tolerance) {
-        console.log(`Converged after ${i} iterations. IRR: ${guess * 100}%`);
+        console.log(`Converged after ${i} iterations. IRR: ${(guess * 100).toFixed(2)}%`);
         console.log('==============================');
-        return guess * 100; // Convert to percentage
+
+        if (audit) {
+          audit.logStep(
+            'irr_convergence',
+            'IRR calculation converged to solution',
+            {
+              iterations: i,
+              finalGuess: guess,
+              finalNPV: currentNPV,
+              tolerance,
+              lowerBound: lowerRate,
+              upperBound: upperRate
+            },
+            `Newton-Raphson convergence: |NPV| < ${tolerance}`,
+            {
+              irr: guess,
+              irrPercentage: guess * 100,
+              converged: 1,
+              iterationsUsed: i
+            }
+          );
+        }
+
+        // ARCHITECTURAL FIX: Return as decimal (0.09623 = 9.623%) for consistent unit handling
+        return guess; // Return as decimal, frontend will handle percentage formatting
       }
 
       if (currentNPV > 0) {
@@ -130,16 +194,64 @@ export class FinancialCalculations {
       }
 
       guess = (lowerRate + upperRate) / 2;
-      
+
       // Log every 100 iterations
       if (i % 100 === 0) {
         console.log(`Iteration ${i}: Rate=${guess}, NPV=${currentNPV}`);
+
+        if (audit && i > 0) {
+          audit.logStep(
+            `irr_iteration_${i}`,
+            `IRR calculation progress checkpoint at iteration ${i}`,
+            {
+              iteration: i,
+              currentGuess: guess,
+              currentNPV,
+              lowerBound: lowerRate,
+              upperBound: upperRate,
+              convergenceError: Math.abs(currentNPV)
+            },
+            `Bisection method: NPV(${guess.toFixed(6)}) = ${currentNPV.toFixed(6)}`,
+            {
+              iterationCheckpoint: i,
+              convergenceProgress: Math.abs(currentNPV) / tolerance
+            }
+          );
+        }
       }
     }
 
-    console.log(`Failed to converge after ${maxIterations} iterations. Best guess: ${guess * 100}%`);
+    console.log(`Failed to converge after ${maxIterations} iterations. Best guess: ${(guess * 100).toFixed(2)}%`);
     console.log('==============================');
-    return guess * 100; // Convert to percentage
+
+    if (audit) {
+      audit.logStep(
+        'irr_max_iterations',
+        'IRR calculation reached maximum iterations without convergence',
+        {
+          maxIterations,
+          finalGuess: guess,
+          finalNPV: currentNPV,
+          convergenceError: Math.abs(currentNPV),
+          tolerance
+        },
+        `Failed convergence: |NPV| = ${Math.abs(currentNPV).toFixed(8)} > ${tolerance}`,
+        {
+          irr: guess,
+          irrPercentage: guess * 100,
+          converged: 0,
+          iterationsUsed: maxIterations
+        },
+        [
+          'IRR did not converge - result may be inaccurate',
+          `Final convergence error: ${Math.abs(currentNPV).toFixed(8)}`,
+          'Consider reviewing cash flow inputs or increasing max iterations'
+        ]
+      );
+    }
+
+    // ARCHITECTURAL FIX: Return as decimal for consistent unit handling
+    return guess; // Return as decimal, frontend will handle percentage formatting
   }
 
   /**

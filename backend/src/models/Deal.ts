@@ -262,6 +262,58 @@ export interface Analysis {
       totalReturn?: number;
     };
   };
+  // Tax Intelligence Analysis
+  taxAnalysis?: {
+    userTaxProfile?: {
+      filingStatus: 'single' | 'married_joint' | 'married_separate' | 'head_household';
+      state: string; // Two-letter state code
+      federalTaxBracket?: number;
+      stateTaxRate?: number;
+      capitalGainsHoldingStrategy: 'short_term' | 'long_term' | 'flexible';
+      depreciation: {
+        method: 'straight_line';
+        personalUsePercentage: number;
+      };
+      investorType: 'individual' | 'entity';
+    };
+    holdPeriodAnalysis?: Array<{
+      holdPeriod: number;
+      salePrice: number;
+      originalBasis: number;
+      adjustedBasis: number;
+      capitalGain: number;
+      depreciationRecapture: number;
+      federalCapitalGainsRate: number;
+      stateCapitalGainsRate: number;
+      federalTax: number;
+      stateTax: number;
+      totalTaxLiability: number;
+      netProceedsFromSale: number;
+      totalCashFlow: number;
+      totalReturn: number;
+      afterTaxIRR: number;
+      taxSavingsVsPreviousYear: number;
+      breakEvenHoldPeriod: boolean;
+    }>;
+    optimalHoldPeriod?: number;
+    totalTaxSavingsAtOptimal?: number;
+    taxOptimizationRecommendations?: string[];
+    stateArbitrageOpportunities?: string[];
+    exchange1031Eligibility?: {
+      eligible: boolean;
+      deferralAmount: number;
+      timelineRequirements: string[];
+      minimumExchangeValue: number;
+    };
+    expertInsights?: {
+      holdPeriodReasoning: string;
+      riskConsiderations: string[];
+      opportunityCost: string;
+      marketTimingFactors: string;
+    };
+    calculatedAt?: Date;
+    taxYear?: number; // Tax year this analysis is based on (e.g., 2025)
+  };
   // Investment Decision from Investment Decision Engine
   investmentDecision?: {
     verdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION'; // V3.0 adds CAUTION
@@ -759,7 +811,60 @@ const AnalysisSchema = new Schema({
       totalReturn: Number
     }
   },
-  
+
+  // Tax Intelligence Analysis Schema
+  taxAnalysis: {
+    userTaxProfile: {
+      filingStatus: { type: String, enum: ['single', 'married_joint', 'married_separate', 'head_household'] },
+      state: String, // Two-letter state code
+      federalTaxBracket: Number,
+      stateTaxRate: Number,
+      capitalGainsHoldingStrategy: { type: String, enum: ['short_term', 'long_term', 'flexible'] },
+      depreciation: {
+        method: { type: String, enum: ['straight_line'], default: 'straight_line' },
+        personalUsePercentage: { type: Number, default: 0 }
+      },
+      investorType: { type: String, enum: ['individual', 'entity'], default: 'individual' }
+    },
+    holdPeriodAnalysis: [{
+      holdPeriod: Number,
+      salePrice: Number,
+      originalBasis: Number,
+      adjustedBasis: Number,
+      capitalGain: Number,
+      depreciationRecapture: Number,
+      federalCapitalGainsRate: Number,
+      stateCapitalGainsRate: Number,
+      federalTax: Number,
+      stateTax: Number,
+      totalTaxLiability: Number,
+      netProceedsFromSale: Number,
+      totalCashFlow: Number,
+      totalReturn: Number,
+      afterTaxIRR: Number,
+      taxSavingsVsPreviousYear: Number,
+      breakEvenHoldPeriod: Boolean
+    }],
+    optimalHoldPeriod: Number,
+    totalTaxSavingsAtOptimal: Number,
+    taxOptimizationRecommendations: [String],
+    stateArbitrageOpportunities: [String],
+    exchange1031Eligibility: {
+      eligible: Boolean,
+      deferralAmount: Number,
+      timelineRequirements: [String],
+      minimumExchangeValue: Number
+    },
+    expertInsights: {
+      holdPeriodReasoning: String,
+      riskConsiderations: [String],
+      opportunityCost: String,
+      marketTimingFactors: String
+    },
+    calculatedAt: { type: Date, default: Date.now },
+    taxYear: { type: Number, default: 2025 }
+  },
+
   // NEW: Market Intelligence Data
   marketData: {
     property: {

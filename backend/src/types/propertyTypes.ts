@@ -29,6 +29,7 @@ export interface BasePropertyData {
   propertyAddress: PropertyAddress;
   closingCosts?: number;
   capitalInvestments?: number;
+  landValueRatio?: number; // Percentage of purchase price allocated to land (default 0.20)
   tenantTurnoverFees?: {
     prepFees: number;
     realtorCommission: number;
@@ -55,6 +56,7 @@ export interface SFRData extends BasePropertyData {
   condition?: string;
   afterRepairValue?: number;
   renovationCosts?: number;
+  repairCosts?: number;
   longTermAssumptions?: {
     projectionYears: number;
     annualRentIncrease: number;
@@ -66,6 +68,19 @@ export interface SFRData extends BasePropertyData {
   };
   // Exit strategy data for investment decision enhancement
   exitStrategy?: ExitStrategyData;
+  // Tax Intelligence Profile for tax-optimized analysis
+  taxProfile?: {
+    filingStatus: 'single' | 'married_joint' | 'married_separate' | 'head_household';
+    state: string;
+    federalTaxBracket?: number;
+    stateTaxRate?: number;
+    capitalGainsHoldingStrategy: 'short_term' | 'long_term' | 'flexible';
+    depreciation: {
+      method: 'straight_line';
+      personalUsePercentage: number;
+    };
+    investorType: 'individual' | 'entity';
+  };
 }
 
 export interface SFRMetrics extends CommonMetrics {

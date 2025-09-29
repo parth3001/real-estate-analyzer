@@ -17,6 +17,7 @@ import { PropertyClassificationService, PropertyClass, PropertyClassification, P
 import { StrategyAlignmentService, StrategyAlignment, UserStrategy } from './strategyAlignmentService';
 import { aiEnhancedMessagingService, AIEnhancedContent } from '../aiEnhancedMessaging';
 import { sensitivityAnalysisService, SensitivityAnalysis } from './sensitivityAnalysisService';
+import { taxCalculationService, TaxAnalysisResult, TaxProfile, PropertyTaxData } from '../taxCalculationService';
 
 export type InvestmentVerdict = 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION'; // V3.0 adds CAUTION (50-64 score range)
 
@@ -25,22 +26,22 @@ export interface ProfessionalAssessment {
   dealQuality: number; // 0-100 weighted score of deal fundamentals
   executionDifficulty: number; // 0-100 complexity of executing this investment
   dataReliability: number; // 0-100 confidence in input data quality
-  
+
   // Factor breakdown (sum = 100%)
   cashFlowScore: number; // 35% weight - monthly income stability
-  irrScore: number; // 25% weight - total return potential
+  irrScore: number; // 25% weight - total return potential (pre-tax)
   marketStrengthScore: number; // 15% weight - market tier and trends
   debtStructureScore: number; // 10% weight - financing quality
   exitStrategyScore: number; // 10% weight - liquidity and exit options
   capRateScore: number; // 3% weight - current yield vs market
   propertyRiskScore: number; // 2% weight - property quality and age
-  
+
   // Professional recommendations
   primaryInsight: string;
   strategicRecommendations: string[];
   riskMitigation: string[];
   opportunityMaximization: string[];
-  
+
   // Enhanced debt structure analysis
   debtAnalysis?: {
     dscr: number;
@@ -52,6 +53,19 @@ export interface ProfessionalAssessment {
     balloonYears?: number;
     riskFactors: string[];
     strengthFactors: string[];
+  };
+
+  // Tax Intelligence Enhancement (NEW)
+  taxOptimization?: {
+    afterTaxIRR: number; // After-tax IRR vs pre-tax IRR
+    afterTaxDealQuality: number; // Tax-adjusted deal quality score
+    optimalHoldPeriod: number; // Years to hold for optimal after-tax returns
+    taxEfficiencyScore: number; // 0-100 how tax-efficient this investment is
+    stateTaxAdvantage: boolean; // True if investor is in favorable tax state
+    holdPeriodTaxSavings: number; // Dollar amount saved by holding optimal period vs year 1
+    exchange1031Eligible: boolean; // True if eligible for 1031 exchange
+    primaryTaxInsight: string; // Key tax optimization insight
+    taxOptimizationRecommendations: string[]; // Tax-specific action items
   };
 }
 
@@ -74,6 +88,7 @@ export interface InvestmentDecision {
   goalBasedReasoning?: string; // Explanation tied to user's specific goals
   aiEnhancedContent?: AIEnhancedContent; // AI-generated tab content (80/20 approach)
   sensitivityAnalysis?: SensitivityAnalysis; // Deal sensitivity analysis for negotiation intelligence
+  taxAnalysis?: TaxAnalysisResult; // Tax Intelligence analysis with hold period optimization
 }
 
 export interface GoalContext {
@@ -163,10 +178,10 @@ export class InvestmentDecisionEngine {
   };
   
   private readonly IRR_THRESHOLDS = {
-    poor: 4,      // 4% - Below investment grade (2025 market reality)
-    fair: 6,      // 6% - Acceptable minimum return
-    good: 8,      // 8% - Good professional standard
-    excellent: 12  // 12% - Excellent professional standard (percentage format)
+    poor: 0.04,      // 4% - Below investment grade (2025 market reality)
+    fair: 0.06,      // 6% - Acceptable minimum return
+    good: 0.08,      // 8% - Good professional standard
+    excellent: 0.12  // 12% - Excellent professional standard (decimal format for consistency)
   };
 
   /**
@@ -1586,11 +1601,70 @@ export class InvestmentDecisionEngine {
         }
       });
 
-      // V3.0 VERDICT MAPPING: Use Professional Assessment Deal Quality as single source of truth
+      // DEPRECATED: Tax Intelligence Integration - Being replaced with educational approach
+      // Feature flag to control tax optimization (disabled by default)
+      const TAX_OPTIMIZATION_ENABLED = process.env.TAX_OPTIMIZATION_ENABLED === 'true';
+
+      let taxAnalysis: TaxAnalysisResult | undefined;
+      let taxEnhancedAssessment = professionalAssessment;
+
+      // Only run tax analysis if explicitly enabled via feature flag
+      if (TAX_OPTIMIZATION_ENABLED && propertyData.taxProfile) {
+        logger.warn('Tax optimization is deprecated and will be removed. Using educational tax content instead.');
+
+        // Legacy tax optimization code - DO NOT USE FOR NEW FEATURES
+        // This code will be removed in the next release
+        /*
+        try {
+          // Prepare tax calculation data
+          const landRatio = propertyData.landValueRatio || 0.20;
+          const propertyTaxData: PropertyTaxData = {
+            purchasePrice: propertyData.purchasePrice,
+            closingCosts: propertyData.closingCosts || 0,
+            repairCosts: propertyData.repairCosts || 0,
+            capitalInvestments: propertyData.capitalInvestments || 0,
+            landValueRatio: landRatio,
+            yearlyProjections: analysis.longTermAnalysis?.projections?.map((projection: any) => ({
+              year: projection.year,
+              propertyValue: projection.propertyValue,
+              cashFlow: projection.cashFlow,
+              principalPaydown: projection.principalPaidThisYear || 0,
+              depreciation: (propertyData.purchasePrice * (1 - landRatio)) / 27.5
+            })) || []
+          };
+
+          taxAnalysis = await taxCalculationService.calculateTaxAnalysis(
+            propertyTaxData,
+            propertyData.taxProfile
+          );
+
+          const taxOptimization = this.calculateTaxOptimization(taxAnalysis, professionalAssessment, propertyData);
+
+          taxEnhancedAssessment = {
+            ...professionalAssessment,
+            taxOptimization
+          };
+
+          logger.info('Tax Intelligence: Legacy analysis complete (deprecated)', {
+            optimalHoldPeriod: taxAnalysis.optimalHoldPeriod,
+            afterTaxIRR: taxAnalysis.holdPeriodAnalysis.find(h => h.holdPeriod === taxAnalysis.optimalHoldPeriod)?.afterTaxIRR,
+            taxSavings: taxAnalysis.totalTaxSavingsAtOptimal,
+            exchange1031Eligible: taxAnalysis.exchange1031Eligibility?.eligible
+          });
+
+        } catch (error) {
+          logger.warn('Tax Intelligence: Legacy analysis failed', error);
+        }
+        */
+      } else if (propertyData.taxProfile) {
+        logger.info('Tax profile detected but optimization disabled. Educational tax content will be available separately.');
+      }
+
+      // V3.0 VERDICT MAPPING: Use Tax-Enhanced Professional Assessment Deal Quality as single source of truth
       let v3Verdict: InvestmentVerdict;
       let v3PrimaryReason: string;
-      
-      const dealQuality = professionalAssessment.dealQuality;
+
+      const dealQuality = taxEnhancedAssessment.dealQuality;
       if (dealQuality >= 80) {
         v3Verdict = 'BUY';
         v3PrimaryReason = `Institutional-quality deal with ${dealQuality}/100 professional score`;
@@ -1607,7 +1681,7 @@ export class InvestmentDecisionEngine {
       
       // V3.0 CONFIDENCE CALCULATION: Independent from Deal Quality, based on analysis certainty
       let v3Confidence = this.calculateAnalysisConfidence(
-        professionalAssessment,
+        taxEnhancedAssessment,
         marketIntelligence,
         fundamentals,
         propertyData,
@@ -1634,8 +1708,8 @@ export class InvestmentDecisionEngine {
         verdict: v3Verdict,
         confidence: v3Confidence,
         primaryReason: v3PrimaryReason,
-        secondaryReasons: [professionalAssessment.primaryInsight],
-        keyRisks: professionalAssessment.riskMitigation.slice(0, 3), // Top 3 risks
+        secondaryReasons: [taxEnhancedAssessment.primaryInsight],
+        keyRisks: taxEnhancedAssessment.riskMitigation.slice(0, 3), // Top 3 risks
         score: dealQuality // Add Deal Quality as the score for legacy compatibility
       };
 
@@ -1704,7 +1778,7 @@ export class InvestmentDecisionEngine {
         verdict: verdict.verdict,
         confidence: verdict.confidence, // LEGACY - maintained for backwards compatibility
         score: verdict.score, // LEGACY - property quality score
-        professionalAssessment, // V3.0 Professional Calibration - replaces penalty stacking
+        professionalAssessment: taxEnhancedAssessment, // V3.0 Professional Calibration (tax optimization removed)
         primaryReason: verdict.primaryReason,
         secondaryReasons: verdict.secondaryReasons,
         keyRisks: verdict.keyRisks,
@@ -1717,6 +1791,7 @@ export class InvestmentDecisionEngine {
         portfolioContext, // Portfolio Fit analysis
         confidenceDescription: this.getConfidenceDescription(verdict.verdict, verdict.confidence),
         goalBasedReasoning
+        // taxAnalysis REMOVED - Tax optimization deprecated in favor of educational content
       };
 
       const processingTime = Date.now() - startTime;
@@ -3370,5 +3445,103 @@ export class InvestmentDecisionEngine {
     } else {
       return 'maintains';
     }
+  }
+
+  /**
+   * @deprecated This method is deprecated and will be removed in the next release.
+   * Tax optimization is being replaced with educational tax content that doesn't affect investment decisions.
+   * Calculate tax optimization metrics for professional assessment
+   */
+  private calculateTaxOptimization(
+    taxAnalysis: TaxAnalysisResult,
+    professionalAssessment: ProfessionalAssessment,
+    propertyData: SFRData
+  ): ProfessionalAssessment['taxOptimization'] {
+    const optimalAnalysis = taxAnalysis.holdPeriodAnalysis.find(
+      h => h.holdPeriod === taxAnalysis.optimalHoldPeriod
+    );
+    const year1Analysis = taxAnalysis.holdPeriodAnalysis.find(h => h.holdPeriod === 1);
+
+    if (!optimalAnalysis || !year1Analysis) {
+      throw new Error('Tax analysis missing required hold period data');
+    }
+
+    // Calculate tax efficiency score (0-100)
+    const maxTaxRate = 0.5; // Assume 50% as worst-case total tax rate
+    const effectiveTaxRate = optimalAnalysis.totalTaxLiability / Math.max(optimalAnalysis.capitalGain, 1);
+    const taxEfficiencyScore = Math.max(0, Math.min(100, (1 - effectiveTaxRate / maxTaxRate) * 100));
+
+    // State tax advantage check
+    const stateTaxRate = taxAnalysis.userTaxProfile.stateTaxRate || 0;
+    const stateTaxAdvantage = stateTaxRate === 0; // No state tax = advantage
+
+    // Calculate after-tax deal quality adjustment
+    const pretaxIRR = professionalAssessment.irrScore / 25 * 0.12; // Estimate pre-tax IRR from score
+    const afterTaxIRRAdjustmentFactor = optimalAnalysis.afterTaxIRR / Math.max(pretaxIRR, 0.01);
+    const afterTaxDealQuality = Math.round(professionalAssessment.dealQuality * afterTaxIRRAdjustmentFactor);
+
+    // Primary tax insight - focus on after-tax returns, not tax minimization
+    let primaryTaxInsight: string;
+    if (taxAnalysis.optimalHoldPeriod === 1) {
+      primaryTaxInsight = `Hold period optimization not beneficial - exit when market conditions are favorable`;
+    } else if (taxAnalysis.totalTaxSavingsAtOptimal >= 0) {
+      // Traditional positive tax savings case
+      primaryTaxInsight = `Hold ${taxAnalysis.optimalHoldPeriod} years to save $${taxAnalysis.totalTaxSavingsAtOptimal.toLocaleString()} in taxes (${(optimalAnalysis.afterTaxIRR * 100).toFixed(1)}% after-tax IRR)`;
+    } else {
+      // Negative tax savings - focus on superior after-tax returns
+      const afterTaxAdvantage = ((optimalAnalysis.afterTaxIRR - year1Analysis.afterTaxIRR) * 100).toFixed(1);
+      primaryTaxInsight = `Best strategy: Hold ${taxAnalysis.optimalHoldPeriod} years for ${(optimalAnalysis.afterTaxIRR * 100).toFixed(1)}% annual returns vs only ${(year1Analysis.afterTaxIRR * 100).toFixed(1)}% if you sell in Year 1`;
+    }
+
+    // Tax optimization recommendations with smart hints
+    const recommendations: string[] = [];
+
+    // Smart Hint 1: Hold period benefit - adaptive messaging for positive/negative tax scenarios
+    if (taxAnalysis.totalTaxSavingsAtOptimal > 10000) {
+      recommendations.push(`💡 Holding for ${taxAnalysis.optimalHoldPeriod} years could save $${taxAnalysis.totalTaxSavingsAtOptimal.toLocaleString()} in taxes`);
+    } else if (taxAnalysis.totalTaxSavingsAtOptimal < -10000) {
+      const afterTaxAdvantage = ((optimalAnalysis.afterTaxIRR - year1Analysis.afterTaxIRR) * 100).toFixed(1);
+      recommendations.push(`💡 Despite ${Math.abs(taxAnalysis.totalTaxSavingsAtOptimal).toLocaleString()} higher taxes, holding ${taxAnalysis.optimalHoldPeriod} years maximizes after-tax returns (+${afterTaxAdvantage} percentage points)`);
+    }
+
+    // Smart Hint 2: Year-end timing for capital gains (if close to 1 year)
+    if (taxAnalysis.optimalHoldPeriod === 2 && taxAnalysis.totalTaxSavingsAtOptimal > 5000) {
+      recommendations.push(`💡 Consider timing sale after 1-year mark to qualify for long-term capital gains rates`);
+    }
+
+    // Smart Hint 3: High bracket tax strategy value
+    const federalTaxBracket = taxAnalysis.userTaxProfile.federalTaxBracket || 24; // Default 24%
+    const federalMarginalRate = federalTaxBracket / 100;
+    if (federalMarginalRate >= 0.32) {
+      recommendations.push(`⚠️ Your high tax bracket (${federalTaxBracket}%) makes tax-deferred strategies particularly valuable`);
+    }
+
+    // Smart Hint 4: NIIT awareness
+    if (taxAnalysis.highIncomeWarning?.applies) {
+      recommendations.push(`💰 High earners: Consider timing and structuring to minimize 3.8% Net Investment Income Tax`);
+    }
+
+    // Legacy recommendations
+    if (taxAnalysis.exchange1031Eligibility?.eligible) {
+      recommendations.push(`Eligible for 1031 exchange - defer $${taxAnalysis.exchange1031Eligibility.deferralAmount.toLocaleString()} in taxes`);
+    }
+
+    if (taxAnalysis.stateArbitrageOpportunities.length > 0) {
+      recommendations.push(taxAnalysis.stateArbitrageOpportunities[0]); // First opportunity
+    }
+
+    recommendations.push(...taxAnalysis.taxOptimizationRecommendations.slice(0, 2)); // Top 2 additional recommendations
+
+    return {
+      afterTaxIRR: optimalAnalysis.afterTaxIRR,
+      afterTaxDealQuality: Math.min(100, Math.max(0, afterTaxDealQuality)),
+      optimalHoldPeriod: taxAnalysis.optimalHoldPeriod,
+      taxEfficiencyScore,
+      stateTaxAdvantage,
+      holdPeriodTaxSavings: taxAnalysis.totalTaxSavingsAtOptimal,
+      exchange1031Eligible: taxAnalysis.exchange1031Eligibility?.eligible || false,
+      primaryTaxInsight,
+      taxOptimizationRecommendations: recommendations
+    };
   }
 }

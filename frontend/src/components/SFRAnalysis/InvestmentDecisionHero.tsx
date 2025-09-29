@@ -107,6 +107,19 @@ interface ProfessionalAssessment {
     riskFactors: string[];
     strengthFactors: string[];
   };
+
+  // Tax Intelligence Enhancement
+  taxOptimization?: {
+    afterTaxIRR: number;
+    afterTaxDealQuality: number;
+    optimalHoldPeriod: number;
+    taxEfficiencyScore: number;
+    stateTaxAdvantage: boolean;
+    holdPeriodTaxSavings: number;
+    exchange1031Eligible: boolean;
+    primaryTaxInsight: string;
+    taxOptimizationRecommendations: string[];
+  };
 }
 
 // AI-Enhanced Content Interface (80/20 approach)
@@ -546,6 +559,40 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                       
                       <Typography variant="caption" sx={{ color: appleColors.gray[700], fontSize: '11px', fontStyle: 'italic', mt: 1, display: 'block' }}>
                         {investmentDecision.professionalAssessment.primaryInsight}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Minimal Tax Summary */}
+                  {investmentDecision.professionalAssessment?.taxOptimization && (
+                    <Box sx={{
+                      p: 2,
+                      mt: 2,
+                      backgroundColor: appleColors.blue[50],
+                      borderRadius: '8px',
+                      borderLeft: `4px solid ${appleColors.blue[500]}`
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: appleColors.blue[700] }}>
+                          Tax Intelligence
+                        </Typography>
+                        <Chip
+                          label={`${investmentDecision.professionalAssessment.taxOptimization.optimalHoldPeriod}yr optimal`}
+                          size="small"
+                          sx={{
+                            backgroundColor: appleColors.blue[100],
+                            color: appleColors.blue[800],
+                            fontWeight: 600,
+                            fontSize: '10px'
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="caption" sx={{
+                        color: appleColors.gray[700],
+                        fontSize: '10px',
+                        display: 'block'
+                      }}>
+                        {investmentDecision.professionalAssessment.taxOptimization.primaryTaxInsight}
                       </Typography>
                     </Box>
                   )}
