@@ -35,7 +35,6 @@ import {
   Build as FixIcon,
   Assessment as ScenarioIcon
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
 import InvestmentDecisionHero from './InvestmentDecisionHero';
@@ -677,13 +676,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     </Card>
   );
 
-  // Financial projections chart data
-  const projectionData = analysis?.longTermAnalysis?.projections?.map((year: any) => ({
-    year: year.year,
-    cashFlow: year.cashFlow || 0,
-    propertyValue: year.propertyValue || 0,
-    equity: year.equity || 0
-  })) || [];
+  // Financial projections chart data - commented out as charts are not currently used
+  // const projectionData = analysis?.longTermAnalysis?.projections?.map((year: any) => ({
+  //   year: year.year,
+  //   cashFlow: year.cashFlow || 0,
+  //   propertyValue: year.propertyValue || 0,
+  //   equity: year.equity || 0
+  // })) || [];
 
   // Render section content
   const renderSectionContent = () => {

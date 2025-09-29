@@ -11,13 +11,11 @@ import {
   Typography,
   Card,
   CardContent,
-  Chip,
   Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Button,
-  Link,
   Alert,
   CircularProgress
 } from '@mui/material';
@@ -61,7 +59,7 @@ interface TaxEducationSummaryProps {
   propertyData?: any; // Full property data for contextual examples
 }
 
-const TaxEducationSummary: React.FC<TaxEducationSummaryProps> = ({ purchasePrice, propertyData }) => {
+const TaxEducationSummary: React.FC<TaxEducationSummaryProps> = ({ propertyData }) => {
   const [educationalContent, setEducationalContent] = useState<TaxEducationalContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

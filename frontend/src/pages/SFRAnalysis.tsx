@@ -465,12 +465,7 @@ const SFRAnalysis: React.FC = () => {
         hasAnalysis: !!analysis,
         hasInvestmentDecision: !!analysis?.investmentDecision,
         hasPortfolioContext: !!analysis?.investmentDecision?.portfolioContext,
-        portfolioContext: analysis?.investmentDecision?.portfolioContext,
-        // TAX INTELLIGENCE FRONTEND SAVE DEBUG
-        hasTaxAnalysis: !!analysis?.investmentDecision?.taxAnalysis,
-        taxAnalysisKeys: analysis?.investmentDecision?.taxAnalysis ? Object.keys(analysis.investmentDecision.taxAnalysis) : [],
-        optimalHoldPeriod: analysis?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
-        taxSavings: analysis?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal
+        portfolioContext: analysis?.investmentDecision?.portfolioContext
       });
       
       let response;
