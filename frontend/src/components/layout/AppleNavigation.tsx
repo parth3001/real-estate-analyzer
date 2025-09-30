@@ -46,7 +46,8 @@ import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDualMode } from '../../contexts/DualModeContext';
 import { ModeToggle } from '../common/ModeToggle';
-import { appleColors, appleBorderRadius } from '../../theme/appleDesignSystem';
+import { appleBorderRadius } from '../../theme/appleDesignSystem';
+import analyzrLogo from '../../assets/analyzr-logo.png';
 
 // Apple-style constants
 const SIDEBAR_WIDTH = 280;
@@ -258,31 +259,41 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         borderColor: 'divider'
       }}
     >
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: appleBorderRadius.lg,
-          backgroundColor: appleColors.primary[500],
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mr: (sidebarOpen && !isMobile) ? 2 : 0
-        }}
-      >
-        <TrendingUpIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-      </Box>
-      
-      {(sidebarOpen && !isMobile) && (
-        <Box>
+      {(sidebarOpen && !isMobile) ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            component="img"
+            src={analyzrLogo}
+            alt="REanalyzr"
+            sx={{
+              height: 32,
+              width: 'auto',
+              objectFit: 'contain'
+            }}
+          />
           <Typography
-            variant="h6"
-            fontWeight={700}
-            sx={{ color: 'text.primary', lineHeight: 1.2 }}
+            variant="body1"
+            sx={{
+              color: 'text.primary',
+              fontSize: '1rem',
+              fontWeight: 700,
+              letterSpacing: '-0.5px'
+            }}
           >
-            reanalyzr
+            REanalyzr
           </Typography>
         </Box>
+      ) : (
+        <Box
+          component="img"
+          src={analyzrLogo}
+          alt="REanalyzr"
+          sx={{
+            height: 28,
+            width: 'auto',
+            objectFit: 'contain'
+          }}
+        />
       )}
     </Box>
   );
@@ -510,7 +521,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       return 'Portfolio Intelligence';
     }
     
-    return titles[pathname] || 'reanalyzr';
+    return titles[pathname] || 'REanalyzr';
   };
 
   // Top App Bar

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { authService, RegisterData, LoginData } from '../services/authService';
+import { emailService } from '../services/emailService';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
@@ -94,9 +95,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const result = await authService.register(userData);
 
+    // Send verification email asynchronously (don't block response)
+    if (!result.user.isVerified) {
+      const verificationToken = authService.generateEmailVerificationToken(result.user.id);
+      emailService.sendVerificationEmail(result.user.email, verificationToken)
+        .catch(error => {
+          logger.error(`[AuthController] Failed to send verification email to ${result.user.email}:`, error);
+        });
+    }
+
     logger.info(`[AuthController] Registration successful for: ${result.user.email}`);
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email to verify your account.',
       user: result.user,
       accessToken: result.accessToken,
       refreshToken: result.refreshToken
@@ -452,5 +462,196 @@ export const completeDualModeOnboarding = async (req: AuthenticatedRequest, res:
   } catch (error) {
     logger.error('[AuthController] Complete dual-mode onboarding error:', error);
     res.status(500).json({ error: 'Failed to complete dual-mode onboarding' });
+  }
+};
+
+/**
+ * Validation rules for email verification
+ */
+export const validateEmailVerification = [
+  body('token')
+    .isLength({ min: 1 })
+    .withMessage('Verification token is required')
+];
+
+/**
+ * Validation rules for resend verification
+ */
+export const validateResendVerification = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address')
+];
+
+/**
+ * Validation rules for forgot password
+ */
+export const validateForgotPassword = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address')
+];
+
+/**
+ * Validation rules for password reset
+ */
+export const validatePasswordReset = [
+  body('token')
+    .isLength({ min: 1 })
+    .withMessage('Reset token is required'),
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number')
+];
+
+/**
+ * Verify email with token
+ */
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Check for validation errors
+    if (handleValidationErrors(req, res)) return;
+
+    const { token } = req.body;
+
+    logger.info('[AuthController] Email verification request');
+
+    // Verify token and get user ID
+    const { id } = authService.verifyEmailToken(token);
+
+    // Mark user as verified
+    const user = await authService.verifyUserEmail(id);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Send welcome email
+    emailService.sendWelcomeEmail(user.email, user.firstName)
+      .catch(error => {
+        logger.error(`[AuthController] Failed to send welcome email to ${user.email}:`, error);
+      });
+
+    logger.info(`[AuthController] Email verified for user: ${user.email}`);
+    res.json({
+      message: 'Email verified successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    logger.error('[AuthController] Email verification error:', error);
+
+    if (error instanceof Error && error.message.includes('Invalid or expired')) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    res.status(500).json({ error: 'Email verification failed. Please try again.' });
+  }
+};
+
+/**
+ * Resend verification email
+ */
+export const resendVerification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+
+    logger.info(`[AuthController] Resend verification request for: ${email}`);
+
+    // Find user (but don't reveal if they exist or not)
+    const user = await authService.findUserByEmail(email);
+
+    if (user && !user.isVerified) {
+      const verificationToken = authService.generateEmailVerificationToken(user.id);
+      await emailService.sendVerificationEmail(user.email, verificationToken);
+    }
+
+    // Always return success (don't leak user existence)
+    res.json({
+      message: 'If an unverified account exists with this email, a new verification link has been sent.'
+    });
+  } catch (error) {
+    logger.error('[AuthController] Resend verification error:', error);
+    res.status(500).json({ error: 'Failed to resend verification email. Please try again.' });
+  }
+};
+
+/**
+ * Request password reset
+ */
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Check for validation errors
+    if (handleValidationErrors(req, res)) return;
+
+    const { email } = req.body;
+
+    logger.info(`[AuthController] Password reset request for: ${email}`);
+
+    // Find user (but don't reveal if they exist or not)
+    const user = await authService.findUserByEmail(email);
+
+    if (user) {
+      const resetToken = authService.generatePasswordResetToken(user.id);
+      await emailService.sendPasswordResetEmail(user.email, resetToken);
+    }
+
+    // Always return success (don't leak user existence)
+    res.json({
+      message: 'If an account exists with this email, a password reset link has been sent.'
+    });
+  } catch (error) {
+    logger.error('[AuthController] Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process password reset request. Please try again.' });
+  }
+};
+
+/**
+ * Reset password with token
+ */
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Check for validation errors
+    if (handleValidationErrors(req, res)) return;
+
+    const { token, password } = req.body;
+
+    logger.info('[AuthController] Password reset attempt');
+
+    // Verify token and get user ID
+    const { id } = authService.verifyPasswordResetToken(token);
+
+    // Reset password
+    await authService.resetUserPassword(id, password);
+
+    logger.info(`[AuthController] Password reset successfully for user: ${id}`);
+    res.json({
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    logger.error('[AuthController] Password reset error:', error);
+
+    if (error instanceof Error && error.message.includes('Invalid or expired')) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    res.status(500).json({ error: 'Password reset failed. Please try again.' });
   }
 };

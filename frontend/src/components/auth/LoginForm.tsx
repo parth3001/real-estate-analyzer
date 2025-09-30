@@ -1,115 +1,54 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  Container,
-  TextField,
-  Button,
-  Typography,
-  Link as MuiLink,
-  Alert,
-  CircularProgress,
-  Divider,
-  IconButton,
-  InputAdornment,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Stack
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-  Analytics,
-  TrendingUp,
-  Home
-} from '@mui/icons-material';
-import type { LoginCredentials, AuthFormErrors } from '../../types/auth';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
+import type { LoginCredentials } from '../../types/auth';
+import analyzrLogo from '../../assets/analyzr-logo.png';
 
 interface LoginFormProps {
   onSuccess?: () => void;
   redirectTo?: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ 
-  onSuccess, 
-  redirectTo = '/dashboard' 
+const LoginForm: React.FC<LoginFormProps> = ({
+  onSuccess,
+  redirectTo = '/dashboard'
 }) => {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error } = useAuth();
   const { validateLoginForm } = useAuthValidation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  // Form state
+
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: '',
   });
-  const [formErrors, setFormErrors] = useState<AuthFormErrors>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
-  // Handle input changes
-  const handleChange = (field: keyof LoginCredentials) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = event.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear field error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-    
-    // Clear global error
-    if (error) {
-      clearError();
-    }
-  };
-
-  // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
-    // Validate form
     const errors = validateLoginForm(formData);
     if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
       return;
     }
 
     try {
       await login(formData);
-      
-      // Success - redirect or call success callback
       if (onSuccess) {
         onSuccess();
       } else {
         navigate(redirectTo);
       }
     } catch (error) {
-      // Error is handled by AuthContext
       console.error('Login failed:', error);
     }
   };
 
-  // Demo user login for development
   const handleDemoLogin = async () => {
     const demoCredentials: LoginCredentials = {
       email: 'admin@realestateanalyzer.com',
       password: 'Spring@2025',
     };
-    
     setFormData(demoCredentials);
-    
     try {
       await login(demoCredentials);
-      
       if (onSuccess) {
         onSuccess();
       } else {
@@ -121,297 +60,338 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
+    <div style={{
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      margin: 0,
+      padding: 0,
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      overflow: 'hidden',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+    }}>
+      {/* LEFT SIDE - HERO - EXACTLY 50% */}
+      <div style={{
+        width: '50%',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-        padding: 2,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Fade in timeout={600}>
-          <Box>
-            {/* Logo and Title Section */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 64,
-                  height: 64,
-                  borderRadius: 2,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  mb: 2,
-                  boxShadow: 3,
-                }}
-              >
-                <Home sx={{ fontSize: 32 }} />
-              </Box>
-              <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>
-                reanalyzr
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Professional Property Investment Intelligence
-              </Typography>
-            </Box>
+        alignItems: 'center',
+        padding: '40px',
+        boxSizing: 'border-box',
+        overflow: 'auto'
+      }}>
+        <div style={{
+          maxWidth: '600px',
+          width: '100%',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <img
+            src={analyzrLogo}
+            alt="REanalyzr"
+            style={{
+              height: '140px',
+              width: 'auto',
+              marginBottom: '40px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
+          <h1 style={{
+            fontSize: '4.5rem',
+            fontWeight: 700,
+            margin: '0 0 24px 0',
+            letterSpacing: '-3px',
+            color: 'white',
+            lineHeight: 0.9
+          }}>
+            REanalyzr
+          </h1>
+          <p style={{
+            fontSize: '1.5rem',
+            color: 'rgba(255, 255, 255, 0.8)',
+            marginBottom: '48px',
+            lineHeight: 1.3,
+            fontWeight: 300
+          }}>
+            Professional property investment analysis with AI-powered intelligence
+          </p>
 
-            {/* Login Card */}
-            <Card
-              sx={{
-                p: { xs: 3, sm: 4 },
-                borderRadius: 3,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
-                border: '1px solid',
-                borderColor: 'grey.100',
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '32px',
+            alignItems: 'flex-start',
+            maxWidth: '400px',
+            margin: '0 auto'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <span style={{ fontSize: '32px' }}>📊</span>
+              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>47+ Analysis Metrics</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <span style={{ fontSize: '32px' }}>🤖</span>
+              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>AI-Powered Market Insights</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <span style={{ fontSize: '32px' }}>🏠</span>
+              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>All Property Types</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE - FORM - EXACTLY 50% */}
+      <div style={{
+        width: '50%',
+        height: '100vh',
+        background: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '40px',
+        boxSizing: 'border-box',
+        overflowY: 'auto'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '480px'
+        }}>
+          <h2 style={{
+            fontSize: '2.75rem',
+            fontWeight: 600,
+            color: '#0a0a0a',
+            margin: '0 0 12px 0',
+            letterSpacing: '-1.5px'
+          }}>
+            Welcome back
+          </h2>
+          <p style={{
+            color: '#6b7280',
+            fontSize: '1.25rem',
+            marginBottom: '40px',
+            lineHeight: 1.4
+          }}>
+            Sign in to access your property analyses and portfolio
+          </p>
+
+          {error && (
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '12px',
+              marginBottom: '32px',
+              color: '#dc2626'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '32px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#374151'
+              }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                style={{
+                  width: '100%',
+                  height: '64px',
+                  padding: '0 24px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '1.125rem',
+                  backgroundColor: 'white',
+                  color: '#000000',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#6366f1';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#374151'
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                style={{
+                  width: '100%',
+                  height: '64px',
+                  padding: '0 24px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '1.125rem',
+                  backgroundColor: 'white',
+                  color: '#000000',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#6366f1';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '40px'
+            }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '1rem',
+                color: '#374151',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  style={{
+                    marginRight: '12px',
+                    width: '20px',
+                    height: '20px',
+                    accentColor: '#6366f1'
+                  }}
+                />
+                Remember me
+              </label>
+              <a href="/forgot-password" style={{
+                color: '#6366f1',
+                textDecoration: 'none',
+                fontSize: '1rem',
+                fontWeight: 500
+              }}>
+                Forgot password?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !formData.email || !formData.password}
+              style={{
+                width: '100%',
+                height: '64px',
+                backgroundColor: isLoading || !formData.email || !formData.password ? '#e5e7eb' : '#0a0a0a',
+                color: isLoading || !formData.email || !formData.password ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                cursor: isLoading || !formData.email || !formData.password ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
               }}
             >
-              {/* Welcome Message */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
-                  Welcome back
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Sign in to access your property analyses and portfolio
-                </Typography>
-              </Box>
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
 
-              {/* Error Alert */}
-              {error && (
-                <Fade in>
-                  <Alert 
-                    severity="error" 
-                    sx={{ mb: 3, borderRadius: 2 }}
-                    onClose={clearError}
-                  >
-                    {error}
-                  </Alert>
-                </Fade>
-              )}
-
-              {/* Login Form */}
-              <form onSubmit={handleSubmit}>
-                <Stack spacing={3}>
-                  {/* Email Field */}
-                  <TextField
-                    fullWidth
-                    label="Email Address"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange('email')}
-                    error={!!formErrors.email}
-                    helperText={formErrors.email}
-                    required
-                    autoComplete="email"
-                    autoFocus
-                    disabled={isLoading}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Email sx={{ color: 'text.secondary', fontSize: 20 }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: 'grey.50',
-                      },
-                    }}
-                  />
-
-                  {/* Password Field */}
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={handleChange('password')}
-                    error={!!formErrors.password}
-                    helperText={formErrors.password}
-                    required
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Lock sx={{ color: 'text.secondary', fontSize: 20 }} />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            size="small"
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: 'grey.50',
-                      },
-                    }}
-                  />
-
-                  {/* Remember Me & Forgot Password */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <input
-                        type="checkbox"
-                        id="remember-me"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      <Typography
-                        component="label"
-                        htmlFor="remember-me"
-                        variant="body2"
-                        sx={{ cursor: 'pointer', userSelect: 'none' }}
-                      >
-                        Remember me
-                      </Typography>
-                    </Box>
-                    <MuiLink
-                      component={Link}
-                      to="/forgot-password"
-                      variant="body2"
-                      sx={{
-                        textDecoration: 'none',
-                        '&:hover': { textDecoration: 'underline' },
-                      }}
-                    >
-                      Forgot password?
-                    </MuiLink>
-                  </Box>
-
-                  {/* Submit Button */}
-                  <Button
-                    fullWidth
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={isLoading || !formData.email || !formData.password}
-                    sx={{
-                      py: 1.5,
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      position: 'relative',
-                    }}
-                  >
-                    {isLoading ? (
-                      <CircularProgress size={24} sx={{ color: 'white' }} />
-                    ) : (
-                      'Sign In'
-                    )}
-                  </Button>
-                </Stack>
-              </form>
-
-              {/* Demo Login for Development */}
-              {process.env.NODE_ENV === 'development' && (
-                <>
-                  <Divider sx={{ my: 3 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      OR
-                    </Typography>
-                  </Divider>
-
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="large"
-                    onClick={handleDemoLogin}
-                    disabled={isLoading}
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      borderColor: 'grey.300',
-                      color: 'text.primary',
-                      '&:hover': {
-                        borderColor: 'grey.400',
-                        bgcolor: 'grey.50',
-                      },
-                    }}
-                  >
-                    Demo Login (Admin User)
-                  </Button>
-                </>
-              )}
-
-              {/* Sign Up Link */}
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Don't have an account?{' '}
-                  <MuiLink
-                    component={Link}
-                    to="/register"
-                    sx={{
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                      '&:hover': { textDecoration: 'underline' },
-                    }}
-                  >
-                    Sign up for free
-                  </MuiLink>
-                </Typography>
-              </Box>
-            </Card>
-
-            {/* Features Section */}
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <Stack
-                direction={isMobile ? 'column' : 'row'}
-                spacing={3}
-                justifyContent="center"
-                alignItems="center"
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <div style={{
+                textAlign: 'center',
+                margin: '40px 0',
+                position: 'relative'
+              }}>
+                <span style={{
+                  backgroundColor: 'white',
+                  padding: '0 16px',
+                  position: 'relative',
+                  zIndex: 1,
+                  color: '#9ca3af'
+                }}>
+                  OR
+                </span>
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  right: 0,
+                  height: '1px',
+                  backgroundColor: '#e5e7eb',
+                  zIndex: 0
+                }} />
+              </div>
+              <button
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  height: '64px',
+                  backgroundColor: 'transparent',
+                  color: '#374151',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '1.125rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Analytics sx={{ color: 'primary.main', fontSize: 20 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    47+ Analysis Metrics
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TrendingUp sx={{ color: 'success.main', fontSize: 20 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    AI-Powered Insights
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Home sx={{ color: 'secondary.main', fontSize: 20 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    All Property Types
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
+                Demo Login (Admin User)
+              </button>
+            </>
+          )}
 
-            {/* Footer */}
-            <Box sx={{ textAlign: 'center', mt: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                © 2025 Real Estate Analyzer. All rights reserved.
-              </Typography>
-            </Box>
-          </Box>
-        </Fade>
-      </Container>
-    </Box>
+          <p style={{
+            textAlign: 'center',
+            marginTop: '48px',
+            fontSize: '1rem',
+            color: '#6b7280'
+          }}>
+            Don't have an account?{' '}
+            <a href="/register" style={{
+              color: '#0a0a0a',
+              fontWeight: 600,
+              textDecoration: 'none'
+            }}>
+              Sign up for free
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

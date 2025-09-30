@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { authenticateToken } from '../middleware/auth';
 import {
   register,
@@ -11,13 +12,32 @@ import {
   getDualMode,
   updateDualMode,
   completeDualModeOnboarding,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
   validateRegister,
   validateLogin,
   validatePasswordChange,
-  validateDualModeUpdate
+  validateDualModeUpdate,
+  validateEmailVerification,
+  validateResendVerification,
+  validateForgotPassword,
+  validatePasswordReset
 } from '../controllers/authController';
 
 const router = Router();
+
+// Rate limiting for email-related endpoints
+const emailRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests per window
+  message: {
+    error: 'Too many email requests. Please try again in 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * @route   POST /api/auth/register
@@ -88,5 +108,33 @@ router.put('/dual-mode', authenticateToken, validateDualModeUpdate, updateDualMo
  * @access  Private
  */
 router.post('/dual-mode/onboarding', authenticateToken, completeDualModeOnboarding);
+
+/**
+ * @route   POST /api/auth/verify-email
+ * @desc    Verify user email with token
+ * @access  Public
+ */
+router.post('/verify-email', validateEmailVerification, verifyEmail);
+
+/**
+ * @route   POST /api/auth/resend-verification
+ * @desc    Resend email verification
+ * @access  Public
+ */
+router.post('/resend-verification', emailRateLimit, validateResendVerification, resendVerification);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Send password reset email
+ * @access  Public
+ */
+router.post('/forgot-password', emailRateLimit, validateForgotPassword, forgotPassword);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password with token
+ * @access  Public
+ */
+router.post('/reset-password', validatePasswordReset, resetPassword);
 
 export default router;

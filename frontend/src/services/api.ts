@@ -978,6 +978,90 @@ export const authApi = {
       throw error;
     }
   },
+
+  // Email verification
+  verifyEmail: async (token: string): Promise<ApiResponse<{ message: string; user: any }>> => {
+    try {
+      const response = await api.post('/auth/verify-email', { token });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Email verification error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Email verification failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Resend email verification
+  resendVerification: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/resend-verification', { email });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Failed to resend verification email' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Forgot password
+  forgotPassword: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Failed to send password reset email' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Reset password
+  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<{ message: string }>> => {
+    try {
+      const response = await api.post('/auth/reset-password', { token, newPassword });
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { message: 'Password reset failed' },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 // Scenario-related types

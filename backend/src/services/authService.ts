@@ -385,6 +385,159 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
+
+  /**
+   * Generate email verification token
+   */
+  generateEmailVerificationToken(userId: string): string {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+
+    return jwt.sign(
+      {
+        id: userId,
+        type: 'email_verification'
+      },
+      jwtSecret,
+      { expiresIn: '24h' }
+    );
+  }
+
+  /**
+   * Generate password reset token
+   */
+  generatePasswordResetToken(userId: string): string {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+
+    return jwt.sign(
+      {
+        id: userId,
+        type: 'password_reset'
+      },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+  }
+
+  /**
+   * Verify email verification token
+   */
+  verifyEmailToken(token: string): { id: string; type: string } {
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is required');
+      }
+
+      const decoded = jwt.verify(token, jwtSecret) as any;
+
+      if (decoded.type !== 'email_verification') {
+        throw new Error('Invalid token type');
+      }
+
+      return {
+        id: decoded.id,
+        type: decoded.type
+      };
+    } catch (error) {
+      logger.error('[AuthService] Email token verification failed:', error);
+      throw new Error('Invalid or expired verification token');
+    }
+  }
+
+  /**
+   * Verify password reset token
+   */
+  verifyPasswordResetToken(token: string): { id: string; type: string } {
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is required');
+      }
+
+      const decoded = jwt.verify(token, jwtSecret) as any;
+
+      if (decoded.type !== 'password_reset') {
+        throw new Error('Invalid token type');
+      }
+
+      return {
+        id: decoded.id,
+        type: decoded.type
+      };
+    } catch (error) {
+      logger.error('[AuthService] Password reset token verification failed:', error);
+      throw new Error('Invalid or expired reset token');
+    }
+  }
+
+  /**
+   * Mark user email as verified
+   */
+  async verifyUserEmail(userId: string): Promise<IUser | null> {
+    try {
+      logger.info(`[AuthService] Verifying email for user: ${userId}`);
+
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          isVerified: true,
+          $unset: { verifiedAt: "" } // Remove field if it exists
+        },
+        { new: true }
+      ).select('-password');
+
+      if (!user) {
+        logger.warn(`[AuthService] User not found for email verification: ${userId}`);
+        return null;
+      }
+
+      logger.info(`[AuthService] Email verified for user: ${user.email}`);
+      return user;
+    } catch (error) {
+      logger.error('[AuthService] Error verifying user email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset user password
+   */
+  async resetUserPassword(userId: string, newPassword: string): Promise<void> {
+    try {
+      logger.info(`[AuthService] Resetting password for user: ${userId}`);
+
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      user.password = newPassword; // Will be hashed by pre-save hook
+      await user.save();
+
+      logger.info(`[AuthService] Password reset successfully for user: ${user.email}`);
+    } catch (error) {
+      logger.error('[AuthService] Error resetting password:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find user by email (for password reset and verification)
+   */
+  async findUserByEmail(email: string): Promise<IUser | null> {
+    try {
+      return await User.findOne({ email }).select('-password');
+    } catch (error) {
+      logger.error('[AuthService] Error finding user by email:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
