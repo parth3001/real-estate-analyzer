@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
@@ -17,6 +19,7 @@ import portfoliosRouter from './routes/portfolios';
 import pipelineRouter from './routes/pipeline';
 import commandCenterRouter from './routes/commandCenter';
 import educationRouter from './routes/education';
+import contactRouter from './routes/contact';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
@@ -50,8 +53,71 @@ const port = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
+
+// Security headers with Helmet.js
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
 app.use(express.json());
 app.use(morgan('dev'));
+
+// Rate limiting configuration
+const generalRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window per IP
+  message: {
+    error: 'Too many requests from this IP. Please try again in 15 minutes.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health checks and internal requests
+    return req.path === '/api/health' || req.ip === '127.0.0.1' || req.ip === '::1';
+  }
+});
+
+// Stricter rate limiting for auth endpoints
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 auth attempts per window per IP
+  message: {
+    error: 'Too many authentication attempts. Please try again in 15 minutes.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Financial calculation rate limiting
+const calculationRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 calculations per window per IP
+  message: {
+    error: 'Too many analysis requests. Please try again in 15 minutes.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiting to all routes
+app.use(generalRateLimit);
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -67,19 +133,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use('/api/auth', authRouter);
+// Routes with specific rate limiting
+app.use('/api/auth', authRateLimit, authRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/deals', dealsRouter);
-app.use('/api/analyze', analyzeRouter);
+app.use('/api/deals', calculationRateLimit, dealsRouter);
+app.use('/api/analyze', calculationRateLimit, analyzeRouter);
 app.use('/api/census', censusRouter);
 app.use('/api/market-data', marketDataRouter);
-app.use('/api/wizard', wizardRouter);
-app.use('/api/quick', quickAnalysisRouter);
+app.use('/api/wizard', calculationRateLimit, wizardRouter);
+app.use('/api/quick', calculationRateLimit, quickAnalysisRouter);
 app.use('/api/portfolios', portfoliosRouter);
 app.use('/api/pipeline', pipelineRouter);
 app.use('/api/command-center', commandCenterRouter);
 app.use('/api/education', educationRouter);
+app.use('/api/contact', contactRouter);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

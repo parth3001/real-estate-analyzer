@@ -10,6 +10,7 @@ export interface EmailTemplate {
 export class EmailService {
   private resend: Resend | null = null;
   private FROM_EMAIL = 'REanalyzr <admin@reanalyzr.com>';
+  private ADMIN_EMAIL = 'ppatel21@gmail.com'; // Your personal email for notifications
   private FRONTEND_URL: string;
 
   constructor() {
@@ -70,6 +71,36 @@ export class EmailService {
     });
 
     logger.info(`[EmailService] Welcome email sent to: ${email}`);
+  }
+
+  /**
+   * Send admin notification when new user signs up
+   */
+  async sendAdminSignupNotification(userEmail: string, firstName: string, lastName: string): Promise<void> {
+    const template = this.getAdminSignupNotificationTemplate(userEmail, firstName, lastName);
+
+    await this.sendEmail({
+      to: this.ADMIN_EMAIL,
+      subject: `🎉 New REanalyzr Signup: ${firstName} ${lastName}`,
+      html: template
+    });
+
+    logger.info(`[EmailService] Admin signup notification sent for: ${userEmail}`);
+  }
+
+  /**
+   * Send contact us message to admin
+   */
+  async sendContactUsMessage(name: string, email: string, subject: string, message: string): Promise<void> {
+    const template = this.getContactUsTemplate(name, email, subject, message);
+
+    await this.sendEmail({
+      to: this.ADMIN_EMAIL,
+      subject: `📧 REanalyzr Contact: ${subject}`,
+      html: template
+    });
+
+    logger.info(`[EmailService] Contact us message sent from: ${email}`);
   }
 
   /**
@@ -287,6 +318,133 @@ export class EmailService {
           <div class="footer">
             <p style="margin: 0;">© 2025 REanalyzr. Professional Property Investment Analysis.</p>
             <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Intelligent Real Estate Investment Platform</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Admin signup notification template
+   */
+  private getAdminSignupNotificationTemplate(userEmail: string, firstName: string, lastName: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New User Signup - REanalyzr</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .user-info { background-color: #f9fafb; padding: 24px; margin: 24px 0; border-radius: 12px; border-left: 4px solid #16a34a; }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">🎉 New Signup!</h1>
+            <p class="tagline">REanalyzr User Registration</p>
+          </div>
+
+          <div class="content">
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">New User Registered</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
+              Great news! A new user has signed up for REanalyzr and completed email verification.
+            </p>
+
+            <div class="user-info">
+              <h3 style="color: #16a34a; margin-top: 0; font-weight: 600;">👤 User Details:</h3>
+              <ul style="color: #374151; margin: 12px 0; line-height: 1.8; list-style: none; padding: 0;">
+                <li><strong>Name:</strong> ${firstName} ${lastName}</li>
+                <li><strong>Email:</strong> ${userEmail}</li>
+                <li><strong>Registration Time:</strong> ${new Date().toLocaleString()}</li>
+                <li><strong>Status:</strong> Email Verified ✅</li>
+              </ul>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 32px;">
+              This user is now active and can start analyzing properties. Consider following up with them
+              to ensure they have a great experience with the platform.
+            </p>
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0;">© 2025 REanalyzr Admin Notifications</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Automated signup notification</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Contact us email template
+   */
+  private getContactUsTemplate(name: string, email: string, subject: string, message: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Contact Form Submission - REanalyzr</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .contact-info { background-color: #f9fafb; padding: 24px; margin: 24px 0; border-radius: 12px; border-left: 4px solid #3b82f6; }
+          .message-box { background-color: #fefefe; padding: 24px; margin: 24px 0; border-radius: 12px; border: 2px solid #e5e7eb; }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">📧 Contact Form</h1>
+            <p class="tagline">REanalyzr Support Request</p>
+          </div>
+
+          <div class="content">
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">New Contact Form Submission</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
+              You have received a new message through the REanalyzr contact form.
+            </p>
+
+            <div class="contact-info">
+              <h3 style="color: #3b82f6; margin-top: 0; font-weight: 600;">👤 Contact Information:</h3>
+              <ul style="color: #374151; margin: 12px 0; line-height: 1.8; list-style: none; padding: 0;">
+                <li><strong>Name:</strong> ${name}</li>
+                <li><strong>Email:</strong> ${email}</li>
+                <li><strong>Subject:</strong> ${subject}</li>
+                <li><strong>Submission Time:</strong> ${new Date().toLocaleString()}</li>
+              </ul>
+            </div>
+
+            <div class="message-box">
+              <h3 style="color: #0a0a0a; margin-top: 0; font-weight: 600;">💬 Message:</h3>
+              <p style="color: #374151; line-height: 1.6; margin: 0; white-space: pre-wrap;">${message}</p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 32px;">
+              <strong>Next Steps:</strong> Reply directly to ${email} to respond to this inquiry.
+            </p>
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0;">© 2025 REanalyzr Contact Form</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Automated contact form notification</p>
           </div>
         </div>
       </body>

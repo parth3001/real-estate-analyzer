@@ -19,6 +19,7 @@ import SFRAnalysis from './pages/SFRAnalysis';
 import MFAnalysis from './pages/MFAnalysis';
 import SavedProperties from './pages/SavedProperties';
 import HelpPage from './pages/HelpPage';
+import ContactPage from './pages/ContactPage';
 import NotFound from './pages/NotFound';
 import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
@@ -188,6 +189,7 @@ function App() {
                 {/* Market & Tools */}
                 <Route path="/market-data" element={<MarketDataPage />} />
                 <Route path="/help" element={<HelpPage />} />
+                <Route path="/contact" element={<ContactPage />} />
                 <Route path="/census-test" element={<CensusDataTestPage />} />
                 
                 {/* User Management */}

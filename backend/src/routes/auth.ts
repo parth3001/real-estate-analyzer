@@ -28,12 +28,13 @@ import {
 
 const router = Router();
 
-// Rate limiting for email-related endpoints
+// Stricter rate limiting for email-related endpoints (password reset, verification)
 const emailRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 3, // 3 email requests per window per IP (stricter than general auth)
   message: {
-    error: 'Too many email requests. Please try again in 15 minutes.'
+    error: 'Too many email requests. Please try again in 15 minutes.',
+    retryAfter: '15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

@@ -40,7 +40,8 @@ import {
   Notifications as NotificationsIcon,
   Map as MapIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
-  Business as BusinessIcon
+  Business as BusinessIcon,
+  ContactSupport as ContactSupportIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -144,6 +145,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     label: 'Help & Documentation',
     icon: HelpIcon,
     path: '/help',
+    badge: null
+  },
+  {
+    id: 'contact',
+    label: 'Contact Us',
+    icon: ContactSupportIcon,
+    path: '/contact',
     badge: null
   }
 ];

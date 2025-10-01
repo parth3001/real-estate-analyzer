@@ -537,6 +537,12 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
         logger.error(`[AuthController] Failed to send welcome email to ${user.email}:`, error);
       });
 
+    // Send admin notification about new signup
+    emailService.sendAdminSignupNotification(user.email, user.firstName, user.lastName)
+      .catch(error => {
+        logger.error(`[AuthController] Failed to send admin signup notification for ${user.email}:`, error);
+      });
+
     logger.info(`[AuthController] Email verified for user: ${user.email}`);
     res.json({
       message: 'Email verified successfully',
