@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 
 export async function ensureAdminUser(): Promise<void> {
   try {
-    const adminEmail = process.env.SMOKE_TEST_EMAIL || 'admin@realestateanalyzer.com';
+    const adminEmail = process.env.SMOKE_TEST_EMAIL || 'admin@reanalyzr.com';
     const adminPassword = process.env.SMOKE_TEST_PASSWORD || 'Spring@2025';
     
     // Check if admin user already exists

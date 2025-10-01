@@ -91,7 +91,7 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     label: 'Saved Properties',
     icon: BookmarkIcon,
     path: '/saved-properties',
-    badge: 3 // Dynamic count - will be populated from API
+    badge: null
   },
   {
     id: 'portfolio',

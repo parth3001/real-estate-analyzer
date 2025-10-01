@@ -45,7 +45,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   const handleDemoLogin = async () => {
     const demoCredentials: LoginCredentials = {
-      email: 'admin@realestateanalyzer.com',
+      email: 'admin@reanalyzr.com',
       password: 'Spring@2025',
     };
     setFormData(demoCredentials);

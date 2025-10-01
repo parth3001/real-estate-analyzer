@@ -17,7 +17,7 @@ export const validateRegister = [
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
     .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
   
   body('firstName')
@@ -56,7 +56,7 @@ export const validatePasswordChange = [
   body('newPassword')
     .isLength({ min: 8 })
     .withMessage('New password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
     .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number')
 ];
 
@@ -504,7 +504,7 @@ export const validatePasswordReset = [
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
     .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number')
 ];
 

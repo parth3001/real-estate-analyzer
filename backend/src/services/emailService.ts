@@ -9,7 +9,7 @@ export interface EmailTemplate {
 
 export class EmailService {
   private resend: Resend | null = null;
-  private FROM_EMAIL = 'REanalyzr <noreply@reanalyzr.com>';
+  private FROM_EMAIL = 'REanalyzr <admin@reanalyzr.com>';
   private FRONTEND_URL: string;
 
   constructor() {
@@ -33,7 +33,7 @@ export class EmailService {
 
     await this.sendEmail({
       to: email,
-      subject: 'Verify your reanalyzr account',
+      subject: 'Verify your REanalyzr account',
       html: template
     });
 
@@ -50,7 +50,7 @@ export class EmailService {
 
     await this.sendEmail({
       to: email,
-      subject: 'Reset your reanalyzr password',
+      subject: 'Reset your REanalyzr password',
       html: template
     });
 
@@ -65,7 +65,7 @@ export class EmailService {
 
     await this.sendEmail({
       to: email,
-      subject: 'Welcome to reanalyzr! 🎉',
+      subject: 'Welcome to REanalyzr! 🎉',
       html: template
     });
 
@@ -106,49 +106,51 @@ export class EmailService {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify your analyzr account</title>
+        <title>Verify your REanalyzr account</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-          .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .header { background: linear-gradient(135deg, #374151 0%, #6366f1 100%); padding: 40px 40px 20px; text-align: center; }
-          .logo { color: white; font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-          .tagline { color: #e2e8f0; font-size: 11px; font-weight: 600; letter-spacing: 2px; margin: 8px 0 0; }
-          .content { padding: 40px; }
-          .button { display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; margin: 20px 0; transition: transform 0.2s; }
-          .footer { padding: 20px 40px; background-color: #f1f5f9; color: #64748b; font-size: 14px; text-align: center; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .button { display: inline-block; background: #0a0a0a; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; margin: 24px 0; transition: all 0.2s; }
+          .button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2); }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
             <h1 class="logo">REanalyzr</h1>
-            <p class="tagline">INTELLIGENCE</p>
+            <p class="tagline">Email Verification</p>
           </div>
 
           <div class="content">
-            <h2 style="color: #1e293b; margin-top: 0;">Welcome to REanalyzr!</h2>
-            <p style="color: #475569; line-height: 1.6;">
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">Welcome to REanalyzr!</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
               Thank you for signing up for REanalyzr. To complete your registration and start analyzing properties,
               please verify your email address by clicking the button below.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
+            <div style="text-align: center; margin: 32px 0;">
               <a href="${verificationUrl}" class="button">Verify Email Address</a>
             </div>
 
-            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
-              This verification link will expire in 24 hours. If you didn't create an account with reanalyzr,
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 32px;">
+              This verification link will expire in 24 hours. If you didn't create an account with REanalyzr,
               you can safely ignore this email.
             </p>
 
-            <p style="color: #64748b; font-size: 14px;">
+            <p style="color: #6b7280; font-size: 14px; margin-top: 24px;">
               If the button doesn't work, copy and paste this link into your browser:<br>
-              <a href="${verificationUrl}" style="color: #1e40af; word-break: break-all;">${verificationUrl}</a>
+              <a href="${verificationUrl}" style="color: #0a0a0a; word-break: break-all; font-size: 13px;">${verificationUrl}</a>
             </p>
           </div>
 
           <div class="footer">
-            <p style="margin: 0;">© 2024 analyzr Intelligence. Professional Property Investment Analysis.</p>
+            <p style="margin: 0;">© 2025 REanalyzr. Professional Property Investment Analysis.</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Intelligent Real Estate Investment Platform</p>
           </div>
         </div>
       </body>
@@ -166,54 +168,56 @@ export class EmailService {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Reset your analyzr password</title>
+        <title>Reset your REanalyzr password</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-          .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 40px 40px 20px; text-align: center; }
-          .logo { color: white; font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-          .tagline { color: #fecaca; font-size: 11px; font-weight: 600; letter-spacing: 2px; margin: 8px 0 0; }
-          .content { padding: 40px; }
-          .button { display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; margin: 20px 0; }
-          .footer { padding: 20px 40px; background-color: #f1f5f9; color: #64748b; font-size: 14px; text-align: center; }
-          .warning { background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0; border-radius: 8px; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .button { display: inline-block; background: #0a0a0a; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; margin: 24px 0; transition: all 0.2s; }
+          .button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2); }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
+          .warning { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 32px 0; border-radius: 12px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
             <h1 class="logo">REanalyzr</h1>
-            <p class="tagline">PASSWORD RESET</p>
+            <p class="tagline">Password Reset</p>
           </div>
 
           <div class="content">
-            <h2 style="color: #1e293b; margin-top: 0;">Reset Your Password</h2>
-            <p style="color: #475569; line-height: 1.6;">
-              We received a request to reset your password for your reanalyzr account.
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">Reset Your Password</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
+              We received a request to reset your password for your REanalyzr account.
               Click the button below to create a new password.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
+            <div style="text-align: center; margin: 32px 0;">
               <a href="${resetUrl}" class="button">Reset Password</a>
             </div>
 
             <div class="warning">
-              <p style="color: #b91c1c; margin: 0; font-weight: 600;">⚠️ Important Security Notice</p>
-              <ul style="color: #dc2626; margin: 10px 0 0; padding-left: 20px;">
+              <p style="color: #991b1b; margin: 0; font-weight: 600; font-size: 15px;">⚠️ Important Security Notice</p>
+              <ul style="color: #dc2626; margin: 12px 0 0; padding-left: 20px; line-height: 1.6;">
                 <li>This reset link expires in 1 hour for security</li>
                 <li>If you didn't request this reset, please ignore this email</li>
                 <li>Your password won't change until you complete the reset process</li>
               </ul>
             </div>
 
-            <p style="color: #64748b; font-size: 14px;">
+            <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
               If the button doesn't work, copy and paste this link into your browser:<br>
-              <a href="${resetUrl}" style="color: #dc2626; word-break: break-all;">${resetUrl}</a>
+              <a href="${resetUrl}" style="color: #0a0a0a; word-break: break-all; font-size: 13px;">${resetUrl}</a>
             </p>
           </div>
 
           <div class="footer">
-            <p style="margin: 0;">© 2024 analyzr Intelligence. Professional Property Investment Analysis.</p>
+            <p style="margin: 0;">© 2025 REanalyzr. Professional Property Investment Analysis.</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Intelligent Real Estate Investment Platform</p>
           </div>
         </div>
       </body>
@@ -231,36 +235,37 @@ export class EmailService {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to analyzr!</title>
+        <title>Welcome to REanalyzr!</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-          .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px 40px 20px; text-align: center; }
-          .logo { color: white; font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-          .tagline { color: #a7f3d0; font-size: 11px; font-weight: 600; letter-spacing: 2px; margin: 8px 0 0; }
-          .content { padding: 40px; }
-          .button { display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; margin: 20px 0; }
-          .footer { padding: 20px 40px; background-color: #f1f5f9; color: #64748b; font-size: 14px; text-align: center; }
-          .feature { background-color: #f0fdf4; padding: 20px; margin: 15px 0; border-radius: 12px; border-left: 4px solid #059669; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .button { display: inline-block; background: #0a0a0a; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; margin: 24px 0; transition: all 0.2s; }
+          .button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2); }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
+          .feature { background-color: #f9fafb; padding: 24px; margin: 24px 0; border-radius: 12px; border-left: 4px solid #0a0a0a; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
             <h1 class="logo">REanalyzr</h1>
-            <p class="tagline">INTELLIGENCE</p>
+            <p class="tagline">Welcome</p>
           </div>
 
           <div class="content">
-            <h2 style="color: #1e293b; margin-top: 0;">Welcome aboard, ${firstName}! 🎉</h2>
-            <p style="color: #475569; line-height: 1.6;">
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">Welcome aboard, ${firstName}! 🎉</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
               Your email has been verified and your REanalyzr account is now active.
               You're ready to start making smarter property investment decisions.
             </p>
 
             <div class="feature">
-              <h3 style="color: #065f46; margin-top: 0;">🏠 What you can do now:</h3>
-              <ul style="color: #047857; margin: 10px 0;">
+              <h3 style="color: #0a0a0a; margin-top: 0; font-weight: 600;">🏠 What you can do now:</h3>
+              <ul style="color: #374151; margin: 12px 0; line-height: 1.8;">
                 <li>Analyze single-family rental properties</li>
                 <li>Get AI-powered investment insights</li>
                 <li>Track your deal pipeline</li>
@@ -269,18 +274,19 @@ export class EmailService {
               </ul>
             </div>
 
-            <div style="text-align: center; margin: 30px 0;">
+            <div style="text-align: center; margin: 32px 0;">
               <a href="${this.FRONTEND_URL}/dashboard" class="button">Start Analyzing Properties</a>
             </div>
 
-            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 32px;">
               Need help getting started? Check out our help section or reach out to our support team.
               We're here to help you succeed in real estate investing.
             </p>
           </div>
 
           <div class="footer">
-            <p style="margin: 0;">© 2024 analyzr Intelligence. Professional Property Investment Analysis.</p>
+            <p style="margin: 0;">© 2025 REanalyzr. Professional Property Investment Analysis.</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Intelligent Real Estate Investment Platform</p>
           </div>
         </div>
       </body>
