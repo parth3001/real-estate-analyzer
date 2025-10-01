@@ -92,18 +92,6 @@ const generalRateLimit = rateLimit({
   }
 });
 
-// Stricter rate limiting for auth endpoints
-const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 auth attempts per window per IP
-  message: {
-    error: 'Too many authentication attempts. Please try again in 15 minutes.',
-    retryAfter: '15 minutes'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Financial calculation rate limiting
 const calculationRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -134,7 +122,8 @@ app.use((req, res, next) => {
 });
 
 // Routes with specific rate limiting
-app.use('/api/auth', authRateLimit, authRouter);
+// Note: Auth routes have their own specific rate limiting in the router
+app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/deals', calculationRateLimit, dealsRouter);
 app.use('/api/analyze', calculationRateLimit, analyzeRouter);

@@ -28,6 +28,31 @@ import {
 
 const router = Router();
 
+// Rate limiting for login attempts
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per window per IP
+  message: {
+    error: 'Too many login attempts. Please try again in 15 minutes.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful logins
+});
+
+// Rate limiting for registration
+const registerRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 registration attempts per hour per IP
+  message: {
+    error: 'Too many registration attempts. Please try again later.',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Stricter rate limiting for email-related endpoints (password reset, verification)
 const emailRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -45,14 +70,14 @@ const emailRateLimit = rateLimit({
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/register', validateRegister, register);
+router.post('/register', registerRateLimit, validateRegister, register);
 
 /**
  * @route   POST /api/auth/login
  * @desc    Login user and return tokens
  * @access  Public
  */
-router.post('/login', validateLogin, login);
+router.post('/login', loginRateLimit, validateLogin, login);
 
 /**
  * @route   POST /api/auth/refresh
