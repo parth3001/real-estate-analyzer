@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
 import type { RegisterData, AuthFormErrors } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();
   const { validateRegisterForm } = useAuthValidation();
+  const { isMobile, isTablet } = useResponsive();
 
   const [formData, setFormData] = useState<RegisterData>({
     email: '',
@@ -59,125 +61,200 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   };
 
+  // Responsive styles (adapted from LoginForm)
+  const getContainerStyle = () => ({
+    minHeight: '100vh',
+    width: '100vw',
+    display: 'flex',
+    flexDirection: (isMobile || isTablet ? 'column' : 'row') as 'column' | 'row',
+    margin: 0,
+    padding: 0,
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    overflow: 'hidden',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+  });
+
+  const getHeroStyle = () => ({
+    width: isMobile || isTablet ? '100%' : '50%',
+    height: isMobile || isTablet ? '35vh' : '100vh', // Smaller hero for register (more form fields)
+    minHeight: isMobile ? '250px' : isTablet ? '300px' : '100vh',
+    background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
+    boxSizing: 'border-box' as const,
+    overflow: 'auto'
+  });
+
+  const getHeroContentStyle = () => ({
+    maxWidth: isMobile ? '100%' : isTablet ? '400px' : '500px',
+    width: '100%',
+    textAlign: 'center' as const,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center'
+  });
+
+  const getLogoStyle = () => ({
+    height: isMobile ? '50px' : isTablet ? '60px' : '100px',
+    width: 'auto',
+    marginBottom: isMobile ? '12px' : isTablet ? '16px' : '24px',
+    objectFit: 'contain' as const,
+    display: 'block'
+  });
+
+  const getTitleStyle = () => ({
+    fontSize: isMobile ? '2rem' : isTablet ? '2.75rem' : '3.5rem',
+    fontWeight: 700,
+    margin: '0 0 8px 0',
+    letterSpacing: isMobile ? '-0.5px' : isTablet ? '-1px' : '-2px',
+    color: 'white',
+    lineHeight: 0.9
+  });
+
+  const getSubtitleStyle = () => ({
+    fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1.25rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: isMobile ? '16px' : isTablet ? '20px' : '32px',
+    lineHeight: 1.3,
+    fontWeight: 300
+  });
+
+  const getFeaturesStyle = () => ({
+    display: isMobile ? 'none' : 'flex', // Hide features on mobile to save space
+    flexDirection: 'column' as const,
+    gap: isTablet ? '16px' : '24px',
+    alignItems: 'flex-start',
+    maxWidth: '350px',
+    margin: '0 auto'
+  });
+
+  const getFeatureStyle = () => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: isTablet ? '12px' : '16px'
+  });
+
+  const getFeatureTextStyle = () => ({
+    fontSize: isTablet ? '0.875rem' : '1rem',
+    color: 'rgba(255, 255, 255, 0.9)'
+  });
+
+  const getFormContainerStyle = () => ({
+    width: isMobile || isTablet ? '100%' : '50%',
+    height: isMobile || isTablet ? '65vh' : '100vh', // More space for register form
+    minHeight: isMobile || isTablet ? 'auto' : '100vh',
+    background: 'white',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
+    boxSizing: 'border-box' as const,
+    overflowY: 'auto' as const
+  });
+
+  const getInputStyle = () => ({
+    width: '100%',
+    height: isMobile ? '48px' : isTablet ? '52px' : '56px', // Slightly smaller for register form
+    padding: isMobile ? '0 12px' : isTablet ? '0 16px' : '0 20px',
+    border: '2px solid #e5e7eb',
+    borderRadius: isMobile ? '6px' : '12px',
+    fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1rem',
+    backgroundColor: 'white',
+    color: '#000000',
+    outline: 'none',
+    transition: 'all 0.2s',
+    boxSizing: 'border-box' as const
+  });
+
+  const getLabelStyle = () => ({
+    display: 'block',
+    marginBottom: isMobile ? '4px' : '8px',
+    fontSize: isMobile ? '0.75rem' : '0.875rem',
+    fontWeight: 500,
+    color: '#374151'
+  });
+
+  const getFieldMarginStyle = () => ({
+    marginBottom: isMobile ? '16px' : isTablet ? '20px' : '24px'
+  });
+
+  const getButtonStyle = () => ({
+    width: '100%',
+    height: isMobile ? '44px' : isTablet ? '48px' : '56px',
+    borderRadius: isMobile ? '6px' : '12px',
+    fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1.125rem',
+    fontWeight: 600,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  });
+
+  const getBottomTextStyle = () => ({
+    textAlign: 'center' as const,
+    marginTop: isMobile ? '16px' : isTablet ? '24px' : '40px',
+    fontSize: isMobile ? '0.75rem' : '1rem',
+    color: '#6b7280'
+  });
+
   return (
-    <div style={{
-      height: '100vh',
-      width: '100vw',
-      display: 'flex',
-      margin: 0,
-      padding: 0,
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      overflow: 'hidden',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-    }}>
-      {/* LEFT SIDE - HERO - EXACTLY 50% */}
-      <div style={{
-        width: '50%',
-        height: '100vh',
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '40px',
-        boxSizing: 'border-box',
-        overflow: 'auto'
-      }}>
-        <div style={{
-          maxWidth: '600px',
-          width: '100%',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
-        }}>
+    <div style={getContainerStyle()}>
+      {/* HERO SECTION - Responsive */}
+      <div style={getHeroStyle()}>
+        <div style={getHeroContentStyle()}>
           <img
             src={analyzrLogo}
             alt="REanalyzr"
-            style={{
-              height: '140px',
-              width: 'auto',
-              marginBottom: '40px',
-              objectFit: 'contain',
-              display: 'block'
-            }}
+            style={getLogoStyle()}
           />
-          <h1 style={{
-            fontSize: '4.5rem',
-            fontWeight: 700,
-            margin: '0 0 24px 0',
-            letterSpacing: '-3px',
-            color: 'white',
-            lineHeight: 0.9
-          }}>
+          <h1 style={getTitleStyle()}>
             REanalyzr
           </h1>
-          <p style={{
-            fontSize: '1.5rem',
-            color: 'rgba(255, 255, 255, 0.8)',
-            marginBottom: '48px',
-            lineHeight: 1.3,
-            fontWeight: 300
-          }}>
+          <p style={getSubtitleStyle()}>
             Professional property investment analysis with AI-powered intelligence
           </p>
 
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '32px',
-            alignItems: 'flex-start',
-            maxWidth: '400px',
-            margin: '0 auto'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <span style={{ fontSize: '32px' }}>📊</span>
-              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>47+ Analysis Metrics</span>
+          <div style={getFeaturesStyle()}>
+            <div style={getFeatureStyle()}>
+              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>📊</span>
+              <span style={getFeatureTextStyle()}>47+ Analysis Metrics</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <span style={{ fontSize: '32px' }}>🤖</span>
-              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>AI-Powered Market Insights</span>
+            <div style={getFeatureStyle()}>
+              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>🤖</span>
+              <span style={getFeatureTextStyle()}>AI-Powered Market Insights</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <span style={{ fontSize: '32px' }}>🏠</span>
-              <span style={{ fontSize: '1.375rem', color: 'rgba(255, 255, 255, 0.9)' }}>All Property Types</span>
+            <div style={getFeatureStyle()}>
+              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>🏠</span>
+              <span style={getFeatureTextStyle()}>All Property Types</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* RIGHT SIDE - FORM - EXACTLY 50% */}
-      <div style={{
-        width: '50%',
-        height: '100vh',
-        background: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '40px',
-        boxSizing: 'border-box',
-        overflowY: 'auto'
-      }}>
+      {/* FORM SECTION - Responsive */}
+      <div style={getFormContainerStyle()}>
         <div style={{
           width: '100%',
-          maxWidth: '480px'
+          maxWidth: isMobile ? '100%' : isTablet ? '360px' : '480px'
         }}>
           <h2 style={{
-            fontSize: '2.75rem',
+            fontSize: isMobile ? '1.75rem' : isTablet ? '2.25rem' : '2.75rem',
             fontWeight: 600,
             color: '#0a0a0a',
-            margin: '0 0 12px 0',
-            letterSpacing: '-1.5px'
+            margin: '0 0 6px 0',
+            letterSpacing: isMobile ? '-0.5px' : isTablet ? '-1px' : '-1.5px'
           }}>
             Sign Up
           </h2>
           <p style={{
             color: '#6b7280',
-            fontSize: '1.25rem',
-            marginBottom: '40px',
+            fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1.25rem',
+            marginBottom: isMobile ? '20px' : isTablet ? '28px' : '40px',
             lineHeight: 1.4
           }}>
             Create your Real Estate Analyzer account
@@ -210,34 +287,21 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#374151'
-                }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '0' : isTablet ? '12px' : '16px',
+              marginBottom: isMobile ? '0' : isTablet ? '16px' : '24px'
+            }}>
+              <div style={{ flex: 1, marginBottom: isMobile ? '16px' : '0' }}>
+                <label style={getLabelStyle()}>
                   First Name *
                 </label>
                 <input
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    height: '56px',
-                    padding: '0 20px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    color: '#000000',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle()}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#6366f1';
                     e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
@@ -249,32 +313,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#374151'
-                }}>
+                <label style={getLabelStyle()}>
                   Last Name *
                 </label>
                 <input
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    height: '56px',
-                    padding: '0 20px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    color: '#000000',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  style={getInputStyle()}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#6366f1';
                     e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
@@ -287,33 +333,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               </div>
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+            <div style={getFieldMarginStyle()}>
+              <label style={getLabelStyle()}>
                 Email Address *
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                style={{
-                  width: '100%',
-                  height: '56px',
-                  padding: '0 20px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  backgroundColor: 'white',
-                  color: '#000000',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box'
-                }}
+                style={getInputStyle()}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#6366f1';
                   e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
@@ -325,33 +353,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               />
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+            <div style={getFieldMarginStyle()}>
+              <label style={getLabelStyle()}>
                 Password *
               </label>
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                style={{
-                  width: '100%',
-                  height: '56px',
-                  padding: '0 20px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  backgroundColor: 'white',
-                  color: '#000000',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box'
-                }}
+                style={getInputStyle()}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#6366f1';
                   e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
@@ -362,41 +372,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 }}
               />
               <p style={{
-                marginTop: '8px',
-                fontSize: '0.875rem',
+                marginTop: isMobile ? '4px' : '8px',
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
                 color: '#6b7280'
               }}>
                 Must be at least 8 characters with uppercase, lowercase, and number
               </p>
             </div>
 
-            <div style={{ marginBottom: '32px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: '#374151'
-              }}>
+            <div style={getFieldMarginStyle()}>
+              <label style={getLabelStyle()}>
                 Confirm Password *
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '56px',
-                  padding: '0 20px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  backgroundColor: 'white',
-                  color: '#000000',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box'
-                }}
+                style={getInputStyle()}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#6366f1';
                   e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
@@ -408,8 +400,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               />
               {confirmPassword && confirmPassword !== formData.password && (
                 <p style={{
-                  marginTop: '8px',
-                  fontSize: '0.875rem',
+                  marginTop: isMobile ? '4px' : '8px',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
                   color: '#dc2626'
                 }}>
                   Passwords do not match
@@ -418,12 +410,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
 
             <div style={{
-              marginBottom: '32px'
+              marginBottom: isMobile ? '20px' : isTablet ? '24px' : '32px'
             }}>
               <label style={{
                 display: 'flex',
                 alignItems: 'flex-start',
-                fontSize: '0.875rem',
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
                 color: '#374151',
                 cursor: 'pointer'
               }}>
@@ -432,28 +424,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                   checked={agreeToTerms}
                   onChange={(e) => setAgreeToTerms(e.target.checked)}
                   style={{
-                    marginRight: '12px',
+                    marginRight: isMobile ? '8px' : '12px',
                     marginTop: '2px',
-                    width: '20px',
-                    height: '20px',
+                    width: isMobile ? '16px' : '20px',
+                    height: isMobile ? '16px' : '20px',
                     accentColor: '#6366f1'
                   }}
                 />
                 <span>
                   I agree to the{' '}
-                  <a href="/terms" style={{
+                  <Link to="/terms" style={{
                     color: '#6366f1',
-                    textDecoration: 'none'
+                    textDecoration: 'none',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem'
                   }}>
                     Terms of Service
-                  </a>
+                  </Link>
                   {' '}and{' '}
-                  <a href="/privacy" style={{
+                  <Link to="/privacy" style={{
                     color: '#6366f1',
-                    textDecoration: 'none'
+                    textDecoration: 'none',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem'
                   }}>
                     Privacy Policy
-                  </a>
+                  </Link>
                 </span>
               </label>
             </div>
@@ -462,36 +456,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               type="submit"
               disabled={isLoading || !formData.email || !formData.password || !formData.firstName || !formData.lastName || !agreeToTerms}
               style={{
-                width: '100%',
-                height: '64px',
+                ...getButtonStyle(),
                 backgroundColor: isLoading || !formData.email || !formData.password || !formData.firstName || !formData.lastName || !agreeToTerms ? '#e5e7eb' : '#0a0a0a',
-                color: isLoading || !formData.email || !formData.password || !formData.firstName || !formData.lastName || !agreeToTerms ? '#9ca3af' : 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '1.125rem',
-                fontWeight: 600,
-                cursor: isLoading || !formData.email || !formData.password || !formData.firstName || !formData.lastName || !agreeToTerms ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s'
+                color: isLoading || !formData.email || !formData.password || !formData.firstName || !formData.lastName || !agreeToTerms ? '#9ca3af' : 'white'
               }}
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
-          <p style={{
-            textAlign: 'center',
-            marginTop: '40px',
-            fontSize: '1rem',
-            color: '#6b7280'
-          }}>
+          <p style={getBottomTextStyle()}>
             Already have an account?{' '}
-            <a href="/login" style={{
+            <Link to="/login" style={{
               color: '#0a0a0a',
               fontWeight: 600,
-              textDecoration: 'none'
+              textDecoration: 'none',
+              fontSize: isMobile ? '0.75rem' : '1rem'
             }}>
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </div>

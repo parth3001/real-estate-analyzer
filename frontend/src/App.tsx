@@ -23,6 +23,10 @@ import NotFound from './pages/NotFound';
 import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import PasswordResetPage from './pages/PasswordResetPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
@@ -99,17 +103,49 @@ function App() {
                   </GuestRoute>
                 } 
               />
-              <Route 
-                path="/register" 
+              <Route
+                path="/register"
                 element={
                   <GuestRoute>
                     <AuthLayout>
                       <RegisterPage />
                     </AuthLayout>
                   </GuestRoute>
-                } 
+                }
               />
-              
+              <Route
+                path="/forgot-password"
+                element={
+                  <GuestRoute>
+                    <ForgotPasswordPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/reset-password"
+                element={
+                  <GuestRoute>
+                    <PasswordResetPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/verify-email"
+                element={
+                  <GuestRoute>
+                    <EmailVerificationPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/terms"
+                element={
+                  <GuestRoute>
+                    <TermsOfServicePage />
+                  </GuestRoute>
+                }
+              />
+
               {/* Protected Routes (authentication required) */}
               <Route 
                 element={
