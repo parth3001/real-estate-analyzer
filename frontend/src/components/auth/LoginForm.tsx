@@ -244,26 +244,100 @@ const LoginForm: React.FC<LoginFormProps> = ({
             style={getLogoStyle()}
           />
           <h1 style={getTitleStyle()}>
-            REanalyzr
+            Professional Real Estate Analysis.
           </h1>
+          <h2 style={{
+            ...getTitleStyle(),
+            fontSize: isMobile ? '2.5rem' : isTablet ? '3.5rem' : '4.5rem',
+            margin: '0 0 24px 0'
+          }}>
+            Zero Spreadsheets. Zero Guesswork.
+          </h2>
           <p style={getSubtitleStyle()}>
-            Professional property investment analysis with AI-powered intelligence
+            REAnalyzr brings institutional-grade property analysis to individual investors.
+            Calculate NOI, Cap Rate, IRR, and 25+ metrics in seconds—no Excel required.
           </p>
 
           <div style={getFeaturesStyle()}>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '24px' : '32px' }}>📊</span>
-              <span style={getFeatureTextStyle()}>47+ Analysis Metrics</span>
+              <span style={{
+                fontSize: isTablet ? '20px' : '24px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '1.125rem' : '1.25rem'
+                }}>Instant Analysis</span>
+                <span style={{
+                  fontSize: isTablet ? '0.875rem' : '0.938rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.4
+                }}>Professional metrics in seconds, not hours</span>
+              </div>
             </div>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '24px' : '32px' }}>🤖</span>
-              <span style={getFeatureTextStyle()}>AI-Powered Market Insights</span>
+              <span style={{
+                fontSize: isTablet ? '20px' : '24px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '1.125rem' : '1.25rem'
+                }}>No Spreadsheets</span>
+                <span style={{
+                  fontSize: isTablet ? '0.875rem' : '0.938rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.4
+                }}>Automated calculations prevent costly mistakes</span>
+              </div>
             </div>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '24px' : '32px' }}>🏠</span>
-              <span style={getFeatureTextStyle()}>All Property Types</span>
+              <span style={{
+                fontSize: isTablet ? '20px' : '24px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '1.125rem' : '1.25rem'
+                }}>AI Investment Advisor</span>
+                <span style={{
+                  fontSize: isTablet ? '0.875rem' : '0.938rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.4
+                }}>BUY/NEGOTIATE/PASS verdicts with walk-away prices—not just numbers</span>
+              </div>
             </div>
           </div>
+
+          {/* Footer tagline - visible on tablet and desktop */}
+          {!isMobile && (
+            <div style={{
+              marginTop: isTablet ? '40px' : '56px',
+              paddingTop: isTablet ? '32px' : '40px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+              maxWidth: '500px'
+            }}>
+              <p style={{
+                fontSize: isTablet ? '0.875rem' : '0.938rem',
+                color: 'rgba(255, 255, 255, 0.6)',
+                textAlign: 'center',
+                margin: 0,
+                fontStyle: 'italic',
+                letterSpacing: '0.5px'
+              }}>
+                Data democratization. Professional software. Fractional cost.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -424,6 +498,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }}>
               Sign up for free
             </Link>
+            {' '}
+            <span style={{
+              display: 'inline-block',
+              backgroundColor: '#10B981',
+              color: 'white',
+              padding: isMobile ? '2px 8px' : '3px 10px',
+              borderRadius: '6px',
+              fontSize: isMobile ? '0.688rem' : '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+              verticalAlign: 'middle',
+              marginLeft: '4px'
+            }}>
+              BETA
+            </span>
           </p>
         </div>
       </div>

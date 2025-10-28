@@ -213,24 +213,77 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             style={getLogoStyle()}
           />
           <h1 style={getTitleStyle()}>
-            REanalyzr
+            Professional Real Estate Analysis.
           </h1>
+          <h2 style={{
+            ...getTitleStyle(),
+            fontSize: isMobile ? '2rem' : isTablet ? '2.75rem' : '3.5rem',
+            margin: '0 0 16px 0'
+          }}>
+            Zero Spreadsheets. Zero Guesswork.
+          </h2>
           <p style={getSubtitleStyle()}>
-            Professional property investment analysis with AI-powered intelligence
+            REAnalyzr brings institutional-grade property analysis to individual investors.
+            Calculate NOI, Cap Rate, IRR, and 25+ metrics in seconds—no Excel required.
           </p>
 
           <div style={getFeaturesStyle()}>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>📊</span>
-              <span style={getFeatureTextStyle()}>47+ Analysis Metrics</span>
+              <span style={{
+                fontSize: isTablet ? '18px' : '20px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '0.938rem' : '1rem'
+                }}>Instant Analysis</span>
+                <span style={{
+                  fontSize: isTablet ? '0.75rem' : '0.813rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.3
+                }}>Professional metrics in seconds, not hours</span>
+              </div>
             </div>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>🤖</span>
-              <span style={getFeatureTextStyle()}>AI-Powered Market Insights</span>
+              <span style={{
+                fontSize: isTablet ? '18px' : '20px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '0.938rem' : '1rem'
+                }}>No Spreadsheets</span>
+                <span style={{
+                  fontSize: isTablet ? '0.75rem' : '0.813rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.3
+                }}>Automated calculations prevent costly mistakes</span>
+              </div>
             </div>
             <div style={getFeatureStyle()}>
-              <span style={{ fontSize: isTablet ? '20px' : '24px' }}>🏠</span>
-              <span style={getFeatureTextStyle()}>All Property Types</span>
+              <span style={{
+                fontSize: isTablet ? '18px' : '20px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '0.938rem' : '1rem'
+                }}>AI Investment Advisor</span>
+                <span style={{
+                  fontSize: isTablet ? '0.75rem' : '0.813rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.3
+                }}>BUY/NEGOTIATE/PASS verdicts with walk-away prices—not just numbers</span>
+              </div>
             </div>
           </div>
         </div>
@@ -242,22 +295,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           width: '100%',
           maxWidth: isMobile ? '100%' : isTablet ? '360px' : '480px'
         }}>
-          <h2 style={{
-            fontSize: isMobile ? '1.75rem' : isTablet ? '2.25rem' : '2.75rem',
-            fontWeight: 600,
-            color: '#0a0a0a',
-            margin: '0 0 6px 0',
-            letterSpacing: isMobile ? '-0.5px' : isTablet ? '-1px' : '-1.5px'
-          }}>
-            Sign Up
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <h2 style={{
+              fontSize: isMobile ? '1.75rem' : isTablet ? '2.25rem' : '2.75rem',
+              fontWeight: 600,
+              color: '#0a0a0a',
+              margin: 0,
+              letterSpacing: isMobile ? '-0.5px' : isTablet ? '-1px' : '-1.5px'
+            }}>
+              Sign Up
+            </h2>
+            <span style={{
+              display: 'inline-block',
+              backgroundColor: '#10B981',
+              color: 'white',
+              padding: isMobile ? '4px 10px' : '6px 14px',
+              borderRadius: '8px',
+              fontSize: isMobile ? '0.688rem' : '0.813rem',
+              fontWeight: 700,
+              letterSpacing: '0.5px',
+              verticalAlign: 'middle'
+            }}>
+              BETA
+            </span>
+          </div>
           <p style={{
             color: '#6b7280',
             fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1.25rem',
             marginBottom: isMobile ? '20px' : isTablet ? '28px' : '40px',
             lineHeight: 1.4
           }}>
-            Create your Real Estate Analyzer account
+            Start analyzing properties for free. No credit card required.
           </p>
 
           {error && (
