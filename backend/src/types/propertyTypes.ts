@@ -91,24 +91,61 @@ export interface SFRMetrics extends CommonMetrics {
   rehabROI?: number;
 }
 
+/**
+ * Multi-Family Property Data Interface
+ * Story 1.1: Enhanced with unit-level granularity for competitive advantage
+ *
+ * Supports TWO input methods:
+ * 1. unitTypes[] - Simplified aggregated input (Property Wizard default)
+ * 2. units[] - Granular unit-level input (Advanced users, RentCast integration)
+ */
 export interface MultiFamilyData extends BasePropertyData {
   propertyType: 'MF';
-  totalUnits: number;
+
+  // Building Details
+  totalUnits: number;  // 2-32 units (target range)
   totalSqft: number;
-  unitTypes: Array<{
-    type: string;
-    count: number;
-    sqft: number;
-    monthlyRent: number;
-  }>;
-  maintenanceCostPerUnit: number;
-  commonAreaUtilities: {
-    electric: number;
-    water: number;
-    gas: number;
-    trash: number;
-  };
   yearBuilt: number;
+  buildingType?: 'SIDE_BY_SIDE' | 'STACKED' | 'MIXED' | 'COMPLEX';
+
+  // Unit Configuration - Method 1: Aggregated (existing, backward compatible)
+  unitTypes?: Array<{
+    type: string;          // e.g., "2bed/1bath", "Studio"
+    count: number;         // How many of this type
+    sqft: number;          // Square feet per unit
+    monthlyRent: number;   // Current rent per unit
+  }>;
+
+  // Unit Configuration - Method 2: Granular (NEW - competitive moat)
+  units?: Array<{
+    unitNumber?: string;          // e.g., "101", "2A"
+    bedrooms: number;             // 0 (studio) to 4+
+    bathrooms: number;            // 1.0, 1.5, 2.0, etc.
+    squareFeet: number;           // Individual unit size
+    currentRent: number;          // What tenant actually pays
+    marketRent?: number;          // ✨ COMPETITIVE MOAT - From RentCast API
+    isVacant?: boolean;           // Track physical vacancy at unit level
+    condition?: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';  // Renovation planning
+    leaseEndDate?: string;        // ISO date for turnover planning
+  }>;
+
+  // Operating Expenses (monthly amounts)
+  commonAreaUtilities: {
+    electric: number;   // Common area electricity
+    water: number;      // Water/sewer for common areas
+    gas: number;        // Gas for common areas
+    trash: number;      // Trash removal
+  };
+  maintenanceCostPerUnit: number;  // Monthly per-unit maintenance budget
+
+  // Financing Options
+  loanType?: 'RESIDENTIAL' | 'COMMERCIAL';  // ✨ EDUCATES BEGINNERS: 1-4 units = residential, 5+ = commercial
+  balloonPayment?: {
+    years: number;      // Typical: 5, 7, or 10 years
+    amount?: number;    // Calculated if not provided
+  };
+
+  // Long-term Assumptions (optional, uses defaults if not provided)
   longTermAssumptions?: {
     projectionYears: number;
     annualRentIncrease: number;
@@ -121,14 +158,30 @@ export interface MultiFamilyData extends BasePropertyData {
 }
 
 export interface MultiFamilyMetrics extends CommonMetrics {
+  // Per-unit metrics
   pricePerUnit: number;
   pricePerSqft: number;
   noiPerUnit: number;
+  cashFlowPerUnit: number;
   averageRentPerUnit: number;
   operatingExpensePerUnit: number;
-  commonAreaExpenseRatio: number;
-  unitMixEfficiency: number;
-  economicVacancyRate: number;
+
+  // Advanced MF-specific metrics (Story 1.4)
+  grm: number;                      // Gross Rent Multiplier: Purchase Price / Gross Annual Income
+  debtYield: number;                // (NOI / Loan Amount) * 100 - What lenders use
+  breakEvenOccupancy: number;       // (Operating Expenses + Debt Service) / Gross Income * 100
+  rentPerSqft: number;              // Monthly Rent / Total Square Feet
+  unitMixEfficiency: number;        // Rent optimization score (0-100)
+  economicVacancyRate: number;      // (Potential Income - Actual Income) / Potential Income * 100
+  grossYield: number;               // (Gross Annual Income / Purchase Price) * 100
+
+  // Efficiency metrics
+  commonAreaExpenseRatio: number;   // Common area costs per square foot
+
+  // Context fields for NOI calculation clarity
+  effectiveGrossIncome?: number;    // Gross Income - Vacancy - Credit Loss
+  grossIncome?: number;             // Potential Gross Income (before vacancy)
+  operatingExpenses?: number;       // Total operating expenses (NO vacancy)
 }
 
 export interface ProjectionAssumptions {
@@ -162,6 +215,40 @@ export interface ExitAnalysis {
   netProceedsFromSale: number;
   totalReturn: number;
   equityMultiple: number;
+}
+
+export interface SensitivityAnalysis {
+  bestCase: {
+    cashFlow: number;
+    noi: number;
+    dscr: number;
+    capRate: number;
+    totalReturn: number;
+    assumptions: {
+      rentIncrease: number;     // % increase applied
+      expenseDecrease: number;  // % decrease applied
+      vacancyRate: number;      // Optimistic vacancy rate
+    };
+  };
+  worstCase: {
+    cashFlow: number;
+    noi: number;
+    dscr: number;
+    capRate: number;
+    totalReturn: number;
+    assumptions: {
+      rentDecrease: number;     // % decrease applied
+      expenseIncrease: number;  // % increase applied
+      vacancyRate: number;      // Pessimistic vacancy rate
+    };
+  };
+  baseCase: {
+    cashFlow: number;
+    noi: number;
+    dscr: number;
+    capRate: number;
+    totalReturn: number;
+  };
 }
 
 export interface AnalysisResult<T extends CommonMetrics> {
