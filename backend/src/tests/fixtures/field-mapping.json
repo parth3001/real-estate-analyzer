@@ -1,5 +1,5 @@
 {
-  "generated": "2025-08-30T18:06:20.948Z",
+  "generated": "2025-10-29T02:29:31.761Z",
   "propertyType": "SFR",
   "fields": {
     "monthlyAnalysis.income.gross": {
@@ -20,12 +20,12 @@
     "monthlyAnalysis.expenses.debt": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.debt",
-      "sampleValue": 2334.953147645576
+      "sampleValue": 2334.95
     },
     "monthlyAnalysis.expenses.total": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.total",
-      "sampleValue": 3232.1531476455757
+      "sampleValue": 3232.1499999999996
     },
     "monthlyAnalysis.expenses.breakdown.propertyTax": {
       "type": "number",
@@ -45,7 +45,7 @@
     "monthlyAnalysis.expenses.breakdown.propertyManagement": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.breakdown.propertyManagement",
-      "sampleValue": 235.20000000000002
+      "sampleValue": 235.2
     },
     "monthlyAnalysis.expenses.breakdown.vacancy": {
       "type": "number",
@@ -55,7 +55,7 @@
     "monthlyAnalysis.expenses.breakdown.tenantTurnover": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.breakdown.tenantTurnover",
-      "sampleValue": 82.08333333333333
+      "sampleValue": 82.08
     },
     "monthlyAnalysis.expenses.breakdown.utilities": {
       "type": "number",
@@ -120,7 +120,7 @@
     "monthlyAnalysis.expenses.propertyManagement": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.propertyManagement",
-      "sampleValue": 235.20000000000002
+      "sampleValue": 235.2
     },
     "monthlyAnalysis.expenses.vacancy": {
       "type": "number",
@@ -130,12 +130,12 @@
     "monthlyAnalysis.expenses.mortgage.total": {
       "type": "number",
       "path": "monthlyAnalysis.expenses.mortgage.total",
-      "sampleValue": 2334.953147645576
+      "sampleValue": 2334.95
     },
     "monthlyAnalysis.cashFlow": {
       "type": "number",
       "path": "monthlyAnalysis.cashFlow",
-      "sampleValue": -521.2364809789093
+      "sampleValue": -521.2333333333333
     },
     "annualAnalysis.income": {
       "type": "number",
@@ -155,12 +155,12 @@
     "annualAnalysis.debtService": {
       "type": "number",
       "path": "annualAnalysis.debtService",
-      "sampleValue": 28019.43777174691
+      "sampleValue": 28019.399999999998
     },
     "annualAnalysis.cashFlow": {
       "type": "number",
       "path": "annualAnalysis.cashFlow",
-      "sampleValue": -6254.837771746912
+      "sampleValue": -6254.8
     },
     "keyMetrics.noi": {
       "type": "number",
@@ -170,27 +170,27 @@
     "keyMetrics.capRate": {
       "type": "number",
       "path": "keyMetrics.capRate",
-      "sampleValue": 4.836577777777777
+      "sampleValue": 4.84
     },
     "keyMetrics.cashOnCashReturn": {
       "type": "number",
       "path": "keyMetrics.cashOnCashReturn",
-      "sampleValue": -6.949819746385458
+      "sampleValue": -6.95
     },
     "keyMetrics.dscr": {
       "type": "number",
       "path": "keyMetrics.dscr",
-      "sampleValue": 0.7767679058123748
+      "sampleValue": 0.78
     },
     "keyMetrics.operatingExpenseRatio": {
       "type": "number",
       "path": "keyMetrics.operatingExpenseRatio",
-      "sampleValue": 35.06205991168397
+      "sampleValue": 35.06
     },
     "keyMetrics.debtYield": {
       "type": "number",
       "path": "keyMetrics.debtYield",
-      "sampleValue": 6.0457222222222216
+      "sampleValue": 6.05
     },
     "keyMetrics.grossYield": {
       "type": "number",
@@ -235,12 +235,12 @@
     "keyMetrics.breakEvenOccupancy": {
       "type": "number",
       "path": "keyMetrics.breakEvenOccupancy",
-      "sampleValue": 112.72913200608534
+      "sampleValue": 112.72902494331065
     },
     "keyMetrics.equityMultiple": {
       "type": "number",
       "path": "keyMetrics.equityMultiple",
-      "sampleValue": 12.943934220464724
+      "sampleValue": 12.943908928934516
     },
     "keyMetrics.fiftyRuleAnalysis": {
       "type": "boolean",
@@ -250,7 +250,7 @@
     "keyMetrics.debtToIncomeRatio": {
       "type": "number",
       "path": "keyMetrics.debtToIncomeRatio",
-      "sampleValue": 79.42017508998558
+      "sampleValue": 79.42006802721087
     },
     "keyMetrics.returnOnImprovements": {
       "type": "number",
@@ -265,22 +265,22 @@
     "keyMetrics.irr": {
       "type": "number",
       "path": "keyMetrics.irr",
-      "sampleValue": 8.939668989303632
+      "sampleValue": 0.0893967442777181
     },
     "keyMetrics.reservesAnalysis.minimumReserves": {
       "type": "number",
       "path": "keyMetrics.reservesAnalysis.minimumReserves",
-      "sampleValue": 9942.709442936728
+      "sampleValue": 9942.699999999999
     },
     "keyMetrics.reservesAnalysis.recommendedReserves": {
       "type": "number",
       "path": "keyMetrics.reservesAnalysis.recommendedReserves",
-      "sampleValue": 16571.182404894545
+      "sampleValue": 16571.166666666664
     },
     "keyMetrics.reservesAnalysis.optimalReserves": {
       "type": "number",
       "path": "keyMetrics.reservesAnalysis.optimalReserves",
-      "sampleValue": 23199.655366852363
+      "sampleValue": 23199.63333333333
     },
     "keyMetrics.reservesAnalysis.breakdown.baseMonths": {
       "type": "number",
@@ -325,27 +325,27 @@
     "longTermAnalysis.projections.debtService": {
       "type": "number",
       "path": "longTermAnalysis.projections[0].debtService",
-      "sampleValue": 28019.43777174691
+      "sampleValue": 28019.399999999998
     },
     "longTermAnalysis.projections.cashFlow": {
       "type": "number",
       "path": "longTermAnalysis.projections[0].cashFlow",
-      "sampleValue": -6254.837771746912
+      "sampleValue": -6254.8
     },
     "longTermAnalysis.projections.equity": {
       "type": "number",
       "path": "longTermAnalysis.projections[0].equity",
-      "sampleValue": 107219.43777174689
+      "sampleValue": 107219.40000000002
     },
     "longTermAnalysis.projections.mortgageBalance": {
       "type": "number",
       "path": "longTermAnalysis.projections[0].mortgageBalance",
-      "sampleValue": 356280.5622282531
+      "sampleValue": 356280.6
     },
     "longTermAnalysis.projections.totalReturn": {
       "type": "number",
       "path": "longTermAnalysis.projections[0].totalReturn",
-      "sampleValue": 7245.162228253088
+      "sampleValue": 7245.2
     },
     "longTermAnalysis.projections.propertyTax": {
       "type": "number",
@@ -410,32 +410,32 @@
     "longTermAnalysis.exitAnalysis.mortgagePayoff": {
       "type": "number",
       "path": "longTermAnalysis.exitAnalysis.mortgagePayoff",
-      "sampleValue": 24072.820291269458
+      "sampleValue": 24076.231709120577
     },
     "longTermAnalysis.exitAnalysis.netProceedsFromSale": {
       "type": "number",
       "path": "longTermAnalysis.exitAnalysis.netProceedsFromSale",
-      "sampleValue": 1002659.2050219574
+      "sampleValue": 1002655.7936041064
     },
     "longTermAnalysis.exitAnalysis.totalReturn": {
       "type": "number",
       "path": "longTermAnalysis.exitAnalysis.totalReturn",
-      "sampleValue": 1164954.0798418252
+      "sampleValue": 1164951.8036041064
     },
     "longTermAnalysis.exitAnalysis.returnOnInvestment": {
       "type": "number",
       "path": "longTermAnalysis.exitAnalysis.returnOnInvestment",
-      "sampleValue": 1294.3934220464723
+      "sampleValue": 1294.3908928934516
     },
     "longTermAnalysis.returns.irr": {
       "type": "number",
       "path": "longTermAnalysis.returns.irr",
-      "sampleValue": 8.939668989303632
+      "sampleValue": 0.0893967442777181
     },
     "longTermAnalysis.returns.totalCashFlow": {
       "type": "number",
       "path": "longTermAnalysis.returns.totalCashFlow",
-      "sampleValue": 252294.87481986772
+      "sampleValue": 252296.01000000004
     },
     "longTermAnalysis.returns.totalAppreciation": {
       "type": "number",
@@ -445,7 +445,7 @@
     "longTermAnalysis.returns.totalReturn": {
       "type": "number",
       "path": "longTermAnalysis.returns.totalReturn",
-      "sampleValue": 1164954.0798418252
+      "sampleValue": 1164951.8036041064
     },
     "longTermAnalysis.returns.totalInvestment": {
       "type": "number",
@@ -465,17 +465,17 @@
     "sensitivityAnalysis.bestCase.cashFlow": {
       "type": "number",
       "path": "sensitivityAnalysis.bestCase.cashFlow",
-      "sampleValue": -1830.1330584202515
+      "sampleValue": -1830.1100000000006
     },
     "sensitivityAnalysis.bestCase.cashOnCashReturn": {
       "type": "number",
       "path": "sensitivityAnalysis.bestCase.cashOnCashReturn",
-      "sampleValue": -2.0334811760225016
+      "sampleValue": -2.03
     },
     "sensitivityAnalysis.bestCase.totalReturn": {
       "type": "number",
       "path": "sensitivityAnalysis.bestCase.totalReturn",
-      "sampleValue": 795281.0821836486
+      "sampleValue": 795281.7739362561
     },
     "sensitivityAnalysis.bestCase.noi": {
       "type": "number",
@@ -485,7 +485,7 @@
     "sensitivityAnalysis.bestCase.dscr": {
       "type": "number",
       "path": "sensitivityAnalysis.bestCase.dscr",
-      "sampleValue": 0.9311953748607356
+      "sampleValue": 0.93
     },
     "sensitivityAnalysis.bestCase.vacancyRate": {
       "type": "number",
@@ -505,17 +505,17 @@
     "sensitivityAnalysis.worstCase.cashFlow": {
       "type": "number",
       "path": "sensitivityAnalysis.worstCase.cashFlow",
-      "sampleValue": -13040.829008150788
+      "sampleValue": -13040.779999999999
     },
     "sensitivityAnalysis.worstCase.cashOnCashReturn": {
       "type": "number",
       "path": "sensitivityAnalysis.worstCase.cashOnCashReturn",
-      "sampleValue": -14.48981000905643
+      "sampleValue": -14.49
     },
     "sensitivityAnalysis.worstCase.totalReturn": {
       "type": "number",
       "path": "sensitivityAnalysis.worstCase.totalReturn",
-      "sampleValue": -1794.3093664003536
+      "sampleValue": -1792.839121876692
     },
     "sensitivityAnalysis.worstCase.noi": {
       "type": "number",
@@ -525,7 +525,7 @@
     "sensitivityAnalysis.worstCase.dscr": {
       "type": "number",
       "path": "sensitivityAnalysis.worstCase.dscr",
-      "sampleValue": 0.5786350055759029
+      "sampleValue": 0.58
     },
     "sensitivityAnalysis.worstCase.vacancyRate": {
       "type": "number",

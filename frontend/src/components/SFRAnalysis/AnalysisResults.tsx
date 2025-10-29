@@ -1113,6 +1113,210 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 )}
               </CardContent>
             </Card>
+
+            {/* Exit Analysis Table - Restored from commit 05be81c (Sept 28, 2025) */}
+            {analysis?.longTermAnalysis?.exitAnalysis && (
+              <Card sx={{ borderRadius: '16px', mt: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                    Exit Analysis (Year {analysis?.longTermAnalysis?.projectionYears || 10} Sale)
+                  </Typography>
+
+                  <TableContainer>
+                    <Table size="small">
+                      <TableBody>
+                        {/* Projected Sale Price */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: 'none', fontWeight: 600 }}>
+                            Projected Sale Price (Year {analysis?.longTermAnalysis?.projectionYears || 10})
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 700,
+                            fontSize: '1.1rem',
+                            color: appleColors.green[600],
+                            borderBottom: 'none'
+                          }}>
+                            {formatValue(analysis.longTermAnalysis.exitAnalysis.projectedSalePrice || 0, 'currency')}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Selling Costs */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: 'none' }}>Selling Costs (6%)</TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 600,
+                            color: appleColors.red[600],
+                            borderBottom: 'none'
+                          }}>
+                            -{formatValue(analysis.longTermAnalysis.exitAnalysis.sellingCosts || 0, 'currency')}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Mortgage Payoff */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: '2px solid', borderColor: appleColors.gray[300] }}>
+                            Mortgage Payoff
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 600,
+                            color: appleColors.orange[600],
+                            borderBottom: '2px solid',
+                            borderColor: appleColors.gray[300]
+                          }}>
+                            -{formatValue(analysis.longTermAnalysis.exitAnalysis.mortgagePayoff || 0, 'currency')}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Net Proceeds - Highlighted */}
+                        <TableRow sx={{ backgroundColor: appleColors.blue[50] }}>
+                          <TableCell sx={{
+                            fontWeight: 700,
+                            fontSize: '1.1rem',
+                            borderBottom: 'none'
+                          }}>
+                            Net Proceeds from Sale
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 700,
+                            fontSize: '1.3rem',
+                            color: appleColors.blue[600],
+                            borderBottom: 'none'
+                          }}>
+                            {formatValue(analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 0, 'currency')}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Spacer Row */}
+                        <TableRow>
+                          <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 1 }}></TableCell>
+                        </TableRow>
+
+                        {/* Investment Returns Breakdown Header */}
+                        <TableRow>
+                          <TableCell colSpan={2} sx={{
+                            fontWeight: 600,
+                            backgroundColor: appleColors.gray[50],
+                            borderBottom: 'none'
+                          }}>
+                            Investment Returns Breakdown
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Total Cash Flow */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: 'none' }}>
+                            Total Cash Flow ({analysis?.longTermAnalysis?.projectionYears || 10} Years)
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 600,
+                            color: appleColors.green[600],
+                            borderBottom: 'none'
+                          }}>
+                            {formatValue(
+                              analysis.longTermAnalysis.projections?.reduce((sum: number, p: any) => sum + (p.cashFlow || 0), 0) || 0,
+                              'currency'
+                            )}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Total Appreciation */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: 'none' }}>Total Appreciation</TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 600,
+                            color: appleColors.green[600],
+                            borderBottom: 'none'
+                          }}>
+                            {formatValue(
+                              (analysis.longTermAnalysis.exitAnalysis.projectedSalePrice || 0) - (propertyData?.purchasePrice || 0),
+                              'currency'
+                            )}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Initial Investment */}
+                        <TableRow>
+                          <TableCell sx={{ borderBottom: '2px solid', borderColor: appleColors.gray[300] }}>
+                            Less: Initial Investment
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 600,
+                            color: appleColors.red[600],
+                            borderBottom: '2px solid',
+                            borderColor: appleColors.gray[300]
+                          }}>
+                            -{formatValue(
+                              (propertyData?.downPayment || 0) +
+                              (propertyData?.closingCosts || 0) +
+                              (propertyData?.capitalInvestments || 0),
+                              'currency'
+                            )}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Total Return - Highlighted */}
+                        <TableRow sx={{ backgroundColor: appleColors.green[50] }}>
+                          <TableCell sx={{
+                            fontWeight: 700,
+                            fontSize: '1.1rem',
+                            borderBottom: 'none'
+                          }}>
+                            Total Return
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 700,
+                            fontSize: '1.3rem',
+                            color: appleColors.green[600],
+                            borderBottom: 'none'
+                          }}>
+                            {formatValue(
+                              (analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 0) +
+                              (analysis.longTermAnalysis.projections?.reduce((sum: number, p: any) => sum + (p.cashFlow || 0), 0) || 0) -
+                              ((propertyData?.downPayment || 0) + (propertyData?.closingCosts || 0) + (propertyData?.capitalInvestments || 0)),
+                              'currency'
+                            )}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* ROI Percentage */}
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                            Return on Investment (ROI)
+                          </TableCell>
+                          <TableCell align="right" sx={{
+                            fontWeight: 700,
+                            fontSize: '1.3rem',
+                            color: (analysis.longTermAnalysis.exitAnalysis.returnOnInvestment || 0) >= 100
+                              ? appleColors.green[600]
+                              : appleColors.orange[600]
+                          }}>
+                            {formatValue(analysis.longTermAnalysis.exitAnalysis.returnOnInvestment || 0, 'percent')}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  {/* Educational Note */}
+                  <Box sx={{
+                    mt: 3,
+                    p: 2,
+                    backgroundColor: appleColors.blue[50],
+                    borderRadius: '8px',
+                    borderLeft: `4px solid ${appleColors.blue[500]}`
+                  }}>
+                    <Typography variant="body2" color="text.secondary">
+                      💡 <strong>What This Means:</strong> If you sell this property after {analysis?.longTermAnalysis?.projectionYears || 10} years,
+                      you'll receive <strong>{formatValue(analysis.longTermAnalysis.exitAnalysis.netProceedsFromSale || 0, 'currency')}</strong> from
+                      the sale. Combined with your cumulative cash flow, your total return would be{' '}
+                      <strong>
+                        {formatValue(analysis.longTermAnalysis.exitAnalysis.returnOnInvestment || 0, 'percent')}
+                      </strong> on your initial investment.
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
           </Box>
         );
 
