@@ -12,7 +12,7 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
     const property = MFPropertyFactory.create(); // 8-unit default
     const analyzer = new MultiFamilyAnalyzer(property, defaultMFAssumptions);
     const result = analyzer.analyze();
-    const metrics = result.metrics;
+    const metrics = result.keyMetrics;
 
     it('should calculate Effective Gross Income correctly', () => {
       const grossIncome = (1500 * 6 + 1200 * 2) * 12; // $136,800
@@ -80,15 +80,15 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const expectedCreditLoss = 2736; // 2%
       const expectedEGI = 127224;
 
-      expect(result.metrics.grossIncome).toBeCloseTo(expectedGrossIncome, -2);
-      expect(result.metrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
+      expect(result.keyMetrics.grossIncome).toBeCloseTo(expectedGrossIncome, -2);
+      expect(result.keyMetrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
 
       // Operating expenses should be around $58,512 (from manual calc)
       // Allow 10% tolerance for differences in assumptions
-      expect(result.metrics.operatingExpenses).toBeCloseTo(58512, -500);
+      expect(result.keyMetrics.operatingExpenses).toBeCloseTo(58512, -500);
 
       // NOI should be around $68,712 (from manual calc)
-      expect(result.metrics.noi).toBeCloseTo(68712, -500);
+      expect(result.keyMetrics.noi).toBeCloseTo(68712, -500);
     });
 
     it('should validate Fayetteville 4-plex NOI (positive cash flow)', () => {
@@ -117,9 +117,9 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const expectedEGI = 66960;
       const expectedNOI = 40080;
 
-      expect(result.metrics.grossIncome).toBeCloseTo(expectedGrossIncome, -2);
-      expect(result.metrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
-      expect(result.metrics.noi).toBeCloseTo(expectedNOI, -500);
+      expect(result.keyMetrics.grossIncome).toBeCloseTo(expectedGrossIncome, -2);
+      expect(result.keyMetrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
+      expect(result.keyMetrics.noi).toBeCloseTo(expectedNOI, -500);
     });
   });
 
@@ -130,12 +130,12 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const result = analyzer.analyze();
 
       // Negative NOI is valid (property loses money)
-      expect(result.metrics.noi).toBeLessThan(0);
+      expect(result.keyMetrics.noi).toBeLessThan(0);
 
       // But calculation should still use EGI method
-      const egi = result.metrics.effectiveGrossIncome!;
-      const opex = result.metrics.operatingExpenses!;
-      expect(result.metrics.noi).toBeCloseTo(egi - opex, -2);
+      const egi = result.keyMetrics.effectiveGrossIncome!;
+      const opex = result.keyMetrics.operatingExpenses!;
+      expect(result.keyMetrics.noi).toBeCloseTo(egi - opex, -2);
     });
 
     it('should handle all-cash purchase (no debt service)', () => {
@@ -144,12 +144,12 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const result = analyzer.analyze();
 
       // All-cash purchase should still calculate NOI correctly
-      expect(result.metrics.noi).toBeGreaterThan(0);
+      expect(result.keyMetrics.noi).toBeGreaterThan(0);
 
       // EGI method should still apply
-      const egi = result.metrics.effectiveGrossIncome!;
-      const opex = result.metrics.operatingExpenses!;
-      expect(result.metrics.noi).toBeCloseTo(egi - opex, -2);
+      const egi = result.keyMetrics.effectiveGrossIncome!;
+      const opex = result.keyMetrics.operatingExpenses!;
+      expect(result.keyMetrics.noi).toBeCloseTo(egi - opex, -2);
     });
 
     it('should handle high vacancy rate (10%)', () => {
@@ -162,15 +162,15 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const analyzer = new MultiFamilyAnalyzer(property, highVacancyAssumptions);
       const result = analyzer.analyze();
 
-      const grossIncome = result.metrics.grossIncome!;
+      const grossIncome = result.keyMetrics.grossIncome!;
       const vacancyLoss = grossIncome * 0.10; // $13,680
       const creditLoss = grossIncome * 0.02; // $2,736
       const expectedEGI = grossIncome - vacancyLoss - creditLoss;
 
-      expect(result.metrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
+      expect(result.keyMetrics.effectiveGrossIncome).toBeCloseTo(expectedEGI, -2);
 
       // NOI should be lower due to higher vacancy
-      expect(result.metrics.noi).toBeLessThan(68712); // Lower than baseline
+      expect(result.keyMetrics.noi).toBeLessThan(68712); // Lower than baseline
     });
   });
 
@@ -180,12 +180,12 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const analyzer = new MultiFamilyAnalyzer(property, defaultMFAssumptions);
       const result = analyzer.analyze();
 
-      const expectedCapRate = (result.metrics.noi / property.purchasePrice) * 100;
-      expect(result.metrics.capRate).toBeCloseTo(expectedCapRate, 1);
+      const expectedCapRate = (result.keyMetrics.noi / property.purchasePrice) * 100;
+      expect(result.keyMetrics.capRate).toBeCloseTo(expectedCapRate, 1);
 
       // Cap rate should be in typical MF range (4-12%)
-      expect(result.metrics.capRate).toBeGreaterThan(3);
-      expect(result.metrics.capRate).toBeLessThan(15);
+      expect(result.keyMetrics.capRate).toBeGreaterThan(3);
+      expect(result.keyMetrics.capRate).toBeLessThan(15);
     });
 
     it('should calculate DSCR using correct NOI', () => {
@@ -195,10 +195,10 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
 
       // DSCR = NOI / Annual Debt Service
       // This property should have DSCR < 1.0 (doesn't cover debt service)
-      expect(result.metrics.dscr).toBeLessThan(1.0);
+      expect(result.keyMetrics.dscr).toBeLessThan(1.0);
 
       // But it should be within reasonable range (not absurdly low)
-      expect(result.metrics.dscr).toBeGreaterThan(0.5);
+      expect(result.keyMetrics.dscr).toBeGreaterThan(0.5);
     });
 
     it('should calculate Debt Yield using correct NOI', () => {
@@ -207,12 +207,12 @@ describe('Story 1.2: NOI Calculation Bug Fix', () => {
       const result = analyzer.analyze();
 
       const loanAmount = property.purchasePrice - property.downPayment;
-      const expectedDebtYield = (result.metrics.noi / loanAmount) * 100;
+      const expectedDebtYield = (result.keyMetrics.noi / loanAmount) * 100;
 
-      expect(result.metrics.debtYield).toBeCloseTo(expectedDebtYield, 1);
+      expect(result.keyMetrics.debtYield).toBeCloseTo(expectedDebtYield, 1);
 
       // Debt yield should be positive
-      expect(result.metrics.debtYield).toBeGreaterThan(0);
+      expect(result.keyMetrics.debtYield).toBeGreaterThan(0);
     });
   });
 });
