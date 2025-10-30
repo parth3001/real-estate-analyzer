@@ -48,6 +48,7 @@ import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
 import ScenarioManager from './ScenarioManager';
 import StressTestingDashboard from './StressTestingDashboard';
+import FeedbackWidget from '../common/FeedbackWidget';
 import { useDualMode } from '../../contexts/DualModeContext';
 import { EducationalTooltip } from '../common/EducationalTooltip';
 
@@ -1849,6 +1850,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       }}>
         {renderSectionContent()}
       </Box>
+
+      {/* Beta Feedback Widget */}
+      <FeedbackWidget
+        dealId={dealId}
+        propertyAddress={propertyData?.address}
+        autoShowDelay={15000}
+      />
     </Box>
   );
 };
