@@ -80,7 +80,12 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
   ];
 
   const drawer = (
-    <Box sx={{ overflow: 'auto' }}>
+    <Box sx={{
+      overflow: 'auto',
+      backgroundColor: '#ffffff', // Ensure white background
+      color: '#000000', // Ensure black text
+      height: '100%'
+    }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           Real Estate Analyzer
@@ -113,14 +118,21 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
                 },
               }}
             >
-              <ListItemIcon 
-                sx={{ 
-                  color: isActive(item.path) ? 'primary.contrastText' : 'inherit'
+              <ListItemIcon
+                sx={{
+                  color: isActive(item.path) ? 'primary.contrastText' : '#374151'
                 }}
               >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.text} />
+              <ListItemText
+                primary={item.text}
+                sx={{
+                  '& .MuiListItemText-primary': {
+                    color: isActive(item.path) ? 'primary.contrastText' : '#111827'
+                  }
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
@@ -145,10 +157,17 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={{ color: isActive('/census-test') ? 'primary.contrastText' : '#374151' }}>
               <MapIcon />
             </ListItemIcon>
-            <ListItemText primary="Census Data Test" />
+            <ListItemText
+              primary="Census Data Test"
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: isActive('/census-test') ? 'primary.contrastText' : '#111827'
+                }
+              }}
+            />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
@@ -169,10 +188,17 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={{ color: isActive('/help') ? 'primary.contrastText' : '#374151' }}>
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Help & Documentation" />
+            <ListItemText
+              primary="Help & Documentation"
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: isActive('/help') ? 'primary.contrastText' : '#111827'
+                }
+              }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
