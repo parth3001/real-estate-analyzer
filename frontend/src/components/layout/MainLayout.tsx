@@ -120,7 +120,7 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             >
               <ListItemIcon
                 sx={{
-                  color: isActive(item.path) ? 'primary.contrastText' : '#374151'
+                  color: isActive(item.path) ? 'primary.contrastText' : '#374151 !important'
                 }}
               >
                 {item.icon}
@@ -129,7 +129,8 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
                 primary={item.text}
                 sx={{
                   '& .MuiListItemText-primary': {
-                    color: isActive(item.path) ? 'primary.contrastText' : '#111827'
+                    color: isActive(item.path) ? 'primary.contrastText' : '#111827 !important',
+                    fontWeight: 500
                   }
                 }}
               />
@@ -157,14 +158,15 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon sx={{ color: isActive('/census-test') ? 'primary.contrastText' : '#374151' }}>
+            <ListItemIcon sx={{ color: isActive('/census-test') ? 'primary.contrastText' : '#374151 !important' }}>
               <MapIcon />
             </ListItemIcon>
             <ListItemText
               primary="Census Data Test"
               sx={{
                 '& .MuiListItemText-primary': {
-                  color: isActive('/census-test') ? 'primary.contrastText' : '#111827'
+                  color: isActive('/census-test') ? 'primary.contrastText' : '#111827 !important',
+                  fontWeight: 500
                 }
               }}
             />
@@ -188,14 +190,15 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon sx={{ color: isActive('/help') ? 'primary.contrastText' : '#374151' }}>
+            <ListItemIcon sx={{ color: isActive('/help') ? 'primary.contrastText' : '#374151 !important' }}>
               <HelpOutlineIcon />
             </ListItemIcon>
             <ListItemText
               primary="Help & Documentation"
               sx={{
                 '& .MuiListItemText-primary': {
-                  color: isActive('/help') ? 'primary.contrastText' : '#111827'
+                  color: isActive('/help') ? 'primary.contrastText' : '#111827 !important',
+                  fontWeight: 500
                 }
               }}
             />
