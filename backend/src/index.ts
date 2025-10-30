@@ -52,6 +52,18 @@ if (result.error) {
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Trust proxy - CRITICAL for production deployment behind reverse proxy (Render, Heroku, etc.)
+// This allows Express to correctly identify client IPs from X-Forwarded-For header
+// Required for: rate limiting, IP-based security, accurate logging
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Trust first proxy (Render.com load balancer)
+  logger.info('✅ Trust proxy enabled for production environment');
+} else {
+  // In development, optionally trust localhost proxies
+  app.set('trust proxy', 'loopback');
+  logger.info('✅ Trust proxy enabled for localhost only (development)');
+}
+
 // Middleware
 app.use(cors());
 
