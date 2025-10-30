@@ -22,8 +22,6 @@ import {
   IconButton,
   Fab,
   Zoom,
-  Checkbox,
-  FormGroup,
   Snackbar,
   Alert,
   Slide
@@ -56,14 +54,6 @@ interface FeedbackData {
   dealId?: string;
   propertyAddress?: string;
 }
-
-const easeOfUseIcons = {
-  'very-easy': <SentimentVerySatisfied />,
-  'easy': <SentimentSatisfied />,
-  'okay': <SentimentNeutral />,
-  'difficult': <SentimentDissatisfied />,
-  'very-difficult': <SentimentVeryDissatisfied />
-};
 
 export const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({
   dealId,
