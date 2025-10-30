@@ -16,7 +16,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Container,
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -479,10 +478,26 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           display: 'flex',
           gap: 1,
           overflowX: 'auto',
-          pb: 1,
-          '&::-webkit-scrollbar': { display: 'none' },
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none'
+          pb: 2,
+          // Show scrollbar on hover for better UX
+          '&::-webkit-scrollbar': {
+            height: '8px',
+            display: 'block'
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: appleColors.gray[100],
+            borderRadius: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: appleColors.gray[300],
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: appleColors.gray[400]
+            }
+          },
+          // For Firefox
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${appleColors.gray[300]} ${appleColors.gray[100]}`
         }}
       >
         {analysisSections.map((section) => (
@@ -501,6 +516,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               py: 1.5,
               whiteSpace: 'nowrap',
               borderColor: appleColors.gray[300],
+              flexShrink: 0, // Prevent button shrinking
               ...(selectedSection === section.id && {
                 backgroundColor: appleColors.primary[500],
                 boxShadow: '0 4px 12px -4px rgba(59, 130, 246, 0.4)',
@@ -1823,15 +1839,17 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
-        {/* Section Navigation */}
-        <SectionNavigation />
+    <Box sx={{ width: '100%' }}>
+      {/* Section Navigation */}
+      <SectionNavigation />
 
-        {/* Content */}
+      {/* Content */}
+      <Box sx={{
+        width: '100%'
+      }}>
         {renderSectionContent()}
       </Box>
-    </Container>
+    </Box>
   );
 };
 
