@@ -49,7 +49,9 @@ import DealFixer from './DealFixer';
 import ScenarioManager from './ScenarioManager';
 import StressTestingDashboard from './StressTestingDashboard';
 import FeedbackWidget from '../common/FeedbackWidget';
+import { EmailVerificationBanner, markFirstAnalysisComplete } from '../common/EmailVerificationBanner';
 import { useDualMode } from '../../contexts/DualModeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { EducationalTooltip } from '../common/EducationalTooltip';
 
 interface AnalysisResultsProps {
@@ -79,8 +81,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   onLoadScenario
 }): React.ReactElement => {
   const { mode } = useDualMode();
+  const { user } = useAuth();
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
+
+  // Mark first analysis complete (for email verification banner)
+  React.useEffect(() => {
+    markFirstAnalysisComplete();
+  }, []);
   
   // Debug: Log the analysis structure
   console.log('AnalysisResults - analysis object:', analysis);
@@ -1857,6 +1865,21 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         propertyAddress={propertyData?.address}
         autoShowDelay={15000}
       />
+
+      {/* Email Verification Banner (Option A: Gentle Reminder) */}
+      {user && (
+        <EmailVerificationBanner
+          userEmail={user.email}
+          isVerified={user.isVerified || false}
+          onResendVerification={async () => {
+            // TODO: Call resend verification email API
+            console.log('Resend verification email');
+          }}
+          onDismiss={() => {
+            console.log('Email verification banner dismissed');
+          }}
+        />
+      )}
     </Box>
   );
 };

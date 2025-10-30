@@ -40,7 +40,16 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(userData: RegisterData): Promise<AuthTokens> {
+  async register(
+    userData: RegisterData,
+    metadata?: {
+      termsAcceptedAt?: Date;
+      termsVersion?: string;
+      termsAcceptedIp?: string;
+      registrationIp?: string;
+      registrationUserAgent?: string;
+    }
+  ): Promise<AuthTokens> {
     try {
       logger.info(`[AuthService] Registering new user: ${userData.email}`);
 
@@ -57,7 +66,14 @@ export class AuthService {
         firstName: userData.firstName,
         lastName: userData.lastName,
         role: 'user',
-        isVerified: false
+        isVerified: false,
+        // TOS acceptance tracking
+        termsAcceptedAt: metadata?.termsAcceptedAt,
+        termsVersion: metadata?.termsVersion,
+        termsAcceptedIp: metadata?.termsAcceptedIp,
+        // Anti-abuse tracking
+        registrationIp: metadata?.registrationIp,
+        registrationUserAgent: metadata?.registrationUserAgent
       });
 
       const savedUser = await user.save();

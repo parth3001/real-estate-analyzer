@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { authenticateToken } from '../middleware/auth';
+import { validateEmailDomainMiddleware } from '../utils/emailValidator';
 import {
   register,
   login,
@@ -69,8 +70,11 @@ const emailRateLimit = rateLimit({
  * @route   POST /api/auth/register
  * @desc    Register a new user
  * @access  Public
+ * @middleware registerRateLimit - 3 registrations per hour per IP
+ * @middleware validateEmailDomainMiddleware - Block disposable email domains
+ * @middleware validateRegister - Validate registration data
  */
-router.post('/register', registerRateLimit, validateRegister, register);
+router.post('/register', registerRateLimit, validateEmailDomainMiddleware, validateRegister, register);
 
 /**
  * @route   POST /api/auth/login

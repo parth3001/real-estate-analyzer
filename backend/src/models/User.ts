@@ -33,7 +33,20 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;
-  
+
+  // Terms of Service acceptance tracking (legal protection)
+  termsAcceptedAt?: Date;
+  termsVersion?: string;
+  termsAcceptedIp?: string;
+
+  // Anti-abuse tracking (prevent bot spam, mass registration)
+  registrationIp?: string;
+  registrationUserAgent?: string;
+  emailVerifiedAt?: Date;
+
+  // Email verification reminder tracking
+  emailVerificationReminderDismissed?: boolean;
+
   // Dual-mode preferences (optional for backward compatibility)
   dualModePreferences?: DualModePreferences;
   
@@ -85,6 +98,32 @@ const UserSchema = new Schema<IUser>({
   },
   lastLogin: {
     type: Date
+  },
+  // Terms of Service acceptance tracking
+  termsAcceptedAt: {
+    type: Date
+  },
+  termsVersion: {
+    type: String
+  },
+  termsAcceptedIp: {
+    type: String
+  },
+  // Anti-abuse tracking
+  registrationIp: {
+    type: String,
+    index: true // For admin investigation of abuse patterns
+  },
+  registrationUserAgent: {
+    type: String
+  },
+  emailVerifiedAt: {
+    type: Date
+  },
+  // Email verification reminder tracking
+  emailVerificationReminderDismissed: {
+    type: Boolean,
+    default: false
   },
   dualModePreferences: {
     currentMode: {

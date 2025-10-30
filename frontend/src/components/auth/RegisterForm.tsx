@@ -29,9 +29,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const [formErrors, setFormErrors] = useState<AuthFormErrors>({});
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [honeypot, setHoneypot] = useState(''); // Bot detection field
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    // Bot detection - honeypot field should be empty
+    if (honeypot) {
+      // Silently fail for bots - don't reveal the honeypot
+      console.warn('Bot detected - honeypot field filled');
+      return;
+    }
 
     if (confirmPassword !== formData.password) {
       setFormErrors({ general: 'Passwords do not match' });
@@ -355,6 +363,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           )}
 
           <form onSubmit={handleSubmit}>
+            {/* Honeypot field - hidden from humans, catches bots */}
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              autoComplete="off"
+              tabIndex={-1}
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                width: '1px',
+                height: '1px',
+                opacity: 0,
+                pointerEvents: 'none'
+              }}
+              aria-hidden="true"
+            />
+
             <div style={{
               display: 'flex',
               flexDirection: isMobile ? 'column' : 'row',

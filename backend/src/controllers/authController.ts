@@ -84,6 +84,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Check for validation errors
     if (handleValidationErrors(req, res)) return;
 
+    // Honeypot check - if filled, silently reject (bot detected)
+    if (req.body.website) {
+      logger.warn(`[AuthController] Bot detected - honeypot field filled for email: ${req.body.email}`);
+      res.status(400).json({ error: 'Invalid registration request' });
+      return;
+    }
+
     const userData: RegisterData = {
       email: req.body.email,
       password: req.body.password,
@@ -91,9 +98,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       lastName: req.body.lastName
     };
 
-    logger.info(`[AuthController] Registration request for: ${userData.email}`);
+    // TOS acceptance tracking and anti-abuse metadata
+    const registrationMetadata = {
+      termsAcceptedAt: new Date(),
+      termsVersion: '2025-10-30', // Update this when TOS changes
+      termsAcceptedIp: req.ip || req.socket.remoteAddress || 'unknown',
+      registrationIp: req.ip || req.socket.remoteAddress || 'unknown',
+      registrationUserAgent: req.headers['user-agent'] || 'unknown'
+    };
 
-    const result = await authService.register(userData);
+    logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}`);
+
+    const result = await authService.register(userData, registrationMetadata);
 
     // Send verification email asynchronously (don't block response)
     if (!result.user.isVerified) {
