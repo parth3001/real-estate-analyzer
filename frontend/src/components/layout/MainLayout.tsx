@@ -106,6 +106,7 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               }}
               selected={isActive(item.path)}
               sx={{
+                color: '#111827',
                 '&.Mui-selected': {
                   backgroundColor: 'primary.light',
                   color: 'primary.contrastText',
@@ -144,11 +145,12 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton 
+          <ListItemButton
             component={Link}
             to="/census-test"
             selected={isActive('/census-test')}
             sx={{
+              color: '#111827',
               '&.Mui-selected': {
                 backgroundColor: 'primary.light',
                 color: 'primary.contrastText',
@@ -181,11 +183,12 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton 
+          <ListItemButton
             component={Link}
             to="/help"
             selected={isActive('/help')}
             sx={{
+              color: '#111827',
               '&.Mui-selected': {
                 backgroundColor: 'primary.light',
                 color: 'primary.contrastText',
