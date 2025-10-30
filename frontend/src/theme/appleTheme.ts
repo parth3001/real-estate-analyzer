@@ -222,11 +222,31 @@ export const appleTheme = createTheme({
           fontSize: '14px',
           borderRadius: '12px',
           margin: '0 4px',
-          
+
           '&.Mui-selected': {
             backgroundColor: '#eff6ff',
             color: '#2563eb'
           }
+        }
+      }
+    },
+
+    MuiListItemText: {
+      styleOverrides: {
+        root: {
+          '& .MuiListItemText-primary': {
+            color: '#111827',
+            fontWeight: 500
+          }
+        }
+      }
+    },
+
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: {
+          color: '#374151',
+          minWidth: 40
         }
       }
     }
