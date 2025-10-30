@@ -120,17 +120,20 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             >
               <ListItemIcon
                 sx={{
-                  color: isActive(item.path) ? 'primary.contrastText' : '#374151 !important'
+                  color: isActive(item.path) ? 'primary.contrastText' : '#374151',
+                  minWidth: 40
                 }}
               >
                 {item.icon}
               </ListItemIcon>
               <ListItemText
                 primary={item.text}
-                sx={{
-                  '& .MuiListItemText-primary': {
-                    color: isActive(item.path) ? 'primary.contrastText' : '#111827 !important',
-                    fontWeight: 500
+                slotProps={{
+                  primary: {
+                    style: {
+                      color: isActive(item.path) ? '#ffffff' : '#111827',
+                      fontWeight: 500
+                    }
                   }
                 }}
               />
@@ -158,15 +161,20 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon sx={{ color: isActive('/census-test') ? 'primary.contrastText' : '#374151 !important' }}>
+            <ListItemIcon sx={{
+              color: isActive('/census-test') ? 'primary.contrastText' : '#374151',
+              minWidth: 40
+            }}>
               <MapIcon />
             </ListItemIcon>
             <ListItemText
               primary="Census Data Test"
-              sx={{
-                '& .MuiListItemText-primary': {
-                  color: isActive('/census-test') ? 'primary.contrastText' : '#111827 !important',
-                  fontWeight: 500
+              slotProps={{
+                primary: {
+                  style: {
+                    color: isActive('/census-test') ? '#ffffff' : '#111827',
+                    fontWeight: 500
+                  }
                 }
               }}
             />
@@ -190,15 +198,20 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               },
             }}
           >
-            <ListItemIcon sx={{ color: isActive('/help') ? 'primary.contrastText' : '#374151 !important' }}>
+            <ListItemIcon sx={{
+              color: isActive('/help') ? 'primary.contrastText' : '#374151',
+              minWidth: 40
+            }}>
               <HelpOutlineIcon />
             </ListItemIcon>
             <ListItemText
               primary="Help & Documentation"
-              sx={{
-                '& .MuiListItemText-primary': {
-                  color: isActive('/help') ? 'primary.contrastText' : '#111827 !important',
-                  fontWeight: 500
+              slotProps={{
+                primary: {
+                  style: {
+                    color: isActive('/help') ? '#ffffff' : '#111827',
+                    fontWeight: 500
+                  }
                 }
               }}
             />
