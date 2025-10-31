@@ -428,8 +428,15 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
-              backgroundColor: '#ffffff',
-              color: '#000000'
+              backgroundColor: '#ff0000 !important',
+              color: '#000000 !important',
+              '& *': {
+                color: '#000000 !important',
+                fontSize: '20px !important',
+                fontFamily: '-apple-system, Arial, sans-serif !important',
+                webkitTextFillColor: '#000000 !important',
+                textFillColor: '#000000 !important'
+              }
             },
           }}
         >
