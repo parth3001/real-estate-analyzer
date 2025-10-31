@@ -112,6 +112,135 @@ export const mockMarketIntelligence = {
   }
 };
 
+// ===== MULTI-FAMILY TEST FIXTURES (Story 2.4) =====
+
+/**
+ * Mock Multi-Family Property: 8-Unit Apartment Building
+ *
+ * Property Details:
+ * - Location: Nashville, TN (same as SFR for consistency)
+ * - Type: Garden Style Apartments
+ * - Units: 8 × 2BR/1BA @ 850 sqft each
+ * - Rent: $1,200/unit/month ($9,600/month total)
+ * - Purchase Price: $800,000
+ * - Down Payment: $200,000 (25%)
+ *
+ * Expected Metrics (for validation):
+ * - Gross Annual Income: $115,200 (8 units × $1,200 × 12)
+ * - Operating Expenses: ~$40,000/year
+ * - NOI: ~$75,200/year
+ * - Cap Rate: 9.4% ($75,200 / $800,000)
+ * - DSCR: 1.65 (NOI / Annual Debt Service)
+ * - Walk-Away Price: ~$1,074,286 (NOI / 7% target cap rate)
+ */
+export const mockMFProperty = {
+  propertyType: 'MF',
+  propertyName: 'Test 8-Unit Apartment',
+  propertyAddress: {
+    street: '789 Multi Family Blvd',
+    city: 'Nashville',
+    state: 'TN',
+    zipCode: '37203'
+  },
+
+  // Purchase & Financing
+  purchasePrice: 800000,
+  downPayment: 200000,      // 25% down ($600K loan)
+  interestRate: 6.5,
+  loanTerm: 30,
+  closingCosts: 20000,      // 2.5% of purchase price
+
+  // Property Details
+  totalUnits: 8,
+  totalSqft: 6800,          // 8 units × 850 sqft
+  yearBuilt: 1995,
+  buildingType: 'Garden Style Apartments',
+
+  // Tax & Insurance
+  propertyTaxRate: 1.2,     // 1.2% annual
+  insuranceCost: 3000,      // $3,000/year annual insurance
+
+  // Unit-level data (8 identical units for simplicity)
+  units: [
+    { unitNumber: '1', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '2', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '3', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '4', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '5', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '6', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '7', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 },
+    { unitNumber: '8', bedrooms: 2, bathrooms: 1, sqft: 850, currentRent: 1200, marketRent: 1250 }
+  ],
+
+  // Operating Expenses
+  propertyManagementRate: 5,    // 5% for MF (lower than SFR 8%)
+  maintenanceCost: 5760,        // $60/unit/month × 8 units × 12 months = $5,760/year
+
+  // Common Area Utilities (MF-specific)
+  commonAreaUtilities: {
+    electric: 200,   // $200/month
+    water: 150,      // $150/month
+    gas: 100         // $100/month
+  },
+
+  // Long-term Assumptions
+  longTermAssumptions: {
+    projectionYears: 10,
+    annualRentIncrease: 2,
+    annualExpenseIncrease: 2,
+    annualPropertyValueIncrease: 3,
+    sellingCostsPercentage: 6,
+    vacancyRate: 5
+  }
+};
+
+/**
+ * Expected MF Metrics for Validation
+ *
+ * These values are pre-calculated based on the mockMFProperty data above.
+ * Use these in tests to validate that the MultiFamilyAnalyzer is working correctly.
+ */
+export const expectedMFMetrics = {
+  // Income
+  grossMonthlyIncome: 9600,        // 8 units × $1,200/month
+  grossAnnualIncome: 115200,       // $9,600 × 12
+
+  // NOI Calculation (from MF Sprint 1 implementation)
+  noi: 75200,                       // Approximate (actual will be calculated by analyzer)
+
+  // Key Metrics
+  capRate: 9.4,                     // $75,200 / $800,000 = 9.4%
+  dscr: 1.65,                       // Approximate (NOI / Annual Debt Service)
+  cashOnCashReturn: 14.9,           // Approximate
+
+  // Walk-Away Price (MFDecisionEngine formula: NOI / target cap rate)
+  walkAwayPrice: 1074286,           // $75,200 / 0.07 = $1,074,286
+  targetCapRate: 0.07,              // 7% conservative target
+
+  // Per-Unit Metrics
+  noiPerUnit: 9400,                 // $75,200 / 8 units
+  rentPerSqft: 1.41,                // $1,200 / 850 sqft
+
+  // Monthly Debt Service (for DSCR validation)
+  monthlyDebtService: 3792,         // $600K loan @ 6.5% for 30 years
+  annualDebtService: 45504          // $3,792 × 12
+};
+
+/**
+ * Mock MF Property with LOW DSCR (for testing critical warnings)
+ *
+ * This property has:
+ * - Only 10% down payment (high leverage)
+ * - 8% interest rate (expensive debt)
+ * - Result: DSCR < 1.25 (commercial lender will reject)
+ */
+export const mockMFPropertyLowDSCR = {
+  ...mockMFProperty,
+  downPayment: 80000,       // 10% down (high leverage)
+  interestRate: 8.0,        // High interest rate
+  propertyName: 'Test 8-Unit Apartment (Low DSCR)'
+};
+
 // Mock Deal data that matches the actual Deal model structure
 export const mockDealData = {
   // Direct properties from IDeal interface
