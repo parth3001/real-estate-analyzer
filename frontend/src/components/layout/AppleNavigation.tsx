@@ -345,7 +345,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             <item.icon />
           </ListItemIcon>
           
-          {(sidebarOpen && !isMobile) && (
+          {(isMobile || sidebarOpen) && (
             <>
               <ListItemText
                 primary={item.label}
@@ -387,7 +387,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         </ListItem>
 
         {/* Submenu Items */}
-        {hasSubmenu && (sidebarOpen && !isMobile) && (
+        {hasSubmenu && (isMobile || sidebarOpen) && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
             <List sx={{ pl: 2 }}>
               {item.submenu.map((subItem: any) => (
@@ -775,6 +775,26 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           </Box>
         </MenuItem>
       </Menu>
+
+      {/* Version Footer - Deployment Verification */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 8,
+          right: 8,
+          backgroundColor: 'primary.main',
+          color: 'white',
+          padding: '4px 12px',
+          borderRadius: '12px',
+          fontSize: '12px',
+          fontWeight: 600,
+          zIndex: 9999,
+          opacity: 0.8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}
+      >
+        v3.1.0
+      </Box>
     </Box>
   );
 };
