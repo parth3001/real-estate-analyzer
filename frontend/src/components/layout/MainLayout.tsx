@@ -129,10 +129,16 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               </ListItemIcon>
               <ListItemText
                 primary={item.text}
-                slotProps={{
-                  primary: {
-                    color: "inherit",
-                    fontWeight: 500
+                sx={{
+                  '& .MuiListItemText-primary': {
+                    color: '#000000 !important',
+                    backgroundColor: '#ffff00 !important',
+                    fontWeight: 700,
+                    fontSize: '16px !important',
+                    padding: '4px',
+                    display: 'block !important',
+                    visibility: 'visible !important',
+                    opacity: '1 !important'
                   }
                 }}
               />
@@ -169,10 +175,16 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             </ListItemIcon>
             <ListItemText
               primary="Census Data Test"
-              slotProps={{
-                primary: {
-                  color: "inherit",
-                  fontWeight: 500
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: '#000000 !important',
+                  backgroundColor: '#ffff00 !important',
+                  fontWeight: 700,
+                  fontSize: '16px !important',
+                  padding: '4px',
+                  display: 'block !important',
+                  visibility: 'visible !important',
+                  opacity: '1 !important'
                 }
               }}
             />
@@ -205,10 +217,16 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             </ListItemIcon>
             <ListItemText
               primary="Help & Documentation"
-              slotProps={{
-                primary: {
-                  color: "inherit",
-                  fontWeight: 500
+              sx={{
+                '& .MuiListItemText-primary': {
+                  color: '#000000 !important',
+                  backgroundColor: '#ffff00 !important',
+                  fontWeight: 700,
+                  fontSize: '16px !important',
+                  padding: '4px',
+                  display: 'block !important',
+                  visibility: 'visible !important',
+                  opacity: '1 !important'
                 }
               }}
             />
