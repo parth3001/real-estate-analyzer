@@ -109,6 +109,140 @@ calculate: totalExpenses - income // Uses full precision
 const monthlyTax = Math.round((purchasePrice * taxRate / 100) / 12 * 100) / 100; // Loss of precision
 ```
 
+## 🔍 **Debugging Methodology - CRITICAL RULES**
+
+### **STOP Rules - When Stuck After 2-3 Failed Attempts**
+
+**If a fix doesn't work after 2-3 attempts, STOP and follow this checklist:**
+
+#### **1. Verify Component Architecture (UI Bugs)**
+```bash
+# ALWAYS verify which component is actually being rendered
+grep -r "import.*ComponentName" frontend/src/App.tsx
+grep -r "import.*Layout" frontend/src/App.tsx
+
+# Example: We spent 10+ attempts editing MainLayout.tsx
+# But App.tsx imported AppleNavigation.tsx instead!
+```
+
+**Real Example (Mobile Menu Text Bug - October 30, 2025):**
+- ❌ **Wrong**: Assumed MainLayout.tsx was being used (10+ failed attempts)
+- ✅ **Correct**: Checked App.tsx, found AppleNavigation.tsx was actual component
+- 💡 **Lesson**: Never assume - verify imports in App.tsx first
+
+#### **2. Add Unique Identifiers to Verify File Usage**
+```typescript
+// Add a unique visible element to confirm the file is being used
+<Box sx={{ backgroundColor: 'red', padding: 2 }}>
+  🔴 TESTING MainLayout.tsx v1.0 🔴
+</Box>
+
+// If you don't see this in the browser, YOU'RE EDITING THE WRONG FILE
+```
+
+**If the test content doesn't appear:**
+1. Check App.tsx imports
+2. Check parent component routing
+3. Check conditional rendering logic
+4. Use browser DevTools to inspect actual DOM elements
+
+#### **3. Browser DevTools Inspection (UI Issues)**
+```
+1. Open browser DevTools (F12)
+2. Inspect the problematic element
+3. Check computed styles (which CSS is actually applied)
+4. Look for style overrides or specificity issues
+5. Check React component hierarchy in React DevTools
+```
+
+**Common Issues:**
+- ✅ Wrong component file being edited
+- ✅ CSS specificity wars (!important not working)
+- ✅ Parent component conditional rendering hiding content
+- ✅ Mobile-specific CSS overrides (webkit-text-fill-color)
+
+#### **4. Trace the Render Path**
+```typescript
+// For conditional rendering bugs, trace the logic:
+{(sidebarOpen && !isMobile) && (  // ← This line matters!
+  <ListItemText primary={item.label} />
+)}
+
+// Question: What happens when isMobile = true?
+// Answer: Text NEVER renders on mobile (bug found!)
+```
+
+**Real Example:**
+- Line 348 in AppleNavigation.tsx: `{(sidebarOpen && !isMobile) && (`
+- Condition `!isMobile` prevented text from showing on mobile
+- Fix: Change to `{(isMobile || sidebarOpen) && (`
+
+#### **5. Deployment Verification Techniques**
+```bash
+# Add version badges to verify deployments are working
+<Box sx={{ position: 'fixed', bottom: 8, right: 8 }}>
+  v3.1.0
+</Box>
+
+# Check git commits match deployed code
+git log --oneline -3
+
+# Verify build cache isn't stale
+# On Render: Settings → Clear Build Cache
+```
+
+**If changes don't appear in production:**
+1. ✅ Verify commit was pushed to correct branch
+2. ✅ Check Render dashboard shows new commit deployed
+3. ✅ Clear browser cache (Cmd+Shift+R on Mac)
+4. ✅ Check if editing correct file (see step 1)
+5. ✅ Verify build succeeded without errors
+
+### **DEBUGGING DECISION TREE**
+
+```
+Bug Report Received
+    ↓
+Is this a UI/frontend bug?
+    ↓ YES
+1. Check App.tsx - which component is imported?
+2. Add unique test element to verify file usage
+3. See test element in browser?
+    ↓ NO → YOU'RE EDITING THE WRONG FILE
+    ↓ YES → Continue debugging in this file
+4. Use browser DevTools to inspect element
+5. Check conditional rendering logic
+6. Make targeted fix
+7. Test immediately
+    ↓
+Fix doesn't work after 2 attempts?
+    ↓ YES → STOP, GO BACK TO STEP 1
+```
+
+### **KEY PRINCIPLES**
+
+1. **Verify, Don't Assume**: Always verify which file/component is being used
+2. **Test Early**: Add visible test elements to confirm changes are applied
+3. **Stop After 2-3 Failures**: If approach isn't working, verify assumptions
+4. **Use DevTools**: Browser tools reveal truth about rendering and styles
+5. **One Variable at a Time**: Change one thing, test, repeat
+
+### **PERSONAS DON'T OVERRIDE METHODOLOGY**
+
+⚠️ **CRITICAL**: Activating "Senior Engineer" or "UX Designer" personas does NOT replace systematic debugging.
+
+**Personas provide:**
+- ✅ Knowledge frameworks and best practices
+- ✅ Communication styles and priorities
+- ✅ Domain expertise and patterns
+
+**Personas DO NOT provide:**
+- ❌ Automatic assumption verification
+- ❌ Magic bug detection
+- ❌ Bypass for fundamental debugging steps
+
+**If ANY persona is stuck after 2-3 attempts, revert to this debugging methodology.**
+
 [... rest of the existing file content remains the same ...]
 
 ## 📝 **Claude's Memory Log**
