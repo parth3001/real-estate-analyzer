@@ -18,6 +18,7 @@ import { AIInsightsCacheService } from '../services/aiInsightsCacheService';
 
 // Import Investment Decision Engine
 import { InvestmentDecisionEngine } from '../services/investment/investmentDecisionEngine';
+import { MFDecisionEngine } from '../services/investment/MFDecisionEngine';
 
 // Import AI Goal Analysis
 import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiService';
@@ -899,54 +900,101 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
     }
     
     // Generate Professional Investment Decision (Investment Decision Engine)
+    // Story 2.4: Property-type-aware routing
     if (!dealData.skipAI) {
       try {
-        logger.info('Generating professional investment decision...');
-        const decisionEngine = new InvestmentDecisionEngine();
-        
-        // Enhanced user context - use enhanced goals from Step 5 or fallback to defaults
-        const enhancedGoals = dealData.enhancedGoals || {};
-        
-        logger.info('Enhanced goals received:', {
-          hasEnhancedGoals: !!dealData.enhancedGoals,
-          exitStrategy: enhancedGoals.exitStrategy,
-          portfolioStrategy: enhancedGoals.portfolioStrategy,
-          experienceLevel: enhancedGoals.experienceLevel,
-          riskTolerance: enhancedGoals.riskTolerance,
-          hasFreeTextStrategy: !!enhancedGoals.freeTextStrategy,
-          processingMethod: enhancedGoals.processingMethod
+        logger.info('Generating professional investment decision...', {
+          propertyType: dealData.propertyType
         });
-        
-        // Map portfolio strategy to investment goals for backward compatibility
-        let investmentGoals: 'cash_flow' | 'appreciation' | 'balanced' = 'balanced';
-        if (enhancedGoals.portfolioStrategy === 'cashflow') investmentGoals = 'cash_flow';
-        else if (enhancedGoals.portfolioStrategy === 'appreciation') investmentGoals = 'appreciation';
-        
-        const userContext = {
-          availableCash: dealData.totalInvestment || dealData.purchasePrice, // Assume they have the full purchase price
-          experienceLevel: enhancedGoals.experienceLevel || 'intermediate' as const,
-          riskTolerance: enhancedGoals.riskTolerance || 'moderate' as const,
-          investmentGoals
-        };
-        
-        // Get predictions from AI insights if available
-        const predictions = analysis.aiInsights?.boldPredictions || null;
-        
-        // Pass market intelligence from analysis instead of null
-        const marketIntelligence = {
-          marketData: analysis.marketData,
-          marketInsights: analysis.marketInsights,
-          investmentTiming: analysis.investmentTiming
-        };
-        
-        analysis.investmentDecision = await decisionEngine.generateInvestmentDecision(
-          dealData,
-          analysis,
-          predictions,
-          marketIntelligence,
-          userContext,
-          enhancedGoals // NEW: Pass enhanced goals for personalized messaging
-        );
+
+        // Use 'any' to avoid type conflicts between legacy and new engine APIs
+        let investmentDecision: any;
+
+        if (dealData.propertyType === 'MF') {
+          // ===== MULTI-FAMILY: NEW SIMPLIFIED API (80% CORE LOGIC) =====
+          logger.info('🏢 Using MFDecisionEngine for Multi-Family property');
+
+          const marketData = analysis.marketData;
+
+          const mfEngine = new MFDecisionEngine(
+            analysis,      // AnalysisResult<MultiFamilyMetrics>
+            dealData as MultiFamilyData,      // MultiFamilyData
+            marketData     // MarketDataResponse | undefined
+          );
+
+          // NEW SIMPLIFIED API - No parameters needed (data in constructor)
+          investmentDecision = mfEngine.generateDecision();
+
+          logger.info('✅ MF investment decision generated (CORE 80%):', {
+            verdict: investmentDecision.verdict,
+            dealQuality: investmentDecision.professionalAssessment?.dealQuality,
+            walkAwayPrice: investmentDecision.marketPosition?.walkAwayPrice,
+            capRateScore: investmentDecision.professionalAssessment?.capRateScore,
+            dscrScore: investmentDecision.professionalAssessment?.debtStructureScore,
+            aiEnhancement: 'DEFERRED TO STORY 2.5'
+          });
+
+        } else {
+          // ===== SFR: LEGACY API (100% UNCHANGED - FULL 80% + 20% AI) =====
+          logger.info('🏠 Using legacy InvestmentDecisionEngine for SFR property');
+
+          const decisionEngine = new InvestmentDecisionEngine();
+
+          // Enhanced user context - use enhanced goals from Step 5 or fallback to defaults
+          const enhancedGoals = dealData.enhancedGoals || {};
+
+          logger.info('Enhanced goals received:', {
+            hasEnhancedGoals: !!dealData.enhancedGoals,
+            exitStrategy: enhancedGoals.exitStrategy,
+            portfolioStrategy: enhancedGoals.portfolioStrategy,
+            experienceLevel: enhancedGoals.experienceLevel,
+            riskTolerance: enhancedGoals.riskTolerance,
+            hasFreeTextStrategy: !!enhancedGoals.freeTextStrategy,
+            processingMethod: enhancedGoals.processingMethod
+          });
+
+          // Map portfolio strategy to investment goals for backward compatibility
+          let investmentGoals: 'cash_flow' | 'appreciation' | 'balanced' = 'balanced';
+          if (enhancedGoals.portfolioStrategy === 'cashflow') investmentGoals = 'cash_flow';
+          else if (enhancedGoals.portfolioStrategy === 'appreciation') investmentGoals = 'appreciation';
+
+          const userContext = {
+            availableCash: dealData.totalInvestment || dealData.purchasePrice,
+            experienceLevel: enhancedGoals.experienceLevel || 'intermediate' as const,
+            riskTolerance: enhancedGoals.riskTolerance || 'moderate' as const,
+            investmentGoals
+          };
+
+          // Get predictions from AI insights if available
+          const predictions = analysis.aiInsights?.boldPredictions || null;
+
+          // Pass market intelligence from analysis instead of null
+          const marketIntelligence = {
+            marketData: analysis.marketData,
+            marketInsights: analysis.marketInsights,
+            investmentTiming: analysis.investmentTiming
+          };
+
+          // OLD API - 6 PARAMETERS (UNCHANGED)
+          investmentDecision = await decisionEngine.generateInvestmentDecision(
+            dealData,
+            analysis,
+            predictions,
+            marketIntelligence,
+            userContext,
+            enhancedGoals
+          );
+
+          logger.info('✅ SFR investment decision generated (FULL 100%):', {
+            verdict: investmentDecision.verdict,
+            confidence: investmentDecision.confidence,
+            score: investmentDecision.score,
+            aiEnhancement: 'FULL AI + GOAL INTEGRATION'
+          });
+        }
+
+        // Assign decision to analysis (common for both paths)
+        analysis.investmentDecision = investmentDecision;
         
         // SAFE: Add portfolio context if portfolioId is provided (optional enhancement)
         logger.info('Checking for portfolio context:', {
