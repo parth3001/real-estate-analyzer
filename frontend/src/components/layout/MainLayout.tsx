@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  AppBar, 
-  Box, 
-  Toolbar, 
-  Typography, 
-  Container, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  Container,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
   useMediaQuery,
   IconButton,
   Divider,
@@ -127,21 +126,21 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText
-                primary={item.text}
+              <Typography
                 sx={{
-                  '& .MuiListItemText-primary': {
-                    color: '#000000 !important',
-                    backgroundColor: '#ffff00 !important',
-                    fontWeight: 700,
-                    fontSize: '16px !important',
-                    padding: '4px',
-                    display: 'block !important',
-                    visibility: 'visible !important',
-                    opacity: '1 !important'
-                  }
+                  color: '#000000 !important',
+                  backgroundColor: '#ff0000 !important',
+                  fontWeight: 700,
+                  fontSize: '18px !important',
+                  padding: '8px !important',
+                  display: 'block !important',
+                  visibility: 'visible !important',
+                  opacity: '1 !important',
+                  flexGrow: 1
                 }}
-              />
+              >
+                {item.text}
+              </Typography>
             </ListItemButton>
           </ListItem>
         ))}
@@ -173,21 +172,21 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             }}>
               <MapIcon />
             </ListItemIcon>
-            <ListItemText
-              primary="Census Data Test"
+            <Typography
               sx={{
-                '& .MuiListItemText-primary': {
-                  color: '#000000 !important',
-                  backgroundColor: '#ffff00 !important',
-                  fontWeight: 700,
-                  fontSize: '16px !important',
-                  padding: '4px',
-                  display: 'block !important',
-                  visibility: 'visible !important',
-                  opacity: '1 !important'
-                }
+                color: '#000000 !important',
+                backgroundColor: '#ff0000 !important',
+                fontWeight: 700,
+                fontSize: '18px !important',
+                padding: '8px !important',
+                display: 'block !important',
+                visibility: 'visible !important',
+                opacity: '1 !important',
+                flexGrow: 1
               }}
-            />
+            >
+              Census Data Test
+            </Typography>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
@@ -215,21 +214,21 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             }}>
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText
-              primary="Help & Documentation"
+            <Typography
               sx={{
-                '& .MuiListItemText-primary': {
-                  color: '#000000 !important',
-                  backgroundColor: '#ffff00 !important',
-                  fontWeight: 700,
-                  fontSize: '16px !important',
-                  padding: '4px',
-                  display: 'block !important',
-                  visibility: 'visible !important',
-                  opacity: '1 !important'
-                }
+                color: '#000000 !important',
+                backgroundColor: '#ff0000 !important',
+                fontWeight: 700,
+                fontSize: '18px !important',
+                padding: '8px !important',
+                display: 'block !important',
+                visibility: 'visible !important',
+                opacity: '1 !important',
+                flexGrow: 1
               }}
-            />
+            >
+              Help & Documentation
+            </Typography>
           </ListItemButton>
         </ListItem>
       </List>
