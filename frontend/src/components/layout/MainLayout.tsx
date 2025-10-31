@@ -131,10 +131,8 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
                 primary={item.text}
                 slotProps={{
                   primary: {
-                    style: {
-                      color: isActive(item.path) ? '#ffffff' : '#111827',
-                      fontWeight: 500
-                    }
+                    color: "inherit",
+                    fontWeight: 500
                   }
                 }}
               />
@@ -173,10 +171,8 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               primary="Census Data Test"
               slotProps={{
                 primary: {
-                  style: {
-                    color: isActive('/census-test') ? '#ffffff' : '#111827',
-                    fontWeight: 500
-                  }
+                  color: "inherit",
+                  fontWeight: 500
                 }
               }}
             />
@@ -211,10 +207,8 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
               primary="Help & Documentation"
               slotProps={{
                 primary: {
-                  style: {
-                    color: isActive('/help') ? '#ffffff' : '#111827',
-                    fontWeight: 500
-                  }
+                  color: "inherit",
+                  fontWeight: 500
                 }
               }}
             />
