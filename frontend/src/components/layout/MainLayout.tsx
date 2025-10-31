@@ -8,7 +8,6 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemButton,
   ListItemIcon,
   useMediaQuery,
   IconButton,
@@ -94,142 +93,147 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
       <List>
         {navigationItems.map((item) => (
           <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              component={Link}
-              to={item.path}
-              onClick={() => {
-                console.log(`Navigating to ${item.path}`);
-                if (isMobile) {
-                  setMobileOpen(false);
-                }
-              }}
-              selected={isActive(item.path)}
-              sx={{
-                color: '#111827',
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.light',
-                  color: 'primary.contrastText',
+            <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', padding: '8px 16px' }}>
+              <Box
+                component={Link}
+                to={item.path}
+                onClick={() => {
+                  console.log(`Navigating to ${item.path}`);
+                  if (isMobile) {
+                    setMobileOpen(false);
+                  }
+                }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  textDecoration: 'none',
+                  color: '#000000',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive(item.path) ? 'primary.light' : 'transparent',
                   '&:hover': {
-                    backgroundColor: 'primary.main',
-                  },
-                  '& .MuiListItemIcon-root': {
-                    color: 'primary.contrastText',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  color: isActive(item.path) ? 'primary.contrastText' : '#374151',
-                  minWidth: 40
+                    backgroundColor: 'primary.light'
+                  }
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <Typography
-                sx={{
-                  color: '#000000 !important',
-                  backgroundColor: '#ff0000 !important',
-                  fontWeight: 700,
-                  fontSize: '18px !important',
-                  padding: '8px !important',
-                  display: 'block !important',
-                  visibility: 'visible !important',
-                  opacity: '1 !important',
-                  flexGrow: 1
-                }}
-              >
-                {item.text}
-              </Typography>
-            </ListItemButton>
+                <Box sx={{ minWidth: 40, display: 'flex', color: '#374151' }}>
+                  {item.icon}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    color: '#000000 !important',
+                    backgroundColor: '#00ff00 !important',
+                    fontWeight: 700,
+                    fontSize: '20px !important',
+                    padding: '12px !important',
+                    display: 'inline-block !important',
+                    visibility: 'visible !important',
+                    opacity: '1 !important',
+                    border: '3px solid #ff0000 !important'
+                  }}
+                >
+                  {item.text}
+                </Box>
+              </Box>
+            </Box>
           </ListItem>
         ))}
       </List>
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton
-            component={Link}
-            to="/census-test"
-            selected={isActive('/census-test')}
-            sx={{
-              color: '#111827',
-              '&.Mui-selected': {
-                backgroundColor: 'primary.light',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  backgroundColor: 'primary.main',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: 'primary.contrastText',
-                },
-              },
-            }}
-          >
-            <ListItemIcon sx={{
-              color: isActive('/census-test') ? 'primary.contrastText' : '#374151',
-              minWidth: 40
-            }}>
-              <MapIcon />
-            </ListItemIcon>
-            <Typography
+          <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', padding: '8px 16px' }}>
+            <Box
+              component={Link}
+              to="/census-test"
+              onClick={() => {
+                if (isMobile) {
+                  setMobileOpen(false);
+                }
+              }}
               sx={{
-                color: '#000000 !important',
-                backgroundColor: '#ff0000 !important',
-                fontWeight: 700,
-                fontSize: '18px !important',
-                padding: '8px !important',
-                display: 'block !important',
-                visibility: 'visible !important',
-                opacity: '1 !important',
-                flexGrow: 1
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                textDecoration: 'none',
+                color: '#000000',
+                padding: '8px',
+                borderRadius: '8px',
+                backgroundColor: isActive('/census-test') ? 'primary.light' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.light'
+                }
               }}
             >
-              Census Data Test
-            </Typography>
-          </ListItemButton>
+              <Box sx={{ minWidth: 40, display: 'flex', color: '#374151' }}>
+                <MapIcon />
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  color: '#000000 !important',
+                  backgroundColor: '#00ff00 !important',
+                  fontWeight: 700,
+                  fontSize: '20px !important',
+                  padding: '12px !important',
+                  display: 'inline-block !important',
+                  visibility: 'visible !important',
+                  opacity: '1 !important',
+                  border: '3px solid #ff0000 !important'
+                }}
+              >
+                Census Data Test
+              </Box>
+            </Box>
+          </Box>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton
-            component={Link}
-            to="/help"
-            selected={isActive('/help')}
-            sx={{
-              color: '#111827',
-              '&.Mui-selected': {
-                backgroundColor: 'primary.light',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  backgroundColor: 'primary.main',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: 'primary.contrastText',
-                },
-              },
-            }}
-          >
-            <ListItemIcon sx={{
-              color: isActive('/help') ? 'primary.contrastText' : '#374151',
-              minWidth: 40
-            }}>
-              <HelpOutlineIcon />
-            </ListItemIcon>
-            <Typography
+          <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', padding: '8px 16px' }}>
+            <Box
+              component={Link}
+              to="/help"
+              onClick={() => {
+                if (isMobile) {
+                  setMobileOpen(false);
+                }
+              }}
               sx={{
-                color: '#000000 !important',
-                backgroundColor: '#ff0000 !important',
-                fontWeight: 700,
-                fontSize: '18px !important',
-                padding: '8px !important',
-                display: 'block !important',
-                visibility: 'visible !important',
-                opacity: '1 !important',
-                flexGrow: 1
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                textDecoration: 'none',
+                color: '#000000',
+                padding: '8px',
+                borderRadius: '8px',
+                backgroundColor: isActive('/help') ? 'primary.light' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.light'
+                }
               }}
             >
-              Help & Documentation
-            </Typography>
-          </ListItemButton>
+              <Box sx={{ minWidth: 40, display: 'flex', color: '#374151' }}>
+                <HelpOutlineIcon />
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  color: '#000000 !important',
+                  backgroundColor: '#00ff00 !important',
+                  fontWeight: 700,
+                  fontSize: '20px !important',
+                  padding: '12px !important',
+                  display: 'inline-block !important',
+                  visibility: 'visible !important',
+                  opacity: '1 !important',
+                  border: '3px solid #ff0000 !important'
+                }}
+              >
+                Help & Documentation
+              </Box>
+            </Box>
+          </Box>
         </ListItem>
       </List>
     </Box>
