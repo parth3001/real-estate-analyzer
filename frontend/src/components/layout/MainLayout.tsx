@@ -463,17 +463,38 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
       
       <Box
         component="main"
-        sx={{ 
-          flexGrow: 1, 
-          p: 3, 
+        sx={{
+          flexGrow: 1,
+          p: 3,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: '64px', // AppBar height
-          backgroundColor: 'background.default'
+          backgroundColor: 'background.default',
+          position: 'relative',
+          minHeight: '100vh'
         }}
       >
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <Outlet />
         </Container>
+
+        {/* Version Footer - Deployment Verification */}
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            backgroundColor: '#ff0000',
+            color: '#ffffff',
+            padding: '4px 12px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            zIndex: 9999,
+            borderTopLeftRadius: '4px',
+            fontFamily: 'monospace'
+          }}
+        >
+          v1.0.0
+        </Box>
       </Box>
     </Box>
   );
