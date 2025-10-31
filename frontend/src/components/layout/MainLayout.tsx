@@ -483,17 +483,17 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
             position: 'fixed',
             bottom: 0,
             right: 0,
-            backgroundColor: '#ff0000',
-            color: '#ffffff',
-            padding: '4px 12px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            zIndex: 9999,
-            borderTopLeftRadius: '4px',
-            fontFamily: 'monospace'
+            backgroundColor: '#00ff00 !important',
+            color: '#000000 !important',
+            padding: '20px !important',
+            fontSize: '24px !important',
+            fontWeight: '900 !important',
+            zIndex: 99999,
+            border: '5px solid #ff0000 !important',
+            boxShadow: '0 0 20px rgba(255,0,0,0.8) !important'
           }}
         >
-          v1.0.0
+          🔴 BUILD v2.0.0 🔴
         </Box>
       </Box>
     </Box>
