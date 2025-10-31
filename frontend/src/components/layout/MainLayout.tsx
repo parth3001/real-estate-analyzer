@@ -84,6 +84,20 @@ const MainLayout: React.FC<MainLayoutProps> = () => {
       color: '#000000', // Ensure black text
       height: '100%'
     }}>
+      {/* DIAGNOSTIC TEST - Plain text with extreme visibility */}
+      <div style={{
+        backgroundColor: '#ff00ff',
+        color: '#000000',
+        fontSize: '24px',
+        fontWeight: '900',
+        padding: '20px',
+        border: '5px solid #00ff00',
+        margin: '10px',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        TEST MENU TEXT
+      </div>
+
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           Real Estate Analyzer
