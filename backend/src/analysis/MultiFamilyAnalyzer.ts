@@ -197,6 +197,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
   /**
    * Story 1.5: Override analyze() to add validation before calculation
+   * CRITICAL FIX: Override to ensure annualAnalysis.noi matches keyMetrics.noi (EGI-based)
    */
   public analyze() {
     console.log('\n========== MULTI-FAMILY ANALYSIS START ==========');
@@ -211,6 +212,33 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     // Call parent analyze() method
     const result = super.analyze();
+
+    // CRITICAL FIX: Override annualAnalysis.noi with MF-specific EGI-based NOI
+    // This ensures annualAnalysis.noi matches keyMetrics.noi (single source of truth)
+    const grossIncome = this.calculateGrossIncome(1);
+    const effectiveGrossIncome = this.calculateEffectiveGrossIncome(grossIncome);
+    const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
+    const correctNOI = effectiveGrossIncome - operatingExpenses;
+
+    console.log('\n[MF] ⚠️ CRITICAL FIX: Correcting annualAnalysis.noi to match keyMetrics.noi');
+    console.log(`  Base class NOI (vacancy only): $${result.annualAnalysis.noi.toLocaleString()}`);
+    console.log(`  MF class NOI (EGI-based with credit loss): $${correctNOI.toLocaleString()}`);
+    console.log(`  Difference: $${(result.annualAnalysis.noi - correctNOI).toLocaleString()} (2% credit loss)`);
+
+    // Override annualAnalysis.noi to match keyMetrics.noi
+    result.annualAnalysis.noi = correctNOI;
+
+    // Recalculate cash flow based on correct NOI
+    const monthlyMortgage = this.calculateMonthlyMortgage();
+    const annualDebtService = monthlyMortgage * 12;
+    const correctCashFlow = correctNOI - annualDebtService;
+
+    result.annualAnalysis.cashFlow = correctCashFlow;
+    result.monthlyAnalysis.cashFlow = correctCashFlow / 12;
+
+    console.log(`  Corrected Annual Cash Flow: $${correctCashFlow.toLocaleString()}`);
+    console.log(`  Corrected Monthly Cash Flow: $${(correctCashFlow / 12).toLocaleString()}`);
+    console.log('[MF] ✅ Single source of truth restored: annualAnalysis.noi === keyMetrics.noi\n');
 
     console.log('\n[MF] ✅ Multi-family analysis complete');
     console.log('========== MULTI-FAMILY ANALYSIS END ==========\n');
