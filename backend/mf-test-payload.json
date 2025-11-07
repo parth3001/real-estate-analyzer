@@ -1,0 +1,32 @@
+{
+  "propertyType": "MF",
+  "skipAI": false,
+  "propertyAddress": {
+    "address": "456 Rental Ave",
+    "city": "Austin",
+    "state": "TX",
+    "zipCode": "78701"
+  },
+  "purchasePrice": 1200000,
+  "downPayment": 240000,
+  "interestRate": 7.25,
+  "loanTerm": 30,
+  "totalUnits": 8,
+  "totalSqft": 7200,
+  "yearBuilt": 2010,
+  "propertyTaxRate": 1.5,
+  "insuranceRate": 0.5,
+  "maintenanceCost": 100,
+  "propertyManagementRate": 8,
+  "unitTypes": [
+    {"type": "2bed/1bath", "count": 6, "sqft": 900, "monthlyRent": 1500},
+    {"type": "1bed/1bath", "count": 2, "sqft": 700, "monthlyRent": 1200}
+  ],
+  "enhancedGoals": {
+    "exitStrategy": "long-term",
+    "portfolioStrategy": "cashflow",
+    "experienceLevel": "intermediate",
+    "riskTolerance": "moderate",
+    "freeTextStrategy": "Building passive income through multi-family"
+  }
+}

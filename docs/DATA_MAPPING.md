@@ -422,19 +422,172 @@ To maintain backward compatibility when data structures change:
    - Default values for visualization
    - Error boundaries catch rendering issues
 
-## Future Data Mapping Considerations
+## Multi-Family Data Mapping
 
-### Multi-Family Data Mapping
+**Status**: ✅ **IMPLEMENTED** (Stories 1.1-2.5, November 2025)
 
-For future Multi-Family implementation:
+### Request Structure (POST /api/deals/analyze)
+
+**Critical Field Name Requirements** (Must match interface exactly):
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `propertyType` | `'MF'` | Yes | Triggers MF analysis flow |
+| `totalUnits` | number | Yes | 2-32 recommended range |
+| `totalSqft` | number | Yes | Building total square footage |
+| `yearBuilt` | number | Yes | For property age risk assessment |
+| `insuranceRate` | number | Yes | **Percentage** (e.g., 0.5 for 0.5%) - NOT dollar amount |
+| `propertyManagementRate` | number | Yes | **Percentage** (e.g., 8 for 8%) - NOT `propertyManagementPercent` |
+| `maintenanceCost` | number | Yes | **Per unit per month** (e.g., 100 for $100/unit/month) |
+| `unitTypes[]` | Array | Yes* | Aggregated unit configuration (backward compatible) |
+| `units[]` | Array | Yes* | Granular unit-by-unit configuration (future) |
+
+*Either `unitTypes[]` OR `units[]` required, not both.
+
+**Common Mistakes** (Causes null metrics):
+- ❌ `insurance: 600` → ✅ `insuranceRate: 0.5`
+- ❌ `propertyManagementPercent: 8` → ✅ `propertyManagementRate: 8`
+- ❌ `maintenance: 800` → ✅ `maintenanceCost: 100` (per unit per month)
+
+### Response Structure
+
+**Key Difference from SFR**: MF returns `keyMetrics` at root level with MF-specific metrics.
+
+```typescript
+{
+  keyMetrics: {
+    // Common Metrics (shared with SFR)
+    noi: number,                    // Net Operating Income (EGI - OpEx)
+    capRate: number,                // (NOI / Purchase Price) × 100
+    cashOnCashReturn: number,       // (Annual Cash Flow / Total Investment) × 100
+    irr: number,                    // Internal Rate of Return
+    dscr: number,                   // NOI / Annual Debt Service
+    operatingExpenseRatio: number,  // (OpEx / EGI) × 100
+    totalInvestment: number,        // Down payment + closing costs + CapEx
+
+    // MF-Specific Per-Unit Metrics
+    pricePerUnit: number,           // Purchase price ÷ total units
+    noiPerUnit: number,             // NOI ÷ total units (annual)
+    cashFlowPerUnit: number,        // Cash flow ÷ total units (annual)
+    averageRentPerUnit: number,     // Average monthly rent across all units
+    operatingExpensePerUnit: number,// OpEx ÷ total units (annual)
+
+    // MF-Specific Advanced Metrics (Story 1.4)
+    grm: number,                    // Gross Rent Multiplier (4-7 typical)
+    debtYield: number,              // (NOI / Loan Amount) × 100 (10%+ for lenders)
+    breakEvenOccupancy: number,     // ((OpEx + Debt) / Gross Income) × 100
+    rentPerSqft: number,            // Monthly rent per square foot
+    unitMixEfficiency: number,      // Revenue efficiency score
+    economicVacancyRate: number,    // Actual vacancy including credit loss
+    grossYield: number,             // (Gross Income / Purchase Price) × 100
+    commonAreaExpenseRatio: number, // Common utilities ÷ total sqft
+
+    // Context Fields (for calculation transparency)
+    effectiveGrossIncome: number,   // Gross income - vacancy - credit loss (2%)
+    grossIncome: number,            // Total rent before any deductions
+    operatingExpenses: number       // Property tax + insurance + management + maintenance + CapEx
+  },
+
+  investmentDecision: {
+    verdict: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS',
+    professionalAssessment: {
+      dealQuality: number,          // 0-100 weighted score
+      capRateScore: number,         // 25% weight (PRIMARY for MF)
+      debtStructureScore: number,   // 20% weight (DSCR - CRITICAL for MF)
+      cashFlowScore: number,        // 20% weight
+      irrScore: number,             // 20% weight
+      marketStrengthScore: number,  // 10% weight
+      exitStrategyScore: number,    // 5% weight
+      propertyRiskScore: number     // 0% weight (diversified across units)
+    },
+    marketPosition: {
+      walkAwayPrice: number,        // NOI / Target Cap Rate (MF valuation method)
+      pricingContext: string,       // 'undervalued' | 'fair' | 'overvalued' | 'bubble'
+      marketStage: string,
+      competitiveIntensity: string
+    },
+    aiEnhancedContent?: {           // 20% AI enhancement (Story 2.5)
+      reasoning: string,
+      strategicActionPlan: string[],
+      capitalStrategy: string[]
+    },
+    goalBasedReasoning?: string     // Personalized to investor goals
+  },
+
+  // Standard analysis sections (same as SFR)
+  monthlyAnalysis: { ... },
+  annualAnalysis: { ... },
+  longTermAnalysis: { ... }
+}
+```
+
+### Data Flow: Request → Response
+
+```
+1. POST /api/deals/analyze { propertyType: 'MF', ... }
+   ↓
+2. Controller (deals.ts:913-973)
+   ├─ Detects propertyType === 'MF'
+   ├─ Creates MultiFamilyAnalyzer(dealData, assumptions)
+   ├─ Calls analyzer.analyze()
+   └─ Returns analysis with keyMetrics
+   ↓
+3. MultiFamilyAnalyzer.analyze() (MultiFamilyAnalyzer.ts:202-247)
+   ├─ Validates property data (Story 1.5)
+   ├─ Calls super.analyze() from BasePropertyAnalyzer
+   ├─ Calculates MF-specific metrics via calculatePropertySpecificMetrics()
+   │  ├─ NOI = EGI - Operating Expenses (Story 1.2)
+   │  ├─ EGI = Gross Income - Vacancy (5%) - Credit Loss (2%)
+   │  ├─ OpEx = Tax + Insurance + Management + Maintenance + CapEx (NO vacancy)
+   │  └─ 28 total MF metrics calculated (Stories 1.3, 1.4)
+   └─ Returns analysis object with keyMetrics populated
+   ↓
+4. Controller normalizes for Decision Engine (deals.ts:946-951)
+   ├─ Maps keyMetrics → metrics for BaseDecisionEngine compatibility
+   └─ Creates normalizedAnalysis = { ...analysis, metrics: analysis.keyMetrics }
+   ↓
+5. MFDecisionEngine.generateDecisionWithAI() (MFDecisionEngine.ts:69-121)
+   ├─ Calls super.generateDecision() for 80% core logic
+   │  ├─ Scores property with MF-specific weights
+   │  ├─ Calculates walk-away price: NOI / Target Cap Rate
+   │  └─ Determines verdict based on deal quality (0-100)
+   ├─ Generates AI-enhanced content (20% AI layer) - Story 2.5
+   └─ Returns investmentDecision
+   ↓
+6. Response sent: { keyMetrics, investmentDecision, monthlyAnalysis, ... }
+```
+
+### SFR vs MF Field Mapping
 
 | SFR Field | MF Field | Transformation |
 |-----------|----------|----------------|
-| `monthlyRent` | Calculated from `unitTypes` | Sum of (unit count × monthly rent) for each unit type |
+| `monthlyRent` | Calculated from `unitTypes[]` | Sum of (count × monthlyRent) for each unit type |
 | `squareFootage` | `totalSqft` | None |
-| (none) | `unitTypes` | Array of unit type objects |
-| `maintenanceCost` | `maintenanceCostPerUnit` | Multiplied by unit count |
-| (none) | `commonAreaUtilities` | New object with utility costs |
+| (none) | `unitTypes[]` | Array of `{ type, count, sqft, monthlyRent }` |
+| (none) | `totalUnits` | Sum of all `unitTypes[].count` |
+| `maintenanceCost` (monthly) | `maintenanceCost` (per unit per month) | Multiplied by `totalUnits` |
+| (none) | `commonAreaUtilities` | `{ electric, water, gas, trash }` (monthly) |
+| `insurance` (rate or amount) | `insuranceRate` | **Must be percentage** (e.g., 0.5 for 0.5%) |
+| `propertyManagement` | `propertyManagementRate` | **Must be percentage** (e.g., 8 for 8%) |
+
+### Critical Data Type Notes
+
+**Insurance Field Evolution**:
+- **Legacy/SFR**: May accept dollar amount OR percentage
+- **MF (NEW)**: **MUST be `insuranceRate` percentage only**
+- **Validation**: Backend expects `insuranceRate: 0.5` (0.5% of purchase price annually)
+
+**Property Management Field**:
+- **Incorrect**: `propertyManagementPercent: 8`
+- **Correct**: `propertyManagementRate: 8` (8% of gross income)
+
+**Maintenance Field**:
+- **SFR**: Total monthly maintenance cost
+- **MF**: Per-unit per-month cost (e.g., $100/unit/month × 8 units = $800/month total)
+
+---
+
+## Future Data Mapping Considerations
 
 ### AI Integration Data Mapping
 

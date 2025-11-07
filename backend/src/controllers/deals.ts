@@ -911,27 +911,65 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
         let investmentDecision: any;
 
         if (dealData.propertyType === 'MF') {
-          // ===== MULTI-FAMILY: NEW SIMPLIFIED API (80% CORE LOGIC) =====
+          // ===== MULTI-FAMILY: NEW SIMPLIFIED API (80% CORE + 20% AI) =====
           logger.info('🏢 Using MFDecisionEngine for Multi-Family property');
 
           const marketData = analysis.marketData;
 
+          // ===== STORY 2.5: AI CONTEXT (SAME AS SFR) =====
+          // Enhanced user context - use enhanced goals from Step 5 or fallback to defaults
+          const enhancedGoals = dealData.enhancedGoals || {};
+
+          logger.info('Enhanced goals received:', {
+            hasEnhancedGoals: !!dealData.enhancedGoals,
+            exitStrategy: enhancedGoals.exitStrategy,
+            portfolioStrategy: enhancedGoals.portfolioStrategy,
+            experienceLevel: enhancedGoals.experienceLevel,
+            riskTolerance: enhancedGoals.riskTolerance
+          });
+
+          // Map portfolio strategy to investment goals for backward compatibility
+          let investmentGoals: 'cash_flow' | 'appreciation' | 'balanced' = 'balanced';
+          if (enhancedGoals.portfolioStrategy === 'cashflow') investmentGoals = 'cash_flow';
+          else if (enhancedGoals.portfolioStrategy === 'appreciation') investmentGoals = 'appreciation';
+
+          const userContext = {
+            availableCash: dealData.totalInvestment || dealData.purchasePrice,
+            experienceLevel: enhancedGoals.experienceLevel || 'intermediate' as const,
+            riskTolerance: enhancedGoals.riskTolerance || 'moderate' as const,
+            investmentGoals
+          };
+
+          // Get predictions from AI insights if available
+          const predictions = analysis.aiInsights?.boldPredictions || null;
+
+          // Normalize MF analysis structure: keyMetrics → metrics
+          // MF analyzer returns keyMetrics, but BaseDecisionEngine expects metrics
+          const normalizedAnalysis = {
+            ...analysis,
+            metrics: analysis.keyMetrics // Map keyMetrics to metrics for consistency
+          };
+
           const mfEngine = new MFDecisionEngine(
-            analysis,      // AnalysisResult<MultiFamilyMetrics>
+            normalizedAnalysis,      // AnalysisResult<MultiFamilyMetrics> (normalized)
             dealData as MultiFamilyData,      // MultiFamilyData
-            marketData     // MarketDataResponse | undefined
+            marketData,    // MarketDataResponse | undefined
+            predictions,   // AI predictions (Story 2.5)
+            userContext,   // User context (Story 2.5)
+            enhancedGoals  // Enhanced goals (Story 2.5)
           );
 
-          // NEW SIMPLIFIED API - No parameters needed (data in constructor)
-          investmentDecision = mfEngine.generateDecision();
+          // NEW ASYNC API WITH AI ENHANCEMENT (80% core + 20% AI)
+          investmentDecision = await mfEngine.generateDecisionWithAI();
 
-          logger.info('✅ MF investment decision generated (CORE 80%):', {
+          logger.info('✅ MF investment decision generated (100% - Core + AI):', {
             verdict: investmentDecision.verdict,
             dealQuality: investmentDecision.professionalAssessment?.dealQuality,
             walkAwayPrice: investmentDecision.marketPosition?.walkAwayPrice,
             capRateScore: investmentDecision.professionalAssessment?.capRateScore,
             dscrScore: investmentDecision.professionalAssessment?.debtStructureScore,
-            aiEnhancement: 'DEFERRED TO STORY 2.5'
+            hasAIContent: !!investmentDecision.aiEnhancedContent,
+            hasGoalReasoning: !!investmentDecision.goalBasedReasoning
           });
 
         } else {

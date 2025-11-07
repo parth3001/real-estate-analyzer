@@ -19,28 +19,105 @@ import { logger } from '../../utils/logger';
 import { BaseDecisionEngine, ScoringWeights, PropertyScores } from './BaseDecisionEngine';
 import { MultiFamilyData, MultiFamilyMetrics, AnalysisResult } from '../../types/propertyTypes';
 import { MarketDataResponse } from '../../types/marketData';
+import { aiEnhancedMessagingService } from '../aiEnhancedMessaging';
 
 export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
   // Type-narrowed property data for MF-specific access
   protected mfPropertyData: MultiFamilyData;
 
+  // AI Enhancement context (Story 2.5)
+  private predictions?: any;
+  private userContext?: any;
+  private enhancedGoals?: any;
+
   constructor(
     analysis: AnalysisResult<MultiFamilyMetrics>,
     propertyData: MultiFamilyData,
-    marketData?: MarketDataResponse
+    marketData?: MarketDataResponse,
+    predictions?: any,
+    userContext?: any,
+    enhancedGoals?: any
   ) {
     super(analysis, propertyData, marketData);
 
     // Store type-narrowed property data for MF-specific methods
     this.mfPropertyData = propertyData;
 
+    // Store AI enhancement context
+    this.predictions = predictions;
+    this.userContext = userContext;
+    this.enhancedGoals = enhancedGoals;
+
     logger.info('MFDecisionEngine initialized', {
       totalUnits: propertyData.totalUnits,
       purchasePrice: propertyData.purchasePrice,
-      noi: analysis.metrics.noi,
-      capRate: analysis.metrics.capRate,
-      dscr: analysis.metrics.dscr
+      noi: analysis.metrics?.noi ?? 'undefined',
+      capRate: analysis.metrics?.capRate ?? 'undefined',
+      dscr: analysis.metrics?.dscr ?? 'undefined',
+      hasAIContext: !!(userContext && enhancedGoals)
     });
+  }
+
+  /**
+   * Generate investment decision with AI enhancement (Story 2.5)
+   *
+   * NEW METHOD (not overriding parent) - adds 20% AI layer on top of 80% core logic
+   * - Calls parent generateDecision() for base verdict/scoring
+   * - Adds AI-enhanced content if userContext/enhancedGoals provided
+   * - Adds goal-based reasoning for personalized recommendations
+   */
+  public async generateDecisionWithAI(): Promise<any> {
+    logger.info('MFDecisionEngine: Generating decision with AI enhancement');
+
+    // Step 1: Get base decision from parent (verdict, scores, walk-away price)
+    const baseDecision = super.generateDecision();
+
+    logger.info('MFDecisionEngine: Base decision generated', {
+      verdict: baseDecision.verdict,
+      dealQuality: baseDecision.professionalAssessment?.dealQuality,
+      walkAwayPrice: baseDecision.marketPosition?.walkAwayPrice
+    });
+
+    // Step 2: If no AI context, return base decision (80% core logic only)
+    if (!this.userContext || !this.enhancedGoals) {
+      logger.info('MFDecisionEngine: No AI context provided, returning base decision (80% core)');
+      return baseDecision;
+    }
+
+    logger.info('MFDecisionEngine: AI context available, generating enhanced content (20% AI layer)');
+
+    try {
+      // Step 3: Generate AI-enhanced content (reasoning, action plan, capital strategy, etc.)
+      // Note: Using 'as any' to handle type mismatch between BaseDecisionEngine and legacy types
+      const aiEnhancedContent = await aiEnhancedMessagingService.generateAllContent(
+        baseDecision as any,
+        this.analysis,
+        this.propertyData
+      );
+
+      logger.info('MFDecisionEngine: AI-enhanced content generated');
+
+      // Step 4: Generate goal-based reasoning (personalized to investor goals)
+      const goalBasedReasoning = await aiEnhancedMessagingService.generatePersonalizedGoalReasoning(
+        baseDecision as any,
+        this.analysis,
+        this.propertyData
+      );
+
+      logger.info('MFDecisionEngine: Goal-based reasoning generated');
+
+      // Step 5: Return enhanced decision (100% - Core + AI)
+      return {
+        ...baseDecision,
+        aiEnhancedContent,
+        goalBasedReasoning
+      };
+
+    } catch (aiError) {
+      logger.error('MFDecisionEngine: AI enhancement failed, returning base decision', aiError);
+      // Graceful degradation - return base decision if AI fails
+      return baseDecision;
+    }
   }
 
   // ===== IMPLEMENT 4 ABSTRACT METHODS =====
@@ -80,19 +157,31 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
    * - Walk-Away: $100,000 / 0.08 = $1,250,000
    */
   protected calculateWalkAwayPrice(): number {
-    const noi = this.analysis.metrics.noi;
+    const noi = this.analysis.metrics?.noi;
 
-    // Handle edge case: zero or negative NOI
-    if (noi <= 0) {
-      logger.warn('MF Walk-Away: NOI is zero or negative, returning purchase price', {
-        noi,
-        purchasePrice: this.propertyData.purchasePrice
+    // CRITICAL: Handle null/undefined/zero/negative NOI
+    if (!noi || noi <= 0) {
+      logger.warn('MF Walk-Away: NOI is invalid, using purchase price as conservative estimate', {
+        noi: noi ?? 'undefined',
+        purchasePrice: this.propertyData.purchasePrice,
+        reason: !noi ? 'NOI is null/undefined' : 'NOI is zero or negative'
       });
       return this.propertyData.purchasePrice;
     }
 
     const targetCapRate = this.getTargetCapRate();
     const walkAwayPrice = noi / targetCapRate;
+
+    // Add NaN check before rounding
+    if (isNaN(walkAwayPrice) || !isFinite(walkAwayPrice)) {
+      logger.error('Walk-Away Price calculation produced invalid result', {
+        noi,
+        targetCapRate,
+        walkAwayPrice,
+        purchasePrice: this.propertyData.purchasePrice
+      });
+      return this.propertyData.purchasePrice;
+    }
 
     logger.info('MF Walk-Away Price Calculation', {
       noi: noi.toFixed(0),
@@ -120,17 +209,23 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
   protected scoreProperty(): PropertyScores {
     const metrics = this.analysis.metrics;
 
+    // Defensive check: Ensure metrics exist
+    if (!metrics) {
+      logger.error('MFDecisionEngine: metrics is undefined in scoreProperty()');
+      throw new Error('Analysis metrics are required but undefined');
+    }
+
     // Calculate approximate cash flow from NOI
     // Cash Flow ≈ NOI - Debt Service
     // Debt Service ≈ Total Investment × 6% (rough estimate)
-    const debtService = metrics.totalInvestment * 0.06;
-    const cashFlow = metrics.noi - debtService;
+    const debtService = (metrics.totalInvestment || 0) * 0.06;
+    const cashFlow = (metrics.noi || 0) - debtService;
 
     const scores = {
       cashFlow: this.scoreCashFlow(cashFlow),
-      irr: this.scoreIRR(metrics.irr),
-      capRate: this.scoreCapRate(metrics.capRate),
-      dscr: this.scoreDSCR(metrics.dscr),
+      irr: this.scoreIRR(metrics.irr || 0),
+      capRate: this.scoreCapRate(metrics.capRate || 0),
+      dscr: this.scoreDSCR(metrics.dscr || 0),
       marketStrength: this.scoreMarketStrength(),
       exitStrategy: this.scoreExitStrategy(),
       propertyRisk: 0 // MF diversified across units = zero property risk
@@ -139,8 +234,8 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
     logger.info('MF Property Scoring', {
       scores,
       totalUnits: this.mfPropertyData.totalUnits,
-      capRate: (metrics.capRate * 100).toFixed(2) + '%',
-      dscr: metrics.dscr.toFixed(2)
+      capRate: ((metrics.capRate || 0) * 100).toFixed(2) + '%',
+      dscr: (metrics.dscr || 0).toFixed(2)
     });
 
     return scores;
@@ -161,22 +256,28 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
     const risks: string[] = [];
     const metrics = this.analysis.metrics;
 
+    // Defensive check: Ensure metrics exist
+    if (!metrics) {
+      logger.warn('MFDecisionEngine: metrics is undefined in getPropertyTypeSpecificRisks()');
+      return ['Unable to assess property-specific risks - metrics unavailable'];
+    }
+
     // RISK 1: DSCR below commercial lender threshold (MOST CRITICAL)
-    if (metrics.dscr < 1.25) {
+    if ((metrics.dscr || 0) < 1.25) {
       risks.push('⚠️ CRITICAL: DSCR < 1.25 - Commercial lender will likely reject loan');
-    } else if (metrics.dscr < 1.35) {
+    } else if ((metrics.dscr || 0) < 1.35) {
       risks.push('DSCR below 1.35 may require stronger borrower qualifications or larger down payment');
     }
 
     // RISK 2: Cap rate too low (premium pricing)
-    if (metrics.capRate < 0.04) {
+    if ((metrics.capRate || 0) < 0.04) {
       risks.push('Low cap rate (<4%) indicates premium pricing - exit may be difficult in market downturn');
     }
 
     // RISK 3: High vacancy rate
-    if (metrics.economicVacancyRate > 10) {
+    if ((metrics.economicVacancyRate || 0) > 10) {
       risks.push('High vacancy rate (>10%) indicates market weakness or property management issues');
-    } else if (metrics.economicVacancyRate > 7) {
+    } else if ((metrics.economicVacancyRate || 0) > 7) {
       risks.push('Elevated vacancy rate (>7%) requires investigation - market norm is 5-7%');
     }
 
@@ -186,8 +287,8 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
     }
 
     // RISK 5: Cash flow risk (per unit basis)
-    const debtService = metrics.totalInvestment * 0.06;
-    const cashFlow = metrics.noi - debtService;
+    const debtService = (metrics.totalInvestment || 0) * 0.06;
+    const cashFlow = (metrics.noi || 0) - debtService;
     const cashFlowPerUnit = cashFlow / this.mfPropertyData.totalUnits;
 
     if (cashFlowPerUnit < 0) {
