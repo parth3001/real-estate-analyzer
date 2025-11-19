@@ -16,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Alert,
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -40,6 +41,8 @@ import InvestmentDecisionHero from './InvestmentDecisionHero';
 import SimplePortfolioSelector from './SimplePortfolioSelector';
 // Tax components replaced with educational versions
 import TaxEducationSummary from '../AnalysisResults/TaxEducationSummary';
+// Story 4.2: Unit Mix Analysis Tab
+import { UnitMixAnalysisTab } from '../MFAnalysis/UnitMix';
 // import TaxImpactSummary from '../AnalysisResults/TaxImpactSummary'; // DEPRECATED
 // import HoldPeriodOptimizer from '../AnalysisResults/HoldPeriodOptimizer'; // DEPRECATED
 // import TaxStrategies from '../AnalysisResults/TaxStrategies'; // DEPRECATED
@@ -109,10 +112,18 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     hasTaxOptimization: !!analysis?.investmentDecision?.professionalAssessment?.taxOptimization
   });
 
+  // Story 4.1 & 4.2: Determine property type for conditional rendering
+  const propertyType = propertyData?.propertyType || analysis?.propertyData?.propertyType;
+
+  // Story 4.2: Conditional tab injection for MF properties
   // Analysis sections for horizontal navigation - filter based on mode
   const allAnalysisSections = [
     { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights' },
     { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis' },
+    // Story 4.2: Inject Unit Mix tab for MF properties only (after Financial Details)
+    ...(propertyType === 'MF' ? [
+      { id: 'unitMix', label: 'Unit Mix Analysis', icon: AssessmentIcon, description: 'Unit-level revenue breakdown and optimization' }
+    ] : []),
     { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights' },
     { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections' },
     { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time' },
@@ -124,62 +135,106 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison' }
   ];
 
-  // Filter sections based on mode
+  // Filter sections based on mode (Story 4.2: includes unitMix for MF if present in allAnalysisSections)
   const analysisSections = mode === 'novice'
-    ? allAnalysisSections.filter(section => ['overview', 'financial', 'tax', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
+    ? allAnalysisSections.filter(section => ['overview', 'financial', 'unitMix', 'tax', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
     : allAnalysisSections;
 
-  // Hero Metrics (Top 4 most important)
-  const heroMetrics = [
-    {
-      label: 'Monthly Cash Flow',
-      value: analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || -14,
-      format: 'currency' as const,
-      status: (analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || 0) >= 0 ? 'positive' as const : 'negative' as const,
-      highlight: true,
-      description: 'Net monthly income after all expenses'
-    },
-    {
-      label: 'Cap Rate',
-      value: analysis?.keyMetrics?.capRate || 3.95,
-      format: 'percent' as const,
-      status: (analysis?.keyMetrics?.capRate || 0) >= 5 ? 'positive' as const : (analysis?.keyMetrics?.capRate || 0) >= 3 ? 'warning' as const : 'negative' as const,
-      highlight: true,
-      description: 'Annual return based on property value'
-    },
-    {
-      label: 'Cash-on-Cash Return',
-      value: analysis?.keyMetrics?.cashOnCashReturn || -0.17,
-      format: 'percent' as const,
-      status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' as const : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' as const : 'negative' as const,
-      highlight: true,
-      description: 'Annual cash return on invested capital'
-    },
-    {
-      label: 'Deal Quality Score',
-      value: analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0,
-      format: 'score' as const,
-      status: (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 80 ? 'positive' as const : (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 65 ? 'warning' as const : 'negative' as const,
-      highlight: true,
-      description: 'V3.0 Professional weighted assessment of investment quality'
-    }
-  ];
+  // Story 4.1: Conditional Hero Metrics based on property type
+  // Pattern: Conditional composition (matches backend BasePropertyAnalyzer pattern)
+  // MF shows institutional metrics; SFR shows individual investor metrics
+  const heroMetrics = propertyType === 'MF'
+    ? [
+        // MF Hero Metric 1: Cap Rate (primary MF valuation metric)
+        {
+          label: 'Cap Rate',
+          value: analysis?.keyMetrics?.capRate || 0,
+          format: 'percent' as const,
+          status: (analysis?.keyMetrics?.capRate || 0) >= 6 ? 'positive' as const : (analysis?.keyMetrics?.capRate || 0) >= 4 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'Annual NOI as % of property value (industry standard for MF)'
+        },
+        // MF Hero Metric 2: DSCR (lender financing requirement)
+        {
+          label: 'DSCR',
+          value: analysis?.keyMetrics?.dscr || 0,
+          format: 'multiplier' as const,
+          status: (analysis?.keyMetrics?.dscr || 0) >= 1.25 ? 'positive' as const : (analysis?.keyMetrics?.dscr || 0) >= 1.0 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'Debt Service Coverage Ratio (1.25x+ required by Fannie Mae)'
+        },
+        // MF Hero Metric 3: Annual NOI (foundation of MF value)
+        {
+          label: 'Annual NOI',
+          value: analysis?.keyMetrics?.noi || 0,
+          format: 'currency' as const,
+          status: (analysis?.keyMetrics?.noi || 0) >= 0 ? 'positive' as const : 'negative' as const,
+          highlight: true,
+          description: 'Net Operating Income (determines property value for MF)'
+        },
+        // MF Hero Metric 4: Cash-on-Cash Return (equity performance)
+        {
+          label: 'Cash-on-Cash Return',
+          value: analysis?.keyMetrics?.cashOnCashReturn || 0,
+          format: 'percent' as const,
+          status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' as const : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'Annual cash return on invested capital'
+        }
+      ]
+    : [
+        // SFR Hero Metrics (original - optimized for individual investors)
+        {
+          label: 'Monthly Cash Flow',
+          value: analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || -14,
+          format: 'currency' as const,
+          status: (analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || 0) >= 0 ? 'positive' as const : 'negative' as const,
+          highlight: true,
+          description: 'Net monthly income after all expenses'
+        },
+        {
+          label: 'Cap Rate',
+          value: analysis?.keyMetrics?.capRate || 3.95,
+          format: 'percent' as const,
+          status: (analysis?.keyMetrics?.capRate || 0) >= 5 ? 'positive' as const : (analysis?.keyMetrics?.capRate || 0) >= 3 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'Annual return based on property value'
+        },
+        {
+          label: 'Cash-on-Cash Return',
+          value: analysis?.keyMetrics?.cashOnCashReturn || -0.17,
+          format: 'percent' as const,
+          status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' as const : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'Annual cash return on invested capital'
+        },
+        {
+          label: 'Deal Quality Score',
+          value: analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0,
+          format: 'score' as const,
+          status: (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 80 ? 'positive' as const : (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 65 ? 'warning' as const : 'negative' as const,
+          highlight: true,
+          description: 'V3.0 Professional weighted assessment of investment quality'
+        }
+      ];
 
   // Key Financial Metrics (8 additional important metrics)
   const keyFinancialMetrics = [
     {
+      label: '10-Year IRR',
+      // Backend returns IRR as decimal (0.05 = 5%), convert to percentage for display
+      value: ((analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0) * 100),
+      format: 'percent' as const,
+      // Status thresholds: 15% (excellent), 8% (good), <8% (caution)
+      status: ((analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0) * 100) >= 15 ? 'positive' as const : ((analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0) * 100) >= 8 ? 'warning' as const : 'negative' as const,
+      description: 'Internal Rate of Return - Time-weighted annualized return rate'
+    },
+    {
       label: 'Total ROI (10 yr)',
       value: analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0,
       format: 'percent' as const,
-      status: (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 100 ? 'positive' as const : 'warning' as const,
-      description: 'Total return on investment percentage over 10 years'
-    },
-    {
-      label: '10-Year IRR',
-      value: analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0,
-      format: 'percent' as const,
-      status: (analysis?.keyMetrics?.irr || 0) >= 15 ? 'positive' as const : (analysis?.keyMetrics?.irr || 0) >= 8 ? 'warning' as const : 'negative' as const,
-      description: 'Internal Rate of Return'
+      status: (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 100 ? 'positive' as const : (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 50 ? 'warning' as const : 'negative' as const,
+      description: 'Total cumulative return percentage over 10 years'
     },
     {
       label: 'DSCR',
@@ -243,7 +298,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     },
     {
       label: 'Gross Rent Multiplier',
-      value: analysis?.keyMetrics?.grossRentMultiplier || (propertyData?.purchasePrice && propertyData?.monthlyRent ? propertyData.purchasePrice / (propertyData.monthlyRent * 12) : 0),
+      value: analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm || (propertyData?.purchasePrice && propertyData?.monthlyRent ? propertyData.purchasePrice / (propertyData.monthlyRent * 12) : 0),
       format: 'decimal' as const,
       status: 'neutral' as const,
       description: 'Price to annual rent ratio'
@@ -319,10 +374,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     // Additional metrics from documentation
     {
       label: 'Effective Gross Income',
-      value: (analysis?.monthlyAnalysis?.income?.effective || 0) * 12,
+      value: (analysis?.keyMetrics as any)?.effectiveGrossIncome || (analysis?.monthlyAnalysis?.income?.effective || 0) * 12,
       format: 'currency' as const,
       status: 'neutral' as const,
-      description: 'Annual income after vacancy'
+      description: 'Annual income after vacancy and credit loss'
     },
     {
       label: 'Annual Debt Service',
@@ -380,18 +435,20 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   ];
 
   // Format values based on type
-  const formatValue = (value: number, format: string) => {
+  const formatValue = (value: number, format: string, preserveCents: boolean = false) => {
     if (typeof value !== 'number' || isNaN(value)) {
       return format === 'currency' ? '$0' : format === 'percent' ? '0%' : '0';
     }
-    
+
     switch (format) {
       case 'currency':
-        return new Intl.NumberFormat('en-US', { 
-          style: 'currency', 
+        // For small per-unit values (< $100), preserve cents to show precision
+        const shouldPreserveCents = preserveCents || value < 100;
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
           currency: 'USD',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0
+          minimumFractionDigits: shouldPreserveCents ? 2 : 0,
+          maximumFractionDigits: shouldPreserveCents ? 2 : 0
         }).format(value);
       case 'percent':
         // Backend returns percentages as numbers (e.g., 167.17 for 167.17%)
@@ -731,6 +788,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               <InvestmentDecisionHero
                 investmentDecision={analysis.investmentDecision}
                 analysis={analysis}
+                propertyData={propertyData}
               />
             )}
 
@@ -894,37 +952,37 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                     <TableBody>
                       <TableRow>
                         <TableCell>Gross Rental Income</TableCell>
-                        <TableCell align="right">{formatValue(propertyData?.monthlyRent || 0, 'currency')}</TableCell>
+                        <TableCell align="right">{formatValue(analysis?.monthlyAnalysis?.income?.gross || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Vacancy Loss</TableCell>
-                        <TableCell align="right">-{formatValue((propertyData?.monthlyRent || 0) * (propertyData?.longTermAssumptions?.vacancyRate || 5) / 100, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue((analysis?.monthlyAnalysis?.income?.gross || 0) - (analysis?.monthlyAnalysis?.income?.effective || 0), 'currency')}</TableCell>
                       </TableRow>
                       <TableRow sx={{ backgroundColor: appleColors.gray[50] }}>
                         <TableCell sx={{ fontWeight: 600 }}>Effective Rental Income</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          {formatValue((propertyData?.monthlyRent || 0) * (1 - (propertyData?.longTermAssumptions?.vacancyRate || 5) / 100), 'currency')}
+                          {formatValue(analysis?.monthlyAnalysis?.income?.effective || 0, 'currency')}
                         </TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Mortgage Payment</TableCell>
-                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.mortgage?.total || 0, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.debt || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Property Tax</TableCell>
-                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.propertyTax || 0, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.propertyTax || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Insurance</TableCell>
-                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.insurance || 0, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.insurance || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Maintenance</TableCell>
-                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.maintenance || 0, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.maintenance || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>Property Management</TableCell>
-                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.propertyManagement || 0, 'currency')}</TableCell>
+                        <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.propertyManagement || 0, 'currency')}</TableCell>
                       </TableRow>
                       <TableRow sx={{ backgroundColor: appleColors.primary[50] }}>
                         <TableCell sx={{ fontWeight: 700 }}>Monthly Cash Flow</TableCell>
@@ -941,6 +999,218 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 </TableContainer>
               </CardContent>
             </Card>
+
+            {/* Story 4.6: MF-Specific Advanced Metrics Table (8 institutional-grade metrics) */}
+            {propertyType === 'MF' && (
+              <Card sx={{ borderRadius: '16px', mb: 4 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                    Multi-Family Advanced Metrics
+                  </Typography>
+
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell><strong>Metric</strong></TableCell>
+                          <TableCell align="right"><strong>Value</strong></TableCell>
+                          <TableCell><strong>Industry Benchmark</strong></TableCell>
+                          <TableCell><strong>Status</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {/* 1. Gross Rent Multiplier (GRM) */}
+                        <TableRow>
+                          <TableCell>Gross Rent Multiplier (GRM)</TableCell>
+                          <TableCell align="right">
+                            {(analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm)?.toFixed(2) || 'N/A'}
+                          </TableCell>
+                          <TableCell>4-7 (Residential MF)</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                ((analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm) || 0) >= 4 && ((analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm) || 0) <= 7
+                                  ? "Good"
+                                  : ((analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm) || 0) < 4
+                                    ? "Below Range"
+                                    : "Above Range"
+                              }
+                              color={
+                                ((analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm) || 0) >= 4 && ((analysis?.keyMetrics?.grossRentMultiplier || (analysis?.keyMetrics as any)?.grm) || 0) <= 7
+                                  ? "success"
+                                  : "warning"
+                              }
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 2. Debt Yield */}
+                        <TableRow>
+                          <TableCell>Debt Yield</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.debtYield
+                              ? `${(analysis.keyMetrics.debtYield).toFixed(2)}%`
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>10%+ (Lender Requirement)</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={(analysis?.keyMetrics?.debtYield || 0) >= 10 ? "Meets Requirement" : "Below Threshold"}
+                              color={(analysis?.keyMetrics?.debtYield || 0) >= 10 ? "success" : "warning"}
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 3. Break-Even Occupancy (BEO) */}
+                        <TableRow>
+                          <TableCell>Break-Even Occupancy</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.breakEvenOccupancy
+                              ? `${(analysis.keyMetrics.breakEvenOccupancy).toFixed(1)}%`
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>60-75% (Stable Properties)</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 75
+                                  ? "Good"
+                                  : (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 85
+                                    ? "Moderate"
+                                    : "High Risk"
+                              }
+                              color={
+                                (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 75
+                                  ? "success"
+                                  : (analysis?.keyMetrics?.breakEvenOccupancy || 0) <= 85
+                                    ? "warning"
+                                    : "error"
+                              }
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 4. Operating Expense Ratio (OER) */}
+                        <TableRow>
+                          <TableCell>Operating Expense Ratio</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.operatingExpenseRatio
+                              ? `${(analysis.keyMetrics.operatingExpenseRatio).toFixed(1)}%`
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>35-55% (Well-Managed)</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                (analysis?.keyMetrics?.operatingExpenseRatio || 0) <= 55
+                                  ? "Efficient"
+                                  : "Review Expenses"
+                              }
+                              color={(analysis?.keyMetrics?.operatingExpenseRatio || 0) <= 55 ? "success" : "warning"}
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 5. Economic Vacancy Rate */}
+                        <TableRow>
+                          <TableCell>Economic Vacancy Rate</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.economicVacancyRate
+                              ? `${(analysis.keyMetrics.economicVacancyRate).toFixed(1)}%`
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>5-10% (Market Dependent)</TableCell>
+                          <TableCell>
+                            <Chip
+                              label="Market Rate"
+                              color="info"
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 6. NOI Per Unit */}
+                        <TableRow>
+                          <TableCell>NOI Per Unit (Annual)</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.noiPerUnit
+                              ? formatValue(analysis.keyMetrics.noiPerUnit, 'currency')
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>Market Dependent</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={(analysis?.keyMetrics?.noiPerUnit || 0) > 0 ? "Positive" : "Negative"}
+                              color={(analysis?.keyMetrics?.noiPerUnit || 0) > 0 ? "success" : "error"}
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 7. Cash Flow Per Unit */}
+                        <TableRow>
+                          <TableCell>Cash Flow Per Unit (Monthly)</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.cashFlowPerUnit
+                              ? formatValue(analysis.keyMetrics.cashFlowPerUnit, 'currency')
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>$200-500/unit</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                (analysis?.keyMetrics?.cashFlowPerUnit || 0) >= 200
+                                  ? "Strong"
+                                  : (analysis?.keyMetrics?.cashFlowPerUnit || 0) >= 0
+                                    ? "Modest"
+                                    : "Negative"
+                              }
+                              color={
+                                (analysis?.keyMetrics?.cashFlowPerUnit || 0) >= 200
+                                  ? "success"
+                                  : (analysis?.keyMetrics?.cashFlowPerUnit || 0) >= 0
+                                    ? "warning"
+                                    : "error"
+                              }
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+
+                        {/* 8. Rent Per Square Foot */}
+                        <TableRow>
+                          <TableCell>Rent Per Square Foot</TableCell>
+                          <TableCell align="right">
+                            {analysis?.keyMetrics?.rentPerSqft
+                              ? formatValue(analysis.keyMetrics.rentPerSqft, 'currency')
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>Market Dependent</TableCell>
+                          <TableCell>
+                            <Chip
+                              label="Market Rate"
+                              color="info"
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
+                    <Typography variant="body2">
+                      <strong>Industry Benchmarks:</strong> These metrics are validated against Fannie Mae, Freddie Mac,
+                      and institutional investor standards. Values outside benchmarks warrant further investigation.
+                    </Typography>
+                  </Alert>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Comprehensive Metrics Grid */}
             <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
@@ -1824,6 +2094,44 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               propertyData={propertyData}
             />
           </Box>
+        );
+
+      // Story 4.4: Render Unit Mix Tab (MF-specific)
+      case 'unitMix':
+        // Story 4.2: Unit Mix Analysis Tab (COMPLETE)
+        // Validate we have the required data for MF property
+        if (propertyType !== 'MF' || !propertyData?.unitTypes || propertyData.unitTypes.length === 0) {
+          return (
+            <Box>
+              <Alert severity="warning" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  Unit Mix Analysis is only available for Multi-Family properties with unit type configuration.
+                </Typography>
+              </Alert>
+            </Box>
+          );
+        }
+
+        return (
+          <UnitMixAnalysisTab
+            // From propertyData
+            unitTypes={propertyData.unitTypes}
+            totalUnits={propertyData.totalUnits}
+            totalSqft={propertyData.totalSqft}
+            // From analysis.keyMetrics (MultiFamilyMetrics)
+            unitMixEfficiency={analysis?.keyMetrics?.unitMixEfficiency || 0}
+            noiPerUnit={analysis?.keyMetrics?.noiPerUnit || 0}
+            cashFlowPerUnit={analysis?.keyMetrics?.cashFlowPerUnit || 0}
+            operatingExpensePerUnit={analysis?.keyMetrics?.operatingExpensePerUnit || 0}
+            averageRentPerUnit={analysis?.keyMetrics?.averageRentPerUnit || 0}
+            // From analysis.longTermAnalysis.projections[0]
+            year1GrossIncome={analysis?.longTermAnalysis?.projections?.[0]?.grossIncome || 0}
+            year1OperatingExpenses={analysis?.longTermAnalysis?.projections?.[0]?.operatingExpenses || 0}
+            year1NOI={analysis?.longTermAnalysis?.projections?.[0]?.noi || 0}
+            year1CashFlow={analysis?.longTermAnalysis?.projections?.[0]?.cashFlow || 0}
+            // Issue #5: Per-unit-type metrics for profitability comparison
+            perUnitTypeMetrics={analysis?.keyMetrics?.perUnitTypeMetrics || []}
+          />
         );
 
       default:

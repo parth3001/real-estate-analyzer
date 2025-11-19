@@ -1,3 +1,18 @@
+/**
+ * Validation Warning Types (Phase 1: Multi-Family)
+ */
+export type ValidationSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+export type ValidationCategory = 'OPERATING_EXPENSES' | 'FINANCING' | 'MARKET_DATA' | 'INPUT_VALIDATION';
+
+export interface ValidationWarning {
+  severity: ValidationSeverity;
+  category: ValidationCategory;
+  message: string;
+  impact?: string;
+  recommendation?: string;
+  affectedMetric?: string;
+}
+
 export interface MonthlyExpenses {
   propertyTax: number;
   insurance: number;
@@ -191,6 +206,8 @@ export interface Analysis {
   };
   keyMetrics: KeyMetrics;
   aiInsights?: AIInsights;
+  // Phase 1: Validation warnings for data quality
+  validationWarnings?: ValidationWarning[];
   sensitivityAnalysis?: {
     bestCase: any;
     worstCase: any;

@@ -70,7 +70,8 @@ export interface UnitType {
   count: number;
   sqft: number;
   monthlyRent: number;
-  occupied: number;
+  marketRent?: number;      // Issue #6: RentCast market rent estimate (for value-add analysis)
+  occupied?: number;         // Optional: Number of occupied units of this type
 }
 
 export interface MFLongTermAssumptions extends LongTermAssumptions {
@@ -93,11 +94,22 @@ export interface MultiFamilyPropertyData extends BasePropertyData {
   unitTypes: UnitType[];
   longTermAssumptions: MFLongTermAssumptions;
   commonAreaUtilities: CommonAreaUtilities;
+  buildingType?: 'GARDEN' | 'MID_RISE' | 'COMPLEX'; // Phase 1: Commercial MF (5+ units)
   // Portfolio context (optional)
   portfolioId?: string;
   portfolioContext?: {
     portfolioName?: string;
     portfolioStrategy?: string;
+  };
+  // Investment goals and strategy (optional)
+  enhancedGoals?: {
+    exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';
+    portfolioStrategy?: 'first' | 'geographic' | 'cashflow' | 'appreciation' | 'diversification';
+    experienceLevel?: 'novice' | 'intermediate' | 'expert';
+    riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+    freeTextStrategy?: string;
+    aiEnhancedStrategy?: string;
+    strategicInsights?: string[];
   };
 }
 

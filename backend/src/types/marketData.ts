@@ -543,3 +543,65 @@ export interface MarketDataMetrics {
   lastRequest: Date;
   rateLimitStatus: ApiRateLimitInfo[];
 }
+
+// ============================================================================
+// Multi-Family Property Types (Story 3.1)
+// ============================================================================
+
+/**
+ * Unit configuration for MF rent estimate request
+ */
+export interface MFUnitConfig {
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number;
+}
+
+/**
+ * Multi-Family Unit Rent Estimate
+ * Returned by RentCast API for unit-level MF rent estimates
+ */
+export interface MFUnitRentEstimate {
+  address: string;
+  unitConfig: MFUnitConfig;
+  rentEstimate: number;
+  rentRange: {
+    low: number;
+    high: number;
+  };
+  confidence: {
+    score: number; // 0-100
+    source: string;
+    lastUpdated: Date;
+    comparableCount: number;
+  };
+  comparables: MFComparable[];
+  dataSource: string;
+  timestamp: Date;
+}
+
+/**
+ * Multi-Family Comparable Property
+ * Similar rental units used for rent estimation
+ */
+export interface MFComparable {
+  address: string;
+  propertyType: string;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number;
+  rent: number;
+  distance: number; // Miles from subject property
+  correlation: number; // 0-1 similarity score
+  status: string; // "Active", "Leased", etc.
+}
+
+/**
+ * Request parameters for MF unit rent estimate
+ */
+export interface MFUnitRentEstimateParams {
+  address: string;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number;
+}

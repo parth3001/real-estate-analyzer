@@ -343,8 +343,54 @@ export abstract class BaseDecisionEngine<T extends CommonMetrics> {
    * - NEGOTIATE: 65-79 (strong fundamentals, room for improvement)
    * - CAUTION: 50-64 (acceptable with optimization)
    * - PASS: 0-49 (below professional standards)
+   *
+   * CRITICAL DEAL KILLER OVERRIDES (Architect Fix - Business Expert Feedback):
+   * These conditions override normal scoring to prevent fundamentally broken deals
    */
   protected determineVerdict(dealQuality: number): InvestmentVerdict {
+    // ===== CRITICAL DEAL KILLER CHECKS (applies to both SFR and MF) =====
+    const monthlyCashFlow = this.analysis.monthlyAnalysis?.cashFlow || 0;
+    const dscr = this.analysis.metrics?.dscr || 0;
+    // breakEvenOccupancy only exists on MultiFamilyMetrics, safe to access with type assertion
+    const breakEvenOccupancy = (this.analysis.metrics as any)?.breakEvenOccupancy || 0;
+
+    // Critical Failure 1: DSCR < 1.0 means property cannot cover debt service
+    const criticalDSCRFailure = dscr < 1.0 && dscr > 0;
+
+    // Critical Failure 2: Negative cash flow with no path to profitability
+    const severeNegativeCashFlow = monthlyCashFlow < -1000;
+
+    // Critical Failure 3: Break-even occupancy > 100% (mathematically impossible)
+    const impossibleBreakEven = breakEvenOccupancy > 100;
+
+    // Critical Failure 4: Combination of negative cash flow + low DSCR
+    const combinedCriticalFailure = monthlyCashFlow < 0 && dscr < 1.25;
+
+    // AUTO-PASS: If any critical deal killer exists, override score-based verdict
+    if (criticalDSCRFailure || severeNegativeCashFlow || impossibleBreakEven || combinedCriticalFailure) {
+      const failures = [];
+      if (criticalDSCRFailure) failures.push(`DSCR ${dscr.toFixed(2)} < 1.0 (unlendable)`);
+      if (severeNegativeCashFlow) failures.push(`severe negative cash flow ($${Math.abs(monthlyCashFlow).toFixed(0)}/mo)`);
+      if (impossibleBreakEven) failures.push(`break-even occupancy ${breakEvenOccupancy.toFixed(0)}% (impossible)`);
+      if (combinedCriticalFailure && !criticalDSCRFailure && !severeNegativeCashFlow) {
+        failures.push(`negative cash flow + insufficient debt coverage`);
+      }
+
+      logger.info('🚨 CRITICAL DEAL KILLER AUTO-PASS TRIGGERED', {
+        propertyType: this.propertyData.propertyType,
+        dealQuality,
+        originalVerdict: dealQuality >= 50 ? 'CAUTION' : 'PASS',
+        overriddenTo: 'PASS',
+        failures,
+        monthlyCashFlow,
+        dscr,
+        breakEvenOccupancy
+      });
+
+      return 'PASS'; // Override any score-based verdict
+    }
+
+    // Normal score-based verdict (only if no critical failures)
     if (dealQuality >= 80) return 'BUY';
     if (dealQuality >= 65) return 'NEGOTIATE';
     if (dealQuality >= 50) return 'CAUTION';

@@ -43,3 +43,50 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+// Mock MUI icons to prevent EMFILE (too many open files) error
+// MUI icons barrel import causes excessive file handles in test environment
+vi.mock('@mui/icons-material', () => {
+  const MockIcon = () => 'svg'
+  return {
+    // Address & Property icons
+    LocationOn: MockIcon,
+    Search: MockIcon,
+    AutoAwesome: MockIcon,
+    Home: MockIcon,
+    SquareFoot: MockIcon,
+    CalendarMonth: MockIcon,
+    Apartment: MockIcon,
+    Business: MockIcon,
+
+    // Financial icons
+    AttachMoney: MockIcon,
+    AccountBalance: MockIcon,
+    TrendingUp: MockIcon,
+    Receipt: MockIcon,
+
+    // Strategy & Goals icons
+    Psychology: MockIcon,
+    Info: MockIcon,
+    HelpOutline: MockIcon,
+
+    // Navigation & Action icons
+    ArrowBack: MockIcon,
+    ArrowForward: MockIcon,
+    Check: MockIcon,
+
+    // Status & Validation icons
+    Error: MockIcon,
+    Warning: MockIcon,
+    CheckCircle: MockIcon,
+
+    // Other commonly used icons
+    Add: MockIcon,
+    Remove: MockIcon,
+    Edit: MockIcon,
+    Delete: MockIcon,
+    Close: MockIcon,
+    ExpandMore: MockIcon,
+    ExpandLess: MockIcon,
+  }
+})

@@ -337,6 +337,8 @@ export interface AnalysisResult<T extends CommonMetrics> {
   investmentTiming?: InvestmentTimingAnalysis;
   // NEW: Professional Investment Decision
   investmentDecision?: any; // Will be strongly typed later - using any for now to avoid circular imports
+  // Sprint 4: Property Data (original input) for frontend display (Unit Mix Analysis, Building Type Badge)
+  propertyData?: SFRData | MultiFamilyData;
 }
 
 export type { SFRData, MultiFamilyData, PropertyType }; 

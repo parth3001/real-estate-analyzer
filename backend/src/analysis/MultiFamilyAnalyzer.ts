@@ -5,8 +5,15 @@ import { ExpenseBreakdown, SensitivityAnalysis, AnalysisResult } from '../types/
 import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from '../types/marketData';
 import { marketIntelligenceService } from '../services/marketIntelligenceService';
 import { logger } from '../utils/logger';
+import { ValidationWarning } from '../types/validation';
 
 export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, MultiFamilyMetrics> {
+  /**
+   * Phase 1: Validation warnings collected during analysis
+   * These warnings are returned to the frontend for user feedback
+   */
+  private validationWarnings: ValidationWarning[] = [];
+
   /**
    * Story 1.5: Validate property data for consistency
    * Checks for common data quality issues before analysis
@@ -124,6 +131,78 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
         `  Commercial loans (5+ units) typically require 20-25% down\n` +
         `  → May face financing challenges`
       );
+      this.validationWarnings.push({
+        severity: 'MEDIUM',
+        category: 'FINANCING',
+        message: `Low down payment (${downPaymentPercent.toFixed(1)}%) for commercial property`,
+        impact: 'May face financing challenges or higher interest rates',
+        recommendation: 'Commercial loans (5+ units) typically require 20-25% down payment',
+        affectedMetric: 'Financing'
+      });
+    }
+
+    // Validation 5: Operating expenses reasonability by building type (Phase 1)
+    if (this.data.buildingType && this.data.totalUnits > 0) {
+      // Calculate monthly operating expenses per unit
+      const monthlyTax = (this.data.purchasePrice * (this.data.propertyTaxRate || 0) / 100) / 12;
+      const monthlyInsurance = (this.data.purchasePrice * (this.data.insuranceRate || 0) / 100) / 12;
+      const monthlyMaintenance = this.data.maintenanceCost || 0;
+      const monthlyPropertyMgmt = this.data.propertyManagementRate
+        ? (this.getNormalizedUnits().reduce((sum, u) => sum + u.currentRent, 0) * this.data.propertyManagementRate / 100)
+        : 0;
+
+      // Calculate total utilities from commonAreaUtilities object
+      const monthlyUtilities = this.data.commonAreaUtilities
+        ? (this.data.commonAreaUtilities.electric || 0) +
+          (this.data.commonAreaUtilities.water || 0) +
+          (this.data.commonAreaUtilities.gas || 0) +
+          (this.data.commonAreaUtilities.trash || 0)
+        : 0;
+
+      const totalMonthlyOpEx = monthlyTax + monthlyInsurance + monthlyMaintenance + monthlyPropertyMgmt + monthlyUtilities;
+      const opExPerUnit = totalMonthlyOpEx / this.data.totalUnits;
+
+      // Building type ranges (from Business Reality Check doc)
+      const buildingTypeRanges: Record<string, { min: number; max: number; typical: string }> = {
+        'GARDEN': { min: 250, max: 400, typical: '$250-400/unit/month' },
+        'MID_RISE': { min: 450, max: 700, typical: '$450-700/unit/month' },
+        'COMPLEX': { min: 300, max: 500, typical: '$300-500/unit/month' }
+      };
+
+      const range = buildingTypeRanges[this.data.buildingType];
+      if (range) {
+        if (opExPerUnit < range.min) {
+          console.warn(
+            `[MF] ⚠️ VALIDATION WARNING: Operating expenses appear low for ${this.data.buildingType}\n` +
+            `  Operating expenses: $${opExPerUnit.toFixed(2)}/unit/month\n` +
+            `  Typical range for ${this.data.buildingType}: ${range.typical}\n` +
+            `  → Expenses may be underestimated`
+          );
+          this.validationWarnings.push({
+            severity: 'MEDIUM',
+            category: 'OPERATING_EXPENSES',
+            message: `Operating expenses ($${opExPerUnit.toFixed(2)}/unit/month) appear low for ${this.data.buildingType} building`,
+            impact: `Actual expenses may be ${((range.min - opExPerUnit) * this.data.totalUnits * 12).toFixed(0)} higher annually`,
+            recommendation: `Typical range for ${this.data.buildingType}: ${range.typical}. Verify all expense categories are included.`,
+            affectedMetric: 'Cash Flow, NOI'
+          });
+        } else if (opExPerUnit > range.max) {
+          console.warn(
+            `[MF] ⚠️ VALIDATION WARNING: Operating expenses appear high for ${this.data.buildingType}\n` +
+            `  Operating expenses: $${opExPerUnit.toFixed(2)}/unit/month\n` +
+            `  Typical range for ${this.data.buildingType}: ${range.typical}\n` +
+            `  → Verify expense data accuracy`
+          );
+          this.validationWarnings.push({
+            severity: 'LOW',
+            category: 'OPERATING_EXPENSES',
+            message: `Operating expenses ($${opExPerUnit.toFixed(2)}/unit/month) appear high for ${this.data.buildingType} building`,
+            impact: `Higher expenses will reduce cash flow by $${((opExPerUnit - range.max) * this.data.totalUnits * 12).toFixed(0)}/year`,
+            recommendation: `Typical range for ${this.data.buildingType}: ${range.typical}. This may indicate deferred maintenance or premium amenities.`,
+            affectedMetric: 'Cash Flow, NOI'
+          });
+        }
+      }
     }
 
     console.log('[MF] ✅ Data validation complete');
@@ -205,6 +284,9 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     console.log(`[MF] Purchase Price: $${this.data.purchasePrice.toLocaleString()}`);
     console.log(`[MF] Down Payment: $${this.data.downPayment.toLocaleString()} (${((this.data.downPayment / this.data.purchasePrice) * 100).toFixed(1)}%)`);
 
+    // Phase 1: Clear previous validation warnings
+    this.clearValidationWarnings();
+
     // Story 1.5: Validate data before analysis
     this.validatePropertyData();
 
@@ -246,6 +328,22 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     return result;
   }
 
+  /**
+   * Phase 1: Get validation warnings collected during analysis
+   * @returns Array of validation warnings to display to user
+   */
+  public getValidationWarnings(): ValidationWarning[] {
+    return this.validationWarnings;
+  }
+
+  /**
+   * Phase 1: Clear validation warnings before new analysis
+   * Called at the start of analyze() to reset state
+   */
+  public clearValidationWarnings(): void {
+    this.validationWarnings = [];
+  }
+
   protected calculateGrossIncome(year: number): number {
     const growthFactor = Math.pow(1 + this.assumptions.annualRentIncrease / 100, year - 1);
     const units = this.getNormalizedUnits();
@@ -284,23 +382,30 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * Calculate Operating Expenses - CRITICAL NOI FIX (Story 1.2)
    *
    * IMPORTANT: Vacancy is NOT an operating expense - it reduces income
-   * Operating expenses = Property Tax + Insurance + Management + Maintenance + Utilities + CapEx
+   * Operating expenses = Property Tax + Insurance + Management + Maintenance + Utilities + CapEx + Common Area Reserves + Turnover
+   *
+   * FIX (Issue #4): Now includes ALL expenses to match calculateProjections():
+   * - Common Area Reserves (2% of EGI)
+   * - Turnover Costs
    */
   protected calculateOperatingExpenses(grossIncome: number): number {
-    const { purchasePrice, propertyTaxRate, insuranceRate, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
+    const { purchasePrice, propertyTaxRate, insurancePerUnit, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
+
+    // Calculate EGI first (needed for CapEx and Common Area Reserves)
+    const effectiveGrossIncome = this.calculateEffectiveGrossIncome(grossIncome);
 
     // Calculate base expenses (NO VACANCY)
     const propertyTax = purchasePrice * (propertyTaxRate / 100);
-    const insurance = purchasePrice * (insuranceRate / 100);
+    const insurance = (insurancePerUnit || 600) * totalUnits; // Annual insurance per unit × total units
     const propertyManagement = grossIncome * (propertyManagementRate / 100);
 
     // Calculate maintenance based on per-unit cost
     const maintenance = (maintenanceCostPerUnit || 100) * totalUnits * 12;
 
     // Common area expenses from commonAreaUtilities if present (monthly values, convert to annual)
-    let commonAreaTotal = 0;
+    let commonAreaUtilities = 0;
     if (this.data.commonAreaUtilities) {
-      commonAreaTotal = (
+      commonAreaUtilities = (
         (this.data.commonAreaUtilities.electric || 0) +
         (this.data.commonAreaUtilities.water || 0) +
         (this.data.commonAreaUtilities.gas || 0) +
@@ -308,22 +413,99 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       ) * 12; // Convert monthly to annual
     }
 
-    // Capital expenditures (6% of gross income as default)
-    const capExRate = 0.06;
-    const capEx = grossIncome * capExRate;
+    // ✅ FIX: CapEx reserves should use EGI, not gross income (6% of EGI - Fannie Mae/Freddie Mac standard)
+    const MF_CAPEX_RESERVE_RATE = 6;
+    const capExReserves = effectiveGrossIncome * MF_CAPEX_RESERVE_RATE / 100;
 
-    const totalExpenses = propertyTax + insurance + propertyManagement + maintenance + commonAreaTotal + capEx;
+    // ✅ FIX: Common area reserves (2% of EGI - industry standard for replacement reserves)
+    const MF_COMMON_AREA_RESERVE_RATE = 2;
+    const commonAreaReserves = effectiveGrossIncome * MF_COMMON_AREA_RESERVE_RATE / 100;
 
-    console.log('[MF] Operating Expenses:');
+    // ✅ FIX: Turnover costs (matching calculateProjections logic)
+    const turnoverFrequency = this.assumptions.turnoverFrequency || 3;
+    const turnoverRate = 1 / turnoverFrequency;
+    const prepFees = this.data.tenantTurnoverFees?.prepFees || 500;
+    const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
+    const monthlyRent = grossIncome / 12;
+    const turnoverCosts = (prepFees + (monthlyRent * realtorCommission)) * turnoverRate;
+
+    const totalExpenses = propertyTax + insurance + propertyManagement + maintenance +
+                         commonAreaUtilities + capExReserves + commonAreaReserves + turnoverCosts;
+
+    console.log('[MF] Operating Expenses (FIXED - Issue #4):');
     console.log('  Property Tax:', propertyTax.toFixed(2));
     console.log('  Insurance:', insurance.toFixed(2));
     console.log('  Property Management:', propertyManagement.toFixed(2));
     console.log('  Maintenance:', maintenance.toFixed(2));
-    console.log('  Common Area Utilities:', commonAreaTotal.toFixed(2));
-    console.log('  CapEx:', capEx.toFixed(2));
+    console.log('  Common Area Utilities:', commonAreaUtilities.toFixed(2));
+    console.log('  CapEx Reserves (6% of EGI):', capExReserves.toFixed(2));
+    console.log('  Common Area Reserves (2% of EGI):', commonAreaReserves.toFixed(2));
+    console.log('  Turnover Costs:', turnoverCosts.toFixed(2));
     console.log('  Total (NO VACANCY):', totalExpenses.toFixed(2));
 
     return totalExpenses;
+  }
+
+  /**
+   * Issue #5: Calculate per-unit-type financial metrics for Unit Mix Analysis
+   *
+   * Returns profitability breakdown by unit type (not averaged)
+   * Example: 2BR units vs 1BR units - which is more profitable?
+   *
+   * @returns Array of per-unit-type metrics with income, opex, NOI, cash flow
+   */
+  private calculatePerUnitTypeMetrics(
+    totalGrossIncome: number,
+    totalOperatingExpenses: number,
+    totalDebtService: number
+  ): Array<{
+    unitType: string;
+    income: number;
+    opex: number;
+    noi: number;
+    cashFlow: number;
+  }> {
+    const unitTypes = this.data.unitTypes || [];
+
+    if (unitTypes.length === 0) {
+      console.log('[MF] No unitTypes data available for per-unit-type metrics');
+      return [];
+    }
+
+    console.log('\n[MF] ========== PER-UNIT-TYPE METRICS CALCULATION (Issue #5) ==========');
+
+    return unitTypes.map(unit => {
+      // Calculate annual gross income for this unit type
+      const unitTypeGrossIncome = unit.monthlyRent * unit.count * 12;
+
+      // Calculate proportional operating expenses
+      // Operating expenses are proportional to income (industry standard approach)
+      const opexRatio = totalOperatingExpenses / totalGrossIncome;
+      const unitTypeOpex = unitTypeGrossIncome * opexRatio;
+
+      // Calculate per-unit metrics for this unit type
+      const perUnitIncome = unitTypeGrossIncome / unit.count;
+      const perUnitOpex = unitTypeOpex / unit.count;
+      const perUnitNOI = perUnitIncome - perUnitOpex;
+
+      // Debt service is allocated equally per unit (standard approach)
+      const perUnitDebtService = totalDebtService / this.data.totalUnits;
+      const perUnitCashFlow = perUnitNOI - perUnitDebtService;
+
+      console.log(`[MF] ${unit.type} (${unit.count} units @ $${unit.monthlyRent}/mo):`);
+      console.log(`  Annual Income per Unit: $${perUnitIncome.toLocaleString()}`);
+      console.log(`  Annual OpEx per Unit: $${perUnitOpex.toLocaleString()}`);
+      console.log(`  Annual NOI per Unit: $${perUnitNOI.toLocaleString()}`);
+      console.log(`  Annual Cash Flow per Unit: $${perUnitCashFlow.toLocaleString()}`);
+
+      return {
+        unitType: unit.type,
+        income: perUnitIncome,
+        opex: perUnitOpex,
+        noi: perUnitNOI,
+        cashFlow: perUnitCashFlow
+      };
+    });
   }
 
   protected calculatePropertySpecificMetrics(): MultiFamilyMetrics {
@@ -405,6 +587,13 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const grossYield = this.calculateGrossYield(grossIncome, this.data.purchasePrice);
     console.log('[MF] ========== END ADVANCED MF METRICS ==========');
 
+    // Calculate per-unit-type metrics (Issue #5 - Story 4.2 Unit Mix Analysis)
+    const perUnitTypeMetrics = this.calculatePerUnitTypeMetrics(
+      grossIncome,
+      operatingExpenses,
+      annualDebtService
+    );
+
     const metrics: MultiFamilyMetrics = {
       noi,
       capRate,
@@ -414,7 +603,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       operatingExpenseRatio,
       totalInvestment,
 
-      // Per-unit metrics
+      // Per-unit metrics (averaged across all units)
       pricePerUnit,
       pricePerSqft: FinancialCalculations.calculatePricePerSqFt(
         this.data.purchasePrice,
@@ -424,6 +613,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       cashFlowPerUnit,
       averageRentPerUnit,
       operatingExpensePerUnit: operatingExpenses / this.data.totalUnits,
+
+      // Per-unit-type metrics (Issue #5 - Story 4.2 Unit Mix Analysis)
+      // Breakdown by unit type (2BR vs 1BR, etc.) for profitability comparison
+      perUnitTypeMetrics,
 
       // Advanced MF metrics (Story 1.4 - placeholders for now, will implement in Story 1.4)
       grm,
@@ -454,11 +647,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * NOTE: Vacancy is shown separately as an income reduction, NOT as an expense
    */
   protected getExpenseBreakdown(grossIncome: number): ExpenseBreakdown {
-    const { purchasePrice, propertyTaxRate, insuranceRate, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
+    const { purchasePrice, propertyTaxRate, insurancePerUnit, propertyManagementRate, maintenanceCostPerUnit, totalUnits } = this.data;
 
     // Calculate monthly expenses (NO VACANCY)
     const propertyTax = (purchasePrice * (propertyTaxRate / 100)) / 12;
-    const insurance = (purchasePrice * (insuranceRate / 100)) / 12;
+    const insurance = ((insurancePerUnit || 600) * totalUnits) / 12; // Annual insurance per unit ÷ 12
     const propertyManagement = (grossIncome * (propertyManagementRate / 100)) / 12;
     const maintenance = ((maintenanceCostPerUnit || 100) * totalUnits);
 
@@ -762,16 +955,165 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     return economicVacancyRate;
   }
 
+  /**
+   * CRITICAL IRR FIX: Override calculateProjections for MF-specific expenses
+   *
+   * Base class calculateProjections() only includes basic SFR expenses:
+   * - Property tax, insurance, maintenance, property management, turnover
+   *
+   * MF properties require additional operating expenses:
+   * - CapEx reserves (6% of EGI)
+   * - Common area utilities (electric, water, gas, trash)
+   * - Common area reserves (2% of revenue)
+   *
+   * Without this override, projections had null cash flows → IRR = 0%
+   */
+  protected calculateProjections(): import('../types/analysis').YearlyProjection[] {
+    const monthlyMortgage = this.calculateMonthlyMortgage();
+    const annualDebtService = monthlyMortgage * 12;
+    const projections: import('../types/analysis').YearlyProjection[] = [];
+    let currentPropertyValue = this.data.purchasePrice;
+    let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
+
+    console.log('\n[MF] ========== MF PROJECTIONS CALCULATION ==========');
+    console.log('[MF] Using MultiFamilyAnalyzer override for accurate MF expenses');
+
+    const basePropertyTax = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
+    const baseInsurance = (this.data.insurancePerUnit || 600) * this.data.totalUnits; // ✅ FIX: Use insurancePerUnit, not insuranceRate
+
+    for (let year = 1; year <= this.assumptions.projectionYears; year++) {
+      console.log(`\n[MF] --- YEAR ${year} PROJECTION ---`);
+
+      // Calculate gross income with rent growth
+      const grossIncome = this.calculateGrossIncome(year);
+
+      // Calculate EGI (after vacancy and credit loss)
+      const effectiveGrossIncome = this.calculateEffectiveGrossIncome(grossIncome);
+
+      // Expense inflation
+      const expenseInflationFactor = Math.pow(1 + (this.assumptions.annualExpenseIncrease || 2.5) / 100, year - 1);
+
+      // Basic expenses (inflated)
+      const propertyTax = basePropertyTax * expenseInflationFactor;
+      const insurance = baseInsurance * expenseInflationFactor;
+      const maintenance = (this.data.maintenanceCostPerUnit || 0) * this.data.totalUnits * 12 * expenseInflationFactor;
+
+      // Income-based expenses
+      const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);
+
+      // MF-SPECIFIC: Common area utilities
+      const commonAreaUtilities = this.data.commonAreaUtilities
+        ? ((this.data.commonAreaUtilities.electric || 0) +
+           (this.data.commonAreaUtilities.water || 0) +
+           (this.data.commonAreaUtilities.gas || 0) +
+           (this.data.commonAreaUtilities.trash || 0)) * 12 * expenseInflationFactor
+        : 0;
+
+      // MF-SPECIFIC: CapEx reserves (6% of EGI - industry standard)
+      const MF_CAPEX_RESERVE_RATE = 6; // Fannie Mae/Freddie Mac standard
+      const capExReserves = effectiveGrossIncome * MF_CAPEX_RESERVE_RATE / 100;
+
+      // MF-SPECIFIC: Common area reserves (2% of EGI - industry standard)
+      const MF_COMMON_AREA_RESERVE_RATE = 2; // Industry standard for replacement reserves
+      const commonAreaReserves = effectiveGrossIncome * MF_COMMON_AREA_RESERVE_RATE / 100;
+
+      // Turnover costs
+      const turnoverFrequency = this.assumptions.turnoverFrequency || 3;
+      const turnoverRate = 1 / turnoverFrequency;
+      const prepFees = (this.data.tenantTurnoverFees?.prepFees || 500) * expenseInflationFactor;
+      const realtorCommission = this.data.tenantTurnoverFees?.realtorCommission || 0.5;
+      const monthlyRent = grossIncome / 12;
+      const turnoverCosts = (prepFees + (monthlyRent * realtorCommission)) * turnoverRate;
+
+      // Total operating expenses (MF-complete)
+      const operatingExpenses =
+        propertyTax +
+        insurance +
+        maintenance +
+        propertyManagement +
+        commonAreaUtilities +
+        capExReserves +
+        commonAreaReserves +
+        turnoverCosts;
+
+      // Calculate NOI and Cash Flow
+      const noi = effectiveGrossIncome - operatingExpenses;
+      const capitalImprovements = year === 1 ? (this.data.capitalInvestments || 0) : 0;
+      const cashFlow = noi - annualDebtService - capitalImprovements;
+
+      console.log(`[MF] Year ${year} Complete Calculation:`, {
+        grossIncome,
+        effectiveGrossIncome,
+        operatingExpenses,
+        breakdown: {
+          propertyTax,
+          insurance,
+          maintenance,
+          propertyManagement,
+          commonAreaUtilities,
+          capExReserves,
+          commonAreaReserves,
+          turnoverCosts
+        },
+        noi,
+        annualDebtService,
+        capitalImprovements,
+        cashFlow
+      });
+
+      // Property appreciation
+      currentPropertyValue *= (1 + this.assumptions.annualPropertyValueIncrease / 100);
+
+      // Mortgage amortization
+      const interestPaid = currentLoanBalance * (this.data.interestRate / 100);
+      const principalPaid = annualDebtService - interestPaid;
+      currentLoanBalance = Math.max(0, currentLoanBalance - principalPaid);
+
+      const vacancyAmount = grossIncome * (this.assumptions.vacancyRate / 100);
+      const appreciation = currentPropertyValue - this.data.purchasePrice;
+
+      projections.push({
+        year,
+        propertyValue: currentPropertyValue,
+        grossIncome,
+        operatingExpenses,
+        noi,
+        debtService: annualDebtService,
+        cashFlow,
+        equity: currentPropertyValue - currentLoanBalance,
+        mortgageBalance: currentLoanBalance,
+        totalReturn: cashFlow + appreciation,
+        propertyTax,
+        insurance,
+        maintenance,
+        propertyManagement,
+        vacancy: vacancyAmount,
+        realtorBrokerageFee: 0,
+        grossRent: grossIncome,
+        appreciation,
+        turnoverCosts,
+        capitalImprovements
+      });
+    }
+
+    console.log('[MF] ========== PROJECTIONS COMPLETE ==========\n');
+    return projections;
+  }
+
   private getIRRCashFlows(): number[] {
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
-    return [
+    const cashFlows = [
       -totalInvestment,
       ...projections.map(year => year.cashFlow),
       exitAnalysis.netProceedsFromSale
     ];
+
+    console.log('[MF] IRR Cash Flows:', cashFlows);
+
+    return cashFlows;
   }
 
   /**

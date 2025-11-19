@@ -1665,7 +1665,50 @@ export class InvestmentDecisionEngine {
       let v3PrimaryReason: string;
 
       const dealQuality = taxEnhancedAssessment.dealQuality;
-      if (dealQuality >= 80) {
+
+      // ===== CRITICAL DEAL KILLER OVERRIDES (Architect Fix - Business Expert Feedback) =====
+      // These conditions override normal scoring to prevent fundamentally broken deals from passing
+
+      const monthlyCashFlow = fundamentals.cashFlow || 0;
+      const dscr = fundamentals.dscr || 0;
+      const breakEvenOccupancy = analysis.keyMetrics?.breakEvenOccupancy || 0;
+
+      // Critical Failure 1: DSCR < 1.0 means property cannot cover debt service
+      const criticalDSCRFailure = dscr < 1.0 && dscr > 0;
+
+      // Critical Failure 2: Negative cash flow with no path to profitability
+      const severeNegativeCashFlow = monthlyCashFlow < -1000;
+
+      // Critical Failure 3: Break-even occupancy > 100% (mathematically impossible)
+      const impossibleBreakEven = breakEvenOccupancy > 100;
+
+      // Critical Failure 4: Combination of negative cash flow + low DSCR
+      const combinedCriticalFailure = monthlyCashFlow < 0 && dscr < 1.25;
+
+      // AUTO-PASS: If any critical deal killer exists, override score-based verdict
+      if (criticalDSCRFailure || severeNegativeCashFlow || impossibleBreakEven || combinedCriticalFailure) {
+        v3Verdict = 'PASS';
+        const failures = [];
+        if (criticalDSCRFailure) failures.push(`DSCR ${dscr.toFixed(2)} < 1.0 (unlendable)`);
+        if (severeNegativeCashFlow) failures.push(`severe negative cash flow ($${Math.abs(monthlyCashFlow).toFixed(0)}/mo)`);
+        if (impossibleBreakEven) failures.push(`break-even occupancy ${breakEvenOccupancy.toFixed(0)}% (impossible)`);
+        if (combinedCriticalFailure && !criticalDSCRFailure && !severeNegativeCashFlow) {
+          failures.push(`negative cash flow + insufficient debt coverage`);
+        }
+        v3PrimaryReason = `Critical deal killers present: ${failures.join(', ')}. Score: ${dealQuality}/100 (overridden)`;
+
+        logger.info('🚨 CRITICAL DEAL KILLER AUTO-PASS TRIGGERED', {
+          dealQuality,
+          originalVerdict: dealQuality >= 50 ? 'CAUTION' : 'PASS',
+          overriddenTo: 'PASS',
+          failures,
+          monthlyCashFlow,
+          dscr,
+          breakEvenOccupancy
+        });
+      }
+      // Normal verdict logic (score-based)
+      else if (dealQuality >= 80) {
         v3Verdict = 'BUY';
         v3PrimaryReason = `Institutional-quality deal with ${dealQuality}/100 professional score`;
       } else if (dealQuality >= 65) {

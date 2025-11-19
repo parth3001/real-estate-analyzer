@@ -92,6 +92,15 @@ export interface SFRMetrics extends CommonMetrics {
 }
 
 /**
+ * Multi-Family Building Types (Phase 1: Commercial MF - 5+ units)
+ *
+ * GARDEN: 2-3 story garden-style apartments with outdoor corridors
+ * MID_RISE: 4-9 story buildings with elevators
+ * COMPLEX: Multi-building complexes (multiple garden-style buildings)
+ */
+export type MFBuildingType = 'GARDEN' | 'MID_RISE' | 'COMPLEX';
+
+/**
  * Multi-Family Property Data Interface
  * Story 1.1: Enhanced with unit-level granularity for competitive advantage
  *
@@ -106,14 +115,15 @@ export interface MultiFamilyData extends BasePropertyData {
   totalUnits: number;  // 2-32 units (target range)
   totalSqft: number;
   yearBuilt: number;
-  buildingType?: 'SIDE_BY_SIDE' | 'STACKED' | 'MIXED' | 'COMPLEX';
+  buildingType?: MFBuildingType;  // Phase 1: GARDEN | MID_RISE | COMPLEX
 
   // Unit Configuration - Method 1: Aggregated (existing, backward compatible)
   unitTypes?: Array<{
     type: string;          // e.g., "2bed/1bath", "Studio"
     count: number;         // How many of this type
     sqft: number;          // Square feet per unit
-    monthlyRent: number;   // Current rent per unit
+    monthlyRent: number;   // Current rent per unit (what tenant actually pays)
+    marketRent?: number;   // Issue #6: RentCast market rent estimate (for value-add analysis)
   }>;
 
   // Unit Configuration - Method 2: Granular (NEW - competitive moat)
@@ -129,14 +139,15 @@ export interface MultiFamilyData extends BasePropertyData {
     leaseEndDate?: string;        // ISO date for turnover planning
   }>;
 
-  // Operating Expenses (monthly amounts)
+  // Operating Expenses
   commonAreaUtilities: {
-    electric: number;   // Common area electricity
-    water: number;      // Water/sewer for common areas
-    gas: number;        // Gas for common areas
-    trash: number;      // Trash removal
+    electric: number;   // Common area electricity (monthly)
+    water: number;      // Water/sewer for common areas (monthly)
+    gas: number;        // Gas for common areas (monthly)
+    trash: number;      // Trash removal (monthly)
   };
   maintenanceCostPerUnit: number;  // Monthly per-unit maintenance budget
+  insurancePerUnit: number;        // Annual insurance cost per unit ($/unit/year)
 
   // Financing Options
   loanType?: 'RESIDENTIAL' | 'COMMERCIAL';  // ✨ EDUCATES BEGINNERS: 1-4 units = residential, 5+ = commercial
@@ -158,13 +169,23 @@ export interface MultiFamilyData extends BasePropertyData {
 }
 
 export interface MultiFamilyMetrics extends CommonMetrics {
-  // Per-unit metrics
+  // Per-unit metrics (averaged across all units)
   pricePerUnit: number;
   pricePerSqft: number;
   noiPerUnit: number;
   cashFlowPerUnit: number;
   averageRentPerUnit: number;
   operatingExpensePerUnit: number;
+
+  // Per-unit-type metrics (Issue #5 - Story 4.2 Unit Mix Analysis)
+  // Breakdown by unit type for profitability comparison
+  perUnitTypeMetrics?: Array<{
+    unitType: string;       // e.g., "2BR/1BA", "1BR/1BA"
+    income: number;         // Annual gross income per unit of this type
+    opex: number;           // Annual operating expenses per unit of this type
+    noi: number;            // Annual NOI per unit of this type
+    cashFlow: number;       // Annual cash flow per unit of this type (after debt service)
+  }>;
 
   // Advanced MF-specific metrics (Story 1.4)
   grm: number;                      // Gross Rent Multiplier: Purchase Price / Gross Annual Income

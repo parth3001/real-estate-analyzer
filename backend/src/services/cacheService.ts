@@ -85,6 +85,57 @@ export class CacheService {
     return this.set('market', zipCode, data, { zipCode, source: 'RentCast' });
   }
 
+  /**
+   * Get MF unit rent estimate from cache
+   * Cache key format: "address_BR_BA_sqft"
+   *
+   * Story 3.1: Multi-Family Unit Rent Caching
+   */
+  async getMFUnitRentCache(
+    address: string,
+    bedrooms: number,
+    bathrooms: number,
+    squareFootage: number
+  ): Promise<any | null> {
+    const cacheKey = this.buildMFUnitCacheKey(address, bedrooms, bathrooms, squareFootage);
+    return this.get('rent', cacheKey);
+  }
+
+  /**
+   * Set MF unit rent estimate in cache
+   * TTL: 30 days (720 hours) - rent data changes slowly
+   */
+  async setMFUnitRentCache(
+    address: string,
+    bedrooms: number,
+    bathrooms: number,
+    squareFootage: number,
+    data: any
+  ): Promise<void> {
+    const cacheKey = this.buildMFUnitCacheKey(address, bedrooms, bathrooms, squareFootage);
+    return this.set('rent', cacheKey, data, { address, source: 'RentCast MF Unit' });
+  }
+
+  /**
+   * Build cache key for MF unit rent estimate
+   * Format: "address_BR_BA_sqft"
+   * Example: "4512-sycamore-st-dallas-tx_2BR_1BA_900sqft"
+   */
+  private buildMFUnitCacheKey(
+    address: string,
+    bedrooms: number,
+    bathrooms: number,
+    squareFootage: number
+  ): string {
+    const normalizedAddress = address
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return `${normalizedAddress}_${bedrooms}BR_${bathrooms}BA_${squareFootage}sqft`;
+  }
+
   async clearAll(): Promise<number> {
     try {
       const result = await MarketDataCache.deleteMany({});

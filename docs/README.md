@@ -1,99 +1,169 @@
-# Real Estate Investment Intelligence Platform Documentation
+# Documentation Organization Guide
 
-**Last Updated**: August 29, 2025 - V3.0 Professional Calibration & Portfolio Intelligence Complete
+**Project**: Real Estate Analyzer - Multi-Family Feature Development
+**Last Updated**: 2025-11-16
 
-This directory contains comprehensive documentation for the Real Estate Investment Intelligence Platform, which has evolved from a basic property analyzer into a sophisticated investment decision system with professional-grade AI analysis capabilities.
+---
 
-## Core Documentation
+## 📋 **Documentation Storage Rules**
 
-| Document | Description | Status |
-|----------|-------------|--------|
-| [**Analysis Workflow V3.0**](ANALYSIS_WORKFLOW_DATA_FLOW_V3.md) | **🔥 NEW: Complete V3.0 data flow with Professional Assessment & Portfolio** | **✅ LIVE** |
-| [**Investment Decision Engine V3.0**](INVESTMENT_DECISION_ENGINE_V3.0_PROFESSIONAL_CALIBRATION.md) | **Professional weighting system with Deal Quality scoring** | **✅ IMPLEMENTED** |
-| [**Portfolio Intelligence**](PORTFOLIO_EPIC_TECHNICAL_PLAN.md) | **Portfolio management with skinny metrics calculator** | **✅ IMPLEMENTED** |
-| [**Complete Test Inventory**](COMPLETE_TEST_INVENTORY.md) | **All test suites including bulletproof edge cases** | **✅ Updated Aug 29** |
-| [Architecture](ARCHITECTURE.md) | System architecture and technical decisions | ✅ Updated |
-| [API Documentation](API.md) | Enhanced API endpoints including Investment Decision Engine | 📋 Needs V3.0 Update |
-| [Data Dictionary](DATA_DICTIONARY.md) | Comprehensive field definitions including V3.0 Professional Assessment | ✅ Has V3.0 Fields |
-| [Data Mapping](DATA_MAPPING.md) | Enhanced data flows with Investment Decision Engine integration | 📋 Needs Update |
-| [**Phase 1 Completion Summary**](PHASE_1_COMPLETION_SUMMARY.md) | **✅ Complete overview of Phase 1 achievements** | ✅ Historical |
+### **✅ Root Folder** (Only Primary Project Files)
+Store in project root (`/`):
+- `ISSUE_TRACKER.md` - Central issue tracking (main reference)
+- `/CLAUDE.md` - Project context and instructions for Claude
+- `/README.md` - Project overview
 
-## 🎯 V3.0 Professional Calibration Complete (August 2025)
+**Rule**: ONLY files that are referenced constantly and belong at project root.
 
-### Major Features Implemented
-- **✅ Professional Assessment Scoring**: Deal Quality score (0-100) with weighted factor breakdown
-- **✅ Portfolio Intelligence**: Complete portfolio management with multi-property support
-- **✅ Skinny Metrics Calculator**: Fast calculations for manual portfolio properties
-- **✅ Database Schema Updates**: Added professionalAssessment fields to Deal model
-- **✅ Bulletproof Edge Cases**: Fixed $Infinity expenses bug, zero loan parameter handling
-- **✅ Enhanced Property Detection**: Manual vs analyzed property classification
-- **✅ SavedProperties Display**: Shows Deal Quality score instead of deprecated AI Score
+---
 
-### Critical Bug Fixes
-- **Fixed**: Deal Quality score was being lost on save (missing DB fields)
-- **Fixed**: $Infinity expenses for properties with zero loan parameters
-- **Fixed**: Manual properties showing as "Analyzed" instead of "Manual"
-- **Fixed**: Portfolio cash flow calculations not including manual properties
+### **✅ /docs Folder** (All Other Documentation)
+Store in `/docs` folder:
 
-## 🚀 Previous Updates (January 2025)
+#### **Architecture & Planning**
+- `ARCHITECT_*.md` - Architectural analysis and decisions
+- `TECHNICAL_*.md` - Technical planning documents
+- `*_PLAN.md` - Implementation plans
 
-### Investment Decision Engine v2.1 - Critical Issues Resolved
-The platform's Investment Decision Engine received critical fixes to eliminate contradictory messaging and ensure accurate recommendations:
+#### **Story & Sprint Documentation**
+- `STORY_*.md` - User story documentation
+- `SPRINT_*.md` - Sprint planning and summaries
 
-- **✅ Contradictory Messaging Fixed**: No more "PASS" verdicts showing "Consider With Adjustments" text
-- **✅ Score Consistency**: Eliminated dual scoring systems causing 45 vs 38 score conflicts
-- **✅ Single Source of Truth**: Backend handles all business logic, frontend is pure presentation layer
-- **✅ Conservative Logic**: Walk-away price validation prevents overpaying on properties
-- **✅ Comprehensive Testing**: 10/10 realistic scenario tests passing, validating engine behavior
-- **✅ Architecture Cleanup**: Removed frontend Professional Scoring Engine that violated architectural principles
+#### **Issue & Bug Documentation**
+- `ISSUE_*.md` - Individual issue analysis and fixes
+- `SESSION_*.md` - Session summaries and handoffs
 
-### AI Architecture Transformation
-- **Response Time Improvement**: Reduced AI analysis from 76 seconds to 3-4 seconds
-- **Microservices Architecture**: Distributed AI services with parallel processing
-- **Intelligence Multiplier**: Professional-level insights that transform basic metrics into actionable intelligence
-- **Goal-Contextual Messaging**: Personalizes analysis based on user's investment strategy
+#### **Testing & QA**
+- `TEST_*.md` - Testing guides and reports
+- `QE_*.md` - QA engineer documentation
 
-### Enhanced User Experience
-- **Investment Decision Hero**: Professional investment verdict display with personalized messaging
-- **Leverage Optimization**: Analyzes optimal debt-to-equity ratios with opportunity cost calculations
-- **Enhanced Risk Analysis**: Professional risk blind spot identification and mitigation strategies
+#### **Feature-Specific Documentation**
+- `MF_*.md` - Multi-family feature docs
+- `TAX_*.md` - Tax calculation docs
+- `UX_*.md` - User experience designs
 
-### Technical Improvements
-- **Market Intelligence Integration**: Real-time market data with FRED, RentCast, and Census APIs
-- **Professional Test Coverage**: Comprehensive test suite for Investment Decision Engine
-- **Performance Optimization**: Sub-2-second analysis generation with caching strategies
+#### **Data & Reference**
+- `DATA_*.md` - Data dictionaries and mappings
+- `*_REFERENCE.md` - Reference materials
+- `*_GUIDE.md` - User and developer guides
 
-## Development Guidelines
+#### **Validation & Expert Reviews**
+- `EXPERT_*.md` - Expert validation reports
+- `*_VALIDATION.md` - Business validation docs
 
-| Document | Description |
-|----------|-------------|
-| [TypeScript Rules](TYPESCRIPT_RULES.md) | TypeScript coding standards and best practices |
-| [Changelog](CHANGELOG.md) | Version history and changes |
-| [Bug Fixes](BUG_FIXES.md) | Documented bug fixes and troubleshooting |
-| [Phase Plan](PHASE_PLAN.md) | Development phases and timeline |
+---
 
-## Features & Implementation
+## 🚫 **What NOT to Store in Root**
 
-| Document | Description |
-|----------|-------------|
-| [**SFR Revamp Plan**](SFR_Revamp_Plan_07052025.md) | **✅ Phase 1 implementation plan and completion status** |
-| [**AI Prompt Enhancement**](AI_PROMPT_ENHANCEMENT.md) | **✅ AI analysis enhancements and market intelligence** |
-| [**AI Insights UI Enhancement**](AI_INSIGHTS_UI_ENHANCEMENT.md) | **UI improvements for AI insights presentation** |
-| [Multi-Family Strategy](comprehensive_mf_strategy.md) | Comprehensive strategy for multi-family implementation |
-| [Multi-Family Development Guide](comprehensive_mf_development_guide.md) | Development guide for multi-family module |
-| [Real Estate Metrics](real_estate_metrics_list.md) | List of real estate investment metrics |
-| [Frontend Update Plan](frontend_update_plan.md) | Frontend update strategy |
-| [Competitor Analysis](competitor_analysis.md) | Analysis of competing products |
+❌ **NEVER store in root folder:**
+- Temporary working documents
+- Session summaries
+- Issue fix documentation
+- Architecture analysis docs
+- Testing reports
+- Implementation plans
+- Expert validation reports
+- Any `.md` file that isn't a primary project file
 
-## Deployment & Operations
+**Why**: Keeps root clean and makes project navigation easier
 
-| Document | Description |
-|----------|-------------|
-| [EC2 Deployment Guide](README-EC2-DEPLOYMENT.md) | AWS EC2 deployment instructions |
-| [Milestones](MILESTONE.md) | Project milestones and progress tracking |
+---
 
-## Development Documentation
+## 🔍 **Finding Documentation**
 
-| Document | Description |
-|----------|-------------|
-| [Complete API & Technical Reference](DOCUMENTATION.md) | Comprehensive technical documentation 
+### **For Current Issues:**
+→ Start with `/ISSUE_TRACKER.md` (root)
+
+### **For Story Implementation:**
+→ `/docs/STORY_*.md` files
+
+### **For Architecture Decisions:**
+→ `/docs/ARCHITECT_*.md` files
+
+### **For Testing:**
+→ `/docs/COMPLETE_TEST_INVENTORY.md` + `/docs/TEST_*.md`
+
+### **For Multi-Family Features:**
+→ `/docs/MF_*.md` files
+
+### **For Data Definitions:**
+→ `/docs/DATA_DICTIONARY.md`
+
+---
+
+## 📝 **Document Naming Conventions**
+
+### **Prefixes**
+- `STORY_X.Y_` - User story X.Y documentation
+- `ISSUE_N_` - Issue number N analysis/fixes
+- `ARCHITECT_` - Architectural review/analysis
+- `SESSION_` - Session summaries/handoffs
+- `MF_` - Multi-family feature specific
+- `TEST_` / `QE_` - Testing documentation
+- `TEMP_` - Temporary (clean up when done)
+
+### **Suffixes**
+- `_PLAN.md` - Planning documents
+- `_SUMMARY.md` - Summary documents
+- `_GUIDE.md` - User/developer guides
+- `_REFERENCE.md` - Reference materials
+- `_CHECKLIST.md` - Testing/validation checklists
+
+---
+
+## 🎯 **Before Creating New Documentation**
+
+**Ask yourself:**
+1. Is this a primary project file? → **Root folder**
+2. Is this any other documentation? → **`/docs` folder**
+3. What prefix should I use? (See naming conventions)
+4. Does similar documentation already exist? (Check first!)
+
+**Example Decision Tree:**
+```
+Creating: "Issue #11 Fix Summary"
+├─ Primary project file? NO
+├─ Goes to: /docs folder ✅
+├─ Naming: ISSUE_11_FIX_SUMMARY.md
+└─ Location: /docs/ISSUE_11_FIX_SUMMARY.md
+```
+
+---
+
+## 🧹 **Cleanup Guidelines**
+
+### **Temporary Documents** (`TEMP_*.md`)
+- Review monthly
+- Move to archive or delete when no longer needed
+- Don't let temporary docs accumulate
+
+### **Session Summaries** (`SESSION_*.md`)
+- Useful for context between sessions
+- Archive after 90 days
+- Extract key info to permanent docs first
+
+### **Old Test Reports**
+- Keep latest reports
+- Archive older than 30 days
+- Maintain historical trend data separately
+
+---
+
+## ⚠️ **Common Mistakes to Avoid**
+
+❌ Creating docs in root folder
+❌ Not using standard prefixes
+❌ Creating duplicate documentation
+❌ Leaving `TEMP_` docs indefinitely
+❌ Not referencing this README before creating docs
+
+✅ Check this README first
+✅ Use `/docs` for all documentation
+✅ Follow naming conventions
+✅ Search for existing docs before creating
+✅ Clean up temporary docs regularly
+
+---
+
+**Maintained by**: Development Team
+**Reference**: Always check `/docs/README.md` before creating new documentation

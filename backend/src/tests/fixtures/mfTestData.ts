@@ -30,9 +30,11 @@ export class MFPropertyFactory {
       loanTerm: 30,
       propertyTaxRate: 1.5, // Slightly higher than SFR
       insuranceRate: 0.6,
+      insurancePerUnit: 600, // ✅ ADDED: $600/year per unit (Issue #3 fix)
       maintenanceCost: 800, // $800/month total (from BasePropertyData requirement)
       propertyManagementRate: 8, // 8% of gross income
       maintenanceCostPerUnit: 100, // $100/month per unit
+      buildingType: 'GARDEN', // Phase 1: Garden-style (most common commercial MF)
 
       propertyAddress: {
         street: '456 Rental Ave',
@@ -386,6 +388,7 @@ export class MFPropertyFactory {
       loanTerm: 30,
       propertyTaxRate: 1.5,
       insuranceRate: 0.6,
+      insurancePerUnit: 600, // ✅ ADDED: $600/year per unit (Issue #3 fix)
       maintenanceCost: 800, // $800/month total (BasePropertyData requirement)
       propertyManagementRate: 8,
       maintenanceCostPerUnit: 100,

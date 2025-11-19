@@ -42,6 +42,26 @@ POST /api/deals/analyze → SFRAnalyzer + Market Intelligence →
 Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistence
 ```
 
+## 📂 **Documentation Organization**
+
+⚠️ **IMPORTANT**: Before creating ANY new documentation, ALWAYS check `/docs/README.md`
+
+**Storage Rules:**
+- **Root Folder** (`/`): ONLY primary project files (`ISSUE_TRACKER.md`, `CLAUDE.md`, `README.md`)
+- **Documentation Folder** (`/docs`): ALL other documentation (architecture, stories, issues, testing, etc.)
+
+**Naming Conventions:**
+- `ARCHITECT_*.md` - Architecture analysis
+- `STORY_X.Y_*.md` - User story documentation
+- `ISSUE_N_*.md` - Issue analysis/fixes
+- `SESSION_*.md` - Session summaries
+- `TEST_*.md` / `QE_*.md` - Testing docs
+- `MF_*.md` - Multi-family specific
+
+**Reference**: See `/docs/README.md` for complete organization guide
+
+---
+
 ## 🗂️ **Key Directory Structure**
 ```
 /frontend/src/
@@ -108,6 +128,66 @@ calculate: totalExpenses - income // Uses full precision
 // ❌ WRONG - Rounding in calculations
 const monthlyTax = Math.round((purchasePrice * taxRate / 100) / 12 * 100) / 100; // Loss of precision
 ```
+
+## 🚫 **CRITICAL: Development Server Management**
+
+**⚠️ NEVER AUTO-START BACKEND OR FRONTEND SERVERS**
+
+**STRICT RULE**: Claude should NEVER automatically start, restart, or manage backend/frontend servers.
+
+### **Why This Rule Exists:**
+1. **Port Conflicts**: Auto-starting creates multiple running instances on same ports
+2. **Process Control**: User needs visibility and control over running processes
+3. **Debugging**: Manual start allows user to see all startup logs and errors
+4. **Resource Management**: Prevents orphaned Node processes consuming resources
+
+### **What Claude MUST DO Instead:**
+
+#### **When Backend/Frontend Needs to Start:**
+```
+❌ WRONG: Running `npm run dev` or starting servers automatically
+✅ CORRECT: Inform user and ask them to start manually
+```
+
+**Example Response:**
+```
+"I've made changes to [file]. Please start the backend manually:
+
+Terminal 1 (Backend):
+cd backend && npm run dev
+
+Terminal 2 (Frontend):
+cd frontend && npm run dev
+
+Let me know once both are running and I'll help verify the changes."
+```
+
+#### **When Code Changes Require Server Restart:**
+```
+✅ "I've updated [files]. The backend should auto-reload via nodemon.
+   If you don't see changes, please restart manually: Ctrl+C then npm run dev"
+
+❌ Do NOT run background processes or kill/restart servers
+```
+
+#### **For Testing:**
+```
+✅ "Please ensure backend is running on port 3001, then I'll help run tests"
+❌ Do NOT start backend as part of test setup
+```
+
+### **Kill All Background Processes (If Created):**
+If Claude accidentally created background processes, user should run:
+```bash
+# Kill all node processes
+killall node
+
+# Or find and kill specific processes
+lsof -ti:3000 | xargs kill
+lsof -ti:3001 | xargs kill
+```
+
+---
 
 ## 🔍 **Debugging Methodology - CRITICAL RULES**
 

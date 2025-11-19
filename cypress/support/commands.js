@@ -10,37 +10,60 @@
 Cypress.Commands.add('login', (email, password) => {
   // Use exact same credentials as expert validation that works (admin account)
   const testEmail = email || Cypress.env('TEST_USER_EMAIL') || 'admin@realestateanalyzer.com';
-  const testPassword = password || Cypress.env('TEST_USER_PASSWORD') || 'Spring@2025';
-  
+  const testPassword = password || Cypress.env('TEST_USER_PASSWORD') || 'S@madhu96780302';
+
   cy.log(`🔑 Logging in with: ${testEmail}`);
-  
+
+  // Intercept login API call to see what's happening
+  cy.intercept('POST', '**/api/auth/login').as('loginRequest');
+
   cy.visit('/login');
-  
+
   // Wait for login page to fully load
   cy.wait(1000);
-  
+
   // Email field - be more specific to avoid conflicts
   cy.get('input[type="email"]')
     .should('be.visible')
     .clear()
     .type(testEmail);
-    
+
   // Password field - be more specific
   cy.get('input[type="password"]')
     .should('be.visible')
     .clear()
     .type(testPassword);
-    
+
   // Login button - target the specific submit button, not generic "Sign" text
   cy.get('button[type="submit"]')
     .should('be.visible')
     .should('not.be.disabled')
     .click();
-    
-  // Wait for successful login and redirect
-  cy.url().should('not.include', '/login');
-  cy.wait(3000); // Give time for redirect to complete
-  
+
+  // Wait for login API call to complete
+  cy.wait('@loginRequest').then((interception) => {
+    cy.log(`Login API status: ${interception.response.statusCode}`);
+    if (interception.response.statusCode !== 200) {
+      cy.log(`⚠️ Login failed with status: ${interception.response.statusCode}`);
+      cy.log(`Response: ${JSON.stringify(interception.response.body)}`);
+    }
+  });
+
+  // Check for error messages on page
+  cy.get('body').then($body => {
+    const bodyText = $body.text();
+    if (bodyText.includes('Invalid') || bodyText.includes('Error') || bodyText.includes('failed')) {
+      cy.log('⚠️ Login error detected on page');
+      cy.screenshot('login-error-message');
+    }
+  });
+
+  // Wait for successful login and redirect with better timeout handling
+  cy.url({timeout: 15000}).should('not.include', '/login');
+
+  // Additional wait to ensure page has fully loaded
+  cy.wait(2000);
+
   cy.log('✅ Login completed successfully');
 });
 

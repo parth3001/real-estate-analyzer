@@ -318,15 +318,21 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
   // ===== MF-SPECIFIC HELPER METHODS =====
 
   /**
-   * Get market-adjusted target cap rate
+   * Get market-adjusted target cap rate with building type adjustments (Phase 1)
    *
    * Cap rates vary significantly by market tier:
    * - A-Class (Dallas, Austin): 4-6% → Target: 5%
    * - B-Class (Phoenix, Tampa): 6-8% → Target: 7.5%
    * - C-Class (Memphis, Detroit): 8-11% → Target: 10%
+   *
+   * Building type adjustments (Phase 1 Commercial MF):
+   * - GARDEN: 0 bps (baseline)
+   * - MID_RISE: -150 bps (institutional appeal, better rent growth)
+   * - COMPLEX: 0 bps (baseline)
    */
   private getTargetCapRate(): number {
     const marketTier = this.getMarketTier();
+    const buildingType = this.mfPropertyData.buildingType;
 
     const targetCapRates = {
       'A': 0.05,  // A-Class: 5% (premium markets)
@@ -334,7 +340,21 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
       'C': 0.10   // C-Class: 10% (cash flow markets)
     };
 
-    return targetCapRates[marketTier] || 0.08; // Default 8% if unknown
+    const baseRate = targetCapRates[marketTier] || 0.08; // Default 8% if unknown
+
+    // Phase 1: Apply building type adjustments if buildingType is specified
+    if (!buildingType) {
+      return baseRate; // No adjustment if building type not specified
+    }
+
+    const buildingTypeAdjustments = {
+      'GARDEN': 0,        // Garden-style baseline (most common)
+      'MID_RISE': -0.015, // Mid-rise gets -150 bps (4-9 stories, elevator, institutional appeal)
+      'COMPLEX': 0        // Multi-building complex baseline
+    };
+
+    const adjustment = buildingTypeAdjustments[buildingType] || 0;
+    return baseRate + adjustment;
   }
 
   /**

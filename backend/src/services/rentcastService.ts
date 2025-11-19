@@ -785,6 +785,234 @@ export class RentcastService {
     }
   }
 
+  // ========================================================================
+  // Multi-Family Property Methods (Story 3.1)
+  // ========================================================================
+
+  /**
+   * Get unit-level rent estimate for multi-family property
+   *
+   * VALIDATED: RentCast API supports propertyType=Multi-Family with unit-level params
+   * See: /docs/RENTCAST_FINAL_VALIDATION_SUMMARY.md
+   *
+   * @param params - Unit configuration parameters
+   * @returns Unit rent estimate with confidence score and comparables
+   */
+  async getMFUnitRentEstimate(params: {
+    address: string;
+    bedrooms: number;
+    bathrooms: number;
+    squareFootage: number;
+  }): Promise<import('../types/marketData').MFUnitRentEstimate> {
+    try {
+      if (!this.apiKey) {
+        throw new Error('RentCast API key not configured');
+      }
+
+      await this.checkRateLimit();
+
+      // Check cache first (30-day TTL)
+      const cached = await cacheService.getMFUnitRentCache(
+        params.address,
+        params.bedrooms,
+        params.bathrooms,
+        params.squareFootage
+      );
+
+      if (cached) {
+        logger.info(`MF unit rent estimate cache HIT: ${params.address} (${params.bedrooms}BR/${params.bathrooms}BA/${params.squareFootage}sqft)`);
+        return cached;
+      }
+
+      logger.info(`Fetching MF unit rent estimate for: ${params.address}`, {
+        bedrooms: params.bedrooms,
+        bathrooms: params.bathrooms,
+        squareFootage: params.squareFootage,
+        endpoint: '/avm/rent/long-term'
+      });
+
+      // Call RentCast API with MF parameters
+      const response = await this.client.get('/avm/rent/long-term', {
+        params: {
+          address: params.address,
+          propertyType: 'Multi-Family',  // CRITICAL: Enables MF comparables
+          bedrooms: params.bedrooms,
+          bathrooms: params.bathrooms,
+          squareFootage: params.squareFootage
+        }
+      });
+
+      const data = response.data;
+
+      // Transform response to MFUnitRentEstimate
+      const estimate: import('../types/marketData').MFUnitRentEstimate = {
+        address: params.address,
+        unitConfig: {
+          bedrooms: params.bedrooms,
+          bathrooms: params.bathrooms,
+          squareFootage: params.squareFootage
+        },
+        rentEstimate: data.rent || data.rentEstimate || 0,
+        rentRange: {
+          low: data.rentRangeLow || data.rent * 0.85 || 0,
+          high: data.rentRangeHigh || data.rent * 1.15 || 0
+        },
+        confidence: {
+          score: this.calculateMFConfidenceScore(data),
+          source: 'RentCast',
+          lastUpdated: new Date(),
+          comparableCount: data.comparables?.length || 0
+        },
+        comparables: this.transformMFComparables(data.comparables || []),
+        dataSource: 'RentCast API',
+        timestamp: new Date()
+      };
+
+      // Cache for 30 days
+      await cacheService.setMFUnitRentCache(
+        params.address,
+        params.bedrooms,
+        params.bathrooms,
+        params.squareFootage,
+        estimate
+      );
+
+      logger.info(`MF unit rent estimate SUCCESS: $${estimate.rentEstimate}/month`, {
+        range: `$${estimate.rentRange.low} - $${estimate.rentRange.high}`,
+        confidence: estimate.confidence.score,
+        comparables: estimate.comparables.length
+      });
+
+      return estimate;
+    } catch (error) {
+      logger.error('Error fetching MF unit rent estimate:', error);
+      throw this.handleApiError(error as AxiosError);
+    }
+  }
+
+  /**
+   * Get rent estimates for all unique unit configurations in a MF property
+   * Implements deduplication to minimize API calls
+   *
+   * @param address - Property address
+   * @param units - Array of unit configurations
+   * @returns Map of unit config key to rent estimate
+   */
+  async getMFPropertyRentEstimates(
+    address: string,
+    units: Array<{ bedrooms: number; bathrooms: number; squareFootage: number }>
+  ): Promise<Map<string, import('../types/marketData').MFUnitRentEstimate>> {
+    try {
+      // Deduplicate identical unit configurations
+      const uniqueConfigs = this.deduplicateUnits(units);
+
+      logger.info(`Processing ${uniqueConfigs.length} unique unit configs from ${units.length} total units for ${address}`);
+
+      // Fetch rent estimates in parallel
+      const estimates = await Promise.all(
+        uniqueConfigs.map(config =>
+          this.getMFUnitRentEstimate({
+            address,
+            bedrooms: config.bedrooms,
+            bathrooms: config.bathrooms,
+            squareFootage: config.squareFootage
+          })
+        )
+      );
+
+      // Build map of unit config → rent estimate
+      const estimateMap = new Map<string, import('../types/marketData').MFUnitRentEstimate>();
+      uniqueConfigs.forEach((config, index) => {
+        const key = this.buildUnitConfigKey(config);
+        estimateMap.set(key, estimates[index]);
+      });
+
+      logger.info(`Successfully fetched ${estimateMap.size} MF unit rent estimates`);
+
+      return estimateMap;
+    } catch (error) {
+      logger.error('Error fetching MF property rent estimates:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deduplicate identical unit configurations
+   * @private
+   */
+  private deduplicateUnits(
+    units: Array<{ bedrooms: number; bathrooms: number; squareFootage: number }>
+  ): Array<{ bedrooms: number; bathrooms: number; squareFootage: number }> {
+    const uniqueMap = new Map<string, typeof units[0]>();
+
+    units.forEach(unit => {
+      const key = this.buildUnitConfigKey(unit);
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, unit);
+      }
+    });
+
+    const uniqueUnits = Array.from(uniqueMap.values());
+    logger.debug(`Deduplicated ${units.length} units to ${uniqueUnits.length} unique configurations`);
+
+    return uniqueUnits;
+  }
+
+  /**
+   * Build unique key for unit configuration
+   * @private
+   */
+  private buildUnitConfigKey(config: { bedrooms: number; bathrooms: number; squareFootage: number }): string {
+    return `${config.bedrooms}BR_${config.bathrooms}BA_${config.squareFootage}sqft`;
+  }
+
+  /**
+   * Calculate confidence score for MF rent estimate
+   * @private
+   */
+  private calculateMFConfidenceScore(data: any): number {
+    let score = 50; // Base score
+
+    // Add points for comparables
+    const comparableCount = data.comparables?.length || 0;
+    if (comparableCount >= 10) score += 30;
+    else if (comparableCount >= 5) score += 20;
+    else if (comparableCount >= 3) score += 10;
+
+    // Add points for narrow rent range
+    const rentEstimate = data.rent || data.rentEstimate || 0;
+    const rentRange = (data.rentRangeHigh || rentEstimate * 1.15) - (data.rentRangeLow || rentEstimate * 0.85);
+    const rangePercent = rentEstimate > 0 ? (rentRange / rentEstimate) * 100 : 0;
+    if (rangePercent < 30) score += 20;
+    else if (rangePercent < 50) score += 10;
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Transform RentCast comparables to MFComparable format
+   * @private
+   */
+  private transformMFComparables(comparables: any[]): import('../types/marketData').MFComparable[] {
+    if (!comparables || comparables.length === 0) return [];
+
+    return comparables.slice(0, 5).map(comp => ({
+      address: comp.formattedAddress || comp.address || '',
+      propertyType: comp.propertyType || 'Unknown',
+      bedrooms: comp.bedrooms || 0,
+      bathrooms: comp.bathrooms || 0,
+      squareFootage: comp.squareFootage || 0,
+      rent: comp.price || comp.rent || 0,
+      distance: comp.distance || 0,
+      correlation: comp.correlation || 0,
+      status: comp.status || 'Unknown'
+    }));
+  }
+
+  // ========================================================================
+  // Cache Helper Methods
+  // ========================================================================
+
   /**
    * Cache management methods - now delegated to MongoDB cache service
    */

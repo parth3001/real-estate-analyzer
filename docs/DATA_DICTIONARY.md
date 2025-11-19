@@ -85,7 +85,7 @@ This document serves as a central reference for all data fields used throughout 
 | `totalUnits` | number | Total number of rental units (2-32 target range) | Yes | MF property form |
 | `totalSqft` | number | Total rentable square footage across all units | Yes | MF property form |
 | `yearBuilt` | number | Year the property was built | Yes | MF property form |
-| `buildingType` | string enum | 'SIDE_BY_SIDE', 'STACKED', 'MIXED', 'COMPLEX' | No | MF property form |
+| `buildingType` | string enum | 'GARDEN', 'MID_RISE', 'COMPLEX' (Phase 1: Commercial MF 5+ units) | No | MF property form |
 
 #### Unit Configuration - Method 1: Aggregated (Simplified)
 | Field Name | Type | Description | Required | Used In |
@@ -1115,6 +1115,188 @@ averageRentPerUnit = grossIncome ÷ (totalUnits × 12)  // Monthly average
 
 **Why This Matters**:
 Rounding intermediate values creates compounding errors in complex calculations like IRR and multi-year projections. This approach matches institutional-grade financial modeling standards.
+
+---
+
+### Phase 1: Commercial MF Building Types (November 2025)
+
+**Implementation**: Phase 1 Commercial MF (5+ units) - 3 building types only
+
+**Building Type Enum Values**:
+
+| Value | Description | Operating Expense Range | Cap Rate Adjustment |
+|-------|-------------|------------------------|---------------------|
+| `GARDEN` | 2-3 stories, outdoor corridors, parking lot | $250-400/unit/month | 0 bps (baseline) |
+| `MID_RISE` | 4-9 stories with elevator | $450-700/unit/month | -150 bps (institutional appeal) |
+| `COMPLEX` | Multi-building garden-style on one property | $300-500/unit/month | 0 bps (baseline) |
+
+**Why 3 Building Types Only?**:
+- **Phase 1 Focus**: Commercial multi-family (5+ units) with commercial financing
+- **Market Coverage**: These 3 types cover 95% of commercial MF properties
+- **Excluded**: 2-4 units (use SFR Analyzer), high-rise (rare, institutional), mixed-use (different calculations)
+
+**Building Type Details**:
+
+**GARDEN** (Most Common - 60% of market):
+- **Structure**: 2-3 stories, outdoor corridors, surface parking
+- **Units**: Typically 5-50 units per building
+- **Operating Expenses**: $250-400/unit/month
+  - Lower insurance (no elevator)
+  - Lower maintenance (simpler construction)
+  - Moderate landscaping/parking lot costs
+- **Cap Rate**: Market baseline (no adjustment)
+- **Best For**: Local investors, first commercial MF property
+- **Example**: Typical suburban apartment complex
+
+**MID_RISE** (Institutional Appeal - 10% of market):
+- **Structure**: 4-9 stories with elevator
+- **Units**: Typically 30-150 units per building
+- **Operating Expenses**: $450-700/unit/month
+  - Higher insurance (elevator liability)
+  - Elevator maintenance: $1,200-2,000/month
+  - Higher management costs
+  - Higher utilities (common area HVAC)
+- **Cap Rate**: -150 bps adjustment (institutional buyers compress cap rates)
+- **Best For**: Experienced investors, urban markets
+- **Example**: Urban downtown apartment building
+
+**COMPLEX** (Multi-Building - 25% of market):
+- **Structure**: Multiple garden-style buildings on one property
+- **Units**: Typically 25-200+ units across multiple buildings
+- **Operating Expenses**: $300-500/unit/month
+  - Moderate insurance (no elevator)
+  - Higher landscaping costs (larger property)
+  - Higher parking lot maintenance
+  - Shared amenities (pool, clubhouse)
+- **Cap Rate**: Market baseline (no adjustment)
+- **Best For**: Scaling investors, portfolio aggregation
+- **Example**: Large suburban complex with 4-8 buildings
+
+---
+
+### Phase 1: Validation Warnings System (November 2025)
+
+**Implementation**: MultiFamilyAnalyzer.ts + ValidationWarning types
+
+**ValidationWarning Interface**:
+
+```typescript
+interface ValidationWarning {
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  category: 'OPERATING_EXPENSES' | 'FINANCING' | 'MARKET_DATA' | 'INPUT_VALIDATION';
+  message: string;
+  impact?: string;
+  recommendation?: string;
+  affectedMetric?: string;
+}
+```
+
+**Severity Levels**:
+
+| Severity | Meaning | UI Treatment |
+|----------|---------|--------------|
+| `LOW` | Information, may be intentional | Blue info alert |
+| `MEDIUM` | Unusual but potentially valid | Orange warning alert |
+| `HIGH` | Likely error, needs attention | Red error alert |
+
+**Validation Warning Categories**:
+
+1. **OPERATING_EXPENSES**:
+   - Triggered when OpEx per unit falls outside typical range for building type
+   - Example (GARDEN): "$200/unit/month appears low (typical: $250-400/unit/month)"
+   - Impact: "Actual expenses may be $4,800 higher annually"
+   - Recommendation: "Verify all expense categories are included (tax, insurance, maintenance, management, utilities)"
+
+2. **FINANCING**:
+   - Triggered when financing structure unusual for commercial MF
+   - Example: "Low down payment (15%) for commercial property"
+   - Impact: "May face financing challenges or higher interest rates"
+   - Recommendation: "Commercial loans (5+ units) typically require 20-25% down payment"
+
+3. **MARKET_DATA**:
+   - Triggered when market data appears inconsistent
+   - Example: "Market rent significantly higher than current rent"
+   - Impact: "Potential rental upside of $X/month"
+
+4. **INPUT_VALIDATION**:
+   - Triggered when input data appears incorrect
+   - Example: "Unit count mismatch: totalUnits (8) vs units[] array length (10)"
+   - Impact: "Calculations may use incorrect unit count"
+
+**API Response Contract**:
+
+All MF analysis endpoints return validationWarnings array:
+
+```typescript
+POST /api/deals/analyze
+Response: {
+  ...analysis,
+  validationWarnings: ValidationWarning[] // Empty array if no warnings
+}
+```
+
+**Frontend Display**:
+- Warnings displayed at TOP of analysis results page
+- Color-coded by severity (HIGH=red, MEDIUM=orange, LOW=blue)
+- Collapsible if more than 3 warnings
+- Includes impact and recommendation text
+- Chips showing affected metrics
+
+---
+
+### Phase 1: Cap Rate Target Adjustments (November 2025)
+
+**Implementation**: MFDecisionEngine.ts - getTargetCapRate() method
+
+**Calculation Formula**:
+```
+Target Cap Rate = Base Market Rate + Building Type Adjustment
+```
+
+**Base Market Rates** (by market tier):
+
+| Market Tier | Cities | Base Cap Rate |
+|-------------|--------|---------------|
+| A-Class (Premium) | Dallas, Austin, Nashville | 5.0% |
+| B-Class (Balanced) | Phoenix, Tampa, Charlotte | 7.5% |
+| C-Class (Cash Flow) | Memphis, Indianapolis, Birmingham | 10.0% |
+
+**Building Type Adjustments**:
+
+| Building Type | Adjustment | Reasoning |
+|---------------|-----------|-----------|
+| GARDEN | 0 bps | Baseline (most common, no premium/discount) |
+| MID_RISE | -150 bps | Institutional buyers compress cap rates (better rent growth, lower vacancy) |
+| COMPLEX | 0 bps | Baseline (similar to garden, just multiple buildings) |
+
+**Example Calculations**:
+
+1. **Phoenix (B-Class) + GARDEN**:
+   - Base: 7.5%
+   - Adjustment: +0 bps
+   - Target: **7.5%**
+
+2. **Phoenix (B-Class) + MID_RISE**:
+   - Base: 7.5%
+   - Adjustment: -150 bps
+   - Target: **6.0%**
+
+3. **Dallas (A-Class) + MID_RISE**:
+   - Base: 5.0%
+   - Adjustment: -150 bps
+   - Target: **3.5%**
+
+**Impact on Walk-Away Price**:
+```
+Walk-Away Price = NOI / Target Cap Rate
+```
+
+Higher target cap rate = Lower walk-away price (more conservative)
+Lower target cap rate = Higher walk-away price (more aggressive, reflects institutional demand)
+
+**Backward Compatibility**:
+- If `buildingType` not provided, uses base market rate only
+- Existing MF analyses without building type continue to work
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * Market Data API Routes
- * 
+ *
  * Endpoints for testing and accessing market intelligence features
  */
 
@@ -10,6 +10,7 @@ import { marketIntelligenceService } from '../services/marketIntelligenceService
 import { rentcastService } from '../services/rentcastService';
 import { fredService } from '../services/fredService';
 import { cacheService } from '../services/cacheService';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -325,6 +326,110 @@ router.post('/cache/clear', (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// ========================================================================
+// Multi-Family Property Endpoints (Story 3.1)
+// ========================================================================
+
+/**
+ * POST /api/market-data/mf-unit-rents
+ * Get rent estimates for all unit types in a multi-family property
+ *
+ * Story 3.1: Multi-Family Unit Rent Auto-Population
+ *
+ * Request body:
+ * {
+ *   address: string,
+ *   units: Array<{ bedrooms: number, bathrooms: number, squareFootage: number }>
+ * }
+ *
+ * Response:
+ * {
+ *   success: boolean,
+ *   address: string,
+ *   estimates: Record<string, MFUnitRentEstimate>,
+ *   unitsUpdated: number,
+ *   totalUnits: number,
+ *   uniqueConfigs: number
+ * }
+ */
+router.post('/mf-unit-rents', authenticateToken, async (req, res) => {
+  try {
+    const { address, units } = req.body;
+
+    // Validation
+    if (!address || typeof address !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing or invalid required field: address (must be string)'
+      });
+    }
+
+    if (!units || !Array.isArray(units) || units.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing or invalid required field: units (must be non-empty array)'
+      });
+    }
+
+    // Validate each unit configuration
+    for (let i = 0; i < units.length; i++) {
+      const unit = units[i];
+      if (!unit.bedrooms || !unit.bathrooms || !unit.squareFootage) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid unit configuration at index ${i}: must have bedrooms, bathrooms, and squareFootage`
+        });
+      }
+
+      // Type validation
+      if (typeof unit.bedrooms !== 'number' || typeof unit.bathrooms !== 'number' || typeof unit.squareFootage !== 'number') {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid unit configuration at index ${i}: bedrooms, bathrooms, and squareFootage must be numbers`
+        });
+      }
+    }
+
+    logger.info(`Fetching MF rent estimates for ${units.length} units at ${address}`);
+
+    // Get rent estimates for all unique unit configurations
+    const estimateMap = await rentcastService.getMFPropertyRentEstimates(address, units);
+
+    // Build response with estimates keyed by unit config
+    const estimates: Record<string, any> = {};
+    let unitsUpdated = 0;
+
+    estimateMap.forEach((estimate, key) => {
+      estimates[key] = estimate;
+      unitsUpdated++;
+    });
+
+    logger.info(`Successfully fetched ${unitsUpdated} MF unit rent estimates for ${address}`, {
+      uniqueConfigs: estimateMap.size,
+      totalUnits: units.length
+    });
+
+    res.json({
+      success: true,
+      address,
+      estimates,
+      unitsUpdated,
+      totalUnits: units.length,
+      uniqueConfigs: estimateMap.size
+    });
+  } catch (error) {
+    logger.error('Error fetching MF unit rents:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch rent estimates'
     });
   }
 });

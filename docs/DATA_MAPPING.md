@@ -433,9 +433,10 @@ To maintain backward compatibility when data structures change:
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
 | `propertyType` | `'MF'` | Yes | Triggers MF analysis flow |
-| `totalUnits` | number | Yes | 2-32 recommended range |
+| `totalUnits` | number | Yes | 2-32 recommended range (Phase 1: 5+ units recommended) |
 | `totalSqft` | number | Yes | Building total square footage |
 | `yearBuilt` | number | Yes | For property age risk assessment |
+| `buildingType` | `'GARDEN'` \| `'MID_RISE'` \| `'COMPLEX'` | No | **Phase 1 Commercial MF** - Affects cap rate targets & validation ranges |
 | `insuranceRate` | number | Yes | **Percentage** (e.g., 0.5 for 0.5%) - NOT dollar amount |
 | `propertyManagementRate` | number | Yes | **Percentage** (e.g., 8 for 8%) - NOT `propertyManagementPercent` |
 | `maintenanceCost` | number | Yes | **Per unit per month** (e.g., 100 for $100/unit/month) |
@@ -514,11 +515,25 @@ To maintain backward compatibility when data structures change:
     goalBasedReasoning?: string     // Personalized to investor goals
   },
 
+  // Phase 1: Validation warnings (November 2025)
+  validationWarnings: ValidationWarning[], // Data quality warnings for user
+
   // Standard analysis sections (same as SFR)
   monthlyAnalysis: { ... },
   annualAnalysis: { ... },
   longTermAnalysis: { ... }
 }
+
+// ValidationWarning Interface (Phase 1)
+interface ValidationWarning {
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  category: 'OPERATING_EXPENSES' | 'FINANCING' | 'MARKET_DATA' | 'INPUT_VALIDATION';
+  message: string;
+  impact?: string;           // Financial impact description
+  recommendation?: string;   // Suggested action
+  affectedMetric?: string;   // Which metrics are affected
+}
+
 ```
 
 ### Data Flow: Request → Response
@@ -549,12 +564,51 @@ To maintain backward compatibility when data structures change:
 5. MFDecisionEngine.generateDecisionWithAI() (MFDecisionEngine.ts:69-121)
    ├─ Calls super.generateDecision() for 80% core logic
    │  ├─ Scores property with MF-specific weights
-   │  ├─ Calculates walk-away price: NOI / Target Cap Rate
+   │  ├─ Calculates walk-away price: NOI / Target Cap Rate (Phase 1: building type aware)
    │  └─ Determines verdict based on deal quality (0-100)
    ├─ Generates AI-enhanced content (20% AI layer) - Story 2.5
    └─ Returns investmentDecision
    ↓
-6. Response sent: { keyMetrics, investmentDecision, monthlyAnalysis, ... }
+6. Controller gets validation warnings (Phase 1 - deals.ts:1174)
+   ├─ Calls analyzer.getValidationWarnings()
+   ├─ Adds validationWarnings to response
+   └─ Returns analysis with validationWarnings array
+   ↓
+7. Response sent: { keyMetrics, investmentDecision, validationWarnings, monthlyAnalysis, ... }
+```
+
+**Example Validation Warnings**:
+
+```javascript
+// Example 1: Low operating expenses for GARDEN building
+{
+  severity: 'MEDIUM',
+  category: 'OPERATING_EXPENSES',
+  message: 'Operating expenses ($200/unit/month) appear low for GARDEN building',
+  impact: 'Actual expenses may be $4800 higher annually',
+  recommendation: 'Typical range for GARDEN: $250-400/unit/month. Verify all expense categories are included.',
+  affectedMetric: 'Cash Flow, NOI'
+}
+
+// Example 2: Low down payment for commercial property
+{
+  severity: 'MEDIUM',
+  category: 'FINANCING',
+  message: 'Low down payment (15.0%) for commercial property',
+  impact: 'May face financing challenges or higher interest rates',
+  recommendation: 'Commercial loans (5+ units) typically require 20-25% down payment',
+  affectedMetric: 'Financing'
+}
+
+// Example 3: High operating expenses (may be intentional)
+{
+  severity: 'LOW',
+  category: 'OPERATING_EXPENSES',
+  message: 'Operating expenses ($720/unit/month) appear high for MID_RISE building',
+  impact: 'Higher expenses will reduce cash flow by $4320/year',
+  recommendation: 'Typical range for MID_RISE: $450-700/unit/month. This may indicate deferred maintenance or premium amenities.',
+  affectedMetric: 'Cash Flow, NOI'
+}
 ```
 
 ### SFR vs MF Field Mapping

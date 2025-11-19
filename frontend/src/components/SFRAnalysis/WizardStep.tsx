@@ -77,6 +77,11 @@ const WizardStep: React.FC<WizardStepProps> = ({
 
   // Get validation icon
   const getValidationIcon = () => {
+    // Defensive: handle undefined validation
+    if (!validation || !validation.errors || !validation.warnings) {
+      return <Info color="info" />;
+    }
+
     if (Object.keys(validation.errors).length > 0) {
       return <Error color="error" />;
     }
@@ -149,7 +154,7 @@ const WizardStep: React.FC<WizardStepProps> = ({
         {/* Validation Messages */}
         <Box sx={{ mb: 2 }}>
           {/* Errors */}
-          {Object.entries(validation.errors).map(([field, message]) => (
+          {validation?.errors && Object.entries(validation.errors).map(([field, message]) => (
             <Fade in key={`error-${field}`}>
               <Alert severity="error" sx={{ mb: 1 }} variant="outlined">
                 <Typography variant="body2">
@@ -160,7 +165,7 @@ const WizardStep: React.FC<WizardStepProps> = ({
           ))}
 
           {/* Warnings */}
-          {Object.entries(validation.warnings).map(([field, message]) => (
+          {validation?.warnings && Object.entries(validation.warnings).map(([field, message]) => (
             <Fade in key={`warning-${field}`}>
               <Alert severity="warning" sx={{ mb: 1 }} variant="outlined">
                 <Typography variant="body2">

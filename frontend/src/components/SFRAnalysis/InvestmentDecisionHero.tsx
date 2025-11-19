@@ -261,10 +261,13 @@ interface InvestmentDecisionHeroProps {
     sensitivityAnalysis?: SensitivityAnalysis; // Deal sensitivity analysis for negotiation intelligence
   };
   analysis?: AnalysisData; // Analysis data for safe messaging
+  propertyData?: any; // Sprint 4 Story 4.5: Property data for MF-specific alerts
 }
 
-const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({ 
-  investmentDecision
+const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
+  investmentDecision,
+  analysis,
+  propertyData
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
@@ -679,6 +682,74 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           </Grid>
         </CardContent>
       </Card>
+
+      {/* Story 4.5: MF-Specific Alerts (conditionally shown for Multi-Family properties only) */}
+      {propertyData?.propertyType === 'MF' && (
+        <Box sx={{ mt: 2 }}>
+          {/* Alert 1: DSCR < 1.25 (Fannie Mae requirement) */}
+          {analysis?.dscr && analysis.dscr < 1.25 && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                borderRadius: '12px',
+                border: `1px solid ${appleColors.orange[300]}`,
+                '& .MuiAlert-icon': { color: appleColors.orange[600] }
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                DSCR Below Lender Threshold
+              </Typography>
+              <Typography variant="body2">
+                Debt Service Coverage Ratio of {analysis.dscr.toFixed(2)}x is below the Fannie Mae requirement of 1.25x.
+                This may impact financing approval. Consider increasing down payment or negotiating a lower price.
+              </Typography>
+            </Alert>
+          )}
+
+          {/* Alert 2: Small Property Warning (<10 units) */}
+          {propertyData.units && propertyData.units.length < 10 && (
+            <Alert
+              severity="info"
+              sx={{
+                mb: 2,
+                borderRadius: '12px',
+                border: `1px solid ${appleColors.blue[300]}`,
+                '& .MuiAlert-icon': { color: appleColors.blue[600] }
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                Small Multi-Family Property ({propertyData.units.length} units)
+              </Typography>
+              <Typography variant="body2">
+                Properties with fewer than 10 units may have higher vacancy risk and less stable cash flow.
+                Ensure strong reserves (6+ months of expenses) and conservative vacancy assumptions.
+              </Typography>
+            </Alert>
+          )}
+
+          {/* Alert 3: High Operating Expense Ratio (>55%) */}
+          {analysis?.operatingExpenseRatio && analysis.operatingExpenseRatio > 55 && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                borderRadius: '12px',
+                border: `1px solid ${appleColors.orange[300]}`,
+                '& .MuiAlert-icon': { color: appleColors.orange[600] }
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                High Operating Expense Ratio
+              </Typography>
+              <Typography variant="body2">
+                Operating Expense Ratio of {analysis.operatingExpenseRatio.toFixed(1)}% exceeds the 55% threshold for well-managed properties.
+                Review expense breakdown for cost reduction opportunities or verify expense accuracy.
+              </Typography>
+            </Alert>
+          )}
+        </Box>
+      )}
 
       {/* Detailed Analysis Collapse */}
       <Collapse in={showDetails}>

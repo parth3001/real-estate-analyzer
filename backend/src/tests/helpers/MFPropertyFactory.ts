@@ -110,6 +110,7 @@ export class MFPropertyFactory {
       // Operating expenses (annual basis)
       propertyTaxRate: 1.8,          // Collin County, TX rate (1.8%)
       insuranceRate: 0.6,            // Texas market rate (0.6% of property value)
+      insurancePerUnit: 600,         // ✅ ADDED: $600/year per unit (Issue #3 fix)
       maintenanceCost: 9600,         // $100/unit/month × 8 units × 12 months
       maintenanceCostPerUnit: 100,   // $100/unit/month
       propertyManagementRate: 8,     // 8% of gross rent (typical for 8-unit property)

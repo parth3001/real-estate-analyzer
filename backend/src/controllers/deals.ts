@@ -160,11 +160,11 @@ async function generatePortfolioContext(portfolioId: string, analysis: any) {
 // Helper function to convert wizard data to standard format
 const convertWizardData = (dealData: any): any => {
   // Check if this is wizard data and convert it
-  const isWizardData = dealData._isWizardData || 
-                      dealData.maintenanceReservePercentage !== undefined || 
+  const isWizardData = dealData._isWizardData ||
+                      dealData.maintenanceReservePercentage !== undefined ||
                       dealData.vacancyRate !== undefined ||
                       dealData.downPaymentPercentage !== undefined;
-  
+
   if (!isWizardData) {
     logger.info('Data is not wizard format, returning as-is');
     return dealData;
@@ -172,8 +172,52 @@ const convertWizardData = (dealData: any): any => {
 
   logger.info('=== WIZARD DATA CONVERSION ===');
   logger.info('Detected wizard data, converting to standard format');
+  logger.info('Property Type:', dealData.propertyType);
   logger.info('Full incoming dealData keys:', Object.keys(dealData));
-  
+
+  // ✅ FIX: Multi-Family properties have different data structure
+  if (dealData.propertyType === 'MF') {
+    logger.info('Processing Multi-Family wizard data');
+    logger.info('MF-specific fields:', {
+      maintenanceCostPerUnit: dealData.maintenanceCostPerUnit,
+      totalUnits: dealData.totalUnits,
+      unitTypes: dealData.unitTypes?.length || 0,
+      propertyManagementRate: dealData.propertyManagementRate
+    });
+
+    // MF properties already have correct field structure from wizard
+    // Just need to clean up wizard-specific metadata
+    const convertedData = {
+      ...dealData,
+      longTermAssumptions: {
+        ...dealData.longTermAssumptions,
+        vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+      },
+      _dataSource: {
+        isWizardData: true,
+        propertyType: 'MF',
+        preservedFields: ['maintenanceCostPerUnit', 'unitTypes', 'totalUnits'],
+        userFields: Object.keys(dealData).filter(key =>
+          !['_isWizardData'].includes(key)
+        )
+      }
+    };
+
+    // Remove only wizard metadata, preserve MF-specific fields
+    delete convertedData._isWizardData;
+
+    logger.info('MF wizard data conversion complete:', {
+      maintenanceCostPerUnit: convertedData.maintenanceCostPerUnit,
+      totalUnits: convertedData.totalUnits,
+      propertyManagementRate: convertedData.propertyManagementRate
+    });
+    logger.info('=== END WIZARD DATA CONVERSION (MF) ===');
+
+    return convertedData;
+  }
+
+  // SFR-specific wizard data conversion
+  logger.info('Processing SFR wizard data');
   const wizardDataInfo = {
     maintenanceReservePercentage: dealData.maintenanceReservePercentage,
     vacancyRate: dealData.vacancyRate,
@@ -181,15 +225,15 @@ const convertWizardData = (dealData: any): any => {
     _isWizardData: dealData._isWizardData,
     existingMaintenanceCost: dealData.maintenanceCost
   };
-  logger.info('Wizard data received:', JSON.stringify(wizardDataInfo, null, 2));
-  
-  // Calculate maintenance cost from percentage
+  logger.info('SFR wizard data received:', JSON.stringify(wizardDataInfo, null, 2));
+
+  // Calculate maintenance cost from percentage (SFR only)
   let maintenanceCost = dealData.maintenanceCost || 0;
   logger.info('Initial maintenanceCost value:', maintenanceCost);
-  
+
   if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
     const calculatedCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
-    logger.info('Maintenance calculation:', {
+    logger.info('SFR Maintenance calculation:', {
       hasPercentage: !!dealData.maintenanceReservePercentage,
       hasMonthlyRent: !!dealData.monthlyRent,
       monthlyRent: dealData.monthlyRent,
@@ -200,17 +244,17 @@ const convertWizardData = (dealData: any): any => {
     });
     maintenanceCost = calculatedCost;
   } else {
-    logger.warn('Cannot calculate maintenance cost:', {
+    logger.warn('Cannot calculate SFR maintenance cost:', {
       hasPercentage: !!dealData.maintenanceReservePercentage,
       hasMonthlyRent: !!dealData.monthlyRent,
       percentageValue: dealData.maintenanceReservePercentage,
       monthlyRentValue: dealData.monthlyRent
     });
   }
-  
-  logger.info('Final maintenanceCost before assignment:', maintenanceCost);
-  
-  // Convert wizard data to standard format
+
+  logger.info('Final SFR maintenanceCost before assignment:', maintenanceCost);
+
+  // Convert SFR wizard data to standard format
   const convertedData = {
     ...dealData,
     maintenanceCost: maintenanceCost,
@@ -221,28 +265,29 @@ const convertWizardData = (dealData: any): any => {
     // Add metadata to track data source
     _dataSource: {
       isWizardData: true,
+      propertyType: 'SFR',
       calculatedFields: ['maintenanceCost'],
-      userFields: Object.keys(dealData).filter(key => 
+      userFields: Object.keys(dealData).filter(key =>
         !['maintenanceReservePercentage', 'downPaymentPercentage', 'closingCostPercentage', '_isWizardData'].includes(key)
       )
     }
   };
-  
-  logger.info('After data conversion:', {
+
+  logger.info('After SFR data conversion:', {
     maintenanceCost: convertedData.maintenanceCost,
     maintenanceCostType: typeof convertedData.maintenanceCost,
     dataSource: convertedData._dataSource
   });
-  
-  // Remove wizard-specific fields
+
+  // Remove SFR wizard-specific fields
   delete convertedData.maintenanceReservePercentage;
   delete convertedData.downPaymentPercentage;
   delete convertedData.closingCostPercentage;
   delete convertedData._isWizardData;
-  
-  logger.info('Wizard data converted successfully');
-  logger.info('=== END WIZARD DATA CONVERSION ===');
-  
+
+  logger.info('SFR wizard data converted successfully');
+  logger.info('=== END WIZARD DATA CONVERSION (SFR) ===');
+
   return convertedData;
 };
 
@@ -853,14 +898,16 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
     
     // Use the appropriate analysis service directly
     let analysis: any;
+    let mfAnalyzer: MultiFamilyAnalyzer | null = null; // Phase 1: Store MF analyzer for validation warnings
+
     if (dealData.propertyType === 'SFR') {
       logger.info('Analyzing SFR property with market intelligence');
       const analyzer = new SFRAnalyzer(dealData, assumptions);
       analysis = await analyzer.analyzeWithMarketIntelligence();
     } else if (dealData.propertyType === 'MF') {
       logger.info('Analyzing Multi-Family property');
-      const analyzer = new MultiFamilyAnalyzer(dealData, assumptions);
-      analysis = analyzer.analyze();
+      mfAnalyzer = new MultiFamilyAnalyzer(dealData, assumptions);
+      analysis = mfAnalyzer.analyze();
     } else {
       throw new Error(`Unsupported property type: ${dealData.propertyType}`);
     }
@@ -1167,16 +1214,29 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
     }
     
     logger.info('Analysis complete - returning results');
-    
-    // Include portfolioId in the response so it can be saved with the deal
+
+    // Phase 1: Get validation warnings for MF properties
+    const validationWarnings = mfAnalyzer ? mfAnalyzer.getValidationWarnings() : [];
+
+    if (validationWarnings.length > 0) {
+      logger.info(`Phase 1: Returning ${validationWarnings.length} validation warnings`, {
+        warnings: validationWarnings.map(w => `${w.severity}: ${w.message}`)
+      });
+    }
+
+    // Include portfolioId, propertyData, and validation warnings in the response
+    // Sprint 4: propertyData needed for Unit Mix Analysis Tab (Story 4.3) and Building Type Badge (Story 4.7)
     const responseData = {
       ...analysis,
-      portfolioId: dealData.portfolioId || null // Include portfolioId from original request
+      propertyData: dealData, // Sprint 4: Include original input data for frontend display
+      portfolioId: dealData.portfolioId || null, // Include portfolioId from original request
+      validationWarnings // Phase 1: Include validation warnings for frontend display
     };
-    
+
     logger.info('Returning analysis with portfolioId:', {
       hasPortfolioId: !!dealData.portfolioId,
-      portfolioId: dealData.portfolioId
+      portfolioId: dealData.portfolioId,
+      validationWarningsCount: validationWarnings.length
     });
     
     // Debug: Check if portfolio context and tax analysis are in response
