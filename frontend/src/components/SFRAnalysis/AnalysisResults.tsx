@@ -117,15 +117,16 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
   // Story 4.2: Conditional tab injection for MF properties
   // Analysis sections for horizontal navigation - filter based on mode
+  // TAB SEQUENCE (FSE requirement): Overview → Financial Details → Unit Mix (MF only) → Long-term Analysis → Tax Intelligence → Interactive → Optimizer → Scenarios → Other tabs
   const allAnalysisSections = [
     { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights' },
     { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis' },
-    // Story 4.2: Inject Unit Mix tab for MF properties only (after Financial Details)
+    // Story 4.2: Inject Unit Mix tab for MF properties only (after Financial Details, before Long-term Analysis)
     ...(propertyType === 'MF' ? [
       { id: 'unitMix', label: 'Unit Mix Analysis', icon: AssessmentIcon, description: 'Unit-level revenue breakdown and optimization' }
     ] : []),
-    { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights' },
     { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections' },
+    { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights' },
     { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time' },
     { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns' },
     { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios' },
@@ -136,8 +137,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   ];
 
   // Filter sections based on mode (Story 4.2: includes unitMix for MF if present in allAnalysisSections)
+  // Novice mode shows: Overview → Financial → Unit Mix (MF) → Long-term → Tax → Interactive → Optimizer → Scenarios
   const analysisSections = mode === 'novice'
-    ? allAnalysisSections.filter(section => ['overview', 'financial', 'unitMix', 'tax', 'projections', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
+    ? allAnalysisSections.filter(section => ['overview', 'financial', 'unitMix', 'projections', 'tax', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
     : allAnalysisSections;
 
   // Story 4.1: Conditional Hero Metrics based on property type
