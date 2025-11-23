@@ -15,11 +15,13 @@ import {
   Box,
   Typography,
   Chip,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import InfoIcon from '@mui/icons-material/Info';
 import { formatCurrency } from '../../../utils/formatters';
 import { appleColors } from '../../../theme/appleDesignSystem';
 
@@ -113,6 +115,9 @@ export const ValueAddOpportunityCard: React.FC<ValueAddOpportunityCardProps> = (
             flex={1}
           >
             {isOpportunity ? 'Value-Add Opportunity' : isAboveMarket ? 'Above Market Pricing' : 'At Market Rate'}
+            <Tooltip title={isOpportunity ? 'Annual revenue upside by raising rents to market rate. This represents the gap between current rents and market potential.' : isAboveMarket ? 'Current rents exceed market rates, indicating pricing risk. May need rent reductions to maintain occupancy.' : 'Property rents are aligned with market rates. No immediate value-add opportunity or pricing risk.'}>
+              <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} />
+            </Tooltip>
           </Typography>
           <Chip
             label={`${Math.abs(upsidePercentage).toFixed(1)}%`}

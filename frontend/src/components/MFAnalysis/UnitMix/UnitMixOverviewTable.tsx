@@ -25,12 +25,14 @@ import {
   Grid,
   Divider,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Tooltip
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import InfoIcon from '@mui/icons-material/Info';
 import { formatCurrency } from '../../../utils/formatters';
 
 export interface UnitTypeData {
@@ -250,16 +252,25 @@ export const UnitMixOverviewTable: React.FC<UnitMixOverviewTableProps> = ({
             <TableCell align="right">
               <Typography variant="body2" fontWeight="bold">
                 Gap
+                <Tooltip title="Difference between current rent and market rent. Positive values indicate below-market pricing (value-add opportunity). Negative values indicate above-market pricing (pricing risk).">
+                  <InfoIcon fontSize="small" sx={{ ml: 0.5, verticalAlign: 'middle', fontSize: '0.85rem' }} />
+                </Tooltip>
               </Typography>
             </TableCell>
             <TableCell align="right">
               <Typography variant="body2" fontWeight="bold">
                 Rent/Sqft
+                <Tooltip title="Monthly rent per square foot. Higher values indicate better space utilization. Industry average varies by market and building class.">
+                  <InfoIcon fontSize="small" sx={{ ml: 0.5, verticalAlign: 'middle', fontSize: '0.85rem' }} />
+                </Tooltip>
               </Typography>
             </TableCell>
             <TableCell align="right">
               <Typography variant="body2" fontWeight="bold">
                 % Income
+                <Tooltip title="Percentage of total property income from this unit type. Used to calculate diversification (HHI). Higher concentration = higher risk if market for that unit type softens.">
+                  <InfoIcon fontSize="small" sx={{ ml: 0.5, verticalAlign: 'middle', fontSize: '0.85rem' }} />
+                </Tooltip>
               </Typography>
             </TableCell>
           </TableRow>
