@@ -181,7 +181,7 @@ const MFAddressStep: React.FC<MFWizardStepProps> = ({
           ...state.data,
           totalUnits: propertyDetails.totalUnits || state.data.totalUnits,
           totalSqft: propertyDetails.totalSqft || state.data.totalSqft,
-          buildingType: propertyDetails.buildingType || state.data.buildingType,
+          buildingType: (propertyDetails.buildingType as 'GARDEN' | 'MID_RISE' | 'HIGH_RISE' | 'TOWNHOUSE' | 'STACKED' | 'MIXED' | undefined) || state.data.buildingType,
           yearBuilt: propertyDetails.yearBuilt || state.data.yearBuilt
         },
         smartDefaults: {
@@ -215,11 +215,11 @@ const MFAddressStep: React.FC<MFWizardStepProps> = ({
   // Handle address field changes with auto-lookup
   const handleAddressChange = (field: keyof MFWizardPropertyAddress, value: string) => {
     const updatedAddress = {
+      ...state.data.propertyAddress,
       street: state.data.propertyAddress?.street || '',
       city: state.data.propertyAddress?.city || '',
       state: state.data.propertyAddress?.state || '',
       zipCode: state.data.propertyAddress?.zipCode || '',
-      ...state.data.propertyAddress,
       [field]: value
     };
 

@@ -391,6 +391,10 @@ export interface WizardPropertyLookupResponse {
     yearBuilt?: number;
     propertyType?: string;
     marketValue?: number;
+    // Multi-family specific properties
+    totalUnits?: number;
+    totalSqft?: number;
+    buildingType?: string;
     dataConfidence: Record<string, {
       score: number;
       source: string;

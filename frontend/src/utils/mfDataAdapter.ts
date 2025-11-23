@@ -34,7 +34,7 @@ export interface MFWizardFormData {
   totalUnits: number;
   totalSqft: number;
   yearBuilt: number;
-  buildingType?: 'GARDEN' | 'MID_RISE' | 'COMPLEX'; // Phase 1: Commercial MF (5+ units)
+  buildingType?: 'GARDEN' | 'MID_RISE' | 'HIGH_RISE' | 'TOWNHOUSE' | 'STACKED' | 'MIXED' | 'COMPLEX'; // Phase 1: Commercial MF (5+ units) - COMPLEX is legacy
 
   // Purchase & Financing
   purchasePrice: number;
@@ -66,7 +66,7 @@ export interface MFWizardFormData {
     count: number;
     sqft: number;
     monthlyRent: number;
-    occupied: number;
+    occupied?: number;
   }>;
 
   // Long-term Assumptions
@@ -367,7 +367,8 @@ export function transformMFWizardDataToBackend(
     portfolioContext: wizardData.portfolioContext,
 
     // Enhanced Goals (optional - for AI analysis)
-    enhancedGoals: wizardData.enhancedGoals
+    // Type assertion needed due to type difference between wizard EnhancedGoalContext and backend simple type
+    enhancedGoals: wizardData.enhancedGoals as any
   };
 
   // Log transformation for debugging

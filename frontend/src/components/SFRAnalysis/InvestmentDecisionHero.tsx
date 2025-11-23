@@ -853,8 +853,8 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                               const scoreMatch = originalStrength?.match(/(\d+)\/100/);
                               const score = scoreMatch ? scoreMatch[1] : '100';
 
-                              const appreciation = analysis?.longTermAnalysis?.returns?.totalAppreciation ?? 0;
-                              const cumulativeCashFlow = analysis?.longTermAnalysis?.returns?.totalCashFlow ?? 0;
+                              const appreciation = analysis?.longTermAnalysis?.totalAppreciation ?? 0;
+                              const cumulativeCashFlow = analysis?.longTermAnalysis?.totalCashFlow ?? 0;
 
                               return (
                                 <ListItem sx={{ pl: 0 }}>
@@ -895,7 +895,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                           {(() => {
                             const monthlyCashFlow = analysis?.monthlyAnalysis?.cashFlow ?? 0;
                             if (monthlyCashFlow < 0) {
-                              const cumulativeCashFlow = analysis?.longTermAnalysis?.returns?.totalCashFlow ?? 0;
+                              const cumulativeCashFlow = analysis?.longTermAnalysis?.totalCashFlow ?? 0;
                               return (
                                 <ListItem sx={{ pl: 0 }}>
                                   <ListItemIcon sx={{ minWidth: 28 }}>

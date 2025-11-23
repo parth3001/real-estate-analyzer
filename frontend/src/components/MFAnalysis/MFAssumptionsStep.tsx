@@ -18,12 +18,10 @@ import {
   Slider,
   Alert,
   Card,
-  CardContent,
-  FormControlLabel,
-  Switch,
   InputAdornment,
-  Chip,
-  Divider
+  Divider,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import {
   TrendingUp,
@@ -68,8 +66,8 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
       data: {
         ...state.data,
         longTermAssumptions: assumptions,
-        loanType: state.data.totalUnits >= 5 ? 'COMMERCIAL' : 'RESIDENTIAL',
-        balloonPayment: hasBalloonPayment ? { years: balloonYears } : undefined
+        loanType: state.data.totalUnits >= 5 ? 'commercial' : 'conventional',
+        balloonPayment: hasBalloonPayment ? { enabled: true, years: balloonYears } : { enabled: false }
       }
     });
   }, [assumptions, hasBalloonPayment, balloonYears]);
@@ -84,8 +82,8 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
   return (
     <WizardStep
       title="Operating Assumptions"
-      subtitle="Long-term growth rates, vacancy, and investment timeline"
-      icon={<TrendingUp />}
+      description="Long-term growth rates, vacancy, and investment timeline"
+      validation={validation}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
@@ -107,7 +105,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Projection Period: {assumptions.projectionYears} years
               </Typography>
@@ -129,7 +127,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Typical Turnover: Every {assumptions.turnoverFrequency} years
               </Typography>
@@ -165,7 +163,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Rent Growth Rate"
@@ -180,7 +178,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Property Value Appreciation"
@@ -195,7 +193,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Inflation Rate"
@@ -210,7 +208,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Vacancy Rate"
@@ -238,7 +236,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="CapEx Reserve Rate"
@@ -253,7 +251,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Common Area Maintenance Rate"
@@ -288,7 +286,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Selling Costs"
@@ -303,7 +301,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Card variant="outlined" sx={{ p: 2 }}>
                 <Typography variant="caption" color="text.secondary">Projected Holding Period</Typography>
                 <Typography variant="h6">
@@ -331,7 +329,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
                 control={
                   <Switch
                     checked={hasBalloonPayment}
-                    onChange={(e) => setHasBalloonPayment(e.target.checked)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHasBalloonPayment(e.target.checked)}
                   />
                 }
                 label="Has Balloon Payment"
@@ -341,7 +339,7 @@ const MFAssumptionsStep: React.FC<MFWizardStepProps> = ({
             {hasBalloonPayment && (
               <>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Balloon Due After: {balloonYears} years
                     </Typography>

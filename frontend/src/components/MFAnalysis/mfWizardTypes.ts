@@ -8,7 +8,7 @@
  * - Uses same WizardStep enum and state management pattern as SFR
  */
 
-import type { MultiFamilyPropertyData, PropertyAddress, UnitType, MFLongTermAssumptions, CommonAreaUtilities } from '../../types/property';
+import type { PropertyAddress, UnitType, MFLongTermAssumptions, CommonAreaUtilities } from '../../types/property';
 
 // Re-export shared wizard step enumeration from SFR
 // We use the same step progression pattern: ADDRESS → FINANCIALS → RENTAL → ASSUMPTIONS → GOALS → TAX
@@ -215,6 +215,11 @@ export interface MFWizardFormData {
   downPaymentPercentage?: number; // Wizard-specific field for UI
   interestRate: number;
   loanTerm: number;
+  loanType?: 'conventional' | 'commercial'; // Wizard-specific field for commercial loans
+  balloonPayment?: {
+    enabled: boolean;
+    years?: number;
+  }; // Commercial loan balloon payment configuration
   closingCosts?: number;
   closingCostPercentage?: number; // Wizard-specific field for UI
   capitalInvestments?: number; // Initial repairs or upgrades needed

@@ -23,9 +23,7 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
-  Divider,
-  FormControlLabel,
-  Switch
+  Divider
 } from '@mui/material';
 import {
   AttachMoney,
@@ -46,7 +44,6 @@ const MFFinancialsStep: React.FC<MFWizardStepProps> = ({
   validation
 }) => {
   const [loanType, setLoanType] = useState<'fixed' | 'arm'>('fixed');
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Calculate down payment amount based on percentage
   const downPaymentAmount = (state.data.purchasePrice || 0) * (state.data.downPaymentPercentage || 25) / 100;

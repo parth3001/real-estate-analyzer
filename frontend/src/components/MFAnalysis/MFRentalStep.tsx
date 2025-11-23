@@ -365,14 +365,14 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
           <Card variant="outlined" sx={{ mt: 2, bgcolor: 'background.default' }}>
             <CardContent>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="caption" color="text.secondary">Total Units</Typography>
                   <Typography variant="h6">
                     {totalUnitsEntered}
                     {unitCountMismatch && <Chip label="Mismatch" size="small" color="warning" sx={{ ml: 1 }} />}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="caption" color="text.secondary">Potential Gross Income</Typography>
                   <Typography variant="h6" color="primary.main">
                     ${totalMonthlyRent.toLocaleString()}/mo
@@ -381,7 +381,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
                     (100% occupancy)
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="caption" color="text.secondary">Average Rent/Unit</Typography>
                   <Typography variant="h6">
                     ${averageRentPerUnit.toLocaleString()}
@@ -416,7 +416,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Electric"
@@ -430,7 +430,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
                 helperText="Common area lighting, hallways"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Water/Sewer"
@@ -444,7 +444,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
                 helperText="Landscaping, common areas"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Gas"
@@ -458,7 +458,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
                 helperText="Heating common areas (if applicable)"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Trash"
@@ -492,7 +492,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Maintenance Cost Per Unit (Monthly)"
@@ -506,7 +506,7 @@ const MFRentalStep: React.FC<MFWizardStepProps> = ({
                 helperText="Typical range: $50-200/unit/month"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Card variant="outlined" sx={{ p: 2 }}>
                 <Typography variant="caption" color="text.secondary">Total Monthly Maintenance</Typography>
                 <Typography variant="h6">

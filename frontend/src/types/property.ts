@@ -94,7 +94,7 @@ export interface MultiFamilyPropertyData extends BasePropertyData {
   unitTypes: UnitType[];
   longTermAssumptions: MFLongTermAssumptions;
   commonAreaUtilities: CommonAreaUtilities;
-  buildingType?: 'GARDEN' | 'MID_RISE' | 'COMPLEX'; // Phase 1: Commercial MF (5+ units)
+  buildingType?: 'GARDEN' | 'MID_RISE' | 'HIGH_RISE' | 'TOWNHOUSE' | 'STACKED' | 'MIXED' | 'COMPLEX'; // Phase 1: Commercial MF (5+ units) - COMPLEX is legacy, prefer specific types
   // Portfolio context (optional)
   portfolioId?: string;
   portfolioContext?: {

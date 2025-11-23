@@ -56,16 +56,16 @@ interface MFPropertyWizardProps {
   onCancel?: () => void;
 }
 
-// Default wizard configuration
-const defaultConfig: MFWizardConfig = {
-  enableExternalAPIs: true,
-  enableSmartDefaults: true,
-  enableAutoPopulation: true,
-  showConfidenceScores: true,
-  allowManualOverrides: true,
-  apiTimeout: 10000,
-  defaultUnitTemplateMode: 'template' // MF-specific: prefer template mode for faster setup
-};
+// Default wizard configuration (currently not used in logic, but available for future features)
+// const defaultConfig: MFWizardConfig = {
+//   enableExternalAPIs: true,
+//   enableSmartDefaults: true,
+//   enableAutoPopulation: true,
+//   showConfidenceScores: true,
+//   allowManualOverrides: true,
+//   apiTimeout: 10000,
+//   defaultUnitTemplateMode: 'template' // MF-specific: prefer template mode for faster setup
+// };
 
 // Step definitions - MF-specific steps
 const steps = [
@@ -165,11 +165,12 @@ const MF_SMART_DEFAULTS = {
 const MFPropertyWizard: React.FC<MFPropertyWizardProps> = ({
   onComplete,
   initialData,
-  config = {},
+  // config parameter available but currently not used in logic (prefixed with _ to indicate intentional)
+  config: _config = {},
   onCancel
 }) => {
-  // Wizard configuration
-  const wizardConfig = { ...defaultConfig, ...config };
+  // Wizard configuration (merged but not currently used in logic)
+  // const wizardConfig = { ...defaultConfig, ...config };
 
   // Wizard state management
   const [state, setState] = useState<MFWizardState>({
@@ -372,7 +373,9 @@ const MFPropertyWizard: React.FC<MFPropertyWizardProps> = ({
       }));
 
       // Transform wizard data to backend format using MFDataAdapter
-      const backendData = transformMFWizardDataToBackend(state.data);
+      // Type assertion needed: wizard uses EnhancedGoalContext with ExitStrategyData object,
+      // but adapter expects simple string-based type
+      const backendData = transformMFWizardDataToBackend(state.data as any);
 
       console.log('MFPropertyWizard: Submitting data to backend', {
         totalUnits: backendData.totalUnits,
