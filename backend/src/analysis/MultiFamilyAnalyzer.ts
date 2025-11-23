@@ -636,7 +636,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       operatingExpenses
     };
 
+    // 🔍 DIAGNOSTIC LOGGING - Issue #5 Verification
     console.log('\n[MF] ✅ Property-specific metrics calculated successfully');
+    console.log('🔍 [MF] DIAGNOSTIC - perUnitTypeMetrics being returned:');
+    console.log('🔍 [MF]   Array length:', perUnitTypeMetrics?.length || 0);
+    console.log('🔍 [MF]   Data:', JSON.stringify(perUnitTypeMetrics, null, 2));
     console.log('[MF] ========== END METRICS CALCULATION ==========\n');
 
     return metrics;

@@ -129,15 +129,31 @@ export const UnitMixAnalysisTab: React.FC<UnitMixAnalysisTabProps> = ({
     }));
 
     // Per-unit metrics for bar chart (Issue #5: Use backend-calculated values)
+    // 🔍 DIAGNOSTIC LOGGING - Issue #5 Investigation
+    console.log('🔍 [UnitMixAnalysisTab] ========== DIAGNOSTIC START ==========');
+    console.log('🔍 [UnitMixAnalysisTab] perUnitTypeMetrics prop:', perUnitTypeMetrics);
+    console.log('🔍 [UnitMixAnalysisTab] perUnitTypeMetrics.length:', perUnitTypeMetrics?.length);
+    console.log('🔍 [UnitMixAnalysisTab] Using backend data?', perUnitTypeMetrics.length > 0);
+
     const perUnitMetrics = perUnitTypeMetrics.length > 0
       ? perUnitTypeMetrics // Use backend-calculated per-unit-type metrics
       : transformedUnitTypes.map(unit => {
           // Fallback: Estimate per-unit economics (if backend data not available)
+          console.warn('⚠️ [UnitMixAnalysisTab] FALLBACK CALCULATION TRIGGERED - Backend data not available!');
+          console.warn('⚠️ [UnitMixAnalysisTab] This means perUnitTypeMetrics prop is empty or undefined');
+
           const incomeShare = unit.incomePercentage / 100;
           const grossIncomePerUnit = (year1GrossIncome / totalUnits) * (incomeShare * totalUnits / unit.count);
           const opexPerUnit = operatingExpensePerUnit * 12; // Convert monthly to annual
           const noiPerUnitCalc = noiPerUnit * 12; // Convert monthly to annual
           const cashFlowPerUnitCalc = cashFlowPerUnit * 12; // Convert monthly to annual
+
+          console.warn(`⚠️ [UnitMixAnalysisTab] Fallback data for ${unit.type}:`, {
+            income: grossIncomePerUnit,
+            opex: opexPerUnit,
+            noi: noiPerUnitCalc,
+            cashFlow: cashFlowPerUnitCalc
+          });
 
           return {
             unitType: unit.type,
@@ -147,6 +163,9 @@ export const UnitMixAnalysisTab: React.FC<UnitMixAnalysisTabProps> = ({
             cashFlow: cashFlowPerUnitCalc
           };
         });
+
+    console.log('🔍 [UnitMixAnalysisTab] Final perUnitMetrics:', perUnitMetrics);
+    console.log('🔍 [UnitMixAnalysisTab] ========== DIAGNOSTIC END ==========');
 
     // Issue #9: Calculate efficiency breakdown with HHI algorithm and market alignment scoring
 

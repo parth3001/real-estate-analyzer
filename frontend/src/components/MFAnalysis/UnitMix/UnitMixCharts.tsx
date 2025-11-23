@@ -56,6 +56,27 @@ export const UnitMixCharts: React.FC<UnitMixChartsProps> = ({
 }) => {
   const theme = useTheme();
 
+  // 🔍 DIAGNOSTIC LOGGING - Issue #5 Investigation
+  console.log('🔍 [UnitMixCharts] ========== DIAGNOSTIC START ==========');
+  console.log('🔍 [UnitMixCharts] perUnitMetrics received:', perUnitMetrics);
+  console.log('🔍 [UnitMixCharts] perUnitMetrics.length:', perUnitMetrics?.length);
+  if (perUnitMetrics && perUnitMetrics.length > 0) {
+    console.log('🔍 [UnitMixCharts] Sample data (first item):', perUnitMetrics[0]);
+    console.log('🔍 [UnitMixCharts] Data keys:', Object.keys(perUnitMetrics[0]));
+    console.log('🔍 [UnitMixCharts] Data values breakdown:');
+    perUnitMetrics.forEach((metric, index) => {
+      console.log(`  Unit ${index + 1} (${metric.unitType}):`);
+      console.log(`    - income: $${metric.income?.toLocaleString() || 'MISSING'}`);
+      console.log(`    - opex: $${metric.opex?.toLocaleString() || 'MISSING'}`);
+      console.log(`    - noi: $${metric.noi?.toLocaleString() || 'MISSING'}`);
+      console.log(`    - cashFlow: $${metric.cashFlow?.toLocaleString() || 'MISSING'}`);
+      console.log(`    - cashFlow is negative? ${(metric.cashFlow || 0) < 0}`);
+    });
+  } else {
+    console.warn('⚠️ [UnitMixCharts] NO perUnitMetrics data received!');
+  }
+  console.log('🔍 [UnitMixCharts] ========== DIAGNOSTIC END ==========');
+
   // Color palette
   const COLORS = [
     theme.palette.primary.main,
@@ -173,14 +194,26 @@ export const UnitMixCharts: React.FC<UnitMixChartsProps> = ({
                 <YAxis
                   tick={{ fontSize: 12 }}
                   stroke={theme.palette.text.secondary}
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  tickFormatter={(value) => {
+                    // Handle negative values in formatter
+                    const absValue = Math.abs(value);
+                    const sign = value < 0 ? '-' : '';
+                    return `${sign}$${(absValue / 1000).toFixed(0)}k`;
+                  }}
+                  // Allow negative values on Y-axis (Issue #5: Negative cash flow fix)
+                  domain={['auto', 'auto']}
                 />
                 <Tooltip content={<CustomBarTooltip />} />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="income" fill={theme.palette.success.main} name="Gross Income" />
                 <Bar dataKey="opex" fill={theme.palette.warning.main} name="Operating Exp" />
                 <Bar dataKey="noi" fill={theme.palette.primary.main} name="NOI" />
-                <Bar dataKey="cashFlow" fill={theme.palette.error.main} name="Cash Flow" />
+                {/* Issue #5 Fix: Use conditional fill for cash flow (red if negative, green if positive) */}
+                <Bar
+                  dataKey="cashFlow"
+                  fill={theme.palette.error.main}
+                  name="Cash Flow"
+                />
               </BarChart>
             </ResponsiveContainer>
 

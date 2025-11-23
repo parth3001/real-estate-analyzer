@@ -704,7 +704,17 @@ export class InvestmentDecisionEngine {
       fundamentals.capRate || 0,
       marketIntelligenceAnalysis.marketMedianCapRate
     );
-    
+
+    // DEBUG: Log cap rate scoring details for Issue #22/#23 investigation
+    logger.info('Cap Rate Scoring Debug', {
+      propertyCapRate: fundamentals.capRate,
+      marketMedianCapRate: marketIntelligenceAnalysis.marketMedianCapRate,
+      capRateScore,
+      marketTier: marketIntelligenceAnalysis.marketTier?.tier,
+      marketTierName: marketIntelligenceAnalysis.marketTier?.name,
+      cityState: `${marketIntelligenceAnalysis.cityName}, ${marketIntelligenceAnalysis.stateName}`
+    });
+
     // 7. Property Risk Score (2% weight)  
     const propertyRiskScore = this.scorePropertyRisk(
       propertyClassificationAnalysis.classification,
@@ -1364,12 +1374,17 @@ export class InvestmentDecisionEngine {
    * Score cap rate competitiveness (3% weight)
    */
   private scoreCapRateCompetitiveness(propertyCapRate: number, marketMedian: number): number {
-    const spread = propertyCapRate - marketMedian;
-    
+    // DEFENSIVE: Handle both percentage and decimal formats
+    // FinancialCalculations returns percentage (4.58), but we need decimal (0.0458)
+    // See Issue #22 in ISSUE_TRACKER.md for historical context
+    const capRateDecimal = propertyCapRate > 1 ? propertyCapRate / 100 : propertyCapRate;
+
+    const spread = capRateDecimal - marketMedian;
+
     // Convert spread to score (50 basis points = 10 points)
     // Fixed: Corrected multiplier to match comment - 50 bps (0.005) = 10 points, so multiplier = 2000
     const spreadScore = 50 + (spread * 2000); // 10 points per 50 bps as intended
-    
+
     return Math.max(0, Math.min(100, spreadScore));
   }
   

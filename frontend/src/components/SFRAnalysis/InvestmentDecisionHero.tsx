@@ -431,15 +431,19 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
   // Use standardized currency formatting from utils
   const formatCurrency = standardFormatCurrency;
 
-  // Detail tabs
+  // Issue #15 Fix: Conditional tab display based on content availability
+  const hasTimeline = !!(investmentDecision.timeline?.immediateActions?.length > 0);
+  const hasAlternatives = !!(investmentDecision.alternativeOptions?.length > 0);
+
+  // Detail tabs - conditionally include based on content availability
   const detailTabs = [
     { id: 'reasoning', label: 'Reasoning', icon: AIIcon },
     ...(investmentDecision.professionalAssessment ? [{ id: 'professional', label: 'Professional Analysis', icon: CheckCircle }] : []),
     ...(investmentDecision.portfolioContext ? [{ id: 'portfolio', label: 'Portfolio Fit', icon: InfoIcon }] : []),
-    { id: 'actions', label: 'Action Plan', icon: ActionIcon },
-    { id: 'capital', label: 'Capital Strategy', icon: CapitalIcon },
-    { id: 'timeline', label: 'Timeline', icon: TimelineIcon },
-    { id: 'alternatives', label: 'Alternatives', icon: AlternativeIcon }
+    { id: 'actions', label: 'Action Plan', icon: ActionIcon }, // Always show with fallback
+    { id: 'capital', label: 'Capital Strategy', icon: CapitalIcon }, // Always show with fallback
+    ...(hasTimeline ? [{ id: 'timeline', label: 'Timeline', icon: TimelineIcon }] : []),
+    ...(hasAlternatives ? [{ id: 'alternatives', label: 'Alternatives', icon: AlternativeIcon }] : [])
   ];
 
   return (
@@ -810,17 +814,62 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                           Key Strengths
                         </Typography>
                         <List dense>
-                          {investmentDecision.aiEnhancedContent.reasoning.keyStrengths.map((strength, index) => (
-                            <ListItem key={index} sx={{ pl: 0 }}>
-                              <ListItemIcon sx={{ minWidth: 28 }}>
-                                <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
-                              </ListItemIcon>
-                              <ListItemText 
-                                primary={strength} 
-                                slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
-                              />
-                            </ListItem>
-                          ))}
+                          {investmentDecision.aiEnhancedContent.reasoning.keyStrengths.map((strength, index) => {
+                            // Issue #14 Fix: Detect and transform misleading "Cash Flow scored" messaging
+                            const monthlyCashFlow = analysis?.monthlyAnalysis?.cashFlow ?? 0;
+                            const isCashFlowStrength = /cash flow score.*?100\/100/i.test(strength);
+                            const hasNegativeCashFlow = monthlyCashFlow < 0;
+
+                            // Skip misleading cash flow strength if negative cash flow
+                            if (isCashFlowStrength && hasNegativeCashFlow) {
+                              return null;
+                            }
+
+                            return (
+                              <ListItem key={index} sx={{ pl: 0 }}>
+                                <ListItemIcon sx={{ minWidth: 28 }}>
+                                  <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={strength}
+                                  slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                                />
+                              </ListItem>
+                            );
+                          })}
+
+                          {/* Issue #14 Fix: Add clarified Total Return strength for negative cash flow properties */}
+                          {(() => {
+                            const monthlyCashFlow = analysis?.monthlyAnalysis?.cashFlow ?? 0;
+                            const hasCashFlowStrength = investmentDecision.aiEnhancedContent?.reasoning?.keyStrengths?.some(
+                              s => /cash flow score.*?100\/100/i.test(s)
+                            ) ?? false;
+
+                            if (hasCashFlowStrength && monthlyCashFlow < 0) {
+                              // Extract score from original messaging
+                              const originalStrength = investmentDecision.aiEnhancedContent?.reasoning?.keyStrengths?.find(
+                                s => /cash flow score.*?100\/100/i.test(s)
+                              );
+                              const scoreMatch = originalStrength?.match(/(\d+)\/100/);
+                              const score = scoreMatch ? scoreMatch[1] : '100';
+
+                              const appreciation = analysis?.longTermAnalysis?.returns?.totalAppreciation ?? 0;
+                              const cumulativeCashFlow = analysis?.longTermAnalysis?.returns?.totalCashFlow ?? 0;
+
+                              return (
+                                <ListItem sx={{ pl: 0 }}>
+                                  <ListItemIcon sx={{ minWidth: 28 }}>
+                                    <CheckCircle sx={{ fontSize: 20, color: appleColors.green[500] }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={`Total Return scored ${score}/100, indicating strong appreciation potential over 10 years (${formatCurrency(appreciation)} appreciation + equity paydown), despite negative monthly operating cash flow of ${formatCurrency(Math.abs(monthlyCashFlow))} requiring ${formatCurrency(Math.abs(cumulativeCashFlow))} cumulative subsidy.`}
+                                    slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                                  />
+                                </ListItem>
+                              );
+                            }
+                            return null;
+                          })()}
                         </List>
                       </Grid>
 
@@ -835,12 +884,32 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                               <ListItemIcon sx={{ minWidth: 28 }}>
                                 <Warning sx={{ fontSize: 20, color: appleColors.orange[500] }} />
                               </ListItemIcon>
-                              <ListItemText 
-                                primary={concern} 
+                              <ListItemText
+                                primary={concern}
                                 slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
                               />
                             </ListItem>
                           ))}
+
+                          {/* Issue #14 Fix: Add negative cash flow to concerns if present */}
+                          {(() => {
+                            const monthlyCashFlow = analysis?.monthlyAnalysis?.cashFlow ?? 0;
+                            if (monthlyCashFlow < 0) {
+                              const cumulativeCashFlow = analysis?.longTermAnalysis?.returns?.totalCashFlow ?? 0;
+                              return (
+                                <ListItem sx={{ pl: 0 }}>
+                                  <ListItemIcon sx={{ minWidth: 28 }}>
+                                    <Warning sx={{ fontSize: 20, color: appleColors.orange[500] }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={`Negative Operating Cash Flow: ${formatCurrency(Math.abs(monthlyCashFlow))}/month requires ongoing capital subsidy (${formatCurrency(Math.abs(cumulativeCashFlow))} over 10 years).`}
+                                    slotProps={{ primary: { fontSize: '14px', fontWeight: 500 } }}
+                                  />
+                                </ListItem>
+                              );
+                            }
+                            return null;
+                          })()}
                         </List>
                       </Grid>
                     </>
@@ -957,13 +1026,13 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                   
                   <Grid container spacing={2} sx={{ mb: 4 }}>
                     {[
-                      { name: 'Cash Flow', weight: 35, score: investmentDecision.professionalAssessment.cashFlowScore, color: appleColors.green[600] },
-                      { name: 'IRR', weight: 25, score: investmentDecision.professionalAssessment.irrScore, color: appleColors.blue[600] },
-                      { name: 'Market Strength', weight: 15, score: investmentDecision.professionalAssessment.marketStrengthScore, color: appleColors.blue[700] },
-                      { name: 'Debt Structure', weight: 10, score: investmentDecision.professionalAssessment.debtStructureScore, color: appleColors.orange[600] },
-                      { name: 'Exit Strategy', weight: 10, score: investmentDecision.professionalAssessment.exitStrategyScore, color: appleColors.orange[500] },
-                      { name: 'Cap Rate', weight: 3, score: investmentDecision.professionalAssessment.capRateScore, color: appleColors.red[600] },
-                      { name: 'Property Risk', weight: 2, score: investmentDecision.professionalAssessment.propertyRiskScore, color: appleColors.gray[600] }
+                      { name: 'Cash Flow', weight: 35, score: Math.round(investmentDecision.professionalAssessment.cashFlowScore || 0), color: appleColors.green[600] },
+                      { name: 'IRR', weight: 25, score: Math.round(investmentDecision.professionalAssessment.irrScore || 0), color: appleColors.blue[600] },
+                      { name: 'Market Strength', weight: 15, score: Math.round(investmentDecision.professionalAssessment.marketStrengthScore || 0), color: appleColors.blue[700] },
+                      { name: 'Debt Structure', weight: 10, score: Math.round(investmentDecision.professionalAssessment.debtStructureScore || 0), color: appleColors.orange[600] },
+                      { name: 'Exit Strategy', weight: 10, score: Math.round(investmentDecision.professionalAssessment.exitStrategyScore || 0), color: appleColors.orange[500] },
+                      { name: 'Cap Rate', weight: 3, score: Math.round(investmentDecision.professionalAssessment.capRateScore || 0), color: appleColors.red[600] },
+                      { name: 'Property Risk', weight: 2, score: Math.round(investmentDecision.professionalAssessment.propertyRiskScore || 0), color: appleColors.gray[600] }
                     ].map((factor) => (
                       <Grid size={{ xs: 12, sm: 6, md: 4 }} key={factor.name}>
                         <Box sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '8px' }}>
@@ -1248,7 +1317,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
 
               {activeDetailTab === 'actions' && (
                 <Box>
-                  {/* AI-Enhanced Action Plan with Sensitivity Analysis */}
+                  {/* Issue #15 Fix: AI-Enhanced Action Plan with fallback */}
                   {investmentDecision.aiEnhancedContent?.actionPlan ? (
                     <>
                       <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
@@ -1356,13 +1425,13 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                         </Typography>
                       </Card>
                     </>
-                  ) : (
+                  ) : investmentDecision.actionPlan?.length > 0 ? (
                     // Fallback to original action plan if AI enhancement unavailable
                     <>
                       <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
                         Recommended Action Plan
                       </Typography>
-                      
+
                       <Stack spacing={2}>
                         {investmentDecision.actionPlan.map((action, index) => (
                           <Card key={index} sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px' }}>
@@ -1392,6 +1461,49 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                         ))}
                       </Stack>
                     </>
+                  ) : (
+                    // Issue #15 Fix: Fallback content when no action plan available
+                    <Alert
+                      severity="info"
+                      sx={{
+                        borderRadius: '12px',
+                        backgroundColor: appleColors.blue[50],
+                        border: `1px solid ${appleColors.blue[200]}`
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                        Recommended Next Steps
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Based on the {investmentDecision.verdict} recommendation, here are the key actions to consider:
+                      </Typography>
+                      <Stack spacing={1}>
+                        {investmentDecision.verdict === 'BUY' && (
+                          <>
+                            <Typography variant="body2">• Schedule property inspection and professional appraisal</Typography>
+                            <Typography variant="body2">• Review all Key Concerns in the Reasoning tab carefully</Typography>
+                            <Typography variant="body2">• Verify all financial assumptions with actual data</Typography>
+                            <Typography variant="body2">• Submit financing application to secure rates</Typography>
+                          </>
+                        )}
+                        {investmentDecision.verdict === 'NEGOTIATE' && (
+                          <>
+                            <Typography variant="body2">• Focus negotiation on purchase price reduction</Typography>
+                            <Typography variant="body2">• Review Key Concerns to identify specific negotiation points</Typography>
+                            <Typography variant="body2">• Request seller concessions for inspection items</Typography>
+                            <Typography variant="body2">• Explore creative financing to improve returns</Typography>
+                          </>
+                        )}
+                        {investmentDecision.verdict === 'PASS' && (
+                          <>
+                            <Typography variant="body2">• Review Key Concerns to understand why this property doesn't meet criteria</Typography>
+                            <Typography variant="body2">• Consider expanding search to different neighborhoods or property types</Typography>
+                            <Typography variant="body2">• Revisit your investment criteria if patterns emerge across multiple properties</Typography>
+                            <Typography variant="body2">• Continue analyzing properties to build deal recognition skills</Typography>
+                          </>
+                        )}
+                      </Stack>
+                    </Alert>
                   )}
                 </Box>
               )}
@@ -1463,7 +1575,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                         </Typography>
                       </Alert>
                     </>
-                  ) : (
+                  ) : investmentDecision.capitalStrategy?.currentApproach ? (
                     // Fallback to original capital strategy display if AI enhancement unavailable
                     <Grid container spacing={3}>
                       <Grid size={{ xs: 12, md: 6 }}>
@@ -1537,6 +1649,73 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                         </Alert>
                       </Grid>
                     </Grid>
+                  ) : (
+                    // Issue #15 Fix: Final fallback when no capital strategy available at all
+                    <Alert
+                      severity="info"
+                      sx={{
+                        borderRadius: '12px',
+                        backgroundColor: appleColors.blue[50],
+                        border: `1px solid ${appleColors.blue[200]}`
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                        Capital Deployment Analysis
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Based on the {investmentDecision.verdict} recommendation and financing details:
+                      </Typography>
+
+                      {/* Show basic financing info from analysis */}
+                      {analysis?.financing?.totalInvestment && (
+                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                          <Grid size={{ xs: 12 }}>
+                            <Typography variant="caption" color="text.secondary">Total Investment Required</Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                              {formatCurrency(analysis.financing.totalInvestment)}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      )}
+
+                      {/* Verdict-specific capital recommendations */}
+                      <Stack spacing={1}>
+                        {investmentDecision.verdict === 'PASS' && (
+                          <>
+                            <Typography variant="body2">• Deploy capital to better opportunities with higher returns</Typography>
+                            <Typography variant="body2">• This property does not meet investment criteria - preserve capital for better deals</Typography>
+                            <Typography variant="body2">• Review Professional Analysis tab for detailed scoring breakdown</Typography>
+                          </>
+                        )}
+                        {investmentDecision.verdict === 'NEGOTIATE' && (
+                          <>
+                            <Typography variant="body2">• Negotiate price reduction to improve cash-on-cash return</Typography>
+                            <Typography variant="body2">• Consider increasing down payment to improve DSCR and secure financing</Typography>
+                            <Typography variant="body2">• Explore seller financing or creative structures to enhance returns</Typography>
+                          </>
+                        )}
+                        {investmentDecision.verdict === 'BUY' && (
+                          <>
+                            <Typography variant="body2">• Secure financing at current interest rates before potential increases</Typography>
+                            <Typography variant="body2">• Verify down payment and closing cost reserves are available</Typography>
+                            <Typography variant="body2">• Review cash flow requirements for ongoing property management</Typography>
+                          </>
+                        )}
+                      </Stack>
+
+                      {/* DSCR warning if applicable */}
+                      {analysis?.dscr && analysis.dscr < 1.25 && (
+                        <Alert severity="warning" sx={{ mt: 2, borderRadius: '8px' }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                            Financing Risk
+                          </Typography>
+                          <Typography variant="body2">
+                            DSCR of {analysis.dscr.toFixed(2)}x is below commercial lender requirements (1.25x minimum).
+                            This property may require higher down payment or alternative financing structures.
+                          </Typography>
+                        </Alert>
+                      )}
+                    </Alert>
                   )}
                 </Box>
               )}

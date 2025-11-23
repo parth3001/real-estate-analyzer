@@ -198,7 +198,7 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
    * Score all property metrics (0-100 each)
    *
    * Returns PropertyScores with MF-specific scoring logic for:
-   * - Cash Flow: Per-unit basis (not total)
+   * - Cash Flow: Per-unit basis using ACTUAL monthly cash flow (annualized)
    * - IRR: Long-term return potential
    * - Cap Rate: PRIMARY metric - compared to market targets
    * - DSCR: CRITICAL metric - commercial lender requirement
@@ -215,14 +215,24 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
       throw new Error('Analysis metrics are required but undefined');
     }
 
-    // Calculate approximate cash flow from NOI
-    // Cash Flow ≈ NOI - Debt Service
-    // Debt Service ≈ Total Investment × 6% (rough estimate)
-    const debtService = (metrics.totalInvestment || 0) * 0.06;
-    const cashFlow = (metrics.noi || 0) - debtService;
+    // Use actual monthly cash flow from analysis (annualized for per-unit scoring)
+    // This matches SFR engine approach: investmentDecisionEngine.ts:1903
+    // Uses actual calculated cash flow (not estimation)
+    // See Issue #21 in ISSUE_TRACKER.md for historical context
+    const monthlyCashFlow = this.analysis.monthlyAnalysis?.cashFlow ?? 0;
+    const annualCashFlow = monthlyCashFlow * 12;
+
+    // Log only if cash flow is exactly 0 (potential data issue)
+    if (annualCashFlow === 0) {
+      logger.warn('MF Cash Flow is zero - verify if this is expected', {
+        hasMonthlyAnalysis: !!this.analysis.monthlyAnalysis,
+        monthlyCashFlow,
+        totalUnits: this.mfPropertyData.totalUnits
+      });
+    }
 
     const scores = {
-      cashFlow: this.scoreCashFlow(cashFlow),
+      cashFlow: this.scoreCashFlow(annualCashFlow),
       irr: this.scoreIRR(metrics.irr || 0),
       capRate: this.scoreCapRate(metrics.capRate || 0),
       dscr: this.scoreDSCR(metrics.dscr || 0),
@@ -287,13 +297,14 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
     }
 
     // RISK 5: Cash flow risk (per unit basis)
-    const debtService = (metrics.totalInvestment || 0) * 0.06;
-    const cashFlow = (metrics.noi || 0) - debtService;
-    const cashFlowPerUnit = cashFlow / this.mfPropertyData.totalUnits;
+    // Use actual monthly cash flow from analysis (not estimation)
+    // See Issue #21 in ISSUE_TRACKER.md for historical context
+    const monthlyCashFlow = this.analysis.monthlyAnalysis?.cashFlow ?? 0;
+    const monthlyCashFlowPerUnit = monthlyCashFlow / this.mfPropertyData.totalUnits;
 
-    if (cashFlowPerUnit < 0) {
+    if (monthlyCashFlowPerUnit < 0) {
       risks.push('Negative cash flow per unit requires ongoing capital injection - budget for monthly losses');
-    } else if (cashFlowPerUnit < 50) {
+    } else if (monthlyCashFlowPerUnit < 50) {
       risks.push('Low cash flow per unit (<$50/unit/month) provides minimal buffer for expenses');
     }
 
@@ -449,8 +460,13 @@ export class MFDecisionEngine extends BaseDecisionEngine<MultiFamilyMetrics> {
    * - 2%+ below target: 20 (Severely overpriced)
    */
   private scoreCapRate(capRate: number): number {
+    // DEFENSIVE: Handle both percentage and decimal formats
+    // FinancialCalculations returns percentage (2.99), but we need decimal (0.0299)
+    // See Issue #19 in ISSUE_TRACKER.md for historical context
+    const capRateDecimal = capRate > 1 ? capRate / 100 : capRate;
+
     const targetCapRate = this.getTargetCapRate();
-    const spread = capRate - targetCapRate;
+    const spread = capRateDecimal - targetCapRate;
 
     // Use tolerances for floating point comparison
     const TOLERANCE = 0.0001;
