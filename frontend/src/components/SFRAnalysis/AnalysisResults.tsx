@@ -119,21 +119,21 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   // Analysis sections for horizontal navigation - filter based on mode
   // TAB SEQUENCE (FSE requirement): Overview → Financial Details → Unit Mix (MF only) → Long-term Analysis → Tax Intelligence → Interactive → Optimizer → Scenarios → Other tabs
   const allAnalysisSections = [
-    { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights' },
-    { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis' },
+    { id: 'overview', label: 'Overview', icon: HomeIcon, description: 'Hero metrics and AI insights', implemented: true },
+    { id: 'financial', label: 'Financial Details', icon: AnalyticsIcon, description: 'Detailed cash flow analysis', implemented: true },
     // Story 4.2: Inject Unit Mix tab for MF properties only (after Financial Details, before Long-term Analysis)
     ...(propertyType === 'MF' ? [
-      { id: 'unitMix', label: 'Unit Mix Analysis', icon: AssessmentIcon, description: 'Unit-level revenue breakdown and optimization' }
+      { id: 'unitMix', label: 'Unit Mix Analysis', icon: AssessmentIcon, description: 'Unit-level revenue breakdown and optimization', implemented: true }
     ] : []),
-    { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections' },
-    { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights' },
-    { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time' },
-    { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns' },
-    { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios' },
-    { id: 'risk', label: 'Risk & Intelligence', icon: ShieldIcon, description: 'Risk analysis and market data' },
-    { id: 'stress', label: 'Stress Testing', icon: WarningIcon, description: 'Stress scenarios and risk heat maps' },
-    { id: 'market', label: 'Market Analysis', icon: AssessmentIcon, description: 'Market trends and economics' },
-    { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison' }
+    { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections', implemented: true },
+    { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights', implemented: true },
+    { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'risk', label: 'Risk & Intelligence', icon: ShieldIcon, description: 'Risk analysis and market data', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'stress', label: 'Stress Testing', icon: WarningIcon, description: 'Stress scenarios and risk heat maps', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'market', label: 'Market Analysis', icon: AssessmentIcon, description: 'Market trends and economics', implemented: propertyType !== 'MF' }, // Not implemented for MF
+    { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison', implemented: propertyType !== 'MF' } // Not implemented for MF
   ];
 
   // Filter sections based on mode (Story 4.2: includes unitMix for MF if present in allAnalysisSections)
@@ -568,33 +568,65 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           scrollbarColor: `${appleColors.gray[300]} ${appleColors.gray[100]}`
         }}
       >
-        {analysisSections.map((section) => (
-          <Button
-            key={section.id}
-            variant={selectedSection === section.id ? 'contained' : 'outlined'}
-            startIcon={<section.icon />}
-            onClick={() => setSelectedSection(section.id)}
-            sx={{
-              minWidth: 'fit-content',
-              borderRadius: '12px',
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '14px',
-              px: 3,
-              py: 1.5,
-              whiteSpace: 'nowrap',
-              borderColor: appleColors.gray[300],
-              flexShrink: 0, // Prevent button shrinking
-              ...(selectedSection === section.id && {
-                backgroundColor: appleColors.primary[500],
-                boxShadow: '0 4px 12px -4px rgba(59, 130, 246, 0.4)',
-                transform: 'translateY(-1px)'
-              })
-            }}
-          >
-            {section.label}
-          </Button>
-        ))}
+        {analysisSections.map((section) => {
+          const isImplemented = section.implemented !== false;
+          const isDisabled = !isImplemented;
+
+          return (
+            <Button
+              key={section.id}
+              variant={selectedSection === section.id ? 'contained' : 'outlined'}
+              startIcon={<section.icon />}
+              onClick={() => isImplemented && setSelectedSection(section.id)}
+              disabled={isDisabled}
+              sx={{
+                minWidth: 'fit-content',
+                borderRadius: '12px',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '14px',
+                px: 3,
+                py: 1.5,
+                whiteSpace: 'nowrap',
+                borderColor: appleColors.gray[300],
+                flexShrink: 0, // Prevent button shrinking
+                position: 'relative',
+                ...(selectedSection === section.id && isImplemented && {
+                  backgroundColor: appleColors.primary[500],
+                  boxShadow: '0 4px 12px -4px rgba(59, 130, 246, 0.4)',
+                  transform: 'translateY(-1px)'
+                }),
+                ...(isDisabled && {
+                  opacity: 0.5,
+                  cursor: 'not-allowed',
+                  '&:hover': {
+                    backgroundColor: 'transparent'
+                  }
+                })
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <span>{section.label}</span>
+                {!isImplemented && (
+                  <Chip
+                    label="Coming Soon"
+                    size="small"
+                    sx={{
+                      height: '20px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      backgroundColor: appleColors.orange[100],
+                      color: appleColors.orange[700],
+                      '& .MuiChip-label': {
+                        px: 1
+                      }
+                    }}
+                  />
+                )}
+              </Box>
+            </Button>
+          );
+        })}
       </Box>
     </Box>
   );

@@ -83,7 +83,8 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
         label: 'Multi-Family',
         icon: ApartmentIcon,
         path: '/mf-analysis',
-        description: 'Analyze multi-family properties'
+        description: 'Analyze multi-family properties',
+        badge: 'New'
       }
     ]
   },
@@ -166,11 +167,11 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
         return false;
       }
       
-      // For analysis submenu, hide multi-family analysis in novice mode
+      // For analysis submenu, keep multi-family analysis visible in novice mode (now with "New" badge and simplified tabs)
+      // MF is now ready for novice users with educational content and simplified tab sequence
       if (item.id === 'analysis' && item.submenu) {
-        item.submenu = item.submenu.filter((subItem: any) => 
-          subItem.id !== 'mf-analysis' // Hide multi-family for novice users
-        );
+        // Keep all submenu items including MF analysis
+        // MF analysis tabs show "Coming Soon" badges for unimplemented features
       }
       
       return true;
