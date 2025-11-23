@@ -414,7 +414,27 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
                     <subItem.icon fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
-                    primary={subItem.label}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>{subItem.label}</span>
+                        {subItem.badge && (
+                          <Chip
+                            label={subItem.badge}
+                            size="small"
+                            color="primary"
+                            sx={{
+                              height: '18px',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                                py: 0
+                              }
+                            }}
+                          />
+                        )}
+                      </Box>
+                    }
                     secondary={subItem.description}
                     sx={{
                       color: isPathActive(subItem.path) ? 'primary.main' : 'text.primary',
