@@ -154,7 +154,12 @@ const ContactPage: React.FC = () => {
               onChange={handleChange('message')}
               placeholder="Please describe your question or issue in detail..."
               required
-              helperText={`${formData.message.length}/2000 characters (minimum 10)`}
+              error={formData.message.length > 0 && formData.message.length < 10}
+              helperText={
+                formData.message.length > 0 && formData.message.length < 10
+                  ? `Please enter at least ${10 - formData.message.length} more characters (${formData.message.length}/10 minimum)`
+                  : `${formData.message.length}/2000 characters`
+              }
               sx={{ mb: 3 }}
             />
 

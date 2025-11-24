@@ -146,6 +146,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     label: 'Help & Documentation',
     icon: HelpIcon,
     path: '/help',
+    badge: 'Updated'
+  },
+  {
+    id: 'whats-new',
+    label: "What's New",
+    icon: TrendingUpIcon,
+    path: '/whats-new',
     badge: null
   },
   {
@@ -360,16 +367,23 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
               />
               
               {item.badge && (
-                <Badge
-                  badgeContent={item.badge}
-                  color="primary"
+                <Chip
+                  label={item.badge}
+                  size="small"
                   sx={{
-                    '& .MuiBadge-badge': {
-                      backgroundColor: 'primary.500',
-                      color: 'background.paper',
-                      fontSize: '11px',
-                      height: '18px',
-                      minWidth: '18px'
+                    height: '20px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: '0.5px',
+                    backgroundColor: 'rgba(0, 122, 255, 0.08)', // Subtle blue tint
+                    color: 'primary.main',
+                    border: '1px solid rgba(0, 122, 255, 0.12)',
+                    '& .MuiChip-label': {
+                      px: 1,
+                      py: 0
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 122, 255, 0.12)'
                     }
                   }}
                 />
@@ -814,7 +828,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}
       >
-        v3.1.0
+        v4.0.0
       </Box>
     </Box>
   );
