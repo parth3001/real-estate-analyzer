@@ -7,7 +7,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://reanalyzr.com/</loc>
-    <lastmod>2025-10-29</lastmod>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -15,75 +15,83 @@
   <!-- Auth Pages -->
   <url>
     <loc>https://reanalyzr.com/login</loc>
-    <lastmod>2025-10-29</lastmod>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://reanalyzr.com/signup</loc>
-    <lastmod>2025-10-29</lastmod>
+    <loc>https://reanalyzr.com/register</loc>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
+  <!-- Dashboard -->
+  <url>
+    <loc>https://reanalyzr.com/dashboard</loc>
+    <lastmod>2025-12-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Main Analysis Pages (High Priority - These rank for keywords) -->
   <url>
-    <loc>https://reanalyzr.com/property-wizard</loc>
-    <lastmod>2025-10-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
     <loc>https://reanalyzr.com/sfr-analysis</loc>
-    <lastmod>2025-10-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Future Landing Pages (Create these for SEO) -->
-  <!--
-  <url>
-    <loc>https://reanalyzr.com/rental-property-calculator</loc>
-    <lastmod>2025-11-01</lastmod>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://reanalyzr.com/multi-family-calculator</loc>
-    <lastmod>2025-11-01</lastmod>
+    <loc>https://reanalyzr.com/mf-analysis</loc>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
+  <!-- Portfolio & Pipeline -->
   <url>
-    <loc>https://reanalyzr.com/cap-rate-calculator</loc>
-    <lastmod>2025-11-01</lastmod>
+    <loc>https://reanalyzr.com/portfolio</loc>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://reanalyzr.com/cash-on-cash-calculator</loc>
-    <lastmod>2025-11-01</lastmod>
+    <loc>https://reanalyzr.com/pipeline</loc>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  -->
+
+  <!-- Help & Updates -->
+  <url>
+    <loc>https://reanalyzr.com/help</loc>
+    <lastmod>2025-12-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://reanalyzr.com/whats-new</loc>
+    <lastmod>2025-12-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>https://reanalyzr.com/contact</loc>
+    <lastmod>2025-12-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 
   <!-- Legal Pages -->
   <url>
     <loc>https://reanalyzr.com/terms</loc>
-    <lastmod>2025-10-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://reanalyzr.com/privacy</loc>
-    <lastmod>2025-10-29</lastmod>
+    <lastmod>2025-12-06</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

@@ -1,0 +1,19 @@
+# Remove trailing slashes (301 permanent redirect)
+/sfr-analysis/    /sfr-analysis    301
+/mf-analysis/     /mf-analysis     301
+/portfolio/       /portfolio       301
+/pipeline/        /pipeline        301
+/help/            /help            301
+/whats-new/       /whats-new       301
+/contact/         /contact         301
+/dashboard/       /dashboard       301
+/login/           /login           301
+/register/        /register        301
+/terms/           /terms           301
+
+# Legacy URL redirects (old signup page)
+/signup           /register        301
+/signup/          /register        301
+
+# SPA fallback - catch all other routes and serve index.html (must be last)
+/*                /index.html      200
