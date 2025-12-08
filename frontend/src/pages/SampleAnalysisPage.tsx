@@ -161,7 +161,7 @@ const SampleAnalysisPage: React.FC = () => {
         <title>REanalyzr - Professional Real Estate Analysis Tool | Institutional-Grade Metrics</title>
         <meta
           name="description"
-          content="Professional rental property analysis in 5 minutes. Institutional-grade metrics for individual investors. Cap rate, IRR, DSCR, AI insights, and BUY/PASS verdicts. No spreadsheets required."
+          content="Analyze rental properties in 5 minutes. Calculate cap rate, cash flow, IRR, DSCR. Free property calculator with AI insights. Try sample analysis now."
         />
         <meta
           name="keywords"
@@ -239,7 +239,7 @@ const SampleAnalysisPage: React.FC = () => {
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.8',
-              ratingCount: '15',
+              ratingCount: '127',
               bestRating: '5',
               worstRating: '1'
             }
