@@ -1,12 +1,13 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { 
-  getAllDeals, 
-  getDealById, 
-  createDeal, 
-  updateDeal, 
+import {
+  getAllDeals,
+  getDealById,
+  createDeal,
+  updateDeal,
   deleteDeal,
   getSampleSFR,
   getSampleMF,
+  getSampleAnalysis,
   analyzeDeal,
   getQuickPredictions,
   analyzeGoals
@@ -38,6 +39,9 @@ const logRequestBody = (req: Request, res: Response, next: NextFunction) => {
 
 // Apply middleware to all routes
 router.use(logRequestBody);
+
+// PUBLIC: Sample analysis for SEO landing page (NO AUTH REQUIRED)
+router.get('/sample-analysis', getSampleAnalysis);
 
 // Sample endpoints (require authentication)
 router.get('/sample-sfr', authMiddleware, getSampleSFR);

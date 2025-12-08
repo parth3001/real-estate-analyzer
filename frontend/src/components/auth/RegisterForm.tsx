@@ -523,27 +523,39 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                     marginTop: '2px',
                     width: isMobile ? '16px' : '20px',
                     height: isMobile ? '16px' : '20px',
-                    accentColor: '#6366f1'
+                    accentColor: '#6366f1',
+                    flexShrink: 0
                   }}
                 />
-                <span>
-                  I agree to the{' '}
-                  <Link to="/terms" style={{
-                    color: '#6366f1',
-                    textDecoration: 'none',
-                    fontSize: isMobile ? '0.75rem' : '0.875rem'
+                <div>
+                  <span>
+                    I agree to the{' '}
+                    <Link to="/terms" style={{
+                      color: '#6366f1',
+                      textDecoration: 'none',
+                      fontSize: isMobile ? '0.75rem' : '0.875rem'
+                    }}>
+                      Terms of Service
+                    </Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" style={{
+                      color: '#6366f1',
+                      textDecoration: 'none',
+                      fontSize: isMobile ? '0.75rem' : '0.875rem'
+                    }}>
+                      Privacy Policy
+                    </Link>
+                  </span>
+                  <div style={{
+                    fontSize: isMobile ? '0.688rem' : '0.75rem',
+                    color: '#6b7280',
+                    marginTop: '4px',
+                    fontStyle: 'italic',
+                    lineHeight: 1.4
                   }}>
-                    Terms of Service
-                  </Link>
-                  {' '}and{' '}
-                  <Link to="/privacy" style={{
-                    color: '#6366f1',
-                    textDecoration: 'none',
-                    fontSize: isMobile ? '0.75rem' : '0.875rem'
-                  }}>
-                    Privacy Policy
-                  </Link>
-                </span>
+                    Educational tool only • Not financial advice
+                  </div>
+                </div>
               </label>
             </div>
 

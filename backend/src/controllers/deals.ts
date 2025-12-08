@@ -1420,6 +1420,30 @@ export const getSampleSFR = (_req: Request, res: Response): void => {
   res.json(sampleSFR);
 };
 
+/**
+ * Get sample analysis for SEO landing page
+ * Returns the pre-analyzed Charlotte property deal with complete calculations
+ * PUBLIC ENDPOINT - No authentication required
+ */
+export const getSampleAnalysis = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const sampleDealId = '6934e9689d4a338e22720233'; // Charlotte property - real analyzed deal
+    const deal = await dealService.getDealById(sampleDealId);
+
+    if (!deal) {
+      logger.error('Sample analysis deal not found:', sampleDealId);
+      res.status(404).json({ error: 'Sample analysis not found' });
+      return;
+    }
+
+    logger.info('Returning sample analysis for SEO landing page');
+    res.json(deal);
+  } catch (error) {
+    logger.error('Error fetching sample analysis:', error);
+    res.status(500).json({ error: 'Failed to fetch sample analysis' });
+  }
+};
+
 // Sample Multi-Family data
 export const getSampleMF = (_req: Request, res: Response): void => {
   const sampleMF = {

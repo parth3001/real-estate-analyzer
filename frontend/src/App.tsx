@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { appleTheme } from './theme/appleTheme';
 import AppleNavigation from './components/layout/AppleNavigation';
 
@@ -21,6 +22,7 @@ import SavedProperties from './pages/SavedProperties';
 import HelpPage from './pages/HelpPage';
 import WhatsNewPage from './pages/WhatsNewPage';
 import ContactPage from './pages/ContactPage';
+import SampleAnalysisPage from './pages/SampleAnalysisPage';
 import NotFound from './pages/NotFound';
 import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
@@ -86,14 +88,15 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={appleTheme}>
-        <CssBaseline />
-        <BrowserRouter>
-          <AuthProvider>
-            <PersonaProvider>
-              <DualModeProvider>
-                <Routes>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={appleTheme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <AuthProvider>
+              <PersonaProvider>
+                <DualModeProvider>
+                  <Routes>
               {/* Guest Routes (no authentication required) */}
               <Route 
                 path="/login" 
@@ -148,8 +151,14 @@ function App() {
                 }
               />
 
+              {/* Public Routes - No login required */}
+              <Route path="/" element={<SampleAnalysisPage />} />
+              <Route path="/sample-analysis" element={<SampleAnalysisPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/whats-new" element={<WhatsNewPage />} />
+
               {/* Protected Routes (authentication required) */}
-              <Route 
+              <Route
                 element={
                   <ProtectedRoute>
                     <AppleNavigation />
@@ -157,7 +166,6 @@ function App() {
                 }
               >
                 {/* Main Dashboard */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
                 {/* Property Analysis Routes */}
@@ -189,8 +197,6 @@ function App() {
                 
                 {/* Market & Tools */}
                 <Route path="/market-data" element={<MarketDataPage />} />
-                <Route path="/help" element={<HelpPage />} />
-                <Route path="/whats-new" element={<WhatsNewPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/census-test" element={<CensusDataTestPage />} />
                 
@@ -199,11 +205,9 @@ function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin/users" element={<AdminUserManagement />} />
                 
-                {/* Catch all for protected routes */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
-              
-              {/* Public Routes */}
+
+              {/* Catch all - 404 Not Found */}
               <Route path="*" element={<NotFound />} />
                 </Routes>
               </DualModeProvider>
@@ -212,6 +216,7 @@ function App() {
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

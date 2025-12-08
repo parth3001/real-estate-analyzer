@@ -100,8 +100,8 @@ const generalRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for health checks and internal requests
-    return req.path === '/api/health' || req.ip === '127.0.0.1' || req.ip === '::1';
+    // Skip rate limiting for health checks, sample analysis (public SEO page), and internal requests
+    return req.path === '/api/health' || req.path === '/api/deals/sample-analysis' || req.ip === '127.0.0.1' || req.ip === '::1';
   }
 });
 
