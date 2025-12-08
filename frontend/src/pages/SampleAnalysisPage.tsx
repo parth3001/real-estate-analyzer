@@ -31,6 +31,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { appleColors, appleShadows, appleBorderRadius } from '../theme/appleDesignSystem';
 import { formatCurrency } from '../utils/formatters';
 import analyzrLogo from '../assets/analyzr-logo.png';
+import api from '../services/api';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 
@@ -55,14 +56,10 @@ const SampleAnalysisPage: React.FC = () => {
   useEffect(() => {
     const fetchSampleAnalysis = async () => {
       try {
-        // Use relative URL - Vite proxy will forward to localhost:3001 in dev
-        const response = await fetch('/api/deals/sample-analysis');
-
-        if (!response.ok) {
-          throw new Error('Failed to load sample analysis');
-        }
-
-        const deal = await response.json();
+        // Use configured API service - handles environment URLs automatically
+        // This endpoint is PUBLIC (no auth required) - backend allows anonymous access
+        const response = await api.get('/deals/sample-analysis');
+        const deal = response.data;
 
         // Property data is stored at root level in Deal schema, not nested
         // Construct SFRPropertyData from deal's root-level fields
