@@ -570,6 +570,28 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                     </Box>
                   )}
 
+                  {/* Educational Disclaimer - Legal Protection */}
+                  <Box sx={{
+                    mt: 2,
+                    p: 1.5,
+                    backgroundColor: appleColors.gray[50],
+                    borderRadius: '8px',
+                    border: `1px solid ${appleColors.gray[300]}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    <InfoIcon sx={{ fontSize: 16, color: appleColors.blue[500], flexShrink: 0 }} />
+                    <Typography variant="caption" sx={{
+                      color: appleColors.gray[700],
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      lineHeight: 1.4
+                    }}>
+                      For educational purposes only. Not financial advice. Consult qualified professionals before investing.
+                    </Typography>
+                  </Box>
+
                   {/* Minimal Tax Summary */}
                   {investmentDecision.professionalAssessment?.taxOptimization && (
                     <Box sx={{
