@@ -10,6 +10,13 @@
 
 import { logger } from '../../utils/logger';
 import { SFRData } from '../../types/propertyTypes';
+
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    debug(...args);
+  }
+};
 import { LeverageOptimizer, LeverageAnalysis } from './leverageOptimizer';
 import { MarketDataResponse } from '../../types/marketData';
 import { MarketTierService, MarketTier, MarketContext } from './marketTierService';
@@ -193,16 +200,16 @@ export class InvestmentDecisionEngine {
 
     // Default to moderate (base weights) if no context or unknown risk tolerance
     if (!userContext || !userContext.riskTolerance) {
-      console.log('🔍 STRATEGY WEIGHTS DEBUG: No userContext or riskTolerance, using base weights');
+      debug('🔍 STRATEGY WEIGHTS DEBUG: No userContext or riskTolerance, using base weights');
       return baseWeights;
     }
 
-    console.log(`🔍 STRATEGY WEIGHTS DEBUG: Risk tolerance detected: ${userContext.riskTolerance}`);
+    debug(`🔍 STRATEGY WEIGHTS DEBUG: Risk tolerance detected: ${userContext.riskTolerance}`);
 
     switch (userContext.riskTolerance) {
       case 'conservative':
         // Conservative investors prioritize cash flow stability and safety
-        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using CONSERVATIVE weights - cash flow emphasis');
+        debug('🔍 STRATEGY WEIGHTS DEBUG: Using CONSERVATIVE weights - cash flow emphasis');
         return {
           cashFlow: 0.45,        // +10% emphasis on monthly income stability
           debtStructure: 0.15,   // +5% emphasis on safe financing
@@ -215,7 +222,7 @@ export class InvestmentDecisionEngine {
 
       case 'aggressive':
         // Aggressive investors prioritize total returns and growth potential
-        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using AGGRESSIVE weights - IRR emphasis');
+        debug('🔍 STRATEGY WEIGHTS DEBUG: Using AGGRESSIVE weights - IRR emphasis');
         return {
           irr: 0.35,            // +10% emphasis on total return potential
           marketStrength: 0.20,  // +5% emphasis on market opportunities
@@ -229,7 +236,7 @@ export class InvestmentDecisionEngine {
       case 'moderate':
       default:
         // Moderate investors use balanced approach (base weights)
-        console.log('🔍 STRATEGY WEIGHTS DEBUG: Using MODERATE weights (base weights)');
+        debug('🔍 STRATEGY WEIGHTS DEBUG: Using MODERATE weights (base weights)');
         return baseWeights;
     }
   }
@@ -663,7 +670,7 @@ export class InvestmentDecisionEngine {
     propertyData: SFRData,
     userContext: any
   ): ProfessionalAssessment {
-    console.log('🔍 PROFESSIONAL ASSESSMENT DEBUG: userContext received:', JSON.stringify(userContext, null, 2));
+    debug('🔍 PROFESSIONAL ASSESSMENT DEBUG: userContext received:', JSON.stringify(userContext, null, 2));
     const weights = this.getStrategyAwareWeights(userContext);
     const irrThresholds = this.IRR_THRESHOLDS;
     
@@ -1582,13 +1589,13 @@ export class InvestmentDecisionEngine {
 
       // 2D. V3.0 Professional Assessment with AI-Enhanced Context
       // Bridge AI-extracted intent to algorithmic decision making (80/20 rule)
-      console.log('🔧 QE DEBUG: About to call mapAIIntentToUserContext');
-      console.log('🔧 QE DEBUG: Original userContext:', JSON.stringify(userContext, null, 2));
-      console.log('🔧 QE DEBUG: Enhanced goals received:', JSON.stringify(enhancedGoals, null, 2));
+      debug('🔧 QE DEBUG: About to call mapAIIntentToUserContext');
+      debug('🔧 QE DEBUG: Original userContext:', JSON.stringify(userContext, null, 2));
+      debug('🔧 QE DEBUG: Enhanced goals received:', JSON.stringify(enhancedGoals, null, 2));
 
       const enhancedUserContext = this.mapAIIntentToUserContext(userContext, enhancedGoals);
 
-      console.log('🔧 QE DEBUG: Enhanced userContext result:', JSON.stringify(enhancedUserContext, null, 2));
+      debug('🔧 QE DEBUG: Enhanced userContext result:', JSON.stringify(enhancedUserContext, null, 2));
 
       const professionalAssessment = this.calculateProfessionalAssessment(
         fundamentals,
@@ -3426,7 +3433,7 @@ export class InvestmentDecisionEngine {
     
     // Generate fit analysis with proper number formatting
     let fitAnalysis = '';
-    console.log('🔧 PORTFOLIO FIT DEBUG:', {
+    debug('🔧 PORTFOLIO FIT DEBUG:', {
       originalCashFlow: fundamentals.cashFlow,
       cashFlowType: typeof fundamentals.cashFlow,
       isNumber: !isNaN(fundamentals.cashFlow)
@@ -3434,7 +3441,7 @@ export class InvestmentDecisionEngine {
     
     // More aggressive rounding to handle floating-point precision issues
     const roundedCashFlow = Number(Math.round(fundamentals.cashFlow * 100) / 100);
-    console.log('🔧 ROUNDING DEBUG:', {
+    debug('🔧 ROUNDING DEBUG:', {
       original: fundamentals.cashFlow,
       rounded: roundedCashFlow,
       formatted: roundedCashFlow.toFixed(2)
