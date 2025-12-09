@@ -7,6 +7,13 @@ import { marketIntelligenceService } from '../services/marketIntelligenceService
 import { logger } from '../utils/logger';
 import { ValidationWarning } from '../types/validation';
 
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(...args);
+  }
+};
+
 export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, MultiFamilyMetrics> {
   /**
    * Phase 1: Validation warnings collected during analysis
@@ -19,7 +26,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * Checks for common data quality issues before analysis
    */
   private validatePropertyData(): void {
-    console.log('[MF] Story 1.5: Validating property data consistency...');
+    debug('[MF] Story 1.5: Validating property data consistency...');
 
     // Validation 1: Unit count mismatch (Architect review feedback)
     if (this.data.units && this.data.units.length !== this.data.totalUnits) {
@@ -205,7 +212,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       }
     }
 
-    console.log('[MF] ✅ Data validation complete');
+    debug('[MF] ✅ Data validation complete');
   }
 
   /**
@@ -214,23 +221,23 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * Story 1.5: Added comprehensive logging and error handling
    */
   private getNormalizedUnits(): Array<{ bedrooms: number; bathrooms: number; squareFeet: number; currentRent: number; marketRent?: number; isVacant?: boolean }> {
-    console.log('[MF] getNormalizedUnits: Determining input method...');
+    debug('[MF] getNormalizedUnits: Determining input method...');
 
     // Method 1: Granular units[] (NEW - preferred for advanced features)
     if (this.data.units && this.data.units.length > 0) {
-      console.log(`[MF] ✅ Using granular units[] input (${this.data.units.length} units)`);
+      debug(`[MF] ✅ Using granular units[] input (${this.data.units.length} units)`);
       return this.data.units;
     }
 
     // Method 2: Aggregated unitTypes[] (EXISTING - backward compatible)
     if (this.data.unitTypes && this.data.unitTypes.length > 0) {
-      console.log(`[MF] Using aggregated unitTypes[] input (${this.data.unitTypes.length} types)`);
+      debug(`[MF] Using aggregated unitTypes[] input (${this.data.unitTypes.length} types)`);
 
       // Expand unitTypes into individual units for consistent processing
       const expandedUnits: Array<{ bedrooms: number; bathrooms: number; squareFeet: number; currentRent: number }> = [];
 
       this.data.unitTypes.forEach((unitType, typeIndex) => {
-        console.log(`[MF]   Type ${typeIndex + 1}: "${unitType.type}" x${unitType.count}`);
+        debug(`[MF]   Type ${typeIndex + 1}: "${unitType.type}" x${unitType.count}`);
 
         for (let i = 0; i < unitType.count; i++) {
           // Parse bedroom count from type string (e.g., "2bed/1bath" -> 2)
@@ -260,7 +267,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
         }
       });
 
-      console.log(`[MF] ✅ Expanded ${this.data.unitTypes.length} unit types into ${expandedUnits.length} individual units`);
+      debug(`[MF] ✅ Expanded ${this.data.unitTypes.length} unit types into ${expandedUnits.length} individual units`);
       return expandedUnits;
     }
 
@@ -279,10 +286,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * CRITICAL FIX: Override to ensure annualAnalysis.noi matches keyMetrics.noi (EGI-based)
    */
   public analyze() {
-    console.log('\n========== MULTI-FAMILY ANALYSIS START ==========');
-    console.log(`[MF] Property: ${this.data.totalUnits}-unit building, ${this.data.totalSqft.toLocaleString()} sq ft`);
-    console.log(`[MF] Purchase Price: $${this.data.purchasePrice.toLocaleString()}`);
-    console.log(`[MF] Down Payment: $${this.data.downPayment.toLocaleString()} (${((this.data.downPayment / this.data.purchasePrice) * 100).toFixed(1)}%)`);
+    debug('\n========== MULTI-FAMILY ANALYSIS START ==========');
+    debug(`[MF] Property: ${this.data.totalUnits}-unit building, ${this.data.totalSqft.toLocaleString()} sq ft`);
+    debug(`[MF] Purchase Price: $${this.data.purchasePrice.toLocaleString()}`);
+    debug(`[MF] Down Payment: $${this.data.downPayment.toLocaleString()} (${((this.data.downPayment / this.data.purchasePrice) * 100).toFixed(1)}%)`);
 
     // Phase 1: Clear previous validation warnings
     this.clearValidationWarnings();
@@ -290,7 +297,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     // Story 1.5: Validate data before analysis
     this.validatePropertyData();
 
-    console.log('[MF] Starting base analysis calculations...\n');
+    debug('[MF] Starting base analysis calculations...\n');
 
     // Call parent analyze() method
     const result = super.analyze();
@@ -302,10 +309,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const operatingExpenses = this.calculateOperatingExpenses(grossIncome);
     const correctNOI = effectiveGrossIncome - operatingExpenses;
 
-    console.log('\n[MF] ⚠️ CRITICAL FIX: Correcting annualAnalysis.noi to match keyMetrics.noi');
-    console.log(`  Base class NOI (vacancy only): $${result.annualAnalysis.noi.toLocaleString()}`);
-    console.log(`  MF class NOI (EGI-based with credit loss): $${correctNOI.toLocaleString()}`);
-    console.log(`  Difference: $${(result.annualAnalysis.noi - correctNOI).toLocaleString()} (2% credit loss)`);
+    debug('\n[MF] ⚠️ CRITICAL FIX: Correcting annualAnalysis.noi to match keyMetrics.noi');
+    debug(`  Base class NOI (vacancy only): $${result.annualAnalysis.noi.toLocaleString()}`);
+    debug(`  MF class NOI (EGI-based with credit loss): $${correctNOI.toLocaleString()}`);
+    debug(`  Difference: $${(result.annualAnalysis.noi - correctNOI).toLocaleString()} (2% credit loss)`);
 
     // Override annualAnalysis.noi to match keyMetrics.noi
     result.annualAnalysis.noi = correctNOI;
@@ -318,12 +325,12 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     result.annualAnalysis.cashFlow = correctCashFlow;
     result.monthlyAnalysis.cashFlow = correctCashFlow / 12;
 
-    console.log(`  Corrected Annual Cash Flow: $${correctCashFlow.toLocaleString()}`);
-    console.log(`  Corrected Monthly Cash Flow: $${(correctCashFlow / 12).toLocaleString()}`);
-    console.log('[MF] ✅ Single source of truth restored: annualAnalysis.noi === keyMetrics.noi\n');
+    debug(`  Corrected Annual Cash Flow: $${correctCashFlow.toLocaleString()}`);
+    debug(`  Corrected Monthly Cash Flow: $${(correctCashFlow / 12).toLocaleString()}`);
+    debug('[MF] ✅ Single source of truth restored: annualAnalysis.noi === keyMetrics.noi\n');
 
-    console.log('\n[MF] ✅ Multi-family analysis complete');
-    console.log('========== MULTI-FAMILY ANALYSIS END ==========\n');
+    debug('\n[MF] ✅ Multi-family analysis complete');
+    debug('========== MULTI-FAMILY ANALYSIS END ==========\n');
 
     return result;
   }
@@ -352,10 +359,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       return total + (unit.currentRent * 12 * growthFactor);
     }, 0);
 
-    console.log(`[MF] calculateGrossIncome (Year ${year}):`);
-    console.log(`  Units: ${units.length}`);
-    console.log(`  Growth Factor: ${growthFactor.toFixed(4)}`);
-    console.log(`  Total Gross Income: $${totalRent.toLocaleString()}/year`);
+    debug(`[MF] calculateGrossIncome (Year ${year}):`);
+    debug(`  Units: ${units.length}`);
+    debug(`  Growth Factor: ${growthFactor.toFixed(4)}`);
+    debug(`  Total Gross Income: $${totalRent.toLocaleString()}/year`);
 
     return totalRent;
   }
@@ -370,10 +377,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const vacancyLoss = grossIncome * (this.assumptions.vacancyRate / 100);
     const creditLoss = grossIncome * 0.02; // 2% bad debt (industry standard)
 
-    console.log('[MF] Gross Income:', grossIncome.toFixed(2));
-    console.log('[MF] Vacancy Loss (5%):', vacancyLoss.toFixed(2));
-    console.log('[MF] Credit Loss (2%):', creditLoss.toFixed(2));
-    console.log('[MF] Effective Gross Income:', (grossIncome - vacancyLoss - creditLoss).toFixed(2));
+    debug('[MF] Gross Income:', grossIncome.toFixed(2));
+    debug('[MF] Vacancy Loss (5%):', vacancyLoss.toFixed(2));
+    debug('[MF] Credit Loss (2%):', creditLoss.toFixed(2));
+    debug('[MF] Effective Gross Income:', (grossIncome - vacancyLoss - creditLoss).toFixed(2));
 
     return grossIncome - vacancyLoss - creditLoss;
   }
@@ -432,16 +439,16 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const totalExpenses = propertyTax + insurance + propertyManagement + maintenance +
                          commonAreaUtilities + capExReserves + commonAreaReserves + turnoverCosts;
 
-    console.log('[MF] Operating Expenses (FIXED - Issue #4):');
-    console.log('  Property Tax:', propertyTax.toFixed(2));
-    console.log('  Insurance:', insurance.toFixed(2));
-    console.log('  Property Management:', propertyManagement.toFixed(2));
-    console.log('  Maintenance:', maintenance.toFixed(2));
-    console.log('  Common Area Utilities:', commonAreaUtilities.toFixed(2));
-    console.log('  CapEx Reserves (6% of EGI):', capExReserves.toFixed(2));
-    console.log('  Common Area Reserves (2% of EGI):', commonAreaReserves.toFixed(2));
-    console.log('  Turnover Costs:', turnoverCosts.toFixed(2));
-    console.log('  Total (NO VACANCY):', totalExpenses.toFixed(2));
+    debug('[MF] Operating Expenses (FIXED - Issue #4):');
+    debug('  Property Tax:', propertyTax.toFixed(2));
+    debug('  Insurance:', insurance.toFixed(2));
+    debug('  Property Management:', propertyManagement.toFixed(2));
+    debug('  Maintenance:', maintenance.toFixed(2));
+    debug('  Common Area Utilities:', commonAreaUtilities.toFixed(2));
+    debug('  CapEx Reserves (6% of EGI):', capExReserves.toFixed(2));
+    debug('  Common Area Reserves (2% of EGI):', commonAreaReserves.toFixed(2));
+    debug('  Turnover Costs:', turnoverCosts.toFixed(2));
+    debug('  Total (NO VACANCY):', totalExpenses.toFixed(2));
 
     return totalExpenses;
   }
@@ -468,11 +475,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const unitTypes = this.data.unitTypes || [];
 
     if (unitTypes.length === 0) {
-      console.log('[MF] No unitTypes data available for per-unit-type metrics');
+      debug('[MF] No unitTypes data available for per-unit-type metrics');
       return [];
     }
 
-    console.log('\n[MF] ========== PER-UNIT-TYPE METRICS CALCULATION (Issue #5) ==========');
+    debug('\n[MF] ========== PER-UNIT-TYPE METRICS CALCULATION (Issue #5) ==========');
 
     return unitTypes.map(unit => {
       // Calculate annual gross income for this unit type
@@ -492,11 +499,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       const perUnitDebtService = totalDebtService / this.data.totalUnits;
       const perUnitCashFlow = perUnitNOI - perUnitDebtService;
 
-      console.log(`[MF] ${unit.type} (${unit.count} units @ $${unit.monthlyRent}/mo):`);
-      console.log(`  Annual Income per Unit: $${perUnitIncome.toLocaleString()}`);
-      console.log(`  Annual OpEx per Unit: $${perUnitOpex.toLocaleString()}`);
-      console.log(`  Annual NOI per Unit: $${perUnitNOI.toLocaleString()}`);
-      console.log(`  Annual Cash Flow per Unit: $${perUnitCashFlow.toLocaleString()}`);
+      debug(`[MF] ${unit.type} (${unit.count} units @ $${unit.monthlyRent}/mo):`);
+      debug(`  Annual Income per Unit: $${perUnitIncome.toLocaleString()}`);
+      debug(`  Annual OpEx per Unit: $${perUnitOpex.toLocaleString()}`);
+      debug(`  Annual NOI per Unit: $${perUnitNOI.toLocaleString()}`);
+      debug(`  Annual Cash Flow per Unit: $${perUnitCashFlow.toLocaleString()}`);
 
       return {
         unitType: unit.type,
@@ -509,7 +516,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
   }
 
   protected calculatePropertySpecificMetrics(): MultiFamilyMetrics {
-    console.log('\n[MF] ========== PROPERTY-SPECIFIC METRICS CALCULATION ==========');
+    debug('\n[MF] ========== PROPERTY-SPECIFIC METRICS CALCULATION ==========');
 
     const monthlyMortgage = this.calculateMonthlyMortgage();
     const annualDebtService = monthlyMortgage * 12;
@@ -520,36 +527,36 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     // CRITICAL: NOI = EGI - Operating Expenses (NOT Gross Income - Operating Expenses)
     const noi = effectiveGrossIncome - operatingExpenses;
 
-    console.log('[MF] NOI Calculation (Story 1.2 - CRITICAL FIX):');
-    console.log('  Gross Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  EGI (after vacancy + credit loss):', `$${effectiveGrossIncome.toLocaleString()}`);
-    console.log('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
-    console.log('  NOI:', `$${noi.toLocaleString()}`);
+    debug('[MF] NOI Calculation (Story 1.2 - CRITICAL FIX):');
+    debug('  Gross Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  EGI (after vacancy + credit loss):', `$${effectiveGrossIncome.toLocaleString()}`);
+    debug('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
+    debug('  NOI:', `$${noi.toLocaleString()}`);
 
     const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
-    console.log('[MF] Cash Flow Calculation:');
-    console.log('  NOI:', `$${noi.toLocaleString()}`);
-    console.log('  Annual Debt Service:', `$${annualDebtService.toLocaleString()}`);
-    console.log('  Cash Flow:', `$${cashFlow.toLocaleString()}/year ($${(cashFlow / 12).toLocaleString()}/month)`);
+    debug('[MF] Cash Flow Calculation:');
+    debug('  NOI:', `$${noi.toLocaleString()}`);
+    debug('  Annual Debt Service:', `$${annualDebtService.toLocaleString()}`);
+    debug('  Cash Flow:', `$${cashFlow.toLocaleString()}/year ($${(cashFlow / 12).toLocaleString()}/month)`);
 
     // Calculate IRR or use a default if calculation fails
     let irr = -99;
     try {
       irr = FinancialCalculations.calculateIRR(this.getIRRCashFlows());
-      console.log('[MF] IRR:', `${irr.toFixed(2)}%`);
+      debug('[MF] IRR:', `${irr.toFixed(2)}%`);
     } catch (error) {
       console.error('[MF] ❌ ERROR calculating IRR:', error);
       console.warn('[MF] ⚠️ Using default IRR value of -99');
     }
 
     const loanAmount = this.data.purchasePrice - this.data.downPayment;
-    console.log('[MF] Loan Details:');
-    console.log('  Loan Amount:', `$${loanAmount.toLocaleString()}`);
-    console.log('  Interest Rate:', `${this.data.interestRate}%`);
-    console.log('  Loan Term:', `${this.data.loanTerm} years`);
-    console.log('  Monthly Payment:', `$${monthlyMortgage.toLocaleString()}`);
+    debug('[MF] Loan Details:');
+    debug('  Loan Amount:', `$${loanAmount.toLocaleString()}`);
+    debug('  Interest Rate:', `${this.data.interestRate}%`);
+    debug('  Loan Term:', `${this.data.loanTerm} years`);
+    debug('  Monthly Payment:', `$${monthlyMortgage.toLocaleString()}`);
 
     // Calculate per-unit metrics
     const pricePerUnit = this.data.purchasePrice / this.data.totalUnits;
@@ -557,11 +564,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const cashFlowPerUnit = cashFlow / this.data.totalUnits;
     const averageRentPerUnit = grossIncome / (this.data.totalUnits * 12);
 
-    console.log('\n[MF] Per-Unit Metrics:');
-    console.log('  Price per Unit:', `$${pricePerUnit.toLocaleString()}`);
-    console.log('  NOI per Unit:', `$${noiPerUnit.toLocaleString()}/year`);
-    console.log('  Cash Flow per Unit:', `$${cashFlowPerUnit.toLocaleString()}/year`);
-    console.log('  Average Rent per Unit:', `$${averageRentPerUnit.toLocaleString()}/month`);
+    debug('\n[MF] Per-Unit Metrics:');
+    debug('  Price per Unit:', `$${pricePerUnit.toLocaleString()}`);
+    debug('  NOI per Unit:', `$${noiPerUnit.toLocaleString()}/year`);
+    debug('  Cash Flow per Unit:', `$${cashFlowPerUnit.toLocaleString()}/year`);
+    debug('  Average Rent per Unit:', `$${averageRentPerUnit.toLocaleString()}/month`);
 
     // Calculate common metrics
     const capRate = this.calculateCapRate(noi);
@@ -572,20 +579,20 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       effectiveGrossIncome
     );
 
-    console.log('\n[MF] Key Investment Metrics:');
-    console.log('  Cap Rate:', `${capRate.toFixed(2)}%`);
-    console.log('  Cash-on-Cash Return:', `${cashOnCashReturn.toFixed(2)}%`);
-    console.log('  DSCR:', dscr.toFixed(2));
-    console.log('  Operating Expense Ratio:', `${operatingExpenseRatio.toFixed(2)}%`);
+    debug('\n[MF] Key Investment Metrics:');
+    debug('  Cap Rate:', `${capRate.toFixed(2)}%`);
+    debug('  Cash-on-Cash Return:', `${cashOnCashReturn.toFixed(2)}%`);
+    debug('  DSCR:', dscr.toFixed(2));
+    debug('  Operating Expense Ratio:', `${operatingExpenseRatio.toFixed(2)}%`);
 
     // Calculate advanced MF metrics (Story 1.4 - extracted to dedicated methods)
-    console.log('\n[MF] ========== ADVANCED MF METRICS (STORY 1.4) ==========');
+    debug('\n[MF] ========== ADVANCED MF METRICS (STORY 1.4) ==========');
     const grm = this.calculateGrossRentMultiplier(this.data.purchasePrice, grossIncome);
     const debtYield = this.calculateDebtYield(noi, loanAmount);
     const breakEvenOccupancy = this.calculateBreakEvenOccupancy(operatingExpenses, annualDebtService, grossIncome);
     const rentPerSqft = this.calculateRentPerSqft(grossIncome, this.data.totalSqft);
     const grossYield = this.calculateGrossYield(grossIncome, this.data.purchasePrice);
-    console.log('[MF] ========== END ADVANCED MF METRICS ==========');
+    debug('[MF] ========== END ADVANCED MF METRICS ==========');
 
     // Calculate per-unit-type metrics (Issue #5 - Story 4.2 Unit Mix Analysis)
     const perUnitTypeMetrics = this.calculatePerUnitTypeMetrics(
@@ -637,11 +644,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     };
 
     // 🔍 DIAGNOSTIC LOGGING - Issue #5 Verification
-    console.log('\n[MF] ✅ Property-specific metrics calculated successfully');
-    console.log('🔍 [MF] DIAGNOSTIC - perUnitTypeMetrics being returned:');
-    console.log('🔍 [MF]   Array length:', perUnitTypeMetrics?.length || 0);
-    console.log('🔍 [MF]   Data:', JSON.stringify(perUnitTypeMetrics, null, 2));
-    console.log('[MF] ========== END METRICS CALCULATION ==========\n');
+    debug('\n[MF] ✅ Property-specific metrics calculated successfully');
+    debug('🔍 [MF] DIAGNOSTIC - perUnitTypeMetrics being returned:');
+    debug('🔍 [MF]   Array length:', perUnitTypeMetrics?.length || 0);
+    debug('🔍 [MF]   Data:', JSON.stringify(perUnitTypeMetrics, null, 2));
+    debug('[MF] ========== END METRICS CALCULATION ==========\n');
 
     return metrics;
   }
@@ -724,10 +731,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const grm = purchasePrice / grossIncome;
 
-    console.log('[MF] Gross Rent Multiplier (GRM) Calculation:');
-    console.log('  Purchase Price:', `$${purchasePrice.toLocaleString()}`);
-    console.log('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  GRM:', grm.toFixed(2));
+    debug('[MF] Gross Rent Multiplier (GRM) Calculation:');
+    debug('  Purchase Price:', `$${purchasePrice.toLocaleString()}`);
+    debug('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  GRM:', grm.toFixed(2));
 
     if (grm < 4) {
       console.warn(
@@ -773,10 +780,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const debtYield = (noi / loanAmount) * 100;
 
-    console.log('[MF] Debt Yield Calculation:');
-    console.log('  NOI:', `$${noi.toLocaleString()}`);
-    console.log('  Loan Amount:', `$${loanAmount.toLocaleString()}`);
-    console.log('  Debt Yield:', `${debtYield.toFixed(2)}%`);
+    debug('[MF] Debt Yield Calculation:');
+    debug('  NOI:', `$${noi.toLocaleString()}`);
+    debug('  Loan Amount:', `$${loanAmount.toLocaleString()}`);
+    debug('  Debt Yield:', `${debtYield.toFixed(2)}%`);
 
     if (debtYield < 10 && debtYield > 0) {
       console.warn(
@@ -805,11 +812,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const breakEvenOccupancy = ((operatingExpenses + annualDebtService) / grossIncome) * 100;
 
-    console.log('[MF] Break-Even Occupancy Calculation:');
-    console.log('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
-    console.log('  Annual Debt Service:', `$${annualDebtService.toLocaleString()}`);
-    console.log('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  Break-Even Occupancy:', `${breakEvenOccupancy.toFixed(2)}%`);
+    debug('[MF] Break-Even Occupancy Calculation:');
+    debug('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
+    debug('  Annual Debt Service:', `$${annualDebtService.toLocaleString()}`);
+    debug('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  Break-Even Occupancy:', `${breakEvenOccupancy.toFixed(2)}%`);
 
     if (breakEvenOccupancy > 85) {
       console.warn(
@@ -818,7 +825,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
         `  → Very little cushion for vacancy - risky investment`
       );
     } else if (breakEvenOccupancy < 60) {
-      console.log(
+      debug(
         `[MF] ✅ Excellent break-even occupancy (${breakEvenOccupancy.toFixed(2)}%)\n` +
         `  → Strong cushion for vacancy and market fluctuations`
       );
@@ -842,10 +849,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const rentPerSqft = (grossIncome / 12) / totalSqft;
 
-    console.log('[MF] Rent per Square Foot Calculation:');
-    console.log('  Gross Monthly Income:', `$${(grossIncome / 12).toLocaleString()}`);
-    console.log('  Total Square Feet:', `${totalSqft.toLocaleString()} sq ft`);
-    console.log('  Rent per Sq Ft:', `$${rentPerSqft.toFixed(2)}/month`);
+    debug('[MF] Rent per Square Foot Calculation:');
+    debug('  Gross Monthly Income:', `$${(grossIncome / 12).toLocaleString()}`);
+    debug('  Total Square Feet:', `${totalSqft.toLocaleString()} sq ft`);
+    debug('  Rent per Sq Ft:', `$${rentPerSqft.toFixed(2)}/month`);
 
     return rentPerSqft;
   }
@@ -866,10 +873,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const grossYield = (grossIncome / purchasePrice) * 100;
 
-    console.log('[MF] Gross Yield Calculation:');
-    console.log('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  Purchase Price:', `$${purchasePrice.toLocaleString()}`);
-    console.log('  Gross Yield:', `${grossYield.toFixed(2)}%`);
+    debug('[MF] Gross Yield Calculation:');
+    debug('  Gross Annual Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  Purchase Price:', `$${purchasePrice.toLocaleString()}`);
+    debug('  Gross Yield:', `${grossYield.toFixed(2)}%`);
 
     if (grossYield < 6) {
       console.warn(
@@ -909,10 +916,10 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
 
     const efficiency = (currentRent / marketRentPotential) * 100;
 
-    console.log('[MF] Unit Mix Efficiency Calculation:');
-    console.log('  Current Monthly Rent:', `$${currentRent.toLocaleString()}`);
-    console.log('  Market Rent Potential:', `$${marketRentPotential.toLocaleString()}`);
-    console.log('  Efficiency:', `${efficiency.toFixed(2)}%`);
+    debug('[MF] Unit Mix Efficiency Calculation:');
+    debug('  Current Monthly Rent:', `$${currentRent.toLocaleString()}`);
+    debug('  Market Rent Potential:', `$${marketRentPotential.toLocaleString()}`);
+    debug('  Efficiency:', `${efficiency.toFixed(2)}%`);
 
     if (efficiency < 95) {
       const monthlyUpside = marketRentPotential - currentRent;
@@ -942,11 +949,11 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const totalLoss = grossIncome - effectiveGrossIncome;
     const economicVacancyRate = (totalLoss / grossIncome) * 100;
 
-    console.log('[MF] Economic Vacancy Rate Calculation:');
-    console.log('  Gross Potential Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  Effective Gross Income:', `$${effectiveGrossIncome.toLocaleString()}`);
-    console.log('  Total Income Loss:', `$${totalLoss.toLocaleString()}`);
-    console.log('  Economic Vacancy Rate:', `${economicVacancyRate.toFixed(2)}%`);
+    debug('[MF] Economic Vacancy Rate Calculation:');
+    debug('  Gross Potential Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  Effective Gross Income:', `$${effectiveGrossIncome.toLocaleString()}`);
+    debug('  Total Income Loss:', `$${totalLoss.toLocaleString()}`);
+    debug('  Economic Vacancy Rate:', `${economicVacancyRate.toFixed(2)}%`);
 
     if (economicVacancyRate > 10) {
       console.warn(
@@ -979,14 +986,14 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     let currentPropertyValue = this.data.purchasePrice;
     let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
 
-    console.log('\n[MF] ========== MF PROJECTIONS CALCULATION ==========');
-    console.log('[MF] Using MultiFamilyAnalyzer override for accurate MF expenses');
+    debug('\n[MF] ========== MF PROJECTIONS CALCULATION ==========');
+    debug('[MF] Using MultiFamilyAnalyzer override for accurate MF expenses');
 
     const basePropertyTax = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
     const baseInsurance = (this.data.insurancePerUnit || 600) * this.data.totalUnits; // ✅ FIX: Use insurancePerUnit, not insuranceRate
 
     for (let year = 1; year <= this.assumptions.projectionYears; year++) {
-      console.log(`\n[MF] --- YEAR ${year} PROJECTION ---`);
+      debug(`\n[MF] --- YEAR ${year} PROJECTION ---`);
 
       // Calculate gross income with rent growth
       const grossIncome = this.calculateGrossIncome(year);
@@ -1045,7 +1052,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       const capitalImprovements = year === 1 ? (this.data.capitalInvestments || 0) : 0;
       const cashFlow = noi - annualDebtService - capitalImprovements;
 
-      console.log(`[MF] Year ${year} Complete Calculation:`, {
+      debug(`[MF] Year ${year} Complete Calculation:`, {
         grossIncome,
         effectiveGrossIncome,
         operatingExpenses,
@@ -1100,7 +1107,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       });
     }
 
-    console.log('[MF] ========== PROJECTIONS COMPLETE ==========\n');
+    debug('[MF] ========== PROJECTIONS COMPLETE ==========\n');
     return projections;
   }
 
@@ -1115,7 +1122,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       exitAnalysis.netProceedsFromSale
     ];
 
-    console.log('[MF] IRR Cash Flows:', cashFlows);
+    debug('[MF] IRR Cash Flows:', cashFlows);
 
     return cashFlows;
   }
@@ -1131,7 +1138,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * - Sensitivity analysis included
    */
   private normalizeOutput(result: AnalysisResult<MultiFamilyMetrics>): AnalysisResult<MultiFamilyMetrics> {
-    console.log('[MF] Normalizing analysis output for frontend...');
+    debug('[MF] Normalizing analysis output for frontend...');
 
     // Deep clone to avoid mutating original
     const normalized = JSON.parse(JSON.stringify(result)) as AnalysisResult<MultiFamilyMetrics>;
@@ -1199,7 +1206,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     // Add sensitivity analysis
     normalized.sensitivityAnalysis = this.calculateSensitivityAnalysis();
 
-    console.log('[MF] ✅ Output normalized for frontend:', {
+    debug('[MF] ✅ Output normalized for frontend:', {
       hasMonthlyExpenses: !!normalized.monthlyAnalysis?.expenses,
       hasFlattenedExpenses: !!(normalized.monthlyAnalysis?.expenses as any)?.propertyTax,
       hasIncomeObject: typeof normalized.monthlyAnalysis?.income === 'object',
@@ -1319,7 +1326,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
    * Commercial lenders require worst-case DSCR > 1.25 for loan approval
    */
   protected calculateSensitivityAnalysis(): SensitivityAnalysis {
-    console.log('[MF] ========== SENSITIVITY ANALYSIS ==========');
+    debug('[MF] ========== SENSITIVITY ANALYSIS ==========');
 
     // Base case metrics
     const grossIncome = this.calculateGrossIncome(1);
@@ -1330,12 +1337,12 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const cashFlow = noi - annualDebtService;
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
-    console.log('[MF] Base Case:');
-    console.log('  Gross Income:', `$${grossIncome.toLocaleString()}`);
-    console.log('  EGI:', `$${effectiveGrossIncome.toLocaleString()}`);
-    console.log('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
-    console.log('  NOI:', `$${noi.toLocaleString()}`);
-    console.log('  Cash Flow:', `$${cashFlow.toLocaleString()}`);
+    debug('[MF] Base Case:');
+    debug('  Gross Income:', `$${grossIncome.toLocaleString()}`);
+    debug('  EGI:', `$${effectiveGrossIncome.toLocaleString()}`);
+    debug('  Operating Expenses:', `$${operatingExpenses.toLocaleString()}`);
+    debug('  NOI:', `$${noi.toLocaleString()}`);
+    debug('  Cash Flow:', `$${cashFlow.toLocaleString()}`);
 
     // Best case scenario (MF-specific parameters)
     const bestCaseIncome = grossIncome * 1.05; // +5% income
@@ -1366,13 +1373,13 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       cashFlowPerUnit: bestCaseCashFlow / this.data.totalUnits
     };
 
-    console.log('[MF] Best Case (+5% income, -5% expenses, -2% vacancy):');
-    console.log('  Vacancy Rate:', `${bestCaseVacancy.toFixed(1)}%`);
-    console.log('  Interest Rate:', `${bestCaseInterest.toFixed(2)}%`);
-    console.log('  NOI:', `$${bestCaseNOI.toLocaleString()}`);
-    console.log('  Cash Flow:', `$${bestCaseCashFlow.toLocaleString()}`);
-    console.log('  CoC Return:', `${bestCaseMetrics.cashOnCashReturn.toFixed(2)}%`);
-    console.log('  DSCR:', bestCaseMetrics.dscr.toFixed(2));
+    debug('[MF] Best Case (+5% income, -5% expenses, -2% vacancy):');
+    debug('  Vacancy Rate:', `${bestCaseVacancy.toFixed(1)}%`);
+    debug('  Interest Rate:', `${bestCaseInterest.toFixed(2)}%`);
+    debug('  NOI:', `$${bestCaseNOI.toLocaleString()}`);
+    debug('  Cash Flow:', `$${bestCaseCashFlow.toLocaleString()}`);
+    debug('  CoC Return:', `${bestCaseMetrics.cashOnCashReturn.toFixed(2)}%`);
+    debug('  DSCR:', bestCaseMetrics.dscr.toFixed(2));
 
     // Worst case scenario (MF-specific parameters)
     const worstCaseIncome = grossIncome * 0.95; // -5% income
@@ -1402,13 +1409,13 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       cashFlowPerUnit: worstCaseCashFlow / this.data.totalUnits
     };
 
-    console.log('[MF] Worst Case (-5% income, +10% expenses, +5% vacancy):');
-    console.log('  Vacancy Rate:', `${worstCaseVacancy.toFixed(1)}%`);
-    console.log('  Interest Rate:', `${worstCaseInterest.toFixed(2)}%`);
-    console.log('  NOI:', `$${worstCaseNOI.toLocaleString()}`);
-    console.log('  Cash Flow:', `$${worstCaseCashFlow.toLocaleString()}`);
-    console.log('  CoC Return:', `${worstCaseMetrics.cashOnCashReturn.toFixed(2)}%`);
-    console.log('  DSCR:', worstCaseMetrics.dscr.toFixed(2));
+    debug('[MF] Worst Case (-5% income, +10% expenses, +5% vacancy):');
+    debug('  Vacancy Rate:', `${worstCaseVacancy.toFixed(1)}%`);
+    debug('  Interest Rate:', `${worstCaseInterest.toFixed(2)}%`);
+    debug('  NOI:', `$${worstCaseNOI.toLocaleString()}`);
+    debug('  Cash Flow:', `$${worstCaseCashFlow.toLocaleString()}`);
+    debug('  CoC Return:', `${worstCaseMetrics.cashOnCashReturn.toFixed(2)}%`);
+    debug('  DSCR:', worstCaseMetrics.dscr.toFixed(2));
 
     // CRITICAL: Warn if worst-case DSCR < 1.25 (commercial lending requirement)
     if (worstCaseMetrics.dscr < 1.25) {
@@ -1419,7 +1426,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       );
     }
 
-    console.log('[MF] ========== END SENSITIVITY ANALYSIS ==========');
+    debug('[MF] ========== END SENSITIVITY ANALYSIS ==========');
 
     // Calculate total returns for each scenario (simplified)
     const projectionYears = this.assumptions.projectionYears;

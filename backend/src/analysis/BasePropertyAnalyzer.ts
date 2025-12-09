@@ -8,6 +8,13 @@ import {
   ExpenseBreakdown
 } from '../types/analysis';
 
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(...args);
+  }
+};
+
 export interface AnalysisAssumptions {
   projectionYears: number;
   annualRentIncrease: number;
@@ -74,8 +81,8 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     let currentPropertyValue = this.data.purchasePrice;
     let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
 
-    console.log('\n\n========== PROJECTIONS CALCULATION ==========');
-    console.log('Initial Values:', {
+    debug('\n\n========== PROJECTIONS CALCULATION ==========');
+    debug('Initial Values:', {
       purchasePrice: this.data.purchasePrice,
       downPayment: this.data.downPayment,
       closingCosts: this.data.closingCosts || 0,
@@ -86,7 +93,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       propertyManagementRate: this.data.propertyManagementRate
     });
     
-    console.log('Assumptions:', {
+    debug('Assumptions:', {
       projectionYears: this.assumptions.projectionYears,
       annualRentIncrease: this.assumptions.annualRentIncrease,
       annualExpenseIncrease: this.assumptions.annualExpenseIncrease,
@@ -96,7 +103,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       sellingCosts: this.assumptions.sellingCosts
     });
     
-    console.log('Mortgage Details:', {
+    debug('Mortgage Details:', {
       monthlyMortgage,
       annualDebtService,
       interestRate: this.data.interestRate,
@@ -107,7 +114,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const basePropertyTaxForYear1 = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
     const baseInsuranceForYear1 = this.data.purchasePrice * (this.data.insuranceRate / 100);
     
-    console.log('Base expenses (Year 1):', {
+    debug('Base expenses (Year 1):', {
       basePropertyTaxForYear1,
       baseInsuranceForYear1,
       maintenanceCost: this.data.maintenanceCost
@@ -119,7 +126,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const turnoverFrequency = this.assumptions.turnoverFrequency || 2;
     const baseTurnoverRate = 1 / turnoverFrequency;
     
-    console.log('Tenant Turnover Parameters:', {
+    debug('Tenant Turnover Parameters:', {
       prepFees,
       realtorCommission,
       turnoverFrequency,
@@ -127,19 +134,19 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     });
 
     for (let year = 1; year <= this.assumptions.projectionYears; year++) {
-      console.log(`\n--- YEAR ${year} CALCULATION ---`);
+      debug(`\n--- YEAR ${year} CALCULATION ---`);
       
       const grossIncome = this.calculateGrossIncome(year);
-      console.log(`Year ${year} Gross Income:`, grossIncome);
+      debug(`Year ${year} Gross Income:`, grossIncome);
       
       const expenseInflationFactor = Math.pow(1 + (this.assumptions.annualExpenseIncrease || 2.5) / 100, year - 1);
-      console.log(`Year ${year} Expense Inflation Factor:`, expenseInflationFactor);
+      debug(`Year ${year} Expense Inflation Factor:`, expenseInflationFactor);
       
       const propertyTax = basePropertyTaxForYear1 * expenseInflationFactor;
       const insurance = baseInsuranceForYear1 * expenseInflationFactor;
       const maintenance = this.data.maintenanceCost * expenseInflationFactor;
       
-      console.log(`Year ${year} Basic Expenses:`, {
+      debug(`Year ${year} Basic Expenses:`, {
         propertyTax,
         insurance,
         maintenance
@@ -149,10 +156,10 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       // Calculate effective income after vacancy
       const effectiveIncome = grossIncome * (1 - this.assumptions.vacancyRate / 100);
       
-      console.log(`Year ${year} Income-Based Expenses:`, {
+      debug(`Year ${year} Income-Based Expenses:`, {
         propertyManagement
       });
-      console.log(`Year ${year} Effective Income (after ${this.assumptions.vacancyRate}% vacancy):`, effectiveIncome);
+      debug(`Year ${year} Effective Income (after ${this.assumptions.vacancyRate}% vacancy):`, effectiveIncome);
       
       // Calculate tenant turnover costs
       const monthlyRentForYear = grossIncome / 12;
@@ -165,7 +172,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       // Calculate total turnover costs for the year
       const turnoverCosts = (inflatedPrepFees + (monthlyRentForYear * realtorCommission)) * turnoverRate;
       
-      console.log(`Year ${year} Turnover Calculation:`, {
+      debug(`Year ${year} Turnover Calculation:`, {
         monthlyRentForYear,
         inflatedPrepFees,
         vacancyAdjustment,
@@ -180,14 +187,14 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       // Capital improvements (only in year 1)
       const capitalImprovements = year === 1 ? (this.data.capitalInvestments || 0) : 0;
       
-      console.log(`Year ${year} Capital Improvements:`, capitalImprovements);
+      debug(`Year ${year} Capital Improvements:`, capitalImprovements);
       
       const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + turnoverCosts;
       
       const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
       const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService) - capitalImprovements;
 
-      console.log(`Year ${year} Cash Flow Calculation:`, {
+      debug(`Year ${year} Cash Flow Calculation:`, {
         grossIncome,
         operatingExpenses,
         noi,
@@ -207,7 +214,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       const vacancyAmount = grossIncome * (this.assumptions.vacancyRate / 100);
       const appreciation = currentPropertyValue - this.data.purchasePrice;
 
-      console.log(`Year ${year} Property Value & Mortgage:`, {
+      debug(`Year ${year} Property Value & Mortgage:`, {
         currentPropertyValue,
         appreciation,
         interestPaid,
@@ -252,7 +259,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     // Note: Cash flow already includes capital improvements as an expense in year 1
     const cumulativeCashFlow = projections.reduce((sum, p) => sum + p.cashFlow, 0);
 
-    console.log('Exit Analysis Calculation:', {
+    debug('Exit Analysis Calculation:', {
       propertyValue: lastProjection.propertyValue,
       loanBalance: lastProjection.mortgageBalance,
       sellingCosts: this.assumptions.sellingCosts,
@@ -298,27 +305,27 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const propertyMetrics = this.calculatePropertySpecificMetrics();
 
-    console.log('==== BASE ANALYZER CALCULATIONS ====');
-    console.log('Monthly Mortgage:', monthlyMortgage);
-    console.log('Annual Debt Service:', annualDebtService);
-    console.log('Gross Income (Annual):', grossIncome);
-    console.log('Vacancy Rate:', this.assumptions.vacancyRate + '%');
-    console.log('Effective Income (Annual):', effectiveIncome);
-    console.log('Monthly Gross Income:', grossIncome / 12);
-    console.log('Monthly Effective Income:', effectiveIncome / 12);
-    console.log('Operating Expenses (Annual):', operatingExpenses);
-    console.log('NOI (from effective income):', noi);
-    console.log('Cash Flow (Annual):', cashFlow);
-    console.log('Cash Flow (Monthly):', cashFlow / 12);
-    console.log('Total Investment:', totalInvestment, {
+    debug('==== BASE ANALYZER CALCULATIONS ====');
+    debug('Monthly Mortgage:', monthlyMortgage);
+    debug('Annual Debt Service:', annualDebtService);
+    debug('Gross Income (Annual):', grossIncome);
+    debug('Vacancy Rate:', this.assumptions.vacancyRate + '%');
+    debug('Effective Income (Annual):', effectiveIncome);
+    debug('Monthly Gross Income:', grossIncome / 12);
+    debug('Monthly Effective Income:', effectiveIncome / 12);
+    debug('Operating Expenses (Annual):', operatingExpenses);
+    debug('NOI (from effective income):', noi);
+    debug('Cash Flow (Annual):', cashFlow);
+    debug('Cash Flow (Monthly):', cashFlow / 12);
+    debug('Total Investment:', totalInvestment, {
       downPayment: this.data.downPayment,
       closingCosts: this.data.closingCosts || 0,
       capitalInvestments: this.data.capitalInvestments || 0
     });
-    console.log('Property Metrics:', propertyMetrics);
-    console.log('Projections Count:', projections.length);
-    console.log('Exit Analysis:', exitAnalysis);
-    console.log('===================================');
+    debug('Property Metrics:', propertyMetrics);
+    debug('Projections Count:', projections.length);
+    debug('Exit Analysis:', exitAnalysis);
+    debug('===================================');
 
     // Calculate total cash flow from projections
     const totalCashFlow = projections.reduce((sum, p) => sum + p.cashFlow, 0);
@@ -329,12 +336,12 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     // Calculate total return (cash flow + net proceeds from sale - total investment)
     const totalReturn = totalCashFlow + exitAnalysis.netProceedsFromSale - totalInvestment;
 
-    console.log('==== RETURNS CALCULATION ====');
-    console.log('Total Cash Flow:', totalCashFlow);
-    console.log('Total Appreciation:', totalAppreciation);
-    console.log('Net Proceeds from Sale:', exitAnalysis.netProceedsFromSale);
-    console.log('Total Return:', totalReturn);
-    console.log('============================');
+    debug('==== RETURNS CALCULATION ====');
+    debug('Total Cash Flow:', totalCashFlow);
+    debug('Total Appreciation:', totalAppreciation);
+    debug('Net Proceeds from Sale:', exitAnalysis.netProceedsFromSale);
+    debug('Total Return:', totalReturn);
+    debug('============================');
 
     const result: AnalysisResult<U> = {
       monthlyAnalysis: {
@@ -373,15 +380,15 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       }
     };
 
-    console.log('==== FINAL ANALYSIS RESULT STRUCTURE ====');
-    console.log('Monthly Analysis Keys:', Object.keys(result.monthlyAnalysis));
-    console.log('Monthly Income:', result.monthlyAnalysis.income);
-    console.log('Monthly Expenses:', result.monthlyAnalysis.expenses);
-    console.log('Monthly Cash Flow:', result.monthlyAnalysis.cashFlow);
-    console.log('Annual Analysis Keys:', Object.keys(result.annualAnalysis));
-    console.log('Metrics Keys:', Object.keys(result.keyMetrics));
-    console.log('Long Term Returns:', result.longTermAnalysis.returns);
-    console.log('========================================');
+    debug('==== FINAL ANALYSIS RESULT STRUCTURE ====');
+    debug('Monthly Analysis Keys:', Object.keys(result.monthlyAnalysis));
+    debug('Monthly Income:', result.monthlyAnalysis.income);
+    debug('Monthly Expenses:', result.monthlyAnalysis.expenses);
+    debug('Monthly Cash Flow:', result.monthlyAnalysis.cashFlow);
+    debug('Annual Analysis Keys:', Object.keys(result.annualAnalysis));
+    debug('Metrics Keys:', Object.keys(result.keyMetrics));
+    debug('Long Term Returns:', result.longTermAnalysis.returns);
+    debug('========================================');
 
     return result;
   }

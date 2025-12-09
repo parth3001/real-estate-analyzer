@@ -6,6 +6,13 @@ import { marketIntelligenceService } from '../services/marketIntelligenceService
 import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from '../types/marketData';
 import { logger } from '../utils/logger';
 
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(...args);
+  }
+};
+
 export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
   protected calculateGrossIncome(year: number): number {
     return SFRCalculationEngine.calculateGrossIncome(this.data, year);
@@ -35,16 +42,16 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     );
 
     // Log calculation details with FIXED calculations
-    console.log('==== SFR UNIFIED CALCULATION ENGINE ====');
-    console.log('Monthly Mortgage:', monthlyMortgage);
-    console.log('Annual Debt Service:', annualDebtService);
-    console.log('Gross Income:', grossIncome);
-    console.log('Effective Income (after ' + this.assumptions.vacancyRate + '% vacancy):', effectiveIncome);
-    console.log('Operating Expenses (NO vacancy in expenses):', operatingExpenses);
-    console.log('NOI (effective income - operating expenses):', noi);
-    console.log('Cash Flow:', cashFlow);
-    console.log('Total Investment:', totalInvestment);
-    console.log('=======================================');
+    debug('==== SFR UNIFIED CALCULATION ENGINE ====');
+    debug('Monthly Mortgage:', monthlyMortgage);
+    debug('Annual Debt Service:', annualDebtService);
+    debug('Gross Income:', grossIncome);
+    debug('Effective Income (after ' + this.assumptions.vacancyRate + '% vacancy):', effectiveIncome);
+    debug('Operating Expenses (NO vacancy in expenses):', operatingExpenses);
+    debug('NOI (effective income - operating expenses):', noi);
+    debug('Cash Flow:', cashFlow);
+    debug('Total Investment:', totalInvestment);
+    debug('=======================================');
 
     // Calculate long-term returns for equity multiple
     const projections = this.calculateProjections();
@@ -68,12 +75,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     });
 
     // Debug operating expense ratio calculation - FIXED
-    console.log('==== FIXED OPERATING EXPENSE RATIO ====');
-    console.log('Operating Expenses (NO vacancy):', operatingExpenses);
-    console.log('Effective Income:', effectiveIncome);
-    console.log('Operating Expense Ratio (vs effective income):', operatingExpenses > 0 && effectiveIncome > 0 ? 
+    debug('==== FIXED OPERATING EXPENSE RATIO ====');
+    debug('Operating Expenses (NO vacancy):', operatingExpenses);
+    debug('Effective Income:', effectiveIncome);
+    debug('Operating Expense Ratio (vs effective income):', operatingExpenses > 0 && effectiveIncome > 0 ? 
       (operatingExpenses / effectiveIncome) * 100 : 0);
-    console.log('Operating Expense Breakdown (CORRECTED):', {
+    debug('Operating Expense Breakdown (CORRECTED):', {
       propertyTax: this.data.purchasePrice * (this.data.propertyTaxRate / 100),
       insurance: this.data.purchasePrice * (this.data.insuranceRate / 100),
       maintenance: this.data.maintenanceCost,
@@ -83,28 +90,28 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     });
     
     // Debug return on improvements and turnover cost impact calculations
-    console.log('==== RETURN ON IMPROVEMENTS DEBUG ====');
-    console.log('Capital Investments:', capitalInvestments);
-    console.log('Estimated NOI Boost from Improvements:', estimatedNOIBoost);
-    console.log('Base NOI (without improvements):', baseNOI);
-    console.log('NOI (with improvements):', noi);
-    console.log('NOI Increase:', estimatedNOIBoost);
+    debug('==== RETURN ON IMPROVEMENTS DEBUG ====');
+    debug('Capital Investments:', capitalInvestments);
+    debug('Estimated NOI Boost from Improvements:', estimatedNOIBoost);
+    debug('Base NOI (without improvements):', baseNOI);
+    debug('NOI (with improvements):', noi);
+    debug('NOI Increase:', estimatedNOIBoost);
     
     // Calculate return on improvements
     const returnOnImprovements = capitalInvestments > 0 ? 
       (estimatedNOIBoost / capitalInvestments) * 100 : 0;
     
-    console.log('Return on Improvements Calculation:', {
+    debug('Return on Improvements Calculation:', {
       estimatedNOIBoost,
       capitalInvestments,
       returnOnImprovements: returnOnImprovements + '%'
     });
     
-    console.log('==== TURNOVER COST IMPACT DEBUG ====');
-    console.log('Turnover Costs:', turnoverCosts);
-    console.log('Gross Income:', grossIncome);
-    console.log('Turnover Cost Impact:', (turnoverCosts / grossIncome) * 100);
-    console.log('=====================================');
+    debug('==== TURNOVER COST IMPACT DEBUG ====');
+    debug('Turnover Costs:', turnoverCosts);
+    debug('Gross Income:', grossIncome);
+    debug('Turnover Cost Impact:', (turnoverCosts / grossIncome) * 100);
+    debug('=====================================');
 
     // Calculate loan amount for debt yield calculation
     const loanAmount = this.data.purchasePrice - this.data.downPayment;
@@ -159,29 +166,29 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     };
 
     // Log calculated metrics with new additions
-    console.log('==== SFR METRICS ====');
-    console.log('NOI:', metrics.noi);
-    console.log('Cap Rate:', metrics.capRate);
-    console.log('Cash on Cash Return:', metrics.cashOnCashReturn);
-    console.log('DSCR:', metrics.dscr);
-    console.log('Debt Yield:', commonMetrics.debtYield);
-    console.log('Gross Yield:', commonMetrics.grossYield);
-    console.log('Price Per SqFt:', metrics.pricePerSqFt);
-    console.log('Reserves Analysis:', {
+    debug('==== SFR METRICS ====');
+    debug('NOI:', metrics.noi);
+    debug('Cap Rate:', metrics.capRate);
+    debug('Cash on Cash Return:', metrics.cashOnCashReturn);
+    debug('DSCR:', metrics.dscr);
+    debug('Debt Yield:', commonMetrics.debtYield);
+    debug('Gross Yield:', commonMetrics.grossYield);
+    debug('Price Per SqFt:', metrics.pricePerSqFt);
+    debug('Reserves Analysis:', {
       recommended: reservesAnalysis.recommendedReserves,
       months: reservesAnalysis.breakdown.baseMonths + reservesAnalysis.breakdown.ageAdjustment + reservesAnalysis.breakdown.marketAdjustment
     });
-    console.log('Rent Per SqFt:', metrics.rentPerSqFt);
-    console.log('Break-Even Occupancy:', metrics.breakEvenOccupancy);
-    console.log('Equity Multiple:', metrics.equityMultiple);
-    console.log('One Percent Rule Value:', metrics.onePercentRuleValue);
-    console.log('Fifty Rule Analysis:', metrics.fiftyRuleAnalysis);
-    console.log('Rent-to-Price Ratio:', metrics.rentToPriceRatio);
-    console.log('Price Per Bedroom:', metrics.pricePerBedroom);
-    console.log('Debt-to-Income Ratio:', metrics.debtToIncomeRatio);
-    console.log('Return on Improvements:', metrics.returnOnImprovements);
-    console.log('Turnover Cost Impact:', metrics.turnoverCostImpact);
-    console.log('=====================');
+    debug('Rent Per SqFt:', metrics.rentPerSqFt);
+    debug('Break-Even Occupancy:', metrics.breakEvenOccupancy);
+    debug('Equity Multiple:', metrics.equityMultiple);
+    debug('One Percent Rule Value:', metrics.onePercentRuleValue);
+    debug('Fifty Rule Analysis:', metrics.fiftyRuleAnalysis);
+    debug('Rent-to-Price Ratio:', metrics.rentToPriceRatio);
+    debug('Price Per Bedroom:', metrics.pricePerBedroom);
+    debug('Debt-to-Income Ratio:', metrics.debtToIncomeRatio);
+    debug('Return on Improvements:', metrics.returnOnImprovements);
+    debug('Turnover Cost Impact:', metrics.turnoverCostImpact);
+    debug('=====================');
 
     // Add rehab metrics if applicable
     if (this.data.afterRepairValue && this.data.renovationCosts) {
@@ -204,14 +211,14 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const projections = this.calculateProjections();
     const exitAnalysis = this.calculateExitAnalysis(projections);
     
-    console.log('==== SENSITIVITY ANALYSIS DEBUG ====');
-    console.log('Base values:');
-    console.log('Gross Income:', grossIncome);
-    console.log('Operating Expenses:', operatingExpenses);
-    console.log('Annual Debt Service:', annualDebtService);
-    console.log('NOI:', noi);
-    console.log('Cash Flow:', cashFlow);
-    console.log('Total Investment:', totalInvestment);
+    debug('==== SENSITIVITY ANALYSIS DEBUG ====');
+    debug('Base values:');
+    debug('Gross Income:', grossIncome);
+    debug('Operating Expenses:', operatingExpenses);
+    debug('Annual Debt Service:', annualDebtService);
+    debug('NOI:', noi);
+    debug('Cash Flow:', cashFlow);
+    debug('Total Investment:', totalInvestment);
     
     // Enhanced best case: Higher rent, lower expenses, lower vacancy, higher appreciation
     const bestCaseIncome = grossIncome * 1.05; // 5% higher income
@@ -273,28 +280,28 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       (this.data.purchasePrice * Math.pow(1 + worstCaseAppreciationRate / 100, 
       this.assumptions.projectionYears) - this.data.purchasePrice);
     
-    console.log('Best case scenario:');
-    console.log('Income:', bestCaseIncome);
-    console.log('Expenses:', bestCaseExpenses);
-    console.log('Vacancy Rate:', bestCaseVacancy);
-    console.log('Interest Rate:', bestCaseInterestRate);
-    console.log('NOI:', bestCaseNOI);
-    console.log('Cash Flow:', bestCaseCashFlow);
-    console.log('Cash on Cash Return:', bestCaseCashOnCash);
-    console.log('DSCR:', bestCaseDSCR);
-    console.log('Total Return:', bestCaseTotalReturn);
+    debug('Best case scenario:');
+    debug('Income:', bestCaseIncome);
+    debug('Expenses:', bestCaseExpenses);
+    debug('Vacancy Rate:', bestCaseVacancy);
+    debug('Interest Rate:', bestCaseInterestRate);
+    debug('NOI:', bestCaseNOI);
+    debug('Cash Flow:', bestCaseCashFlow);
+    debug('Cash on Cash Return:', bestCaseCashOnCash);
+    debug('DSCR:', bestCaseDSCR);
+    debug('Total Return:', bestCaseTotalReturn);
     
-    console.log('Worst case scenario:');
-    console.log('Income:', worstCaseIncome);
-    console.log('Expenses:', worstCaseExpenses);
-    console.log('Vacancy Rate:', worstCaseVacancy);
-    console.log('Interest Rate:', worstCaseInterestRate);
-    console.log('NOI:', worstCaseNOI);
-    console.log('Cash Flow:', worstCaseCashFlow);
-    console.log('Cash on Cash Return:', worstCaseCashOnCash);
-    console.log('DSCR:', worstCaseDSCR);
-    console.log('Total Return:', worstCaseTotalReturn);
-    console.log('==================================');
+    debug('Worst case scenario:');
+    debug('Income:', worstCaseIncome);
+    debug('Expenses:', worstCaseExpenses);
+    debug('Vacancy Rate:', worstCaseVacancy);
+    debug('Interest Rate:', worstCaseInterestRate);
+    debug('NOI:', worstCaseNOI);
+    debug('Cash Flow:', worstCaseCashFlow);
+    debug('Cash on Cash Return:', worstCaseCashOnCash);
+    debug('DSCR:', worstCaseDSCR);
+    debug('Total Return:', worstCaseTotalReturn);
+    debug('==================================');
     
     return {
       bestCase: {
@@ -362,12 +369,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     ];
     
     // Debug IRR calculation inputs
-    console.log('==== IRR CALCULATION DEBUG ====');
-    console.log('Initial Investment:', totalInvestment);
-    console.log('Annual Cash Flows:', projections.map(year => year.cashFlow));
-    console.log('Exit Proceeds:', exitAnalysis.netProceedsFromSale);
-    console.log('Complete Cash Flow Array:', cashFlows);
-    console.log('=============================');
+    debug('==== IRR CALCULATION DEBUG ====');
+    debug('Initial Investment:', totalInvestment);
+    debug('Annual Cash Flows:', projections.map(year => year.cashFlow));
+    debug('Exit Proceeds:', exitAnalysis.netProceedsFromSale);
+    debug('Complete Cash Flow Array:', cashFlows);
+    debug('=============================');
     
     return cashFlows;
   }
@@ -451,7 +458,7 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     normalized.sensitivityAnalysis = this.calculateSensitivityAnalysis();
 
     // Log the normalized structure
-    console.log('Normalized analysis structure for frontend:', {
+    debug('Normalized analysis structure for frontend:', {
       hasMonthlyExpenses: !!normalized.monthlyAnalysis?.expenses,
       hasExpenseBreakdown: !!normalized.monthlyAnalysis?.expenses?.breakdown,
       hasPropertyTax: !!(normalized.monthlyAnalysis?.expenses as any)?.propertyTax,
