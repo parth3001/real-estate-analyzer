@@ -21,7 +21,13 @@ import {
   Bed as BedIcon,
   Bathtub as BathIcon,
   SquareFoot as SquareFootIcon,
-  WarningAmber as WarningAmberIcon
+  WarningAmber as WarningAmberIcon,
+  Share as ShareIcon
+} from '@mui/icons-material';
+import {
+  Facebook as FacebookIcon,
+  Twitter as TwitterIcon,
+  LinkedIn as LinkedInIcon
 } from '@mui/icons-material';
 
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
@@ -336,6 +342,104 @@ const SampleAnalysisPage: React.FC = () => {
             selectedType={selectedPropertyType}
             onTypeChange={setSelectedPropertyType}
           />
+
+          {/* Social Sharing Section */}
+          <Box sx={{ mt: 3, mb: 2, textAlign: 'center' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: appleColors.gray[600],
+                fontSize: '0.875rem',
+                mb: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <ShareIcon sx={{ fontSize: '18px' }} />
+              Share this free tool:
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              sx={{
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: 1
+              }}
+            >
+              {/* Facebook Share */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FacebookIcon />}
+                onClick={() => {
+                  const url = encodeURIComponent('https://reanalyzr.com/');
+                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
+                }}
+                sx={{
+                  borderColor: '#1877F2',
+                  color: '#1877F2',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    borderColor: '#1877F2',
+                    backgroundColor: 'rgba(24, 119, 242, 0.04)'
+                  }
+                }}
+              >
+                Facebook
+              </Button>
+
+              {/* Twitter/X Share */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<TwitterIcon />}
+                onClick={() => {
+                  const text = encodeURIComponent('Check out REanalyzr - Free real estate investment calculator with AI insights!');
+                  const url = encodeURIComponent('https://reanalyzr.com/');
+                  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'width=600,height=400');
+                }}
+                sx={{
+                  borderColor: '#1DA1F2',
+                  color: '#1DA1F2',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    borderColor: '#1DA1F2',
+                    backgroundColor: 'rgba(29, 161, 242, 0.04)'
+                  }
+                }}
+              >
+                Twitter
+              </Button>
+
+              {/* LinkedIn Share */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<LinkedInIcon />}
+                onClick={() => {
+                  const url = encodeURIComponent('https://reanalyzr.com/');
+                  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=600,height=400');
+                }}
+                sx={{
+                  borderColor: '#0A66C2',
+                  color: '#0A66C2',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    borderColor: '#0A66C2',
+                    backgroundColor: 'rgba(10, 102, 194, 0.04)'
+                  }
+                }}
+              >
+                LinkedIn
+              </Button>
+            </Stack>
+          </Box>
 
           {/* Property Overview Card */}
           <Card
