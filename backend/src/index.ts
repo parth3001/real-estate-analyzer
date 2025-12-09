@@ -28,24 +28,16 @@ import { ensureAdminUser } from './utils/ensureAdminUser';
 const envPath = path.resolve(__dirname, '../.env');
 const result = dotenv.config({ path: envPath });
 
-logger.info('Attempting to load .env from:', envPath);
+// Only log .env loading in development or on error
 if (result.error) {
   logger.error('❌ Error loading .env file:', result.error);
-} else {
+} else if (process.env.NODE_ENV !== 'production') {
   logger.info('✅ .env file loaded successfully');
-  // Log the raw environment variables
-  logger.info('Raw environment variables:', {
+  logger.info('Environment:', {
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'exists' : 'missing',
-    OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
-    OPENAI_API_KEY_START: process.env.OPENAI_API_KEY?.substring(0, 10),
-    CORS_ORIGIN: process.env.CORS_ORIGIN,
-    MONGODB_URI: process.env.MONGODB_URI ? 'exists' : 'missing',
-    CENSUS_API_KEY: process.env.CENSUS_API_KEY ? 'exists' : 'missing',
-    RENTCAST_API_KEY: process.env.RENTCAST_API_KEY ? 'exists' : 'missing',
-    FRED_API_KEY: process.env.FRED_API_KEY ? 'exists' : 'missing',
-    JWT_SECRET: process.env.JWT_SECRET ? 'exists' : 'missing'
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+    MONGODB_URI: process.env.MONGODB_URI ? 'configured' : 'missing'
   });
 }
 

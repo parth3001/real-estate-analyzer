@@ -21,23 +21,37 @@ const fileFormat = winston.format.combine(
   winston.format.json()
 );
 
+// Determine log level based on environment
+const logLevel = process.env.NODE_ENV === 'production'
+  ? (process.env.LOG_LEVEL || 'error')  // Production: Only errors by default
+  : (process.env.LOG_LEVEL || 'info');   // Development: Info by default
+
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  transports: [
-    new winston.transports.File({ 
-      filename: 'logs/error.log', 
-      level: 'error',
-      format: fileFormat
-    }),
-    new winston.transports.File({ 
-      filename: 'logs/all.log',
-      format: fileFormat
-    })
-  ]
+  level: logLevel,
+  transports: []
 });
 
-// Add console transport with better formatting
-if (process.env.NODE_ENV !== 'production') {
+// Production: Only error logs to file
+if (process.env.NODE_ENV === 'production') {
+  logger.add(new winston.transports.File({
+    filename: 'logs/error.log',
+    level: 'error',
+    format: fileFormat,
+    maxsize: 5242880, // 5MB
+    maxFiles: 5
+  }));
+} else {
+  // Development: Full logging to files
+  logger.add(new winston.transports.File({
+    filename: 'logs/error.log',
+    level: 'error',
+    format: fileFormat
+  }));
+  logger.add(new winston.transports.File({
+    filename: 'logs/all.log',
+    format: fileFormat
+  }));
+  // Development: Console logging with colors
   logger.add(new winston.transports.Console({
     format: consoleFormat
   }));
