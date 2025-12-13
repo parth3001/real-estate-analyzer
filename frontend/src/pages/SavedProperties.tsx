@@ -328,6 +328,7 @@ const SavedProperties: React.FC = () => {
                       opacity: hoveredCard === property._id ? 1 : 0,
                       transition: 'opacity 0.2s ease',
                       backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      zIndex: 2, // FIX: Above badge
                       '&:hover': {
                         backgroundColor: 'rgba(255, 59, 48, 0.1)',
                       },
@@ -340,37 +341,35 @@ const SavedProperties: React.FC = () => {
                     <DeleteIcon sx={{ color: '#FF3B30', fontSize: 20 }} />
                   </IconButton>
 
-                  {/* Deal Quality Badge (top-right, below delete button) */}
+                  {/* Deal Quality Badge (top-right, ALWAYS consistent position) */}
                   {typeof dealQuality === 'number' && verdict && (
                     <Chip
                       label={`${dealQuality} ${verdict}`}
                       sx={{
                         position: 'absolute',
-                        top: hoveredCard === property._id ? 48 : 8,
+                        top: 8,  // FIX: Always top-right, no animation
                         right: 8,
                         backgroundColor: verdictColors.bg,
                         color: verdictColors.text,
                         fontWeight: 600,
                         fontSize: '0.875rem',
                         height: 28,
-                        transition: 'top 0.2s ease',
-                        '@media (hover: none)': {
-                          top: 48, // Always below delete on mobile
-                        }
+                        zIndex: 1, // Below delete button
                       }}
                     />
                   )}
 
-                  <CardContent sx={{ pt: 3 }}>
-                    {/* Property Address */}
+                  <CardContent sx={{ pt: 3, pb: 3, px: 3 }}> {/* FIX: 24px padding */}
+                    {/* Property Address - FIX: Larger, more prominent */}
                     <Typography
-                      variant="h6"
+                      variant="h5"
                       component="div"
                       sx={{
                         fontWeight: 600,
                         color: '#1C1C1E',
-                        mb: 0.5,
-                        fontSize: '1.125rem'
+                        mb: 1,
+                        fontSize: '1.25rem', // FIX: 20px (was 18px)
+                        lineHeight: 1.3
                       }}
                     >
                       {property.propertyAddress?.street || property.propertyName || 'Unnamed Property'}
@@ -387,36 +386,54 @@ const SavedProperties: React.FC = () => {
                       }
                     </Typography>
 
-                    {/* Property Type Badge */}
+                    {/* Property Type Badge - FIX: Subtle gray instead of bright blue */}
                     <Box sx={{ mb: 2 }}>
                       <Chip
                         label={property.propertyType === 'SFR' ? 'Single Family' : 'Multi-Family'}
-                        color={property.propertyType === 'SFR' ? 'primary' : 'secondary'}
                         size="small"
-                        sx={{ fontSize: '0.75rem' }}
+                        sx={{
+                          fontSize: '0.75rem',
+                          backgroundColor: '#F2F2F7', // FIX: Subtle gray background
+                          color: '#8E8E93', // FIX: Gray text (not bright blue/purple)
+                          fontWeight: 500
+                        }}
                       />
                     </Box>
 
-                    {/* Key Metrics */}
+                    {/* Key Metrics - FIX: Black/gray colors, smaller font */}
                     <Box sx={{ mb: 2 }}>
                       {typeof cashFlow === 'number' ? (
                         <Typography
-                          variant="h5"
+                          variant="h6"
                           sx={{
                             fontWeight: 600,
-                            color: cashFlow >= 0 ? '#34C759' : '#FF3B30',
-                            mb: 0.5
+                            color: cashFlow >= 0 ? '#1C1C1E' : '#8E8E93', // FIX: Black (not green) / Gray (not red)
+                            mb: 0.5,
+                            fontSize: '1.125rem' // FIX: 18px (was 24px in h5)
                           }}
                         >
                           {formatCurrency(cashFlow)}/mo
                         </Typography>
                       ) : (
-                        <Typography variant="h5" color="text.secondary" sx={{ mb: 0.5 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: '#8E8E93',
+                            mb: 0.5,
+                            fontSize: '1.125rem'
+                          }}
+                        >
                           Cash Flow N/A
                         </Typography>
                       )}
 
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: '#8E8E93', // FIX: Consistent gray
+                          fontSize: '0.8125rem' // 13px
+                        }}
+                      >
                         {typeof capRate === 'number' ? `${formatPercent(capRate)} Cap Rate` : 'Cap Rate N/A'}
                         {typeof cocReturn === 'number' && ` · ${formatPercent(cocReturn)} CoC`}
                       </Typography>
