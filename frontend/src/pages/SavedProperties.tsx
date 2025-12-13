@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Button,
   IconButton,
   CircularProgress,
@@ -13,16 +12,20 @@ import {
   DialogContentText,
   DialogActions,
   Chip,
-  Grid,
-  Card,
-  CardContent,
   MenuItem,
   Select,
   FormControl,
-  InputLabel
+  InputLabel,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import HomeIcon from '@mui/icons-material/Home';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
 
@@ -69,8 +72,10 @@ const SavedProperties: React.FC = () => {
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('dealQuality');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedProperty, setSelectedProperty] = useState<SavedProperty | null>(null);
 
   // Fetch saved properties on component mount
   useEffect(() => {
@@ -156,10 +161,10 @@ const SavedProperties: React.FC = () => {
   };
 
   // Open delete confirmation dialog
-  const openDeleteDialog = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+  const openDeleteDialog = (id: string) => {
     setPropertyToDelete(id);
     setDeleteDialogOpen(true);
+    handleCloseMenu();
   };
 
   // Close delete confirmation dialog
@@ -168,9 +173,21 @@ const SavedProperties: React.FC = () => {
     setPropertyToDelete(null);
   };
 
-  // Handle card click to navigate to property details
-  const handleCardClick = (property: SavedProperty) => {
+  // Handle row click to navigate to property details
+  const handleRowClick = (property: SavedProperty) => {
     navigate(`/${property.propertyType.toLowerCase()}-analysis?id=${property._id}`);
+  };
+
+  // Handle actions menu
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, property: SavedProperty) => {
+    event.stopPropagation(); // Prevent row click
+    setAnchorEl(event.currentTarget);
+    setSelectedProperty(property);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setSelectedProperty(null);
   };
 
   // Get verdict color based on verdict type
@@ -266,17 +283,18 @@ const SavedProperties: React.FC = () => {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       {successMessage && <Alert severity="success" sx={{ mb: 3 }}>{successMessage}</Alert>}
 
-      {/* Properties Grid */}
+      {/* Properties List */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
           <CircularProgress />
         </Box>
       ) : properties.length === 0 ? (
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
+        <Box sx={{ textAlign: 'center', p: 8, backgroundColor: '#FAFAFA', borderRadius: 2 }}>
+          <HomeIcon sx={{ fontSize: 64, color: '#C7C7CC', mb: 2 }} />
           <Typography variant="h6" gutterBottom>
             No saved properties yet
           </Typography>
-          <Typography variant="body1" paragraph color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
             Start by analyzing a new property and save it to your collection.
           </Typography>
           <Button
@@ -287,180 +305,275 @@ const SavedProperties: React.FC = () => {
           >
             Analyze New Property
           </Button>
-        </Paper>
+        </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 2,
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+          }}
+        >
+          {/* Column Headers */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              px: 3,
+              py: 1.5,
+              backgroundColor: '#F5F5F7',
+              borderBottom: '1px solid #E5E5EA'
+            }}
+          >
+            {/* Placeholder for future image */}
+            <Box sx={{ width: 80, flexShrink: 0 }} />
+
+            <Box sx={{ flex: '0 0 120px', ml: 2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Verdict
+              </Typography>
+            </Box>
+
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Property
+              </Typography>
+            </Box>
+
+            <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Cash Flow
+              </Typography>
+            </Box>
+
+            <Box sx={{ flex: '0 0 100px', textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Cap Rate
+              </Typography>
+            </Box>
+
+            <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Price
+              </Typography>
+            </Box>
+
+            <Box sx={{ width: 48, flexShrink: 0 }} />
+          </Box>
+
+          {/* Property Rows */}
           {sortedProperties.map((property) => {
             const dealQuality = property.analysis?.investmentDecision?.professionalAssessment?.dealQuality;
             const verdict = property.analysis?.investmentDecision?.verdict;
             const cashFlow = property.analysis?.monthlyAnalysis?.cashFlow;
             const capRate = property.analysis?.keyMetrics?.capRate;
-            const cocReturn = property.analysis?.keyMetrics?.cashOnCashReturn;
             const verdictColors = getVerdictColor(verdict);
 
             return (
-              <Grid item xs={12} sm={6} md={4} key={property._id}>
-                <Card
-                  onMouseEnter={() => setHoveredCard(property._id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  onClick={() => handleCardClick(property)}
+              <Box
+                key={property._id}
+                onMouseEnter={() => setHoveredRow(property._id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                onClick={() => handleRowClick(property)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 3,
+                  py: 2,
+                  borderBottom: '1px solid #F2F2F7',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                  backgroundColor: hoveredRow === property._id ? 'rgba(0, 122, 255, 0.04)' : 'transparent',
+                  '&:last-child': {
+                    borderBottom: 'none'
+                  },
+                  // Mobile responsive: stack vertically
+                  '@media (max-width: 900px)': {
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: 1
+                  }
+                }}
+              >
+                {/* Placeholder for future property image (60x45px) */}
+                <Box
                   sx={{
-                    position: 'relative',
-                    cursor: 'pointer',
-                    height: '100%',
-                    borderRadius: '12px',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 122, 255, 0.04)',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                      transform: 'translateY(-2px)',
+                    width: 80,
+                    height: 60,
+                    flexShrink: 0,
+                    backgroundColor: '#F2F2F7',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    // Mobile: hide placeholder
+                    '@media (max-width: 900px)': {
+                      display: 'none'
                     }
                   }}
                 >
-                  {/* Delete Button (top-right, appears on hover) */}
-                  <IconButton
-                    onClick={(e) => openDeleteDialog(property._id, e)}
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      opacity: hoveredCard === property._id ? 1 : 0,
-                      transition: 'opacity 0.2s ease',
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      zIndex: 2, // FIX: Above badge
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 59, 48, 0.1)',
-                      },
-                      // Always show on mobile (no hover)
-                      '@media (hover: none)': {
-                        opacity: 1,
-                      }
-                    }}
-                  >
-                    <DeleteIcon sx={{ color: '#FF3B30', fontSize: 20 }} />
-                  </IconButton>
+                  <HomeIcon sx={{ fontSize: 28, color: '#C7C7CC' }} />
+                </Box>
 
-                  {/* Deal Quality Badge (top-right, ALWAYS consistent position) */}
-                  {typeof dealQuality === 'number' && verdict && (
+                {/* Verdict Badge */}
+                <Box sx={{ flex: '0 0 120px', ml: 2 }}>
+                  {typeof dealQuality === 'number' && verdict ? (
                     <Chip
                       label={`${dealQuality} ${verdict}`}
                       sx={{
-                        position: 'absolute',
-                        top: 8,  // FIX: Always top-right, no animation
-                        right: 8,
                         backgroundColor: verdictColors.bg,
                         color: verdictColors.text,
                         fontWeight: 600,
-                        fontSize: '0.875rem',
-                        height: 28,
-                        zIndex: 1, // Below delete button
+                        fontSize: '0.8125rem',
+                        height: 26
+                      }}
+                    />
+                  ) : (
+                    <Chip
+                      label="N/A"
+                      sx={{
+                        backgroundColor: '#8E8E93',
+                        color: '#FFFFFF',
+                        fontSize: '0.8125rem',
+                        height: 26
                       }}
                     />
                   )}
+                </Box>
 
-                  <CardContent sx={{ pt: 3, pb: 3, px: 3 }}> {/* FIX: 24px padding */}
-                    {/* Property Address - FIX: Larger, more prominent */}
-                    <Typography
-                      variant="h5"
-                      component="div"
-                      sx={{
-                        fontWeight: 600,
-                        color: '#1C1C1E',
-                        mb: 1,
-                        fontSize: '1.25rem', // FIX: 20px (was 18px)
-                        lineHeight: 1.3
-                      }}
-                    >
-                      {property.propertyAddress?.street || property.propertyName || 'Unnamed Property'}
-                    </Typography>
+                {/* Property Address */}
+                <Box sx={{ flex: 1, minWidth: 200 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#1C1C1E',
+                      fontSize: '0.9375rem',
+                      mb: 0.25
+                    }}
+                  >
+                    {property.propertyAddress?.street || property.propertyName || 'Unnamed Property'}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#8E8E93',
+                      fontSize: '0.8125rem'
+                    }}
+                  >
+                    {property.propertyAddress ?
+                      `${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}`.trim() :
+                      'Address not available'
+                    }
+                  </Typography>
+                </Box>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2, fontSize: '0.875rem' }}
-                    >
-                      {property.propertyAddress ?
-                        `${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}`.trim() :
-                        'Address not available'
+                {/* Cash Flow */}
+                <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 600,
+                      color: typeof cashFlow === 'number' ? (cashFlow >= 0 ? '#1C1C1E' : '#8E8E93') : '#8E8E93',
+                      fontSize: '0.9375rem'
+                    }}
+                  >
+                    {typeof cashFlow === 'number' ? `${formatCurrency(cashFlow)}/mo` : 'N/A'}
+                  </Typography>
+                </Box>
+
+                {/* Cap Rate */}
+                <Box sx={{ flex: '0 0 100px', textAlign: 'right' }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#1C1C1E',
+                      fontSize: '0.9375rem'
+                    }}
+                  >
+                    {typeof capRate === 'number' ? formatPercent(capRate) : 'N/A'}
+                  </Typography>
+                </Box>
+
+                {/* Purchase Price */}
+                <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#8E8E93',
+                      fontSize: '0.9375rem'
+                    }}
+                  >
+                    {property.purchasePrice ? formatCurrency(property.purchasePrice) : 'N/A'}
+                  </Typography>
+                </Box>
+
+                {/* Actions Menu */}
+                <Box sx={{ width: 48, flexShrink: 0, textAlign: 'right' }}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleOpenMenu(e, property)}
+                    sx={{
+                      opacity: hoveredRow === property._id ? 1 : 0,
+                      transition: 'opacity 0.15s ease',
+                      '@media (hover: none)': {
+                        opacity: 1, // Always visible on mobile
                       }
-                    </Typography>
-
-                    {/* Property Type Badge - FIX: Subtle gray instead of bright blue */}
-                    <Box sx={{ mb: 2 }}>
-                      <Chip
-                        label={property.propertyType === 'SFR' ? 'Single Family' : 'Multi-Family'}
-                        size="small"
-                        sx={{
-                          fontSize: '0.75rem',
-                          backgroundColor: '#F2F2F7', // FIX: Subtle gray background
-                          color: '#8E8E93', // FIX: Gray text (not bright blue/purple)
-                          fontWeight: 500
-                        }}
-                      />
-                    </Box>
-
-                    {/* Key Metrics - FIX: Black/gray colors, smaller font */}
-                    <Box sx={{ mb: 2 }}>
-                      {typeof cashFlow === 'number' ? (
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 600,
-                            color: cashFlow >= 0 ? '#1C1C1E' : '#8E8E93', // FIX: Black (not green) / Gray (not red)
-                            mb: 0.5,
-                            fontSize: '1.125rem' // FIX: 18px (was 24px in h5)
-                          }}
-                        >
-                          {formatCurrency(cashFlow)}/mo
-                        </Typography>
-                      ) : (
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            color: '#8E8E93',
-                            mb: 0.5,
-                            fontSize: '1.125rem'
-                          }}
-                        >
-                          Cash Flow N/A
-                        </Typography>
-                      )}
-
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: '#8E8E93', // FIX: Consistent gray
-                          fontSize: '0.8125rem' // 13px
-                        }}
-                      >
-                        {typeof capRate === 'number' ? `${formatPercent(capRate)} Cap Rate` : 'Cap Rate N/A'}
-                        {typeof cocReturn === 'number' && ` · ${formatPercent(cocReturn)} CoC`}
-                      </Typography>
-                    </Box>
-
-                    {/* Purchase Price */}
-                    {property.purchasePrice && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Purchase: {formatCurrency(property.purchasePrice)}
-                      </Typography>
-                    )}
-
-                    {/* Last Updated */}
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: '0.75rem' }}
-                    >
-                      Updated {formatDate(property.updatedAt)}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                    }}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
             );
           })}
-        </Grid>
+        </Box>
       )}
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedProperty) {
+              handleRowClick(selectedProperty);
+            }
+          }}
+        >
+          <ListItemIcon>
+            <VisibilityIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>View Analysis</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            if (selectedProperty) {
+              openDeleteDialog(selectedProperty._id);
+            }
+          }}
+          sx={{ color: '#FF3B30' }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" sx={{ color: '#FF3B30' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

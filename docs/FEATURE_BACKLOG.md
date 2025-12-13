@@ -538,6 +538,103 @@ Redesign and optimize social sharing functionality to drive viral growth, includ
 
 ---
 
+## 🎯 **P2 - Medium Priority Features** (continued)
+
+### Feature #9: Property Image Integration
+**Status:** 🔴 Not Started
+**Priority:** P2 - Medium (Visual Enhancement / User Engagement)
+**Added:** December 13, 2025
+**Category:** Data Integration / Visual Enhancement
+
+**Description:**
+Integrate property images from Google Street View, Zillow, or similar APIs to display property photos on saved properties list and throughout the platform. Visual representation helps users quickly identify properties and increases engagement.
+
+**Business Value:**
+- **User Engagement**: Property images increase time on site by 40%+ (industry data)
+- **Memory Aid**: Visual recognition faster than reading addresses
+- **Professional Appearance**: Matches Zillow/Redfin user expectations
+- **Conversion**: Properties with images get 2x more clicks (user behavior data)
+
+**Functional Requirements:**
+1. **Image Source Options:**
+   - **Google Street View API** (most reliable, costs $7/1000 requests)
+   - **Zillow API** (if property listed, free tier available)
+   - **RentCast API Enhancement** (may include property images)
+   - **User Upload** (manual fallback for unlisted properties)
+
+2. **Display Locations:**
+   - Saved Properties List (card/row thumbnail)
+   - Property Analysis Results (hero image)
+   - Property Wizard Address Step (preview after address entry)
+   - Investment Decision Hero card (contextual visual)
+
+3. **Image Handling:**
+   - Default placeholder if no image available (property icon or map pin)
+   - Lazy loading for performance (load images as user scrolls)
+   - Caching in MongoDB (avoid repeated API calls)
+   - Responsive image sizes (thumbnail, medium, large)
+
+4. **Integration Points:**
+   - Fetch during RentCast API call (piggyback on existing request)
+   - Store image URL in property document
+   - CDN optimization for fast loading (Cloudinary, imgix)
+
+**Technical Requirements:**
+- **Google Street View API Integration:**
+  ```typescript
+  const imageUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x300&location=${address}&key=${API_KEY}`;
+  ```
+- **Image Storage**: Store URL in property schema (not binary data)
+- **Fallback Logic**: If API fails, show placeholder SVG icon
+- **Performance**: Lazy load with IntersectionObserver API
+- **Caching**: MongoDB TTL index (7-day cache for image URLs)
+
+**UI/UX Considerations:**
+- **Row Layout Impact**: 60px thumbnail on left side of row (doesn't break layout)
+- **Card Layout Impact**: Hero image at top of card (natural card enhancement)
+- **Mobile**: Smaller thumbnails (40px) for performance
+- **Accessibility**: Alt text with property address
+
+**Design Requirements:**
+- Image aspect ratio: 4:3 (standard property photo ratio)
+- Thumbnail sizes: 60x45px (row), 320x240px (card), 640x480px (details)
+- Border radius: 8px (matches card design)
+- Loading state: Gray skeleton with pulse animation
+
+**API Cost Analysis:**
+- **Google Street View**: $7 per 1,000 requests
+- **Estimated Usage**: 500 properties/month = $3.50/month
+- **Free Tier**: First $200/month free (28,000 requests)
+- **Verdict**: Extremely affordable for startup phase
+
+**Estimated Effort:** 1 week (40 hours)
+
+**Dependencies:**
+- Google Cloud Platform account setup
+- Street View API key configuration
+- Image storage strategy decision (URL vs CDN)
+
+**Related Files:**
+- `/backend/src/services/propertyImageService.ts` (new)
+- `/backend/src/models/Deal.ts` (add imageUrl field)
+- `/frontend/src/components/PropertyImage.tsx` (new reusable component)
+- `/frontend/src/pages/SavedProperties.tsx` (add image display)
+
+**Design Inspiration:**
+- Zillow saved homes (large images in cards)
+- Redfin favorites (small thumbnails in rows)
+- Apple Maps (Street View integration)
+
+**Notes:**
+- **Row vs Card Decision**: Images work in BOTH layouts
+  - **Row Layout**: 60px thumbnail on left, text on right (Gmail attachment style)
+  - **Card Layout**: Hero image at top, content below (Airbnb style)
+- Image integration does NOT dictate layout choice
+- Can implement images after layout decision is made
+- Start with placeholder icons, add images later (progressive enhancement)
+
+---
+
 ## 🎯 **P3 - Low Priority Features**
 
 ### Feature #6: PDF Report Download
@@ -716,14 +813,15 @@ Rename and redesign the current Census Data Integration test page to provide use
 |----------|---------|--------|------------------|-----------------|
 | **P1** | BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |
 | **P1** | Metrics UX Optimization | 🔴 Not Started | 1-2 weeks | High (user experience) |
-| **P1** | Saved Properties List UX | 🔴 Not Started | 1 week | High (core workflow friction) |
+| **P1** | Saved Properties List UX | 🟢 In Progress | 1 week | High (core workflow friction) |
 | **P2** | Calculation Accuracy Docs | 🔴 Not Started | 1 week | Medium (trust + SEO) |
 | **P2** | Help Docs Outside Login | 🔴 Not Started | 2 weeks | Medium (SEO + acquisition) |
 | **P2** | Social Sharing Strategy | 🔴 Not Started | 1.5 weeks | Medium (viral growth) |
+| **P2** | Property Image Integration | 🔴 Not Started | 1 week | Medium (visual enhancement) |
 | **P3** | PDF Report Download | 🔴 Not Started | 2 weeks | Low (professional feature) |
 | **P3** | Census Data User Value | 🔴 Not Started | 1 week | Low (market intelligence) |
 
-**Total Estimated Effort:** 11.5 - 14.5 weeks (460-580 hours)
+**Total Estimated Effort:** 12.5 - 15.5 weeks (500-620 hours)
 
 ---
 
