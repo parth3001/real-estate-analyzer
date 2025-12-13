@@ -13,21 +13,19 @@ import {
   Typography,
   Button,
   Alert,
-  LinearProgress,
-  Chip,
   CircularProgress
 } from '@mui/material';
 import {
   LocationOn,
   AttachMoney,
   Home,
-  TrendingUp,
-  Psychology as GoalsIcon,
-  AccountBalance as TaxIcon,
+  Psychology as GoalsIcon, // Phase 1: Used for Strategy step icon
   ArrowBack,
   ArrowForward,
   Check
 } from '@mui/icons-material';
+// REMOVED Phase 1: TrendingUp (was used for Assumptions step, now deprecated)
+// REMOVED Phase 1: TaxIcon (was used for Tax step, now deprecated)
 
 import type { SFRPropertyData } from '../../types/property';
 import type { Analysis } from '../../types/analysis';
@@ -45,11 +43,14 @@ import {
 } from '../../constants/sfrPropertyDefaults';
 
 // Import step components
+import StrategySelectionStep from './StrategySelectionStep'; // Phase 1: NEW Step 0
 import AddressStep from './AddressStep';
 import FinancialsStep from './FinancialsStep';
 import RentalStep from './RentalStep';
-import AssumptionsStep from './AssumptionsStep';
-import GoalsStrategyStep from './GoalsStrategyStep';
+// DEPRECATED Phase 1: AssumptionsStep content moved to advanced accordion in RentalStep
+// import AssumptionsStep from './AssumptionsStep';
+// DEPRECATED Phase 1: GoalsStrategyStep replaced by StrategySelectionStep
+// import GoalsStrategyStep from './GoalsStrategyStep';
 // DEPRECATED: Tax profile collection being replaced with educational content
 // import TaxProfileStep from './TaxProfileStep';
 
@@ -58,6 +59,9 @@ interface PropertyWizardProps {
   initialData?: Partial<SFRPropertyData>;
   config?: Partial<WizardConfig>;
   onCancel?: () => void;
+  // FIX Issue #26 (Option B): Portfolio context in wizard
+  selectedPortfolioId?: string | null;
+  onPortfolioChange?: (portfolioId: string | null) => void;
 }
 
 // Default wizard configuration (currently unused but kept for future use)
@@ -70,11 +74,13 @@ interface PropertyWizardProps {
 //   apiTimeout: 10000
 // };
 
-// Feature flag for tax step (disabled - tax optimization being replaced with educational content)
-const SHOW_TAX_STEP = false;
-
-// Step definitions
-const baseSteps = [
+// Phase 1: Universal Simple - 4-step wizard (down from 5 steps)
+const steps = [
+  {
+    label: 'Investment Strategy',
+    description: 'Choose your investment approach',
+    icon: GoalsIcon
+  },
   {
     label: 'Property Address',
     description: 'Enter property address and basic details',
@@ -86,49 +92,37 @@ const baseSteps = [
     icon: AttachMoney
   },
   {
-    label: 'Rental Analysis',
+    label: 'Rental & Operating',
     description: 'Rent estimates and operating expenses',
     icon: Home
-  },
-  {
-    label: 'Long-term Assumptions',
-    description: 'Growth rates and investment timeline',
-    icon: TrendingUp
-  },
-  {
-    label: 'Investment Goals & Strategy',
-    description: 'Your investment approach and goals',
-    icon: GoalsIcon
   }
+  // REMOVED: Long-term Assumptions step (content moved to advanced accordion in Rental step)
+  // REMOVED: Investment Goals & Strategy step (replaced by Strategy step at beginning)
+  // REMOVED: Tax Intelligence Profile step (deprecated)
 ];
-
-// Only add tax step if feature flag is enabled (deprecated)
-const steps = SHOW_TAX_STEP ? [...baseSteps, {
-  label: 'Tax Intelligence Profile',
-  description: 'Tax optimization and after-tax analysis',
-  icon: TaxIcon
-}] : baseSteps;
 
 const PropertyWizard: React.FC<PropertyWizardProps> = ({
   onComplete,
   initialData,
   config: _config = {}, // Currently unused but kept for future use
-  onCancel
+  onCancel,
+  selectedPortfolioId,
+  onPortfolioChange
 }) => {
   // Wizard configuration
   // const wizardConfig = { ...defaultConfig, ...config };
 
-  // Wizard state management
+  // Wizard state management (Phase 1: 4 steps instead of 6)
   const [state, setState] = useState<WizardState>({
-    currentStep: WizardStep.ADDRESS,
-    completed: [false, false, false, false, false, false],
+    currentStep: WizardStep.STRATEGY, // Phase 1: Start with strategy selection
+    completed: [false, false, false, false], // 4 steps: STRATEGY, ADDRESS, FINANCIALS, RENTAL
     data: {
       // Use centralized defaults for consistency across all entry methods
       ...SFR_PROPERTY_DEFAULTS,
-      
+
       // Wizard-specific percentage fields
       ...DEFAULT_WIZARD_PERCENTAGES,
-      
+
       // Merge with any initial data provided (e.g., from saved property)
       ...initialData
     },
@@ -150,8 +144,8 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState<WizardProgress>({
     completedSteps: 0,
-    totalSteps: 6,
-    estimatedTimeRemaining: 15,
+    totalSteps: 4, // Phase 1: 4 steps (STRATEGY, ADDRESS, FINANCIALS, RENTAL)
+    estimatedTimeRemaining: 10, // ~2.5 min per step
     dataQualityScore: 60
   });
 
@@ -188,9 +182,9 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     return Math.min(100, coverageScore + confidenceBonus);
   }, [state.autoPopulated]);
 
-  // Navigation handlers
+  // Navigation handlers (Phase 1: 4-step wizard)
   const handleNext = useCallback(() => {
-    const lastStep = SHOW_TAX_STEP ? WizardStep.TAX : WizardStep.GOALS;
+    const lastStep = WizardStep.RENTAL; // Phase 1: Last step is RENTAL (step 3)
     if (state.currentStep < lastStep) {
       const newCompleted = [...state.completed];
       newCompleted[state.currentStep] = true;
@@ -204,7 +198,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   }, [state.currentStep, state.completed]);
 
   const handlePrevious = useCallback(() => {
-    if (state.currentStep > WizardStep.ADDRESS) {
+    if (state.currentStep > WizardStep.STRATEGY) { // Phase 1: First step is STRATEGY (step 0)
       setState(prev => ({
         ...prev,
         currentStep: (prev.currentStep - 1) as WizardStep
@@ -227,14 +221,14 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     }));
   }, []);
 
-  // Complete wizard and submit data
+  // Complete wizard and submit data (Phase 1: Final step is RENTAL)
   const handleComplete = useCallback(async () => {
     setIsLoading(true);
     try {
       // Mark final step as completed
       const finalCompleted = [...state.completed];
-      finalCompleted[WizardStep.TAX] = true;
-      
+      finalCompleted[WizardStep.RENTAL] = true; // Phase 1: RENTAL is the last step
+
       setState(prev => ({
         ...prev,
         completed: finalCompleted
@@ -251,6 +245,18 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
         // Include enhanced goals with AI analysis for personalized messaging
         enhancedGoals: state.data.enhancedGoals
       };
+
+      // DEBUG Issue #29: Log final wizard data before submission
+      console.log('🚀 WIZARD SUBMITTING DATA:', {
+        purchasePrice: wizardData.purchasePrice,
+        downPayment: wizardData.downPayment,
+        downPaymentPercentage: wizardData.downPaymentPercentage,
+        closingCosts: wizardData.closingCosts,
+        loanAmount: (wizardData.purchasePrice || 0) - (wizardData.downPayment || 0),
+        totalInvestment: (wizardData.downPayment || 0) + (wizardData.closingCosts || 0),
+        _isWizardData: wizardData._isWizardData
+      });
+
       const result = await onComplete(wizardData as SFRPropertyData);
       
       // Success handled by parent component
@@ -272,7 +278,16 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
       const errors: Record<string, string> = {};
       const warnings: Record<string, string> = {};
 
+      // Phase 1: Simplified 4-step validation
       switch (state.currentStep) {
+        case WizardStep.STRATEGY:
+          // Phase 1: Strategy selection validation
+          if (!state.data.strategy) {
+            errors.strategy = 'Please select an investment strategy';
+          }
+          // Optional AI enhancement - no validation required
+          break;
+
         case WizardStep.ADDRESS:
           if (!state.data.propertyAddress?.street) {
             errors['propertyAddress.street'] = 'Property address is required';
@@ -292,7 +307,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
           if (!state.data.downPayment || state.data.downPayment <= 0) {
             errors.downPayment = 'Down payment is required';
           }
-          if (state.data.downPayment && state.data.purchasePrice && 
+          if (state.data.downPayment && state.data.purchasePrice &&
               state.data.downPayment >= state.data.purchasePrice) {
             warnings.downPayment = 'Down payment should be less than purchase price';
           }
@@ -302,59 +317,12 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
           if (!state.data.monthlyRent || state.data.monthlyRent <= 0) {
             errors.monthlyRent = 'Monthly rent is required';
           }
+          // Phase 1: Assumptions moved to advanced accordion - no validation required
           break;
 
-        case WizardStep.ASSUMPTIONS:
-          if (!state.data.longTermAssumptions?.projectionYears || 
-              state.data.longTermAssumptions.projectionYears < 1) {
-            errors.projectionYears = 'Projection years must be at least 1';
-          }
-          break;
-
-        case WizardStep.GOALS:
-          // Basic validation - at least one exit strategy and portfolio strategy required
-          if (!state.data.enhancedGoals?.exitStrategy) {
-            errors.exitStrategy = 'Exit strategy is required';
-          }
-          if (!state.data.enhancedGoals?.portfolioStrategy) {
-            errors.portfolioStrategy = 'Portfolio strategy is required';
-          }
-
-          // Optional but helpful warnings
-          if (!state.data.enhancedGoals?.experienceLevel) {
-            warnings.experienceLevel = 'Experience level helps personalize recommendations';
-          }
-          if (!state.data.enhancedGoals?.riskTolerance) {
-            warnings.riskTolerance = 'Risk tolerance helps optimize investment advice';
-          }
-          break;
-
-        case WizardStep.TAX:
-          // DEPRECATED: Tax profile collection disabled
-          if (SHOW_TAX_STEP && state.data.taxProfile) {
-            // Legacy validation code (not used when SHOW_TAX_STEP is false)
-            /*
-            if (!state.data.taxProfile.filingStatus) {
-              errors.filingStatus = 'Filing status is required';
-            }
-            if (!state.data.taxProfile.state) {
-              errors.state = 'State is required for tax calculations';
-            }
-            if (!state.data.taxProfile.capitalGainsHoldingStrategy) {
-              errors.capitalGainsHoldingStrategy = 'Capital gains strategy is required';
-            }
-
-            // Warnings for tax optimization
-            if (state.data.taxProfile.state &&
-                ['CA', 'NY', 'NJ', 'HI', 'OR', 'MN'].includes(state.data.taxProfile.state)) {
-              warnings.highTaxState = 'High tax state - consider tax optimization strategies';
-            }
-            if (state.data.taxProfile.capitalGainsHoldingStrategy === 'short_term') {
-              warnings.shortTermStrategy = 'Short-term capital gains are taxed at higher ordinary income rates';
-            }
-            */
-          }
-          break;
+        // REMOVED Phase 1: WizardStep.ASSUMPTIONS validation
+        // REMOVED Phase 1: WizardStep.GOALS validation (replaced by STRATEGY)
+        // REMOVED: WizardStep.TAX validation (deprecated)
       }
 
       setValidation({
@@ -367,7 +335,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     validateCurrentStep();
   }, [state.currentStep, state.data]);
 
-  // Render step content (placeholder for now)
+  // Render step content - Phase 1: 4-step wizard
   const renderStepContent = () => {
     const stepProps = {
       state,
@@ -378,6 +346,35 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
     };
 
     switch (state.currentStep) {
+      case WizardStep.STRATEGY:
+        // Phase 1: NEW Step 0 - Investment Strategy Selection
+        return (
+          <StrategySelectionStep
+            strategy={state.data.strategy}
+            onStrategyChange={(strategy) => {
+              setState(prev => ({
+                ...prev,
+                data: {
+                  ...prev.data,
+                  strategy
+                }
+              }));
+            }}
+            selectedPortfolioId={selectedPortfolioId}
+            onPortfolioChange={onPortfolioChange}
+            enhancedGoals={state.data.enhancedGoals}
+            onEnhancedGoalsChange={(goals) => {
+              setState(prev => ({
+                ...prev,
+                data: {
+                  ...prev.data,
+                  enhancedGoals: goals
+                }
+              }));
+            }}
+          />
+        );
+
       case WizardStep.ADDRESS:
         return <AddressStep {...stepProps} />;
 
@@ -387,58 +384,9 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
       case WizardStep.RENTAL:
         return <RentalStep {...stepProps} />;
 
-      case WizardStep.ASSUMPTIONS:
-        return <AssumptionsStep {...stepProps} />;
-
-      case WizardStep.GOALS:
-        return <GoalsStrategyStep
-          goals={state.data.enhancedGoals || {}}
-          onGoalsChange={(goals) => {
-            setState(prev => ({
-              ...prev,
-              data: {
-                ...prev.data,
-                enhancedGoals: goals
-              }
-            }));
-          }}
-        />;
-
-      case WizardStep.TAX:
-        // DEPRECATED: Tax step disabled
-        if (SHOW_TAX_STEP) {
-          // Legacy tax step (not rendered when SHOW_TAX_STEP is false)
-          return null;
-          /*
-          return <TaxProfileStep
-            data={state.data}
-            onUpdate={(updates) => {
-              setState(prev => ({
-                ...prev,
-                data: {
-                  ...prev.data,
-                  ...updates
-                }
-              }));
-            }}
-            validation={validation}
-            onValidationChange={setValidation}
-            state={state}
-          />;
-          */
-        }
-        // When tax step is disabled, show completion message
-        return (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Analysis Ready
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Click "Complete Analysis" to see your investment analysis.
-              Tax education content will be available in the results.
-            </Typography>
-          </Box>
-        );
+      // REMOVED Phase 1: WizardStep.ASSUMPTIONS (content moved to advanced accordion in RentalStep)
+      // REMOVED Phase 1: WizardStep.GOALS (replaced by StrategySelectionStep above)
+      // REMOVED Phase 1: WizardStep.TAX (deprecated in favor of educational content)
 
       default:
         return <Typography>Unknown step</Typography>;
@@ -447,43 +395,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto' }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Property Analysis Wizard
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          Guided property analysis with intelligent data auto-population
-        </Typography>
-        
-        {/* Progress Indicators */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-          <Chip
-            icon={<Check />}
-            label={`${progress.completedSteps}/${progress.totalSteps} Steps`}
-            color={progress.completedSteps === progress.totalSteps ? 'success' : 'default'}
-            variant="outlined"
-          />
-          <Chip
-            label={`${Math.round(progress.dataQualityScore)}% Data Quality`}
-            color={progress.dataQualityScore > 80 ? 'success' : progress.dataQualityScore > 60 ? 'warning' : 'error'}
-            variant="outlined"
-          />
-          <Chip
-            label={`~${Math.round(progress.estimatedTimeRemaining)} min remaining`}
-            variant="outlined"
-          />
-        </Box>
-
-        {/* Progress Bar */}
-        <LinearProgress
-          variant="determinate"
-          value={(progress.completedSteps / progress.totalSteps) * 100}
-          sx={{ height: 6, borderRadius: 3 }}
-        />
-      </Box>
-
-      {/* Stepper */}
+      {/* Stepper - immediately visible, no redundant header/badges */}
       <Paper sx={{ mb: 3 }}>
         <Stepper activeStep={state.currentStep} sx={{ p: 3 }}>
           {steps.map((step, index) => {
@@ -543,15 +455,15 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
       {/* Navigation */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button
-          onClick={onCancel || handlePrevious}
+          onClick={state.currentStep === WizardStep.STRATEGY && onCancel ? onCancel : handlePrevious}
           startIcon={<ArrowBack />}
-          disabled={state.currentStep === WizardStep.ADDRESS && !onCancel}
+          disabled={state.currentStep === WizardStep.STRATEGY && !onCancel}
         >
-          {onCancel && state.currentStep === WizardStep.ADDRESS ? 'Cancel' : 'Previous'}
+          {onCancel && state.currentStep === WizardStep.STRATEGY ? 'Cancel' : 'Previous'}
         </Button>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {state.currentStep === (SHOW_TAX_STEP ? WizardStep.TAX : WizardStep.GOALS) ? (
+          {state.currentStep === WizardStep.RENTAL ? ( // Phase 1: Last step is RENTAL
             <Button
               variant="contained"
               onClick={handleComplete}

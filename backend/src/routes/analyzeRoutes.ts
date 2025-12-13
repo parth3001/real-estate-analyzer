@@ -197,15 +197,32 @@ const analyzeHandler = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Detect if this is wizard data and convert to standard format
-    const isWizardData = formData._isWizardData || 
-                        formData.maintenanceReservePercentage !== undefined || 
+    const isWizardData = formData._isWizardData ||
+                        formData.maintenanceReservePercentage !== undefined ||
                         formData.vacancyRate !== undefined ||
                         formData.downPaymentPercentage !== undefined;
 
     if (isWizardData) {
+      // DEBUG Issue #29: Log wizard data BEFORE conversion
+      logger.info('🔍 ISSUE #29 DEBUG - Wizard data received:', {
+        purchasePrice: formData.purchasePrice,
+        downPayment: formData.downPayment,
+        downPaymentPercentage: formData.downPaymentPercentage,
+        closingCosts: formData.closingCosts,
+        loanAmount: (formData.purchasePrice || 0) - (formData.downPayment || 0),
+        totalInvestment: (formData.downPayment || 0) + (formData.closingCosts || 0)
+      });
+
       logger.info('Detected wizard data, converting to standard format');
       formData = convertWizardToStandardFormat(formData);
-      logger.info('Converted wizard data:', {
+
+      // DEBUG Issue #29: Log wizard data AFTER conversion
+      logger.info('🔍 ISSUE #29 DEBUG - After conversion:', {
+        purchasePrice: formData.purchasePrice,
+        downPayment: formData.downPayment,
+        closingCosts: formData.closingCosts,
+        loanAmount: (formData.purchasePrice || 0) - (formData.downPayment || 0),
+        totalInvestment: (formData.downPayment || 0) + (formData.closingCosts || 0),
         maintenanceCost: formData.maintenanceCost,
         vacancyRate: formData.longTermAssumptions?.vacancyRate,
         insuranceRate: formData.insuranceRate

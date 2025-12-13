@@ -32,6 +32,15 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
   constructor(data: T, assumptions: AnalysisAssumptions) {
     this.data = data;
     this.assumptions = assumptions;
+
+    // DEBUG Issue #29: Log data received by analyzer
+    console.log('🔍 ISSUE #29 DEBUG - Analyzer received data:', {
+      purchasePrice: data.purchasePrice,
+      downPayment: data.downPayment,
+      closingCosts: data.closingCosts,
+      loanAmount: data.purchasePrice - data.downPayment,
+      totalInvestment: data.downPayment + (data.closingCosts || 0)
+    });
   }
 
   protected calculateMonthlyMortgage(): number {

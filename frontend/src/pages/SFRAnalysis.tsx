@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Alert, 
-  CircularProgress, 
-  Button, 
-  Snackbar, 
+import {
+  Box,
+  Typography,
+  Alert,
+  CircularProgress,
+  Button,
+  Snackbar,
   ButtonGroup,
   Container,
   Stack,
-  Fade
+  Fade,
+  Link
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { AutoAwesome, Edit, DataUsage as SampleDataIcon, Add as AddIcon } from '@mui/icons-material';
@@ -1024,170 +1025,86 @@ const SFRAnalysis: React.FC = () => {
         {/* Property Input Section */}
         <Fade in={activeSection === 'input'} unmountOnExit>
           <Box sx={{ display: activeSection === 'input' ? 'block' : 'none' }}>
-            {/* Input Method Selection */}
-            {wizardEnabled && (
-              <Box sx={{ mb: 4 }}>
-                <AppleCard padding="large">
-                  <Stack spacing={3}>
-                    <Box>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          fontWeight: 600,
-                          color: appleColors.gray[900],
-                          mb: 1
-                        }}
-                      >
-                        Choose Analysis Method
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: appleColors.gray[600],
-                          lineHeight: 1.6
-                        }}
-                      >
-                        Select how you'd like to input your property information for analysis
-                      </Typography>
-                    </Box>
-                    
-                    <ButtonGroup 
-                      variant="outlined" 
-                      sx={{ 
-                        '& .MuiButtonGroup-grouped': {
-                          borderRadius: '12px',
-                          px: 4,
-                          py: 2,
-                          fontWeight: 500,
-                          textTransform: 'none',
-                          minWidth: '180px',
-                          '&:hover': {
-                            backgroundColor: appleColors.primary[50],
-                            borderColor: appleColors.primary[300]
-                          }
-                        }
-                      }}
-                    >
-                      <Button
-                        onClick={() => handleInputMethodChange('wizard')}
-                        startIcon={<AutoAwesome />}
-                        sx={{
-                          backgroundColor: inputMethod === 'wizard' ? appleColors.primary[50] : 'transparent',
-                          borderColor: inputMethod === 'wizard' ? appleColors.primary[500] : appleColors.gray[300],
-                          color: inputMethod === 'wizard' ? appleColors.primary[700] : appleColors.gray[700],
-                          '&:hover': {
-                            backgroundColor: appleColors.primary[50],
-                            borderColor: appleColors.primary[300]
-                          }
-                        }}
-                      >
-                        Smart Wizard
-                      </Button>
-                      <Button
-                        onClick={() => handleInputMethodChange('manual')}
-                        startIcon={<Edit />}
-                        sx={{
-                          backgroundColor: inputMethod === 'manual' ? appleColors.primary[50] : 'transparent',
-                          borderColor: inputMethod === 'manual' ? appleColors.primary[500] : appleColors.gray[300],
-                          color: inputMethod === 'manual' ? appleColors.primary[700] : appleColors.gray[700],
-                          '&:hover': {
-                            backgroundColor: appleColors.primary[50],
-                            borderColor: appleColors.primary[300]
-                          }
-                        }}
-                      >
-                        Manual Form
-                      </Button>
-                    </ButtonGroup>
-                    
-                    {/* Method Descriptions */}
-                    <Box>
-                      {inputMethod === 'wizard' && (
-                        <Fade in={true}>
-                          <Alert 
-                            severity="info" 
-                            sx={{ 
-                              backgroundColor: '#EFF6FF',
-                              border: `1px solid #BFDBFE`,
-                              borderRadius: '12px',
-                              '& .MuiAlert-icon': {
-                                color: '#2563EB'
-                              }
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                              Guided Analysis (Recommended)
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
-                              Step-by-step property analysis with auto-population from market data, 
-                              smart defaults, and intelligent suggestions. Perfect for all experience levels.
-                            </Typography>
-                          </Alert>
-                        </Fade>
-                      )}
-                      
-                      {inputMethod === 'manual' && (
-                        <Fade in={true}>
-                          <Alert 
-                            severity="warning" 
-                            sx={{ 
-                              backgroundColor: '#FFF7ED',
-                              border: `1px solid #FED7AA`,
-                              borderRadius: '12px',
-                              '& .MuiAlert-icon': {
-                                color: '#EA580C'
-                              }
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                              Advanced Manual Entry
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
-                              Complete control over all 60+ fields with detailed input options. 
-                              Ideal for experienced investors who want full customization.
-                            </Typography>
-                          </Alert>
-                        </Fade>
-                      )}
-                    </Box>
-                  </Stack>
-                </AppleCard>
-              </Box>
-            )}
-
-            {/* Portfolio Selection for Analysis Context */}
-            <Box sx={{ mb: 3 }}>
-              <SimplePortfolioSelector 
-                selectedPortfolioId={selectedPortfolioId}
-                onPortfolioSelected={setSelectedPortfolioId}
-                disabled={isLoading}
-              />
-            </Box>
+            {/* FIX Issue #26 (FINAL): Clean UX - Wizard shows immediately, manual form link at bottom */}
 
             {/* Render Wizard or Form */}
             <Fade in={inputMethod === 'wizard'} unmountOnExit>
               <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
                 {inputMethod === 'wizard' && wizardEnabled && (
-                  <PropertyWizard
-                    key={propertyData?.propertyName || 'wizard-default'} 
-                    onComplete={handleAnalyzeProperty}
-                    initialData={propertyData || undefined}
-                    onCancel={() => handleInputMethodChange('manual')}
-                  />
+                  <>
+                    <PropertyWizard
+                      key={propertyData?.propertyName || 'wizard-default'}
+                      onComplete={handleAnalyzeProperty}
+                      initialData={propertyData || undefined}
+                      onCancel={() => handleInputMethodChange('manual')}
+                      selectedPortfolioId={selectedPortfolioId}
+                      onPortfolioChange={setSelectedPortfolioId}
+                    />
+
+                    {/* Manual form link at bottom - subtle, non-intrusive */}
+                    <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
+                      <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                        Experienced investor?{' '}
+                        <Link
+                          component="button"
+                          onClick={() => handleInputMethodChange('manual')}
+                          sx={{
+                            color: appleColors.primary[600],
+                            fontWeight: 500,
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            '&:hover': {
+                              textDecoration: 'underline',
+                              color: appleColors.primary[700]
+                            }
+                          }}
+                        >
+                          Use advanced manual form
+                        </Link>
+                      </Typography>
+                    </Box>
+                  </>
                 )}
               </Box>
             </Fade>
-            
+
             <Fade in={inputMethod === 'manual'} unmountOnExit>
               <Box sx={{ display: inputMethod === 'manual' ? 'block' : 'none' }}>
                 {inputMethod === 'manual' && (
-                  <SFRPropertyForm
-                    key={propertyData?.propertyName || 'form-default'}
-                    onSubmit={handleAnalyzeProperty}
-                    initialData={propertyData || undefined}
-                    isLoading={isLoading}
-                    error={error || undefined}
-                  />
+                  <>
+                    <SFRPropertyForm
+                      key={propertyData?.propertyName || 'form-default'}
+                      onSubmit={handleAnalyzeProperty}
+                      initialData={propertyData || undefined}
+                      isLoading={isLoading}
+                      error={error || undefined}
+                    />
+
+                    {/* Wizard link at bottom when in manual mode */}
+                    <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
+                      <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                        Prefer guided analysis?{' '}
+                        <Link
+                          component="button"
+                          onClick={() => handleInputMethodChange('wizard')}
+                          sx={{
+                            color: appleColors.primary[600],
+                            fontWeight: 500,
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            '&:hover': {
+                              textDecoration: 'underline',
+                              color: appleColors.primary[700]
+                            }
+                          }}
+                        >
+                          Switch to Smart Wizard
+                        </Link>
+                      </Typography>
+                    </Box>
+                  </>
                 )}
               </Box>
             </Fade>

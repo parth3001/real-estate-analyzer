@@ -221,9 +221,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       ];
 
   // Key Financial Metrics (8 additional important metrics)
+  const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
   const keyFinancialMetrics = [
     {
-      label: '10-Year IRR',
+      label: `${projectionYears}-Year IRR`,
       // Backend returns IRR as decimal (0.05 = 5%), convert to percentage for display
       value: ((analysis?.keyMetrics?.irr || analysis?.longTermAnalysis?.returns?.irr || 0) * 100),
       format: 'percent' as const,
@@ -232,11 +233,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       description: 'Internal Rate of Return - Time-weighted annualized return rate'
     },
     {
-      label: 'Total ROI (10 yr)',
+      label: `Total ROI (${projectionYears} yr)`,
       value: analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0,
       format: 'percent' as const,
       status: (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 100 ? 'positive' as const : (analysis?.longTermAnalysis?.exitAnalysis?.returnOnInvestment || 0) >= 50 ? 'warning' as const : 'negative' as const,
-      description: 'Total cumulative return percentage over 10 years'
+      description: `Total cumulative return percentage over ${projectionYears} years`
     },
     {
       label: 'DSCR',

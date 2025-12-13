@@ -634,20 +634,64 @@ body {
 `;
 
 // =============================================================================
-// 8. EXPORT CONFIGURATION
+// 8. ANIMATION SYSTEM (Phase 1: Universal Simple)
+// =============================================================================
+
+/**
+ * Apple-style easing curves for smooth animations
+ * Based on Apple's Human Interface Guidelines
+ */
+export const appleEasing = {
+  standard: 'cubic-bezier(0.4, 0, 0.2, 1)',      // Standard transition (most common)
+  enter: 'cubic-bezier(0, 0, 0.2, 1)',            // Element entering (decelerating)
+  exit: 'cubic-bezier(0.4, 0, 1, 1)',             // Element exiting (accelerating)
+  sharp: 'cubic-bezier(0.4, 0, 0.6, 1)'           // Sharp transition (quick)
+};
+
+/**
+ * Standard animation durations in milliseconds
+ * Aligned with Apple's interface timing
+ */
+export const appleDurations = {
+  shortest: 100,   // Instant feedback (tap, press)
+  shorter: 200,    // Quick hover effects
+  short: 250,      // Button interactions
+  standard: 300,   // Expand/collapse, most transitions
+  complex: 375     // Complex multi-step animations
+};
+
+// =============================================================================
+// 9. CALCULATION UTILITIES
+// =============================================================================
+
+/**
+ * Round currency value to 2 decimal places (for calculations)
+ *
+ * NOTE: For display formatting, use formatCurrency from /utils/formatters.ts
+ * This utility is for maintaining precision in calculations per Financial Precision Principle
+ *
+ * @param value - Number to round
+ * @returns Rounded number
+ */
+export function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+// =============================================================================
+// 10. EXPORT CONFIGURATION
 // =============================================================================
 
 // Export the complete theme for Material-UI
 export const appleTheme = appleMaterialUITheme;
 
 // Export individual systems for use in components
-export { 
-  appleColors, 
-  appleTypography, 
-  appleSpacing, 
-  appleShadows, 
+export {
+  appleColors,
+  appleTypography,
+  appleSpacing,
+  appleShadows,
   appleBorderRadius,
-  appleCSSVariables 
+  appleCSSVariables
 };
 
 // Export CSS string for injection

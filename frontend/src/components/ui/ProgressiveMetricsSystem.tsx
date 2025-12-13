@@ -72,7 +72,7 @@ const ProgressiveMetricsSystem: React.FC<ProgressiveMetricsSystemProps> = ({ ana
         }
       ]
     },
-    
+
     financial: {
       title: 'Financial Performance',
       description: 'Cash flow, returns, and profitability metrics',
@@ -80,7 +80,7 @@ const ProgressiveMetricsSystem: React.FC<ProgressiveMetricsSystemProps> = ({ ana
       displayMode: 'expandable-grid',
       metrics: [
         { key: 'dscr', label: 'DSCR', value: analysis?.keyMetrics?.dscr || 0, format: 'ratio', benchmark: 1.2 },
-        { key: 'irr', label: '10-Year IRR', value: analysis?.keyMetrics?.irr || 0, format: 'percentage', benchmark: 12 },
+        { key: 'irr', label: `${analysis?.longTermAnalysis?.projectionYears || 10}-Year IRR`, value: analysis?.keyMetrics?.irr || 0, format: 'percentage', benchmark: 12 },
         { key: 'equityMultiple', label: 'Equity Multiple', value: analysis?.keyMetrics?.equityMultiple || 0, format: 'ratio', benchmark: 2.0 },
         { key: 'breakEvenOccupancy', label: 'Break-Even Occupancy', value: analysis?.keyMetrics?.breakEvenOccupancy || 0, format: 'percentage', benchmark: 85 },
         { key: 'operatingExpenseRatio', label: 'Operating Expense Ratio', value: analysis?.keyMetrics?.operatingExpenseRatio || 0, format: 'percentage', benchmark: 45 },

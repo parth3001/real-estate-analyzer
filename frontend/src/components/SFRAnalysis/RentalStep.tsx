@@ -18,7 +18,9 @@ import {
   FormControlLabel,
   Switch,
   Divider,
-  LinearProgress
+  LinearProgress,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import {
   Home,
@@ -32,23 +34,67 @@ import {
 
 import WizardStep from './WizardStep';
 import type { WizardStepProps, DataConfidence } from './wizardTypes';
+import type { LongTermAssumptions } from '../../types/property';
 import { wizardApi } from '../../services/api';
+import TapToExpandField from '../common/TapToExpandField/TapToExpandField';
 
 const RentalStep: React.FC<WizardStepProps> = ({
   state,
   onUpdate,
   validation
 }) => {
+  // Default long-term assumptions for type safety (matches backend defaults)
+  const defaultLongTermAssumptions: LongTermAssumptions = {
+    projectionYears: 10,
+    annualRentIncrease: 3,
+    annualPropertyValueIncrease: 3,
+    inflationRate: 2.5,
+    vacancyRate: 5,
+    sellingCostsPercentage: 6,
+    turnoverFrequency: 2
+  };
+
   const [selfManage, setSelfManage] = useState(false);
   const [loadingRentEstimate, setLoadingRentEstimate] = useState(false);
-  
+
+  // UX Enhancement: Dual input mode for Property Management (percentage vs dollar amount)
+  const [mgmtInputMode, setMgmtInputMode] = useState<'percentage' | 'amount'>('percentage');
+  const [mgmtMonthlyAmount, setMgmtMonthlyAmount] = useState(
+    (state.data.monthlyRent || 0) * (state.data.propertyManagementRate || 8) / 100
+  );
+
   // Calculate price to rent ratio
-  const priceToRentRatio = state.data.purchasePrice && state.data.monthlyRent ? 
+  const priceToRentRatio = state.data.purchasePrice && state.data.monthlyRent ?
     Math.round(state.data.purchasePrice / (state.data.monthlyRent * 12)) : 0;
-  
+
   // Calculate gross rental yield
   const grossRentalYield = state.data.purchasePrice && state.data.monthlyRent ?
     ((state.data.monthlyRent * 12) / state.data.purchasePrice * 100).toFixed(2) : '0';
+
+  // FIX Issue #28: Smart default for maintenance reserve (1% of property value annually)
+  useEffect(() => {
+    if (state.data.purchasePrice && !state.data.maintenanceCost) {
+      const smartMaintenanceDefault = Math.round(state.data.purchasePrice * 0.01);
+
+      console.log('🔧 ISSUE #28 FIX: Setting smart maintenance default:', {
+        purchasePrice: state.data.purchasePrice,
+        maintenanceDefault: smartMaintenanceDefault,
+        formula: '1% of property value annually'
+      });
+
+      onUpdate({
+        data: {
+          ...state.data,
+          maintenanceCost: smartMaintenanceDefault
+        }
+      });
+    }
+  }, [state.data.purchasePrice]); // Only run when purchase price changes
+
+  // FIX Issue #28: Calculate maintenance as percentage of rent for validation
+  const maintenancePercentOfRent = state.data.monthlyRent && state.data.maintenanceCost
+    ? (state.data.maintenanceCost / 12 / state.data.monthlyRent) * 100
+    : 0;
 
   // Real rent estimate lookup using RentCast + Census data
   useEffect(() => {
@@ -169,10 +215,44 @@ const RentalStep: React.FC<WizardStepProps> = ({
   // Handle self management toggle
   const handleSelfManageToggle = (checked: boolean) => {
     setSelfManage(checked);
+    const newRate = checked ? 0 : 8;
+    const calculatedAmount = (state.data.monthlyRent || 0) * newRate / 100;
+    setMgmtMonthlyAmount(calculatedAmount);
+
     onUpdate({
       data: {
         ...state.data,
-        propertyManagementRate: checked ? 0 : 8
+        propertyManagementRate: newRate
+      }
+    });
+  };
+
+  // UX Enhancement: Handle property management percentage change (% → $)
+  const handleMgmtPercentageChange = (value: number) => {
+    const calculatedAmount = (state.data.monthlyRent || 0) * value / 100;
+    setMgmtMonthlyAmount(calculatedAmount);
+
+    onUpdate({
+      data: {
+        ...state.data,
+        propertyManagementRate: value
+      }
+    });
+  };
+
+  // UX Enhancement: Handle property management amount change ($ → %)
+  const handleMgmtAmountChange = (value: number) => {
+    setMgmtMonthlyAmount(value);
+
+    // Auto-calculate percentage
+    const calculatedPercentage = state.data.monthlyRent && state.data.monthlyRent > 0
+      ? (value / state.data.monthlyRent * 100)
+      : 8;
+
+    onUpdate({
+      data: {
+        ...state.data,
+        propertyManagementRate: calculatedPercentage
       }
     });
   };
@@ -293,31 +373,79 @@ const RentalStep: React.FC<WizardStepProps> = ({
             </Grid>
 
             {!selfManage && (
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Management Fee: {state.data.propertyManagementRate || 8}% of rent
-                  </Typography>
-                  <Slider
-                    value={state.data.propertyManagementRate || 8}
-                    onChange={(_, value) => onUpdate({
-                      data: { ...state.data, propertyManagementRate: value as number }
-                    })}
-                    min={5}
-                    max={12}
-                    step={0.5}
-                    marks={[
-                      { value: 5, label: '5%' },
-                      { value: 8, label: '8%' },
-                      { value: 10, label: '10%' },
-                      { value: 12, label: '12%' }
-                    ]}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(value) => `${value}%`}
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    Monthly cost: ${Math.round((state.data.monthlyRent || 0) * (state.data.propertyManagementRate || 8) / 100).toLocaleString()}
-                  </Typography>
+                  {/* UX Enhancement: Input mode toggle */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 500 }}
+                    >
+                      Property Management Fee Input Method:
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={mgmtInputMode}
+                      exclusive
+                      onChange={(_, value) => value && setMgmtInputMode(value)}
+                      size="small"
+                      fullWidth
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          fontFamily: 'SF Pro Text',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          borderRadius: '8px'
+                        }
+                      }}
+                    >
+                      <ToggleButton value="percentage">% of Monthly Rent</ToggleButton>
+                      <ToggleButton value="amount">$ Monthly Amount</ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+
+                  {/* Conditional input based on mode */}
+                  {mgmtInputMode === 'percentage' ? (
+                    <>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Management Fee: {(state.data.propertyManagementRate || 8).toFixed(1)}% (${Math.round(mgmtMonthlyAmount)}/month)
+                      </Typography>
+                      <Slider
+                        value={state.data.propertyManagementRate || 8}
+                        onChange={(_, value) => handleMgmtPercentageChange(value as number)}
+                        min={0}
+                        max={15}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 8, label: '8%' },
+                          { value: 10, label: '10%' },
+                          { value: 12, label: '12%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <TextField
+                        label="Property Management Monthly Fee"
+                        type="number"
+                        value={Math.round(mgmtMonthlyAmount)}
+                        onChange={(e) => handleMgmtAmountChange(parseFloat(e.target.value) || 0)}
+                        fullWidth
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">$</InputAdornment>
+                        }}
+                        inputProps={{
+                          min: 0, // User can set to 0 if managing themselves
+                          step: 10
+                        }}
+                        helperText={`Estimated rate: ${(state.data.propertyManagementRate || 8).toFixed(1)}% of ${(state.data.monthlyRent || 0).toLocaleString()}/month rent`}
+                      />
+                    </>
+                  )}
                 </Box>
               </Grid>
             )}
@@ -330,7 +458,17 @@ const RentalStep: React.FC<WizardStepProps> = ({
                 <Slider
                   value={state.data.vacancyRate || 5}
                   onChange={(_, value) => onUpdate({
-                    data: { ...state.data, vacancyRate: value as number }
+                    data: {
+                      ...state.data,
+                      vacancyRate: value as number,
+                      // CRITICAL FIX: Sync vacancy rate to longTermAssumptions for backend calculations
+                      // This maintains the pattern from the old AssumptionsStep that we deleted in Phase 1
+                      longTermAssumptions: {
+                        ...defaultLongTermAssumptions,
+                        ...state.data.longTermAssumptions,
+                        vacancyRate: value as number
+                      }
+                    }
                   })}
                   min={0}
                   max={20}
@@ -409,6 +547,276 @@ const RentalStep: React.FC<WizardStepProps> = ({
               />
             </Grid>
           </Grid>
+        </Box>
+
+        <Divider />
+
+        {/* Advanced Assumptions Section - Collapsed by Default */}
+        <Box>
+          <TapToExpandField
+            label="Advanced Assumptions"
+            displayValue="Optional - Customize for more accurate long-term analysis"
+            helperText="Using industry-standard defaults"
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+              {/* Long-term Projections */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  📈 Long-Term Projections
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Projection Years"
+                      type="number"
+                      value={state.data.longTermAssumptions?.projectionYears || 10}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          longTermAssumptions: {
+                            ...defaultLongTermAssumptions,
+                            ...state.data.longTermAssumptions,
+                            projectionYears: parseFloat(e.target.value) || 10
+                          }
+                        }
+                      })}
+                      helperText="Years to project cash flows and appreciation"
+                      inputProps={{ min: 1, max: 30, step: 1 }}
+                      placeholder="10"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Annual Rent Increase: {(state.data.longTermAssumptions?.annualRentIncrease || 3).toFixed(1)}%
+                      </Typography>
+                      <Slider
+                        value={state.data.longTermAssumptions?.annualRentIncrease || 3}
+                        onChange={(_, value) => onUpdate({
+                          data: {
+                            ...state.data,
+                            longTermAssumptions: {
+                              ...defaultLongTermAssumptions,
+                              ...state.data.longTermAssumptions,
+                              annualRentIncrease: value as number
+                            }
+                          }
+                        })}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 3, label: '3%' },
+                          { value: 5, label: '5%' },
+                          { value: 10, label: '10%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Expected annual rent growth rate
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Property Appreciation: {(state.data.longTermAssumptions?.annualPropertyValueIncrease || 3).toFixed(1)}%
+                      </Typography>
+                      <Slider
+                        value={state.data.longTermAssumptions?.annualPropertyValueIncrease || 3}
+                        onChange={(_, value) => onUpdate({
+                          data: {
+                            ...state.data,
+                            longTermAssumptions: {
+                              ...defaultLongTermAssumptions,
+                              ...state.data.longTermAssumptions,
+                              annualPropertyValueIncrease: value as number
+                            }
+                          }
+                        })}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 3, label: '3%' },
+                          { value: 5, label: '5%' },
+                          { value: 10, label: '10%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Expected annual property value growth
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Selling Costs: {(state.data.longTermAssumptions?.sellingCostsPercentage || 6).toFixed(1)}%
+                      </Typography>
+                      <Slider
+                        value={state.data.longTermAssumptions?.sellingCostsPercentage || 6}
+                        onChange={(_, value) => onUpdate({
+                          data: {
+                            ...state.data,
+                            longTermAssumptions: {
+                              ...defaultLongTermAssumptions,
+                              ...state.data.longTermAssumptions,
+                              sellingCostsPercentage: value as number
+                            }
+                          }
+                        })}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 6, label: '6%' },
+                          { value: 8, label: '8%' },
+                          { value: 10, label: '10%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Agent fees and closing costs when selling
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Operating Reserves */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  💰 Operating Reserves (Optional - If not using actual costs)
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Maintenance Reserve"
+                      type="number"
+                      value={state.data.maintenanceCost || ''}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          maintenanceCost: parseFloat(e.target.value) || 0
+                        }
+                      })}
+                      helperText="Annual maintenance and repairs budget (defaults to 1% of property value)"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        endAdornment: <InputAdornment position="end">/year</InputAdornment>
+                      }}
+                      inputProps={{ min: 0, step: 50 }}
+                      placeholder={state.data.purchasePrice ? Math.round(state.data.purchasePrice * 0.01).toString() : "2000"}
+                    />
+                  </Grid>
+
+                  {/* HOA Fees - TODO: Add to backend type first
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="HOA Fees (if applicable)"
+                      type="number"
+                      helperText="Monthly homeowners association fees (coming soon)"
+                      disabled
+                      placeholder="0"
+                    />
+                  </Grid>
+                  */}
+                </Grid>
+
+                {/* FIX Issue #28: Validation warning for excessive maintenance */}
+                {maintenancePercentOfRent > 15 && (
+                  <Alert severity="warning" sx={{ mt: 2 }}>
+                    <strong>High Maintenance Reserve:</strong> Your annual maintenance reserve (${state.data.maintenanceCost?.toLocaleString()}/year) equals{' '}
+                    <strong>{maintenancePercentOfRent.toFixed(1)}%</strong> of monthly rent.
+                    <br />
+                    Industry standard is <strong>5-10% of monthly rent</strong> (${Math.round((state.data.monthlyRent || 0) * 0.05 * 12)}-${Math.round((state.data.monthlyRent || 0) * 0.10 * 12)}/year).
+                    Consider reducing to avoid overstating expenses.
+                  </Alert>
+                )}
+              </Box>
+
+              {/* Economic Assumptions */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  📊 Economic Assumptions
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Inflation Rate: {(state.data.longTermAssumptions?.inflationRate || 2.5).toFixed(1)}%
+                      </Typography>
+                      <Slider
+                        value={state.data.longTermAssumptions?.inflationRate || 2.5}
+                        onChange={(_, value) => onUpdate({
+                          data: {
+                            ...state.data,
+                            longTermAssumptions: {
+                              ...defaultLongTermAssumptions,
+                              ...state.data.longTermAssumptions,
+                              inflationRate: value as number
+                            }
+                          }
+                        })}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 2.5, label: '2.5%' },
+                          { value: 5, label: '5%' },
+                          { value: 10, label: '10%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Expected annual inflation for expenses
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Turnover Frequency"
+                      type="number"
+                      value={state.data.longTermAssumptions?.turnoverFrequency || 2}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          longTermAssumptions: {
+                            ...defaultLongTermAssumptions,
+                            ...state.data.longTermAssumptions,
+                            turnoverFrequency: parseFloat(e.target.value) || 2
+                          }
+                        }
+                      })}
+                      helperText="Years between tenant turnovers"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">years</InputAdornment>
+                      }}
+                      inputProps={{ min: 1, max: 10, step: 0.5 }}
+                      placeholder="2"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+          </TapToExpandField>
         </Box>
 
         {/* Metrics Cards */}

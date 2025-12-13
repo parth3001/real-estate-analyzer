@@ -23,13 +23,15 @@ interface SimplePortfolioSelectorProps {
   onPortfolioSelected?: (portfolioId: string | null) => void;
   selectedPortfolioId?: string | null;
   disabled?: boolean;
+  compact?: boolean; // FIX Issue #26: Compact mode for minimal UI
 }
 
 export const SimplePortfolioSelector: React.FC<SimplePortfolioSelectorProps> = ({
   dealId,
   onPortfolioSelected,
   selectedPortfolioId,
-  disabled = false
+  disabled = false,
+  compact = false
 }) => {
   const [portfolios, setPortfolios] = useState<PortfolioSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,14 +82,66 @@ export const SimplePortfolioSelector: React.FC<SimplePortfolioSelectorProps> = (
 
   const selectedPortfolio = portfolios.find(p => p.id === selectedPortfolioId);
 
+  // FIX Issue #26: Compact mode renders minimal UI without card wrapper
+  if (compact) {
+    return (
+      <Box>
+        {loading ? (
+          <Box sx={{ textAlign: 'center', py: 1 }}>
+            <CircularProgress size={20} />
+          </Box>
+        ) : portfolios.length === 0 ? (
+          <Typography variant="caption" sx={{ color: appleColors.gray[500], textAlign: 'center', display: 'block' }}>
+            No portfolios available
+          </Typography>
+        ) : (
+          <FormControl fullWidth size="small">
+            <Select
+              value={selectedPortfolioId || 'none'}
+              onChange={(e) => handlePortfolioChange(e.target.value)}
+              disabled={disabled}
+              displayEmpty
+              sx={{
+                backgroundColor: 'white',
+                borderRadius: '10px',
+                fontSize: '0.875rem',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: appleColors.gray[300]
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: appleColors.primary[300]
+                }
+              }}
+            >
+              <MenuItem value="none">
+                <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
+                  <Folder sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle', color: appleColors.gray[500] }} />
+                  Analyze without portfolio context
+                </Typography>
+              </MenuItem>
+              {portfolios.map((portfolio) => (
+                <MenuItem key={portfolio.id} value={portfolio.id}>
+                  <Typography variant="body2">
+                    <Folder sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle', color: appleColors.primary[600] }} />
+                    {portfolio.name}
+                  </Typography>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+      </Box>
+    );
+  }
+
   return (
     <AppleCard padding="large">
       <Box>
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
           <Folder sx={{ color: appleColors.blue[600] }} />
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               fontWeight: 600,
               color: appleColors.gray[900],
               flex: 1
@@ -96,7 +150,7 @@ export const SimplePortfolioSelector: React.FC<SimplePortfolioSelectorProps> = (
             Portfolio Selection
           </Typography>
           {selectedPortfolioId && (
-            <Chip 
+            <Chip
               icon={<CheckCircle />}
               label="Selected"
               color="success"

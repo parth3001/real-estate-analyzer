@@ -53,6 +53,8 @@ export interface SFRPropertyData extends BasePropertyData {
     portfolioName?: string;
     portfolioStrategy?: string;
   };
+  // Phase 1: Universal Simple - Investment strategy selection
+  strategy?: 'buy-hold' | 'house-hack' | 'brrrr';
   // Investment goals and strategy (optional)
   enhancedGoals?: {
     exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';

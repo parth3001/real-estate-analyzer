@@ -1,34 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Button, 
-  IconButton, 
-  CircularProgress, 
-  Alert, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  IconButton,
+  CircularProgress,
+  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip
+  Grid,
+  Card,
+  CardContent,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { propertyApi } from '../services/api';
-import { pipelineApi } from '../services/pipelineApi';
 import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
-import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
-import { ConfidenceIndicator, calculateConfidence } from '../components/ui/ConfidenceIndicator';
 
 interface SavedProperty {
   _id: string;
@@ -55,25 +51,17 @@ interface SavedProperty {
     };
     investmentDecision?: {
       verdict?: string;
+      professionalAssessment?: {
+        dealQuality?: number;
+      };
     };
-    // Other analysis fields might be present
     [key: string]: any;
   };
-  confidence?: {
-    level: 1 | 2 | 3;
-    dataSource: string;
-    calculationMethod: string;
-  };
-  quickMetrics?: {
-    cashFlow?: number;
-    capRate?: number;
-    cashOnCashReturn?: number;
-  };
-  // Allow other fields that might be in the response
   [key: string]: any;
 }
 
 const SavedProperties: React.FC = () => {
+  const navigate = useNavigate();
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,21 +69,21 @@ const SavedProperties: React.FC = () => {
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedDeal] = useState<any>(null);
-  const [isImportingToPipeline, setIsImportingToPipeline] = useState<{[key: string]: boolean}>({});
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>('dealQuality');
 
   // Fetch saved properties on component mount
   useEffect(() => {
     fetchProperties();
   }, []);
 
-  // Add useEffect to clear success messages
+  // Clear success messages after 5 seconds
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
         setSuccessMessage(null);
-      }, 5000); // Clear after 5 seconds
-      
+      }, 5000);
+
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
@@ -105,14 +93,11 @@ const SavedProperties: React.FC = () => {
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-    
+
     try {
       console.log('Fetching saved properties...');
       const response = await propertyApi.getAllProperties();
-      
-      console.log('API response status:', response.status);
-      console.log('API response type:', typeof response.data);
-      
+
       if (response.status === 200) {
         if (!Array.isArray(response.data)) {
           console.error('Expected array but received:', response.data);
@@ -120,33 +105,13 @@ const SavedProperties: React.FC = () => {
           setProperties([]);
           return;
         }
-        
+
         console.log('Properties fetched successfully:', response.data.length, 'items');
-        
-        try {
-          // Examine each property to check for required fields
-          response.data.forEach((prop: any, index) => {
-            console.log(`Property ${index} structure check:`, {
-              hasId: Boolean(prop._id),
-              hasName: Boolean(prop.propertyName),
-              hasType: Boolean(prop.propertyType),
-              hasAnalysis: Boolean(prop.analysis),
-              hasKeyMetrics: Boolean(prop.analysis && prop.analysis.keyMetrics),
-            });
-          });
-          
-          // Cast the data to the SavedProperty type
-          const savedProperties = response.data as unknown as SavedProperty[];
-          console.log('First property sample:', savedProperties[0] || 'No properties');
-          setProperties(savedProperties);
-        } catch (parseErr) {
-          console.error('Error parsing property data:', parseErr);
-          setError('Error parsing property data: ' + (parseErr instanceof Error ? parseErr.message : 'Unknown error'));
-          setProperties([]);
-        }
+        const savedProperties = response.data as unknown as SavedProperty[];
+        setProperties(savedProperties);
       } else {
         console.error('Failed to load saved properties:', response);
-        setError('Failed to load saved properties: ' + (response.message || 'Unknown error'));
+        setError('Failed to load saved properties');
         setProperties([]);
       }
     } catch (err) {
@@ -161,32 +126,27 @@ const SavedProperties: React.FC = () => {
   // Handle property deletion
   const handleDeleteProperty = async () => {
     if (!propertyToDelete) return;
-    
+
     setDeleteLoading(true);
     setSuccessMessage(null);
     setError(null);
-    
+
     try {
       const response = await propertyApi.deleteProperty(propertyToDelete);
-      
-      // Check for a successful response status (could be 200, 202, 204)
+
       if (response.status >= 200 && response.status < 300) {
-        // Remove the deleted property from the state
-        setProperties(prevProperties => 
+        setProperties(prevProperties =>
           prevProperties.filter(property => property._id !== propertyToDelete)
         );
         setDeleteDialogOpen(false);
-        // Add a success message
         setSuccessMessage('Property deleted successfully');
         console.log('Property deleted successfully');
       } else {
         console.error('Delete response:', response);
-        setError('Failed to delete property: ' + (response.data?.message || 'Unknown error'));
+        setError('Failed to delete property');
       }
     } catch (err) {
       console.error('Error deleting property:', err);
-      // Even if there's an error, check if the property was actually deleted
-      // by refreshing the properties list
       fetchProperties();
       setError('Error occurred, but property may have been deleted. Please check the list.');
     } finally {
@@ -196,7 +156,8 @@ const SavedProperties: React.FC = () => {
   };
 
   // Open delete confirmation dialog
-  const openDeleteDialog = (id: string) => {
+  const openDeleteDialog = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
     setPropertyToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -207,87 +168,95 @@ const SavedProperties: React.FC = () => {
     setPropertyToDelete(null);
   };
 
-  // Handle importing property to Pipeline
-  const handleImportToPipeline = async (property: SavedProperty) => {
-    setIsImportingToPipeline(prev => ({...prev, [property._id]: true}));
-    setError(null);
-    
-    try {
-      console.log('Importing property to Pipeline:', property._id);
-      
-      const result = await pipelineApi.convertAnalysisToPipeline(
-        property._id,
-        {
-          channel: 'OTHER',
-          contact: 'Imported from Saved Properties',
-          notes: 'Converted from existing analysis'
-        },
-        `Imported saved property: ${property.propertyName || 'Unknown Property'}`
-      );
-      
-      console.log('Successfully imported to Pipeline:', result);
-      setSuccessMessage(`"${property.propertyName}" successfully added to Pipeline!`);
-    } catch (err) {
-      console.error('Error importing to Pipeline:', err);
-      setError('Error importing to Pipeline: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    } finally {
-      setIsImportingToPipeline(prev => ({...prev, [property._id]: false}));
+  // Handle card click to navigate to property details
+  const handleCardClick = (property: SavedProperty) => {
+    navigate(`/${property.propertyType.toLowerCase()}-analysis?id=${property._id}`);
+  };
+
+  // Get verdict color based on verdict type
+  const getVerdictColor = (verdict?: string) => {
+    switch (verdict) {
+      case 'BUY':
+        return { bg: '#34C759', text: '#FFFFFF' };
+      case 'NEGOTIATE':
+        return { bg: '#FF9500', text: '#FFFFFF' };
+      case 'CAUTION':
+        return { bg: '#007AFF', text: '#FFFFFF' };
+      case 'PASS':
+        return { bg: '#FF3B30', text: '#FFFFFF' };
+      default:
+        return { bg: '#8E8E93', text: '#FFFFFF' };
     }
   };
 
-  // Add a function to check if property has valid structure
-  const isValidProperty = (property: any): boolean => {
-    if (!property || typeof property !== 'object') return false;
-    if (!property._id) return false;
-    if (!property.propertyName) return false;
-    if (!property.propertyType) return false;
-    return true;
+  // Sort properties based on selected criteria
+  const getSortedProperties = () => {
+    const sorted = [...properties];
+
+    switch (sortBy) {
+      case 'dealQuality':
+        return sorted.sort((a, b) => {
+          const aQuality = a.analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0;
+          const bQuality = b.analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0;
+          return bQuality - aQuality; // High to low
+        });
+      case 'cashFlow':
+        return sorted.sort((a, b) => {
+          const aCashFlow = a.analysis?.monthlyAnalysis?.cashFlow || 0;
+          const bCashFlow = b.analysis?.monthlyAnalysis?.cashFlow || 0;
+          return bCashFlow - aCashFlow; // High to low
+        });
+      case 'dateAdded':
+        return sorted.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      case 'price':
+        return sorted.sort((a, b) => (a.purchasePrice || 0) - (b.purchasePrice || 0)); // Low to high
+      default:
+        return sorted;
+    }
   };
 
-  // Property source detection logic (same as Portfolio dashboard)
-  const getPropertySource = (property: any) => {
-    if (property.source === 'PORTFOLIO_MANUAL_ENTRY' || 
-        property.isManualEntry || 
-        property.isPortfolioProperty ||
-        property.manualEntryData ||
-        (property.monthlyOperatingExpenses !== undefined) ||
-        (property.propertyType === 'OTHER' && property.monthlyRent) ||
-        (!property.analysis?.investmentDecision?.verdict)) {
-      return 'manual';
-    }
-    
-    if (property.analysis && 
-        property.analysis.investmentDecision && 
-        property.analysis.investmentDecision.verdict &&
-        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.analysis.investmentDecision.verdict)) {
-      return 'analyzed';
-    }
-    
-    return 'manual'; // Default to manual for safety
-  };
+  const sortedProperties = getSortedProperties();
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Saved Properties
         </Typography>
-        
-        <Box>
-          <Button 
-            variant="outlined" 
-            color="primary" 
+
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          {/* Sort Dropdown */}
+          {properties.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Sort By</InputLabel>
+              <Select
+                value={sortBy}
+                label="Sort By"
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <MenuItem value="dealQuality">Deal Quality (High to Low)</MenuItem>
+                <MenuItem value="cashFlow">Cash Flow (High to Low)</MenuItem>
+                <MenuItem value="dateAdded">Date Added (Newest First)</MenuItem>
+                <MenuItem value="price">Price (Low to High)</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+
+          <Button
+            variant="outlined"
+            color="primary"
             onClick={fetchProperties}
             disabled={loading}
-            sx={{ mr: 2 }}
           >
-            {loading ? 'Loading...' : 'Refresh List'}
+            {loading ? 'Loading...' : 'Refresh'}
           </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            component={Link}
-            to="/sfr-analysis"
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/sfr-analysis')}
           >
             Add New Property
           </Button>
@@ -297,257 +266,184 @@ const SavedProperties: React.FC = () => {
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       {successMessage && <Alert severity="success" sx={{ mb: 3 }}>{successMessage}</Alert>}
 
-      <Paper sx={{ p: 3, mb: 4 }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : properties.length === 0 ? (
-          <Box sx={{ textAlign: 'center', p: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              No saved properties yet
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Start by analyzing a new property and save it to your collection.
-            </Typography>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              component={Link}
-              to="/sfr-analysis"
-              sx={{ mt: 2 }}
-            >
-              Analyze New Property
-            </Button>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table sx={{ minWidth: 650 }} aria-label="properties table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Property Name</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell align="center">
-                    <Tooltip 
-                      title={
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                            Investment Insights
-                          </Typography>
-                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-                            ●○○ Basic Insights - Address, price, basic info
-                          </Typography>
-                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-                            ●●○ Good Insights - Cash flow and metrics calculated
-                          </Typography>
-                          <Typography variant="caption" display="block">
-                            ●●● Complete Insights - Full analysis with AI recommendations
-                          </Typography>
-                        </Box>
-                      }
-                      placement="top"
-                      arrow
-                    >
-                      <Typography component="span" sx={{ cursor: 'help', borderBottom: '1px dotted' }}>
-                        Investment Insights
-                      </Typography>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell align="right">Price</TableCell>
-                  <TableCell align="right">Cap Rate</TableCell>
-                  <TableCell align="right">CoC Return</TableCell>
-                  <TableCell align="right">IRR</TableCell>
-                  <TableCell align="right">
-                    <Tooltip 
-                      title={
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                            Investment Rating
-                          </Typography>
-                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-                            Our V3.0 Investment Engine's quality assessment:
-                          </Typography>
-                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-                            ●○○ Basic - Property info available
-                          </Typography>
-                          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
-                            ●●○ Good - Financial metrics calculated
-                          </Typography>
-                          <Typography variant="caption" display="block">
-                            ●●● Excellent - Full professional analysis with deal quality score
-                          </Typography>
-                        </Box>
-                      }
-                      placement="top"
-                      arrow
-                    >
-                      <Typography component="span" sx={{ cursor: 'help', borderBottom: '1px dotted' }}>
-                        Investment Rating
-                      </Typography>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>Last Updated</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {properties.map((property) => {
-                  if (!isValidProperty(property)) {
-                    return (
-                      <TableRow key={property._id || 'invalid-' + Math.random()}>
-                        <TableCell colSpan={10}>
-                          <Typography color="error">Invalid property data</Typography>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
+      {/* Properties Grid */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : properties.length === 0 ? (
+        <Paper sx={{ p: 6, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            No saved properties yet
+          </Typography>
+          <Typography variant="body1" paragraph color="text.secondary">
+            Start by analyzing a new property and save it to your collection.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/sfr-analysis')}
+            sx={{ mt: 2 }}
+          >
+            Analyze New Property
+          </Button>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {sortedProperties.map((property) => {
+            const dealQuality = property.analysis?.investmentDecision?.professionalAssessment?.dealQuality;
+            const verdict = property.analysis?.investmentDecision?.verdict;
+            const cashFlow = property.analysis?.monthlyAnalysis?.cashFlow;
+            const capRate = property.analysis?.keyMetrics?.capRate;
+            const cocReturn = property.analysis?.keyMetrics?.cashOnCashReturn;
+            const verdictColors = getVerdictColor(verdict);
 
-                  const isManualProperty = getPropertySource(property) === 'manual';
+            return (
+              <Grid item xs={12} sm={6} md={4} key={property._id}>
+                <Card
+                  onMouseEnter={() => setHoveredCard(property._id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => handleCardClick(property)}
+                  sx={{
+                    position: 'relative',
+                    cursor: 'pointer',
+                    height: '100%',
+                    borderRadius: '12px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 122, 255, 0.04)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                      transform: 'translateY(-2px)',
+                    }
+                  }}
+                >
+                  {/* Delete Button (top-right, appears on hover) */}
+                  <IconButton
+                    onClick={(e) => openDeleteDialog(property._id, e)}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      opacity: hoveredCard === property._id ? 1 : 0,
+                      transition: 'opacity 0.2s ease',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                      },
+                      // Always show on mobile (no hover)
+                      '@media (hover: none)': {
+                        opacity: 1,
+                      }
+                    }}
+                  >
+                    <DeleteIcon sx={{ color: '#FF3B30', fontSize: 20 }} />
+                  </IconButton>
 
-                  return (
-                    <TableRow 
-                      key={property._id}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  {/* Deal Quality Badge (top-right, below delete button) */}
+                  {typeof dealQuality === 'number' && verdict && (
+                    <Chip
+                      label={`${dealQuality} ${verdict}`}
+                      sx={{
+                        position: 'absolute',
+                        top: hoveredCard === property._id ? 48 : 8,
+                        right: 8,
+                        backgroundColor: verdictColors.bg,
+                        color: verdictColors.text,
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        height: 28,
+                        transition: 'top 0.2s ease',
+                        '@media (hover: none)': {
+                          top: 48, // Always below delete on mobile
+                        }
+                      }}
+                    />
+                  )}
+
+                  <CardContent sx={{ pt: 3 }}>
+                    {/* Property Address */}
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      sx={{
+                        fontWeight: 600,
+                        color: '#1C1C1E',
+                        mb: 0.5,
+                        fontSize: '1.125rem'
+                      }}
                     >
-                      <TableCell component="th" scope="row">
-                        <Box>
-                          <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.3 }}>
-                            {property.propertyName || 'Unnamed Property'}
-                          </Typography>
-                          <Box sx={{ mt: 0.5 }}>
-                            <Chip 
-                              label={property.propertyType === 'SFR' ? 'SFR' : 'MF'} 
-                              color={property.propertyType === 'SFR' ? 'primary' : 'secondary'} 
-                              size="small"
-                              sx={{ height: 20, fontSize: '0.7rem' }}
-                            />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {property.propertyAddress ? (
-                          <Box>
-                            <Typography variant="body2" sx={{ lineHeight: 1.3 }}>
-                              {property.propertyAddress.street || 'Street not available'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.3 }}>
-                              {`${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}`.trim()}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          'Address not available'
-                        )}
-                      </TableCell>
-                      <TableCell align="center">
-                        {(() => {
-                          // Calculate investment insights level
-                          const insightsLevel = calculateConfidence(property);
-                          
-                          // Determine source for tooltip
-                          const source = isManualProperty ? 'Manual Entry' : 'Full Analysis';
-                          
-                          return (
-                            <ConfidenceIndicator 
-                              level={insightsLevel} 
-                              size="small" 
-                              source={source}
-                            />
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(property.purchasePrice)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {property.analysis?.keyMetrics?.capRate ? 
-                          formatPercent(property.analysis.keyMetrics.capRate) : 
-                          'N/A'
-                        }
-                      </TableCell>
-                      <TableCell align="right">
-                        {property.analysis?.keyMetrics?.cashOnCashReturn ? 
-                          formatPercent(property.analysis.keyMetrics.cashOnCashReturn) : 
-                          'N/A'
-                        }
-                      </TableCell>
-                      <TableCell align="right">
-                        {property.analysis?.longTermAnalysis?.returns?.irr ? 
-                          formatPercent(property.analysis.longTermAnalysis.returns.irr) : 
-                          '0.00%'
-                        }
-                      </TableCell>
-                      <TableCell align="right">
-                        {(() => {
-                          const dealQuality = (property.analysis?.investmentDecision as any)?.professionalAssessment?.dealQuality;
-                          const verdict = (property.analysis?.investmentDecision as any)?.verdict;
-                          
-                          if (typeof dealQuality === 'number') {
-                            return (
-                              <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {dealQuality}/100
-                                </Typography>
-                                {verdict && (
-                                  <Typography variant="caption" sx={{ 
-                                    color: verdict === 'BUY' ? 'success.main' : 
-                                           verdict === 'NEGOTIATE' ? 'warning.main' :
-                                           verdict === 'CAUTION' ? 'info.main' : 'error.main',
-                                    fontWeight: 500
-                                  }}>
-                                    {verdict}
-                                  </Typography>
-                                )}
-                              </Box>
-                            );
-                          }
-                          return 'N/A';
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(property.updatedAt)}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Tooltip title="View Details">
-                          <IconButton 
-                            color="primary"
-                            component={Link}
-                            to={`/${property.propertyType.toLowerCase()}-analysis?id=${property._id}`}
-                          >
-                            <VisibilityIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleImportToPipeline(property)}
-                          disabled={isImportingToPipeline[property._id]}
-                          sx={{ 
-                            minWidth: 'auto',
-                            fontSize: '0.75rem',
-                            px: 1.5,
-                            py: 0.5,
-                            textTransform: 'none'
+                      {property.propertyAddress?.street || property.propertyName || 'Unnamed Property'}
+                    </Typography>
+
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2, fontSize: '0.875rem' }}
+                    >
+                      {property.propertyAddress ?
+                        `${property.propertyAddress.city || ''}, ${property.propertyAddress.state || ''} ${property.propertyAddress.zipCode || ''}`.trim() :
+                        'Address not available'
+                      }
+                    </Typography>
+
+                    {/* Property Type Badge */}
+                    <Box sx={{ mb: 2 }}>
+                      <Chip
+                        label={property.propertyType === 'SFR' ? 'Single Family' : 'Multi-Family'}
+                        color={property.propertyType === 'SFR' ? 'primary' : 'secondary'}
+                        size="small"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                    </Box>
+
+                    {/* Key Metrics */}
+                    <Box sx={{ mb: 2 }}>
+                      {typeof cashFlow === 'number' ? (
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            fontWeight: 600,
+                            color: cashFlow >= 0 ? '#34C759' : '#FF3B30',
+                            mb: 0.5
                           }}
                         >
-                          {isImportingToPipeline[property._id] ? 'Adding...' : 'Add to Pipeline'}
-                        </Button>
-                        <Tooltip title="Delete">
-                          <IconButton 
-                            color="error" 
-                            onClick={() => openDeleteDialog(property._id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
+                          {formatCurrency(cashFlow)}/mo
+                        </Typography>
+                      ) : (
+                        <Typography variant="h5" color="text.secondary" sx={{ mb: 0.5 }}>
+                          Cash Flow N/A
+                        </Typography>
+                      )}
+
+                      <Typography variant="body2" color="text.secondary">
+                        {typeof capRate === 'number' ? `${formatPercent(capRate)} Cap Rate` : 'Cap Rate N/A'}
+                        {typeof cocReturn === 'number' && ` · ${formatPercent(cocReturn)} CoC`}
+                      </Typography>
+                    </Box>
+
+                    {/* Purchase Price */}
+                    {property.purchasePrice && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Purchase: {formatCurrency(property.purchasePrice)}
+                      </Typography>
+                    )}
+
+                    {/* Last Updated */}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: '0.75rem' }}
+                    >
+                      Updated {formatDate(property.updatedAt)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -568,9 +464,9 @@ const SavedProperties: React.FC = () => {
           <Button onClick={closeDeleteDialog} color="primary">
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteProperty} 
-            color="error" 
+          <Button
+            onClick={handleDeleteProperty}
+            color="error"
             disabled={deleteLoading}
             autoFocus
           >
@@ -578,16 +474,8 @@ const SavedProperties: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {selectedDeal && (
-        <AnalysisResults 
-          analysis={selectedDeal.analysis} 
-          propertyData={selectedDeal.propertyData}
-          dealId={selectedDeal._id}
-        />
-      )}
     </Box>
   );
 };
 
-export default SavedProperties; 
+export default SavedProperties;

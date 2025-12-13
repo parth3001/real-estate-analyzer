@@ -347,11 +347,13 @@ export class PersonaDataTransformer {
   private static getExtendedMetrics(analysisData: Analysis): CoreMetricData[] {
     const keyMetrics = analysisData.keyMetrics;
     const _longTermAnalysis = analysisData.longTermAnalysis;
-    
+
+    const projectionYears = _longTermAnalysis.projectionYears || 10;
+
     return [
       {
         id: 'irr',
-        name: '10-Year IRR',
+        name: `${projectionYears}-Year IRR`,
         value: `${_longTermAnalysis.returns.irr?.toFixed(2)}%`,
         status: (_longTermAnalysis.returns.irr || 0) > 12 ? 'positive' : 'neutral',
         importance: 'high'

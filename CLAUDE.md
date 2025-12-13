@@ -62,6 +62,45 @@ Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistenc
 
 ---
 
+## 🐛 **Issue Tracking Protocol**
+
+⚠️ **CRITICAL RULE**: Every bug or issue discovered MUST be added to `/ISSUE_TRACKER.md`
+
+**When to Add an Issue**:
+- ✅ Any bug found during development or testing
+- ✅ Any incorrect calculation or data display
+- ✅ Any user-reported problem
+- ✅ Any performance issue
+- ✅ Any UX issue that impacts usability
+
+**Issue Tracking Process**:
+1. **Discover Issue** → Immediately add to `/ISSUE_TRACKER.md`
+2. **Assign Priority**: 🔴 Critical / 🟡 High / 🟢 Medium / 🔵 Low
+3. **Document Details**: Description, impact, root cause (if known), proposed solution
+4. **Update Status**: As you work on it (Open → In Progress → Resolved)
+5. **Cross-Reference**: Link to related commits, PRs, or documentation
+
+**Issue Numbering**:
+- Use sequential numbering: Issue #1, Issue #2, etc.
+- Find the last issue number: `grep -n "^### Issue #" ISSUE_TRACKER.md | tail -1`
+- Add new issue to appropriate priority section
+
+**Required Fields**:
+- **Status**: 🔴 Open / 🟡 In Progress / ✅ Resolved
+- **Priority**: P0 (Critical) / P1 (High) / P2 (Medium) / P3 (Low)
+- **Reported**: Date (YYYY-MM-DD)
+- **Component**: Which part of the system (Frontend/Backend/API/etc.)
+- **Description**: Clear explanation of the problem
+- **Business Impact**: Why it matters to users/business
+- **Proposed Solution**: How to fix it (if known)
+
+**Examples**:
+- Bug: Investment Decision Engine not running → Issue #XX (Critical)
+- Bug: IRR uses 10 years instead of user's projection years → Issue #25 (Medium)
+- Feature Gap: Property tax not editable in MF wizard → Issue #2 (High)
+
+---
+
 ## 🗂️ **Key Directory Structure**
 ```
 /frontend/src/

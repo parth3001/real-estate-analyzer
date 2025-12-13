@@ -1,6 +1,6 @@
 /**
  * Property Wizard Controller
- * 
+ *
  * Handles wizard-specific business logic and validation
  * Coordinates with PropertyDataAggregator for data orchestration
  */
@@ -12,6 +12,10 @@ import { rentEstimationService } from '../services/rentEstimationService';
 import { propertyTaxEstimationService } from '../services/propertyTaxEstimationService';
 import { SFRData } from '../types/propertyTypes';
 import { WizardEnhancedSFRData } from '../types/wizardTypes';
+
+// Default insurance rate from STATIC_ANALYSIS_DEFAULTS (0.35% rule)
+// Matches /shared/constants/analysisDefaults.ts:34
+const DEFAULT_INSURANCE_RATE_PERCENTAGE = 0.35;
 
 /**
  * Convert wizard data to standard SFR analysis format
@@ -43,7 +47,7 @@ export const convertWizardToSFRData = async (req: Request, res: Response) => {
       interestRate: wizardData.propertyData.interestRate || 7.5,
       loanTerm: wizardData.propertyData.loanTerm || 30,
       propertyTaxRate: wizardData.propertyData.actualPropertyTaxRate || wizardData.propertyData.propertyTaxRate || 1.2,
-      insuranceRate: wizardData.propertyData.insuranceRate || 0.7,
+      insuranceRate: wizardData.propertyData.insuranceRate || DEFAULT_INSURANCE_RATE_PERCENTAGE, // FIX Issue #27: Changed from 0.7 to 0.35
       maintenanceCost: calculateMaintenanceCost(
         wizardData.propertyData.monthlyRent,
         wizardData.propertyData.maintenanceReservePercentage
@@ -140,7 +144,7 @@ export const analyzePropertyFromWizard = async (req: Request, res: Response) => 
       interestRate: wizardData.propertyData.interestRate || 7.5,
       loanTerm: wizardData.propertyData.loanTerm || 30,
       propertyTaxRate: wizardData.propertyData.actualPropertyTaxRate || wizardData.propertyData.propertyTaxRate || 1.2,
-      insuranceRate: wizardData.propertyData.insuranceRate || 0.7,
+      insuranceRate: wizardData.propertyData.insuranceRate || DEFAULT_INSURANCE_RATE_PERCENTAGE, // FIX Issue #27: Changed from 0.7 to 0.35
       maintenanceCost: maintenanceCost || wizardData.propertyData.maintenanceCost || 0,
       propertyManagementRate: wizardData.propertyData.propertyManagementRate || 8,
       propertyAddress: wizardData.propertyData.propertyAddress,

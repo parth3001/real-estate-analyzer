@@ -6,13 +6,15 @@
 import type { SFRPropertyData, PropertyAddress } from '../../types/property';
 
 // Wizard step enumeration (using const to satisfy erasableSyntaxOnly)
+// Phase 1: Universal Simple - 4-step wizard with strategy selection first
 export const WizardStep = {
-  ADDRESS: 0,
-  FINANCIALS: 1,
-  RENTAL: 2,
-  ASSUMPTIONS: 3,
-  GOALS: 4,
-  TAX: 5
+  STRATEGY: 0,     // NEW: Investment strategy selection (Buy & Hold, House Hack, BRRRR)
+  ADDRESS: 1,      // Property address and basic details
+  FINANCIALS: 2,   // Purchase & financing (enhanced with tap-to-expand)
+  RENTAL: 3,       // Rental & operating expenses (enhanced with hybrid slider)
+  // REMOVED: ASSUMPTIONS (4) - Simplified into advanced accordion in RENTAL step
+  // REMOVED: GOALS (5) - Replaced by STRATEGY step with optional AI enhancement
+  // REMOVED: TAX (6) - Deprecated in favor of educational content
 } as const;
 
 export type WizardStep = typeof WizardStep[keyof typeof WizardStep];

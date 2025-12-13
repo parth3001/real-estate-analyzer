@@ -12,9 +12,9 @@ import { logger } from '../../utils/logger';
 import { SFRData } from '../../types/propertyTypes';
 
 // Debug helper - only logs in development
-const debug = (...args: any[]) => {
+const debug = (message: string, meta?: any) => {
   if (process.env.NODE_ENV !== 'production') {
-    debug(...args);
+    logger.info(message, meta);
   }
 };
 import { LeverageOptimizer, LeverageAnalysis } from './leverageOptimizer';
