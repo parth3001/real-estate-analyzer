@@ -23,6 +23,214 @@
 
 ## 🎯 **P1 - High Priority Features**
 
+### Feature #10: Educational Content Integration (Josh Partnership Prep)
+**Status:** 🔴 Not Started
+**Priority:** P1 - High (Partnership Strategy - After Feature #2, Before Feature #1)
+**Added:** December 13, 2025
+**Category:** Strategic Partnership / Content Integration / User Education
+
+**Description:**
+Integrate educational content slots throughout the platform to demonstrate partnership readiness with Josh Lupo (TheFiCouple) and other real estate educators. These slots will showcase how partner content can seamlessly integrate into the user workflow, positioning the platform for potential white-label opportunities while providing immediate user value through educational resources.
+
+**Strategic Business Value:**
+- **Partnership Demonstration**: "One or two educational link slots ready to demo" (Josh's feedback)
+- **White-Label Potential**: Proves platform can showcase partner content without being a "gig worker"
+- **Revenue Model**: Foundation for affiliate partnerships, sponsored content, or white-label licensing
+- **User Education**: Provides contextual learning at decision points
+- **Competitive Moat**: Educational content increases platform stickiness vs pure calculators
+
+**Josh Lupo Partnership Context:**
+- **TheFiCouple**: 50K+ YouTube subscribers, real estate investing education
+- **Partnership Vision**: White-label platform for Josh's audience (NOT gig work for him)
+- **Demo Requirement**: Show how his content integrates naturally into analysis workflow
+- **Potential Models**:
+  - White-label: Josh-branded version of platform for his students
+  - Affiliate: Josh promotes platform, gets revenue share
+  - Content Partnership: Josh creates exclusive educational modules
+
+**Functional Requirements:**
+
+1. **Educational Content Slots (Strategic Placement):**
+   - **Analysis Results Page**: "Learn more about Cap Rate" link near Cap Rate metric
+   - **Investment Decision Hero**: "Why did I get this verdict?" educational modal
+   - **Property Wizard**: Contextual help bubbles with "Learn more" links
+   - **Saved Properties**: "How to analyze multiple properties" tutorial link
+   - **Dashboard/Landing**: Featured educational content section
+
+2. **Content Integration Options:**
+   - **External Links**: Link to Josh's YouTube videos, blog posts, courses
+   - **Embedded Videos**: YouTube embed with partner content
+   - **Modal Popups**: Educational content in lightbox/modal
+   - **AI-Powered Help**: ChatGPT-style Q&A assistant (optional enhancement)
+   - **Search Integration**: Perplexity AI-style search for real estate education
+
+3. **Demo-Ready Features:**
+   - **Partner Branding**: Show "Brought to you by Josh Lupo" attribution
+   - **Analytics Tracking**: Track which educational links get clicked (prove engagement)
+   - **A/B Testing**: Test different content placements and messaging
+   - **White-Label Preview**: Toggle to show "TheFiCouple Edition" branding
+
+4. **Initial Content Ideas:**
+   - "What is Cap Rate?" → Link to Josh's Cap Rate explainer video
+   - "Understanding Cash-on-Cash Return" → Blog post or YouTube
+   - "BRRRR Strategy Explained" → Josh's BRRRR course preview
+   - "How to Analyze Your First Rental" → Step-by-step guide
+   - "Market Selection Tips" → Geographic diversification content
+
+**Technical Implementation Options:**
+
+**Option A: Simple External Links (Quick Win - 4 hours)**
+```typescript
+<Box sx={{ mt: 2, p: 2, backgroundColor: '#F5F5F7', borderRadius: 2 }}>
+  <Typography variant="body2" color="text.secondary" gutterBottom>
+    📚 New to Cap Rate?
+  </Typography>
+  <Link
+    href="https://youtube.com/watch?v=..."
+    target="_blank"
+    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+  >
+    Learn from Josh Lupo (TheFiCouple) →
+  </Link>
+</Box>
+```
+
+**Option B: Modal with Embedded Content (Medium - 2 days)**
+```typescript
+<IconButton onClick={() => setEducationModalOpen(true)}>
+  <HelpOutlineIcon />
+</IconButton>
+
+<Dialog open={educationModalOpen} maxWidth="md">
+  <DialogTitle>Understanding Cap Rate</DialogTitle>
+  <DialogContent>
+    <iframe
+      src="https://www.youtube.com/embed/..."
+      width="100%"
+      height="400px"
+    />
+    <Typography variant="body2" sx={{ mt: 2 }}>
+      Brought to you by Josh Lupo - TheFiCouple
+    </Typography>
+  </DialogContent>
+</Dialog>
+```
+
+**Option C: AI-Powered Help Assistant (Advanced - 1 week)**
+```typescript
+// ChatGPT-style floating help button
+<Fab
+  sx={{ position: 'fixed', bottom: 16, right: 16 }}
+  onClick={() => setHelpChatOpen(true)}
+>
+  <SchoolIcon />
+</Fab>
+
+// Drawer with AI assistant or curated educational content
+<Drawer anchor="right" open={helpChatOpen}>
+  <EducationalAssistant
+    context={currentPage}
+    partnerContent={joshLupoContent}
+  />
+</Drawer>
+```
+
+**Recommended Placement Strategy:**
+
+1. **Cap Rate Metric** (Analysis Results):
+   ```
+   Cap Rate: 9.5%
+   [📚 What is Cap Rate?] ← Link to Josh's video
+   ```
+
+2. **Investment Decision Hero Card**:
+   ```
+   94/100 - BUY Verdict
+   [❓ Why this verdict?] ← Educational modal
+   [📖 Learn BRRRR Strategy] ← If BRRRR selected
+   ```
+
+3. **Property Wizard - Financing Step**:
+   ```
+   Down Payment: 20%
+   [💡 Learn about down payment strategies] ← Josh's guide
+   ```
+
+4. **Saved Properties Header**:
+   ```
+   Saved Properties (9)
+   [📚 How to compare multiple properties] ← Tutorial link
+   ```
+
+**Partnership Demo Script:**
+
+"Josh, check out how your content integrates here. When a user sees their Cap Rate, they can click 'Learn more from Josh Lupo' and watch your explainer video right in context. This isn't us being your gig worker - this is us white-labeling the entire platform for your students, with your branding and your educational content seamlessly woven throughout the experience."
+
+**Analytics Tracking:**
+```typescript
+// Track educational content engagement
+analytics.track('Educational Link Clicked', {
+  partner: 'Josh Lupo',
+  content_type: 'YouTube Video',
+  topic: 'Cap Rate',
+  placement: 'Analysis Results',
+  user_deal_quality: 94
+});
+```
+
+**White-Label Preview Mode:**
+```typescript
+// Toggle to show partner-branded version
+const [whiteLabel, setWhiteLabel] = useState('default');
+
+// TheFiCouple branding example:
+if (whiteLabel === 'theficouple') {
+  return (
+    <Box>
+      <Logo src="/theficouple-logo.png" />
+      <Typography>Powered by Real Estate Analyzer</Typography>
+    </Box>
+  );
+}
+```
+
+**Estimated Effort:**
+- **Phase 1 (Demo-Ready)**: 1-2 days (simple links + 1 embedded modal)
+- **Phase 2 (Full Integration)**: 1 week (multiple placements + analytics)
+- **Phase 3 (AI Assistant)**: 2 weeks (ChatGPT-style help system)
+
+**Dependencies:**
+- Josh Lupo content URLs (YouTube videos, blog posts, course pages)
+- Partnership agreement on attribution and branding
+- Analytics setup for tracking engagement
+
+**Related Files:**
+- `/frontend/src/components/SFRAnalysis/AnalysisResults.tsx` (add links near metrics)
+- `/frontend/src/components/InvestmentDecisionHero.tsx` (add "Why this verdict?" modal)
+- `/frontend/src/components/common/EducationalLink.tsx` (new reusable component)
+- `/frontend/src/components/common/EducationalModal.tsx` (new modal component)
+- `/frontend/src/services/analytics.ts` (track educational link clicks)
+
+**Success Metrics:**
+- **Engagement**: 20%+ of users click educational links
+- **Time on Platform**: +30% session duration with educational content
+- **Partnership Demo**: Josh approves integration approach
+- **White-Label Interest**: 2-3 other educators interested after demo
+
+**Notes:**
+- **Priority Rationale**: After Feature #2 (Metrics UX) gives us clean interface to add links, Before Feature #1 (BRRRR Engine) so Josh can promote BRRRR education alongside feature
+- **NOT Gig Work**: We control platform, partners provide content, mutual benefit
+- **Revenue Potential**: White-label licensing ($500-2000/month per partner) or affiliate rev share
+- **Competitive Advantage**: No other calculators integrate educator partnerships this way
+
+**Design Inspiration:**
+- **Duolingo**: Contextual educational tips during lessons
+- **Robinhood**: "Learn" tab with investor education
+- **Notion**: Help docs embedded in context
+- **ChatGPT**: Floating help assistant
+
+---
+
 ### Feature #1: BRRRR & House Hacking Investment Decision Engines
 **Status:** 🔴 Not Started
 **Priority:** P1 - High (as of 12/13/2025)
@@ -811,9 +1019,10 @@ Rename and redesign the current Census Data Integration test page to provide use
 
 | Priority | Feature | Status | Estimated Effort | Business Impact |
 |----------|---------|--------|------------------|-----------------|
-| **P1** | BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |
 | **P1** | Metrics UX Optimization | 🔴 Not Started | 1-2 weeks | High (user experience) |
-| **P1** | Saved Properties List UX | 🟢 In Progress | 1 week | High (core workflow friction) |
+| **P1** | Educational Content Integration | 🔴 Not Started | 1-2 days | High (partnership strategy) |
+| **P1** | BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |
+| **P1** | Saved Properties List UX | ✅ Complete | 1 week | High (core workflow friction) |
 | **P2** | Calculation Accuracy Docs | 🔴 Not Started | 1 week | Medium (trust + SEO) |
 | **P2** | Help Docs Outside Login | 🔴 Not Started | 2 weeks | Medium (SEO + acquisition) |
 | **P2** | Social Sharing Strategy | 🔴 Not Started | 1.5 weeks | Medium (viral growth) |
