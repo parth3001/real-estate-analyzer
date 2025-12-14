@@ -594,12 +594,14 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
             {getPageTitle(location.pathname)}
           </Typography>
           
-          {/* Dual-Mode Toggle - only for authenticated users */}
+          {/* UNIFIED EXPERIENCE: Mode toggle removed - single experience for all users */}
+          {/* Dual-Mode Toggle - HIDDEN (unified experience implemented)
           {user && (
             <Box sx={{ ml: 4 }}>
               <ModeToggle />
             </Box>
           )}
+          */}
         </Box>
 
         <Box display="flex" alignItems="center" gap={1}>

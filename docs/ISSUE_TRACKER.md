@@ -1,11 +1,68 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2025-12-12
+**Last Updated**: 2025-12-13
 
 ---
 
 ## 🔴 **CRITICAL ISSUES** (Production Blockers)
+
+### Issue #25: IRR Metric Label Shows Wrong Time Period (Data Accuracy Critical)
+**Status**: ✅ RESOLVED
+**Priority**: P1 - CRITICAL (Data Accuracy - User Trust)
+**Discovered**: 2025-12-14
+**Resolved**: 2025-12-14
+**Discovered By**: Product Owner during unified experience testing
+**Resolved By**: FSE (Full-Stack Engineer)
+**Component**: Frontend - buyHoldMetrics.ts (Tier 2 Financial Performance)
+**Affects**: ALL SFR properties - Buy & Hold strategy
+**Category**: Data Accuracy / User Trust / Metric Labeling
+
+**Resolution Summary**:
+✅ Made IRR and Total ROI labels dynamic based on user's hold period selection
+✅ Backend calculation verified to correctly use `projectionYears` from user input
+✅ Only label was incorrect - calculations were always accurate (label-only bug)
+
+**Files Changed**:
+1. `/frontend/src/components/SFRAnalysis/metricDefinitions/metrics/buyHoldMetrics.ts`
+   - Updated `MetricDefinition` interface to support dynamic labels and descriptions
+   - Changed IRR metric label to function: `(analysis, propertyData) => ${holdPeriod}-Year IRR`
+   - Changed Total ROI metric label and description to functions with dynamic hold period
+
+2. `/frontend/src/components/SFRAnalysis/AnalysisResults.tsx`
+   - Updated `buildMetricFromDefinition` to handle dynamic labels/descriptions
+   - Added type checking for function vs string labels
+
+**Verification Performed**:
+✅ Backend code reviewed: `BasePropertyAnalyzer.ts:145` uses `this.assumptions.projectionYears`
+✅ Backend IRR calculation confirmed to use ALL projection years from user input
+✅ Frontend now correctly displays hold period in labels (10, 15, 20, 30 years)
+
+**Testing Notes**:
+- Test Case 1 (10-year default): Label shows "10-Year IRR" ✅
+- Test Case 2 (20-year user input): Label shows "20-Year IRR" ✅
+- Test Case 3 (Custom periods): Labels dynamically update ✅
+- Backward compatibility maintained for all other metrics ✅
+
+**Original Issue Description** (Collapsed for archive):
+<details>
+<summary>Original Issue Details</summary>
+
+The IRR metric in Tier 2 (Financial Performance) was hardcoded to display "10-Year IRR" regardless of the user's actual exit strategy/hold period. When a user selected a 20-year hold period, the IRR calculation was correct for 20 years, but the label still showed "10-Year IRR", causing confusion and potential mistrust.
+
+**User Scenario**:
+```
+User Input: 20-year exit strategy
+Backend Calculation: Correctly calculates IRR for 20 years ✅
+Frontend Display (BEFORE): "10-Year IRR: 24.11%" ❌
+Frontend Display (AFTER): "20-Year IRR: 24.11%" ✅
+```
+
+**Root Cause**: Static `label` field in `MetricDefinition` interface
+**Fix**: Changed `label` to support functions: `string | ((analysis, propertyData) => string)`
+</details>
+
+---
 
 ### Issue #24: Unit Mix Efficiency Score - Invalid Industry Benchmark (Credibility Risk)
 **Status**: ✅ FIXED - IMPLEMENTATION COMPLETE (2025-11-23)
@@ -5384,6 +5441,196 @@ status: ((analysis?.keyMetrics?.irr || 0) * 100) >= 15 ? 'positive' ...
 
 **Files Changed**:
 - `/frontend/src/components/SFRAnalysis/AnalysisResults.tsx`
+
+---
+
+---
+
+### Issue #31: Frontend Metric Calculation Duplication - Violates Single Source of Truth
+**Status**: 🔴 Open
+**Priority**: P1 - High (Architectural Integrity)
+**Reported**: 2025-12-13
+**Discovered By**: Architect during Metrics Reorganization Plan (Feature #2)
+**Component**: Full-Stack (Frontend + Backend)
+**Affects**: ALL property analyses - SFR and Multi-Family
+**Category**: Architecture / Technical Debt / Data Integrity
+
+**Description**:
+The frontend re-calculates 6 metrics that are ALREADY calculated by the backend, violating the fundamental architectural principle of "Single Source of Truth". This creates a dual calculation system with fallback logic that masks data integrity issues.
+
+**Metrics Affected** (6 total):
+1. **Price Per SqFt** - `AnalysisResults.tsx:261-265`
+2. **Rent Per SqFt** - `AnalysisResults.tsx:268-272`
+3. **Price Per Bedroom** - `AnalysisResults.tsx:323-327`
+4. **1% Rule Value** - `AnalysisResults.tsx:300-304`
+5. **Gross Rent Multiplier** - `AnalysisResults.tsx:307-311`
+6. **Debt-to-Income Ratio** - `AnalysisResults.tsx:330-336`
+
+**Backend Source** (Confirmed Calculations):
+- File: `/backend/src/utils/financialCalculations.ts`
+- Function: `SFRCalculationEngine.calculatePropertySpecificMetrics()` (lines 780-810)
+- Metrics ARE calculated and returned in `analysis.keyMetrics.*`
+
+**Frontend Duplication Pattern**:
+```typescript
+// Example from AnalysisResults.tsx line 301
+value: analysis?.keyMetrics?.onePercentRuleValue ||
+  (propertyData?.monthlyRent && propertyData?.purchasePrice ?
+    (propertyData.monthlyRent / propertyData.purchasePrice) * 100 : 0.69)
+//      ↑ Backend value                                               ↑ Hardcoded fallback
+//                          ↑ Frontend re-calculation
+```
+
+**Expected Behavior**:
+1. Backend calculates metric in `SFRCalculationEngine.calculatePropertySpecificMetrics()`
+2. Backend includes metric in `analysis.keyMetrics.*` response
+3. Frontend displays `analysis.keyMetrics.*` value directly
+4. If backend value missing → Log error, show "N/A" or 0 (NOT calculate fallback)
+
+**Actual Behavior**:
+1. ✅ Backend calculates metric correctly
+2. ✅ Backend includes metric in response
+3. ❌ Frontend ALSO calculates metric as fallback
+4. ❌ Frontend uses hardcoded default values (175, 0.69, 20) if calculation fails
+5. ❌ No logging when fallback is triggered (silent masking of missing data)
+
+**Root Cause**:
+**Defensive Programming Gone Wrong** - Historical evolution:
+1. **Phase 1** (Early development): Frontend built BEFORE backend metrics existed
+2. **Phase 2** (Backend added): Backend calculations added, frontend fallback kept "just in case"
+3. **Phase 3** (Technical debt accumulated): Never cleaned up duplication
+
+**Problems Created**:
+
+1. **Dual Source of Truth** 🔴
+   - Backend formula: `pricePerSqFt = purchasePrice / squareFootage`
+   - Frontend formula: `purchasePrice / squareFootage`
+   - If formulas diverge → Users see inconsistent data
+
+2. **Potential Data Inconsistency** 🟠
+   - Backend uses validated input data
+   - Frontend uses `propertyData` (may be stale, missing, or different)
+   - Different data sources = different results
+
+3. **Maintenance Burden** 🟡
+   - Change to calculation formula requires updates in 2 places
+   - Example: If we improve `pricePerSqFt` to handle edge cases in backend
+   - Must remember to update frontend fallback too (likely forgotten)
+
+4. **Trust Issues** 🟠
+   - Hardcoded fallback values (175, 0.69, 20) mask missing backend data
+   - Silent fallback = No visibility when backend fails to provide metric
+   - Users see "175" and don't know it's fake data
+
+5. **Testing Complexity** 🟡
+   - Must test backend calculation correctness
+   - Must test frontend fallback calculation correctness
+   - Must test fallback trigger conditions
+   - 3x testing effort for same metric
+
+**Example Scenario - Real Risk**:
+```
+Scenario: Backend returns pricePerSqFt = 0 due to bug
+Current Behavior:
+  - Frontend fallback calculates: 205000 / 1500 = 136.67
+  - User sees: "$136.67/sqft"
+  - User thinks: "Metric is working fine"
+  - Reality: Backend bug masked, user has false confidence
+
+Expected Behavior:
+  - Frontend sees: analysis.keyMetrics.pricePerSqFt = 0
+  - Frontend logs: ⚠️ CRITICAL: Backend pricePerSqFt is 0
+  - Frontend shows: "N/A" or $0
+  - User/Developer sees: Something is wrong, investigate backend
+```
+
+**Business Impact**:
+
+1. **Data Integrity Risk** (P1)
+   - If backend and frontend formulas differ, users see wrong data
+   - Financial decisions based on wrong calculations = potential lawsuits
+
+2. **Maintenance Overhead** (P2)
+   - Every calculation change requires 2 code updates
+   - Increases bug risk (forgotten update in one location)
+
+3. **Debugging Difficulty** (P2)
+   - "Why is this metric wrong?" → Must check 2 locations
+   - Silent fallbacks hide real backend issues
+
+4. **Scalability Concern** (P2)
+   - As we add more metrics, duplication compounds
+   - Multi-Family has 10 metrics, SFR has 24 metrics = potential 34 duplications
+
+**Reproduction Steps**:
+1. Analyze any SFR property
+2. Open browser DevTools → Network tab
+3. Check POST `/api/deals/analyze` response
+4. Confirm `analysis.keyMetrics.pricePerSqFt` exists and has value
+5. Open AnalysisResults.tsx line 261
+6. Observe: Frontend re-calculates `propertyData.purchasePrice / propertyData.squareFootage`
+
+**Files Affected**:
+- **Frontend**: `/frontend/src/components/SFRAnalysis/AnalysisResults.tsx` (lines 261-351)
+- **Backend**: `/backend/src/utils/financialCalculations.ts` (lines 783-788)
+
+**Proposed Solution** (3-Phase Migration):
+
+**Phase 1: Add Validation Logging** (1 hour)
+```typescript
+// AnalysisResults.tsx - Add to each metric
+const pricePerSqFt = analysis?.keyMetrics?.pricePerSqFt;
+if (!pricePerSqFt && propertyData?.squareFootage) {
+  console.warn('⚠️ FALLBACK TRIGGERED: Backend did not provide pricePerSqFt', {
+    propertyId: propertyData.id,
+    timestamp: new Date().toISOString()
+  });
+}
+value: pricePerSqFt || (propertyData?.squareFootage ?
+  propertyData.purchasePrice / propertyData.squareFootage : 0)
+```
+
+**Phase 2: Monitor Production** (30 days)
+- Deploy Phase 1 logging
+- Monitor console warnings in production
+- Expected result: 0 fallback triggers (backend always provides metrics)
+- If fallbacks trigger → Fix backend, not add frontend fallback
+
+**Phase 3: Remove Fallback Calculations** (2 hours)
+```typescript
+// After 30 days of 0 fallback triggers:
+const pricePerSqFt = analysis?.keyMetrics?.pricePerSqFt;
+if (!pricePerSqFt) {
+  console.error('🚨 CRITICAL: Backend did not provide pricePerSqFt');
+  return 0; // Show 0, not fake calculated data
+}
+value: pricePerSqFt // Trust backend completely
+```
+
+**Alternative Quick Fix** (If urgent):
+- Keep fallback calculations for stability
+- Add `console.warn()` when fallback triggers
+- Document as "intentional defensive programming"
+- Accept technical debt, revisit in 6 months
+
+**Why Not Fixed in Metrics Reorganization**:
+- Current task: UI/UX reorganization (visual changes only)
+- Fixing data layer = separate architectural task (this issue)
+- Risk: Breaking existing saved analyses or wizard flow
+- Scope: Metrics reorganization maintains existing data flow for stability
+
+**Related Work**:
+- Feature #2: Metrics UX Optimization (currently in progress)
+- `/docs/METRICS_REORGANIZATION_PLAN.md` - Documents this issue in Technical Debt section
+
+**Recommendation**:
+1. **Immediate**: Create this issue (you're reading it now)
+2. **Short-term** (After Feature #2 complete): Implement Phase 1 (validation logging)
+3. **Medium-term** (30 days later): Implement Phase 3 (remove fallbacks)
+4. **Long-term**: Establish architectural review process to prevent duplication
+
+**Assignee**: TBD (Architect + FSE collaboration)
+**Target Fix Date**: Phase 1 by 2025-12-20, Phase 3 by 2026-01-20
 
 ---
 

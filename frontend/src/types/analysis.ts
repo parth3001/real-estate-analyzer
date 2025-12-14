@@ -188,6 +188,20 @@ export interface KeyMetrics {
   grossRentMultiplier?: number;
   returnOnImprovements?: number;
   turnoverCostImpact?: number;
+
+  // Phase 2: BRRRR-specific metrics (backend will populate when strategy = 'brrrr')
+  // These fields are unused until BRRRR implementation in Phase 2B
+  refinanceAmount?: number;
+  cashLeftInDeal?: number;
+  forcedEquity?: number;
+  allInCost?: number;
+  equityOnRefinance?: number;
+
+  // Phase 2: House Hack-specific metrics (backend will populate when strategy = 'house-hack')
+  // These fields are unused until House Hack implementation in Phase 2B
+  effectiveHousingCost?: number;
+  ownerEquivalentRent?: number;
+  housingCostReduction?: number;
 }
 
 export interface Analysis {
@@ -208,6 +222,9 @@ export interface Analysis {
   aiInsights?: AIInsights;
   // Phase 1: Validation warnings for data quality
   validationWarnings?: ValidationWarning[];
+  // Phase 1: Investment strategy (backend echoes back user's selected strategy)
+  // Used by frontend to determine which metrics to display
+  strategy?: 'buy-hold' | 'house-hack' | 'brrrr';
   sensitivityAnalysis?: {
     bestCase: any;
     worstCase: any;

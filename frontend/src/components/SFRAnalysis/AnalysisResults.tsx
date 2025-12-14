@@ -17,6 +17,8 @@ import {
   TableHead,
   TableRow,
   Alert,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import {
@@ -46,7 +48,7 @@ import { UnitMixAnalysisTab } from '../MFAnalysis/UnitMix';
 // import TaxImpactSummary from '../AnalysisResults/TaxImpactSummary'; // DEPRECATED
 // import HoldPeriodOptimizer from '../AnalysisResults/HoldPeriodOptimizer'; // DEPRECATED
 // import TaxStrategies from '../AnalysisResults/TaxStrategies'; // DEPRECATED
-import ProMetricsBar from './ProMetricsBar';
+// import ProMetricsBar from './ProMetricsBar'; // DEPRECATED - Replaced by unified Tier 1 metrics
 import DynamicSliders from './DynamicSliders';
 import DealFixer from './DealFixer';
 import ScenarioManager from './ScenarioManager';
@@ -56,6 +58,9 @@ import { EmailVerificationBanner, markFirstAnalysisComplete } from '../common/Em
 import { useDualMode } from '../../contexts/DualModeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { EducationalTooltip } from '../common/EducationalTooltip';
+// Phase 3A: Strategy-aware metrics integration
+import { getMetricTiers } from './metricDefinitions';
+import type { MetricDefinition } from './metricDefinitions';
 
 interface AnalysisResultsProps {
   analysis: any; // Your existing Analysis type
@@ -87,12 +92,34 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   const { user } = useAuth();
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
+  const [showProfessionalMetrics, setShowProfessionalMetrics] = useState(false);
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
+  const [showInvestmentIntelligence, setShowInvestmentIntelligence] = useState(false);
 
   // Mark first analysis complete (for email verification banner)
   React.useEffect(() => {
     markFirstAnalysisComplete();
   }, []);
-  
+
+  // ========================================
+  // METRICS REORGANIZATION: Debug Logging (Phase 1)
+  // Added: 2025-12-13
+  // Purpose: Validate data availability for zero-risk refactoring
+  // ========================================
+  console.group('🔍 METRICS DEBUG - Reorganization Safety Check');
+  console.log('Analysis object available:', !!analysis);
+  console.log('Analysis keys:', analysis ? Object.keys(analysis) : 'MISSING');
+  console.log('keyMetrics available:', !!analysis?.keyMetrics);
+  console.log('keyMetrics count:', analysis?.keyMetrics ? Object.keys(analysis.keyMetrics).length : 0);
+  console.log('propertyData available:', !!propertyData);
+  console.log('propertyData keys:', propertyData ? Object.keys(propertyData) : 'MISSING');
+  console.log('monthlyAnalysis available:', !!analysis?.monthlyAnalysis);
+  console.log('longTermAnalysis available:', !!analysis?.longTermAnalysis);
+  console.log('investmentDecision available:', !!analysis?.investmentDecision);
+  console.log('Property type:', propertyData?.propertyType || 'UNKNOWN');
+  console.log('Current mode:', mode);
+  console.groupEnd();
+
   // Debug: Log the analysis structure
   console.log('AnalysisResults - analysis object:', analysis);
   console.log('AnalysisResults - keyMetrics:', analysis?.keyMetrics);
@@ -115,6 +142,54 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   // Story 4.1 & 4.2: Determine property type for conditional rendering
   const propertyType = propertyData?.propertyType || analysis?.propertyData?.propertyType;
 
+  // ========================================
+  // Phase 3A: Strategy-Aware Metrics Integration
+  // Get metric tiers based on property type and strategy
+  // ========================================
+  const strategyResult = getMetricTiers({
+    propertyType: propertyType as 'SFR' | 'MF',
+    strategy: analysis?.strategy || propertyData?.strategy || 'buy-hold',
+    analysis,
+    propertyData
+  });
+
+  console.log('📊 Strategy Selector Result:', {
+    type: strategyResult.type,
+    strategy: strategyResult.type === 'SFR' ? strategyResult.strategy : 'N/A',
+    isFallback: strategyResult.type === 'SFR' ? strategyResult.isFallback : false,
+    tierCount: strategyResult.tiers.length,
+    tier1Metrics: strategyResult.tiers[0]?.metrics?.length || 0,
+    tier2Metrics: strategyResult.tiers[1]?.metrics?.length || 0,
+    tier3Metrics: strategyResult.tiers[2]?.metrics?.length || 0,
+    tier2Title: strategyResult.tiers[1]?.title || 'N/A',
+    tier3Title: strategyResult.tiers[2]?.title || 'N/A'
+  });
+
+  // Phase 3B: Helper function to convert MetricDefinition to AppleMetricCard format
+  // IMPORTANT: Must be declared before heroMetrics to avoid hoisting issues
+  const buildMetricFromDefinition = (metricDef: MetricDefinition) => {
+    const value = metricDef.getValue(analysis, propertyData);
+    const status = metricDef.getStatus ? metricDef.getStatus(value) : 'neutral';
+
+    // Handle dynamic labels and descriptions (Issue #25 fix)
+    const label = typeof metricDef.label === 'function'
+      ? metricDef.label(analysis, propertyData)
+      : metricDef.label;
+
+    const description = typeof metricDef.description === 'function'
+      ? metricDef.description(analysis, propertyData)
+      : metricDef.description;
+
+    return {
+      label: label,
+      value: value,
+      format: metricDef.format,
+      status: status,
+      highlight: metricDef.tier === 1,
+      description: description
+    };
+  };
+
   // Story 4.2: Conditional tab injection for MF properties
   // Analysis sections for horizontal navigation - filter based on mode
   // TAB SEQUENCE (FSE requirement): Overview → Financial Details → Unit Mix (MF only) → Long-term Analysis → Tax Intelligence → Interactive → Optimizer → Scenarios → Other tabs
@@ -136,15 +211,16 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison', implemented: propertyType !== 'MF' } // Not implemented for MF
   ];
 
-  // Filter sections based on mode (Story 4.2: includes unitMix for MF if present in allAnalysisSections)
-  // Novice mode shows: Overview → Financial → Unit Mix (MF) → Long-term → Tax → Interactive → Optimizer → Scenarios
-  const analysisSections = mode === 'novice'
-    ? allAnalysisSections.filter(section => ['overview', 'financial', 'unitMix', 'projections', 'tax', 'interactive', 'optimizer', 'scenarios'].includes(section.id))
-    : allAnalysisSections;
+  // UNIFIED EXPERIENCE: Show all tabs to everyone (no mode-based filtering)
+  // Previously: Novice mode showed 8 tabs, Pro mode showed all 12 tabs
+  // Now: Everyone sees all available tabs (formerly "Pro mode" tab set)
+  const analysisSections = allAnalysisSections;
 
-  // Story 4.1: Conditional Hero Metrics based on property type
-  // Pattern: Conditional composition (matches backend BasePropertyAnalyzer pattern)
-  // MF shows institutional metrics; SFR shows individual investor metrics
+  // ========================================
+  // Phase 3B: Strategy-Aware Hero Metrics (Tier 1)
+  // MF: Use existing hardcoded metrics (backward compatible)
+  // SFR: Use strategy selector Tier 1 metrics (3-7-8 pattern)
+  // ========================================
   const heroMetrics = propertyType === 'MF'
     ? [
         // MF Hero Metric 1: Cap Rate (primary MF valuation metric)
@@ -184,43 +260,22 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           description: 'Annual cash return on invested capital'
         }
       ]
-    : [
-        // SFR Hero Metrics (original - optimized for individual investors)
-        {
-          label: 'Monthly Cash Flow',
-          value: analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || -14,
-          format: 'currency' as const,
-          status: (analysis?.monthlyAnalysis?.cashFlow || analysis?.cashFlow?.monthlyCashFlow || 0) >= 0 ? 'positive' as const : 'negative' as const,
-          highlight: true,
-          description: 'Net monthly income after all expenses'
-        },
-        {
-          label: 'Cap Rate',
-          value: analysis?.keyMetrics?.capRate || 3.95,
-          format: 'percent' as const,
-          status: (analysis?.keyMetrics?.capRate || 0) >= 5 ? 'positive' as const : (analysis?.keyMetrics?.capRate || 0) >= 3 ? 'warning' as const : 'negative' as const,
-          highlight: true,
-          description: 'Annual return based on property value'
-        },
-        {
-          label: 'Cash-on-Cash Return',
-          value: analysis?.keyMetrics?.cashOnCashReturn || -0.17,
-          format: 'percent' as const,
-          status: (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 8 ? 'positive' as const : (analysis?.keyMetrics?.cashOnCashReturn || 0) >= 0 ? 'warning' as const : 'negative' as const,
-          highlight: true,
-          description: 'Annual cash return on invested capital'
-        },
-        {
-          label: 'Deal Quality Score',
-          value: analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0,
-          format: 'score' as const,
-          status: (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 80 ? 'positive' as const : (analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0) >= 65 ? 'warning' as const : 'negative' as const,
-          highlight: true,
-          description: 'V3.0 Professional weighted assessment of investment quality'
-        }
-      ];
+    : // SFR: Use Tier 1 from strategy selector (3 metrics for Buy & Hold)
+      strategyResult.type === 'SFR'
+        ? strategyResult.tiers[0]?.metrics.map(buildMetricFromDefinition) || []
+        : []; // Fallback to empty if strategy selector fails
 
-  // Key Financial Metrics (8 additional important metrics)
+  console.log('🎯 Phase 3B - Hero Metrics Built:', {
+    propertyType,
+    heroMetricsCount: heroMetrics.length,
+    usedStrategySelector: propertyType !== 'MF',
+    tier1MetricsFromSelector: strategyResult.type === 'SFR' ? strategyResult.tiers[0]?.metrics.length : 0,
+    heroMetricLabels: heroMetrics.map(m => m.label)
+  });
+
+  // Legacy hardcoded metrics (still used in Financial Details tab and other sections)
+  // NOTE: Overview tab now uses strategy-aware metrics from metricDefinitions/
+  // These will be migrated to strategy-aware system in future work
   const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
   const keyFinancialMetrics = [
     {
@@ -468,6 +523,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     }
   };
 
+  // ========================================
+  // Phase 3A: Helper function moved earlier in file (line 169) to avoid hoisting issues
+  // ========================================
+
   // Apple-style Metric Card
   const AppleMetricCard = ({ metric }: { metric: any }) => (
     <Card
@@ -477,7 +536,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         borderColor: metric.highlight ? appleColors.primary[500] : appleColors.gray[200],
         backgroundColor: metric.highlight ? appleColors.primary[50] : 'background.paper',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'pointer',
+        height: '100%', // Ensure all cards in a row have same height
+        display: 'flex',
+        flexDirection: 'column',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 8px 25px -8px rgba(0, 0, 0, 0.15)',
@@ -485,22 +546,45 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         }
       }}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '120px' }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             color="text.secondary"
             fontWeight={500}
             sx={{ fontSize: '13px' }}
           >
             {metric.label}
           </Typography>
-          
-          <InfoIcon sx={{ fontSize: 16, color: appleColors.gray[400] }} />
+
+          {metric.description && (
+            <Tooltip
+              title={metric.description}
+              arrow
+              placement="top"
+              enterTouchDelay={0}
+              leaveTouchDelay={3000}
+            >
+              <IconButton
+                size="small"
+                sx={{
+                  ml: 0.5,
+                  p: 0.25,
+                  color: appleColors.gray[400],
+                  '&:hover': {
+                    color: appleColors.blue[500],
+                    backgroundColor: 'rgba(0, 122, 255, 0.08)'
+                  }
+                }}
+              >
+                <InfoIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
 
-        <Typography 
-          variant="h5" 
+        <Typography
+          variant="h5"
           fontWeight={700}
           color={
             metric.status === 'positive' ? appleColors.green[600] :
@@ -513,29 +597,99 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           {formatValue(metric.value, metric.format)}
         </Typography>
 
-        {metric.description && (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11px' }}>
-            {metric.description}
-          </Typography>
-        )}
-
         {metric.status === 'negative' && (
-          <Typography variant="caption" color={appleColors.red[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" color={appleColors.red[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5, fontSize: '11px' }}>
             Requires attention
           </Typography>
         )}
         {metric.status === 'warning' && (
-          <Typography variant="caption" color={appleColors.orange[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" color={appleColors.orange[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5, fontSize: '11px' }}>
             Monitor closely
           </Typography>
         )}
         {metric.status === 'positive' && metric.highlight && (
-          <Typography variant="caption" color={appleColors.green[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" color={appleColors.green[600]} fontWeight={500} sx={{ display: 'block', mt: 0.5, fontSize: '11px' }}>
             Excellent performance
           </Typography>
         )}
       </CardContent>
     </Card>
+  );
+
+  // ========================================
+  // Phase 3C: Collapsible Metric Section Component
+  // Apple Design System: Subtle animation, clear hierarchy
+  // ========================================
+  const CollapsibleMetricSection = ({
+    title,
+    description,
+    metrics,
+    isExpanded,
+    onToggle
+  }: {
+    title: string;
+    description: string;
+    metrics: any[];
+    isExpanded: boolean;
+    onToggle: () => void;
+  }) => (
+    <Box sx={{ mb: 3 }}>
+      <Card
+        sx={{
+          borderRadius: '16px',
+          border: `1px solid ${appleColors.gray[200]}`,
+          backgroundColor: 'background.paper',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden',
+          '&:hover': {
+            borderColor: appleColors.blue[300],
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+          }
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
+          {/* Header Button */}
+          <Button
+            onClick={onToggle}
+            fullWidth
+            sx={{
+              justifyContent: 'space-between',
+              textAlign: 'left',
+              p: 3,
+              borderRadius: 0,
+              backgroundColor: isExpanded ? appleColors.gray[50] : 'transparent',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                backgroundColor: appleColors.gray[100]
+              }
+            }}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5, color: 'text.primary' }}>
+                {title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {description}
+              </Typography>
+            </Box>
+            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </Button>
+
+          {/* Collapsible Content - INSIDE the Card */}
+          <Collapse in={isExpanded} timeout="auto">
+            <Box sx={{ px: 3, pb: 3, pt: 1 }}>
+              <Grid container spacing={2}>
+                {metrics.map((metric, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
+                    <AppleMetricCard metric={metric} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Collapse>
+        </CardContent>
+      </Card>
+    </Box>
   );
 
 
@@ -844,124 +998,113 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               </Box>
             )}
             
-            {/* Pro Mode - Condensed Metrics Bar */}
-            {mode === 'pro' && (
-              <ProMetricsBar
-                title="KEY METRICS AT A GLANCE"
-                metrics={[
-                  ...heroMetrics,
-                  ...keyFinancialMetrics.slice(0, 4) // Add first 4 financial metrics
-                ]}
+            {/* UNIFIED EXPERIENCE: Same layout for all users (no Pro/Learning mode difference) */}
+
+            {/* Tier 1: Key Investment Numbers - Always visible for everyone */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" fontWeight={600}>
+                Key Investment Numbers
+              </Typography>
+              <EducationalTooltip
+                title="Investment Metrics"
+                description="These are the most important numbers to understand if this property is a good investment. Green means good, yellow means okay, red means be careful."
+                whyItMatters="These metrics tell you if you'll make money on this property and how much risk you're taking."
               />
-            )}
-            
-            {/* Hero Metrics - Detailed view for novice, hidden for pro (shown in bar above) */}
-            {mode === 'novice' && (
+            </Box>
+
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              {heroMetrics.map((metric, index) => (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                  <AppleMetricCard metric={metric} />
+                </Grid>
+              ))}
+            </Grid>
+
+            {/* Tier 2 & 3 Collapsible Sections - SFR Only, shown to everyone */}
+            {propertyType === 'SFR' && strategyResult.type === 'SFR' && (
               <>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h5" fontWeight={600}>
-                    Key Investment Numbers
-                  </Typography>
-                  <EducationalTooltip
-                    title="Investment Metrics"
-                    description="These are the most important numbers to understand if this property is a good investment. Green means good, yellow means okay, red means be careful."
-                    whyItMatters="These metrics tell you if you'll make money on this property and how much risk you're taking."
+                {/* Tier 2: Financial Performance (7 metrics) */}
+                {strategyResult.tiers[1] && (
+                  <CollapsibleMetricSection
+                    title={strategyResult.tiers[1].title}
+                    description={strategyResult.tiers[1].description}
+                    metrics={strategyResult.tiers[1].metrics.map(buildMetricFromDefinition)}
+                    isExpanded={showProfessionalMetrics}
+                    onToggle={() => setShowProfessionalMetrics(!showProfessionalMetrics)}
                   />
-                </Box>
-            
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  {heroMetrics.map((metric, index) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-                      <AppleMetricCard metric={metric} />
-                    </Grid>
-                  ))}
-                </Grid>
-              </>
-            )}
-
-            {/* Key Financial Metrics */}
-            {mode === 'novice' && (
-              <>
-                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-                  Additional Financial Details
-                </Typography>
-                
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  {keyFinancialMetrics.map((metric, index) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
-                      <AppleMetricCard metric={metric} />
-                    </Grid>
-                  ))}
-                </Grid>
-
-                {/* Advanced Analytics - Show/Hide for novice mode */}
-                {!showAdvancedMetrics && (
-                  <>
-                    <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-                      Advanced Analytics Preview
-                    </Typography>
-                    
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                      {advancedMetrics.slice(0, 8).map((metric, index) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
-                          <AppleMetricCard metric={metric} />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </>
                 )}
 
-                {/* AI Investment Analysis - Only show in learning mode in overview section */}
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2, mt: 3 }}>
-                    🧠 Professional Investment Intelligence
-                  </Typography>
-                  <IntelligenceMultiplier aiInsights={analysis?.aiInsights} />
-                </Box>
-
-                {/* Show More Button for Novice Mode */}
-                {!showAdvancedMetrics && (
-                  <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
-                    <Button
-                      variant="contained"
-                      onClick={() => setShowAdvancedMetrics(true)}
-                      startIcon={<ExpandMoreIcon />}
-                      sx={{ 
-                        borderRadius: '12px',
-                        backgroundColor: appleColors.blue[500],
-                        '&:hover': {
-                          backgroundColor: appleColors.blue[600]
-                        }
-                      }}
-                    >
-                      Show Advanced Analytics
-                    </Button>
-                  </Box>
+                {/* Tier 3: Risk & Operational Analysis (8 metrics) */}
+                {strategyResult.tiers[2] && (
+                  <CollapsibleMetricSection
+                    title={strategyResult.tiers[2].title}
+                    description={strategyResult.tiers[2].description}
+                    metrics={strategyResult.tiers[2].metrics.map(buildMetricFromDefinition)}
+                    isExpanded={showAdvancedAnalytics}
+                    onToggle={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+                  />
                 )}
               </>
             )}
 
-            {/* Advanced Analytics for Pro Mode or when expanded */}
-            {(mode === 'pro' || showAdvancedMetrics) && (
-              <>
-                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-                  Complete Financial Analysis
-                </Typography>
-                
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  {advancedMetrics.map((metric, index) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index}>
-                      <AppleMetricCard metric={metric} />
-                    </Grid>
-                  ))}
-                </Grid>
+            {/* Professional Investment Intelligence - Collapsible for all users */}
+            <Box sx={{ mb: 3 }}>
+              <Card
+                sx={{
+                  borderRadius: '16px',
+                  border: `1px solid ${appleColors.gray[200]}`,
+                  backgroundColor: 'background.paper',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    borderColor: appleColors.blue[300],
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 0 }}>
+                  {/* Header Button */}
+                  <Button
+                    onClick={() => setShowInvestmentIntelligence(!showInvestmentIntelligence)}
+                    fullWidth
+                    sx={{
+                      justifyContent: 'space-between',
+                      textAlign: 'left',
+                      p: 3,
+                      borderRadius: 0,
+                      backgroundColor: showInvestmentIntelligence ? appleColors.gray[50] : 'transparent',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        backgroundColor: appleColors.gray[100]
+                      }
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5, color: 'text.primary' }}>
+                        🧠 Professional Investment Intelligence
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        AI-powered insights and professional analysis (4 sections)
+                      </Typography>
+                    </Box>
+                    {showInvestmentIntelligence ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </Button>
 
-            <AdvancedMetricsSection />
-              </>
-            )}
+                  {/* Collapsible Content */}
+                  <Collapse in={showInvestmentIntelligence} timeout="auto">
+                    <Box sx={{ px: 3, pb: 3, pt: 1 }}>
+                      <IntelligenceMultiplier aiInsights={analysis?.aiInsights} />
+                    </Box>
+                  </Collapse>
+                </CardContent>
+              </Card>
+            </Box>
+
+            {/* REMOVED: Old "Additional Financial Details" and "Advanced Analytics Preview" sections */}
+            {/* These are replaced by Tier 2 and Tier 3 collapsible sections above */}
           </Box>
         );
-        
+
       case 'financial':
         return (
           <Box>

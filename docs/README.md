@@ -22,6 +22,7 @@ Store in `/docs` folder:
 
 #### **Architecture & Planning**
 - `ARCHITECT_*.md` - Architectural analysis and decisions
+- `METRICS_STRATEGY_ARCHITECTURE.md` - **🏗️ Strategy-aware metrics system** (ADR for extensible BRRRR/House Hack foundation)
 - `TECHNICAL_*.md` - Technical planning documents
 - `*_PLAN.md` - Implementation plans
 
@@ -79,6 +80,8 @@ Store in `/docs` folder:
 
 ### **For Architecture Decisions:**
 → `/docs/ARCHITECT_*.md` files
+→ `/docs/METRICS_STRATEGY_ARCHITECTURE.md` - **Strategy-aware metrics system** (extensible foundation for BRRRR, House Hack, etc.)
+→ `/docs/METRICS_REORGANIZATION_PLAN.md` - Metrics reorganization implementation plan
 
 ### **For Testing:**
 → `/docs/COMPLETE_TEST_INVENTORY.md` + `/docs/TEST_*.md`

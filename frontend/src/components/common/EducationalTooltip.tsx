@@ -20,12 +20,13 @@ export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
   learnMoreUrl,
   whyItMatters
 }) => {
-  const { shouldShowTooltips } = useEducationalContent();
-
-  // Only show in novice mode
-  if (!shouldShowTooltips) {
-    return children || null;
-  }
+  // UNIFIED EXPERIENCE: Show educational tooltips to all users
+  // Educational content helps everyone, not just novice mode
+  // const { shouldShowTooltips } = useEducationalContent();
+  // if (!shouldShowTooltips) {
+  //   return children || null;
+  // }
+  // REMOVED: Mode-based hiding. Tooltips are now always available.
 
   const tooltipContent = (
     <Box sx={{ maxWidth: 320, p: 1 }}>
