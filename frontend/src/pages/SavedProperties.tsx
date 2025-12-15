@@ -18,16 +18,14 @@ import {
   InputLabel,
   Menu,
   ListItemIcon,
-  ListItemText,
-  Divider
+  ListItemText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import HomeIcon from '@mui/icons-material/Home';
 import { propertyApi } from '../services/api';
-import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
+import { formatCurrency, formatPercent } from '../utils/formatters';
 
 interface SavedProperty {
   _id: string;
@@ -48,6 +46,7 @@ interface SavedProperty {
       capRate?: number;
       cashOnCashReturn?: number;
       dscr?: number;
+      irr?: number;
     };
     monthlyAnalysis?: {
       cashFlow?: number;
@@ -320,45 +319,59 @@ const SavedProperties: React.FC = () => {
             sx={{
               display: 'flex',
               alignItems: 'center',
+              gap: 2,
               px: 3,
               py: 1.5,
               backgroundColor: '#F5F5F7',
               borderBottom: '1px solid #E5E5EA'
             }}
           >
-            {/* Placeholder for future image */}
-            <Box sx={{ width: 80, flexShrink: 0 }} />
+            {/* Thumbnail column */}
+            <Box sx={{ width: 64, flexShrink: 0 }} />
 
-            <Box sx={{ flex: '0 0 120px', ml: 2 }}>
+            {/* Verdict column */}
+            <Box sx={{ width: 110, flexShrink: 0 }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Verdict
               </Typography>
             </Box>
 
-            <Box sx={{ flex: 1, minWidth: 200 }}>
+            {/* Property column - flexible */}
+            <Box sx={{ flex: '1 1 200px', minWidth: 180, maxWidth: 320 }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Property
               </Typography>
             </Box>
 
-            <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+            {/* Cash Flow column */}
+            <Box sx={{ width: 110, flexShrink: 0, textAlign: 'right' }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Cash Flow
               </Typography>
             </Box>
 
-            <Box sx={{ flex: '0 0 100px', textAlign: 'right' }}>
+            {/* Cap Rate column */}
+            <Box sx={{ width: 90, flexShrink: 0, textAlign: 'right' }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Cap Rate
               </Typography>
             </Box>
 
-            <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+            {/* IRR column */}
+            <Box sx={{ width: 80, flexShrink: 0, textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                IRR
+              </Typography>
+            </Box>
+
+            {/* Price column */}
+            <Box sx={{ width: 110, flexShrink: 0, textAlign: 'right' }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Price
               </Typography>
             </Box>
 
+            {/* Actions column */}
             <Box sx={{ width: 48, flexShrink: 0 }} />
           </Box>
 
@@ -379,6 +392,7 @@ const SavedProperties: React.FC = () => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
+                  gap: 2,
                   px: 3,
                   py: 2,
                   borderBottom: '1px solid #F2F2F7',
@@ -396,11 +410,11 @@ const SavedProperties: React.FC = () => {
                   }
                 }}
               >
-                {/* Placeholder for future property image (60x45px) */}
+                {/* Placeholder for future property image (64x64px) */}
                 <Box
                   sx={{
-                    width: 80,
-                    height: 60,
+                    width: 64,
+                    height: 64,
                     flexShrink: 0,
                     backgroundColor: '#F2F2F7',
                     borderRadius: 1,
@@ -417,7 +431,7 @@ const SavedProperties: React.FC = () => {
                 </Box>
 
                 {/* Verdict Badge */}
-                <Box sx={{ flex: '0 0 120px', ml: 2 }}>
+                <Box sx={{ width: 110, flexShrink: 0 }}>
                   {typeof dealQuality === 'number' && verdict ? (
                     <Chip
                       label={`${dealQuality} ${verdict}`}
@@ -442,15 +456,18 @@ const SavedProperties: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Property Address */}
-                <Box sx={{ flex: 1, minWidth: 200 }}>
+                {/* Property Address - flexible */}
+                <Box sx={{ flex: '1 1 200px', minWidth: 180, maxWidth: 320 }}>
                   <Typography
                     variant="body1"
                     sx={{
                       fontWeight: 600,
                       color: '#1C1C1E',
                       fontSize: '0.9375rem',
-                      mb: 0.25
+                      mb: 0.25,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {property.propertyAddress?.street || property.propertyName || 'Unnamed Property'}
@@ -459,7 +476,10 @@ const SavedProperties: React.FC = () => {
                     variant="body2"
                     sx={{
                       color: '#8E8E93',
-                      fontSize: '0.8125rem'
+                      fontSize: '0.8125rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {property.propertyAddress ?
@@ -470,7 +490,7 @@ const SavedProperties: React.FC = () => {
                 </Box>
 
                 {/* Cash Flow */}
-                <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+                <Box sx={{ width: 110, flexShrink: 0, textAlign: 'right' }}>
                   <Typography
                     variant="body1"
                     sx={{
@@ -484,7 +504,7 @@ const SavedProperties: React.FC = () => {
                 </Box>
 
                 {/* Cap Rate */}
-                <Box sx={{ flex: '0 0 100px', textAlign: 'right' }}>
+                <Box sx={{ width: 90, flexShrink: 0, textAlign: 'right' }}>
                   <Typography
                     variant="body1"
                     sx={{
@@ -497,8 +517,24 @@ const SavedProperties: React.FC = () => {
                   </Typography>
                 </Box>
 
+                {/* IRR */}
+                <Box sx={{ width: 80, flexShrink: 0, textAlign: 'right' }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#1C1C1E',
+                      fontSize: '0.9375rem'
+                    }}
+                  >
+                    {typeof property.analysis?.keyMetrics?.irr === 'number'
+                      ? formatPercent(property.analysis.keyMetrics.irr)
+                      : 'N/A'}
+                  </Typography>
+                </Box>
+
                 {/* Purchase Price */}
-                <Box sx={{ flex: '0 0 120px', textAlign: 'right' }}>
+                <Box sx={{ width: 110, flexShrink: 0, textAlign: 'right' }}>
                   <Typography
                     variant="body1"
                     sx={{
@@ -547,19 +583,6 @@ const SavedProperties: React.FC = () => {
           horizontal: 'right',
         }}
       >
-        <MenuItem
-          onClick={() => {
-            if (selectedProperty) {
-              handleRowClick(selectedProperty);
-            }
-          }}
-        >
-          <ListItemIcon>
-            <VisibilityIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>View Analysis</ListItemText>
-        </MenuItem>
-        <Divider />
         <MenuItem
           onClick={() => {
             if (selectedProperty) {

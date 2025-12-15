@@ -175,7 +175,9 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
             description="Live in one unit while renting others to offset your housing costs"
             icon={<HouseHackIcon />}
             selected={strategy === 'house-hack'}
-            onSelect={() => onStrategyChange('house-hack')}
+            onSelect={() => {}} // Disabled in Phase 1
+            comingSoon={true}
+            badgeText="Coming Soon"
           />
         </Grid>
 
@@ -198,13 +200,11 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
         <Box sx={{ mb: 4 }}>
           <TapToExpandField
             label="Track in Portfolio (Optional)"
+            helperText="Add this property to a portfolio for tracking and context-aware analysis"
             displayValue={selectedPortfolioId ? "Portfolio selected" : "Analyze without portfolio context"}
             defaultExpanded={false}
           >
             <Box sx={{ pt: 2 }}>
-              <Typography variant="body2" sx={{ mb: 2, color: appleColors.gray[600] }}>
-                Add this property to a portfolio for tracking and context-aware analysis.
-              </Typography>
               <SimplePortfolioSelector
                 selectedPortfolioId={selectedPortfolioId}
                 onPortfolioSelected={onPortfolioChange}
