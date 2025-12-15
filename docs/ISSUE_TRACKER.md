@@ -1,7 +1,7 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2025-12-13
+**Last Updated**: 2025-12-14
 
 ---
 
@@ -5185,12 +5185,128 @@ Test Case: $164,500 @ 6.5% for 30 years
 
 ## 🟢 **MEDIUM PRIORITY** (Enhancements)
 
-### Issue #3: [Placeholder for Future Issues]
-**Status**: -
-**Priority**: -
-**Reported**: -
+### Issue #26: Mobile Blank Page When Navigating to Property Input from Analysis Results
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Mobile UX Issue)
+**Discovered**: 2025-12-14
+**Discovered By**: Product Owner during production testing
+**Component**: Frontend - Mobile Navigation/Routing
+**Affects**: Mobile devices only (desktop works correctly)
+**Category**: Navigation / Mobile UX / Routing
 
-_Add new medium priority issues here_
+**Description**:
+When viewing an existing property on mobile, the analysis results display correctly. However, when attempting to navigate to the property input page from the results view, the page turns completely blank. The same property and navigation flow works perfectly on desktop browsers.
+
+**User Scenario**:
+```
+Mobile Device Flow:
+1. User opens saved property on mobile → ✅ Results display correctly
+2. User clicks to navigate to property input page → ❌ Blank white screen
+3. No error messages shown, page just blank
+
+Desktop Flow (Same Property):
+1. User opens saved property on desktop → ✅ Results display correctly
+2. User clicks to navigate to property input page → ✅ Input form displays correctly
+```
+
+**Expected Behavior**:
+- Mobile navigation should work identically to desktop
+- Property input form should display on mobile devices
+- No blank screens during navigation
+
+**Actual Behavior**:
+- Navigation results in completely blank page on mobile
+- No error messages or loading indicators
+- Desktop navigation works as expected
+
+**Testing Notes**:
+- Reproduced on mobile devices during production testing (Dec 14, 2025)
+- Desktop browsers (Chrome, Safari, Firefox) work correctly
+- Likely routing or responsive layout issue specific to mobile viewport
+
+**Next Steps**:
+1. Debug mobile navigation routing logic
+2. Check for viewport-specific conditional rendering
+3. Review React Router mobile compatibility
+4. Test on multiple mobile devices and browsers
+5. Add error boundaries to catch navigation failures
+
+---
+
+### Issue #27: Property Analysis Performance Slow (1-2 Minutes)
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Performance Optimization)
+**Discovered**: 2025-12-14
+**Discovered By**: Product Owner during production usage
+**Component**: Backend - Analysis Engine
+**Affects**: All property analyses (SFR and Multi-Family)
+**Category**: Performance / User Experience / Backend Optimization
+
+**Description**:
+Property analysis currently takes 1-2 minutes to complete, which creates a poor user experience. While some optimizations have been implemented (debug log removal, increased Render server size), further performance improvements are needed to achieve target analysis time of <10 seconds.
+
+**Current Performance**:
+- **Analysis Duration**: 1-2 minutes per property
+- **Target Performance**: <10 seconds per property
+- **Gap**: 12x-20x slower than target
+
+**Optimizations Already Implemented**:
+✅ Removed 273+ console.log statements from production code (Dec 2025)
+✅ Increased Render backend server size (Dec 2025)
+✅ Removed Investment Decision Engine debug logging
+
+**Remaining Performance Issues**:
+- External API calls (RentCast, FRED, Census) may not be properly cached
+- Synchronous processing of market intelligence data
+- Potential inefficient database queries
+- No request timeout handling
+- AI content generation may be blocking analysis completion
+
+**Potential Optimizations to Investigate**:
+
+1. **API Response Caching**:
+   - Verify MongoDB cache TTL is working correctly
+   - Check cache hit/miss rates for FRED, RentCast, Census APIs
+   - Consider pre-warming cache for popular ZIP codes
+
+2. **Parallel Processing**:
+   - Run market intelligence queries concurrently (Promise.all)
+   - Separate AI content generation from core analysis (async)
+   - Load non-critical data in background
+
+3. **Database Optimization**:
+   - Add indexes for frequently queried fields
+   - Review MongoDB query performance with explain()
+   - Consider aggregation pipeline optimization
+
+4. **Request Optimization**:
+   - Implement request timeouts for external APIs (5-10s max)
+   - Add circuit breaker for failing external services
+   - Graceful degradation when APIs are slow/down
+
+5. **Code Profiling**:
+   - Add performance monitoring to identify bottlenecks
+   - Profile Investment Decision Engine execution time
+   - Measure time spent in each analysis phase
+
+**Business Impact**:
+- **User Experience**: 1-2 minute wait drives user abandonment
+- **Competitive Disadvantage**: Users expect instant or near-instant results
+- **Professional Credibility**: Slow performance suggests inefficient platform
+- **Conversion Risk**: Free trial users may not convert due to poor experience
+
+**Success Criteria**:
+- ✅ Analysis completes in <10 seconds for 90% of properties
+- ✅ API response caching reduces external call latency by 80%+
+- ✅ Performance monitoring identifies specific bottlenecks
+- ✅ Graceful degradation when external APIs are slow
+
+**Next Steps**:
+1. Add performance logging to measure time for each analysis phase
+2. Audit external API call patterns and caching effectiveness
+3. Profile Investment Decision Engine and SFR/MF analyzers
+4. Implement parallel processing for independent calculations
+5. Add performance monitoring dashboard (response times, cache hits, etc.)
 
 ---
 
