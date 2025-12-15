@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import {
   Container,
   Box,
@@ -35,6 +36,111 @@ import StickyHeader from '../components/SampleAnalysis/StickyHeader';
 const WhatsNewPage: React.FC = () => {
   return (
     <>
+      {/* SEO Meta Tags */}
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>What's New - REanalyzr v4.1 | Latest Features & Updates</title>
+        <meta
+          name="title"
+          content="What's New - REanalyzr v4.1 | Latest Features & Updates"
+        />
+        <meta
+          name="description"
+          content="Discover the latest features in REanalyzr v4.1: Simplified property wizard, unified analysis experience, progressive metrics, and saved properties redesign. See our roadmap for BRRRR & house hacking analysis coming Q1 2026."
+        />
+        <meta
+          name="keywords"
+          content="real estate software updates, rental property calculator features, investment analysis tools, property analyzer changelog, REanalyzr updates, BRRRR analysis, house hacking calculator, multi-family analysis"
+        />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://reanalyzr.com/whats-new" />
+        <meta
+          property="og:title"
+          content="What's New in REanalyzr v4.1 - Simplified Analysis Experience"
+        />
+        <meta
+          property="og:description"
+          content="REanalyzr v4.1 brings simplified property input, unified experience for all users, and enhanced property list UX. Coming soon: BRRRR & house hacking analysis."
+        />
+        <meta property="og:image" content="https://reanalyzr.com/og-image-whats-new.png" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://reanalyzr.com/whats-new" />
+        <meta
+          property="twitter:title"
+          content="What's New in REanalyzr v4.1 - Simplified Analysis Experience"
+        />
+        <meta
+          property="twitter:description"
+          content="REanalyzr v4.1: Streamlined wizard, unified experience, progressive metrics. BRRRR & house hacking analysis coming Q1 2026."
+        />
+        <meta property="twitter:image" content="https://reanalyzr.com/og-image-whats-new.png" />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://reanalyzr.com/whats-new" />
+
+        {/* Structured Data - SoftwareApplication */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'REanalyzr',
+            applicationCategory: 'FinanceApplication',
+            operatingSystem: 'Web',
+            softwareVersion: '4.1.0',
+            releaseNotes: 'https://reanalyzr.com/whats-new',
+            datePublished: '2025-04-01',
+            dateModified: '2025-12-14',
+            description: 'Professional real estate investment analysis platform with AI-powered insights',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD'
+            },
+            featureList: [
+              'Simplified Property Wizard',
+              'Multi-Family Analysis',
+              'Investment Decision Engine',
+              'AI-Enhanced Analysis',
+              'Portfolio Intelligence',
+              'Market Intelligence Integration'
+            ]
+          })}
+        </script>
+
+        {/* Structured Data - Article (for changelog/release notes) */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: 'REanalyzr v4.1 Release - Simplified Analysis Experience',
+            description:
+              'Version 4.1 brings streamlined property wizard, unified experience, progressive metric disclosure, and enhanced property list UX. Roadmap includes BRRRR and house hacking analysis for Q1 2026.',
+            author: {
+              '@type': 'Organization',
+              name: 'REanalyzr'
+            },
+            publisher: {
+              '@type': 'Organization',
+              name: 'REanalyzr',
+              logo: {
+                '@type': 'ImageObject',
+                url: 'https://reanalyzr.com/analyzr-logo.png'
+              }
+            },
+            datePublished: '2025-12-14',
+            dateModified: '2025-12-14',
+            mainEntityOfPage: {
+              '@type': 'WebPage',
+              '@id': 'https://reanalyzr.com/whats-new'
+            }
+          })}
+        </script>
+      </Helmet>
+
       {/* Sticky Navigation Header */}
       <StickyHeader />
 
