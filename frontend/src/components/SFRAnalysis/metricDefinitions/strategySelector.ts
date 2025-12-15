@@ -134,14 +134,9 @@ export function getMetricTiers(options: StrategyOptions): StrategyResult {
       );
       return {
         type: 'SFR',
-        strategy: 'brrrr',
-        tiers: BUY_HOLD_TIERS, // Fallback to buy-hold
-        info: {
-          ...BUY_HOLD_STRATEGY_INFO,
-          strategyName: 'BRRRR (Coming Soon)',
-          strategyId: 'brrrr' as const,
-          description: 'Buy, Rehab, Rent, Refinance, Repeat - Implementation coming soon'
-        },
+        strategy: 'buy-hold', // Fallback to buy-hold for BRRRR
+        tiers: BUY_HOLD_TIERS,
+        info: BUY_HOLD_STRATEGY_INFO, // Use buy-hold info for now
         isFallback: true
       };
 
@@ -153,14 +148,9 @@ export function getMetricTiers(options: StrategyOptions): StrategyResult {
       );
       return {
         type: 'SFR',
-        strategy: 'house-hack',
-        tiers: BUY_HOLD_TIERS, // Fallback to buy-hold
-        info: {
-          ...BUY_HOLD_STRATEGY_INFO,
-          strategyName: 'House Hack (Coming Soon)',
-          strategyId: 'house-hack' as const,
-          description: 'Live in one unit, rent others - Implementation coming soon'
-        },
+        strategy: 'buy-hold', // Fallback to buy-hold for House Hack
+        tiers: BUY_HOLD_TIERS,
+        info: BUY_HOLD_STRATEGY_INFO, // Use buy-hold info for now
         isFallback: true
       };
 

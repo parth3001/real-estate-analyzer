@@ -168,7 +168,7 @@ export const TIER_2_METRICS: MetricDefinition[] = [
     // Source: METRICS_REORGANIZATION_PLAN.md line 56 ⚠️ TECH DEBT (Issue #31)
     getValue: (analysis, propertyData) => {
       // TECH DEBT: Backend calculates annual (line 784), frontend shows monthly
-      const backendValue = analysis?.keyMetrics?.rentPerSqFt; // Backend uses annual
+      const backendValue = (analysis?.keyMetrics as any)?.rentPerSqFt; // Backend uses annual
       if (backendValue !== undefined && backendValue !== null) {
         return backendValue / 12; // Convert annual to monthly for display
       }

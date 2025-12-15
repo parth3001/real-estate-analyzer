@@ -158,9 +158,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
     strategy: strategyResult.type === 'SFR' ? strategyResult.strategy : 'N/A',
     isFallback: strategyResult.type === 'SFR' ? strategyResult.isFallback : false,
     tierCount: strategyResult.tiers.length,
-    tier1Metrics: strategyResult.tiers[0]?.metrics?.length || 0,
-    tier2Metrics: strategyResult.tiers[1]?.metrics?.length || 0,
-    tier3Metrics: strategyResult.tiers[2]?.metrics?.length || 0,
+    ...(strategyResult.type === 'SFR' ? {
+      tier1Metrics: (strategyResult.tiers[0] as any)?.metrics?.length || 0,
+      tier2Metrics: (strategyResult.tiers[1] as any)?.metrics?.length || 0,
+      tier3Metrics: (strategyResult.tiers[2] as any)?.metrics?.length || 0,
+    } : {}),
     tier2Title: strategyResult.tiers[1]?.title || 'N/A',
     tier3Title: strategyResult.tiers[2]?.title || 'N/A'
   });
