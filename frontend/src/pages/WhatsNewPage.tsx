@@ -30,10 +30,15 @@ import {
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { appleColors } from '../theme/appleDesignSystem';
+import StickyHeader from '../components/SampleAnalysis/StickyHeader';
 
 const WhatsNewPage: React.FC = () => {
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <>
+      {/* Sticky Navigation Header */}
+      <StickyHeader />
+
+      <Container maxWidth="lg" sx={{ py: 4, pt: { xs: 10, md: 12 } }}>
       {/* Hero Section */}
       <Box sx={{ mb: 6, textAlign: 'center' }}>
         <Typography variant="h3" fontWeight={700} gutterBottom>
@@ -43,7 +48,7 @@ const WhatsNewPage: React.FC = () => {
           We're constantly improving to give you institutional-grade analysis with consumer-grade simplicity
         </Typography>
         <Chip
-          label="Version 4.0 - Latest"
+          label="Version 4.1 - Latest"
           color="primary"
           sx={{ mt: 2, fontSize: '14px', fontWeight: 600, px: 2, py: 1 }}
         />
@@ -52,29 +57,29 @@ const WhatsNewPage: React.FC = () => {
       {/* Latest Release Highlight */}
       <Card sx={{ mb: 6, borderRadius: '24px', overflow: 'hidden', boxShadow: 6 }}>
         <Box sx={{
-          background: `linear-gradient(135deg, ${appleColors.purple[500]} 0%, ${appleColors.purple[600]} 100%)`,
+          background: `linear-gradient(135deg, ${appleColors.blue[500]} 0%, ${appleColors.blue[600]} 100%)`,
           p: 4,
           color: 'white'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <ApartmentIcon sx={{ fontSize: 48 }} />
+            <SpeedIcon sx={{ fontSize: 48 }} />
             <Box>
               <Typography variant="h4" fontWeight={700}>
-                Multi-Family Analysis Now Live
+                Simplified Wizard & Analysis Experience
               </Typography>
               <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                Version 4.0 • Released November 2025
+                Version 4.1 • Released December 2025
               </Typography>
             </Box>
           </Box>
         </Box>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" fontWeight={600} gutterBottom>
-            Analyze Apartments & Duplexes Like a Pro
+            Professional Analysis, Consumer Simplicity
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Scale from single-family homes to multi-family complexes without changing platforms.
-            Our new Multi-Family Analyzer brings institutional-grade metrics to individual investors.
+            We dramatically simplified the property input wizard and analysis results page while keeping all the institutional-grade metrics you need.
+            Faster property analysis without sacrificing depth.
           </Typography>
 
           <Grid container spacing={3}>
@@ -82,9 +87,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Unit Mix Analysis</Typography>
+                  <Typography fontWeight={600}>Streamlined Property Wizard</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Track performance by unit type (1BR, 2BR, 3BR). See which units drive your returns.
+                    4-step guided input with RentCast auto-population. Get from address to analysis in under 5 minutes.
                   </Typography>
                 </Box>
               </Box>
@@ -93,9 +98,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Institutional Metrics</Typography>
+                  <Typography fontWeight={600}>Unified Experience</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    DSCR, Debt Yield, Break-Even Occupancy, GRM - the same metrics commercial lenders use.
+                    Removed Pro/Learning mode toggle. Everyone gets strategy-aware metrics tailored to their investment approach.
                   </Typography>
                 </Box>
               </Box>
@@ -104,9 +109,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Fannie/Freddie Standards</Typography>
+                  <Typography fontWeight={600}>Progressive Metric Disclosure</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    NOI calculations match industry underwriting standards. Get financing-ready analysis.
+                    3-tier system shows core metrics first, advanced metrics on-demand. See what you need, when you need it.
                   </Typography>
                 </Box>
               </Box>
@@ -115,19 +120,19 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Commercial Loan Support</Typography>
+                  <Typography fontWeight={600}>Improved Property List UX</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Model balloon payments and commercial loan structures unique to 5+ unit properties.
+                    Saved properties list redesigned with responsive layout, IRR column, and better mobile experience.
                   </Typography>
                 </Box>
               </Box>
             </Grid>
           </Grid>
 
-          <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
+          <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
             <Typography variant="body2">
-              <strong>Why it matters:</strong> The average multifamily property delivers 12-18% annual returns vs 8-12% for single-family.
-              Now you can analyze both with the same confidence.
+              <strong>What changed:</strong> We listened to investor feedback and removed complexity without removing power.
+              Same professional analysis, 40% less cognitive load.
             </Typography>
           </Alert>
         </CardContent>
@@ -139,6 +144,29 @@ const WhatsNewPage: React.FC = () => {
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* v4.1 */}
+        <Card sx={{ borderRadius: '16px', borderLeft: `4px solid ${appleColors.blue[500]}` }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h6" fontWeight={600}>
+                v4.1 - Universal Simple Experience
+              </Typography>
+              <Chip label="December 2025" size="small" variant="outlined" />
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Dramatically simplified UX while maintaining professional-grade analysis. Removed Pro/Learning mode, streamlined wizard, enhanced property list.
+            </Typography>
+            <Box component="ul" sx={{ pl: 2, mt: 1, '& li': { mb: 0.5 } }}>
+              <li><Typography variant="body2">Unified experience - removed Pro/Learning mode toggle</Typography></li>
+              <li><Typography variant="body2">Streamlined Property Wizard with 4-step guided input</Typography></li>
+              <li><Typography variant="body2">Progressive metric disclosure (3-tier system)</Typography></li>
+              <li><Typography variant="body2">Strategy-aware metrics for Buy & Hold (BRRRR & House Hack coming Q1 2026)</Typography></li>
+              <li><Typography variant="body2">Saved Properties list redesign with responsive layout and IRR column</Typography></li>
+              <li><Typography variant="body2">Dynamic metric labels based on hold period (e.g., "10-Year IRR" vs "Total ROI")</Typography></li>
+            </Box>
+          </CardContent>
+        </Card>
+
         {/* v4.0 */}
         <Card sx={{ borderRadius: '16px', borderLeft: `4px solid ${appleColors.purple[500]}` }}>
           <CardContent>
@@ -277,7 +305,7 @@ const WhatsNewPage: React.FC = () => {
               <Typography variant="h6" fontWeight={600}>
                 v1.0 - Foundation
               </Typography>
-              <Chip label="October 2024" size="small" variant="outlined" />
+              <Chip label="April 2025" size="small" variant="outlined" />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Launched with core SFR analysis capabilities that transformed spreadsheet chaos into professional insights.
@@ -305,6 +333,24 @@ const WhatsNewPage: React.FC = () => {
         </Typography>
 
         <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card sx={{ borderRadius: '16px', height: '100%' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <AutoAwesomeIcon sx={{ fontSize: 32, color: appleColors.orange[500] }} />
+                  <Typography variant="h6" fontWeight={600}>
+                    BRRRR & House Hacking Analysis
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  Strategy-specific metrics for Buy, Rehab, Rent, Refinance, Repeat and house hacking investments.
+                  Model renovation costs, after-repair value, refinance scenarios, and live-in rental offsets.
+                </Typography>
+                <Chip label="Q1 2026" size="small" sx={{ mt: 2 }} />
+              </CardContent>
+            </Card>
+          </Grid>
+
           <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ borderRadius: '16px', height: '100%' }}>
               <CardContent>
@@ -395,10 +441,11 @@ const WhatsNewPage: React.FC = () => {
           Follow our progress and request features you need.
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Version 4.0.0 • Last updated: November 23, 2025
+          Version 4.1.0 • Last updated: December 14, 2025
         </Typography>
       </Box>
     </Container>
+    </>
   );
 };
 

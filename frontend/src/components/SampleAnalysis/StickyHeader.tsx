@@ -61,8 +61,31 @@ const StickyHeader: React.FC = () => {
             }}
           />
 
-          {/* Login + Sign Up CTAs */}
+          {/* Login + What's New + Sign Up CTAs */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, md: 2 } }}>
+            {/* What's New Link */}
+            <Button
+              onClick={() => navigate('/whats-new')}
+              sx={{
+                color: appleColors.gray[600],
+                fontSize: { xs: '0.875rem', md: '0.938rem' },
+                fontWeight: 500,
+                textTransform: 'none',
+                padding: { xs: '6px 12px', md: '8px 16px' },
+                minWidth: 'auto',
+                display: { xs: 'none', sm: 'inline-flex' }, // Hide on mobile to save space
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: appleColors.primary[500],
+                  textDecoration: 'underline',
+                  textDecorationThickness: '1px',
+                  textUnderlineOffset: '4px'
+                }
+              }}
+            >
+              What's New
+            </Button>
+
             {/* Login Link */}
             <Button
               onClick={() => navigate('/login')}
