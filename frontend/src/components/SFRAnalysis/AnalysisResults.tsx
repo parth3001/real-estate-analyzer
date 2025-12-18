@@ -35,12 +35,15 @@ import {
   Security as SecurityIcon,
   Tune as TuneIcon,
   Build as FixIcon,
-  Assessment as ScenarioIcon
+  Assessment as ScenarioIcon,
+  HelpOutline as HelpOutlineIcon,
+  PlayCircleOutline as PlayCircleOutlineIcon
 } from '@mui/icons-material';
 import { appleColors } from '../../theme/appleDesignSystem';
 import IntelligenceMultiplier from './IntelligenceMultiplier';
 import InvestmentDecisionHero from './InvestmentDecisionHero';
 import SimplePortfolioSelector from './SimplePortfolioSelector';
+import EducationalModal from '../common/EducationalModal';
 // Tax components replaced with educational versions
 import TaxEducationSummary from '../AnalysisResults/TaxEducationSummary';
 // Story 4.2: Unit Mix Analysis Tab
@@ -95,6 +98,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   const [showProfessionalMetrics, setShowProfessionalMetrics] = useState(false);
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const [showInvestmentIntelligence, setShowInvestmentIntelligence] = useState(false);
+  const [educationalModalOpen, setEducationalModalOpen] = useState(false);
 
   // Mark first analysis complete (for email verification banner)
   React.useEffect(() => {
@@ -1081,13 +1085,56 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                       }
                     }}
                   >
-                    <Box>
-                      <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5, color: 'text.primary' }}>
-                        🧠 Professional Investment Intelligence
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        AI-powered insights and professional analysis (4 sections)
-                      </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5, flexWrap: 'wrap' }}>
+                          <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary' }}>
+                            🧠 Professional Investment Intelligence
+                          </Typography>
+                          <Chip
+                            label="advanced"
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.75rem',
+                              backgroundColor: appleColors.blue[50],
+                              color: appleColors.blue[600],
+                              fontWeight: 500
+                            }}
+                          />
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEducationalModalOpen(true);
+                            }}
+                            startIcon={<PlayCircleOutlineIcon sx={{ fontSize: 18 }} />}
+                            size="small"
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.8125rem',
+                              fontWeight: 500,
+                              color: appleColors.blue[600],
+                              backgroundColor: appleColors.blue[50],
+                              border: `1px solid ${appleColors.blue[200]}`,
+                              borderRadius: '8px',
+                              padding: '4px 12px',
+                              minHeight: 'auto',
+                              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                              '&:hover': {
+                                backgroundColor: appleColors.blue[100],
+                                borderColor: appleColors.blue[300],
+                                transform: 'translateY(-1px)',
+                                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.15)'
+                              }
+                            }}
+                          >
+                            Watch Tutorial
+                          </Button>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          AI-powered insights and professional analysis (4 sections)
+                        </Typography>
+                      </Box>
                     </Box>
                     {showInvestmentIntelligence ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </Button>
@@ -2368,6 +2415,15 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
           }}
         />
       )}
+
+      {/* Educational Modal - Professional Investment Intelligence */}
+      <EducationalModal
+        open={educationalModalOpen}
+        onClose={() => setEducationalModalOpen(false)}
+        title="Professional Investment Intelligence"
+        description="Learn how to interpret AI-powered insights and make data-driven investment decisions"
+        videoUrl="https://www.youtube.com/embed/fa-VZ-SDxgY"
+      />
     </Box>
   );
 };
