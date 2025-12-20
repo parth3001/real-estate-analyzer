@@ -10,6 +10,15 @@
 
 import { logger } from '../../utils/logger';
 import { SFRData } from '../../types/propertyTypes';
+import { BRRRRAnalyzer, BRRRRAnalysis, BRRRRInputs } from './brrrAnalyzer';
+import {
+  calculatePostRefiCashFlowScore,
+  calculateRefinanceViabilityScore,
+  calculatePropertyRiskScore,
+  generateBRRRRStrengths,
+  generateBRRRRConcerns,
+  generateBRRRRBottomLine
+} from './brrrDecisionLogic';
 
 // Debug helper - only logs in development
 const debug = (message: string, meta?: any) => {
@@ -1551,10 +1560,29 @@ export class InvestmentDecisionEngine {
       experience: userContext.experienceLevel,
       exitStrategy: propertyData.exitStrategy?.primaryExitStrategy || 'not_specified',
       holdPeriod: propertyData.longTermAssumptions?.projectionYears || 10,
-      portfolioStrategy: propertyData.exitStrategy?.portfolioStrategy || 'not_specified'
+      portfolioStrategy: propertyData.exitStrategy?.portfolioStrategy || 'not_specified',
+      investmentStrategy: (propertyData as any).investmentStrategy || 'buy-hold'
     });
 
     try {
+      // BRRRR Strategy Routing - Phase 1.2
+      const investmentStrategy = (propertyData as any).investmentStrategy || 'buy-hold';
+
+      if (investmentStrategy === 'brrrr') {
+        logger.info('BRRRR Strategy detected - routing to BRRRR analyzer');
+        return await this.generateBRRRRDecision(
+          propertyData as any,
+          analysis,
+          predictions,
+          marketIntelligence,
+          userContext,
+          enhancedGoals,
+          skipEnhancements,
+          startTime
+        );
+      }
+
+      // Continue with standard Buy & Hold analysis
       // 1. Analyze leverage optimization
       const leverageAnalysis = await this.leverageOptimizer.analyzeOptimalLeverage(
         propertyData, 
@@ -1909,6 +1937,302 @@ export class InvestmentDecisionEngine {
       logger.error('Investment Decision Engine: Failed to generate decision', error);
       throw new Error('Failed to generate investment decision');
     }
+  }
+
+  /**
+   * Generate BRRRR Strategy Investment Decision
+   * Phase 1.2: BRRRR-specific decision logic with weighted scoring
+   */
+  private async generateBRRRRDecision(
+    propertyData: any,
+    analysis: any,
+    predictions: any,
+    marketIntelligence: any,
+    userContext: any,
+    enhancedGoals: any,
+    skipEnhancements: boolean,
+    startTime: number
+  ): Promise<InvestmentDecision> {
+    logger.info('BRRRR Decision Engine: Starting BRRRR-specific analysis');
+
+    try {
+      // 1. Run BRRRR Analyzer
+      const brrrAnalyzer = new BRRRRAnalyzer();
+
+      // Map propertyData to BRRRRInputs
+      const brrrInputs: BRRRRInputs = {
+        purchasePrice: propertyData.purchasePrice,
+        closingCosts: propertyData.closingCosts || 0,
+        downPayment: propertyData.downPayment,
+        interestRate: propertyData.interestRate,
+        loanTerm: propertyData.loanTerm,
+        brrrr: propertyData.brrrr,
+        monthlyRent: propertyData.monthlyRent,
+        propertyTaxRate: propertyData.propertyTaxRate,
+        insuranceRate: propertyData.insuranceRate,
+        maintenanceCost: propertyData.maintenanceCost || 0,
+        propertyManagementRate: propertyData.propertyManagementRate || 0,
+        vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5,
+        monthlyHOA: propertyData.monthlyHOA,
+        monthlyUtilities: propertyData.monthlyUtilities
+      };
+
+      const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs);
+
+      logger.info('BRRRR Analysis Complete', {
+        capitalRecoveryRate: brrrAnalysis.capitalRecovery.capitalRecoveryRate,
+        infiniteReturn: brrrAnalysis.capitalRecovery.infiniteReturn,
+        postRefiCashFlow: brrrAnalysis.postRefinanceMetrics.monthlyCashFlow,
+        meets70Rule: brrrAnalysis.rule70Check.meets70Rule
+      });
+
+      // 2. Calculate BRRRR-specific professional assessment
+      const professionalAssessment = this.calculateBRRRRAssessment(
+        brrrAnalysis,
+        marketIntelligence,
+        propertyData
+      );
+
+      logger.info('BRRRR Professional Assessment Complete', {
+        dealQuality: professionalAssessment.dealQuality,
+        primaryInsight: professionalAssessment.primaryInsight
+      });
+
+      // 3. Determine verdict based on deal quality
+      const verdict = this.determineBRRRRVerdict(professionalAssessment.dealQuality);
+
+      // 4. Build investment decision (simplified for Phase 1.2)
+      const decision: InvestmentDecision = {
+        verdict: verdict.verdict,
+        confidence: verdict.confidence,
+        score: professionalAssessment.dealQuality,
+        professionalAssessment,
+        primaryReason: professionalAssessment.primaryInsight,
+        secondaryReasons: professionalAssessment.strategicRecommendations.slice(0, 3),
+        keyRisks: professionalAssessment.riskMitigation.slice(0, 3),
+        actionPlan: [],
+        capitalStrategy: {
+          currentApproach: {
+            description: `BRRRR: ${brrrAnalysis.capitalRecovery.capitalRecoveryRate.toFixed(0)}% capital recovery`,
+            cashRequired: brrrAnalysis.totalInvestment,
+            expectedReturn: brrrAnalysis.postRefinanceMetrics.cashOnCashReturn,
+            efficiency: this.determineEfficiency(brrrAnalysis.capitalRecovery.capitalRecoveryRate)
+          },
+          recommendedApproach: {
+            description: 'Execute BRRRR strategy as planned',
+            cashRequired: brrrAnalysis.capitalRecovery.capitalRemaining,
+            expectedReturn: brrrAnalysis.postRefinanceMetrics.cashOnCashReturn,
+            efficiency: this.determineEfficiency(brrrAnalysis.capitalRecovery.capitalRecoveryRate)
+          },
+          opportunityCost: {
+            annualCost: 0,
+            description: 'BRRRR allows capital recycling',
+            alternativeUse: 'Reinvest recovered capital into next BRRRR deal'
+          },
+          portfolioStrategy: brrrAnalysis.capitalRecovery.infiniteReturn
+            ? 'Infinite return enables rapid portfolio scaling'
+            : 'Partial capital recovery supports measured growth'
+        },
+        alternativeOptions: [],
+        marketContext: {
+          marketStage: 'mid',
+          pricingContext: 'fair',
+          competitiveIntensity: 'moderate',
+          recommendedStrategy: 'Verify ARV with local comps and ensure conservative rehab budget'
+        },
+        timeline: {
+          immediateActions: [
+            brrrAnalysis.capitalRecovery.infiniteReturn
+              ? 'Secure financing immediately - exceptional BRRRR opportunity'
+              : 'Negotiate purchase price if possible',
+            'Get 3+ contractor quotes for rehab scope',
+            'Order professional appraisal to validate ARV assumptions'
+          ],
+          shortTermActions: [
+            `Complete $${brrrInputs.brrrr.rehabBudget.toLocaleString()} rehab within budget`,
+            `Stabilize property during ${brrrInputs.brrrr.seasoningPeriod || 12}-month seasoning period`,
+            'Build relationship with refinance lender'
+          ],
+          longTermStrategy: [
+            `Refinance after ${brrrInputs.brrrr.seasoningPeriod || 12} months to recover ${brrrAnalysis.capitalRecovery.capitalRecoveryRate.toFixed(0)}% of capital`,
+            `Maintain positive cash flow of $${brrrAnalysis.postRefinanceMetrics.monthlyCashFlow.toFixed(0)}/month post-refinance`,
+            'Recycle recovered capital into next BRRRR deal'
+          ]
+        }
+      };
+
+      // 5. Add BRRRR analysis to strategySpecific
+      (decision as any).strategySpecific = brrrAnalysis;
+
+      const processingTime = Date.now() - startTime;
+      logger.info('BRRRR Decision Engine: Decision generated', {
+        processingTime: `${processingTime}ms`,
+        verdict: decision.verdict,
+        dealQuality: professionalAssessment.dealQuality,
+        capitalRecoveryRate: `${brrrAnalysis.capitalRecovery.capitalRecoveryRate.toFixed(0)}%`,
+        infiniteReturn: brrrAnalysis.capitalRecovery.infiniteReturn
+      });
+
+      // 6. Generate AI-enhanced content (skip for recursive calls)
+      if (!skipEnhancements) {
+        try {
+          logger.info('Generating AI-enhanced tab content for BRRRR');
+          const aiEnhancedContent = await aiEnhancedMessagingService.generateAllContent(
+            decision,
+            analysis,
+            propertyData
+          );
+          decision.aiEnhancedContent = aiEnhancedContent;
+          logger.info('AI-enhanced content generation completed');
+        } catch (error) {
+          logger.warn('AI-enhanced content generation failed, using fallback', error);
+        }
+      }
+
+      return decision;
+
+    } catch (error) {
+      logger.error('BRRRR Decision Engine: Failed to generate decision', error);
+      throw new Error('Failed to generate BRRRR investment decision');
+    }
+  }
+
+  /**
+   * Calculate BRRRR-specific professional assessment
+   * Uses BRRRR-specific weights (different from Buy & Hold)
+   */
+  private calculateBRRRRAssessment(
+    brrrAnalysis: BRRRRAnalysis,
+    marketIntelligence: any,
+    propertyData: any
+  ): ProfessionalAssessment {
+    // BRRRR-specific scoring weights (Phase 1.2 approved plan)
+    const weights = {
+      capitalRecovery: 0.40,    // 40% - Capital Recovery Rate (PRIMARY)
+      arvReliability: 0.20,     // 20% - ARV Confidence
+      rehabExecution: 0.15,     // 15% - Rehab Execution
+      postRefiCashFlow: 0.10,   // 10% - Post-Refinance Cash Flow
+      marketStrength: 0.08,     // 8% - Market Appreciation
+      refinanceViability: 0.05, // 5% - Refinance Approval
+      propertyRisk: 0.02        // 2% - Property Condition
+    };
+
+    // Calculate individual scores (using helper functions)
+    const postRefiCashFlowScore = calculatePostRefiCashFlowScore(brrrAnalysis);
+    const refinanceViabilityScore = calculateRefinanceViabilityScore(brrrAnalysis);
+    const propertyRiskScore = calculatePropertyRiskScore(propertyData);
+    const marketStrengthScore = this.getMarketStrengthScore(marketIntelligence) || 70; // Default 70
+
+    // Calculate weighted deal quality score
+    const dealQuality = Math.round(
+      brrrAnalysis.scores.capitalRecovery * weights.capitalRecovery +
+      brrrAnalysis.scores.arvReliability * weights.arvReliability +
+      brrrAnalysis.scores.rehabExecution * weights.rehabExecution +
+      postRefiCashFlowScore * weights.postRefiCashFlow +
+      marketStrengthScore * weights.marketStrength +
+      refinanceViabilityScore * weights.refinanceViability +
+      propertyRiskScore * weights.propertyRisk
+    );
+
+    // Generate BRRRR-specific insights
+    const strengths = generateBRRRRStrengths(brrrAnalysis);
+    const concerns = generateBRRRRConcerns(brrrAnalysis);
+    const bottomLine = generateBRRRRBottomLine(brrrAnalysis);
+
+    return {
+      dealQuality,
+      executionDifficulty: this.calculateBRRRRExecutionDifficulty(brrrAnalysis),
+      dataReliability: brrrAnalysis.scores.arvReliability, // ARV reliability as data quality proxy
+
+      // Factor breakdown
+      cashFlowScore: postRefiCashFlowScore,
+      irrScore: 0, // Not applicable for BRRRR (focus is capital recovery, not IRR)
+      marketStrengthScore,
+      debtStructureScore: refinanceViabilityScore,
+      exitStrategyScore: brrrAnalysis.scores.capitalRecovery, // Capital recovery is the exit
+      capRateScore: 0, // Not primary metric for BRRRR
+      propertyRiskScore,
+
+      // Professional recommendations
+      primaryInsight: bottomLine,
+      strategicRecommendations: strengths,
+      riskMitigation: concerns,
+      opportunityMaximization: this.generateBRRRROpportunities(brrrAnalysis)
+    };
+  }
+
+  /**
+   * Calculate BRRRR execution difficulty (0-100)
+   * Higher score = easier to execute
+   */
+  private calculateBRRRRExecutionDifficulty(brrrAnalysis: BRRRRAnalysis): number {
+    let difficulty = 50; // Base difficulty
+
+    // High rehab budget increases difficulty
+    const rehabPercent = (brrrAnalysis.rehabBudget / brrrAnalysis.totalInvestment) * 100;
+    if (rehabPercent > 40) difficulty -= 20;
+    else if (rehabPercent < 20) difficulty += 10;
+
+    // Longer seasoning period increases difficulty
+    if (brrrAnalysis.seasoningCosts.months > 12) difficulty -= 10;
+    else if (brrrAnalysis.seasoningCosts.months <= 6) difficulty += 10;
+
+    // Low DSCR makes refinance difficult
+    if (brrrAnalysis.postRefinanceMetrics.postRefiDSCR < 1.25) difficulty -= 20;
+    else if (brrrAnalysis.postRefinanceMetrics.postRefiDSCR >= 1.35) difficulty += 15;
+
+    return Math.max(0, Math.min(100, difficulty));
+  }
+
+  /**
+   * Generate BRRRR-specific opportunities
+   */
+  private generateBRRRROpportunities(brrrAnalysis: BRRRRAnalysis): string[] {
+    const opportunities: string[] = [];
+
+    if (brrrAnalysis.capitalRecovery.infiniteReturn) {
+      opportunities.push('Infinite return allows immediate reinvestment in next deal');
+    }
+
+    if (brrrAnalysis.postRefinanceMetrics.monthlyCashFlow > 200) {
+      opportunities.push('Strong cash flow supports holding long-term if needed');
+    }
+
+    if (brrrAnalysis.sensitivity.arv.optimistic.infiniteReturn && !brrrAnalysis.capitalRecovery.infiniteReturn) {
+      opportunities.push('Conservative ARV could yield even better returns');
+    }
+
+    return opportunities;
+  }
+
+  /**
+   * Determine BRRRR verdict based on deal quality score
+   */
+  private determineBRRRRVerdict(dealQuality: number): { verdict: InvestmentVerdict; confidence: number } {
+    // BRRRR thresholds (same as Buy & Hold)
+    if (dealQuality >= 65) return { verdict: 'BUY', confidence: dealQuality };
+    if (dealQuality >= 50) return { verdict: 'NEGOTIATE', confidence: dealQuality };
+    if (dealQuality >= 35) return { verdict: 'CAUTION', confidence: dealQuality };
+    return { verdict: 'PASS', confidence: dealQuality };
+  }
+
+  /**
+   * Helper: Get market strength score from market intelligence
+   */
+  private getMarketStrengthScore(marketIntelligence: any): number {
+    // Simplified for Phase 1.2 - use default if no market data
+    return 70; // Default moderate market score
+  }
+
+  /**
+   * Helper: Determine capital efficiency level
+   */
+  private determineEfficiency(capitalRecoveryRate: number): 'poor' | 'fair' | 'good' | 'excellent' {
+    if (capitalRecoveryRate >= 100) return 'excellent'; // Infinite return
+    if (capitalRecoveryRate >= 80) return 'excellent';
+    if (capitalRecoveryRate >= 60) return 'good';
+    if (capitalRecoveryRate >= 40) return 'fair';
+    return 'poor';
   }
 
   /**

@@ -1,7 +1,64 @@
 # Property Wizard - Complete Field Documentation
 
 ## Overview
-As Sr QE, this document catalogs ALL manual input fields across the 5-step Property Wizard to ensure comprehensive testing coverage. Each field supports both auto-population (via RentCast/FRED APIs) AND manual user override.
+As Sr QE, this document catalogs ALL manual input fields across the **4-step Property Wizard** (updated December 2025) to ensure comprehensive testing coverage. Each field supports both auto-population (via RentCast/FRED APIs) AND manual user override.
+
+**🔄 Major UX Change (December 2025)**: Investment Strategy moved from Step 5 (last) to **Step 0 (first)**. Wizard is now 4 steps (down from 5).
+
+### Current Wizard Flow:
+- **Step 0**: Investment Strategy & Goals (NEW - Visual card selection)
+- **Step 1**: Property Address & Details
+- **Step 2**: Purchase & Financing
+- **Step 3**: Rental Analysis + Advanced Assumptions (collapsed accordion)
+
+### What Changed:
+- **Removed**: Separate "Long-term Assumptions" step (merged into Step 3 accordion)
+- **Removed**: Separate "Goals & Strategy" step (replaced by Step 0)
+- **Added**: Step 0 with visual strategy cards (Buy & Hold, House Hacking, BRRRR)
+
+---
+
+## Step 0: Investment Strategy & Goals (NEW - December 2025) 🎯
+
+**Implementation**: Visual card selection (not dropdown)
+**Component**: `StrategySelectionStep.tsx`
+**Date Added**: December 10, 2025 (Phase 1: Universal Simple)
+
+### Investment Strategy Selection (REQUIRED)
+- **Strategy Cards** (`strategy`) - Visual card selection
+  - **Buy & Hold**: Long-term rental income (most common) ✅ Available
+  - **House Hacking**: Live in one unit, rent out others (first-timers) ✅ Available
+  - **BRRRR**: Buy, Rehab, Rent, Refinance, Repeat (advanced) ⚠️ Coming Soon
+  - Auto-populated: `'buy-hold'` default
+  - Manual Override: **REQUIRED** - User must select one strategy
+
+### AI-Enhanced Strategy Input (OPTIONAL)
+- **Free-form Investment Goals** (`enhancedGoals.freeTextStrategy`) - Multi-line text area
+  - Auto-populated: No
+  - Manual Override: **YES** (Optional, enhances AI analysis)
+  - Triggers AI analysis when >50 characters entered
+  - Results in `enhancedGoals.aiEnhancedStrategy` and `enhancedGoals.strategicInsights[]`
+
+### Portfolio Context (OPTIONAL)
+- **Portfolio Selection** (`selectedPortfolioId`) - Dropdown of user's portfolios
+  - Auto-populated: No
+  - Manual Override: **YES** (Optional)
+  - When selected: Property analysis includes portfolio fit analysis
+
+### Visual Design Notes (UX Specification)
+- **Desktop**: 3 strategy cards horizontally
+- **Mobile**: 3 strategy cards vertically stacked
+- **Card States**: Default, Hover, Selected, Disabled
+- **Disabled State**: BRRRR shows "Coming Soon" badge (Phase 2+)
+- **Apple Design**: SF Pro font, 16px border-radius, subtle shadows
+
+### Data Impact on Analysis
+- `strategy='buy-hold'`: Standard long-term hold analysis (default)
+- `strategy='house-hack'`: Personal housing cost offset calculations (available, not yet backend-supported)
+- `strategy='brrrr'`: Capital recovery, refinance projections (Phase 1.3 backend complete, frontend pending)
+- Portfolio selection: Adds `portfolioContext` to analysis results
+
+---
 
 ## Step 1: Property Address & Details (6+ Fields)
 
@@ -68,14 +125,17 @@ As Sr QE, this document catalogs ALL manual input fields across the 5-step Prope
 
 ---
 
-## Step 4: Long-term Assumptions (6+ Fields)
+### Step 3 Advanced Accordion: Long-term Assumptions (Collapsed by Default) 📊
 
-### Tax & Insurance Fields
+**Implementation**: Collapsible accordion section at bottom of Rental Step
+**Pattern**: Progressive disclosure - hidden by default, revealed when user clicks "Advanced Assumptions"
+
+#### Tax & Insurance Fields (in accordion)
 - **Property Tax Rate** (`propertyTaxRate`) - Auto-populated: **YES** (RentCast historical tax data) | Manual Override: **YES**
 - **Insurance Rate** (`insuranceRate`) - Auto-populated: 0.7% of purchase price | Manual Override: **YES**
 - **Maintenance Reserve %** (`maintenanceReservePercentage`) - Auto-populated: 5% of rent | Manual Override: **YES**
 
-### Long-term Projection Fields
+#### Long-term Projection Fields (in accordion)
 - **Projection Years** (`longTermProjections.projectionYears`) - Auto-populated: 10 years | Manual Override: **YES**
 - **Annual Rent Increase** (`longTermProjections.annualRentIncrease`) - Auto-populated: **YES** (FRED inflation + market data) | Manual Override: **YES**
 - **Annual Property Value Increase** (`longTermProjections.annualPropertyValueIncrease`) - Auto-populated: **YES** (FRED housing price index) | Manual Override: **YES**
@@ -83,52 +143,46 @@ As Sr QE, this document catalogs ALL manual input fields across the 5-step Prope
 - **Inflation Rate** (`longTermProjections.inflationRate`) - Auto-populated: **YES** (FRED CPI data) | Manual Override: **YES**
 - **Turnover Frequency** (`longTermProjections.turnoverFrequency`) - Auto-populated: 2 years | Manual Override: **YES**
 
-### Data Sources & Validation
+#### Data Sources & Validation
 - **FRED API**: Inflation rates, housing price index, economic indicators
 - **RentCast API**: Historical property tax rates by location
 - **Market Intelligence**: Regional growth trends and assumptions
 - **Validation**: All percentages 0-100%, Years 1-50, Rates 0-20%
 
----
-
-## Step 5: Investment Goals & Strategy (4+ Fields)
-
-### Strategy Dropdown Fields
-- **Exit Strategy** (`exitStrategy`) - Options: sale, refinance, 1031exchange, estate, flexible
-- **Portfolio Strategy** (`portfolioStrategy`) - Options: first, geographic, cashflow, appreciation, diversification
-- **Experience Level** (`experienceLevel`) - Options: novice, intermediate, expert
-- **Risk Tolerance** (`riskTolerance`) - Options: conservative, moderate, aggressive
-
-### Investment Planning Fields
-- **Investment Horizon** (`investmentHorizon`) - Options: 1-3 years, 3-5 years, 5-10 years, 10+ years
-- **Target Cash Flow** (`targetCashFlow`) - Auto-populated: No | Manual Override: **YES** (Optional)
-- **Target Appreciation** (`targetAppreciation`) - Auto-populated: No | Manual Override: **YES** (Optional)
-
-### AI-Enhanced Fields
-- **Free-form Investment Goals** (`freeformGoals`) - Auto-populated: No | Manual Override: **YES** (Text area)
-- **Market Focus Areas** (derived from goals) - Auto-populated: **YES** (AI analysis) | Manual Override: Indirect
-- **Risk Assessment** (derived from selections) - Auto-populated: **YES** (AI analysis) | Manual Override: Indirect
-
-### Data Sources & Impact
-- **AI Processing**: GPT-4o-mini analyzes free-form goals for enhanced context
-- **Investment Decision Engine**: Strategy selections influence verdict scoring
-- **Portfolio Context**: Goals affect property fit analysis and recommendations
+**UX Notes**:
+- Section starts collapsed (simplifies wizard for novice users)
+- Smart defaults mean most users never need to expand this
+- "Pro users" can expand and customize all assumptions
 
 ---
 
-## Complete Input Field Summary
+## ~~Step 4 & 5: DEPRECATED (December 2025)~~
 
-### Total Manual Input Fields: **30+ Fields**
+**Step 4 "Long-term Assumptions"**: ❌ **REMOVED** - Content moved to Step 3 advanced accordion
+**Step 5 "Investment Goals & Strategy"**: ❌ **REMOVED** - Replaced by Step 0
+
+**Rationale**: Wizard simplified from 5 steps → 4 steps to reduce cognitive load and improve completion rates.
+
+---
+
+## Complete Input Field Summary (UPDATED December 2025)
+
+### Total Manual Input Fields: **30+ Fields** (Across 4 steps)
+- **Step 0**: 3 fields (1 strategy + 1 AI text + 1 portfolio) - **NEW**
 - **Step 1**: 9 fields (5 address + 4 property details)
 - **Step 2**: 8 fields (4 core + 4 advanced financing)
-- **Step 3**: 7 fields (2 rental + 2 management + 3 turnover)
-- **Step 4**: 9 fields (3 assumptions + 6 projections)
-- **Step 5**: 7+ fields (4 strategy + 3+ planning/goals)
+- **Step 3**: 7 visible + 9 accordion fields (2 rental + 2 management + 3 turnover + 9 advanced assumptions)
+
+**Changed from 5-step wizard:**
+- Steps 4 & 5 removed/consolidated
+- Step 0 added (strategy first)
+- Total steps: 5 → 4 (20% reduction in wizard length)
 
 ### Auto-Population Coverage
-- **High Auto-Population**: Steps 1, 3, 4 (60-80% fields auto-populated)
-- **Moderate Auto-Population**: Step 2 (40% fields auto-populated)
-- **Low Auto-Population**: Step 5 (20% fields auto-populated)
+- **Step 0**: Low (33% - only strategy default populated)
+- **Step 1**: High (67% - property details auto-populated)
+- **Step 2**: Moderate (50% - interest rate + defaults)
+- **Step 3**: High (75% - rent, taxes, all projections)
 
 ### API Integration Points
 - **RentCast API**: Property details, rent estimates, tax rates, comparables
@@ -140,12 +194,14 @@ As Sr QE, this document catalogs ALL manual input fields across the 5-step Prope
 
 ## Testing Strategy Implications
 
-### Critical Test Scenarios
-1. **Auto-Population + Manual Override**: Test RentCast data vs user input precedence
-2. **Field Validation**: Test boundary conditions and error handling
-3. **Data Flow Integration**: Ensure all fields reach Investment Decision Engine
-4. **Strategy Impact**: Validate Step 5 selections influence final analysis
-5. **Cross-Step Dependencies**: Property details → rent estimates → cash flow calculations
+### Critical Test Scenarios (UPDATED December 2025)
+1. **Step 0 Strategy Selection**: Test visual card selection, strategy routing to backend
+2. **Auto-Population + Manual Override**: Test RentCast data vs user input precedence
+3. **Field Validation**: Test boundary conditions and error handling
+4. **Accordion Collapse/Expand**: Test advanced assumptions section UX
+5. **Data Flow Integration**: Ensure all fields (including strategy) reach Investment Decision Engine
+6. **Strategy Impact**: Validate Step 0 strategy selection influences final analysis verdict
+7. **Cross-Step Dependencies**: Strategy → property details → rent estimates → cash flow calculations
 
 ### Sr QE Validation Points
 - ✅ Every field accepts manual input

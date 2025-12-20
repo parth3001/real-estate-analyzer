@@ -9,6 +9,9 @@ import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Removed unused propertyEnrichmentService imports
 
+// BRRRR Validation (Phase 1.3)
+import { validateBRRRRInputs } from '../validation/brrrValidation';
+
 // Initialize the deal service
 const dealService = new DealService();
 
@@ -885,7 +888,38 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
       res.status(400).json({ error: 'Property type is required' });
       return;
     }
-    
+
+    // BRRRR Validation (Phase 1.3 - Fix Test 5 Gap)
+    // If investmentStrategy is 'brrrr', validate that brrrr object exists and is valid
+    if (dealData.investmentStrategy === 'brrrr') {
+      logger.info('BRRRR strategy detected - validating BRRRR data');
+
+      if (!dealData.brrrr) {
+        logger.warn('BRRRR strategy specified but brrrr object is missing');
+        res.status(400).json({
+          error: 'BRRRR strategy requires brrrr object with rehabBudget, afterRepairValue, refinanceLTV, and seasoningPeriod'
+        });
+        return;
+      }
+
+      // Use existing validation layer from Phase 0
+      const validation = validateBRRRRInputs(dealData);
+
+      if (validation.errors.length > 0) {
+        logger.warn('BRRRR validation failed', { errors: validation.errors });
+        res.status(400).json({
+          error: validation.errors[0].message,
+          validationErrors: validation.errors
+        });
+        return;
+      }
+
+      // Log warnings but don't block (non-blocking validation)
+      if (validation.warnings.length > 0) {
+        logger.info('BRRRR validation warnings', { warnings: validation.warnings });
+      }
+    }
+
     // Extract assumptions from the dealData
     const assumptions: AnalysisAssumptions = {
       projectionYears: dealData.longTermAssumptions?.projectionYears || 10,

@@ -7,6 +7,16 @@ export interface PropertyAddress {
   zipCode: string;
 }
 
+// BRRRR Strategy Data (Phase 1.3 - BRRRR Implementation)
+export interface BRRRRStrategyData {
+  rehabBudget: number;
+  afterRepairValue: number;
+  refinanceLTV: number;  // 65-80%, default 75
+  seasoningPeriod: number;  // 6-24 months, default 12
+  estimatedRehabTime?: number;  // months (optional)
+  arvAppraisalConfidence: 'conservative' | 'moderate' | 'aggressive';
+}
+
 // Exit strategy data for investment decision enhancement
 export interface ExitStrategyData {
   primaryExitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';

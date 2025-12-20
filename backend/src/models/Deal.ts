@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { BRRRRStrategyData } from '../types/propertyTypes';
 
 // Base interfaces
 export interface PropertyAddress {
@@ -415,6 +416,12 @@ export interface Analysis {
       impactSummary: string;
     };
   };
+
+  // Strategy-Specific Analysis Results (Phase 1.3)
+  // For BRRRR: Contains BRRRRAnalysis object
+  // For House Hack: Contains house hack specific data
+  // For Buy & Hold: Undefined/null
+  strategySpecific?: any;
 }
 
 // Base deal interface
@@ -447,6 +454,11 @@ export interface IDeal extends Document {
     prepFees: number;
     realtorCommission: number;
   };
+
+  // BRRRR Strategy Fields (Phase 1.3)
+  investmentStrategy?: 'buy-hold' | 'brrrr' | 'house-hack';
+  brrrr?: BRRRRStrategyData;
+
   analysis: Analysis;
   confidence?: AnalysisConfidence;
   investmentDecision?: {
@@ -1068,6 +1080,15 @@ const AnalysisSchema = new Schema({
       fitAnalysis: String,
       impactSummary: String
     }
+  },
+
+  // Strategy-Specific Analysis Results (Phase 1.3)
+  // For BRRRR: Contains BRRRRAnalysis object
+  // For House Hack: Contains house hack specific data
+  // For Buy & Hold: Undefined/null
+  strategySpecific: {
+    type: Schema.Types.Mixed,
+    required: false
   }
 });
 
@@ -1128,7 +1149,53 @@ const DealSchema = new Schema({
     prepFees: { type: Number, default: 500 },
     realtorCommission: { type: Number, default: 0.5 }
   },
-  
+
+  // BRRRR Strategy Fields (Phase 1.3)
+  investmentStrategy: {
+    type: String,
+    enum: ['buy-hold', 'brrrr', 'house-hack'],
+    default: 'buy-hold',
+    required: false
+  },
+
+  brrrr: {
+    rehabBudget: {
+      type: Number,
+      required: function() { return this.investmentStrategy === 'brrrr'; },
+      min: 0
+    },
+    afterRepairValue: {
+      type: Number,
+      required: function() { return this.investmentStrategy === 'brrrr'; },
+      min: 0
+    },
+    refinanceLTV: {
+      type: Number,
+      required: false,
+      min: 65,
+      max: 80,
+      default: 75
+    },
+    seasoningPeriod: {
+      type: Number,
+      required: false,
+      min: 6,
+      max: 24,
+      default: 12
+    },
+    estimatedRehabTime: {
+      type: Number,
+      required: false,
+      min: 1
+    },
+    arvAppraisalConfidence: {
+      type: String,
+      required: false,
+      enum: ['conservative', 'moderate', 'aggressive'],
+      default: 'moderate'
+    }
+  },
+
   // SFR specific fields with conditional validation
   monthlyRent: { 
     type: Number,
@@ -1186,6 +1253,17 @@ const DealSchema = new Schema({
   discriminatorKey: 'propertyType',
   strict: false  // Allow additional fields for new property types (COMMERCIAL, STORAGE, etc.)
 });
+
+// BRRRR Strategy Indexes (Phase 1.3 - Simplified per Architect feedback)
+// Index 1: Strategy filtering (simple queries like "show me all BRRRR deals")
+DealSchema.index({ investmentStrategy: 1 });
+
+// Index 2: User + Strategy (most common query: "show me MY BRRRR deals")
+DealSchema.index({ userId: 1, investmentStrategy: 1 });
+
+// DEFERRED indexes (add when >1K BRRRR deals):
+// - BRRRR Leaderboard: { investmentStrategy: 1, 'analysis.strategySpecific.capitalRecovery.capitalRecoveryRate': -1 }
+// - ARV Analysis: { investmentStrategy: 1, 'brrrr.afterRepairValue': -1 }
 
 // Create the base model
 const DealModel = mongoose.model<IDeal>('Deal', DealSchema);
