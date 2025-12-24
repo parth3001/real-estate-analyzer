@@ -104,10 +104,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       termsVersion: '2025-10-30', // Update this when TOS changes
       termsAcceptedIp: req.ip || req.socket.remoteAddress || 'unknown',
       registrationIp: req.ip || req.socket.remoteAddress || 'unknown',
-      registrationUserAgent: req.headers['user-agent'] || 'unknown'
+      registrationUserAgent: req.headers['user-agent'] || 'unknown',
+      // Affiliate tracking (e.g., Josh Lupo partnership)
+      affiliateCode: req.body.affiliateCode || null,
+      affiliateCodeSetAt: req.body.affiliateCode ? new Date() : undefined
     };
 
-    logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}`);
+    logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}${registrationMetadata.affiliateCode ? ` | Affiliate: ${registrationMetadata.affiliateCode}` : ''}`);
 
     const result = await authService.register(userData, registrationMetadata);
 

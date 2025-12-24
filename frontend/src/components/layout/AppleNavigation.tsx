@@ -49,6 +49,8 @@ import { useDualMode } from '../../contexts/DualModeContext';
 import { ModeToggle } from '../common/ModeToggle';
 import { appleBorderRadius } from '../../theme/appleDesignSystem';
 import analyzrLogo from '../../assets/analyzr-logo.png';
+import { useAffiliate } from '../../contexts/AffiliateContext';
+import AffiliateHeaderBadge from '../common/AffiliateHeaderBadge';
 
 // Apple-style constants
 const SIDEBAR_WIDTH = 280;
@@ -201,6 +203,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuth();
   const { mode } = useDualMode();
+  const { isAffiliateSite, affiliatePartner } = useAffiliate();
   
   // Initialize drawer state - always closed on mobile initially
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Desktop sidebar open by default
@@ -612,13 +615,20 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
                 Welcome, {user.firstName}
               </Typography>
               {user.role === 'admin' && (
-                <Chip 
-                  label="Admin" 
-                  size="small" 
-                  color="primary" 
-                  variant="outlined" 
+                <Chip
+                  label="Admin"
+                  size="small"
+                  color="primary"
+                  variant="outlined"
                 />
               )}
+            </Box>
+          )}
+
+          {/* Affiliate Badge - shows only on affiliate subdomains */}
+          {isAffiliateSite && affiliatePartner && (
+            <Box sx={{ mr: 2 }}>
+              <AffiliateHeaderBadge partner={affiliatePartner} />
             </Box>
           )}
 

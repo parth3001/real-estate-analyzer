@@ -48,6 +48,8 @@ export class AuthService {
       termsAcceptedIp?: string;
       registrationIp?: string;
       registrationUserAgent?: string;
+      affiliateCode?: string | null;
+      affiliateCodeSetAt?: Date;
     }
   ): Promise<AuthTokens> {
     try {
@@ -73,7 +75,10 @@ export class AuthService {
         termsAcceptedIp: metadata?.termsAcceptedIp,
         // Anti-abuse tracking
         registrationIp: metadata?.registrationIp,
-        registrationUserAgent: metadata?.registrationUserAgent
+        registrationUserAgent: metadata?.registrationUserAgent,
+        // Affiliate tracking
+        affiliateCode: metadata?.affiliateCode,
+        affiliateCodeSetAt: metadata?.affiliateCodeSetAt
       });
 
       const savedUser = await user.save();

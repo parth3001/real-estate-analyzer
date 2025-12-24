@@ -367,6 +367,156 @@ Fix doesn't work after 2 attempts?
 
 ## 📝 **Claude's Memory Log**
 
+### **Affiliate Partnership System - Josh Lupo Integration (December 23, 2025)** 🤝
+
+#### **✅ COMPLETED DELIVERABLES (Full-Stack Implementation)**
+
+**Status**: ✅ Frontend + Backend Complete, Ready for Production
+
+**Implementation Summary**:
+
+**Frontend Components (6 files created/modified)**:
+1. **`affiliateDetector.ts`** - Subdomain-based partner detection utility
+   - Detects `theficouple.reanalyzr.com` → Returns Josh's branding config
+   - localStorage persistence: `affiliateCode: 'JOSH_LUPO'`
+   - Supports URL parameter fallback (`?ref=JOSH_LUPO`)
+
+2. **`AffiliateContext.tsx`** - React context for affiliate state management
+   - Wraps entire app with affiliate detection
+   - Provides `{ isAffiliateSite, affiliatePartner, affiliateCode }`
+   - Auto-persists affiliate code through user journey
+
+3. **`AffiliateLandingPage.tsx`** - Custom branded landing page
+   - Partner-specific hero image, tagline, description
+   - Trust signals section (Institutional-Grade Analysis, 5-Minute vs 2-Hour, Investment Decision Engine)
+   - Primary CTA: "Start Free Analysis" → `/sfr-analysis`
+   - Footer promise: "10 free analyses" (vs standard 3)
+
+4. **`AffiliateHeaderBadge.tsx`** - Subtle attribution badge
+   - Desktop: "🏷️ Recommended by Josh Lupo" (180×32px)
+   - Mobile: "🏷️ Josh" (80×24px compact)
+   - Appears in header throughout user journey
+   - Neutral gray styling (doesn't compete with main design)
+
+5. **`App.tsx`** - Conditional routing + logged-in user redirect
+   - Home route: `isAffiliateSite ? <AffiliateLandingPage /> : <SampleAnalysisPage />`
+   - Logged-in users: Auto-redirect to dashboard (not landing page)
+   - Badge persists for logged-in users on affiliate subdomain
+
+6. **`AppleNavigation.tsx`** - Badge integration in header
+   - Conditionally renders badge only on affiliate subdomains
+   - Positioned between "Welcome" message and notifications icon
+
+7. **`RegisterForm.tsx`** - Sends affiliate code to backend on signup + Flodesk pre-fill
+   - Captures `affiliateCode` from `useAffiliate()` hook
+   - Includes in registration payload: `{ email, password, ..., affiliateCode }`
+   - **Flodesk Integration**: Detects URL params (`?email=...&name=...`)
+   - Pre-fills email, firstName, lastName from Flodesk redirect
+   - Auto-updates form when URL params change
+
+**Flodesk Email Capture Integration**:
+8. **Josh's Flow**: Flodesk page → Redirect with merge tags → Pre-filled signup
+   - **Flodesk URL**: `https://theficouple.reanalyzr.com?email={{email}}&name={{name}}`
+   - **Landing Page**: Detects email/name → Shows "Welcome, [FirstName]! 👋"
+   - **Smart Navigation**: With email → `/register`, Without email → `/sfr-analysis`
+   - **Pre-Filled Signup**: Email, first name, last name auto-filled from URL params
+   - **Friction Reduction**: Users only need to create password
+
+**Backend Changes (3 files modified)**:
+1. **`User.ts`** model - Added affiliate tracking fields
+   - `affiliateCode`: String, indexed, optional (e.g., 'JOSH_LUPO')
+   - `affiliateCodeSetAt`: Date, timestamp of attribution capture
+   - **Existing users**: Unaffected (defaults to `null`)
+   - **No migration needed**: MongoDB handles gracefully
+
+2. **`authController.ts`** - Save affiliate code on signup
+   - Captures `req.body.affiliateCode` in registration metadata
+   - Saves to User document on account creation
+   - Logging: `"Registration request for: user@email.com | Affiliate: JOSH_LUPO"`
+
+3. **`authService.ts`** - Accept and save affiliateCode in metadata
+   - Updated metadata interface to include `affiliateCode` and `affiliateCodeSetAt`
+   - Passes affiliate data to User model during account creation
+   - Ensures data persistence in MongoDB
+
+**Infrastructure Setup**:
+- ✅ Render Custom Domain: `theficouple.reanalyzr.com` configured
+- ✅ Namecheap DNS: CNAME record created (`theficouple` → `real-estate-analyzer-9ise.onrender.com`)
+- ✅ SSL Certificate: Auto-provisioned via Let's Encrypt
+- ✅ DNS Propagation: Verified working
+
+**Key Architectural Decisions**:
+1. **Minimal "Powered By" Model** (Not full white-label)
+   - Josh gets branded landing page + attribution badge
+   - Core app design unchanged (Reanalyzr branding preserved)
+   - Scalable: Configuration-driven for 100+ partners
+
+2. **Client-Side Tracking → Backend Persistence**
+   - `AffiliateContext` detects subdomain → Saves to localStorage
+   - Persists through navigation, login, signup
+   - Backend captures on account creation → Permanent database record
+
+3. **Optional Field Architecture**
+   - `affiliateCode` is optional, not required
+   - Existing users: `affiliateCode: null` (no impact)
+   - Future payments: Attribution data already exists for commission calculation
+
+4. **No Payment Integration Yet**
+   - Just tracking referrals for now
+   - Future: Apply benefits (10 free analyses, 20% discount, etc.)
+   - Database ready for tiered affiliate benefits when payments ship
+
+**Testing Results** (All Passed ✅):
+1. **Main Site** (`localhost:3000`):
+   - ✅ No affiliate badge shown
+   - ✅ Standard 3 free analyses
+   - ✅ User creation: `affiliateCode: null`
+
+2. **Affiliate Site** (`theficouple.localhost:3000`):
+   - ✅ Custom landing page loads
+   - ✅ "Start Free Analysis" → Signup works
+   - ✅ User creation: `affiliateCode: "JOSH_LUPO"`
+   - ✅ Full SFR Buy & Hold flow tested and working
+
+3. **Flodesk Integration** (`theficouple.localhost:3000?email=...&name=...`):
+   - ✅ Personalized welcome: "Welcome, Josh! 👋"
+   - ✅ Email pre-filled: `josh-test@example.com`
+   - ✅ Name pre-filled: First name `Josh`, Last name `Smith`
+   - ✅ User creation: `affiliateCode: "JOSH_LUPO"` + `affiliateCodeSetAt` timestamp
+
+4. **Logged-In User Redirect**:
+   - ✅ Existing users auto-redirect to dashboard (not landing page)
+   - ✅ Badge still shows in header for affiliate subdomain
+
+**Business Impact**:
+- **Ready for Josh's Promotion**: Can share `theficouple.reanalyzr.com` immediately
+- **Attribution Tracking**: Every signup captured with `affiliateCode: 'JOSH_LUPO'`
+- **Future Commission Calc**: Database query `User.find({ affiliateCode: 'JOSH_LUPO', isPaid: true })`
+- **Scalable Model**: Add new partners by updating config object (no code changes)
+
+**Documentation Created**:
+- ✅ `DATA_DICTIONARY.md`: Added `affiliateCode` and `affiliateCodeSetAt` fields to User Model
+- ✅ `CLAUDE.md`: Complete memory log with implementation details
+- ✅ `JOSH_LUPO_FLODESK_SETUP.md`: 200+ line setup guide for Josh
+- ✅ `EMAIL_TO_JOSH_LUPO.md`: Email template with quick setup instructions
+- ✅ Partner assets directory: `/frontend/public/partners/theficouple/`
+
+**Files Created/Modified** (Total: 13 files):
+**Frontend (7 files)**:
+- Created: `affiliateDetector.ts`, `AffiliateContext.tsx`, `AffiliateLandingPage.tsx`, `AffiliateHeaderBadge.tsx`
+- Modified: `App.tsx`, `AppleNavigation.tsx`, `RegisterForm.tsx`
+
+**Backend (3 files)**:
+- Modified: `User.ts`, `authController.ts`, `authService.ts`
+
+**Documentation (3 files)**:
+- Updated: `DATA_DICTIONARY.md`, `CLAUDE.md`
+- Created: `JOSH_LUPO_FLODESK_SETUP.md`, `EMAIL_TO_JOSH_LUPO.md`
+
+**Production Ready**: ✅ Yes - All testing passed, DNS configured, Flodesk integration complete
+
+---
+
 ### **Multi-Family Analyzer - Backend Implementation Complete (Stories 1.1-1.6, October 28, 2025)** 🏢
 
 #### **✅ COMPLETED DELIVERABLES (Backend Complete, Frontend Pending)**

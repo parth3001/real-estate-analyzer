@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
+import { useAffiliate } from '../../contexts/AffiliateContext';
 import type { RegisterData, AuthFormErrors } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -18,13 +19,33 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const { register, isLoading, error } = useAuth();
   const { validateRegisterForm } = useAuthValidation();
   const { isMobile, isTablet } = useResponsive();
+  const { affiliateCode } = useAffiliate();
+  const [searchParams] = useSearchParams();
+
+  // Get email/name from URL params (Flodesk redirect)
+  const urlEmail = searchParams.get('email') || '';
+  const urlName = searchParams.get('name') || '';
+  const urlFirstName = urlName ? urlName.split(' ')[0] : '';
+  const urlLastName = urlName ? urlName.split(' ').slice(1).join(' ') : '';
 
   const [formData, setFormData] = useState<RegisterData>({
-    email: '',
+    email: urlEmail,
     password: '',
-    firstName: '',
-    lastName: '',
+    firstName: urlFirstName,
+    lastName: urlLastName,
   });
+
+  // Update form if URL params change
+  useEffect(() => {
+    if (urlEmail) {
+      setFormData(prev => ({
+        ...prev,
+        email: urlEmail,
+        firstName: urlFirstName,
+        lastName: urlLastName
+      }));
+    }
+  }, [urlEmail, urlFirstName, urlLastName]);
 
   const [formErrors, setFormErrors] = useState<AuthFormErrors>({});
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -58,7 +79,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
 
     try {
-      await register(formData);
+      // Include affiliate code if user came from partner link
+      const registrationData = {
+        ...formData,
+        affiliateCode: affiliateCode || undefined
+      };
+
+      await register(registrationData);
       if (onSuccess) {
         onSuccess();
       } else {

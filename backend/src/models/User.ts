@@ -47,6 +47,10 @@ export interface IUser extends Document {
   // Email verification reminder tracking
   emailVerificationReminderDismissed?: boolean;
 
+  // Affiliate tracking (for partner referrals like Josh Lupo)
+  affiliateCode?: string;
+  affiliateCodeSetAt?: Date;
+
   // Dual-mode preferences (optional for backward compatibility)
   dualModePreferences?: DualModePreferences;
   
@@ -124,6 +128,18 @@ const UserSchema = new Schema<IUser>({
   emailVerificationReminderDismissed: {
     type: Boolean,
     default: false
+  },
+  // Affiliate tracking (partner referrals like Josh Lupo)
+  affiliateCode: {
+    type: String,
+    required: false,
+    default: null,
+    index: true, // For querying Josh's referrals
+    trim: true
+  },
+  affiliateCodeSetAt: {
+    type: Date,
+    required: false
   },
   dualModePreferences: {
     currentMode: {

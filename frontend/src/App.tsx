@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -13,6 +14,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PersonaProvider } from './contexts/PersonaContext';
 import { DualModeProvider } from './contexts/DualModeContext';
 import ProtectedRoute, { GuestRoute } from './components/auth/ProtectedRoute';
+
+// Affiliate Context
+import { AffiliateProvider, useAffiliate } from './contexts/AffiliateContext';
+
+// Auth Context
+import { useAuth } from './contexts/AuthContext';
+
+// Lazy load affiliate landing page (code splitting)
+const AffiliateLandingPage = React.lazy(() => import('./pages/AffiliateLandingPage'));
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -86,6 +96,36 @@ const queryClient = new QueryClient({
   },
 });
 
+// Conditional Home Route Selector (Affiliate vs Main Site)
+const HomeRouteSelector: React.FC = () => {
+  const { isAffiliateSite } = useAffiliate();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect logged-in users to dashboard
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  // If logged in, show nothing while redirecting
+  if (user) {
+    return <Box sx={{ p: 4, textAlign: 'center' }}>Redirecting...</Box>;
+  }
+
+  // Not logged in - show affiliate landing or sample page
+  if (isAffiliateSite) {
+    return (
+      <React.Suspense fallback={<Box sx={{ p: 4, textAlign: 'center' }}>Loading...</Box>}>
+        <AffiliateLandingPage />
+      </React.Suspense>
+    );
+  }
+
+  return <SampleAnalysisPage />;
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -93,10 +133,11 @@ function App() {
         <ThemeProvider theme={appleTheme}>
           <CssBaseline />
           <BrowserRouter>
-            <AuthProvider>
-              <PersonaProvider>
-                <DualModeProvider>
-                  <Routes>
+            <AffiliateProvider>
+              <AuthProvider>
+                <PersonaProvider>
+                  <DualModeProvider>
+                    <Routes>
               {/* Guest Routes (no authentication required) */}
               <Route 
                 path="/login" 
@@ -152,7 +193,7 @@ function App() {
               />
 
               {/* Public Routes - No login required */}
-              <Route path="/" element={<SampleAnalysisPage />} />
+              <Route path="/" element={<HomeRouteSelector />} />
               <Route path="/sample-analysis" element={<SampleAnalysisPage />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />
@@ -209,13 +250,14 @@ function App() {
 
               {/* Catch all - 404 Not Found */}
               <Route path="*" element={<NotFound />} />
-                </Routes>
-              </DualModeProvider>
-            </PersonaProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+                    </Routes>
+                  </DualModeProvider>
+                </PersonaProvider>
+              </AuthProvider>
+            </AffiliateProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
     </HelmetProvider>
   );
 }

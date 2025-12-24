@@ -25,6 +25,8 @@ This document serves as a central reference for all data fields used throughout 
 | `createdAt` | Date | Account creation timestamp | Auto | MongoDB timestamp |
 | `updatedAt` | Date | Last update timestamp | Auto | MongoDB timestamp |
 | `lastLogin` | Date | Last successful login | No | Updated on login |
+| `affiliateCode` | string | Affiliate partner code (e.g., 'JOSH_LUPO') | No | Indexed for reporting, Default: null |
+| `affiliateCodeSetAt` | Date | Timestamp when affiliate code was captured | No | Set when affiliateCode is provided |
 
 ### Authentication API Fields
 | Field Name | Type | Description | Used In |
