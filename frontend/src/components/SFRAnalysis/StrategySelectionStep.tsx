@@ -185,12 +185,12 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
           <StrategyCard
             strategy="brrrr"
             title="BRRRR"
-            description="Buy, Rehab, Rent, Refinance, Repeat - Build portfolio with recycled capital"
+            description="Buy, Rehab, Rent, Refinance, Repeat - Build portfolio with recycled capital. Best for investors with rehab experience."
             icon={<BRRRRIcon />}
             selected={strategy === 'brrrr'}
-            onSelect={() => {}} // Disabled in Phase 1
-            comingSoon={true}
-            badgeText="Coming Soon"
+            onSelect={() => onStrategyChange('brrrr')}
+            comingSoon={false}
+            badgeText="Advanced"
           />
         </Grid>
       </Grid>

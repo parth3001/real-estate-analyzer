@@ -622,32 +622,52 @@ const AssumptionsStep: React.FC<WizardStepProps> = ({
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Projection Years"
-                type="number"
-                value={state.data.longTermAssumptions?.projectionYears || ''}
-                onChange={(e) => onUpdate({
-                  data: {
-                    ...state.data,
-                    longTermAssumptions: {
-                      projectionYears: parseInt(e.target.value) || 0,
-                      annualRentIncrease: state.data.longTermAssumptions?.annualRentIncrease || 3,
-                      annualPropertyValueIncrease: state.data.longTermAssumptions?.annualPropertyValueIncrease || 3,
-                      sellingCostsPercentage: state.data.longTermAssumptions?.sellingCostsPercentage || 6,
-                      inflationRate: state.data.longTermAssumptions?.inflationRate || 2,
-                      vacancyRate: state.data.longTermAssumptions?.vacancyRate || 5,
-                      turnoverFrequency: state.data.longTermAssumptions?.turnoverFrequency || 2
-                    }
+              {state.data.strategy === 'brrrr' ? (
+                <Alert severity="info" sx={{ borderRadius: '16px' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                    BRRRR Multi-Scenario Analysis
+                  </Typography>
+                  <Typography variant="body2">
+                    Your analysis will show multiple exit scenarios (3, 5, 7, 10, 15 years)
+                    to help you discover optimal timing. No hold period commitment required!
+                  </Typography>
+                </Alert>
+              ) : (
+                <TextField
+                  fullWidth
+                  label={
+                    state.data.propertyType === 'MF'
+                      ? "Investment Horizon"
+                      : "Modeling Period"
                   }
-                })}
-                helperText="Years to project cash flows"
-                InputProps={{
-                  endAdornment: <InputAdornment position="end">years</InputAdornment>
-                }}
-                inputProps={{ min: 1, max: 30 }}
-                placeholder="10"
-              />
+                  type="number"
+                  value={state.data.longTermAssumptions?.projectionYears || ''}
+                  onChange={(e) => onUpdate({
+                    data: {
+                      ...state.data,
+                      longTermAssumptions: {
+                        projectionYears: parseInt(e.target.value) || 0,
+                        annualRentIncrease: state.data.longTermAssumptions?.annualRentIncrease || 3,
+                        annualPropertyValueIncrease: state.data.longTermAssumptions?.annualPropertyValueIncrease || 3,
+                        sellingCostsPercentage: state.data.longTermAssumptions?.sellingCostsPercentage || 6,
+                        inflationRate: state.data.longTermAssumptions?.inflationRate || 2,
+                        vacancyRate: state.data.longTermAssumptions?.vacancyRate || 5,
+                        turnoverFrequency: state.data.longTermAssumptions?.turnoverFrequency || 2
+                      }
+                    }
+                  })}
+                  helperText={
+                    state.data.propertyType === 'MF'
+                      ? "Typical business plan duration (5-10 years)"
+                      : "How many years to model cash flows? (Typical: 10-30 years)"
+                  }
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">years</InputAdornment>
+                  }}
+                  inputProps={{ min: 1, max: 30 }}
+                  placeholder="10"
+                />
+              )}
             </Grid>
 
             <Grid item xs={12} sm={6}>

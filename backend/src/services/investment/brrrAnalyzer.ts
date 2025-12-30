@@ -55,6 +55,14 @@ export interface BRRRRInputs {
   monthlyUtilities?: number;
 }
 
+/**
+ * Seasoning Period Holding Costs
+ *
+ * INDUSTRY STANDARD: Seasoning assumes tenant-occupied property
+ * - Lenders require tenant occupancy for cash-out refinance
+ * - Vacancy rate applies to POST-refinance projections only
+ * - Management fees deducted from gross rental income
+ */
 export interface SeasoningCosts {
   mortgagePayments: number;
   propertyTax: number;
@@ -62,10 +70,10 @@ export interface SeasoningCosts {
   utilities: number;
   maintenance: number;
   propertyManagement: number;
-  vacancy: number;
   totalHoldingCosts: number;
-  rentalIncomeDuringSeasoning: number;
-  netSeasoningCost: number; // Positive = out of pocket, Negative = profit
+  grossRentalIncome: number;  // Total rent collected during seasoning
+  netRentalIncome: number;    // Gross rent minus management fees
+  netSeasoningCost: number;   // Positive = out of pocket, Negative = profit
   months: number;
 }
 
@@ -77,6 +85,29 @@ export interface RefinanceResults {
   cashOutProceeds: number;
   refinanceClosingCosts: number;
   netCashOut: number; // After closing costs
+}
+
+/**
+ * Exit Scenario Analysis for BRRRR Tab 4
+ * Represents a potential exit point (Year 3, 5, 7, 10, or 15)
+ * Used to help investors discover optimal timing for selling and repeating BRRRR cycle
+ */
+export interface ExitScenario {
+  year: number;
+  salePrice: number;
+  sellingCosts: number;
+  mortgagePayoff: number;
+  netProceeds: number;
+  totalWealthCreated: number;
+  breakdown: {
+    capitalRecovered: number;      // From refinance cash-out (constant across scenarios)
+    cumulativeCashFlow: number;    // Sum of cash flows from Year 1 to exit year
+    appreciation: number;           // Property value at exit - ARV
+    principalPaid: number;          // Initial loan amount - mortgage balance at exit
+  };
+  totalProfit: number;              // Net proceeds - capital remaining + cumulative cash flow
+  totalReturn: number;              // (Total profit / total investment) * 100
+  irr: number;                      // Internal rate of return
 }
 
 export interface CapitalRecovery {
@@ -161,6 +192,9 @@ export interface BRRRRAnalysis {
 
   // 70% Rule
   rule70Check: Rule70Check;
+
+  // Exit Scenarios (for Tab 4 - Long-Term Projections)
+  exitScenarios?: ExitScenario[];  // Optional - calculated when projections available
 }
 
 // =============================================================================
@@ -201,10 +235,22 @@ export class BRRRRAnalyzer {
   // 2. Seasoning Period Costs
   // ====================================
 
+  /**
+   * Calculate seasoning period holding costs
+   *
+   * INDUSTRY STANDARD: Seasoning assumes tenant-occupied property
+   * - Lenders require 6-12 months of rental history for cash-out refinance
+   * - Cannot refinance vacant properties (conventional lending requirement)
+   * - Vacancy rate applies to POST-refinance projections only
+   * - Management fees deducted from gross rental income
+   *
+   * @param inputs BRRRR strategy inputs
+   * @returns Seasoning costs breakdown with rental income
+   */
   calculateSeasoningCosts(inputs: BRRRRInputs): SeasoningCosts {
     const months = inputs.brrrr.seasoningPeriod || 12;
 
-    // Calculate monthly expenses
+    // Calculate monthly holding expenses
     const loanAmount = inputs.purchasePrice - inputs.downPayment;
     const monthlyMortgage = FinancialCalculations.calculateMortgage(
       loanAmount,
@@ -215,29 +261,37 @@ export class BRRRRAnalyzer {
     const monthlyPropertyTax = (inputs.purchasePrice * inputs.propertyTaxRate / 100) / 12;
     const monthlyInsurance = (inputs.purchasePrice * inputs.insuranceRate / 100) / 12;
     const monthlyMaintenance = inputs.maintenanceCost / 12;
-    const monthlyManagement = (inputs.monthlyRent * inputs.propertyManagementRate) / 100;
     const monthlyUtilities = inputs.monthlyUtilities || 0;
     const monthlyHOA = inputs.monthlyHOA || 0;
 
-    const vacancyRate = inputs.vacancyRate || 5;
-    const monthlyVacancy = (inputs.monthlyRent * vacancyRate) / 100;
+    // Management fee: Applied to gross rent collected during seasoning
+    // Industry standard: 8-12% of gross rental income
+    const managementRate = inputs.propertyManagementRate || 0;
+    const monthlyManagementFee = (inputs.monthlyRent * managementRate) / 100;
 
-    // Total holding costs
+    // Total holding costs for seasoning period
     const mortgagePayments = monthlyMortgage * months;
     const propertyTax = monthlyPropertyTax * months;
     const insurance = monthlyInsurance * months;
     const utilities = monthlyUtilities * months;
     const maintenance = monthlyMaintenance * months;
-    const propertyManagement = monthlyManagement * months;
-    const vacancy = monthlyVacancy * months;
     const hoa = monthlyHOA * months;
+    const propertyManagement = monthlyManagementFee * months;
 
+    // CRITICAL: No vacancy during seasoning period
+    // Property must be tenant-occupied to qualify for refinance
+    // Vacancy rate is used for POST-refinance cash flow projections only
     const totalHoldingCosts = mortgagePayments + propertyTax + insurance +
-                              utilities + maintenance + propertyManagement +
-                              vacancy + hoa;
+                              utilities + maintenance + propertyManagement + hoa;
 
-    const rentalIncomeDuringSeasoning = inputs.monthlyRent * months;
-    const netSeasoningCost = totalHoldingCosts - rentalIncomeDuringSeasoning;
+    // Rental income during seasoning period
+    const grossRentalIncome = inputs.monthlyRent * months;
+    const netRentalIncome = grossRentalIncome - propertyManagement;
+
+    // Net seasoning cost
+    // Positive = out of pocket during seasoning
+    // Negative = property cash flows during seasoning (profit)
+    const netSeasoningCost = totalHoldingCosts - netRentalIncome;
 
     return {
       mortgagePayments,
@@ -246,9 +300,9 @@ export class BRRRRAnalyzer {
       utilities,
       maintenance,
       propertyManagement,
-      vacancy,
       totalHoldingCosts,
-      rentalIncomeDuringSeasoning,
+      grossRentalIncome,
+      netRentalIncome,
       netSeasoningCost,
       months
     };
@@ -360,9 +414,22 @@ export class BRRRRAnalyzer {
       inputs.loanTerm
     );
 
-    // Calculate monthly operating expenses (no debt service)
-    const monthlyPropertyTax = (inputs.purchasePrice * inputs.propertyTaxRate / 100) / 12;
-    const monthlyInsurance = (inputs.purchasePrice * inputs.insuranceRate / 100) / 12;
+    /**
+     * CRITICAL FIX: Post-refinance tax/insurance based on ARV
+     *
+     * After refinance, property tax assessor reassesses at After Repair Value (ARV),
+     * not original purchase price. Insurance also increases to cover higher property value.
+     *
+     * Real Example:
+     * - Purchase Price: $100K → Tax: $1,800/year ($150/month @ 1.8%)
+     * - ARV: $180K → Tax: $3,240/year ($270/month @ 1.8%)
+     * - Underestimation if using purchase price: $120/month or $1,440/year
+     *
+     * Industry Standard: Tax assessors typically reassess within 6-12 months after
+     * significant improvements (matching refinance seasoning period timeline).
+     */
+    const monthlyPropertyTax = (inputs.brrrr.afterRepairValue * inputs.propertyTaxRate / 100) / 12;
+    const monthlyInsurance = (inputs.brrrr.afterRepairValue * inputs.insuranceRate / 100) / 12;
     const monthlyMaintenance = inputs.maintenanceCost / 12;
     const monthlyManagement = (inputs.monthlyRent * inputs.propertyManagementRate) / 100;
     const monthlyHOA = inputs.monthlyHOA || 0;
@@ -551,6 +618,115 @@ export class BRRRRAnalyzer {
       monthlyCashFlow: postRefiMetrics.monthlyCashFlow,
       infiniteReturn: capitalRecovery.infiniteReturn
     };
+  }
+
+  // ====================================
+  // 11. Exit Scenarios Calculation (Tab 4)
+  // ====================================
+
+  /**
+   * Calculate exit scenarios for BRRRR Tab 4 display
+   * Generates exit analysis for years 3, 5, 7, 10, and 15
+   *
+   * IMPORTANT: Assumes refinance happened at month 15 for all scenarios
+   * - capitalRecovered is constant (one-time refinance cash-out)
+   * - cumulativeCashFlow varies by exit year
+   * - appreciation varies by property value growth
+   * - principalPaid varies by mortgage amortization
+   *
+   * @param inputs - BRRRR property inputs
+   * @param projections - Yearly projections from BasePropertyAnalyzer
+   * @param exitYears - Array of exit years to calculate (default: [3, 5, 7, 10, 15])
+   * @returns Array of exit scenarios
+   */
+  calculateExitScenarios(
+    inputs: BRRRRInputs,
+    projections: any[],  // YearlyProjection[] from BasePropertyAnalyzer
+    exitYears: number[] = [3, 5, 7, 10, 15]
+  ): ExitScenario[] {
+
+    // Calculate refinance metrics (same for all scenarios)
+    const refinanceResults = this.calculateRefinance(inputs);
+    const seasoningCosts = this.calculateSeasoningCosts(inputs);
+    const totalInvestment = inputs.purchasePrice + inputs.closingCosts + inputs.brrrr.rehabBudget;
+    const capitalRecovery = this.calculateCapitalRecovery(totalInvestment, seasoningCosts, refinanceResults);
+
+    // Constants across all scenarios (refinance is one-time event)
+    const capitalRecovered = capitalRecovery.capitalRecovered;
+    const capitalRemaining = capitalRecovery.capitalRemaining;
+    const afterRepairValue = inputs.brrrr.afterRepairValue;
+    const sellingCostsPercentage = 6;  // 6% industry standard
+
+    // Initial loan amount for principal calculation
+    const downPaymentAmount = inputs.purchasePrice * (inputs.downPayment / 100);
+    const initialLoanAmount = inputs.purchasePrice - downPaymentAmount;
+
+    // Filter to available years (projections may be < 15 years)
+    const availableExitYears = exitYears.filter(year => year <= projections.length);
+
+    return availableExitYears.map(year => {
+      const yearIndex = year - 1;
+      const projection = projections[yearIndex];
+
+      // 1. Sale Analysis
+      const salePrice = projection.propertyValue;
+      const sellingCosts = salePrice * (sellingCostsPercentage / 100);
+      const mortgagePayoff = projection.mortgageBalance;
+      const netProceeds = salePrice - sellingCosts - mortgagePayoff;
+
+      // 2. Cumulative Cash Flow (sum from Year 1 to exit year)
+      const cumulativeCashFlow = projections
+        .slice(0, year)
+        .reduce((sum, p) => sum + p.cashFlow, 0);
+
+      // 3. Wealth Breakdown
+      const appreciation = salePrice - afterRepairValue;
+      const principalPaid = initialLoanAmount - mortgagePayoff;
+
+      const totalWealthCreated =
+        capitalRecovered +
+        cumulativeCashFlow +
+        appreciation +
+        principalPaid;
+
+      // 4. Profit Calculation
+      const totalProfit = netProceeds - capitalRemaining + cumulativeCashFlow;
+      const totalReturn = totalInvestment > 0
+        ? (totalProfit / totalInvestment) * 100
+        : 0;
+
+      // 5. IRR Calculation
+      const cashFlows: number[] = [-totalInvestment];
+
+      // Add cash flows for years 1 through (year - 1)
+      for (let i = 0; i < year - 1; i++) {
+        cashFlows.push(projections[i].cashFlow);
+      }
+
+      // Add final year: annual cash flow + net proceeds
+      const finalYearCashFlow = projections[year - 1].cashFlow;
+      cashFlows.push(finalYearCashFlow + netProceeds);
+
+      const irr = FinancialCalculations.calculateIRR(cashFlows);
+
+      return {
+        year,
+        salePrice,
+        sellingCosts,
+        mortgagePayoff,
+        netProceeds,
+        totalWealthCreated,
+        breakdown: {
+          capitalRecovered,  // Constant across all scenarios
+          cumulativeCashFlow,
+          appreciation,
+          principalPaid
+        },
+        totalProfit,
+        totalReturn,
+        irr
+      };
+    });
   }
 
   // ====================================

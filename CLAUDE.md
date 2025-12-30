@@ -63,6 +63,77 @@ Enhanced AI Analysis (GPT-4o-mini) → AnalysisResults Display + Deal Persistenc
 
 ---
 
+## 📋 **Backlog Management**
+
+⚠️ **CRITICAL**: There are THREE backlog files with distinct purposes
+
+### **Active Backlogs**
+
+1. **`/docs/FEATURE_BACKLOG.md`** - **PRIMARY FEATURE BACKLOG** ⭐
+   - **Purpose**: Current sprint/quarter features in active development
+   - **Scope**: User-facing features, UI/UX enhancements, new capabilities
+   - **Status**: ACTIVE - Add new feature requests here
+   - **Owner**: Product Owner
+   - **Examples**: New analysis tabs, wizard improvements, data visualizations
+
+2. **`/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md`** - **TECHNICAL DEBT & INFRASTRUCTURE** 🏗️
+   - **Purpose**: Technical architecture improvements, infrastructure, non-functional requirements
+   - **Scope**: Security, performance, observability, scaling, integrations
+   - **Status**: ACTIVE - Add technical/architectural items here
+   - **Owner**: Architecture Team
+   - **Examples**:
+     - BRRRR Input Wizard Configurability Compliance (#6.1)
+     - BRRRR Tabs 6-12 Display Logic Implementation (#6.2)
+     - Security & Privacy Architecture
+     - Scale & Performance optimization
+     - Data consistency improvements
+
+### **Completed/Reference Backlog**
+
+3. **`/docs/PRODUCT_ENHANCEMENT_BACKLOG.md`** - **HISTORICAL REFERENCE ONLY** 📚
+   - **Purpose**: Investment Decision Engine A- to A+ enhancement roadmap
+   - **Status**: ✅ DONE - For reference only, DO NOT ADD new items
+   - **Context**: Portfolio intelligence, market calibration, tax optimization epics
+   - **Note**: This was strategic planning completed in January 2025
+
+### **Decision Tree: Where to Add New Items**
+
+```
+New item to add?
+├─ Is it a user-facing feature or UI enhancement?
+│  └─ YES → Add to FEATURE_BACKLOG.md
+│
+├─ Is it technical infrastructure, architecture, or non-functional?
+│  └─ YES → Add to TECHNICAL_ARCHITECTURE_BACKLOG.md
+│
+└─ Is it related to Investment Decision Engine enhancements?
+   └─ NO → Use FEATURE_BACKLOG.md or TECHNICAL_ARCHITECTURE_BACKLOG.md
+       (PRODUCT_ENHANCEMENT_BACKLOG.md is done, reference only)
+```
+
+### **Examples of Proper Backlog Usage**
+
+**FEATURE_BACKLOG.md**:
+- ✅ Multi-family property wizard
+- ✅ New chart visualizations
+- ✅ Export to PDF feature
+- ✅ Mobile app development
+- ✅ User onboarding improvements
+
+**TECHNICAL_ARCHITECTURE_BACKLOG.md**:
+- ✅ BRRRR input configurability compliance
+- ✅ BRRRR tabs 6-12 implementation
+- ✅ MongoDB sharding for scale
+- ✅ Redis caching layer
+- ✅ Security audit and enhancements
+- ✅ API rate limiting
+- ✅ Observability and monitoring
+
+**PRODUCT_ENHANCEMENT_BACKLOG.md**:
+- 📚 Reference only - no new additions
+
+---
+
 ## 🐛 **Issue Tracking Protocol**
 
 ⚠️ **CRITICAL RULE**: Every bug or issue discovered MUST be added to `/ISSUE_TRACKER.md`

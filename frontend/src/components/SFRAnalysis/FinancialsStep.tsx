@@ -23,7 +23,11 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Divider,
-  Button
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Link
 } from '@mui/material';
 import {
   AttachMoney,
@@ -32,7 +36,9 @@ import {
   Receipt,
   AutoAwesome,
   Info,
-  Home as HomeIcon
+  Home as HomeIcon,
+  ExpandMore as ExpandMoreIcon,
+  Refresh as BRRRRIcon
 } from '@mui/icons-material';
 
 import WizardStep from './WizardStep';
@@ -73,6 +79,18 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
     (state.data.purchasePrice || 0) * (state.data.downPaymentPercentage || 25) / 100
   );
   const loanAmount = (state.data.purchasePrice || 0) - downPaymentAmount;
+
+  // Phase 2.2: BRRRR state management
+  const [rehabBudget, setRehabBudget] = useState(state.data.brrrr?.rehabBudget || 0);
+  const [afterRepairValue, setAfterRepairValue] = useState(state.data.brrrr?.afterRepairValue || 0);
+  const [refinanceLTV, setRefinanceLTV] = useState(state.data.brrrr?.refinanceLTV || 75);
+  const [seasoningPeriod, setSeasoningPeriod] = useState(state.data.brrrr?.seasoningPeriod || 12);
+  const [arvConfidence, setArvConfidence] = useState<'conservative' | 'moderate' | 'aggressive'>(
+    state.data.brrrr?.arvAppraisalConfidence || 'moderate'
+  );
+  const [isRehabCustomized, setIsRehabCustomized] = useState(false);
+  const [isARVCustomized, setIsARVCustomized] = useState(false);
+  const [showARVGuidance, setShowARVGuidance] = useState(false);
   
   // Calculate monthly payment
   const calculateMonthlyPayment = () => {
@@ -179,6 +197,99 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
       const calculatedRate = (value / state.data.purchasePrice * 100);
       setPropertyTaxRate(calculatedRate);
     }
+  };
+
+  // Phase 2.2: BRRRR handler functions
+  const handleRehabBudgetChange = (value: number) => {
+    setRehabBudget(value);
+    setIsRehabCustomized(true);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: value,
+          afterRepairValue: afterRepairValue || 0,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: arvConfidence
+        }
+      }
+    });
+  };
+
+  const handleARVChange = (value: number) => {
+    setAfterRepairValue(value);
+    setIsARVCustomized(true);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: value,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: arvConfidence
+        }
+      }
+    });
+  };
+
+  const handleRefinanceLTVChange = (value: number) => {
+    setRefinanceLTV(value);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: afterRepairValue,
+          refinanceLTV: value,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: arvConfidence
+        }
+      }
+    });
+  };
+
+  const handleSeasoningPeriodChange = (value: number) => {
+    setSeasoningPeriod(value);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: afterRepairValue,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: value,
+          arvAppraisalConfidence: arvConfidence
+        }
+      }
+    });
+  };
+
+  const handleARVConfidenceChange = (value: 'conservative' | 'moderate' | 'aggressive') => {
+    setArvConfidence(value);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: afterRepairValue,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: value
+        }
+      }
+    });
+  };
+
+  const handleNavigateToComparables = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowARVGuidance(!showARVGuidance);
   };
 
   // Get smart defaults based on location (mock for Phase 1)
@@ -359,7 +470,11 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
   const monthlyPropertyTax = (state.data.purchasePrice || 0) * propertyTaxRate / 100 / 12;
   // UX Enhancement: annualPropertyTax is now state variable (line 66-68)
   const annualInsurance = monthlyInsurance * 12;
-  const totalCashNeeded = downPaymentAmount + (state.data.closingCosts || 0) + (state.data.capitalInvestments || 0);
+
+  // Phase 2.2.6: Total cash calculation - use rehabBudget for BRRRR, capitalInvestments for other strategies
+  const totalCashNeeded = downPaymentAmount +
+    (state.data.closingCosts || 0) +
+    (state.data.strategy === 'brrrr' ? rehabBudget : (state.data.capitalInvestments || 0));
 
   return (
     <WizardStep
@@ -790,24 +905,210 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Initial Capital Investments"
-                type="number"
-                value={state.data.capitalInvestments || ''}
-                onChange={(e) => onUpdate({
-                  data: { ...state.data, capitalInvestments: parseInt(e.target.value) || 0 }
-                })}
-                helperText="Repairs, renovations, or improvements"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>
-                }}
-                placeholder="5000"
-              />
-            </Grid>
+            {/* Hide for BRRRR strategy - use rehabBudget instead */}
+            {state.data.strategy !== 'brrrr' && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Initial Capital Investments"
+                  type="number"
+                  value={state.data.capitalInvestments || ''}
+                  onChange={(e) => onUpdate({
+                    data: { ...state.data, capitalInvestments: parseInt(e.target.value) || 0 }
+                  })}
+                  helperText="Repairs, renovations, or improvements"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>
+                  }}
+                  placeholder="5000"
+                />
+              </Grid>
+            )}
           </Grid>
         </Box>
+
+        {/* Phase 2.2: BRRRR Strategy Section (conditional) */}
+        {state.data.strategy === 'brrrr' && (
+          <>
+            <Divider />
+            <Box>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BRRRRIcon color="primary" />
+                BRRRR Strategy Details
+              </Typography>
+
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  <strong>BRRRR Strategy</strong>: Buy, Rehab, Rent, Refinance, Repeat. Configure your rehab costs
+                  and after-repair value to calculate capital recovery after refinancing.
+                </Typography>
+              </Alert>
+
+              {/* Required BRRRR Fields */}
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Rehab Budget"
+                    type="number"
+                    value={rehabBudget}
+                    onChange={(e) => handleRehabBudgetChange(parseFloat(e.target.value) || 0)}
+                    error={rehabBudget > 0 && rehabBudget < 5000}
+                    helperText={
+                      rehabBudget > 0 && rehabBudget < 5000
+                        ? "Minimum $5,000 for meaningful rehab"
+                        : "Total renovation/repair costs"
+                    }
+                    required
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>
+                    }}
+                    placeholder="50000"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="After Repair Value (ARV)"
+                    type="number"
+                    value={afterRepairValue}
+                    onChange={(e) => handleARVChange(parseFloat(e.target.value) || 0)}
+                    error={afterRepairValue > 0 && afterRepairValue <= (state.data.purchasePrice || 0)}
+                    helperText={
+                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {afterRepairValue > 0 && afterRepairValue <= (state.data.purchasePrice || 0)
+                          ? "ARV must exceed purchase price"
+                          : <>
+                              Property value after rehab •{' '}
+                              <Link
+                                component="button"
+                                variant="body2"
+                                onClick={handleNavigateToComparables}
+                                sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+                              >
+                                How to estimate
+                              </Link>
+                            </>
+                        }
+                      </Box>
+                    }
+                    required
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>
+                    }}
+                    placeholder="450000"
+                  />
+                </Grid>
+              </Grid>
+
+              {/* ARV Guidance Alert (Option A - Architect & UX Designer Approved) */}
+              {showARVGuidance && (
+                <Alert
+                  severity="info"
+                  onClose={() => setShowARVGuidance(false)}
+                  sx={{ mb: 2 }}
+                >
+                  <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                    How to estimate ARV accurately:
+                  </Typography>
+                  <ol style={{ margin: 0, paddingLeft: 20 }}>
+                    <li>Search "recent sold homes" in your area (Zillow, Redfin, Realtor.com)</li>
+                    <li>Filter by: Similar size, condition (renovated), location (within 0.5 miles)</li>
+                    <li>Use median sold price from last 3-6 months as ARV estimate</li>
+                  </ol>
+                  <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                    💡 Tip: Conservative ARV estimates lead to better refinancing outcomes
+                  </Typography>
+                </Alert>
+              )}
+
+              {/* Optional BRRRR Fields (Accordion - Progressive Disclosure) */}
+              <Accordion sx={{ mt: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight={600}>
+                    Advanced BRRRR Settings (Optional)
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Refinance LTV: {refinanceLTV}%
+                        </Typography>
+                        <Slider
+                          value={refinanceLTV}
+                          onChange={(_, value) => handleRefinanceLTVChange(value as number)}
+                          min={65}
+                          max={85}
+                          step={1}
+                          marks={[
+                            { value: 65, label: '65%' },
+                            { value: 75, label: '75%' },
+                            { value: 85, label: '85%' }
+                          ]}
+                          valueLabelDisplay="auto"
+                          valueLabelFormat={(value) => `${value}%`}
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                          Typical range: 70-80% for investment properties
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Seasoning Period: {seasoningPeriod} months
+                        </Typography>
+                        <Slider
+                          value={seasoningPeriod}
+                          onChange={(_, value) => handleSeasoningPeriodChange(value as number)}
+                          min={6}
+                          max={24}
+                          step={1}
+                          marks={[
+                            { value: 6, label: '6mo' },
+                            { value: 12, label: '12mo' },
+                            { value: 24, label: '24mo' }
+                          ]}
+                          valueLabelDisplay="auto"
+                          valueLabelFormat={(value) => `${value}mo`}
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                          Lender waiting period before refinancing (6-12 months typical)
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 1 }}>
+                          ARV Appraisal Confidence:
+                        </Typography>
+                        <ToggleButtonGroup
+                          value={arvConfidence}
+                          exclusive
+                          onChange={(_, value) => value && handleARVConfidenceChange(value)}
+                          size="small"
+                          fullWidth
+                        >
+                          <ToggleButton value="conservative">Conservative (90%)</ToggleButton>
+                          <ToggleButton value="moderate">Moderate (100%)</ToggleButton>
+                          <ToggleButton value="aggressive">Aggressive (105%)</ToggleButton>
+                        </ToggleButtonGroup>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          Appraisal risk adjustment: Conservative = 90% of ARV, Moderate = 100%, Aggressive = 105%
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            </Box>
+          </>
+        )}
 
         {/* Summary Card */}
         <Card variant="outlined" sx={{ bgcolor: 'action.hover' }}>

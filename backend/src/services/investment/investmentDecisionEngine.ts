@@ -1568,8 +1568,18 @@ export class InvestmentDecisionEngine {
       // BRRRR Strategy Routing - Phase 1.2
       const investmentStrategy = (propertyData as any).investmentStrategy || 'buy-hold';
 
+      // ✅ OBSERVABILITY (Issues #33, #34): Log routing decision for production debugging
+      logger.info('📍 Investment Strategy Routing', {
+        investmentStrategy,
+        hasStrategyField: !!(propertyData as any).strategy,
+        strategyFieldValue: (propertyData as any).strategy,
+        hasInvestmentStrategyField: !!(propertyData as any).investmentStrategy,
+        routingDecision: investmentStrategy === 'brrrr' ? '🎯 BRRRR Engine' : '🏠 Buy & Hold Engine',
+        propertyType: (propertyData as any).propertyType
+      });
+
       if (investmentStrategy === 'brrrr') {
-        logger.info('BRRRR Strategy detected - routing to BRRRR analyzer');
+        logger.info('🎯 BRRRR Strategy CONFIRMED - Routing to BRRRR Decision Engine');
         return await this.generateBRRRRDecision(
           propertyData as any,
           analysis,
@@ -1583,6 +1593,7 @@ export class InvestmentDecisionEngine {
       }
 
       // Continue with standard Buy & Hold analysis
+      logger.info('🏠 Buy & Hold Strategy - Routing to Standard Decision Engine');
       // 1. Analyze leverage optimization
       const leverageAnalysis = await this.leverageOptimizer.analyzeOptimalLeverage(
         propertyData, 
@@ -1986,11 +1997,36 @@ export class InvestmentDecisionEngine {
 
       const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs);
 
+      // NEW: Calculate exit scenarios using projections from longTermAnalysis
+      if (analysis.longTermAnalysis?.projections) {
+        try {
+          logger.info('Calculating BRRRR exit scenarios for Tab 4');
+          const exitScenarios = brrrAnalyzer.calculateExitScenarios(
+            brrrInputs,
+            analysis.longTermAnalysis.projections
+          );
+          brrrAnalysis.exitScenarios = exitScenarios;
+          logger.info('BRRRR Exit Scenarios Calculated', {
+            scenariosCount: exitScenarios.length,
+            exitYears: exitScenarios.map(s => s.year),
+            irrRange: exitScenarios.length > 0
+              ? `${Math.min(...exitScenarios.map(s => s.irr)).toFixed(1)}% - ${Math.max(...exitScenarios.map(s => s.irr)).toFixed(1)}%`
+              : 'N/A'
+          });
+        } catch (error) {
+          logger.error('Error calculating BRRRR exit scenarios:', error);
+          // Continue without exit scenarios - not critical for core analysis
+        }
+      } else {
+        logger.warn('No projections available for BRRRR exit scenarios calculation');
+      }
+
       logger.info('BRRRR Analysis Complete', {
         capitalRecoveryRate: brrrAnalysis.capitalRecovery.capitalRecoveryRate,
         infiniteReturn: brrrAnalysis.capitalRecovery.infiniteReturn,
         postRefiCashFlow: brrrAnalysis.postRefinanceMetrics.monthlyCashFlow,
-        meets70Rule: brrrAnalysis.rule70Check.meets70Rule
+        meets70Rule: brrrAnalysis.rule70Check.meets70Rule,
+        hasExitScenarios: !!brrrAnalysis.exitScenarios
       });
 
       // 2. Calculate BRRRR-specific professional assessment

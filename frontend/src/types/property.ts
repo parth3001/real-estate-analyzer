@@ -55,6 +55,16 @@ export interface SFRPropertyData extends BasePropertyData {
   };
   // Phase 1: Universal Simple - Investment strategy selection
   strategy?: 'buy-hold' | 'house-hack' | 'brrrr';
+
+  // Phase 2: BRRRR Strategy Data
+  brrrr?: {
+    rehabBudget: number;
+    afterRepairValue: number;
+    refinanceLTV: number;          // 65-85%, default 75
+    seasoningPeriod: number;       // 6-24 months, default 12
+    arvAppraisalConfidence: 'conservative' | 'moderate' | 'aggressive';
+  };
+
   // Investment goals and strategy (optional)
   enhancedGoals?: {
     exitStrategy?: 'sale' | 'refinance' | '1031exchange' | 'estate' | 'flexible';

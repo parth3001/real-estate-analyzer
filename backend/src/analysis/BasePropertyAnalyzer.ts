@@ -87,12 +87,25 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     const monthlyMortgage = this.calculateMonthlyMortgage();
     const annualDebtService = monthlyMortgage * 12;
     const projections: YearlyProjection[] = [];
-    let currentPropertyValue = this.data.purchasePrice;
+
+    // CRITICAL FIX: For BRRRR strategy, use After Repair Value (ARV) for long-term projections
+    // Bug: Was using purchase price ($200K) instead of ARV ($320K) → 60% underestimation
+    // Fix: Check NESTED brrrr.afterRepairValue first (Issue #42 - Dec 29, 2025)
+    // ARV is stored at this.data.brrrr.afterRepairValue, not this.data.afterRepairValue
+    const initialPropertyValue =
+      (this.data as any).brrrr?.afterRepairValue ||  // Check nested BRRRR structure FIRST
+      (this.data as any).afterRepairValue ||          // Then check top-level (backwards compatibility)
+      this.data.purchasePrice;                        // Fallback to purchase price for Buy & Hold
+    let currentPropertyValue = initialPropertyValue;
     let currentLoanBalance = this.data.purchasePrice - this.data.downPayment;
 
     debug('\n\n========== PROJECTIONS CALCULATION ==========');
     debug('Initial Values:', {
       purchasePrice: this.data.purchasePrice,
+      arvNested: (this.data as any).brrrr?.afterRepairValue || 'N/A',
+      arvTopLevel: (this.data as any).afterRepairValue || 'N/A',
+      initialPropertyValue: initialPropertyValue,
+      usingARV: !!(this.data as any).afterRepairValue,
       downPayment: this.data.downPayment,
       closingCosts: this.data.closingCosts || 0,
       capitalInvestments: this.data.capitalInvestments || 0,
@@ -142,7 +155,25 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       baseTurnoverRate
     });
 
-    for (let year = 1; year <= this.assumptions.projectionYears; year++) {
+    // Strategy-aware projection years (BRRRR Tab 4 redesign)
+    // BRRRR: Always 15 years (supports exit scenarios at 3, 5, 7, 10, 15 years)
+    // Buy & Hold / Multi-Family: User input (modeling period / investment horizon)
+    // Note: investmentStrategy is added at runtime by deals controller (line 274)
+    const investmentStrategy = (this.data as any).investmentStrategy || 'buy-hold';
+    const effectiveProjectionYears = investmentStrategy === 'brrrr'
+      ? 15  // BRRRR: Fixed 15 years for multi-scenario analysis
+      : this.assumptions.projectionYears;  // Buy & Hold/MF: User's modeling period
+
+    debug('Projection Years Calculation:', {
+      investmentStrategy,
+      userInputYears: this.assumptions.projectionYears,
+      effectiveYears: effectiveProjectionYears,
+      reason: investmentStrategy === 'brrrr'
+        ? 'BRRRR uses fixed 15 years for exit scenario analysis'
+        : 'Using user input for modeling period'
+    });
+
+    for (let year = 1; year <= effectiveProjectionYears; year++) {
       debug(`\n--- YEAR ${year} CALCULATION ---`);
       
       const grossIncome = this.calculateGrossIncome(year);
@@ -213,6 +244,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         formula: `${noi} - ${annualDebtService} - ${capitalImprovements} = ${cashFlow}`
       });
 
+      // NOTE: Appreciation timing issue documented in Issue #47 (deferred to Phase 2)
+      // Currently applies appreciation BEFORE recording year value (Year 1 shows appreciation)
+      // Should apply AFTER for mathematical correctness (Year 1 = starting value)
       currentPropertyValue *= (1 + this.assumptions.annualPropertyValueIncrease / 100);
 
       const interestPaid = currentLoanBalance * (this.data.interestRate / 100);
@@ -221,7 +255,8 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
       // Calculate vacancy amount for display (not an expense, but shows income reduction)
       const vacancyAmount = grossIncome * (this.assumptions.vacancyRate / 100);
-      const appreciation = currentPropertyValue - this.data.purchasePrice;
+      // BRRRR Fix: Calculate appreciation from initial property value (ARV for BRRRR, purchase price for Buy & Hold)
+      const appreciation = currentPropertyValue - initialPropertyValue;
 
       debug(`Year ${year} Property Value & Mortgage:`, {
         currentPropertyValue,
@@ -338,9 +373,10 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
     // Calculate total cash flow from projections
     const totalCashFlow = projections.reduce((sum, p) => sum + p.cashFlow, 0);
-    
-    // Calculate total appreciation (final property value - purchase price)
-    const totalAppreciation = projections[projections.length - 1]?.propertyValue - this.data.purchasePrice;
+
+    // BRRRR Fix: Calculate total appreciation from initial property value (ARV for BRRRR, purchase price for Buy & Hold)
+    const initialPropertyValue = (this.data as any).afterRepairValue || this.data.purchasePrice;
+    const totalAppreciation = projections[projections.length - 1]?.propertyValue - initialPropertyValue;
     
     // Calculate total return (cash flow + net proceeds from sale - total investment)
     const totalReturn = totalCashFlow + exitAnalysis.netProceedsFromSale - totalInvestment;

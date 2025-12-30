@@ -1,4 +1,9 @@
 /**
+ * BRRRR Type Imports (Day 0: Type Safety Update)
+ */
+import { BRRRRAnalysis } from './brrrr';
+
+/**
  * Validation Warning Types (Phase 1: Multi-Family)
  */
 export type ValidationSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -270,4 +275,9 @@ export interface Analysis {
       actionableInsights: string[];
     };
   };
-} 
+  // Strategy-Specific Analysis Results (Phase 1.3 - BRRRR)
+  // For BRRRR: Contains BRRRRAnalysis object with capital recovery, post-refi metrics, etc.
+  // For House Hack: Will contain house hack specific data (Phase 2B)
+  // For Buy & Hold: Undefined/null
+  strategySpecific?: BRRRRAnalysis;
+}

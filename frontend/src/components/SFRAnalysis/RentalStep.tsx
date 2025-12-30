@@ -20,7 +20,8 @@ import {
   Divider,
   LinearProgress,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Tooltip
 } from '@mui/material';
 import {
   Home,
@@ -29,7 +30,8 @@ import {
   TrendingUp,
   Assessment,
   AutoAwesome,
-  CompareArrows
+  CompareArrows,
+  Info
 } from '@mui/icons-material';
 
 import WizardStep from './WizardStep';
@@ -409,7 +411,17 @@ const RentalStep: React.FC<WizardStepProps> = ({
                   {mgmtInputMode === 'percentage' ? (
                     <>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Management Fee: {(state.data.propertyManagementRate || 8).toFixed(1)}% (${Math.round(mgmtMonthlyAmount)}/month)
+                        {state.data.strategy === 'brrrr' ? 'Property Management Fee (All Phases): ' : 'Management Fee: '}
+                        {(state.data.propertyManagementRate || 8).toFixed(1)}% (${Math.round(mgmtMonthlyAmount)}/month)
+                        {state.data.strategy === 'brrrr' && (
+                          <Tooltip
+                            title="Applied during both seasoning period and post-refinance operations. This fee is deducted from gross rental income."
+                            arrow
+                            placement="right"
+                          >
+                            <Info sx={{ fontSize: 16, ml: 0.5, verticalAlign: 'middle', cursor: 'help', color: 'info.main' }} />
+                          </Tooltip>
+                        )}
                       </Typography>
                       <Slider
                         value={state.data.propertyManagementRate || 8}
@@ -453,7 +465,16 @@ const RentalStep: React.FC<WizardStepProps> = ({
             <Grid item xs={12} sm={6}>
               <Box>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Vacancy Rate: {state.data.vacancyRate || 5}%
+                  {state.data.strategy === 'brrrr' ? 'Post-Refinance ' : ''}Vacancy Rate: {state.data.vacancyRate || 5}%
+                  {state.data.strategy === 'brrrr' && (
+                    <Tooltip
+                      title="Used for long-term cash flow projections after refinance. During seasoning period (6-12 months), property must be tenant-occupied per lender requirements."
+                      arrow
+                      placement="right"
+                    >
+                      <Info sx={{ fontSize: 16, ml: 0.5, verticalAlign: 'middle', cursor: 'help', color: 'info.main' }} />
+                    </Tooltip>
+                  )}
                 </Typography>
                 <Slider
                   value={state.data.vacancyRate || 5}
@@ -483,7 +504,10 @@ const RentalStep: React.FC<WizardStepProps> = ({
                   valueLabelFormat={(value) => `${value}%`}
                 />
                 <Typography variant="caption" color="text.secondary">
-                  Expected vacant days/year: {Math.round(365 * (state.data.vacancyRate || 5) / 100)}
+                  {state.data.strategy === 'brrrr'
+                    ? `Post-refinance projection: ~${Math.round(365 * (state.data.vacancyRate || 5) / 100)} vacant days/year`
+                    : `Expected vacant days/year: ${Math.round(365 * (state.data.vacancyRate || 5) / 100)}`
+                  }
                 </Typography>
               </Box>
             </Grid>

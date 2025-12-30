@@ -192,6 +192,11 @@ const convertWizardData = (dealData: any): any => {
     // Just need to clean up wizard-specific metadata
     const convertedData = {
       ...dealData,
+
+      // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
+      // Multi-Family properties can also use BRRRR strategy (future support)
+      investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+
       longTermAssumptions: {
         ...dealData.longTermAssumptions,
         vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
@@ -199,6 +204,7 @@ const convertWizardData = (dealData: any): any => {
       _dataSource: {
         isWizardData: true,
         propertyType: 'MF',
+        mappedFields: ['investmentStrategy'], // Document field transformation
         preservedFields: ['maintenanceCostPerUnit', 'unitTypes', 'totalUnits'],
         userFields: Object.keys(dealData).filter(key =>
           !['_isWizardData'].includes(key)
@@ -261,6 +267,12 @@ const convertWizardData = (dealData: any): any => {
   const convertedData = {
     ...dealData,
     maintenanceCost: maintenanceCost,
+
+    // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
+    // Frontend sends 'strategy' field (property.ts:57), backend expects 'investmentStrategy' (investmentDecisionEngine.ts:1569)
+    // Without this mapping, BRRRR properties incorrectly route to Buy & Hold logic
+    investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+
     longTermAssumptions: {
       ...dealData.longTermAssumptions,
       vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
@@ -270,6 +282,7 @@ const convertWizardData = (dealData: any): any => {
       isWizardData: true,
       propertyType: 'SFR',
       calculatedFields: ['maintenanceCost'],
+      mappedFields: ['investmentStrategy'], // Document field transformation
       userFields: Object.keys(dealData).filter(key =>
         !['maintenanceReservePercentage', 'downPaymentPercentage', 'closingCostPercentage', '_isWizardData'].includes(key)
       )
@@ -854,9 +867,16 @@ export const deleteDeal = async (req: AuthenticatedRequest, res: Response): Prom
 
 // Analyze a deal
 export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  // ⏱️ PERFORMANCE LOGGING: Track total request time
+  const perfStart = performance.now();
+  const perfTrace: any = { steps: {}, apis: {} };
+
   try {
     let dealData = req.body;
-    
+
+    console.log('\n🎯 ========== ANALYSIS START ==========');
+    console.time('🎯 TOTAL_ANALYSIS');
+
     // DEBUG: Log the incoming request data
     logger.info('ANALYZE REQUEST DEBUG:', {
       hasPortfolioId: !!dealData.portfolioId,
@@ -1114,7 +1134,19 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
 
         // Assign decision to analysis (common for both paths)
         analysis.investmentDecision = investmentDecision;
-        
+
+        // CRITICAL FIX (Issue #32): Copy strategySpecific from investmentDecision to analysis root
+        // For BRRRR strategy, the investmentDecision.strategySpecific contains BRRRRAnalysis data
+        // Frontend expects this at analysis.strategySpecific (not nested in investmentDecision)
+        if (investmentDecision.strategySpecific) {
+          analysis.strategySpecific = investmentDecision.strategySpecific;
+          logger.info('✅ Copied strategySpecific to analysis root for frontend compatibility', {
+            strategy: dealData.investmentStrategy,
+            hasCapitalRecovery: !!investmentDecision.strategySpecific.capitalRecovery,
+            hasPostRefinanceMetrics: !!investmentDecision.strategySpecific.postRefinanceMetrics
+          });
+        }
+
         // SAFE: Add portfolio context if portfolioId is provided (optional enhancement)
         logger.info('Checking for portfolio context:', {
           hasPortfolioId: !!dealData.portfolioId,

@@ -183,6 +183,43 @@ export class CacheService {
       return [];
     }
   }
+
+  /**
+   * Get portfolio summaries from cache (Issue #41)
+   * TTL: 5 minutes (300 seconds) - portfolios change when properties added/removed
+   * Cache key: portfolio:available:{userId}
+   */
+  async getPortfolioCache(userId: string): Promise<any | null> {
+    const cacheKey = `portfolio_available_${userId}`;
+    return this.get('market', cacheKey);
+  }
+
+  /**
+   * Set portfolio summaries in cache (Issue #41)
+   * TTL: 5 minutes - short TTL since portfolio data is relatively dynamic
+   */
+  async setPortfolioCache(userId: string, data: any): Promise<void> {
+    const cacheKey = `portfolio_available_${userId}`;
+    return this.set('market', cacheKey, data, { source: 'Portfolio Service' });
+  }
+
+  /**
+   * Delete portfolio cache for a specific user (Issue #41)
+   * Used for cache invalidation when portfolio or properties change
+   */
+  async deletePortfolioCache(userId: string): Promise<void> {
+    try {
+      const cacheKey = this.generateCacheKey('market', `portfolio_available_${userId}`);
+      const result = await MarketDataCache.deleteOne({ cacheKey });
+
+      if (result.deletedCount > 0) {
+        logger.debug(`Deleted portfolio cache for user ${userId}`);
+      }
+    } catch (error) {
+      logger.error(`Failed to delete portfolio cache for user ${userId}:`, error);
+      // Don't throw - cache deletion failures shouldn't break the app
+    }
+  }
 }
 
 export const cacheService = new CacheService();
