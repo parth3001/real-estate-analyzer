@@ -6,7 +6,8 @@ const consoleFormat = winston.format.combine(
   winston.format.timestamp({
     format: () => new Date().toLocaleString() // Local time format
   }),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+  winston.format.printf((info: any) => {
+    const { timestamp, level, message, ...meta } = info;
     let log = `[${timestamp}] ${level}: ${message}`;
     if (Object.keys(meta).length > 0) {
       log += ` ${JSON.stringify(meta, null, 2)}`;
