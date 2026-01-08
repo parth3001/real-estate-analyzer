@@ -79,7 +79,12 @@ export const SFR_PROPERTY_DEFAULTS = {
   bedrooms: 3,
   bathrooms: 2,
   maintenanceCost: 0,
-  
+
+  // ✅ NEW: Operating Expenses (Josh's feature request - Jan 2026)
+  monthlyHOA: 0,           // Monthly HOA fees (0 if not applicable)
+  monthlyUtilities: 0,     // Landlord-paid utilities (0 if tenant pays)
+  monthlyCapEx: 0,         // CapEx reserve (dynamically calculated as 5% of rent in wizard)
+
   // Fee structures
   tenantTurnoverFees: DEFAULT_TENANT_TURNOVER_FEES,
   

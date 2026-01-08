@@ -181,16 +181,17 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
           />
         </Grid>
 
+        {/* BRRRR - Grayed out with "Coming Soon" badge (Jan 2026 - Pending UAT) */}
         <Grid size={{ xs: 12, md: 4 }}>
           <StrategyCard
             strategy="brrrr"
             title="BRRRR"
-            description="Buy, Rehab, Rent, Refinance, Repeat - Build portfolio with recycled capital. Best for investors with rehab experience."
+            description="Buy, Rehab, Rent, Refinance, Repeat - Build portfolio with recycled capital"
             icon={<BRRRRIcon />}
             selected={strategy === 'brrrr'}
             onSelect={() => onStrategyChange('brrrr')}
-            comingSoon={false}
-            badgeText="Advanced"
+            comingSoon={true}
+            badgeText="Coming Soon"
           />
         </Grid>
       </Grid>

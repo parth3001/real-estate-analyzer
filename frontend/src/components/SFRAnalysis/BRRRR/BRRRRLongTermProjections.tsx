@@ -19,7 +19,7 @@
  * @date December 29, 2025
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -32,6 +32,9 @@ import {
 } from '@mui/material';
 import {
   Compare as CompareIcon,
+  BarChart as ChartIcon,
+  TableChart as TableIcon,
+  ViewModule as BothIcon,
 } from '@mui/icons-material';
 import { BRRRRTimelineVisual } from './BRRRRTimelineVisual';
 import { ExitScenarioCard } from './ExitScenarioCard';
@@ -42,6 +45,7 @@ import { ProjectionsTable } from './ProjectionsTable';
 import type { ProjectionRow } from './types';
 import type { ExitScenario } from '../../../types/brrrr';
 import { brrrColors } from '../../../theme/brrrDesignTokens';
+import { formatCurrency } from '../../../utils/formatters';
 
 export interface BRRRRLongTermProjectionsProps {
   analysis: any; // Full analysis object from backend
@@ -58,6 +62,10 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
   // Selection state for scenario comparison
   const [selectedScenarios, setSelectedScenarios] = useState<number[]>([]); // Array of scenario years
   const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
+  const [showAllScenarios, setShowAllScenarios] = useState(false);
+
+  // Collapsible projections state (chart/table)
+  const [projectionsView, setProjectionsView] = useState<'chart' | 'table' | 'both' | 'hidden'>('table');
 
   // Extract BRRRR-specific data
   const purchasePrice = propertyData.purchasePrice || 0;
@@ -66,9 +74,38 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
   const appreciationRate = analysis?.assumptions?.appreciationRate || 3.0;
 
   // Get exit scenarios from backend (new Tab 4 redesign data)
-  const exitScenarios: ExitScenario[] = analysis?.brrrAnalysis?.exitScenarios || [];
+  // Exit scenarios are in investmentDecision.strategySpecific.exitScenarios
+  const exitScenarios: ExitScenario[] = analysis?.investmentDecision?.strategySpecific?.exitScenarios || [];
   const hasExitScenarios = exitScenarios && exitScenarios.length > 0;
-  const brrrData = analysis?.brrrAnalysis;
+  const brrrData = analysis?.investmentDecision?.strategySpecific;
+
+  // Calculate optimal exit year (highest IRR)
+  const optimalExitYear = useMemo(() => {
+    if (!hasExitScenarios || exitScenarios.length === 0) return 10; // Default fallback
+
+    // Find scenario with highest IRR
+    const optimalScenario = exitScenarios.reduce((best, current) => {
+      if (!best) return current;
+      // Handle edge case: if IRRs are equal, prefer earlier exit year
+      if (Math.abs(current.irr - best.irr) < 0.001) {
+        return current.year < best.year ? current : best;
+      }
+      return current.irr > best.irr ? current : best;
+    });
+
+    return optimalScenario.year;
+  }, [exitScenarios, hasExitScenarios]);
+
+  // Progressive disclosure: Show 3 scenarios by default (Years 5, 7, 10)
+  // Based on UX Brief requirement for progressive disclosure
+  const defaultScenarioYears = [5, 7, 10];
+  const displayedScenarios = useMemo(() => {
+    if (showAllScenarios || exitScenarios.length <= 3) {
+      return exitScenarios;
+    }
+    // Show default 3 scenarios (5, 7, 10) or first 3 if defaults not available
+    return exitScenarios.filter(s => defaultScenarioYears.includes(s.year)).slice(0, 3);
+  }, [exitScenarios, showAllScenarios]);
 
   // Fallback: Old projection data for backward compatibility
   const projectionYears = analysis?.longTermAnalysis?.projectionYears || 10;
@@ -141,18 +178,10 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
           : `${projectionYears}-year financial forecast starting from After Repair Value (ARV)`}
       </Typography>
 
-      {/* Forced Appreciation Callout */}
-      <ForcedAppreciationCallout
-        purchasePrice={purchasePrice}
-        arv={arv}
-        rehabCosts={rehabCosts}
-        appreciationRate={appreciationRate}
-      />
-
       {/* NEW DESIGN: Exit Scenarios Available */}
       {hasExitScenarios && brrrData ? (
         <>
-          {/* BRRRR Timeline Visual */}
+          {/* BRRRR Timeline Visual - FIRST per UX Brief */}
           <Box sx={{ mb: 4 }}>
             <BRRRRTimelineVisual
               brrrData={brrrData}
@@ -161,7 +190,7 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
             />
           </Box>
 
-          {/* Exit Scenarios Section */}
+          {/* Exit Scenarios Section - SECOND per UX Brief */}
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Box>
@@ -203,17 +232,190 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
                 gap: 3,
               }}
             >
-              {exitScenarios.map((scenario) => (
+              {displayedScenarios.map((scenario: ExitScenario) => (
                 <ExitScenarioCard
                   key={scenario.year}
                   scenario={scenario}
                   isSelected={selectedScenarios.includes(scenario.year)}
                   onToggleSelection={() => toggleScenarioSelection(scenario.year)}
-                  isRecommended={scenario.year === 10} // Year 10 is recommended
+                  isRecommended={scenario.year === optimalExitYear}
                 />
               ))}
             </Box>
+
+            {/* Show All / Show Less Button */}
+            {exitScenarios.length > 3 && (
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowAllScenarios(!showAllScenarios)}
+                  sx={{
+                    borderRadius: '12px',
+                    textTransform: 'none',
+                    borderColor: brrrColors.neutral.medium,
+                    color: 'text.secondary',
+                    '&:hover': {
+                      borderColor: brrrColors.postRefinance.primary,
+                      backgroundColor: brrrColors.postRefinance.light,
+                    },
+                  }}
+                >
+                  {showAllScenarios ? 'Show Less' : `Show All ${exitScenarios.length} Scenarios`}
+                </Button>
+              </Box>
+            )}
           </Box>
+
+          {/* Forced Appreciation Callout - THIRD per UX Brief */}
+          <Box sx={{ mb: 4 }}>
+            <ForcedAppreciationCallout
+              purchasePrice={purchasePrice}
+              arv={arv}
+              rehabCosts={rehabCosts}
+              appreciationRate={appreciationRate}
+            />
+          </Box>
+
+          {/* BRRRR vs Buy & Hold Comparison - FOURTH per UX Brief */}
+          {exitScenarios.length > 0 && buyHoldComparison && buyHoldComparison.length >= 15 && (
+            <Card sx={{ mb: 4, borderRadius: '16px', border: `2px solid ${brrrColors.capitalRecovery.light}` }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                  BRRRR Advantage at Year 15
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Comparing BRRRR strategy vs traditional Buy & Hold
+                </Typography>
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 3 }}>
+                  {/* BRRRR Column */}
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: brrrColors.capitalRecovery.primary }}>
+                      BRRRR Strategy
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Property Value (Year 15)</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(brrrProjections[14]?.propertyValue || 0))}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Total Equity</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(brrrProjections[14]?.equity || 0))}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Cumulative Cash Flow</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(brrrProjections.slice(0, 15).reduce((sum: number, p: any) => sum + (p.cashFlow || 0), 0)))}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Buy & Hold Column */}
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                      Buy & Hold Strategy
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Property Value (Year 15)</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(buyHoldComparison[14]?.propertyValue || 0))}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Total Equity</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(buyHoldComparison[14]?.equity || 0))}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Cumulative Cash Flow</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {formatCurrency(Math.round(buyHoldComparison.slice(0, 15).reduce((sum: number, p: any) => sum + (p.cashFlow || 0), 0)))}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Advantage Summary */}
+                <Box sx={{ mt: 3, p: 2, backgroundColor: brrrColors.capitalRecovery.light, borderRadius: '12px' }}>
+                  <Typography variant="body2" fontWeight={600} sx={{ color: brrrColors.capitalRecovery.dark }}>
+                    BRRRR Advantage: {formatCurrency(Math.round(
+                      (brrrProjections[14]?.equity || 0) - (buyHoldComparison[14]?.equity || 0)
+                    ))} higher equity
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Detailed Projections: Chart & Table - FIFTH per UX Brief */}
+          <Card sx={{ mb: 4, borderRadius: '16px' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" fontWeight={600}>
+                  15-Year Financial Projections
+                </Typography>
+
+                {/* View Toggle Buttons */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant={projectionsView === 'chart' ? 'contained' : 'outlined'}
+                    onClick={() => setProjectionsView('chart')}
+                    startIcon={<ChartIcon />}
+                    sx={{ borderRadius: '8px', textTransform: 'none' }}
+                  >
+                    Chart
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={projectionsView === 'table' ? 'contained' : 'outlined'}
+                    onClick={() => setProjectionsView('table')}
+                    startIcon={<TableIcon />}
+                    sx={{ borderRadius: '8px', textTransform: 'none' }}
+                  >
+                    Table
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={projectionsView === 'both' ? 'contained' : 'outlined'}
+                    onClick={() => setProjectionsView('both')}
+                    startIcon={<BothIcon />}
+                    sx={{ borderRadius: '8px', textTransform: 'none' }}
+                  >
+                    Both
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Chart View */}
+              {(projectionsView === 'chart' || projectionsView === 'both') && (
+                <Box sx={{ mb: projectionsView === 'both' ? 3 : 0 }}>
+                  <AppreciationChart
+                    brrrData={brrrProjectionData}
+                    buyHoldData={buyHoldComparison}
+                    height={isMobile ? 300 : 400}
+                  />
+                </Box>
+              )}
+
+              {/* Table View */}
+              {(projectionsView === 'table' || projectionsView === 'both') && (
+                <ProjectionsTable
+                  projections={brrrProjectionData}
+                  compact={isMobile}
+                  highlightYear={15}
+                />
+              )}
+            </CardContent>
+          </Card>
 
           {/* Scenario Comparison Modal */}
           <ScenarioComparisonModal
@@ -227,8 +429,12 @@ export const BRRRRLongTermProjections: React.FC<BRRRRLongTermProjectionsProps> =
         <>
           {/* Show alert if no exit scenarios */}
           <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+              Exit Scenario Analysis Not Available
+            </Typography>
             <Typography variant="body2">
-              Exit scenarios not available for this analysis. Showing traditional projection table.
+              This analysis was generated before the BRRRR exit scenario feature was released.
+              Re-analyze this property to see exit scenarios at Years 3, 5, 7, 10, and 15 with IRR calculations.
             </Typography>
           </Alert>
 

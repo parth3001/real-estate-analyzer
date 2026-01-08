@@ -1,6 +1,6 @@
 import { FinancialCalculations } from '../utils/financialCalculations';
-import { BasePropertyData } from '../types/propertyTypes';
-import {
+import type { BasePropertyData } from '../types/propertyTypes';
+import type {
   CommonMetrics,
   AnalysisResult,
   YearlyProjection,
@@ -9,10 +9,12 @@ import {
 } from '../types/analysis';
 
 // Debug helper - only logs in development
+// 🔍 ISSUE #53 DEBUG: Temporarily disabled to reduce noise
 const debug = (...args: any[]) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(...args);
-  }
+  // TEMPORARILY DISABLED
+  // if (process.env.NODE_ENV !== 'production') {
+  //   console.log(...args);
+  // }
 };
 
 export interface AnalysisAssumptions {
@@ -64,7 +66,19 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       // REMOVED vacancy - it should reduce income, not be an expense
     };
 
-    return Object.values(baseExpenses).reduce((sum, expense) => sum + expense, 0);
+    const totalBaseExpenses = Object.values(baseExpenses).reduce((sum, expense) => sum + expense, 0);
+
+    // ✅ NEW: SFR-SPECIFIC expenses (Josh's feature - Jan 2026)
+    // Only applied for SFR properties to prevent Multi-Family double-counting
+    // Multi-Family calculates CapEx separately (6% EGI) and has commonAreaUtilities
+    if (this.data.propertyType === 'SFR') {
+      const hoa = (this.data.monthlyHOA ?? 0) * 12;
+      const utilities = (this.data.monthlyUtilities ?? 0) * 12;
+      const capEx = (this.data.monthlyCapEx ?? 0) * 12;
+      return totalBaseExpenses + hoa + utilities + capEx;
+    }
+
+    return totalBaseExpenses;
   }
 
   protected calculateNOI(effectiveIncome: number, operatingExpenses: number): number {
@@ -226,11 +240,30 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       
       // Capital improvements (only in year 1)
       const capitalImprovements = year === 1 ? (this.data.capitalInvestments || 0) : 0;
-      
+
       debug(`Year ${year} Capital Improvements:`, capitalImprovements);
-      
-      const operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + turnoverCosts;
-      
+
+      // Base operating expenses
+      let operatingExpenses = propertyTax + insurance + maintenance + propertyManagement + turnoverCosts;
+
+      // ✅ OPTION A FIX: Add SFR-specific operating expenses to projections (Jan 2026)
+      // This fixes the discrepancy where new expenses were in monthly analysis but missing from projections
+      if (this.data.propertyType === 'SFR') {
+        const hoa = (this.data.monthlyHOA ?? 0) * 12 * expenseInflationFactor;
+        const utilities = (this.data.monthlyUtilities ?? 0) * 12 * expenseInflationFactor;
+        const capEx = (this.data.monthlyCapEx ?? 0) * 12 * expenseInflationFactor;
+
+        debug(`Year ${year} SFR-Specific Expenses:`, {
+          hoa,
+          utilities,
+          capEx,
+          total: hoa + utilities + capEx,
+          inflationFactor: expenseInflationFactor
+        });
+
+        operatingExpenses += hoa + utilities + capEx;
+      }
+
       const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
       const cashFlow = FinancialCalculations.calculateCashFlow(noi, annualDebtService) - capitalImprovements;
 
@@ -414,7 +447,9 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         projections: projections, // Primary field name for consistency
         exitAnalysis: exitAnalysis,
         returns: {
-          irr: propertyMetrics.irr || 0,
+          irr: propertyMetrics.irr !== null && propertyMetrics.irr !== undefined
+            ? propertyMetrics.irr
+            : 0, // Default to 0 if IRR calculation fails (prevents null type error)
           totalCashFlow: totalCashFlow,
           totalAppreciation: totalAppreciation,
           totalReturn: totalReturn,

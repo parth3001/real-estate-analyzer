@@ -38,15 +38,19 @@ import {
   Info,
   Home as HomeIcon,
   ExpandMore as ExpandMoreIcon,
-  Refresh as BRRRRIcon
+  Refresh as BRRRRIcon,
+  Restore as RestoreIcon,
+  HelpOutline as HelpIcon
 } from '@mui/icons-material';
 
 import WizardStep from './WizardStep';
 import type { WizardStepProps, DataConfidence } from './wizardTypes';
 import { TapToExpandField } from '../common/TapToExpandField';
 import { HybridSliderInput } from '../common/HybridSliderInput';
+import { EducationalTooltip } from '../common/EducationalTooltip';
 import { wizardApi } from '../../services/api';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
+import { appleColors } from '../../theme/appleDesignSystem';
 
 const FinancialsStep: React.FC<WizardStepProps> = ({
   state,
@@ -91,6 +95,13 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
   const [isRehabCustomized, setIsRehabCustomized] = useState(false);
   const [isARVCustomized, setIsARVCustomized] = useState(false);
   const [showARVGuidance, setShowARVGuidance] = useState(false);
+
+  // Issue #51: Refinance interest rate state (smart default: initial + 2%)
+  const [refinanceRate, setRefinanceRate] = useState(
+    state.data.brrrr?.refinanceInterestRate || (state.data.interestRate || 7.5) + 2
+  );
+  const [hasUserEditedRefiRate, setHasUserEditedRefiRate] = useState(false);
+  const [showRefinanceModal, setShowRefinanceModal] = useState(false);
   
   // Calculate monthly payment
   const calculateMonthlyPayment = () => {
@@ -212,7 +223,8 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
           afterRepairValue: afterRepairValue || 0,
           refinanceLTV: refinanceLTV,
           seasoningPeriod: seasoningPeriod,
-          arvAppraisalConfidence: arvConfidence
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: refinanceRate  // Issue #51: Preserve refinance rate
         }
       }
     });
@@ -230,7 +242,8 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
           afterRepairValue: value,
           refinanceLTV: refinanceLTV,
           seasoningPeriod: seasoningPeriod,
-          arvAppraisalConfidence: arvConfidence
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: refinanceRate  // Issue #51: Preserve refinance rate
         }
       }
     });
@@ -247,7 +260,8 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
           afterRepairValue: afterRepairValue,
           refinanceLTV: value,
           seasoningPeriod: seasoningPeriod,
-          arvAppraisalConfidence: arvConfidence
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: refinanceRate  // Issue #51: Preserve refinance rate
         }
       }
     });
@@ -264,7 +278,8 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
           afterRepairValue: afterRepairValue,
           refinanceLTV: refinanceLTV,
           seasoningPeriod: value,
-          arvAppraisalConfidence: arvConfidence
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: refinanceRate  // Issue #51: Preserve refinance rate
         }
       }
     });
@@ -281,11 +296,62 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
           afterRepairValue: afterRepairValue,
           refinanceLTV: refinanceLTV,
           seasoningPeriod: seasoningPeriod,
-          arvAppraisalConfidence: value
+          arvAppraisalConfidence: value,
+          refinanceInterestRate: refinanceRate  // Issue #51: Preserve refinance rate
         }
       }
     });
   };
+
+  // Issue #51: Refinance rate handlers
+  const handleRefinanceRateChange = (value: number) => {
+    setRefinanceRate(value);
+    setHasUserEditedRefiRate(true); // Lock in user's custom rate
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: afterRepairValue,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: value
+        }
+      }
+    });
+  };
+
+  const resetToSmartDefault = () => {
+    const smartDefault = (state.data.interestRate || 7.5) + 2;
+    setRefinanceRate(smartDefault);
+    setHasUserEditedRefiRate(false);
+    onUpdate({
+      data: {
+        ...state.data,
+        brrrr: {
+          ...state.data.brrrr,
+          rehabBudget: rehabBudget,
+          afterRepairValue: afterRepairValue,
+          refinanceLTV: refinanceLTV,
+          seasoningPeriod: seasoningPeriod,
+          arvAppraisalConfidence: arvConfidence,
+          refinanceInterestRate: smartDefault
+        }
+      }
+    });
+  };
+
+  // Issue #51: Auto-update refinance rate when initial rate changes (unless user has customized)
+  useEffect(() => {
+    if (!hasUserEditedRefiRate && state.data.interestRate && state.data.strategy === 'brrrr') {
+      const smartDefault = state.data.interestRate + 2;
+      setRefinanceRate(smartDefault);
+      // Don't call onUpdate here - just update local state
+      // The value will be sent on next user action
+    }
+  }, [state.data.interestRate, hasUserEditedRefiRate, state.data.strategy]);
 
   const handleNavigateToComparables = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -910,13 +976,13 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Initial Capital Investments"
+                  label="Initial Repairs & Upgrades"
                   type="number"
                   value={state.data.capitalInvestments || ''}
                   onChange={(e) => onUpdate({
                     data: { ...state.data, capitalInvestments: parseInt(e.target.value) || 0 }
                   })}
-                  helperText="Repairs, renovations, or improvements"
+                  helperText="One-time costs for property improvements before tenant move-in (painting, flooring, appliances, etc.)"
                   InputProps={{
                     startAdornment: <InputAdornment position="start">$</InputAdornment>
                   }}
@@ -1078,6 +1144,143 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
                         />
                         <Typography variant="caption" color="text.secondary">
                           Lender waiting period before refinancing (6-12 months typical)
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    {/* Issue #51: Refinance Interest Rate - UX Enhanced Side-by-Side Comparison */}
+                    <Grid item xs={12}>
+                      <Box sx={{
+                        backgroundColor: appleColors.blue[50],
+                        borderRadius: 2,
+                        p: 2,
+                        border: `1px solid ${appleColors.blue[100]}`
+                      }}>
+                        <Typography variant="caption" sx={{
+                          color: appleColors.blue[700],
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          fontSize: '11px',
+                          display: 'block',
+                          mb: 1.5
+                        }}>
+                          Loan Rate Comparison
+                        </Typography>
+
+                        <Grid container spacing={2}>
+                          {/* Left: Initial Rate (read-only display) */}
+                          <Grid item xs={6}>
+                            <Box>
+                              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                Initial Purchase
+                              </Typography>
+                              <Typography variant="h6" sx={{
+                                fontWeight: 600,
+                                color: appleColors.gray[700]
+                              }}>
+                                {(state.data.interestRate || 7.5).toFixed(2)}%
+                              </Typography>
+                            </Box>
+                          </Grid>
+
+                          {/* Right: Refinance Rate (editable) */}
+                          <Grid item xs={6}>
+                            <Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                  Cash-Out Refi
+                                </Typography>
+                                <EducationalTooltip
+                                  title="Cash-Out Refinance Rate"
+                                  description="Cash-out refinances typically carry 2-5% higher interest rates than purchase loans because lenders view equity extraction as higher risk."
+                                  whyItMatters="Using the same rate for both loans can overestimate cash flow by $100-300/month on a typical BRRRR deal."
+                                  placement="top"
+                                />
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TextField
+                                  type="number"
+                                  value={refinanceRate.toFixed(2)}
+                                  onChange={(e) => handleRefinanceRateChange(parseFloat(e.target.value) || 0)}
+                                  size="small"
+                                  sx={{
+                                    width: '100px',
+                                    '& input': {
+                                      fontWeight: 600,
+                                      fontSize: '18px',
+                                      color: appleColors.blue[700]
+                                    }
+                                  }}
+                                  InputProps={{
+                                    endAdornment: <InputAdornment position="end">%</InputAdornment>
+                                  }}
+                                  inputProps={{
+                                    step: 0.125,
+                                    min: state.data.interestRate || 0,
+                                    max: 20
+                                  }}
+                                />
+
+                                {/* Spread badge */}
+                                <Chip
+                                  label={`+${(refinanceRate - (state.data.interestRate || 7.5)).toFixed(1)}%`}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: (() => {
+                                      const spread = refinanceRate - (state.data.interestRate || 7.5);
+                                      if (spread <= 2) return appleColors.green[600];
+                                      if (spread <= 4) return appleColors.orange[600];
+                                      return appleColors.red[600];
+                                    })(),
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    fontSize: '12px'
+                                  }}
+                                />
+
+                                {/* Reset to smart default button */}
+                                {hasUserEditedRefiRate && (
+                                  <Button
+                                    size="small"
+                                    onClick={resetToSmartDefault}
+                                    startIcon={<RestoreIcon />}
+                                    sx={{
+                                      fontSize: '11px',
+                                      textTransform: 'none',
+                                      color: appleColors.gray[600],
+                                      minWidth: 'auto',
+                                      '&:hover': {
+                                        backgroundColor: appleColors.blue[100],
+                                        color: appleColors.blue[700]
+                                      }
+                                    }}
+                                  >
+                                    Reset
+                                  </Button>
+                                )}
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+
+                        {/* Contextual help text */}
+                        <Typography variant="caption" sx={{
+                          color: appleColors.gray[600],
+                          display: 'block',
+                          mt: 1.5,
+                          lineHeight: 1.4
+                        }}>
+                          💡 Cash-out refinances typically cost 2-5% more than purchase loans.
+                          {' '}
+                          <Link
+                            component="button"
+                            variant="caption"
+                            onClick={() => setShowRefinanceModal(true)}
+                            sx={{ color: appleColors.blue[600] }}
+                          >
+                            Why is this?
+                          </Link>
                         </Typography>
                       </Box>
                     </Grid>

@@ -1992,7 +1992,10 @@ export class InvestmentDecisionEngine {
         propertyManagementRate: propertyData.propertyManagementRate || 0,
         vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5,
         monthlyHOA: propertyData.monthlyHOA,
-        monthlyUtilities: propertyData.monthlyUtilities
+        monthlyUtilities: propertyData.monthlyUtilities,
+        // Issue #51: Pass turnover costs and long-term assumptions for Post-Refinance calculations
+        tenantTurnoverFees: propertyData.tenantTurnoverFees,
+        longTermAssumptions: propertyData.longTermAssumptions
       };
 
       const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs);

@@ -1,7 +1,7 @@
 /**
  * BRRRR Type Imports (Day 0: Type Safety Update)
  */
-import { BRRRRAnalysis } from './brrrr';
+import type { BRRRRAnalysis } from './brrrr';
 
 /**
  * Validation Warning Types (Phase 1: Multi-Family)
@@ -31,6 +31,11 @@ export interface MonthlyExpenses {
   };
   total: number;
   tenantTurnover?: number;
+
+  // ✅ NEW: SFR-specific operating expenses (Jan 2026)
+  hoa?: number;
+  landlordUtilities?: number;
+  sfrCapEx?: number;
 }
 
 export interface MonthlyAnalysis {

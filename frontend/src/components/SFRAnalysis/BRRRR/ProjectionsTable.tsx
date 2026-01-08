@@ -114,19 +114,6 @@ export const ProjectionsTable: React.FC<ProjectionsTableProps> = ({
                   }}
                 >
                   {projection.year}
-                  {isHighlighted && (
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      sx={{
-                        ml: 1,
-                        color: brrrColors.postRefinance.primary,
-                        fontWeight: 600,
-                      }}
-                    >
-                      (Exit)
-                    </Typography>
-                  )}
                 </TableCell>
 
                 {/* Property Value */}

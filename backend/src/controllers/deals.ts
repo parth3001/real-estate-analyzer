@@ -199,7 +199,16 @@ const convertWizardData = (dealData: any): any => {
 
       longTermAssumptions: {
         ...dealData.longTermAssumptions,
-        vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+        // ✅ ISSUE #53 FIX: Use ?? operator instead of || to preserve zero values
+        // User Input: vacancyRate: 0 (luxury property, fully occupied)
+        // OLD BUG: 0 || 5 = 5 (WRONG - corrupted user's zero)
+        // NEW FIX: 0 ?? 5 = 0 (CORRECT - preserves user's zero)
+        vacancyRate: dealData.vacancyRate ?? dealData.longTermAssumptions?.vacancyRate ?? 5,
+        projectionYears: dealData.projectionYears ?? dealData.longTermAssumptions?.projectionYears ?? 10,
+        annualRentIncrease: dealData.annualRentIncrease ?? dealData.longTermAssumptions?.annualRentIncrease ?? 2,
+        annualExpenseIncrease: dealData.annualExpenseIncrease ?? dealData.longTermAssumptions?.annualExpenseIncrease ?? 2,
+        annualPropertyValueIncrease: dealData.annualPropertyValueIncrease ?? dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3,
+        sellingCostsPercentage: dealData.sellingCostsPercentage ?? dealData.longTermAssumptions?.sellingCostsPercentage ?? 6
       },
       _dataSource: {
         isWizardData: true,
@@ -236,13 +245,15 @@ const convertWizardData = (dealData: any): any => {
   };
   logger.info('SFR wizard data received:', JSON.stringify(wizardDataInfo, null, 2));
 
-  // Calculate maintenance cost from percentage (SFR only)
+  // Calculate maintenance cost with proper priority logic (Jan 2026 - Josh's feature)
+  // Priority: Explicit user value → Percentage fallback → Zero
   let maintenanceCost = dealData.maintenanceCost || 0;
   logger.info('Initial maintenanceCost value:', maintenanceCost);
 
-  if (dealData.maintenanceReservePercentage && dealData.monthlyRent) {
+  // ✅ FIX: Only calculate from percentage if user hasn't provided explicit value
+  if (!dealData.maintenanceCost && dealData.maintenanceReservePercentage && dealData.monthlyRent) {
     const calculatedCost = Math.round((dealData.monthlyRent * dealData.maintenanceReservePercentage / 100) * 12);
-    logger.info('SFR Maintenance calculation:', {
+    logger.info('SFR Maintenance calculation (using percentage fallback):', {
       hasPercentage: !!dealData.maintenanceReservePercentage,
       hasMonthlyRent: !!dealData.monthlyRent,
       monthlyRent: dealData.monthlyRent,
@@ -252,8 +263,14 @@ const convertWizardData = (dealData: any): any => {
       formula: `(${dealData.monthlyRent} * ${dealData.maintenanceReservePercentage} / 100) * 12 = ${calculatedCost}`
     });
     maintenanceCost = calculatedCost;
+  } else if (dealData.maintenanceCost) {
+    logger.info('Using user-provided maintenanceCost (priority over percentage):', {
+      userProvidedValue: dealData.maintenanceCost,
+      decision: 'User explicit value takes priority over calculated percentage',
+      percentageIgnored: dealData.maintenanceReservePercentage || 'N/A'
+    });
   } else {
-    logger.warn('Cannot calculate SFR maintenance cost:', {
+    logger.warn('Cannot calculate SFR maintenance cost (no explicit value or percentage):', {
       hasPercentage: !!dealData.maintenanceReservePercentage,
       hasMonthlyRent: !!dealData.monthlyRent,
       percentageValue: dealData.maintenanceReservePercentage,
@@ -268,6 +285,13 @@ const convertWizardData = (dealData: any): any => {
     ...dealData,
     maintenanceCost: maintenanceCost,
 
+    // ✅ NEW: Explicitly preserve operating expense fields (Jan 2026 - Issue #1 Fix)
+    // These fields must be explicitly included to survive convertWizardData transformation
+    // Without explicit preservation, they may be lost during save/load cycles
+    monthlyHOA: dealData.monthlyHOA ?? 0,
+    monthlyUtilities: dealData.monthlyUtilities ?? 0,
+    monthlyCapEx: dealData.monthlyCapEx ?? 0,
+
     // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
     // Frontend sends 'strategy' field (property.ts:57), backend expects 'investmentStrategy' (investmentDecisionEngine.ts:1569)
     // Without this mapping, BRRRR properties incorrectly route to Buy & Hold logic
@@ -275,7 +299,13 @@ const convertWizardData = (dealData: any): any => {
 
     longTermAssumptions: {
       ...dealData.longTermAssumptions,
-      vacancyRate: dealData.vacancyRate || dealData.longTermAssumptions?.vacancyRate || 5
+      // ✅ ISSUE #53 FIX: Use ?? operator instead of || to preserve zero values
+      vacancyRate: dealData.vacancyRate ?? dealData.longTermAssumptions?.vacancyRate ?? 5,
+      projectionYears: dealData.projectionYears ?? dealData.longTermAssumptions?.projectionYears ?? 10,
+      annualRentIncrease: dealData.annualRentIncrease ?? dealData.longTermAssumptions?.annualRentIncrease ?? 2,
+      annualExpenseIncrease: dealData.annualExpenseIncrease ?? dealData.longTermAssumptions?.annualExpenseIncrease ?? 2,
+      annualPropertyValueIncrease: dealData.annualPropertyValueIncrease ?? dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3,
+      sellingCostsPercentage: dealData.sellingCostsPercentage ?? dealData.longTermAssumptions?.sellingCostsPercentage ?? 6
     },
     // Add metadata to track data source
     _dataSource: {
@@ -941,13 +971,15 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     // Extract assumptions from the dealData
+    // ✅ ISSUE #53 FIX: Remove redundant fallbacks - convertWizardData already enriched all values
+    // Previous code re-applied defaults (defensive programming), but convertWizardData guarantees these exist
     const assumptions: AnalysisAssumptions = {
-      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
-      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
-      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease || 2,
-      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
-      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
-      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+      projectionYears: dealData.longTermAssumptions?.projectionYears ?? 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease ?? 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease ?? 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage ?? 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate ?? 5
     };
     
     // Use the appropriate analysis service directly
@@ -1314,9 +1346,13 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
       hasTaxAnalysis: !!(responseData.investmentDecision as any)?.taxAnalysis,
       taxAnalysisKeys: (responseData.investmentDecision as any)?.taxAnalysis ? Object.keys((responseData.investmentDecision as any).taxAnalysis) : [],
       optimalHoldPeriod: (responseData.investmentDecision as any)?.taxAnalysis?.optimalHoldPeriod,
-      taxSavings: (responseData.investmentDecision as any)?.taxAnalysis?.totalTaxSavingsAtOptimal
+      taxSavings: (responseData.investmentDecision as any)?.taxAnalysis?.totalTaxSavingsAtOptimal,
+      // BRRRR EXIT SCENARIOS DEBUGGING
+      hasBRRRRAnalysis: !!(responseData.investmentDecision as any)?.strategySpecific,
+      hasExitScenarios: !!(responseData.investmentDecision as any)?.strategySpecific?.exitScenarios,
+      exitScenariosCount: (responseData.investmentDecision as any)?.strategySpecific?.exitScenarios?.length || 0
     });
-    
+
     // Return analysis with portfolioId
     res.json(responseData);
   } catch (error) {
@@ -1595,13 +1631,14 @@ export const getQuickPredictions = async (req: AuthenticatedRequest, res: Respon
     }
 
     // Extract assumptions
+    // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
     const assumptions: AnalysisAssumptions = {
-      projectionYears: dealData.longTermAssumptions?.projectionYears || 10,
-      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease || 2,
-      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease || 2,
-      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease || 3,
-      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage || 6,
-      vacancyRate: dealData.longTermAssumptions?.vacancyRate || 5
+      projectionYears: dealData.longTermAssumptions?.projectionYears ?? 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease ?? 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease ?? 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage ?? 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate ?? 5
     };
 
     // Quick analysis for predictions

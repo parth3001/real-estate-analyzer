@@ -438,6 +438,11 @@ Fix doesn't work after 2 attempts?
 
 ## 📝 **Claude's Memory Log**
 
+### **Latest Changes - January 8, 2026** 💰
+**Operating Expense Fields (HOA, Utilities, CapEx) for Buy & Hold Flow** - See [CHANGELOG.md](/docs/CHANGELOG.md#unreleased---2026-01-08) for full details.
+
+---
+
 ### **Affiliate Partnership System - Josh Lupo Integration (December 23, 2025)** 🤝
 
 #### **✅ COMPLETED DELIVERABLES (Full-Stack Implementation)**

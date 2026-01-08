@@ -409,6 +409,14 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     // Calculate maintenance based on per-unit cost
     const maintenance = (maintenanceCostPerUnit || 100) * totalUnits * 12;
 
+    // Validation logging for critical MF defaults
+    if (!maintenanceCostPerUnit) {
+      console.warn('[MF Analyzer] Using default maintenance: $100/unit/month');
+    }
+    if (!this.assumptions.vacancyRate) {
+      console.warn('[MF Analyzer] Using default vacancy rate: 5%');
+    }
+
     // Common area expenses from commonAreaUtilities if present (monthly values, convert to annual)
     let commonAreaUtilities = 0;
     if (this.data.commonAreaUtilities) {
@@ -1007,7 +1015,7 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
       // Basic expenses (inflated)
       const propertyTax = basePropertyTax * expenseInflationFactor;
       const insurance = baseInsurance * expenseInflationFactor;
-      const maintenance = (this.data.maintenanceCostPerUnit || 0) * this.data.totalUnits * 12 * expenseInflationFactor;
+      const maintenance = (this.data.maintenanceCostPerUnit || 100) * this.data.totalUnits * 12 * expenseInflationFactor;
 
       // Income-based expenses
       const propertyManagement = grossIncome * (this.data.propertyManagementRate / 100);

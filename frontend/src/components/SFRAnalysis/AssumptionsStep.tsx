@@ -635,11 +635,7 @@ const AssumptionsStep: React.FC<WizardStepProps> = ({
               ) : (
                 <TextField
                   fullWidth
-                  label={
-                    state.data.propertyType === 'MF'
-                      ? "Investment Horizon"
-                      : "Modeling Period"
-                  }
+                  label="Modeling Period"
                   type="number"
                   value={state.data.longTermAssumptions?.projectionYears || ''}
                   onChange={(e) => onUpdate({
@@ -656,11 +652,7 @@ const AssumptionsStep: React.FC<WizardStepProps> = ({
                       }
                     }
                   })}
-                  helperText={
-                    state.data.propertyType === 'MF'
-                      ? "Typical business plan duration (5-10 years)"
-                      : "How many years to model cash flows? (Typical: 10-30 years)"
-                  }
+                  helperText="How many years to model cash flows? (Typical: 10-30 years)"
                   InputProps={{
                     endAdornment: <InputAdornment position="end">years</InputAdornment>
                   }}

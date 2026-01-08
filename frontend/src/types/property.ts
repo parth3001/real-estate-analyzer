@@ -36,6 +36,12 @@ export interface BasePropertyData {
     prepFees?: number;
     realtorCommission?: number;
   };
+
+  // ✅ NEW: Universal Operating Expenses (Josh's feature request - Jan 2026)
+  // Applied conditionally based on propertyType (SFR only in backend calculations)
+  monthlyHOA?: number;           // Monthly HOA fees (condos, townhomes)
+  monthlyUtilities?: number;     // Landlord-paid utilities (water, trash, sewer)
+  monthlyCapEx?: number;         // Capital expenditure reserve (major replacements: HVAC, roof, appliances)
 }
 
 export interface SFRPropertyData extends BasePropertyData {
@@ -63,6 +69,7 @@ export interface SFRPropertyData extends BasePropertyData {
     refinanceLTV: number;          // 65-85%, default 75
     seasoningPeriod: number;       // 6-24 months, default 12
     arvAppraisalConfidence: 'conservative' | 'moderate' | 'aggressive';
+    refinanceInterestRate?: number; // Issue #51: Cash-out refi rate (typically +2-5% above initial rate)
   };
 
   // Investment goals and strategy (optional)

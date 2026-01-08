@@ -1,5 +1,5 @@
-import { PropertyType } from '../types/propertyTypes';
-import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
+import type { PropertyType } from '../types/propertyTypes';
+import type { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 import { CalculationAuditTrail } from './CalculationAuditTrail';
 
 export class FinancialCalculations {
@@ -771,6 +771,19 @@ export class SFRCalculationEngine extends BaseCalculationEngine {
       turnoverFrequency: assumptions.turnoverFrequency || 2,
       vacancyRate: assumptions.vacancyRate
     });
+
+    // ✅ NEW: SFR-specific operating expenses with inflation (Josh's feature - Jan 2026)
+    // Only applied for SFR properties to prevent Multi-Family double-counting
+    if (data.propertyType === 'SFR') {
+      const inflationFactor = Math.pow(1 + (assumptions.annualExpenseIncrease || 2) / 100, year - 1);
+      const hoa = (data.monthlyHOA ?? 0) * 12 * inflationFactor;
+      const utilities = (data.monthlyUtilities ?? 0) * 12 * inflationFactor;
+      const capEx = (data.monthlyCapEx ?? 0) * 12 * inflationFactor;
+
+      // NO vacancy expense - it's handled as income reduction
+      // NO unauthorized defaults like 5% CapEx or mysterious 8.33% broker fees
+      return baseExpenses.total + turnoverCosts + hoa + utilities + capEx;
+    }
 
     // NO vacancy expense - it's handled as income reduction
     // NO unauthorized defaults like 5% CapEx or mysterious 8.33% broker fees

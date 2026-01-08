@@ -38,7 +38,7 @@ import {
   RadioButtonUnchecked as UnselectedIcon,
 } from '@mui/icons-material';
 import type { ExitScenario } from '../../../types/brrrr';
-import { formatCurrency, formatPercentage } from '../../../utils/formatters';
+import { formatCurrency, formatPercent } from '../../../utils/formatters';
 import { brrrColors } from '../../../theme/brrrDesignTokens';
 
 export interface ExitScenarioCardProps {
@@ -163,7 +163,7 @@ export const ExitScenarioCard: React.FC<ExitScenarioCardProps> = ({
               IRR
             </Typography>
             <Typography variant="h6" fontWeight={600}>
-              {formatPercentage(scenario.irr)}
+              {formatPercent(scenario.irr, 1)}
             </Typography>
           </Box>
 
@@ -173,7 +173,7 @@ export const ExitScenarioCard: React.FC<ExitScenarioCardProps> = ({
               Total Return
             </Typography>
             <Typography variant="h6" fontWeight={600}>
-              {formatPercentage(scenario.totalReturn)}
+              {formatPercent(scenario.totalReturn, 1)}
             </Typography>
           </Box>
 

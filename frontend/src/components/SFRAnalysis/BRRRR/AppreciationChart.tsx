@@ -53,7 +53,7 @@ export interface AppreciationChartProps {
 /**
  * Custom Tooltip Component
  */
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string | number }) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
@@ -69,7 +69,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
         Year {label}
       </Typography>
-      {payload.map((entry, index) => (
+      {payload.map((entry: any, index: number) => (
         <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <Box
             sx={{

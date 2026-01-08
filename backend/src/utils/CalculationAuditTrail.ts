@@ -13,7 +13,7 @@
  */
 
 import { logger } from './logger';
-import { ValidationResult } from './FinancialValidator';
+import type { ValidationResult } from './FinancialValidator';
 
 export interface CalculationStep {
   stepNumber: number;

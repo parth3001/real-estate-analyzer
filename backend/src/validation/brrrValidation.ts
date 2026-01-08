@@ -462,24 +462,36 @@ function calculateDataQualityScore(
 // =============================================================================
 
 export class BRRRRValidationError extends Error {
+  field: string;
+  value?: any;
+  code?: ValidationCode;
+
   constructor(
-    public field: string,
+    field: string,
     message: string,
-    public value?: any,
-    public code?: ValidationCode
+    value?: any,
+    code?: ValidationCode
   ) {
     super(message);
     this.name = 'BRRRRValidationError';
+    this.field = field;
+    this.value = value;
+    this.code = code;
   }
 }
 
 export class BRRRRCalculationError extends Error {
+  calculation: string;
+  inputs?: any;
+
   constructor(
     message: string,
-    public calculation: string,
-    public inputs?: any
+    calculation: string,
+    inputs?: any
   ) {
     super(message);
     this.name = 'BRRRRCalculationError';
+    this.calculation = calculation;
+    this.inputs = inputs;
   }
 }

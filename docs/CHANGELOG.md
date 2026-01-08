@@ -5,9 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2025-09-08
+## [Unreleased] - 2026-01-08
 
-### 🔧 Critical Bug Fixes
+### ✨ New Features
+
+**Operating Expense Fields for Buy & Hold**
+- Added 3 new universal operating expense fields: `monthlyHOA`, `monthlyUtilities`, `monthlyCapEx`
+- New input fields in Property Wizard (RentalStep): HOA Fees, Landlord-Paid Utilities, CapEx Reserve
+- Educational alert explaining difference between Routine Maintenance vs Capital Expenditures
+- Dynamic CapEx default: 5% of monthly rent for new properties (industry standard)
+- Saved properties load with blank fields (no surprise changes to existing analyses)
+
+### 🔄 Changes
+
+**BRRRR Strategy Temporarily Disabled**
+- BRRRR card hidden in strategy selection screen (pending UAT validation)
+- Backend BRRRR code remains fully functional with backward compatibility
+- Deprecated `capExReserveRate` and `capExReserveFixed` fields in favor of universal `monthlyCapEx`
+- Fallback chain ensures old BRRRR analyses continue to work: `monthlyCapEx` → `capExReserveFixed` → `capExReserveRate` → 5% default
+
+### 🏗️ Technical Implementation
+
+**Backend Architecture**
+- Updated `BasePropertyAnalyzer` with property-type conditional (SFR only)
+- Updated `financialCalculations` projection engine with SFR-specific expenses + inflation
+- Updated `brrrAnalyzer` with backward compatibility fallback chain
+- No database migration required (MongoDB schema-less design)
+- Fixed 11 TypeScript compilation errors (type imports, constructor syntax, IRR null handling)
+
+**Frontend Architecture**
+- Updated `RentalStep.tsx` with 3 new expense input fields (+80 lines)
+- Added useEffect for dynamic CapEx default (Option B: new properties only)
+- Updated `StrategySelectionStep.tsx` (BRRRR card commented out)
+- Updated type definitions in both backend and frontend `BasePropertyData`
+- Fixed 17 TypeScript compilation errors (type imports, MF comparisons, callback types)
+
+**Documentation**
+- Updated `DATA_DICTIONARY.md` with new fields and deprecation notices
+- Updated `DATA_MAPPING.md` with field migration table and fallback chain
+- Created comprehensive unit test: `operating-expenses-jan-2026.test.ts`
+- **Created comprehensive UAT plan**: `/docs/UAT_OPERATING_EXPENSES_JAN_2026.md` (12 test scenarios)
+
+**Build Status**
+- ✅ Backend TypeScript compilation: PASSING (0 errors)
+- ✅ Frontend TypeScript compilation: PASSING (0 errors)
+- ✅ Frontend production build: PASSING (7.94s, 12,734 modules)
+- ✅ All 28 TypeScript errors fixed (11 backend, 17 frontend)
+
+### 🔧 Critical Bug Fixes (2025-09-08)
 
 **Cap Rate Scoring Formula Fix**
 - **Issue**: Cap rate professional assessment always showing ~50/100 regardless of property performance

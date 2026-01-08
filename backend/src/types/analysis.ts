@@ -1,5 +1,5 @@
-import { SFRData, MultiFamilyData, PropertyType } from './propertyTypes';
-import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from './marketData';
+import type { SFRData, MultiFamilyData, PropertyType } from './propertyTypes';
+import type { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from './marketData';
 
 export interface MonthlyAnalysis {
   income: {
@@ -22,15 +22,20 @@ export interface ExpenseBreakdown {
   propertyManagement: number;
   vacancy: number;
   tenantTurnover?: number;
-  utilities: number;
+  utilities: number;           // MF: Common area utilities
   commonAreaElectricity: number;
   landscaping: number;
   waterSewer: number;
   garbage: number;
   marketingAndAdvertising: number;
   repairsAndMaintenance: number;
-  capEx: number;
+  capEx: number;              // MF: Capital expenditure percentage
   other?: number;
+
+  // ✅ NEW: SFR-specific operating expenses (Jan 2026 - Josh's feature)
+  hoa?: number;                // SFR: Monthly HOA fees (condos, townhomes)
+  landlordUtilities?: number;  // SFR: Landlord-paid utilities (water, trash, sewer)
+  sfrCapEx?: number;          // SFR: Capital expenditure reserve ($/month)
 }
 
 export interface AnnualAnalysis {

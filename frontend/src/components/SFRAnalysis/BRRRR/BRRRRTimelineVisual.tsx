@@ -53,9 +53,9 @@ export const BRRRRTimelineVisual: React.FC<BRRRRTimelineVisualProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Extract data from brrrData
-  const rehabCosts = brrrData.inputs.brrrr.rehabBudget;
-  const seasoningMonths = brrrData.inputs.brrrr.seasoningMonths || 9;
+  // Extract data from brrrData (BRRRRAnalysis structure)
+  const rehabCosts = brrrData.rehabBudget;
+  const seasoningMonths = brrrData.seasoningCosts.months;
   const newLoanAmount = brrrData.refinanceResults.newLoanAmount;
   const capitalRecovered = brrrData.capitalRecovery.capitalRecovered;
   const postRefinanceCashFlow = brrrData.postRefinanceMetrics.monthlyCashFlow;
@@ -78,11 +78,18 @@ export const BRRRRTimelineVisual: React.FC<BRRRRTimelineVisualProps> = ({
       label: 'Seasoning Period',
       timeframe: `Months 7-${6 + seasoningMonths}`,
       icon: <SeasoningIcon />,
-      color: brrrColors.seasoning.primary,
+      color: brrrColors.initialPeriod.primary,
       metrics: [
         { label: 'Duration', value: `${seasoningMonths} months` },
         { label: 'Property Value', value: formatCurrency(Math.round(afterRepairValue)) },
-        { label: 'Monthly Cash Flow', value: formatCurrency(Math.round(brrrData.seasoningCosts.monthlyCashFlow)) },
+        // ✅ ISSUE #54 FIX: Use seasoningNetCashFlow with fallback for backward compatibility
+        // New field: positive = profit, negative = loss (clear sign convention)
+        // Old field: positive = loss, negative = profit (confusing, deprecated)
+        (() => {
+          const cashFlow = brrrData.seasoningCosts.seasoningNetCashFlow ?? -brrrData.seasoningCosts.netSeasoningCost;
+          const label = cashFlow >= 0 ? 'Seasoning Profit' : 'Seasoning Cost';
+          return { label, value: formatCurrency(Math.abs(Math.round(cashFlow))) };
+        })(),
       ],
       description: 'Stabilize property with rental income to meet lender requirements for refinance',
     },
@@ -90,11 +97,11 @@ export const BRRRRTimelineVisual: React.FC<BRRRRTimelineVisualProps> = ({
       label: 'Refinance',
       timeframe: `Month ${6 + seasoningMonths + 1}`,
       icon: <RefinanceIcon />,
-      color: brrrColors.refinance.primary,
+      color: brrrColors.postRefinance.primary,
       metrics: [
         { label: 'New Loan Amount', value: formatCurrency(Math.round(newLoanAmount)) },
         { label: 'Capital Recovered', value: formatCurrency(Math.round(capitalRecovered)) },
-        { label: 'Recovery %', value: `${brrrData.capitalRecovery.recoveryPercentage.toFixed(1)}%` },
+        { label: 'Recovery %', value: `${brrrData.capitalRecovery.capitalRecoveryRate.toFixed(1)}%` },
       ],
       description: 'Cash-out refinance based on new appraised value to recover invested capital',
     },

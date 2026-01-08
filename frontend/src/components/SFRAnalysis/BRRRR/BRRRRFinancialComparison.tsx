@@ -18,9 +18,9 @@
  */
 
 import React from 'react';
-import { Box, Typography, Card, CardContent, Alert, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Typography, Card, CardContent, Alert, useMediaQuery, useTheme, Tooltip } from '@mui/material';
 import Grid from '@mui/system/Grid';
-import { Info as InfoIcon, TrendingDown as TrendingDownIcon } from '@mui/icons-material';
+import { Info as InfoIcon, TrendingDown as TrendingDownIcon, HelpOutline as HelpOutlineIcon } from '@mui/icons-material';
 import { FinancialPeriodCard, type FinancialPeriodMetrics } from './FinancialPeriodCard';
 import { PeriodSeparator } from './PeriodSeparator';
 import { brrrColors } from '../../../theme/brrrDesignTokens';
@@ -76,12 +76,34 @@ export const BRRRRFinancialComparison: React.FC<BRRRRFinancialComparisonProps> =
     ? (brrrData.seasoningCosts.mortgagePayments / (brrrData.seasoningCosts.months || 12))
     : calculateMonthlyPayment(initialLoan, purchaseRate, loanTerm); // Fallback only if backend missing
 
-  // Calculate initial cash flow from backend seasoning data
+  // ✅ ISSUE #49 FIX (2025-12-30): Calculate Initial Hold operating expenses from backend seasoning data
+  // ROOT CAUSE: Was using netRentalIncome / 12 (only deducts mgmt fees)
+  // SOLUTION: Extract monthly opex from backend totals (backend provides 12-month totals)
+  // REFERENCE: /docs/ISSUE_49_IMPLEMENTATION_PLAN.md
+  const months = brrrData?.seasoningCosts?.months || 12;
+  const initialHoldMonthlyOpEx = brrrData?.seasoningCosts ? {
+    propertyTax: brrrData.seasoningCosts.propertyTax / months,
+    insurance: brrrData.seasoningCosts.insurance / months,
+    maintenance: brrrData.seasoningCosts.maintenance / months,
+    propertyManagement: brrrData.seasoningCosts.propertyManagement / months,
+    utilities: brrrData.seasoningCosts.utilities / months,
+    hoa: 0, // TODO: Add to backend SeasoningCosts interface in future sprint
+    total: (brrrData.seasoningCosts.propertyTax +
+            brrrData.seasoningCosts.insurance +
+            brrrData.seasoningCosts.maintenance +
+            brrrData.seasoningCosts.propertyManagement +
+            brrrData.seasoningCosts.utilities) / months
+  } : null;
+
+  // ✅ ISSUE #49 FIX: Calculate Initial Hold cash flow properly
+  // Use gross rent - operating expenses - mortgage (NO vacancy - lender requirement)
+  // BEFORE (WRONG): netRentalIncome / 12 - mortgage = $1,104 - $559 = $545/month
+  // AFTER (CORRECT): rent - ALL opex - mortgage = $1,200 - $377 - $559 = $264/month
   const monthlyRent = analysis?.monthlyAnalysis?.income?.gross || 0;
   const monthlyExpenses = analysis?.monthlyAnalysis?.expenses?.operating || 0;
-  const initialCashFlow = brrrData?.seasoningCosts
-    ? (brrrData.seasoningCosts.netRentalIncome / (brrrData.seasoningCosts.months || 12)) - initialPayment
-    : monthlyRent - monthlyExpenses - initialPayment;
+  const initialCashFlow = initialHoldMonthlyOpEx
+    ? monthlyRent - initialHoldMonthlyOpEx.total - initialPayment
+    : monthlyRent - monthlyExpenses - initialPayment; // Fallback if no seasoning data
 
   // Get Post-Refinance Period metrics from backend
   const refinanceLoan = brrrData?.refinanceResults?.newLoanAmount || (arv * (refinanceLTV / 100));
@@ -101,7 +123,12 @@ export const BRRRRFinancialComparison: React.FC<BRRRRFinancialComparisonProps> =
   const totalInvestment = brrrData?.totalInvestment || 0;
   const capitalRecoveryRate = brrrData?.capitalRecovery?.capitalRecoveryRate || 0;
   const remainingInvestment = brrrData?.capitalRecovery?.capitalRemaining || 0;
-  const initialDownPayment = brrrData?.downPayment || (purchasePrice * (downPaymentPct / 100));
+  const totalCapitalDeployed = brrrData?.capitalRecovery?.totalCapitalDeployed || totalInvestment;
+
+  // ✅ ISSUE #48 FIX: Calculate seasoning profit/cost for breakdown display
+  // If totalCapitalDeployed < totalInvestment, property generated profit during seasoning
+  const seasoningProfit = totalInvestment - totalCapitalDeployed;
+  const hasSeasoningProfit = seasoningProfit > 0;
 
   // Build metrics objects
   const initialMetrics: FinancialPeriodMetrics = {
@@ -109,7 +136,10 @@ export const BRRRRFinancialComparison: React.FC<BRRRRFinancialComparisonProps> =
     monthlyExpenses: monthlyExpenses,
     monthlyCashFlow: initialCashFlow,
     annualCashFlow: initialCashFlow * 12,
-    cashOnCashReturn: initialDownPayment > 0 ? (initialCashFlow * 12 / initialDownPayment) * 100 : 0,
+    // ✅ ISSUE #49 FIX: Cash-on-Cash on TOTAL investment (not just down payment)
+    // BEFORE (WRONG): CoC on down payment only ($20K) = artificially high
+    // AFTER (CORRECT): CoC on total investment ($52K) = accurate capital efficiency
+    cashOnCashReturn: totalInvestment > 0 ? (initialCashFlow * 12 / totalInvestment) * 100 : 0,
     expenseBreakdown,
     loanDetails: {
       loanAmount: initialLoan,
@@ -229,9 +259,46 @@ export const BRRRRFinancialComparison: React.FC<BRRRRFinancialComparisonProps> =
             </Grid>
 
             <Grid size={{ xs: 12, sm: 4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                Remaining Investment
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Net Capital at Risk
+                </Typography>
+                <Tooltip
+                  title={
+                    <Box sx={{ p: 0.5 }}>
+                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, mb: 1 }}>
+                        Capital Calculation Breakdown:
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', fontFamily: 'monospace', lineHeight: 1.6 }}>
+                        Total Investment: ${totalInvestment.toLocaleString()}
+                        {hasSeasoningProfit && (
+                          <>
+                            <br />
+                            Less: Seasoning Profit: -${seasoningProfit.toLocaleString()}
+                            <br />
+                            Capital Deployed: ${totalCapitalDeployed.toLocaleString()}
+                          </>
+                        )}
+                        <br />
+                        Less: Capital Recovered: -${capitalRecovered.toLocaleString()}
+                        <br />
+                        ───────────────────────
+                        <br />
+                        Net Capital at Risk: ${Math.max(0, remainingInvestment).toLocaleString()}
+                      </Typography>
+                      {hasSeasoningProfit && (
+                        <Typography variant="caption" sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}>
+                          Note: Property generated ${seasoningProfit.toLocaleString()} profit during the {brrrData?.seasoningCosts?.months || 12}-month seasoning period, reducing your capital at risk.
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                  arrow
+                  placement="top"
+                >
+                  <HelpOutlineIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                </Tooltip>
+              </Box>
               <Typography variant="h6" fontWeight={700}>
                 ${Math.max(0, remainingInvestment).toLocaleString()}
               </Typography>

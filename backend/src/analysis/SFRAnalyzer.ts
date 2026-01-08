@@ -7,10 +7,12 @@ import { MarketDataResponse, MarketInsight, InvestmentTimingAnalysis } from '../
 import { logger } from '../utils/logger';
 
 // Debug helper - only logs in development
+// 🔍 ISSUE #53 DEBUG: Temporarily disabled to reduce noise
 const debug = (...args: any[]) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(...args);
-  }
+  // TEMPORARILY DISABLED
+  // if (process.env.NODE_ENV !== 'production') {
+  //   console.log(...args);
+  // }
 };
 
 export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
@@ -345,6 +347,8 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       propertyManagement: Math.round((grossIncome * (this.data.propertyManagementRate / 100) / 12) * 100) / 100,
       vacancy: 0, // FIXED - Vacancy reduces income, not an expense
       tenantTurnover: Math.round(monthlyTurnoverCost * 100) / 100,
+
+      // MF-specific expenses (keep at 0 for SFR)
       utilities: 0,
       commonAreaElectricity: 0,
       landscaping: 0,
@@ -353,7 +357,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       marketingAndAdvertising: 0,
       repairsAndMaintenance: 0, // REMOVED - was unauthorized 5% default
       capEx: 0, // REMOVED - was unauthorized 5% default
-      other: 0
+      other: 0,
+
+      // ✅ NEW: SFR-specific operating expenses (Jan 2026 - Josh's feature)
+      hoa: Math.round((this.data.monthlyHOA || 0) * 100) / 100,
+      landlordUtilities: Math.round((this.data.monthlyUtilities || 0) * 100) / 100,
+      sfrCapEx: Math.round((this.data.monthlyCapEx || 0) * 100) / 100
     };
   }
 

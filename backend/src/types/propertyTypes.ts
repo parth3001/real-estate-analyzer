@@ -15,6 +15,28 @@ export interface BRRRRStrategyData {
   seasoningPeriod: number;  // 6-24 months, default 12
   estimatedRehabTime?: number;  // months (optional)
   arvAppraisalConfidence: 'conservative' | 'moderate' | 'aggressive';
+
+  /**
+   * Cash-out refinance interest rate (percentage format: 9.5 = 9.5%)
+   *
+   * Typically 2-5% higher than initial purchase loan rate due to:
+   * - Higher lender risk (equity extraction)
+   * - Cash-out refinance premium
+   * - Market conditions
+   *
+   * Defaults to initialRate + 2% if not specified (backward compatibility)
+   *
+   * Valid Range: 0-20% (frontend validates)
+   * Typical Range: initialRate + 2% to initialRate + 5%
+   *
+   * Example:
+   * - Initial purchase: 7.5%
+   * - Cash-out refi: 9.5% (+2%)
+   * - High-risk scenario: 11.5% (+4%)
+   *
+   * Issue #51 Fix: Separate refinance rate enables accurate Post-Refi cash flow modeling
+   */
+  refinanceInterestRate?: number;
 }
 
 // Exit strategy data for investment decision enhancement
@@ -44,6 +66,12 @@ export interface BasePropertyData {
     prepFees: number;
     realtorCommission: number;
   };
+
+  // ✅ NEW: Universal Operating Expenses (Josh's feature request - Jan 2026)
+  // Applied conditionally based on propertyType (SFR only, prevents Multi-Family double-counting)
+  monthlyHOA?: number;           // Monthly HOA fees (condos, townhomes)
+  monthlyUtilities?: number;     // Landlord-paid utilities (water, trash, sewer)
+  monthlyCapEx?: number;         // Capital expenditure reserve (major replacements: HVAC, roof, appliances)
 }
 
 export interface CommonMetrics {

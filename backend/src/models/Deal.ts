@@ -1213,11 +1213,33 @@ const DealSchema = new Schema({
     type: Number,
     required: function() { return this.propertyType === 'SFR'; }
   },
-  maintenanceCost: { 
+  maintenanceCost: {
     type: Number,
     required: function() { return this.propertyType === 'SFR'; }
   },
-  
+
+  // ✅ NEW: Universal Operating Expenses (January 2026 - Buy & Hold Enhancement)
+  // These fields apply to SFR properties and enable granular expense tracking
+  // Field names match frontend: monthlyHOA, monthlyUtilities, monthlyCapEx
+  monthlyHOA: {
+    type: Number,
+    required: false,
+    default: 0,
+    min: 0
+  },
+  monthlyUtilities: {
+    type: Number,
+    required: false,
+    default: 0,
+    min: 0
+  },
+  monthlyCapEx: {
+    type: Number,
+    required: false,
+    default: 0,
+    min: 0
+  },
+
   // MF specific fields with conditional validation
   totalUnits: { 
     type: Number,

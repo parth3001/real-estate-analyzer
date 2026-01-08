@@ -98,6 +98,30 @@ const RentalStep: React.FC<WizardStepProps> = ({
     ? (state.data.maintenanceCost / 12 / state.data.monthlyRent) * 100
     : 0;
 
+  // ✅ NEW: Dynamic CapEx default (Jan 2026 - Josh's feature)
+  // Option B: Only apply for NEW properties (not saved/loaded ones)
+  useEffect(() => {
+    // Check if this is a new property (no database ID)
+    const isNewProperty = !state.data.id;
+
+    if (isNewProperty && state.data.monthlyRent && !state.data.monthlyCapEx) {
+      const suggestedCapEx = Math.round(state.data.monthlyRent * 0.05);
+
+      console.log('💰 Setting smart CapEx default (5% of rent):', {
+        monthlyRent: state.data.monthlyRent,
+        capExDefault: suggestedCapEx,
+        formula: '5% of monthly rent'
+      });
+
+      onUpdate({
+        data: {
+          ...state.data,
+          monthlyCapEx: suggestedCapEx
+        }
+      });
+    }
+  }, [state.data.monthlyRent, state.data.id]); // Only run when rent or ID changes
+
   // Real rent estimate lookup using RentCast + Census data
   useEffect(() => {
     if (!state.autoPopulated.rentEstimate && state.data.propertyAddress?.street && !loadingRentEstimate) {
@@ -721,13 +745,13 @@ const RentalStep: React.FC<WizardStepProps> = ({
               {/* Operating Reserves */}
               <Box>
                 <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
-                  💰 Operating Reserves (Optional - If not using actual costs)
+                  💰 Operating Reserves
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="Maintenance Reserve"
+                      label="Routine Maintenance Reserve"
                       type="number"
                       value={state.data.maintenanceCost || ''}
                       onChange={(e) => onUpdate({
@@ -736,7 +760,7 @@ const RentalStep: React.FC<WizardStepProps> = ({
                           maintenanceCost: parseFloat(e.target.value) || 0
                         }
                       })}
-                      helperText="Annual maintenance and repairs budget (defaults to 1% of property value)"
+                      helperText="Small repairs, preventive maintenance (1% of property value annually)"
                       InputProps={{
                         startAdornment: <InputAdornment position="start">$</InputAdornment>,
                         endAdornment: <InputAdornment position="end">/year</InputAdornment>
@@ -746,19 +770,88 @@ const RentalStep: React.FC<WizardStepProps> = ({
                     />
                   </Grid>
 
-                  {/* HOA Fees - TODO: Add to backend type first
+                  {/* ✅ NEW: CapEx Reserve (Josh's feature - Jan 2026) */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Capital Expenditure (CapEx) Reserve"
+                      type="number"
+                      value={state.data.monthlyCapEx || ''}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          monthlyCapEx: parseFloat(e.target.value) || 0
+                        }
+                      })}
+                      helperText="Major replacements (HVAC, roof, appliances). Industry: $100-200/month"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        endAdornment: <InputAdornment position="end">/month</InputAdornment>
+                      }}
+                      inputProps={{ min: 0, step: 10 }}
+                      placeholder={state.data.monthlyRent ? Math.round(state.data.monthlyRent * 0.05).toString() : "105"}
+                    />
+                  </Grid>
+
+                  {/* ✅ NEW: HOA Fees */}
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
                       label="HOA Fees (if applicable)"
                       type="number"
-                      helperText="Monthly homeowners association fees (coming soon)"
-                      disabled
+                      value={state.data.monthlyHOA || ''}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          monthlyHOA: parseFloat(e.target.value) || 0
+                        }
+                      })}
+                      helperText="Monthly homeowners association fees (condos, townhomes)"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        endAdornment: <InputAdornment position="end">/month</InputAdornment>
+                      }}
+                      inputProps={{ min: 0, step: 10 }}
                       placeholder="0"
                     />
                   </Grid>
-                  */}
+
+                  {/* ✅ NEW: Landlord-Paid Utilities */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Landlord-Paid Utilities"
+                      type="number"
+                      value={state.data.monthlyUtilities || ''}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          monthlyUtilities: parseFloat(e.target.value) || 0
+                        }
+                      })}
+                      helperText="Water, trash, sewer paid by landlord (if applicable)"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        endAdornment: <InputAdornment position="end">/month</InputAdornment>
+                      }}
+                      inputProps={{ min: 0, step: 10 }}
+                      placeholder="0"
+                    />
+                  </Grid>
                 </Grid>
+
+                {/* ✅ NEW: Educational Alert - Always Visible (Option B from Architect) */}
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Why separate Maintenance & CapEx?</strong><br/>
+                    • <strong>Maintenance:</strong> Routine repairs - tax deductible immediately<br/>
+                    • <strong>CapEx:</strong> Major replacements - must be depreciated<br/>
+                    • <strong>Industry Standard:</strong> 5-10% of monthly rent<br/>
+                    {(state.data.monthlyRent && state.data.monthlyRent > 0) && (
+                      <>• <strong>For ${state.data.monthlyRent.toLocaleString()}/month rent:</strong> ${Math.round(state.data.monthlyRent * 0.05).toLocaleString()}-${Math.round(state.data.monthlyRent * 0.10).toLocaleString()}/month</>
+                    )}
+                  </Typography>
+                </Alert>
 
                 {/* FIX Issue #28: Validation warning for excessive maintenance */}
                 {maintenancePercentOfRent > 15 && (

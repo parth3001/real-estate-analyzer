@@ -30,14 +30,13 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
-  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   TrendingUp as WinnerIcon,
 } from '@mui/icons-material';
 import type { ExitScenario } from '../../../types/brrrr';
-import { formatCurrency, formatPercentage } from '../../../utils/formatters';
+import { formatCurrency, formatPercent } from '../../../utils/formatters';
 import { brrrColors } from '../../../theme/brrrDesignTokens';
 
 export interface ScenarioComparisonModalProps {
@@ -194,7 +193,7 @@ export const ScenarioComparisonModal: React.FC<ScenarioComparisonModalProps> = (
 
           {renderMetricRow(
             'Internal Rate of Return (IRR)',
-            (s) => formatPercentage(s.irr),
+            (s) => formatPercent(s.irr, 1),
             (s) => s.irr === bestIRR
           )}
 
@@ -205,7 +204,7 @@ export const ScenarioComparisonModal: React.FC<ScenarioComparisonModalProps> = (
 
           {renderMetricRow(
             'Total Return on Investment',
-            (s) => formatPercentage(s.totalReturn)
+            (s) => formatPercent(s.totalReturn, 1)
           )}
         </Box>
 
@@ -286,7 +285,7 @@ export const ScenarioComparisonModal: React.FC<ScenarioComparisonModalProps> = (
           <Typography variant="body2">
             Year {displayScenarios.find(s => s.totalWealthCreated === bestWealth)?.year} maximizes total wealth
             creation at {formatCurrency(Math.round(bestWealth))} with an IRR of{' '}
-            {formatPercentage(displayScenarios.find(s => s.totalWealthCreated === bestWealth)?.irr || 0)}.
+            {formatPercent(displayScenarios.find(s => s.totalWealthCreated === bestWealth)?.irr || 0, 1)}.
           </Typography>
         </Box>
       </DialogContent>

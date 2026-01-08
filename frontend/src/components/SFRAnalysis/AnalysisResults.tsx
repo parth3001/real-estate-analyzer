@@ -1318,6 +1318,44 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                         <TableCell>Maintenance</TableCell>
                         <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.maintenance || 0, 'currency')}</TableCell>
                       </TableRow>
+
+                      {/* ✅ NEW: SFR Operating Expenses (Jan 2026 - Josh's feature) - Only show if value > 0 */}
+                      {(analysis?.monthlyAnalysis?.expenses?.breakdown?.hoa || 0) > 0 && (
+                        <TableRow>
+                          <TableCell>HOA Fees</TableCell>
+                          <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.hoa || 0, 'currency')}</TableCell>
+                        </TableRow>
+                      )}
+
+                      {(analysis?.monthlyAnalysis?.expenses?.breakdown?.landlordUtilities || 0) > 0 && (
+                        <TableRow>
+                          <TableCell>Landlord-Paid Utilities</TableCell>
+                          <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.landlordUtilities || 0, 'currency')}</TableCell>
+                        </TableRow>
+                      )}
+
+                      {(analysis?.monthlyAnalysis?.expenses?.breakdown?.sfrCapEx || 0) > 0 && (
+                        <TableRow>
+                          <TableCell>Capital Expenditure (CapEx) Reserve</TableCell>
+                          <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.sfrCapEx || 0, 'currency')}</TableCell>
+                        </TableRow>
+                      )}
+
+                      {/* Turnover Costs - Prorated tenant turnover expenses */}
+                      {(analysis?.monthlyAnalysis?.expenses?.breakdown?.tenantTurnover || 0) > 0 && (
+                        <TableRow>
+                          <TableCell>
+                            Turnover Costs
+                            <Tooltip title="Tenant turnover costs (realtor commission + prep fees) prorated over average tenant stay period">
+                              <IconButton size="small" sx={{ ml: 0.5, p: 0 }}>
+                                <InfoIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.tenantTurnover || 0, 'currency')}</TableCell>
+                        </TableRow>
+                      )}
+
                       <TableRow>
                         <TableCell>Property Management</TableCell>
                         <TableCell align="right">-{formatValue(analysis?.monthlyAnalysis?.expenses?.breakdown?.propertyManagement || 0, 'currency')}</TableCell>
@@ -1671,7 +1709,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                           <TableCell align="right">Property Management</TableCell>
                           <TableCell align="right">Vacancy</TableCell>
                           <TableCell align="right">Turnover Costs</TableCell>
-                          <TableCell align="right">Capital Improvements</TableCell>
+                          <TableCell align="right">Initial Improvements</TableCell>
                           <TableCell align="right">Total Expenses</TableCell>
                           <TableCell align="right">NOI</TableCell>
                           <TableCell align="right">Debt Service</TableCell>

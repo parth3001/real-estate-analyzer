@@ -40,6 +40,7 @@ export interface BRRRRInputs {
     seasoningPeriod?: number; // Default 12 months
     estimatedRehabTime?: number; // Months
     arvAppraisalConfidence?: 'conservative' | 'moderate' | 'aggressive';
+    refinanceInterestRate?: number; // Issue #51: Cash-out refi rate (typically +2-5% above initial)
   };
 
   // Rental Phase
@@ -50,9 +51,34 @@ export interface BRRRRInputs {
   propertyManagementRate: number;
   vacancyRate?: number; // Default 5%
 
-  // Optional
-  monthlyHOA?: number;
-  monthlyUtilities?: number;
+  // ✅ NEW: Operating Expenses (Jan 2026 - Josh's feature request)
+  monthlyHOA?: number;       // Monthly HOA fees
+  monthlyUtilities?: number; // Landlord-paid utilities
+  monthlyCapEx?: number;     // Capital expenditure reserve (NEW universal field)
+
+  /**
+   * @deprecated Use monthlyCapEx instead (will be removed in v4.0)
+   * Kept for backward compatibility with existing BRRRR analyses
+   */
+  capExReserveRate?: number; // Percentage of rent (OLD - backward compat)
+  capExReserveFixed?: number; // Fixed dollar amount (OLD - backward compat)
+
+  // Issue #51: Turnover costs (for Post-Refinance calculations)
+  tenantTurnoverFees?: {
+    prepFees?: number; // Default 500
+    realtorCommission?: number; // Default 0.5 (half month rent)
+  };
+
+  // Issue #51: Long-term assumptions (for turnover frequency)
+  longTermAssumptions?: {
+    projectionYears?: number;
+    annualRentIncrease?: number;
+    annualPropertyValueIncrease?: number;
+    inflationRate?: number;
+    vacancyRate?: number;
+    sellingCostsPercentage?: number;
+    turnoverFrequency?: number; // Default 2 years
+  };
 }
 
 /**
@@ -62,6 +88,8 @@ export interface BRRRRInputs {
  * - Lenders require tenant occupancy for cash-out refinance
  * - Vacancy rate applies to POST-refinance projections only
  * - Management fees deducted from gross rental income
+ *
+ * ✅ ISSUE #54 FIX: Added seasoningNetCashFlow for clear sign convention
  */
 export interface SeasoningCosts {
   mortgagePayments: number;
@@ -73,7 +101,23 @@ export interface SeasoningCosts {
   totalHoldingCosts: number;
   grossRentalIncome: number;  // Total rent collected during seasoning
   netRentalIncome: number;    // Gross rent minus management fees
-  netSeasoningCost: number;   // Positive = out of pocket, Negative = profit
+
+  /**
+   * Net cash flow during seasoning period
+   * @description Positive = profit, Negative = loss (out of pocket)
+   * @example +$7,983 = property generated profit during seasoning
+   * @example -$2,000 = investor paid $2,000 out of pocket during seasoning
+   * @since Issue #54 fix (2026-01-07)
+   */
+  seasoningNetCashFlow: number;
+
+  /**
+   * @deprecated Use seasoningNetCashFlow instead. This field uses confusing sign convention.
+   * @description Positive = loss, Negative = profit (backward from intuition)
+   * @remove Will be removed in v3.0
+   */
+  netSeasoningCost: number;
+
   months: number;
 }
 
@@ -236,19 +280,36 @@ export class BRRRRAnalyzer {
   // ====================================
 
   /**
-   * Calculate seasoning period holding costs
+   * Calculate Seasoning Period Costs (Initial Hold Period)
    *
-   * INDUSTRY STANDARD: Seasoning assumes tenant-occupied property
-   * - Lenders require 6-12 months of rental history for cash-out refinance
-   * - Cannot refinance vacant properties (conventional lending requirement)
-   * - Vacancy rate applies to POST-refinance projections only
-   * - Management fees deducted from gross rental income
+   * CRITICAL BRRRR MECHANICS:
+   * - Seasoning = 6-12 month period with tenant in place
+   * - Lender requires continuous occupancy for refinance approval
+   * - NO TURNOVER COSTS during this period (tenant must stay)
+   * - NO VACANCY during this period (lender requirement)
+   *
+   * Operating Expenses During Seasoning:
+   * ✅ Property Tax (purchase price-based, pre-assessment)
+   * ✅ Insurance (purchase price-based)
+   * ✅ Maintenance (normal wear and tear)
+   * ✅ Property Management (8% typical)
+   * ✅ Utilities (if owner-paid)
+   * ❌ Vacancy (not allowed during seasoning)
+   * ❌ Turnover Costs (no tenant turnover allowed)
+   *
+   * POST-REFINANCE PERIOD INCLUDES:
+   * ✅ All above expenses
+   * ✅ Vacancy (5% standard)
+   * ✅ Turnover Costs (normal operations resume)
+   *
+   * See: /docs/BRRRR_BUSINESS_EXPERT_VALIDATION.md Section 3.2
    *
    * @param inputs BRRRR strategy inputs
    * @returns Seasoning costs breakdown with rental income
    */
   calculateSeasoningCosts(inputs: BRRRRInputs): SeasoningCosts {
-    const months = inputs.brrrr.seasoningPeriod || 12;
+    // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
+    const months = inputs.brrrr.seasoningPeriod ?? 12;
 
     // Calculate monthly holding expenses
     const loanAmount = inputs.purchasePrice - inputs.downPayment;
@@ -261,12 +322,12 @@ export class BRRRRAnalyzer {
     const monthlyPropertyTax = (inputs.purchasePrice * inputs.propertyTaxRate / 100) / 12;
     const monthlyInsurance = (inputs.purchasePrice * inputs.insuranceRate / 100) / 12;
     const monthlyMaintenance = inputs.maintenanceCost / 12;
-    const monthlyUtilities = inputs.monthlyUtilities || 0;
-    const monthlyHOA = inputs.monthlyHOA || 0;
+    const monthlyUtilities = inputs.monthlyUtilities ?? 0;
+    const monthlyHOA = inputs.monthlyHOA ?? 0;
 
     // Management fee: Applied to gross rent collected during seasoning
     // Industry standard: 8-12% of gross rental income
-    const managementRate = inputs.propertyManagementRate || 0;
+    const managementRate = inputs.propertyManagementRate ?? 0;
     const monthlyManagementFee = (inputs.monthlyRent * managementRate) / 100;
 
     // Total holding costs for seasoning period
@@ -288,10 +349,14 @@ export class BRRRRAnalyzer {
     const grossRentalIncome = inputs.monthlyRent * months;
     const netRentalIncome = grossRentalIncome - propertyManagement;
 
-    // Net seasoning cost
-    // Positive = out of pocket during seasoning
-    // Negative = property cash flows during seasoning (profit)
-    const netSeasoningCost = totalHoldingCosts - netRentalIncome;
+    // ✅ ISSUE #54 FIX: Calculate seasoningNetCashFlow with clear sign convention
+    // Positive = profit (property generates cash during seasoning)
+    // Negative = loss (investor pays out of pocket during seasoning)
+    const seasoningNetCashFlow = netRentalIncome - totalHoldingCosts;
+
+    // Deprecated field (backward compatibility - will be removed in v3.0)
+    // Old sign convention: Positive = loss, Negative = profit (confusing!)
+    const netSeasoningCost = -seasoningNetCashFlow;
 
     return {
       mortgagePayments,
@@ -303,7 +368,8 @@ export class BRRRRAnalyzer {
       totalHoldingCosts,
       grossRentalIncome,
       netRentalIncome,
-      netSeasoningCost,
+      seasoningNetCashFlow,  // NEW: Clear sign convention
+      netSeasoningCost,      // DEPRECATED: Kept for backward compatibility
       months
     };
   }
@@ -314,7 +380,8 @@ export class BRRRRAnalyzer {
 
   calculateRefinance(inputs: BRRRRInputs): RefinanceResults {
     const arv = inputs.brrrr.afterRepairValue;
-    const ltv = inputs.brrrr.refinanceLTV || 75;
+    // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
+    const ltv = inputs.brrrr.refinanceLTV ?? 75;
 
     const newLoanAmount = arv * (ltv / 100);
 
@@ -323,7 +390,7 @@ export class BRRRRAnalyzer {
       inputs.purchasePrice - inputs.downPayment,
       inputs.interestRate,
       inputs.loanTerm,
-      inputs.brrrr.seasoningPeriod || 12
+      inputs.brrrr.seasoningPeriod ?? 12
     );
 
     const cashOutProceeds = newLoanAmount - existingLoanBalance;
@@ -380,7 +447,21 @@ export class BRRRRAnalyzer {
     seasoningCosts: SeasoningCosts,
     refinanceResults: RefinanceResults
   ): CapitalRecovery {
-    const totalCapitalDeployed = totalInvestment + seasoningCosts.netSeasoningCost;
+    /**
+     * ✅ ISSUE #54 FIX: Use seasoningNetCashFlow instead of deprecated netSeasoningCost
+     *
+     * Old logic (confusing):
+     *   totalCapitalDeployed = totalInvestment + netSeasoningCost
+     *   When netSeasoningCost = -$7,983 (profit), capital deployed DECREASED
+     *
+     * New logic (clear):
+     *   totalCapitalDeployed = totalInvestment - seasoningNetCashFlow
+     *   When seasoningNetCashFlow = +$7,983 (profit), capital deployed DECREASES
+     *
+     * Example: $52,000 investment, $7,983 seasoning profit
+     *   totalCapitalDeployed = $52,000 - $7,983 = $44,017 (net capital at risk)
+     */
+    const totalCapitalDeployed = totalInvestment - seasoningCosts.seasoningNetCashFlow;
 
     // Use gross cash-out proceeds (industry standard)
     // Refinance closing costs are paid from loan proceeds, not additional out-of-pocket capital
@@ -408,9 +489,31 @@ export class BRRRRAnalyzer {
     refinanceResults: RefinanceResults,
     capitalRecovery: CapitalRecovery
   ): PostRefinanceMetrics {
+    /**
+     * ✅ ISSUE #51 FIX: Use separate refinance interest rate
+     *
+     * Cash-out refinances typically carry 2-5% higher interest rates than purchase loans
+     * due to higher lender risk (equity extraction). This is a CRITICAL calculation difference.
+     *
+     * Defaults to initial rate if not specified (backward compatibility)
+     *
+     * REFERENCE: /docs/ISSUE_51_IMPLEMENTATION_PLAN.md
+     */
+    // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
+    // - OLD BUG: refinanceInterestRate: 0 || 6.5 = 6.5 (user wanted 0% promo rate)
+    // - NEW FIX: refinanceInterestRate: 0 ?? 6.5 = 0 (preserves user's zero)
+
+    // Issue #53 Fix: Use nullish coalescing to preserve 0 values
+    const refinanceRate = inputs.brrrr.refinanceInterestRate ?? inputs.interestRate;
+
+    // Only log when using fallback (helps debug user issues)
+    if (inputs.brrrr.refinanceInterestRate === undefined || inputs.brrrr.refinanceInterestRate === null) {
+      console.warn(`⚠️ [BRRRR Analyzer] Using fallback refinance rate: ${inputs.interestRate}% (user did not specify refinanceInterestRate)`);
+    }
+
     const newMonthlyPayment = FinancialCalculations.calculateMortgage(
       refinanceResults.newLoanAmount,
-      inputs.interestRate,
+      refinanceRate,  // Use refinance-specific rate (not initial rate)
       inputs.loanTerm
     );
 
@@ -432,15 +535,78 @@ export class BRRRRAnalyzer {
     const monthlyInsurance = (inputs.brrrr.afterRepairValue * inputs.insuranceRate / 100) / 12;
     const monthlyMaintenance = inputs.maintenanceCost / 12;
     const monthlyManagement = (inputs.monthlyRent * inputs.propertyManagementRate) / 100;
-    const monthlyHOA = inputs.monthlyHOA || 0;
-    const monthlyUtilities = inputs.monthlyUtilities || 0;
+    const monthlyHOA = inputs.monthlyHOA ?? 0;
+    const monthlyUtilities = inputs.monthlyUtilities ?? 0;
 
-    const vacancyRate = inputs.vacancyRate || 5;
+    // ✅ ISSUE #53 FIX: Trust controller to provide enriched data, use ?? operator
+    // Controller's convertWizardData guarantees vacancyRate exists (defaults to 5 if not provided)
+    const vacancyRate = inputs.vacancyRate ?? 5;
     const monthlyVacancy = (inputs.monthlyRent * vacancyRate) / 100;
 
+    /**
+     * ✅ ISSUE #55 FIX: Add Capital Expenditure Reserve
+     *
+     * WHY MISSING?
+     * - CapEx was completely missing from post-refinance operating expenses
+     * - This caused $156/month understatement of expenses ($1,872/year)
+     *
+     * INDUSTRY STANDARD:
+     * - Single-family rentals: 5-10% of monthly rent
+     * - Conservative default: 5% (BiggerPockets, Fannie Mae guidelines)
+     *
+     * WHAT IS CAPEX?
+     * - Major repairs: HVAC replacement, roof, appliances, water heater
+     * - NOT routine maintenance (that's separate maintenanceCost field)
+     *
+     * IMPLEMENTATION (JAN 2026 - Backward Compatibility):
+     * - NEW: monthlyCapEx (universal field from BasePropertyData)
+     * - OLD: capExReserveFixed, capExReserveRate (kept for backward compat)
+     * - Fallback chain: monthlyCapEx → capExReserveFixed → capExReserveRate → 5% default
+     */
+    let monthlyCapEx: number;
+    if (inputs.monthlyCapEx !== undefined && inputs.monthlyCapEx !== null) {
+      monthlyCapEx = inputs.monthlyCapEx; // NEW universal field
+    } else if (inputs.capExReserveFixed !== undefined) {
+      monthlyCapEx = inputs.capExReserveFixed; // OLD fixed value (backward compat)
+    } else if (inputs.capExReserveRate !== undefined) {
+      monthlyCapEx = (inputs.monthlyRent * inputs.capExReserveRate) / 100; // OLD percentage (backward compat)
+    } else {
+      monthlyCapEx = (inputs.monthlyRent * 5) / 100; // DEFAULT 5% of rent
+    }
+
+    /**
+     * ✅ ISSUE #51 FIX: Add turnover costs to Post-Refinance operating expenses
+     *
+     * WHY NOT IN SEASONING PERIOD?
+     * - Lender requires tenant in place (no turnover) during 6-12 month seasoning
+     * - This is a BRRRR-specific requirement, NOT an oversight
+     *
+     * WHY INCLUDED POST-REFINANCE?
+     * - Normal operations resume after refinance closes
+     * - Turnover is expected expense in long-term rental operations
+     * - Formula: (prepFees + realtorCommission) / turnoverFrequency
+     *
+     * REFERENCE: /docs/ISSUE_51_IMPLEMENTATION_PLAN.md
+     */
+    // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
+    const annualTurnoverCosts = FinancialCalculations.calculateTurnoverCosts({
+      prepFees: inputs.tenantTurnoverFees?.prepFees ?? 500,
+      monthlyRent: inputs.monthlyRent,
+      realtorCommission: inputs.tenantTurnoverFees?.realtorCommission ?? 0.5,
+      turnoverFrequency: inputs.longTermAssumptions?.turnoverFrequency ?? 2,
+      vacancyRate: vacancyRate
+    });
+    const monthlyTurnoverCosts = annualTurnoverCosts / 12;
+
+    /**
+     * ✅ ISSUE #55 FIX: Include CapEx in operating expenses
+     * This was the missing $156/month that caused Issue #55
+     */
     const monthlyOperatingExpenses = monthlyPropertyTax + monthlyInsurance +
                                       monthlyMaintenance + monthlyManagement +
-                                      monthlyVacancy + monthlyHOA + monthlyUtilities;
+                                      monthlyVacancy + monthlyCapEx +  // ← ADDED for Issue #55
+                                      monthlyHOA + monthlyUtilities +
+                                      monthlyTurnoverCosts;
 
     const monthlyCashFlow = inputs.monthlyRent - newMonthlyPayment - monthlyOperatingExpenses;
     const annualCashFlow = monthlyCashFlow * 12;
@@ -657,9 +823,10 @@ export class BRRRRAnalyzer {
     const afterRepairValue = inputs.brrrr.afterRepairValue;
     const sellingCostsPercentage = 6;  // 6% industry standard
 
-    // Initial loan amount for principal calculation
-    const downPaymentAmount = inputs.purchasePrice * (inputs.downPayment / 100);
-    const initialLoanAmount = inputs.purchasePrice - downPaymentAmount;
+    // BRRRR refinance loan amount (used for long-term projections)
+    // This is the NEW loan amount after refinancing based on ARV
+    // Used to calculate principal paid down over time
+    const refinanceLoanAmount = refinanceResults.newLoanAmount;
 
     // Filter to available years (projections may be < 15 years)
     const availableExitYears = exitYears.filter(year => year <= projections.length);
@@ -681,7 +848,7 @@ export class BRRRRAnalyzer {
 
       // 3. Wealth Breakdown
       const appreciation = salePrice - afterRepairValue;
-      const principalPaid = initialLoanAmount - mortgagePayoff;
+      const principalPaid = refinanceLoanAmount - mortgagePayoff;
 
       const totalWealthCreated =
         capitalRecovered +
