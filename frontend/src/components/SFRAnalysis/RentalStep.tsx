@@ -98,6 +98,24 @@ const RentalStep: React.FC<WizardStepProps> = ({
     ? (state.data.maintenanceCost / 12 / state.data.monthlyRent) * 100
     : 0;
 
+  // Calculate CapEx percentage (% of monthly rent)
+  const capExPercent = React.useMemo(() => {
+    if (!state.data.monthlyRent || state.data.monthlyRent === 0) return 5;
+    if (!state.data.monthlyCapEx) return 5;
+    return (state.data.monthlyCapEx / state.data.monthlyRent) * 100;
+  }, [state.data.monthlyRent, state.data.monthlyCapEx]);
+
+  // Calculate maintenance percentage (% of property value)
+  const maintenancePercent = React.useMemo(() => {
+    if (!state.data.purchasePrice || state.data.purchasePrice === 0) return 1;
+    if (!state.data.maintenanceCost) return 1;
+    return (state.data.maintenanceCost / state.data.purchasePrice) * 100;
+  }, [state.data.purchasePrice, state.data.maintenanceCost]);
+
+  // Calculate maintenance dollar amounts for display
+  const maintenanceAnnual = Math.round((state.data.purchasePrice || 0) * maintenancePercent / 100);
+  const maintenanceMonthly = Math.round(maintenanceAnnual / 12);
+
   // ✅ NEW: Dynamic CapEx default (Jan 2026 - Josh's feature)
   // Option B: Only apply for NEW properties (not saved/loaded ones)
   useEffect(() => {
@@ -602,8 +620,8 @@ const RentalStep: React.FC<WizardStepProps> = ({
         {/* Advanced Assumptions Section - Collapsed by Default */}
         <Box>
           <TapToExpandField
-            label="Advanced Assumptions"
-            displayValue="Optional - Customize for more accurate long-term analysis"
+            label="Operating Reserves & Long-Term Projections"
+            displayValue="Industry-standard defaults applied - customize as needed"
             helperText="Using industry-standard defaults"
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
@@ -749,48 +767,104 @@ const RentalStep: React.FC<WizardStepProps> = ({
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Routine Maintenance Reserve"
-                      type="number"
-                      value={state.data.maintenanceCost || ''}
-                      onChange={(e) => onUpdate({
-                        data: {
-                          ...state.data,
-                          maintenanceCost: parseFloat(e.target.value) || 0
-                        }
-                      })}
-                      helperText="Small repairs, preventive maintenance (1% of property value annually)"
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                        endAdornment: <InputAdornment position="end">/year</InputAdornment>
-                      }}
-                      inputProps={{ min: 0, step: 50 }}
-                      placeholder={state.data.purchasePrice ? Math.round(state.data.purchasePrice * 0.01).toString() : "2000"}
-                    />
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="text.primary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Maintenance Reserve
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1.5 }}
+                      >
+                        {maintenancePercent.toFixed(1)}% • ${maintenanceAnnual.toLocaleString()}/year (${maintenanceMonthly.toLocaleString()}/month)
+                      </Typography>
+                      <Slider
+                        value={maintenancePercent}
+                        onChange={(_, value) => {
+                          const annualAmount = Math.round((state.data.purchasePrice || 0) * (value as number) / 100);
+                          onUpdate({
+                            data: {
+                              ...state.data,
+                              maintenanceCost: annualAmount
+                            }
+                          });
+                        }}
+                        min={0}
+                        max={3}
+                        step={0.1}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 1, label: '1%' },
+                          { value: 2, label: '2%' },
+                          { value: 3, label: '3%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1, display: 'block' }}
+                      >
+                        Small repairs, preventive maintenance. Industry standard: 1% of property value annually.
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   {/* ✅ NEW: CapEx Reserve (Josh's feature - Jan 2026) */}
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Capital Expenditure (CapEx) Reserve"
-                      type="number"
-                      value={state.data.monthlyCapEx || ''}
-                      onChange={(e) => onUpdate({
-                        data: {
-                          ...state.data,
-                          monthlyCapEx: parseFloat(e.target.value) || 0
-                        }
-                      })}
-                      helperText="Major replacements (HVAC, roof, appliances). Industry: $100-200/month"
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                        endAdornment: <InputAdornment position="end">/month</InputAdornment>
-                      }}
-                      inputProps={{ min: 0, step: 10 }}
-                      placeholder={state.data.monthlyRent ? Math.round(state.data.monthlyRent * 0.05).toString() : "105"}
-                    />
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="text.primary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        CapEx Reserve
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1.5 }}
+                      >
+                        {capExPercent.toFixed(1)}% • ${Math.round(state.data.monthlyCapEx || 0).toLocaleString()}/month
+                      </Typography>
+                      <Slider
+                        value={capExPercent}
+                        onChange={(_, value) => {
+                          const dollarAmount = Math.round((state.data.monthlyRent || 0) * (value as number) / 100);
+                          onUpdate({
+                            data: {
+                              ...state.data,
+                              monthlyCapEx: dollarAmount
+                            }
+                          });
+                        }}
+                        min={0}
+                        max={15}
+                        step={0.5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 5, label: '5%' },
+                          { value: 10, label: '10%' },
+                          { value: 15, label: '15%' }
+                        ]}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(value) => `${value}%`}
+                      />
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1, display: 'block' }}
+                      >
+                        Major replacements (HVAC, roof, appliances). Industry standard: 5-10% of monthly rent.
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   {/* ✅ NEW: HOA Fees */}

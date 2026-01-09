@@ -5,6 +5,73 @@
 
 ---
 
+## 🟡 **ACTIVE ISSUES** (2026-01-08)
+
+### Issue #58: Insurance and Property Tax Sliders Don't Persist After Save/Load
+**Status**: 🔴 Open
+**Priority**: P2 - MEDIUM (UX Issue, Not Data Loss)
+**Reported**: 2026-01-08
+**Component**: Frontend - FinancialsStep.tsx (Local State Bug)
+**Category**: State Management - Local vs Wizard State Pattern Bug
+
+**Description**:
+Insurance and property tax sliders reset to default values after saving and reloading a property. User customizations are lost. In contrast, property management rate and vacancy rate sliders persist correctly.
+
+**User Impact**:
+- User adjusts insurance slider from $73/month to $150/month
+- Saves property
+- Reloads property → Insurance resets to $73/month (user's $150 lost)
+- Same issue affects property tax slider
+
+**Root Cause**:
+FinancialsStep.tsx uses **local component state** pattern instead of **wizard state** pattern:
+
+```typescript
+// ❌ BROKEN PATTERN (Insurance/Tax):
+const [monthlyInsurance, setMonthlyInsurance] = useState(defaultValue);
+// Slider reads from local state, never saved to wizard state
+// Only percentage (insuranceRate) gets saved, not dollar amount
+
+// ✅ WORKING PATTERN (Management/Vacancy):
+<Slider value={state.data.propertyManagementRate} />
+// Slider reads directly from wizard state, persists correctly
+```
+
+**Technical Details**:
+- **Insurance (Lines 69-72, 502-515)**: Stores in `monthlyInsurance` (local), only syncs `insuranceRate` (percentage) to wizard state via useEffect
+- **Property Tax (Lines 63, 488-500)**: Stores in `propertyTaxRate` (local), syncs via useEffect but timing issues cause resets
+- **Management/Vacancy**: Store directly in `state.data.propertyManagementRate` and `state.data.vacancyRate` (wizard state) ✅
+
+**Solution**:
+Refactor to match working pattern:
+1. Add `monthlyInsurance` field to wizard state (property.ts, Deal.ts schema)
+2. Update FinancialsStep to read/write directly from wizard state
+3. Remove local state variables and useEffect syncing
+4. Same fix for property tax if issues persist
+
+**Files Affected**:
+- `/frontend/src/components/SFRAnalysis/FinancialsStep.tsx` (lines 63-72, 488-515, 890-936)
+- `/frontend/src/types/property.ts` (add `monthlyInsurance` field)
+- `/backend/src/models/Deal.ts` (add `monthlyInsurance` to schema)
+
+**Testing**:
+1. Set insurance to $150, property tax to 2%
+2. Save property
+3. Reload → Verify values persist (not reset to defaults)
+
+**Related Architectural Decision**:
+Operating Reserves sliders (Issue #57 enhancement) were implemented using the CORRECT pattern (wizard state) to avoid this same bug.
+
+**Priority Rationale**:
+- Medium priority: Affects UX but doesn't cause data loss
+- Users can re-enter values, though frustrating
+- Lower priority than BRRRR calculation bugs (Issues #54-56)
+- Should be fixed before wider launch to avoid user frustration
+
+**Estimated Effort**: 1-2 hours (straightforward pattern refactor)
+
+---
+
 ## ✅ **RECENTLY RESOLVED** (2026-01-08)
 
 ### Issue #57: Operating Expense Breakdown Fields Not Persisting After Save/Load (SFR Buy & Hold)
