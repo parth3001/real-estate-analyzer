@@ -1,6 +1,6 @@
 # Real Estate Investment Intelligence Platform - Data Dictionary
 
-**Last Updated**: January 7, 2026 - Issues #54, #55, #56 Fixes Applied (BRRRR Calculation Accuracy)
+**Last Updated**: January 8, 2026 - Issue #1 Fix Applied (Operating Expense Breakdown Persistence)
 
 This document serves as a central reference for all data fields used throughout the Real Estate Investment Intelligence Platform. This includes the sophisticated Investment Decision Engine, AI microservices architecture, and professional-grade analysis capabilities.
 
@@ -257,6 +257,46 @@ See [BRRRR Analysis Results](#brrrr-analysis-results-phase-13) section for compl
 | `monthlyAnalysis.expenses.mortgage.interest` | number | Interest portion of payment | Yes | Analysis results |
 | `monthlyAnalysis.expenses.total` | number | Total monthly expenses | Yes | Analysis results |
 | `monthlyAnalysis.cashFlow` | number | Monthly cash flow | Yes | Analysis results |
+
+#### Monthly Expense Breakdown Fields (Financial Deep Dive Display)
+
+**Purpose**: Detailed expense breakdown for display in "Financial Deep Dive → Monthly Cash Flow Analysis" table. These fields are created by `getExpenseBreakdown()` and stored in MongoDB for fast retrieval on saved properties.
+
+**Common Breakdown Fields** (All Properties):
+| Field Name | Type | Description | Status | Used In |
+|------------|------|-------------|---------|---------|
+| `monthlyAnalysis.expenses.breakdown.propertyTax` | number | Monthly property tax | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.insurance` | number | Monthly insurance | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.maintenance` | number | Monthly maintenance reserve | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.propertyManagement` | number | Monthly property management fee | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.vacancy` | number | Vacancy reserve (usually 0, as vacancy reduces income) | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.tenantTurnover` | number | Prorated monthly turnover costs (prep + commission) | ✅ Implemented | Financial Deep Dive |
+
+**SFR-Specific Breakdown Fields** (✅ Issue #1 Fix - Jan 8, 2026):
+| Field Name | Type | Description | Status | Used In |
+|------------|------|-------------|---------|---------|
+| `monthlyAnalysis.expenses.breakdown.hoa` | number | **NEW** Monthly HOA fees (condos, townhomes) | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.landlordUtilities` | number | **NEW** Landlord-paid utilities (water, trash, sewer) | ✅ Implemented | Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.sfrCapEx` | number | **NEW** Capital expenditure reserve (HVAC, roof, appliances) | ✅ Implemented | Financial Deep Dive |
+
+**Multi-Family Breakdown Fields**:
+| Field Name | Type | Description | Status | Used In |
+|------------|------|-------------|---------|---------|
+| `monthlyAnalysis.expenses.breakdown.utilities` | number | Common area utilities | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.commonAreaElectricity` | number | Common area electricity | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.landscaping` | number | Landscaping and grounds maintenance | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.waterSewer` | number | Water and sewer | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.garbage` | number | Garbage/waste removal | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.marketingAndAdvertising` | number | Marketing and advertising | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.repairsAndMaintenance` | number | Repairs and maintenance | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.capEx` | number | MF capital expenditure (percentage-based) | ✅ Implemented | MF Financial Deep Dive |
+| `monthlyAnalysis.expenses.breakdown.other` | number | Other miscellaneous expenses | ✅ Implemented | MF Financial Deep Dive |
+
+**Implementation Notes**:
+- All breakdown fields are calculated in `getExpenseBreakdown()` method
+- Fields are stored in MongoDB schema ([Deal.ts:578-598](backend/src/models/Deal.ts#L578-L598))
+- SFR-specific fields (hoa, landlordUtilities, sfrCapEx) added January 8, 2026 to fix Issue #1 (persistence)
+- Breakdown is for **display only** - cash flow calculations use property-level fields (`monthlyHOA`, etc.)
 
 ### Annual Analysis Fields
 | Field Name | Type | Description | Calculated | Used In |

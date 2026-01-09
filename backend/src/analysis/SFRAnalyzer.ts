@@ -340,7 +340,7 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     });
     const monthlyTurnoverCost = annualTurnoverCost / 12;
 
-    return {
+    const breakdown = {
       propertyTax: Math.round((this.data.purchasePrice * (this.data.propertyTaxRate / 100) / 12) * 100) / 100,
       insurance: Math.round((this.data.purchasePrice * (this.data.insuranceRate / 100) / 12) * 100) / 100,
       maintenance: Math.round((this.data.maintenanceCost / 12) * 100) / 100,
@@ -364,6 +364,8 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       landlordUtilities: Math.round((this.data.monthlyUtilities || 0) * 100) / 100,
       sfrCapEx: Math.round((this.data.monthlyCapEx || 0) * 100) / 100
     };
+
+    return breakdown;
   }
 
   private getIRRCashFlows(): number[] {
@@ -396,8 +398,10 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     // Move expense breakdown items to the expenses object directly for monthly analysis
     if (normalized.monthlyAnalysis?.expenses?.breakdown) {
       const breakdown = normalized.monthlyAnalysis.expenses.breakdown;
-      
-      // Use type assertion to allow adding properties to expenses object
+
+      // ✅ CRITICAL FIX (Issue #1 - Operating Expenses Persistence)
+      // MUST explicitly preserve breakdown object when creating new expenses object
+      // Previous code lost breakdown because it wasn't re-added after spread
       normalized.monthlyAnalysis.expenses = {
         ...normalized.monthlyAnalysis.expenses,
         propertyTax: breakdown.propertyTax,
@@ -405,9 +409,11 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
         maintenance: breakdown.maintenance,
         propertyManagement: breakdown.propertyManagement,
         vacancy: breakdown.vacancy,
-        mortgage: normalized.monthlyAnalysis.expenses.debt 
+        mortgage: normalized.monthlyAnalysis.expenses.debt
           ? { total: normalized.monthlyAnalysis.expenses.debt }
-          : (normalized.monthlyAnalysis.expenses as any).mortgage || { total: 0 }
+          : (normalized.monthlyAnalysis.expenses as any).mortgage || { total: 0 },
+        // ✅ CRITICAL: Re-add breakdown object (was being lost!)
+        breakdown: breakdown
       } as any; // Type assertion to avoid TypeScript errors
     }
 

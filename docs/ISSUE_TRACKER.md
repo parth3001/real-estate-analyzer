@@ -1,7 +1,34 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-01-07
+**Last Updated**: 2026-01-08
+
+---
+
+## ✅ **RECENTLY RESOLVED** (2026-01-08)
+
+### Issue #57: Operating Expense Breakdown Fields Not Persisting After Save/Load (SFR Buy & Hold)
+**Status**: ✅ RESOLVED (2026-01-08)
+**Priority**: P1 - HIGH (Data Persistence Bug)
+**Reported**: 2026-01-08 (Same day as feature implementation)
+**Resolved**: 2026-01-08 (Same day - 2 hour debugging session)
+**Component**: Backend - MongoDB Schema (Deal.ts)
+**Discovered By**: User testing after feature deployment
+**Resolved By**: Architect + FSE collaboration (from claude.md)
+**Category**: Schema Definition Bug - Mongoose Field Stripping
+
+**Description**:
+Three new SFR operating expense fields (HOA Fees, Landlord-Paid Utilities, CapEx Reserve) displayed correctly on fresh property analysis but disappeared after saving and reloading the property from saved properties list.
+
+**Root Cause**:
+MongoDB schema missing three fields in nested `expenses.breakdown` object (Deal.ts:578-594). Mongoose strips fields not defined in explicit nested schemas, even with parent `strict: false`.
+
+**Solution**:
+Added `hoa`, `landlordUtilities`, and `sfrCapEx` to breakdown schema (3 lines in Deal.ts:595-597).
+
+**Testing**: ✅ Confirmed working - all fields persist through save/load cycles
+
+**Documentation**: ✅ Updated DATA_DICTIONARY.md, CHANGELOG.md, ISSUE_TRACKER.md
 
 ---
 

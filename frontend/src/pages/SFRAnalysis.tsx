@@ -378,14 +378,14 @@ const SFRAnalysis: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        
+
         // Set property data
         setPropertyData(dealPropertyData as SFRPropertyData);
-        
+
         // If analysis data exists, validate completeness before using
         if (dealAnalysis) {
           console.log('Setting analysis data:', dealAnalysis);
-          
+
           // Log analysis structure for debugging
           const structureCheck = {
             hasMonthlyExpenses: !!dealAnalysis.monthlyAnalysis?.expenses,

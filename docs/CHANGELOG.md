@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-01-08
 
+### 🐛 Critical Bug Fix
+
+**Issue #1: Operating Expense Fields Not Persisting After Save/Load**
+- **Problem**: HOA Fees, Landlord-Paid Utilities, and CapEx Reserve fields displayed correctly on fresh analysis but disappeared after saving and reloading property
+- **Root Cause**: MongoDB schema missing three fields in `expenses.breakdown` nested object (lines 578-598 in Deal.ts). Mongoose was stripping fields not defined in explicit nested schemas, even though parent schema had `strict: false`
+- **Investigation**: Used backward tracing methodology (as Architect from claude.md) to identify that `tenantTurnover` field worked because it was added to breakdown schema when breakdown was created (July 2025), but the three new fields were never added to the schema
+- **Solution**: Added `hoa`, `landlordUtilities`, and `sfrCapEx` to breakdown schema following exact same pattern as `tenantTurnover`
+- **Files Modified**: `backend/src/models/Deal.ts` (3 lines added to breakdown schema)
+- **Result**: All three operating expense fields now persist correctly through save/load cycles
+- **Testing**: Confirmed fix working - fresh properties and saved properties both display all expense fields in "Financial Deep Dive → Monthly Cash Flow Analysis"
+- **Documentation Updated**: DATA_DICTIONARY.md updated with complete breakdown field documentation
+
 ### ✨ New Features
 
 **Operating Expense Fields for Buy & Hold**
@@ -15,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Educational alert explaining difference between Routine Maintenance vs Capital Expenditures
 - Dynamic CapEx default: 5% of monthly rent for new properties (industry standard)
 - Saved properties load with blank fields (no surprise changes to existing analyses)
+- Added display of all operating expense fields in Financial Deep Dive table including Turnover Costs
 
 ### 🔄 Changes
 

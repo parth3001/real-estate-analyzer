@@ -445,12 +445,12 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
       res.status(404).json({ error: 'Deal not found' });
       return;
     }
-    
+
     logger.info(`Loading deal ${id} - returning saved data with complete analysis`);
-    
+
     // Return the complete saved deal (data should be complete after Phase 1 fix)
     const dealData = deal.toObject();
-    
+
     // Validate that saved deal has complete analysis structure
     if (!dealData.analysis) {
       logger.error(`Deal ${id} missing analysis data - may need regeneration`);
@@ -579,8 +579,9 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
         investmentDecisionKeys: (dealData.analysis as any)?.investmentDecision ? Object.keys((dealData.analysis as any).investmentDecision) : []
       });
     }
-    
+
     const newDeal = await dealService.saveDeal(dealData);
+
     logger.info('Deal created successfully:', {
       id: newDeal._id,
       propertyName: newDeal.propertyName,

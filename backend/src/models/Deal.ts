@@ -590,7 +590,11 @@ const AnalysisSchema = new Schema({
         marketingAndAdvertising: Number,
         repairsAndMaintenance: Number,
         capEx: Number,
-        other: Number
+        other: Number,
+        // ✅ SFR-specific operating expenses (Jan 2026 - Issue #1)
+        hoa: Number,
+        landlordUtilities: Number,
+        sfrCapEx: Number
       }
     },
     income: {
