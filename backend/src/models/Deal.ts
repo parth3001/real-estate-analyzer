@@ -1243,6 +1243,19 @@ const DealSchema = new Schema({
     default: 0,
     min: 0
   },
+  // Issue #58: Insurance & Property Tax Dollar Amounts for UI Persistence
+  monthlyInsurance: {
+    type: Number,
+    required: false,
+    default: undefined,
+    min: 0
+  },
+  annualPropertyTax: {
+    type: Number,
+    required: false,
+    default: undefined,
+    min: 0
+  },
 
   // MF specific fields with conditional validation
   totalUnits: { 

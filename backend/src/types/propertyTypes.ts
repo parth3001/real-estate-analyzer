@@ -72,6 +72,11 @@ export interface BasePropertyData {
   monthlyHOA?: number;           // Monthly HOA fees (condos, townhomes)
   monthlyUtilities?: number;     // Landlord-paid utilities (water, trash, sewer)
   monthlyCapEx?: number;         // Capital expenditure reserve (major replacements: HVAC, roof, appliances)
+
+  // ✅ NEW: Insurance & Property Tax Dollar Amounts (Issue #58 - Slider Persistence Fix)
+  // Two-tiered source of truth: dollar amounts (frontend UI) + rates (backend calculations)
+  monthlyInsurance?: number;     // Monthly insurance dollar amount (for UI persistence)
+  annualPropertyTax?: number;    // Annual property tax dollar amount (for UI persistence)
 }
 
 export interface CommonMetrics {

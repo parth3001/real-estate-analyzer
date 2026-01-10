@@ -8,7 +8,7 @@
  * - Progressive disclosure pattern (Apple Design System)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -61,21 +61,58 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
 
   // Phase 1: Property tax state management
   const [propertyTaxRate, setPropertyTaxRate] = useState(state.data.propertyTaxRate || 1.2);
-  const [isPropertyTaxCustomized, setIsPropertyTaxCustomized] = useState(false);
+  // Issue #58 Regression Fix: Initialize based on saved annualPropertyTax value
+  // If annualPropertyTax exists (user customized), prevent tax API from overwriting
+  const [isPropertyTaxCustomized, setIsPropertyTaxCustomized] = useState(
+    state.data.annualPropertyTax !== undefined && state.data.annualPropertyTax !== null
+  );
   const [propertyTaxSmartDefault, setPropertyTaxSmartDefault] = useState<any>(null);
   const [isFetchingTaxData, setIsFetchingTaxData] = useState(false);
 
   // Phase 1: Insurance state management
-  const [monthlyInsurance, setMonthlyInsurance] = useState(
-    (state.data.purchasePrice ? (state.data.purchasePrice * 0.0035 / 12) : 200)
+  // Issue #58 FIX: Use React.useMemo to derive from saved data (two-tiered source of truth)
+  const monthlyInsurance = React.useMemo(() => {
+    // Priority 1: User's saved dollar amount (what they typed/slid)
+    if (state.data.monthlyInsurance !== undefined) {
+      return state.data.monthlyInsurance;
+    }
+    // Priority 2: Calculate from saved rate (backward compatibility)
+    if (state.data.insuranceRate && state.data.purchasePrice) {
+      return (state.data.purchasePrice * state.data.insuranceRate / 100) / 12;
+    }
+    // Priority 3: Default calculation (new properties)
+    return state.data.purchasePrice ? (state.data.purchasePrice * 0.0035 / 12) : 200;
+  }, [state.data.monthlyInsurance, state.data.insuranceRate, state.data.purchasePrice]);
+
+  // Issue #58 Regression Fix: Initialize based on saved monthlyInsurance value
+  // If monthlyInsurance exists (user customized), preserve their value
+  const [isInsuranceCustomized, setIsInsuranceCustomized] = useState(
+    state.data.monthlyInsurance !== undefined && state.data.monthlyInsurance !== null
   );
-  const [isInsuranceCustomized, setIsInsuranceCustomized] = useState(false);
+
+  // Local state for insurance rate slider (mirrors propertyTaxRate pattern)
+  const [insuranceRate, setInsuranceRate] = useState(state.data.insuranceRate || 0.35);
 
   // UX Enhancement: Dual input mode for Property Tax (percentage vs dollar amount)
   const [taxInputMode, setTaxInputMode] = useState<'rate' | 'annual'>('rate');
-  const [annualPropertyTax, setAnnualPropertyTax] = useState(
-    (state.data.purchasePrice || 0) * (state.data.propertyTaxRate || 1.2) / 100
-  );
+
+  // UX Enhancement: Dual input mode for Insurance (percentage vs monthly amount)
+  // Mirrors taxInputMode pattern for consistency
+  const [insuranceInputMode, setInsuranceInputMode] = useState<'rate' | 'monthly'>('monthly');
+
+  // Issue #58 FIX: Use React.useMemo to derive from saved data (two-tiered source of truth)
+  const annualPropertyTax = React.useMemo(() => {
+    // Priority 1: User's saved dollar amount (what they typed/slid)
+    if (state.data.annualPropertyTax !== undefined) {
+      return state.data.annualPropertyTax;
+    }
+    // Priority 2: Calculate from saved rate (backward compatibility)
+    if (state.data.propertyTaxRate && state.data.purchasePrice) {
+      return (state.data.purchasePrice * state.data.propertyTaxRate / 100);
+    }
+    // Priority 3: Default calculation (new properties)
+    return (state.data.purchasePrice || 0) * (state.data.propertyTaxRate || 1.2) / 100;
+  }, [state.data.annualPropertyTax, state.data.propertyTaxRate, state.data.purchasePrice]);
 
   // UX Enhancement: Dual input mode for Down Payment (percentage vs dollar amount)
   const [downPaymentInputMode, setDownPaymentInputMode] = useState<'percentage' | 'amount'>('percentage');
@@ -83,6 +120,12 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
     (state.data.purchasePrice || 0) * (state.data.downPaymentPercentage || 25) / 100
   );
   const loanAmount = (state.data.purchasePrice || 0) - downPaymentAmount;
+
+  // Fix for stale closure in async callbacks (Issue #58 regression fix)
+  const latestStateRef = useRef(state);
+  useEffect(() => {
+    latestStateRef.current = state;
+  });
 
   // Phase 2.2: BRRRR state management
   const [rehabBudget, setRehabBudget] = useState(state.data.brrrr?.rehabBudget || 0);
@@ -120,35 +163,43 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
   // Handle purchase price change
   const handlePurchasePriceChange = (value: string) => {
     const price = parseInt(value) || 0;
+
+    // Issue #58 FIX: Recalculate insurance rate from preserved dollar amount
+    let updatedInsuranceRate = state.data.insuranceRate || 0.35;
+    if (state.data.monthlyInsurance && price > 0) {
+      // User has customized insurance - preserve dollar amount, recalculate rate
+      updatedInsuranceRate = (state.data.monthlyInsurance * 12 / price) * 100;
+    } else if (!isInsuranceCustomized && price > 0) {
+      // Not customized - use default 0.35% rate
+      updatedInsuranceRate = 0.35;
+    }
+
+    // Issue #58 FIX: Recalculate property tax rate from preserved dollar amount
+    let updatedPropertyTaxRate = state.data.propertyTaxRate || 1.2;
+    if (state.data.annualPropertyTax && price > 0) {
+      // User has customized tax - preserve dollar amount, recalculate rate
+      updatedPropertyTaxRate = (state.data.annualPropertyTax / price) * 100;
+    } else if (!isPropertyTaxCustomized && price > 0) {
+      // Not customized - use default rate
+      updatedPropertyTaxRate = state.data.propertyTaxRate || 1.2;
+    }
+
     onUpdate({
       data: {
         ...state.data,
         purchasePrice: price,
         downPayment: price * (state.data.downPaymentPercentage || 25) / 100,
-        closingCosts: price * (state.data.closingCostPercentage || 2.5) / 100
+        closingCosts: price * (state.data.closingCostPercentage || 2.5) / 100,
+        insuranceRate: updatedInsuranceRate,
+        propertyTaxRate: updatedPropertyTaxRate
       }
     });
-
-    // Phase 1: Recalculate insurance estimate if not customized
-    if (!isInsuranceCustomized && price > 0) {
-      const estimatedInsurance = (price * 0.0035 / 12);
-      setMonthlyInsurance(estimatedInsurance);
-    }
   };
 
   // UX Enhancement: Handle down payment percentage change (% → $)
   const handleDownPaymentPercentageChange = (value: number) => {
     const calculatedAmount = (state.data.purchasePrice || 0) * value / 100;
     setDownPaymentAmount(calculatedAmount);
-
-    // DEBUG Issue #29: Track down payment values
-    console.log('🔍 DOWN PAYMENT % → $ CONVERSION:', {
-      percentage: value,
-      purchasePrice: state.data.purchasePrice,
-      calculatedAmount,
-      loanAmount: (state.data.purchasePrice || 0) - calculatedAmount,
-      formula: `${state.data.purchasePrice} * ${value}% = $${calculatedAmount}`
-    });
 
     onUpdate({
       data: {
@@ -168,15 +219,6 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
       ? (value / state.data.purchasePrice * 100)
       : 25;
 
-    // DEBUG Issue #29: Track down payment values
-    console.log('🔍 DOWN PAYMENT $ → % CONVERSION:', {
-      dollarAmount: value,
-      purchasePrice: state.data.purchasePrice,
-      calculatedPercentage,
-      loanAmount: (state.data.purchasePrice || 0) - value,
-      formula: `$${value} / ${state.data.purchasePrice} = ${calculatedPercentage}%`
-    });
-
     onUpdate({
       data: {
         ...state.data,
@@ -191,23 +233,73 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
     setPropertyTaxRate(value);
     setIsPropertyTaxCustomized(true);
 
-    // Auto-calculate annual amount
-    if (state.data.purchasePrice) {
-      const calculatedAnnual = (state.data.purchasePrice * value / 100);
-      setAnnualPropertyTax(calculatedAnnual);
-    }
+    // Issue #58 FIX: Save both rate AND dollar amount atomically
+    const purchasePrice = state.data.purchasePrice || 0;
+    const calculatedAnnual = purchasePrice > 0 ? (purchasePrice * value / 100) : 0;
+
+    onUpdate({
+      data: {
+        ...state.data,
+        propertyTaxRate: value,              // Rate (backend calculations)
+        annualPropertyTax: calculatedAnnual  // Dollar amount (UI persistence)
+      }
+    });
   };
 
   // UX Enhancement: Handle annual tax change ($ → %)
   const handleAnnualPropertyTaxChange = (value: number) => {
-    setAnnualPropertyTax(value);
     setIsPropertyTaxCustomized(true);
 
-    // Auto-calculate rate
-    if (state.data.purchasePrice && state.data.purchasePrice > 0) {
-      const calculatedRate = (value / state.data.purchasePrice * 100);
-      setPropertyTaxRate(calculatedRate);
-    }
+    // Issue #58 FIX: Save both dollar amount AND rate atomically
+    const purchasePrice = state.data.purchasePrice || 0;
+    const calculatedRate = purchasePrice > 0 ? (value / purchasePrice * 100) : 1.2;
+
+    onUpdate({
+      data: {
+        ...state.data,
+        annualPropertyTax: value,        // Dollar amount (UI persistence)
+        propertyTaxRate: calculatedRate  // Rate (backend calculations)
+      }
+    });
+    setPropertyTaxRate(calculatedRate);
+  };
+
+  // UX Enhancement: Handle insurance rate change (% → $)
+  // Pattern mirrors handlePropertyTaxRateChange
+  const handleInsuranceRateChange = (value: number) => {
+    setInsuranceRate(value);
+    setIsInsuranceCustomized(true);
+
+    // Issue #58 FIX: Save both rate AND monthly amount atomically
+    const purchasePrice = state.data.purchasePrice || 0;
+    const calculatedMonthly = purchasePrice > 0 ? (purchasePrice * value / 100 / 12) : 0;
+
+    onUpdate({
+      data: {
+        ...state.data,
+        insuranceRate: value,              // Rate (backend calculations)
+        monthlyInsurance: calculatedMonthly // Dollar amount (UI persistence)
+      }
+    });
+  };
+
+  // UX Enhancement: Handle monthly insurance change ($ → %)
+  // Pattern mirrors handleAnnualPropertyTaxChange
+  const handleMonthlyInsuranceChange = (value: number) => {
+    setIsInsuranceCustomized(true);
+
+    // Issue #58 FIX: Save both dollar amount AND rate atomically
+    const purchasePrice = state.data.purchasePrice || 0;
+    const calculatedRate = purchasePrice > 0 ? (value * 12 / purchasePrice * 100) : 0.35;
+
+    onUpdate({
+      data: {
+        ...state.data,
+        monthlyInsurance: value,        // Dollar amount (UI persistence)
+        insuranceRate: calculatedRate   // Rate (backend calculations)
+      }
+    });
+    setInsuranceRate(calculatedRate);
   };
 
   // Phase 2.2: BRRRR handler functions
@@ -391,128 +483,155 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
   }, [state.data.propertyAddress?.zipCode]);
 
   // Phase 1: Fetch property tax estimate (migrated from AssumptionsStep)
+  // Issue #58 Regression Fix: Added 1.5s debounce + useRef to prevent stale closure bug
   useEffect(() => {
-    if (state.data.propertyAddress?.zipCode && state.data.purchasePrice && !isFetchingTaxData) {
-      const fetchTaxEstimate = async () => {
-        setIsFetchingTaxData(true);
-        try {
-          console.log('FinancialsStep: Fetching property tax estimate');
+    let isMounted = true;
 
-          const address = `${state.data.propertyAddress?.street}, ${state.data.propertyAddress?.city}, ${state.data.propertyAddress?.state}`;
+    // Debounce tax API calls by 1.5 seconds (under 2-second psychological threshold)
+    const timeoutId = setTimeout(() => {
+      if (!isMounted) return;
 
-          const response = await wizardApi.getPropertyTaxEstimate({
-            address,
-            purchasePrice: state.data.purchasePrice || 0,
-            zipCode: state.data.propertyAddress?.zipCode || '',
-            state: state.data.propertyAddress?.state || '',
-            county: state.data.propertyAddress?.county
-          });
+      if (state.data.propertyAddress?.zipCode && state.data.purchasePrice && !isFetchingTaxData) {
+        const fetchTaxEstimate = async () => {
+          setIsFetchingTaxData(true);
+          try {
+            console.log('FinancialsStep: Fetching property tax estimate');
 
-          if (response.data.success && response.data.data) {
-            const taxData = response.data.data;
+            const address = `${state.data.propertyAddress?.street}, ${state.data.propertyAddress?.city}, ${state.data.propertyAddress?.state}`;
 
-            console.log('FinancialsStep: Received tax estimate:', {
-              taxRate: taxData.effectiveTaxRate,
-              confidence: taxData.confidence?.score,
-              source: taxData.confidence?.source
+            const response = await wizardApi.getPropertyTaxEstimate({
+              address,
+              purchasePrice: state.data.purchasePrice || 0,
+              zipCode: state.data.propertyAddress?.zipCode || '',
+              state: state.data.propertyAddress?.state || '',
+              county: state.data.propertyAddress?.county
             });
 
-            // Store smart default metadata
-            setPropertyTaxSmartDefault({
-              value: taxData.effectiveTaxRate,
-              source: taxData.confidence?.source || 'Tax Estimation Service',
-              confidence: { score: taxData.confidence?.score || 70 }
-            });
+            if (response.data.success && response.data.data) {
+              const taxData = response.data.data;
 
-            // Auto-apply tax rate if not customized
-            if (!isPropertyTaxCustomized) {
-              setPropertyTaxRate(taxData.effectiveTaxRate);
-              // UX Enhancement: Also update annual amount for dual input mode sync
-              const calculatedAnnual = (state.data.purchasePrice || 0) * taxData.effectiveTaxRate / 100;
-              setAnnualPropertyTax(calculatedAnnual);
-            }
+              console.log('FinancialsStep: Received tax estimate:', {
+                taxRate: taxData.effectiveTaxRate,
+                confidence: taxData.confidence?.score,
+                source: taxData.confidence?.source
+              });
 
-            // Update wizard smart defaults
-            onUpdate({
-              smartDefaults: {
-                ...state.smartDefaults,
-                propertyTaxRate: {
-                  value: taxData.effectiveTaxRate,
-                  confidence: {
-                    score: taxData.confidence?.score || 70,
-                    source: taxData.confidence?.source || 'Tax Estimation Service',
-                    lastUpdated: new Date(),
-                    reliability: taxData.confidence?.reliability || 'medium' as const
+              // Store smart default metadata
+              setPropertyTaxSmartDefault({
+                value: taxData.effectiveTaxRate,
+                source: taxData.confidence?.source || 'Tax Estimation Service',
+                confidence: { score: taxData.confidence?.score || 70 }
+              });
+
+              // Auto-apply tax rate if not customized
+              if (!isPropertyTaxCustomized) {
+                setPropertyTaxRate(taxData.effectiveTaxRate);
+
+                // Issue #58 REGRESSION FIX: Use latestStateRef to prevent stale closure
+                if (!isMounted) return;
+                const calculatedAnnual = (latestStateRef.current.data.purchasePrice || 0) * taxData.effectiveTaxRate / 100;
+                onUpdate({
+                  data: {
+                    ...latestStateRef.current.data,  // ✅ Always fresh state
+                    propertyTaxRate: taxData.effectiveTaxRate,
+                    annualPropertyTax: calculatedAnnual
+                  },
+                  smartDefaults: {
+                    ...latestStateRef.current.smartDefaults,
+                    propertyTaxRate: {
+                      value: taxData.effectiveTaxRate,
+                      confidence: {
+                        score: taxData.confidence?.score || 70,
+                        source: taxData.confidence?.source || 'Tax Estimation Service',
+                        lastUpdated: new Date(),
+                        reliability: taxData.confidence?.reliability || 'medium' as const
+                      }
+                    }
                   }
-                }
+                });
+              } else {
+                // Just update smart defaults
+                if (!isMounted) return;
+                onUpdate({
+                  smartDefaults: {
+                    ...latestStateRef.current.smartDefaults,
+                    propertyTaxRate: {
+                      value: taxData.effectiveTaxRate,
+                      confidence: {
+                        score: taxData.confidence?.score || 70,
+                        source: taxData.confidence?.source || 'Tax Estimation Service',
+                        lastUpdated: new Date(),
+                        reliability: taxData.confidence?.reliability || 'medium' as const
+                      }
+                    }
+                  }
+                });
               }
-            });
-          } else {
-            // Fallback to national average
-            console.warn('FinancialsStep: Tax estimate failed, using fallback');
+            } else {
+              // Fallback to national average
+              console.warn('FinancialsStep: Tax estimate failed, using fallback');
+              setPropertyTaxSmartDefault({
+                value: 1.2,
+                source: 'National Average (Fallback)',
+                confidence: { score: 50 }
+              });
+
+              if (!isPropertyTaxCustomized) {
+                setPropertyTaxRate(1.2);
+                // Issue #58 REGRESSION FIX: Use latestStateRef to prevent stale closure
+                if (!isMounted) return;
+                const calculatedAnnual = (latestStateRef.current.data.purchasePrice || 0) * 1.2 / 100;
+                onUpdate({
+                  data: {
+                    ...latestStateRef.current.data,  // ✅ Always fresh state
+                    propertyTaxRate: 1.2,
+                    annualPropertyTax: calculatedAnnual
+                  }
+                });
+              }
+            }
+          } catch (error) {
+            console.error('FinancialsStep: Error fetching tax estimate:', error);
+            // Use fallback on error
             setPropertyTaxSmartDefault({
               value: 1.2,
-              source: 'National Average (Fallback)',
-              confidence: { score: 50 }
+              source: 'Default Value',
+              confidence: { score: 40 }
             });
 
             if (!isPropertyTaxCustomized) {
               setPropertyTaxRate(1.2);
-              // UX Enhancement: Also update annual amount for dual input mode sync
-              const calculatedAnnual = (state.data.purchasePrice || 0) * 1.2 / 100;
-              setAnnualPropertyTax(calculatedAnnual);
+              // Issue #58 REGRESSION FIX: Use latestStateRef to prevent stale closure
+              if (!isMounted) return;
+              const calculatedAnnual = (latestStateRef.current.data.purchasePrice || 0) * 1.2 / 100;
+              onUpdate({
+                data: {
+                  ...latestStateRef.current.data,  // ✅ Always fresh state
+                  propertyTaxRate: 1.2,
+                  annualPropertyTax: calculatedAnnual
+                }
+              });
+            }
+          } finally {
+            if (isMounted) {
+              setIsFetchingTaxData(false);
             }
           }
-        } catch (error) {
-          console.error('FinancialsStep: Error fetching tax estimate:', error);
-          // Use fallback on error
-          setPropertyTaxSmartDefault({
-            value: 1.2,
-            source: 'Default Value',
-            confidence: { score: 40 }
-          });
+        };
 
-          if (!isPropertyTaxCustomized) {
-            setPropertyTaxRate(1.2);
-            // UX Enhancement: Also update annual amount for dual input mode sync
-            const calculatedAnnual = (state.data.purchasePrice || 0) * 1.2 / 100;
-            setAnnualPropertyTax(calculatedAnnual);
-          }
-        } finally {
-          setIsFetchingTaxData(false);
-        }
-      };
+        fetchTaxEstimate();
+      }
+    }, 1500);  // 1.5 second debounce
 
-      fetchTaxEstimate();
-    }
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [state.data.propertyAddress?.zipCode, state.data.purchasePrice]);
 
-  // Phase 1: Update wizard state when property tax changes
-  useEffect(() => {
-    if (state.data.purchasePrice) {
-      onUpdate({
-        data: {
-          ...state.data,
-          propertyTaxRate
-        }
-      });
-    }
-  }, [propertyTaxRate, state.data.purchasePrice]);
-
-  // FIX Issue #27: Sync insurance to wizard data when monthlyInsurance changes
-  useEffect(() => {
-    if (state.data.purchasePrice && monthlyInsurance) {
-      const annualInsurance = monthlyInsurance * 12;
-      const insuranceRate = (annualInsurance / state.data.purchasePrice) * 100;
-
-      onUpdate({
-        data: {
-          ...state.data,
-          insuranceRate: insuranceRate
-        }
-      });
-    }
-  }, [monthlyInsurance, state.data.purchasePrice]);
+  // Issue #58: Removed obsolete useEffect sync logic (now handled atomically in onChange handlers)
+  // Previously synced propertyTaxRate and monthlyInsurance, but caused delays and complexity
+  // New approach: All updates via onUpdate() with both dollar amount + rate in single call
 
   // Get data confidence for this step
   const getStepConfidence = (): Record<string, DataConfidence> => {
@@ -875,11 +994,16 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
                     setPropertyTaxRate(defaultRate);
                     setIsPropertyTaxCustomized(false);
 
-                    // UX Enhancement: Also reset annual amount
-                    if (state.data.purchasePrice) {
-                      const calculatedAnnual = (state.data.purchasePrice * defaultRate / 100);
-                      setAnnualPropertyTax(calculatedAnnual);
-                    }
+                    // Issue #58 FIX: Save both rate AND dollar amount to wizard data
+                    const purchasePrice = state.data.purchasePrice || 0;
+                    const calculatedAnnual = purchasePrice > 0 ? (purchasePrice * defaultRate / 100) : 0;
+                    onUpdate({
+                      data: {
+                        ...state.data,
+                        propertyTaxRate: defaultRate,
+                        annualPropertyTax: calculatedAnnual
+                      }
+                    });
                   }}
                 >
                   Reset to {propertyTaxSmartDefault.source}
@@ -892,7 +1016,7 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
             <TapToExpandField
               label="Homeowners Insurance"
               displayValue={formatCurrency(monthlyInsurance, 0) + '/month'}
-              helperText={`${formatCurrency(annualInsurance, 0)}/year • Industry average (0.35% rule)`}
+              helperText={`${formatCurrency(annualInsurance, 0)}/year • ${formatPercent(insuranceRate, 2)} rate`}
               smartDefault={{
                 value: state.data.purchasePrice ? (state.data.purchasePrice * 0.0035 / 12) : 200,
                 source: 'Industry Average',
@@ -900,32 +1024,113 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
               }}
               isCustomized={isInsuranceCustomized}
             >
-              <HybridSliderInput
-                label="Monthly Insurance"
-                value={monthlyInsurance}
-                onChange={(value) => {
-                  setMonthlyInsurance(value);
-                  setIsInsuranceCustomized(true);
-                }}
-                min={50}
-                max={500}
-                step={10}
-                unit="currency"
-                marks={[
-                  { value: 100, label: formatCurrency(100, 0) },
-                  { value: 200, label: formatCurrency(200, 0) },
-                  { value: 300, label: formatCurrency(300, 0) }
-                ]}
-                helperText="Adjust based on quotes from insurance providers"
-              />
+              {/* UX Enhancement: Input mode toggle */}
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 1, fontWeight: 500 }}
+                >
+                  Input Method:
+                </Typography>
+                <ToggleButtonGroup
+                  value={insuranceInputMode}
+                  exclusive
+                  onChange={(_, value) => value && setInsuranceInputMode(value)}
+                  size="small"
+                  fullWidth
+                  sx={{
+                    '& .MuiToggleButton-root': {
+                      fontFamily: 'SF Pro Text',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      borderRadius: '8px'
+                    }
+                  }}
+                >
+                  <ToggleButton value="rate">% Rate</ToggleButton>
+                  <ToggleButton value="monthly">$ Monthly</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              {/* Conditional input based on mode */}
+              {insuranceInputMode === 'rate' ? (
+                <>
+                  <HybridSliderInput
+                    label="Annual Insurance Rate"
+                    value={insuranceRate}
+                    onChange={handleInsuranceRateChange}
+                    min={0.1}
+                    max={2.5}
+                    step={0.05}
+                    unit="percentage"
+                    marks={[
+                      { value: 0.25, label: '0.25%' },
+                      { value: 0.35, label: '0.35%' },
+                      { value: 1.0, label: '1.0%' },
+                      { value: 2.0, label: '2.0%' }
+                    ]}
+                    helperText="Annual insurance rate as % of purchase price (0.35% industry average)"
+                  />
+
+                  {/* Show calculated monthly amount */}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: 'block' }}
+                  >
+                    Estimated: {formatCurrency(monthlyInsurance, 0)}/month at {formatCurrency(state.data.purchasePrice || 0, 0)} purchase price
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <HybridSliderInput
+                    label="Monthly Insurance"
+                    value={monthlyInsurance}
+                    onChange={handleMonthlyInsuranceChange}
+                    min={50}
+                    max={500}
+                    step={10}
+                    unit="currency"
+                    marks={[
+                      { value: 100, label: formatCurrency(100, 0) },
+                      { value: 200, label: formatCurrency(200, 0) },
+                      { value: 300, label: formatCurrency(300, 0) }
+                    ]}
+                    helperText="Enter monthly insurance premium from provider quotes"
+                  />
+
+                  {/* Show calculated rate */}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: 'block' }}
+                  >
+                    Estimated rate: {formatPercent(insuranceRate, 2)} at {formatCurrency(state.data.purchasePrice || 0, 0)} purchase price
+                  </Typography>
+                </>
+              )}
 
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-start' }}>
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={() => {
-                    const estimatedInsurance = state.data.purchasePrice ? (state.data.purchasePrice * 0.0035 / 12) : 200;
-                    setMonthlyInsurance(estimatedInsurance);
+                    // Issue #58 FIX: Reset to industry average (0.35% rate)
+                    // Architect's modification: Use 0 fallback (not 200) for consistency
+                    const purchasePrice = state.data.purchasePrice || 0;
+                    const defaultRate = 0.35;
+                    const estimatedMonthly = purchasePrice > 0 ? (purchasePrice * defaultRate / 100 / 12) : 0;
+
+                    setInsuranceRate(defaultRate);
+                    onUpdate({
+                      data: {
+                        ...state.data,
+                        monthlyInsurance: estimatedMonthly,
+                        insuranceRate: defaultRate
+                      }
+                    });
                     setIsInsuranceCustomized(false);
                   }}
                 >
