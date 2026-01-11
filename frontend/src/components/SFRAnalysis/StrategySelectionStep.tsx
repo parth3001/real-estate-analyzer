@@ -181,7 +181,7 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
           />
         </Grid>
 
-        {/* BRRRR - Grayed out with "Coming Soon" badge (Jan 2026 - Pending UAT) */}
+        {/* BRRRR - Coming Soon */}
         <Grid size={{ xs: 12, md: 4 }}>
           <StrategyCard
             strategy="brrrr"
