@@ -181,14 +181,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const getFormContainerStyle = () => ({
     width: isMobile || isTablet ? '100%' : '50%',
-    height: isMobile || isTablet ? '65vh' : '100vh', // More space for register form
-    minHeight: isMobile || isTablet ? 'auto' : '100vh',
+    minHeight: isMobile || isTablet ? '100vh' : '100vh', // Mobile: Let content determine height, allow scrolling
+    maxHeight: isMobile || isTablet ? '100vh' : '100vh', // Prevent overflow
     background: 'white',
     display: 'flex',
     flexDirection: 'column' as const,
-    justifyContent: isMobile || isTablet ? 'flex-start' : 'center', // Fix Safari mobile: align to top so "Sign in" is accessible
+    justifyContent: isMobile || isTablet ? 'flex-start' : 'center', // Mobile: align to top for keyboard compatibility
     alignItems: 'center',
     padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
+    paddingBottom: isMobile ? 'calc(16px + env(safe-area-inset-bottom, 0px))' : isTablet ? '24px' : '40px', // Safe area for iPhone home indicator
     boxSizing: 'border-box' as const,
     overflowY: 'auto' as const
   });

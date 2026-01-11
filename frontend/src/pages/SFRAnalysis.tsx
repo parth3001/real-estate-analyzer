@@ -1030,81 +1030,79 @@ const SFRAnalysis: React.FC = () => {
             {/* Render Wizard or Form */}
             <Fade in={inputMethod === 'wizard'}>
               <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
-                {inputMethod === 'wizard' && wizardEnabled && (
-                  <>
-                    <PropertyWizard
-                      key={propertyData?.propertyName || 'wizard-default'}
-                      onComplete={handleAnalyzeProperty}
-                      initialData={propertyData || undefined}
-                      onCancel={() => handleInputMethodChange('manual')}
-                      selectedPortfolioId={selectedPortfolioId}
-                      onPortfolioChange={setSelectedPortfolioId}
-                    />
+                {/* FIX Issue #59: Keep PropertyWizard always mounted, only hide with CSS */}
+                <PropertyWizard
+                  key={propertyData?.propertyName || 'wizard-default'}
+                  onComplete={handleAnalyzeProperty}
+                  initialData={propertyData || undefined}
+                  onCancel={() => handleInputMethodChange('manual')}
+                  selectedPortfolioId={selectedPortfolioId}
+                  onPortfolioChange={setSelectedPortfolioId}
+                />
 
-                    {/* Manual form link at bottom - subtle, non-intrusive */}
-                    <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
-                      <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
-                        Experienced investor?{' '}
-                        <Link
-                          component="button"
-                          onClick={() => handleInputMethodChange('manual')}
-                          sx={{
-                            color: appleColors.primary[600],
-                            fontWeight: 500,
-                            textDecoration: 'none',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            '&:hover': {
-                              textDecoration: 'underline',
-                              color: appleColors.primary[700]
-                            }
-                          }}
-                        >
-                          Use advanced manual form
-                        </Link>
-                      </Typography>
-                    </Box>
-                  </>
+                {/* Manual form link at bottom - only show when wizard is active */}
+                {inputMethod === 'wizard' && wizardEnabled && (
+                  <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
+                    <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                      Experienced investor?{' '}
+                      <Link
+                        component="button"
+                        onClick={() => handleInputMethodChange('manual')}
+                        sx={{
+                          color: appleColors.primary[600],
+                          fontWeight: 500,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                            color: appleColors.primary[700]
+                          }
+                        }}
+                      >
+                        Use advanced manual form
+                      </Link>
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Fade>
 
             <Fade in={inputMethod === 'manual'}>
               <Box sx={{ display: inputMethod === 'manual' ? 'block' : 'none' }}>
-                {inputMethod === 'manual' && (
-                  <>
-                    <SFRPropertyForm
-                      key={propertyData?.propertyName || 'form-default'}
-                      onSubmit={handleAnalyzeProperty}
-                      initialData={propertyData || undefined}
-                      isLoading={isLoading}
-                      error={error || undefined}
-                    />
+                {/* FIX Issue #59: Keep SFRPropertyForm always mounted, only hide with CSS */}
+                <SFRPropertyForm
+                  key={propertyData?.propertyName || 'form-default'}
+                  onSubmit={handleAnalyzeProperty}
+                  initialData={propertyData || undefined}
+                  isLoading={isLoading}
+                  error={error || undefined}
+                />
 
-                    {/* Wizard link at bottom when in manual mode */}
-                    <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
-                      <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
-                        Prefer guided analysis?{' '}
-                        <Link
-                          component="button"
-                          onClick={() => handleInputMethodChange('wizard')}
-                          sx={{
-                            color: appleColors.primary[600],
-                            fontWeight: 500,
-                            textDecoration: 'none',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            '&:hover': {
-                              textDecoration: 'underline',
-                              color: appleColors.primary[700]
-                            }
-                          }}
-                        >
-                          Switch to Smart Wizard
-                        </Link>
-                      </Typography>
-                    </Box>
-                  </>
+                {/* Wizard link at bottom - only show when manual form is active */}
+                {inputMethod === 'manual' && (
+                  <Box sx={{ textAlign: 'center', mt: 4, pb: 3, borderTop: `1px solid ${appleColors.gray[200]}`, pt: 3 }}>
+                    <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                      Prefer guided analysis?{' '}
+                      <Link
+                        component="button"
+                        onClick={() => handleInputMethodChange('wizard')}
+                        sx={{
+                          color: appleColors.primary[600],
+                          fontWeight: 500,
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                            color: appleColors.primary[700]
+                          }
+                        }}
+                      >
+                        Switch to Smart Wizard
+                      </Link>
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Fade>
