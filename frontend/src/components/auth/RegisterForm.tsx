@@ -186,7 +186,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     background: 'white',
     display: 'flex',
     flexDirection: 'column' as const,
-    justifyContent: 'center',
+    justifyContent: isMobile || isTablet ? 'flex-start' : 'center', // Fix Safari mobile: align to top so "Sign in" is accessible
     alignItems: 'center',
     padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
     boxSizing: 'border-box' as const,
