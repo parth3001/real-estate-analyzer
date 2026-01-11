@@ -107,7 +107,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     position: 'fixed' as const,
     top: 0,
     left: 0,
-    overflow: 'hidden',
+    overflow: isMobile || isTablet ? 'auto' : 'hidden',
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
   });
 
