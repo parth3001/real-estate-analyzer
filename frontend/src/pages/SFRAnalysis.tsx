@@ -1023,13 +1023,13 @@ const SFRAnalysis: React.FC = () => {
         )}
         
         {/* Property Input Section */}
-        <Fade in={activeSection === 'input'} unmountOnExit>
-          <Box>
+        <Fade in={activeSection === 'input'}>
+          <Box sx={{ display: activeSection === 'input' ? 'block' : 'none' }}>
             {/* FIX Issue #26 (FINAL): Clean UX - Wizard shows immediately, manual form link at bottom */}
 
             {/* Render Wizard or Form */}
-            <Fade in={inputMethod === 'wizard'} unmountOnExit>
-              <Box>
+            <Fade in={inputMethod === 'wizard'}>
+              <Box sx={{ display: inputMethod === 'wizard' ? 'block' : 'none' }}>
                 {inputMethod === 'wizard' && wizardEnabled && (
                   <>
                     <PropertyWizard
@@ -1069,8 +1069,8 @@ const SFRAnalysis: React.FC = () => {
               </Box>
             </Fade>
 
-            <Fade in={inputMethod === 'manual'} unmountOnExit>
-              <Box>
+            <Fade in={inputMethod === 'manual'}>
+              <Box sx={{ display: inputMethod === 'manual' ? 'block' : 'none' }}>
                 {inputMethod === 'manual' && (
                   <>
                     <SFRPropertyForm
@@ -1112,8 +1112,8 @@ const SFRAnalysis: React.FC = () => {
         </Fade>
         
         {/* Analysis Results Section */}
-        <Fade in={activeSection === 'results'} unmountOnExit>
-          <Box>
+        <Fade in={activeSection === 'results'}>
+          <Box sx={{ display: activeSection === 'results' ? 'block' : 'none' }}>
             {analysis && propertyData && (
               <React.Fragment>
                 {isLoading || isApplyingChanges ? (
