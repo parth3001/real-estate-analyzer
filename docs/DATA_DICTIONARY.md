@@ -85,6 +85,46 @@ The BRRRR (Buy, Rehab, Rent, Refinance, Repeat) strategy enables investors to re
 
 **Implementation Status**: ✅ Backend Complete (Phase 1.3), Frontend Pending
 
+---
+
+#### ⚠️ **BRRRR Data Flow Architecture Note**
+
+**CRITICAL**: BRRRR uses a **different data flow pattern** than Buy & Hold and Multi-Family strategies.
+
+**BRRRR Data Flow**:
+```
+Frontend Wizard
+    ↓
+POST /api/deals/analyze (with propertyData)
+    ↓
+Backend Controller → convertWizardData() (preserves ALL fields)
+    ↓
+Investment Decision Engine (PRE-analysis orchestrator) ⚠️
+    ├─ Maps dealData → BRRRRInputs interface
+    ├─ Calls BRRRR Analyzer with mapped inputs
+    └─ Generates BRRRR-specific verdict
+```
+
+**Key Difference**: Investment Decision Engine acts as **orchestrator** for BRRRR (transforms data before analysis), but as **post-analysis verdict generator** for Buy & Hold.
+
+**Data Mapping Requirement**:
+- All fields used by BRRRR **MUST be explicitly added** to BRRRRInputs interface
+- File: `/backend/src/services/investment/investmentDecisionEngine.ts` lines 1981-1999
+- If a field is added to `BasePropertyData` but NOT added to BRRRRInputs mapping, BRRRR won't receive it!
+
+**Historical Issue Example (Issue #63 - January 2026)**:
+- `monthlyCapEx` added to `BasePropertyData` but not mapped in BRRRRInputs
+- Buy & Hold: ✅ Worked fine (direct access to dealData)
+- Multi-Family: ✅ Worked fine (direct access to dealData)
+- BRRRR: ❌ Field missing → operating expenses understated by $505/month
+
+**Reference Documentation**:
+- Complete flow diagrams: `/docs/ARCHITECTURE.md` "Investment Strategy Architecture Patterns"
+- Field mapping details: `/docs/DATA_MAPPING.md` "Investment Strategy Data Flow Architecture"
+- Technical debt tracking: `/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md`
+
+---
+
 **Schema Fields**:
 
 | Field Name | Type | Description | Required | Default | Validation |

@@ -10,7 +10,9 @@ import {
   Container,
   Stack,
   Fade,
-  Link
+  Link,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { AutoAwesome, Edit, DataUsage as SampleDataIcon, Add as AddIcon } from '@mui/icons-material';
@@ -31,6 +33,8 @@ const SFRAnalysis: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Mobile detection for debug panel
   const [activeSection, setActiveSection] = useState<'input' | 'results'>('input');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1201,6 +1205,46 @@ const SFRAnalysis: React.FC = () => {
             }
           }}
         />
+
+        {/* Phase 2: Mobile Debug Panel - Shows state for Chrome blank page diagnosis */}
+        {isMobile && (
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'rgba(0, 0, 0, 0.95)',
+              color: 'lime',
+              padding: '12px 16px',
+              fontSize: '11px',
+              zIndex: 9999,
+              fontFamily: 'Monaco, "Courier New", monospace',
+              borderTop: '2px solid lime',
+              boxShadow: '0 -4px 20px rgba(0, 255, 0, 0.3)',
+            }}
+          >
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', mb: 1 }}>
+              <Box>
+                <strong>Section:</strong> <span style={{ color: activeSection === 'input' ? '#00ff00' : '#ffff00' }}>{activeSection}</span>
+              </Box>
+              <Box>
+                <strong>Method:</strong> <span style={{ color: inputMethod === 'wizard' ? '#00ff00' : '#ffff00' }}>{inputMethod}</span>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <Box>
+                <strong>Data:</strong> {propertyData ? <span style={{ color: '#00ff00' }}>✅ YES</span> : <span style={{ color: '#ff0000' }}>❌ NO</span>}
+              </Box>
+              <Box>
+                <strong>Name:</strong> <span style={{ color: '#00ffff' }}>{propertyData?.propertyName || 'none'}</span>
+              </Box>
+            </Box>
+            <Box sx={{ mt: 1, fontSize: '10px', color: '#888', textAlign: 'center' }}>
+              🔍 Phase 2 Debug Panel - Test saved property blank page
+            </Box>
+          </Box>
+        )}
       </Container>
   );
 };

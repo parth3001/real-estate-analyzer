@@ -181,7 +181,7 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
           />
         </Grid>
 
-        {/* BRRRR - Coming Soon */}
+        {/* BRRRR - Enabled for Local Testing */}
         <Grid size={{ xs: 12, md: 4 }}>
           <StrategyCard
             strategy="brrrr"
@@ -190,8 +190,8 @@ const StrategySelectionStep: React.FC<StrategySelectionStepProps> = ({
             icon={<BRRRRIcon />}
             selected={strategy === 'brrrr'}
             onSelect={() => onStrategyChange('brrrr')}
-            comingSoon={true}
-            badgeText="Coming Soon"
+            comingSoon={false}
+            badgeText="New"
           />
         </Grid>
       </Grid>

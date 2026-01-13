@@ -1098,7 +1098,11 @@ const FinancialsStep: React.FC<WizardStepProps> = ({
                       { value: 200, label: formatCurrency(200, 0) },
                       { value: 300, label: formatCurrency(300, 0) }
                     ]}
-                    helperText="Enter monthly insurance premium from provider quotes"
+                    helperText={
+                      state.data.strategy === 'brrrr'
+                        ? "💡 BRRRR Tip: Consider using After Repair Value (ARV) for insurance quotes, not purchase price"
+                        : ""
+                    }
                   />
 
                   {/* Show calculated rate */}

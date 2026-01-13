@@ -1,7 +1,7 @@
 # Technical Architecture Backlog
-**Status**: Future Considerations  
-**Priority**: Post-MVP Implementation  
-**Last Updated**: August 15, 2025
+**Status**: Future Considerations
+**Priority**: Post-MVP Implementation
+**Last Updated**: January 11, 2026
 
 ---
 
@@ -405,6 +405,120 @@ Following same Apple design principles used for tabs 2, 4, 5:
 
 ---
 
+### 11. 🏗️ **BRRRR Data Flow Architectural Refactor**
+**Priority**: P2 (After BRRRR is production-stable)
+**Effort**: Medium (2-3 weeks)
+**Status**: Technical Debt (Discovered January 2026)
+
+#### Current Issue
+BRRRR strategy uses a **different data flow pattern** than Buy & Hold and Multi-Family:
+- **Buy & Hold/Multi-Family**: Controller → Analyzer (direct access to full `dealData`) → Investment Decision Engine (post-analysis verdict)
+- **BRRRR**: Controller → Investment Decision Engine → Data Mapping Layer (`dealData` → `BRRRRInputs`) → BRRRR Analyzer → Verdict
+
+**Problem**: Data transformation layer in Investment Decision Engine (lines 1981-1999) requires fields to be **explicitly mapped** or they get dropped.
+
+**Historical Example (Issue #63 - January 2026)**:
+- `monthlyCapEx` field added to `BasePropertyData`
+- Buy & Hold: ✅ Worked (direct access)
+- Multi-Family: ✅ Worked (direct access)
+- BRRRR: ❌ Broken (field not mapped) → $505/month calculation error
+
+#### Proposed Refactor
+Align BRRRR with Buy & Hold pattern:
+
+**Current (Problematic)**:
+```typescript
+// Investment Decision Engine orchestrates BRRRR analysis
+if (investmentStrategy === 'brrrr') {
+  const brrrInputs: BRRRRInputs = { /* map 18 fields manually */ };
+  const brrrAnalyzer = new BRRRRAnalyzer();
+  const analysis = await brrrAnalyzer.analyze(brrrInputs);
+}
+```
+
+**Proposed (Consistent)**:
+```typescript
+// Controller calls BRRRR Analyzer directly (same as Buy & Hold)
+if (investmentStrategy === 'brrrr') {
+  const brrrAnalyzer = new BRRRRAnalyzer(dealData, assumptions); // Full dealData
+  analysis = await brrrAnalyzer.analyze();
+
+  // THEN pass to Investment Decision Engine for verdict
+  investmentDecision = await decisionEngine.generateBRRRRVerdict(analysis);
+}
+```
+
+#### Requirements
+- Refactor BRRRR Analyzer to accept full `dealData` (not `BRRRRInputs`)
+- Move data mapping logic INTO BRRRR Analyzer (where it belongs)
+- Update Investment Decision Engine to use post-analysis pattern for BRRRR
+- Maintain backward compatibility with existing `BRRRRInputs` interface
+- Create migration tests to ensure no calculation changes
+- Update all 5 architecture documentation files
+
+#### Benefits
+- ✅ **Architectural Consistency**: All strategies use same pattern
+- ✅ **No Field Dropping Risk**: Analyzer gets full `dealData` directly
+- ✅ **Simpler Debugging**: No data mapping layer to trace
+- ✅ **Easier Maintenance**: Add fields to `BasePropertyData` only (not BRRRRInputs mapping too)
+- ✅ **Cleaner Separation**: Investment Decision Engine only generates verdicts (not orchestration)
+
+#### Risks
+- ❌ **Regression Risk**: All BRRRR calculations must be re-tested
+- ❌ **Breaking Changes**: Investment Decision Engine API changes
+- ❌ **Effort Required**: 100+ lines of code changes across 3 files
+- ❌ **Testing Burden**: 10+ BRRRR test scenarios need validation
+
+#### Implementation Strategy
+**Phase 1: Preparation** (3 days)
+- Create comprehensive regression test suite for ALL BRRRR scenarios
+- Document current calculation results as baseline
+- Create feature branch for refactor
+
+**Phase 2: Refactor** (5 days)
+- Update `BRRRRAnalyzer` to accept `dealData` (keep `BRRRRInputs` backward compat)
+- Move field extraction logic from Investment Decision Engine into BRRRR Analyzer
+- Update Investment Decision Engine to call `generateBRRRRVerdict()` post-analysis
+- Update controller routing to match Buy & Hold pattern
+
+**Phase 3: Validation** (4 days)
+- Run all regression tests (expect 100% pass)
+- Manual UAT with Austin TX property (from Issue #63)
+- Compare new vs old calculation results (should be identical)
+- Update architecture documentation (5 files)
+- Code review and approval
+
+#### Triggers for Implementation
+- **Primary Trigger**: BRRRR production-stable for 30+ days with no P0 issues
+- **Secondary Trigger**: 3+ field mapping bugs discovered (currently at 1 - Issue #63)
+- **Blocker Trigger**: Any production P0 issue with BRRRR calculations
+
+**Do NOT implement if**:
+- BRRRR still has open P0 issues (wait for stability)
+- Other high-priority features need delivery
+- Less than 2 weeks available for focused work
+
+#### Current Status
+- ✅ Issue #63 fixed with band-aid (added `monthlyCapEx` to mapping)
+- ✅ All architecture docs updated to explain the pattern (January 2026)
+- ✅ Technical debt acknowledged and tracked
+- 📅 **Awaiting**: BRRRR production stability (30+ days)
+
+#### References
+- **Root Cause Analysis**: `/docs/ARCHITECTURE.md` "Investment Strategy Architecture Patterns"
+- **Data Flow Details**: `/docs/DATA_MAPPING.md` "Investment Strategy Data Flow Architecture"
+- **Issue #63 Example**: `/docs/ISSUE_TRACKER.md` Issue #63
+- **BRRRR Calculations**: `/docs/BRRRR_FLOW_CANONICAL_REFERENCE.md` "BRRRR Data Flow Architecture"
+- **Implementation Files**:
+  - `/backend/src/services/investment/investmentDecisionEngine.ts` (lines 1580-1999)
+  - `/backend/src/services/investment/brrrAnalyzer.ts`
+  - `/backend/src/controllers/deals.ts` (lines 1110-1166)
+
+#### Recommendation
+**Wait for BRRRR production stability**, then refactor to eliminate architectural inconsistency and reduce risk of future field dropping bugs.
+
+---
+
 ## 📊 **PRIORITIZATION MATRIX**
 
 | Category | Business Impact | Technical Risk | Effort | Priority | Trigger |
@@ -418,6 +532,7 @@ Following same Apple design principles used for tabs 2, 4, 5:
 | AI/ML Infrastructure | High | High | Large | P2 | 50K properties |
 | Integrations | Medium | Low | Medium | P2 | User demand |
 | Growth Infrastructure | Medium | Low | Medium | P2 | Post-launch |
+| **BRRRR Refactor** | **Medium** | **Medium** | **Medium** | **P2** | **BRRRR stable 30+ days** |
 | Mobile Platform | High | Medium | X-Large | P3 | Year 2 |
 
 ---

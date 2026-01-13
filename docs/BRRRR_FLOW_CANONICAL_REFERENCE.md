@@ -21,6 +21,144 @@
 
 ---
 
+## 🏗️ BRRRR Data Flow Architecture (January 2026)
+
+**Critical Understanding**: BRRRR uses a **different data flow pattern** than Buy & Hold and Multi-Family strategies. This section explains the routing mechanism and data transformation layer.
+
+---
+
+### BRRRR-Specific Routing Pattern
+
+**Unlike Buy & Hold** (which uses direct analyzer access), **BRRRR uses Investment Decision Engine orchestration**.
+
+**BRRRR Data Flow**:
+```
+Frontend Wizard (Steps 0-4)
+    ↓
+propertyData collected (includes BRRRR-specific fields)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller (/backend/src/controllers/deals.ts)
+    ├─→ convertWizardData(dealData) - preserves ALL fields ✅
+    │    ├─ monthlyHOA: dealData.monthlyHOA ?? 0 (Line 293)
+    │    ├─ monthlyUtilities: dealData.monthlyUtilities ?? 0
+    │    └─ monthlyCapEx: dealData.monthlyCapEx ?? 0
+    ↓
+Investment Decision Engine (PRE-analysis orchestrator) ⚠️
+    ├─ generateInvestmentDecision() called (Line 1151)
+    ├─ Detects strategy = 'brrrr' (Line 1581)
+    ├─ Calls generateBRRRRDecision() (Line 1583)
+    │
+    ├─→ DATA TRANSFORMATION LAYER (Lines 1981-1999) ⚠️
+    │    Maps: dealData → BRRRRInputs interface
+    │
+    │    const brrrInputs: BRRRRInputs = {
+    │      purchasePrice: propertyData.purchasePrice, ✅
+    │      downPayment: propertyData.downPayment, ✅
+    │      brrrr: propertyData.brrrr, ✅ // BRRRR-specific object
+    │      monthlyHOA: propertyData.monthlyHOA, ✅
+    │      monthlyUtilities: propertyData.monthlyUtilities, ✅
+    │      monthlyCapEx: propertyData.monthlyCapEx, ✅ (Issue #63 fix - Jan 2026)
+    │      // ⚠️ RISK: Fields MUST be explicitly mapped or dropped!
+    │    }
+    ↓
+BRRRR Analyzer (receives brrrInputs, NOT full dealData) ⚠️
+    ├─ const brrrAnalyzer = new BRRRRAnalyzer()
+    ├─ const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs)
+    └─ Calculations: Purchase → Seasoning → Refinance → Post-Refi
+    ↓
+Investment Decision Engine (still orchestrating)
+    ├─ Generates BRRRR-specific verdict
+    ├─ Applies BRRRR scoring (70% Rule, capital recovery, etc.)
+    └─ Returns analysis + investmentDecision + strategySpecific
+    ↓
+Response: Frontend displays Tab 4 BRRRR results
+```
+
+---
+
+### Critical Field Mappings for BRRRR
+
+All fields used by BRRRR calculations **MUST be explicitly added** to the `BRRRRInputs` mapping in Investment Decision Engine (lines 1981-1999).
+
+**Required Fields**:
+- `purchasePrice`, `downPayment`, `interestRate`, `loanTerm` (financing basics)
+- `brrrr` object (rehabBudget, afterRepairValue, refinanceLTV, seasoningPeriod, refinanceInterestRate)
+- `monthlyRent`, `propertyTaxRate`, `insuranceRate` (operating income/expenses)
+- `maintenanceCost`, `propertyManagementRate`, `vacancyRate` (operating expenses)
+- `monthlyHOA`, `monthlyUtilities`, `monthlyCapEx` (additional operating expenses) ⚠️
+- `tenantTurnoverFees`, `longTermAssumptions` (projections)
+
+**Historical Issue Example (Issue #63 - January 2026)**:
+```typescript
+// BUG: monthlyCapEx not mapped in BRRRRInputs
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyHOA: propertyData.monthlyHOA, ✅
+  monthlyUtilities: propertyData.monthlyUtilities, ✅
+  // monthlyCapEx: propertyData.monthlyCapEx,  ❌ MISSING!
+};
+
+// RESULT: BRRRR Analyzer fell back to default calculation
+// Operating expenses understated by $505/month
+// Seasoning cash flow: $1,498 (wrong) vs $1,222 (correct)
+// Post-refi cash flow: +$106 (wrong sign!) vs -$39 (correct)
+
+// FIX (January 2026): Added monthlyCapEx to mapping
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyCapEx: propertyData.monthlyCapEx, ✅ FIXED
+};
+```
+
+---
+
+### Comparison: Buy & Hold vs BRRRR Data Flow
+
+| Aspect | Buy & Hold | BRRRR |
+|--------|-----------|-------|
+| **Controller Entry** | Calls analyzer directly | Calls Investment Decision Engine |
+| **Analyzer Receives** | Full `dealData` ✅ | Mapped `BRRRRInputs` ⚠️ |
+| **Transformation Layer** | None | Investment Decision Engine mapping |
+| **Field Dropping Risk** | ✅ None | ⚠️ Yes - if not mapped |
+| **Verdict Generation** | POST-analysis | PRE-analysis (orchestrated) |
+
+---
+
+### Why BRRRR Uses Different Architecture
+
+**BRRRR-Specific Requirements**:
+1. **Multi-Phase Analysis**: Purchase → Rehab → Seasoning (12 mo) → Refinance → Post-Refi Hold
+2. **Strategy-Specific Scoring**: 70% Rule validation, capital recovery calculation, refinance feasibility
+3. **Different Verdict Criteria**: Based on capital recovery potential, not just cash flow
+4. **Specialized Interface**: `BRRRRInputs` designed for BRRRR-specific calculations
+
+**Architectural Decision** (December 2025 - commit `29207eb`):
+- Investment Decision Engine as orchestrator allowed BRRRR-specific logic isolation
+- Reused existing verdict generation infrastructure
+- Created specialized `BRRRRInputs` interface for BRRRR calculations
+
+**Trade-offs**:
+- ✅ BRRRR logic is isolated and maintainable
+- ✅ BRRRR verdicts use appropriate scoring (70% Rule, capital recovery)
+- ❌ Data transformation layer can drop fields if not explicitly mapped
+- ❌ Architectural inconsistency vs Buy & Hold
+- ❌ More complex debugging (must trace mapping layer)
+
+---
+
+### Reference Documentation
+
+For complete architectural details and visual flow diagrams:
+- **Primary**: `/docs/ARCHITECTURE.md` "Investment Strategy Architecture Patterns"
+- **Field Mapping**: `/docs/DATA_MAPPING.md` "Investment Strategy Data Flow Architecture"
+- **Field Definitions**: `/docs/DATA_DICTIONARY.md` "BRRRR Strategy Data Fields"
+- **End-to-End Flow**: `/docs/INVESTMENT_STRATEGY_FLOW.md` "Phase 5: Backend Analysis Routing"
+- **Technical Debt**: `/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md` (future refactor consideration)
+
+---
+
 ## 🚨 INSTITUTIONAL-GRADE CORRECTIONS (December 29, 2025)
 
 **Validation Source**: 20+ year BRRRR fund manager with institutional experience

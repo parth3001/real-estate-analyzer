@@ -578,6 +578,295 @@ Maintenance: 1 update propagates to all property types
 Code Reuse: 532 lines (BaseDecisionEngine) shared across all types
 ```
 
+## Investment Strategy Architecture Patterns
+
+### Overview
+
+The Real Estate Investment Intelligence Platform supports multiple investment strategies (Buy & Hold, BRRRR, House Hacking) with **different data flow patterns** depending on the strategy selected. Understanding these patterns is critical for developers working on analysis logic, data mapping, or debugging calculation issues.
+
+**Key Architectural Decision**: The BRRRR strategy uses a different routing pattern than Buy & Hold and Multi-Family, where the Investment Decision Engine acts as an **orchestrator** (transforming data and calling the analyzer) rather than just a post-analysis verdict generator.
+
+---
+
+### Strategy Router Pattern
+
+The system routes property analysis based on the `investmentStrategy` field selected by the user in the Property Wizard (Step 0):
+
+**Supported Strategies**:
+- **`buy-hold`**: Long-term rental income (most common)
+- **`brrrr`**: Buy, Rehab, Rent, Refinance, Repeat (capital recycling strategy)
+- **`house-hack`**: Live in property while renting rooms/units (planned)
+
+**Routing Logic** (`/backend/src/services/investment/investmentDecisionEngine.ts` lines 1580-1596):
+
+```typescript
+// Strategy detection and routing
+if (investmentStrategy === 'brrrr') {
+  logger.info('🎯 BRRRR Strategy CONFIRMED - Routing to BRRRR Decision Engine');
+  return await this.generateBRRRRDecision(
+    propertyData, analysis, predictions, marketIntelligence,
+    userContext, enhancedGoals, skipEnhancements, startTime
+  );
+}
+
+// Continue with standard Buy & Hold analysis
+logger.info('🏠 Buy & Hold Strategy - Routing to Standard Decision Engine');
+```
+
+---
+
+### Buy & Hold Data Flow Pattern
+
+**Pattern**: Direct Analyzer Access (No Data Transformation Layer)
+
+The Buy & Hold strategy follows a simple, direct pattern where the analyzer receives the complete `dealData` object without any intermediate mapping.
+
+**Flow Diagram**:
+```
+Frontend Wizard (Steps 0-4)
+    ↓
+propertyData collected (includes all fields)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller (/backend/src/controllers/deals.ts)
+    ├─→ convertWizardData(dealData) - preserves ALL fields ✅
+    │    ├─ monthlyHOA: dealData.monthlyHOA ?? 0 (line 293)
+    │    ├─ monthlyUtilities: dealData.monthlyUtilities ?? 0
+    │    └─ monthlyCapEx: dealData.monthlyCapEx ?? 0
+    ↓
+SFRAnalyzer (receives FULL dealData) ✅
+    ├─ new SFRAnalyzer(dealData, assumptions) (line 992)
+    ├─ analysis = await analyzer.analyzeWithMarketIntelligence()
+    └─ ALL fields available (no data loss)
+    ↓
+Investment Decision Engine (POST-analysis) ✅
+    ├─ Receives completed analysis
+    ├─ Generates verdict (BUY/NEGOTIATE/CAUTION/PASS)
+    ├─ Adds AI-enhanced content
+    └─ Returns decision
+    ↓
+Frontend: Display results
+```
+
+**Key Characteristics**:
+- ✅ **No data transformation layer** - analyzer gets full `dealData`
+- ✅ **All fields preserved** - nothing can be dropped accidentally
+- ✅ **Investment Decision Engine is POST-analysis** - only generates verdict
+- ✅ **Simple debugging** - input = output (no mapping to trace)
+
+**File References**:
+- Controller routing: `/backend/src/controllers/deals.ts` lines 990-993
+- Analyzer: `/backend/src/analysis/SFRAnalyzer.ts`
+- Data conversion: `/backend/src/controllers/deals.ts` line 293
+
+---
+
+### BRRRR Data Flow Pattern
+
+**Pattern**: Investment Decision Engine Orchestration (With Data Transformation Layer)
+
+The BRRRR strategy uses a more complex pattern where the Investment Decision Engine acts as an **orchestrator**, transforming `dealData` into a strategy-specific `BRRRRInputs` interface before calling the BRRRR Analyzer.
+
+**Flow Diagram**:
+```
+Frontend Wizard (Steps 0-4)
+    ↓
+propertyData collected (includes all fields)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller (/backend/src/controllers/deals.ts)
+    ├─→ convertWizardData(dealData) - preserves ALL fields ✅
+    │    ├─ monthlyHOA: dealData.monthlyHOA ?? 0 (line 293)
+    │    ├─ monthlyUtilities: dealData.monthlyUtilities ?? 0
+    │    └─ monthlyCapEx: dealData.monthlyCapEx ?? 0
+    ↓
+Investment Decision Engine (PRE-analysis orchestrator) ⚠️
+    ├─ generateInvestmentDecision() called (line 1151)
+    ├─ Detects strategy = 'brrrr' (line 1581)
+    ├─ Calls generateBRRRRDecision() (line 1583)
+    │
+    ├─→ DATA TRANSFORMATION LAYER (lines 1981-1999) ⚠️
+    │    const brrrInputs: BRRRRInputs = {
+    │      purchasePrice: propertyData.purchasePrice, ✅
+    │      downPayment: propertyData.downPayment, ✅
+    │      monthlyHOA: propertyData.monthlyHOA, ✅
+    │      monthlyUtilities: propertyData.monthlyUtilities, ✅
+    │      monthlyCapEx: propertyData.monthlyCapEx, ✅ (Fixed Jan 2026 - Issue #63)
+    │      // ⚠️ RISK: Fields MUST be explicitly mapped or they get dropped!
+    │    }
+    ↓
+BRRRR Analyzer (receives brrrInputs, NOT full dealData) ⚠️
+    ├─ const brrrAnalyzer = new BRRRRAnalyzer()
+    ├─ const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs)
+    └─ Only has fields that were mapped in BRRRRInputs
+    ↓
+Investment Decision Engine (STILL orchestrating)
+    ├─ Generates BRRRR-specific verdict
+    ├─ Applies BRRRR-specific scoring (70% Rule, capital recovery, etc.)
+    ├─ Adds AI-enhanced content
+    └─ Returns decision with brrrAnalysis
+    ↓
+Frontend: Display results (Tab 4 BRRRR-specific UI)
+```
+
+**Key Characteristics**:
+- ⚠️ **Data transformation layer exists** - dealData → BRRRRInputs mapping
+- ⚠️ **Risk of field dropping** - fields MUST be explicitly added to BRRRRInputs interface
+- ⚠️ **Investment Decision Engine is PRE-analysis** - orchestrates entire flow
+- ⚠️ **Complex debugging** - need to trace mapping layer for missing fields
+
+**Historical Issue Example (Issue #63 - January 2026)**:
+```typescript
+// BUG (before fix): monthlyCapEx not mapped
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyHOA: propertyData.monthlyHOA, ✅
+  monthlyUtilities: propertyData.monthlyUtilities, ✅
+  // monthlyCapEx: propertyData.monthlyCapEx,  ❌ MISSING!
+};
+
+// RESULT: BRRRR Analyzer fell back to default calculation
+// Operating expenses understated by $505/month
+// Cash flow showed +$106 when it should be -$39 (WRONG SIGN!)
+
+// FIX (January 2026): Added monthlyCapEx to mapping
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyCapEx: propertyData.monthlyCapEx, ✅ FIXED
+};
+```
+
+**File References**:
+- Controller routing: `/backend/src/controllers/deals.ts` lines 1110-1166
+- Investment Decision Engine strategy detection: `/backend/src/services/investment/investmentDecisionEngine.ts` lines 1580-1593
+- Data mapping layer: `/backend/src/services/investment/investmentDecisionEngine.ts` lines 1981-1999
+- BRRRR Analyzer: `/backend/src/services/investment/brrrAnalyzer.ts`
+
+---
+
+### Multi-Family Data Flow Pattern
+
+**Pattern**: Direct Analyzer Access (Same as Buy & Hold)
+
+Multi-Family properties follow the same simple, direct pattern as Buy & Hold - no data transformation layer.
+
+**Flow Diagram**:
+```
+Frontend Wizard/Form
+    ↓
+propertyData collected (includes all MF-specific fields)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller
+    ├─→ convertWizardData(dealData) - preserves ALL fields ✅
+    ↓
+MultiFamilyAnalyzer (receives FULL dealData) ✅
+    ├─ new MultiFamilyAnalyzer(dealData, assumptions) (line 996)
+    ├─ analysis = mfAnalyzer.analyze()
+    └─ ALL fields available (no data loss)
+    ↓
+MFDecisionEngine (POST-analysis) ✅
+    ├─ Receives completed analysis
+    ├─ Generates MF-specific verdict
+    └─ Returns decision
+    ↓
+Frontend: Display results
+```
+
+**File References**:
+- Controller routing: `/backend/src/controllers/deals.ts` lines 994-997, 1047-1108
+- Analyzer: `/backend/src/analysis/MultiFamilyAnalyzer.ts`
+- Decision Engine: `/backend/src/services/investment/mfDecisionEngine.ts`
+
+---
+
+### Architectural Decision Rationale
+
+**Why does BRRRR use a different pattern?**
+
+The BRRRR strategy was implemented in December 2025 (commit `29207eb`) with specific requirements that led to the orchestrator pattern:
+
+**BRRRR-Specific Requirements**:
+1. **Multi-Phase Analysis**: Purchase → Rehab → Seasoning → Refinance → Post-Refi Hold
+2. **Strategy-Specific Scoring Logic**: 70% Rule validation, capital recovery calculation, refinance feasibility
+3. **Different Verdict Criteria**: BRRRR verdicts based on capital recovery potential, not just cash flow
+4. **Specialized Interface**: BRRRRInputs designed for BRRRR-specific calculations
+
+**Decision**: Investment Decision Engine as Orchestrator
+- Receives dealData from controller
+- Transforms to BRRRRInputs (strategy-specific interface)
+- Calls BRRRR Analyzer
+- Generates BRRRR-specific verdict
+- Returns analysis + decision
+
+**Why Buy & Hold doesn't need this**:
+- Simple single-phase analysis (no rehab, no refinance)
+- Standard verdict criteria (cash flow, cap rate, IRR)
+- Generic SFRData interface works fine
+
+**Trade-offs**:
+- ✅ **Pro**: BRRRR-specific logic is isolated and maintainable
+- ✅ **Pro**: BRRRR verdicts use different scoring (appropriate for strategy)
+- ❌ **Con**: Data transformation layer can drop fields if not explicitly mapped
+- ❌ **Con**: Architectural inconsistency vs Buy & Hold
+- ❌ **Con**: More complex debugging (need to trace mapping)
+
+---
+
+### Known Limitations & Technical Debt
+
+**Current Limitation**: Data Mapping Layer Can Drop Fields
+
+The BRRRR data transformation layer (Investment Decision Engine lines 1981-1999) requires fields to be **explicitly mapped** from `dealData` to `BRRRRInputs`. If a field is added to `BasePropertyData` but NOT added to the mapping, BRRRR won't receive it.
+
+**Example (Issue #63 - January 2026)**:
+- `monthlyCapEx` added to `BasePropertyData` (January 2026)
+- Worked fine for Buy & Hold (direct access to dealData)
+- Worked fine for Multi-Family (direct access to dealData)
+- **Broken for BRRRR** (field not in BRRRRInputs mapping)
+- Result: Operating expenses understated by $505/month
+
+**Fix Applied**: Added `monthlyCapEx: propertyData.monthlyCapEx` to BRRRRInputs mapping (line 1996)
+
+**Future Architectural Refactor** (Technical Debt):
+
+Tracked in: `/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md`
+
+**Option 1: Keep Current Pattern** (Minimal Risk)
+- Continue using Investment Decision Engine orchestrator for BRRRR
+- Document all new fields must be added to BRRRRInputs mapping
+- Add unit tests to catch missing field mappings
+
+**Option 2: Refactor to Match Buy & Hold Pattern** (Major Refactor)
+```typescript
+// Proposed refactored flow (matches Buy & Hold)
+if (dealData.investmentStrategy === 'brrrr') {
+  const brrrAnalyzer = new BRRRRAnalyzer(dealData, assumptions);  // Full dealData
+  analysis = await brrrAnalyzer.analyze();
+
+  // THEN pass analysis to Investment Decision Engine for verdict
+  investmentDecision = await decisionEngine.generateBRRRRVerdict(analysis);
+}
+```
+
+**Pros of Refactor**:
+- ✅ Architectural consistency with Buy & Hold
+- ✅ No data mapping layer = no dropped fields
+- ✅ Simpler debugging
+
+**Cons of Refactor**:
+- ❌ Major refactor (100+ lines changed)
+- ❌ High regression risk (all BRRRR logic affected)
+- ❌ Requires re-testing all BRRRR calculations
+- ❌ 2-3 days of work
+
+**Recommendation**: Fix field mapping bugs NOW (Option 1), refactor architecture LATER after BRRRR is production-stable (Option 2 as technical debt after 30+ days of stability).
+
+---
+
 ## Single-Family Rental (SFR) Analysis Implementation
 
 ### Core Components
@@ -647,12 +936,119 @@ Code Reuse: 532 lines (BaseDecisionEngine) shared across all types
 
 ### Data Flow
 
-1. User inputs property data into SFRPropertyForm
-2. Form data is validated and sent to backend via API
-3. Backend calculates all metrics and projections
-4. Results are returned to frontend and displayed in AnalysisResults
-5. User can save the analysis to the database
-6. Saved deals can be loaded and viewed from SavedProperties page
+**Note**: For detailed investment strategy routing patterns, see [Investment Strategy Architecture Patterns](#investment-strategy-architecture-patterns) section above.
+
+The platform uses **strategy-aware data routing** with different patterns for Buy & Hold, BRRRR, and Multi-Family:
+
+**High-Level Flow (All Strategies)**:
+```
+User selects strategy (Step 0: buy-hold, brrrr, house-hack)
+    ↓
+User inputs property data (Steps 1-4: Address, Finance, Rental, Assumptions)
+    ↓
+Frontend validates and sends to backend API
+    ↓
+Backend routes based on propertyType + investmentStrategy
+    ↓
+Strategy-specific analysis performed
+    ↓
+Results returned to frontend for display
+    ↓
+User can save analysis to database (MongoDB Deal model)
+```
+
+**Property Type Routing** (`/backend/src/controllers/deals.ts`):
+```typescript
+// Line 990-997: Property type determines analyzer
+if (dealData.propertyType === 'SFR') {
+  const analyzer = new SFRAnalyzer(dealData, assumptions);
+  analysis = await analyzer.analyzeWithMarketIntelligence();
+} else if (dealData.propertyType === 'MF') {
+  const mfAnalyzer = new MultiFamilyAnalyzer(dealData, assumptions);
+  analysis = mfAnalyzer.analyze();
+}
+```
+
+**Investment Strategy Routing** (`/backend/src/services/investment/investmentDecisionEngine.ts`):
+```typescript
+// Line 1580-1593: Strategy determines Investment Decision Engine behavior
+if (investmentStrategy === 'brrrr') {
+  // BRRRR: Investment Decision Engine orchestrates analysis
+  return await this.generateBRRRRDecision(...);
+} else {
+  // Buy & Hold: Standard post-analysis verdict generation
+  // Analyzer already ran, just generate verdict
+}
+```
+
+**Data Transformation Layers**:
+
+**Layer 1: Frontend → Controller** (`convertWizardData()`)
+- Preserves ALL fields from frontend wizard
+- Converts wizard format to backend format
+- Sets defaults for optional fields (monthlyHOA ?? 0, monthlyCapEx ?? 0)
+- File: `/backend/src/controllers/deals.ts` lines 164-338
+
+**Layer 2A: Buy & Hold** (Direct Access)
+- SFRAnalyzer receives full `dealData` object
+- No transformation, no field loss
+- File: `/backend/src/analysis/SFRAnalyzer.ts`
+
+**Layer 2B: BRRRR** (Investment Decision Engine Mapping)
+- Investment Decision Engine maps `dealData` → `BRRRRInputs`
+- **Risk**: Fields MUST be explicitly mapped (Issue #63 example)
+- File: `/backend/src/services/investment/investmentDecisionEngine.ts` lines 1981-1999
+
+**Layer 2C: Multi-Family** (Direct Access)
+- MultiFamilyAnalyzer receives full `dealData` object
+- No transformation, no field loss
+- File: `/backend/src/analysis/MultiFamilyAnalyzer.ts`
+
+**Field Preservation Example** (`convertWizardData()` line 293):
+```typescript
+const convertedData = {
+  ...dealData,
+  maintenanceCost: maintenanceCost,
+
+  // ✅ NEW: Explicitly preserve operating expense fields (Jan 2026 - Issue #1 Fix)
+  monthlyHOA: dealData.monthlyHOA ?? 0,      // Preserved ✅
+  monthlyUtilities: dealData.monthlyUtilities ?? 0,  // Preserved ✅
+  monthlyCapEx: dealData.monthlyCapEx ?? 0,  // Preserved ✅ (Issue #63 fix)
+
+  investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+};
+
+// Buy & Hold: convertedData goes directly to SFRAnalyzer (all fields available)
+// BRRRR: convertedData goes to Investment Decision Engine (must map to BRRRRInputs)
+// Multi-Family: convertedData goes directly to MultiFamilyAnalyzer (all fields available)
+```
+
+**BRRRR Data Mapping Risk** (Investment Decision Engine lines 1981-1999):
+```typescript
+// ⚠️ Fields MUST be explicitly added to this mapping or BRRRR won't receive them
+const brrrInputs: BRRRRInputs = {
+  purchasePrice: propertyData.purchasePrice,  // ✅ Mapped
+  downPayment: propertyData.downPayment,      // ✅ Mapped
+  monthlyHOA: propertyData.monthlyHOA,        // ✅ Mapped
+  monthlyUtilities: propertyData.monthlyUtilities,  // ✅ Mapped
+  monthlyCapEx: propertyData.monthlyCapEx,    // ✅ Mapped (Issue #63 fix - Jan 2026)
+  // If you add a new field to BasePropertyData, REMEMBER to add it here!
+};
+```
+
+**Saved Deals Flow**:
+1. User completes analysis (any strategy)
+2. Frontend saves to MongoDB via `POST /api/deals` (with userId for auth)
+3. Deal document includes: propertyData + analysis + investmentDecision + strategySpecific
+4. User loads from SavedProperties page via `GET /api/deals/:id`
+5. Frontend displays appropriate tabs based on `investmentStrategy` field
+
+**Key Takeaways**:
+- ✅ Buy & Hold and Multi-Family: Simple direct analyzer access (no field loss risk)
+- ⚠️ BRRRR: Investment Decision Engine orchestration with data mapping layer (explicit mapping required)
+- ✅ All fields preserved in Layer 1 (convertWizardData)
+- ⚠️ BRRRR fields can be dropped in Layer 2B if not explicitly mapped
+- 📋 See [Investment Strategy Architecture Patterns](#investment-strategy-architecture-patterns) for detailed flow diagrams
 
 ### Validation & Error Handling
 

@@ -1993,6 +1993,7 @@ export class InvestmentDecisionEngine {
         vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5,
         monthlyHOA: propertyData.monthlyHOA,
         monthlyUtilities: propertyData.monthlyUtilities,
+        monthlyCapEx: propertyData.monthlyCapEx,  // Issue #63 fix - Jan 2026
         // Issue #51: Pass turnover costs and long-term assumptions for Post-Refinance calculations
         tenantTurnoverFees: propertyData.tenantTurnoverFees,
         longTermAssumptions: propertyData.longTermAssumptions

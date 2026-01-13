@@ -30,13 +30,34 @@ This document traces the complete journey of investment strategy selection from 
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│         BACKEND: Investment Decision Engine Routing         │
-│   Conditional analyzer selection based on strategy          │
+│     BACKEND: Controller Strategy Routing (deals.ts)         │
+│   Property Type: SFR vs MF                                  │
+│   Investment Strategy: buy-hold vs brrrr                    │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+        ┌─────────────────┴──────────────────┐
+        │                                     │
+    BUY & HOLD PATH                      BRRRR PATH
+        │                                     │
+        ↓                                     ↓
+┌─────────────────────────┐    ┌─────────────────────────────────┐
+│  SFRAnalyzer            │    │  Investment Decision Engine     │
+│  (Direct Access)        │    │  (Orchestrator)                 │
+│                         │    │                                 │
+│  Receives full dealData │    │  1. Maps dealData → BRRRRInputs │
+│  No transformation ✅   │    │  2. Calls BRRRR Analyzer        │
+└────────┬────────────────┘    │  3. Generates verdict           │
+         │                     └────────┬────────────────────────┘
+         │                              │
+         ↓                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Investment Decision Engine (POST-analysis for Buy & Hold)  │
+│  Generates verdict only                                      │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│         BACKEND: Strategy-Specific Analysis                  │
-│   Standard metrics + strategySpecific object                │
+│         BACKEND: Strategy-Specific Analysis Complete         │
+│   analysis + investmentDecision + strategySpecific          │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -189,45 +210,153 @@ if (dealData.investmentStrategy === 'brrrr') {
 
 ## Phase 5: Backend Analysis Routing
 
-### Current Implementation (December 2025)
+### ⚠️ **Critical Architectural Pattern** (Updated January 2026)
 
-**File**: `/backend/src/controllers/deals.ts`
+The routing mechanism differs significantly between Buy & Hold and BRRRR strategies. Understanding this is essential for debugging or adding new features.
 
-**Strategy Routing Logic** (Simplified):
+---
+
+### Buy & Hold Path: Direct Analyzer Access
+
+**File**: `/backend/src/controllers/deals.ts` lines 990-997
+
+**Actual Code**:
 ```typescript
-const investmentStrategy = dealData.investmentStrategy || 'buy-hold';
-
-let analysis: Analysis;
-
-switch (investmentStrategy) {
-  case 'buy-hold':
-    // Standard SFR/MF analyzer
-    if (dealData.propertyType === 'SFR') {
-      analysis = await SFRAnalyzer.analyze(dealData);
-    } else {
-      analysis = await MultiFamilyAnalyzer.analyze(dealData);
-    }
-    break;
-
-  case 'brrrr':
-    // BRRRR-specific analyzer (Phase 1.3)
-    analysis = await BRRRRAnalyzer.analyze(dealData);
-    break;
-
-  case 'house-hack':
-    // House hacking analyzer (future)
-    analysis = await HouseHackAnalyzer.analyze(dealData);
-    break;
-
-  default:
-    // Fallback to standard analyzer
-    analysis = await SFRAnalyzer.analyze(dealData);
+// Property Type Routing (NOT Investment Strategy Routing Yet)
+if (dealData.propertyType === 'SFR') {
+  logger.info('Analyzing SFR property with market intelligence');
+  const analyzer = new SFRAnalyzer(dealData, assumptions);  // ✅ Receives FULL dealData
+  analysis = await analyzer.analyzeWithMarketIntelligence();
+} else if (dealData.propertyType === 'MF') {
+  logger.info('Analyzing Multi-Family property');
+  mfAnalyzer = new MultiFamilyAnalyzer(dealData, assumptions);  // ✅ Receives FULL dealData
+  analysis = mfAnalyzer.analyze();
 }
 ```
 
-**Current Reality (Phase 1.3)**:
+**Key Characteristics**:
+- ✅ Analyzer receives **full dealData** directly
+- ✅ No data transformation layer
+- ✅ All fields preserved (no risk of dropping fields)
+- ✅ Investment Decision Engine called **AFTER** analysis completes (line 1151)
+
+**Investment Decision Engine Role** (POST-analysis):
+```typescript
+// Line 1151: AFTER analysis is complete
+investmentDecision = await decisionEngine.generateInvestmentDecision(
+  dealData, analysis, predictions, marketIntelligence, userContext, enhancedGoals
+);
+
+// Investment Decision Engine just generates verdict (BUY/NEGOTIATE/CAUTION/PASS)
+// Analysis was already done by SFRAnalyzer
+```
+
+---
+
+### BRRRR Path: Investment Decision Engine Orchestration
+
+**File**: `/backend/src/services/investment/investmentDecisionEngine.ts` lines 1580-1593
+
+**Strategy Detection Code**:
+```typescript
+// Line 1580: Inside generateInvestmentDecision()
+const investmentStrategy = propertyData.investmentStrategy || 'buy-hold';
+
+// Line 1581: BRRRR detected → Different flow
+if (investmentStrategy === 'brrrr') {
+  logger.info('🎯 BRRRR Strategy CONFIRMED - Routing to BRRRR Decision Engine');
+  return await this.generateBRRRRDecision(
+    propertyData as any,
+    analysis,
+    predictions,
+    marketIntelligence,
+    userContext,
+    enhancedGoals,
+    skipEnhancements,
+    startTime
+  );
+}
+
+// Line 1595: Otherwise, continue with Buy & Hold
+logger.info('🏠 Buy & Hold Strategy - Routing to Standard Decision Engine');
+```
+
+**Investment Decision Engine as Orchestrator** (PRE-analysis):
+```typescript
+// Lines 1977-2001: Investment Decision Engine orchestrates BRRRR analysis
+private async generateBRRRRDecision(...): Promise<InvestmentDecision> {
+  // 1. Run BRRRR Analyzer (Investment Decision Engine CALLS analyzer)
+  const brrrAnalyzer = new BRRRRAnalyzer();
+
+  // 2. ⚠️ DATA TRANSFORMATION LAYER (fields can be dropped here!)
+  const brrrInputs: BRRRRInputs = {
+    purchasePrice: propertyData.purchasePrice, ✅
+    downPayment: propertyData.downPayment, ✅
+    monthlyHOA: propertyData.monthlyHOA, ✅
+    monthlyUtilities: propertyData.monthlyUtilities, ✅
+    monthlyCapEx: propertyData.monthlyCapEx, ✅ // Issue #63 fix (Jan 2026)
+    brrrr: propertyData.brrrr,
+    // ⚠️ RISK: Fields MUST be explicitly mapped or dropped!
+  };
+
+  // 3. Call BRRRR Analyzer with mapped inputs (NOT full dealData)
+  const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs);
+
+  // 4. Generate BRRRR-specific verdict
+  // ... BRRRR-specific scoring logic ...
+
+  return decision;
+}
+```
+
+**Key Characteristics**:
+- ⚠️ Investment Decision Engine acts as **orchestrator** (not just verdict generator)
+- ⚠️ Data transformation layer: `dealData` → `BRRRRInputs`
+- ⚠️ **Risk of field dropping** - fields MUST be explicitly mapped
+- ⚠️ BRRRR Analyzer receives `brrrInputs`, NOT full `dealData`
+
+---
+
+### Comparison: Buy & Hold vs BRRRR Routing
+
+| Aspect | Buy & Hold | BRRRR |
+|--------|-----------|-------|
+| **Analyzer Entry Point** | Controller calls analyzer directly | Investment Decision Engine calls analyzer |
+| **Data Received** | Full `dealData` object ✅ | Mapped `BRRRRInputs` object ⚠️ |
+| **Transformation Layer** | None (direct access) | Investment Decision Engine mapping (lines 1981-1999) |
+| **Field Dropping Risk** | ✅ None | ⚠️ Yes - if not explicitly mapped |
+| **Investment Decision Engine Role** | POST-analysis verdict only | PRE-analysis orchestrator + verdict |
+| **Debugging Complexity** | ✅ Simple (input = output) | ⚠️ Complex (must trace mapping) |
+
+---
+
+### Why BRRRR Uses Different Architecture
+
+**Historical Context**: BRRRR implemented December 2025 (commit `29207eb`)
+
+**BRRRR-Specific Requirements**:
+1. **Multi-Phase Analysis**: Purchase → Rehab → Seasoning → Refinance → Post-Refi Hold
+2. **Strategy-Specific Scoring**: 70% Rule validation, capital recovery calculation
+3. **Different Verdict Criteria**: Based on capital recovery potential, not just cash flow
+4. **Specialized Interface**: `BRRRRInputs` designed for BRRRR-specific calculations
+
+**Architectural Decision**: Investment Decision Engine as orchestrator allowed BRRRR-specific logic to be isolated while reusing existing verdict generation infrastructure.
+
+**Trade-offs**:
+- ✅ BRRRR logic is isolated and maintainable
+- ✅ BRRRR verdicts use appropriate scoring
+- ❌ Data transformation layer can drop fields (Issue #63 example)
+- ❌ Architectural inconsistency vs Buy & Hold
+- ❌ More complex debugging
+
+**Future Consideration**: Refactor to match Buy & Hold pattern (tracked in `/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md`) after BRRRR is production-stable.
+
+---
+
+### Current Implementation Status (January 2026)
+
 - **Buy & Hold**: ✅ Full implementation via SFRAnalyzer/MultiFamilyAnalyzer
-- **BRRRR**: ⚠️ Backend complete, but frontend Step 0 shows "Coming Soon"
+- **BRRRR**: ✅ Backend complete (Phase 1.3) + Frontend enabled for testing (Issue #63 UAT)
 - **House Hacking**: ❌ Not implemented (placeholder only)
 
 ---

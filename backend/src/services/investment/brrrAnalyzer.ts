@@ -19,6 +19,7 @@
 
 import { FinancialCalculations } from '../../utils/financialCalculations';
 import { BRRRRValidationError, BRRRRCalculationError } from '../../validation/brrrValidation';
+import { logger } from '../../utils/logger';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -574,6 +575,20 @@ export class BRRRRAnalyzer {
       monthlyCapEx = (inputs.monthlyRent * 5) / 100; // DEFAULT 5% of rent
     }
 
+    // Issue #63 fix - Diagnostic logging for CapEx source verification
+    logger.info('BRRRR Operating Expenses - CapEx Calculation:', {
+      monthlyCapExSource: inputs.monthlyCapEx !== undefined && inputs.monthlyCapEx !== null
+        ? 'user-provided'
+        : inputs.capExReserveFixed !== undefined
+          ? 'fixed-value-fallback'
+          : inputs.capExReserveRate !== undefined
+            ? 'percentage-fallback'
+            : 'default-5-percent',
+      monthlyCapExValue: monthlyCapEx,
+      userProvidedValue: inputs.monthlyCapEx ?? null,
+      monthlyRent: inputs.monthlyRent
+    });
+
     /**
      * ✅ ISSUE #51 FIX: Add turnover costs to Post-Refinance operating expenses
      *
@@ -599,11 +614,38 @@ export class BRRRRAnalyzer {
     const monthlyTurnoverCosts = annualTurnoverCosts / 12;
 
     /**
-     * ✅ ISSUE #55 FIX: Include CapEx in operating expenses
-     * This was the missing $156/month that caused Issue #55
+     * ✅ ISSUE #67 FIX: NOI Calculation - Industry Standard Accounting Treatment
+     *
+     * Following Fannie Mae Form 1007, GAAP Real Estate Accounting, and USPAP standards:
+     *
+     * Effective Gross Income (EGI):
+     *   Gross Rental Income: $X
+     *   - Vacancy Loss (economic vacancy)
+     *   - Property Management Fee (8% of gross rent) ← "Above the line" deduction
+     *   = Effective Gross Income
+     *
+     * Net Operating Income (NOI):
+     *   Effective Gross Income
+     *   - Operating Expenses (taxes, insurance, maintenance, CapEx, utilities, HOA, turnover)
+     *   = Net Operating Income
+     *
+     * Key Principle: Management fees are deducted from REVENUE ("above the line"),
+     * NOT included in operating expenses ("below the line").
+     *
+     * This ensures:
+     * 1. Lender underwriting compliance (Fannie Mae/Freddie Mac)
+     * 2. GAAP real estate accounting standards
+     * 3. Appraisal reporting compliance (USPAP)
+     * 4. Industry-standard NOI methodology
+     *
+     * @see BRRRR_BUSINESS_REQUIREMENTS.md - Rule 4: Management Fee Treatment
+     * @see BRRRR_ARCHITECTURE_VALIDATION.md - Formula Validation Matrix
+     * @see Issue #67: NOI accounting method compliance fix
+     *
+     * Note: CapEx added in Issue #55 fix (was missing $156/month)
      */
     const monthlyOperatingExpenses = monthlyPropertyTax + monthlyInsurance +
-                                      monthlyMaintenance + monthlyManagement +
+                                      monthlyMaintenance + // Management fee removed (Issue #67)
                                       monthlyVacancy + monthlyCapEx +  // ← ADDED for Issue #55
                                       monthlyHOA + monthlyUtilities +
                                       monthlyTurnoverCosts;
@@ -616,8 +658,8 @@ export class BRRRRAnalyzer {
       ? (annualCashFlow / capitalRecovery.capitalRemaining) * 100
       : 0; // Infinite return scenario
 
-    // NOI and DSCR
-    const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy;
+    // NOI and DSCR (Industry Standard: EGI deducts vacancy + management "above the line")
+    const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy - monthlyManagement;
     const annualNOI = (effectiveGrossIncome - (monthlyOperatingExpenses - monthlyVacancy)) * 12;
     const annualDebtService = newMonthlyPayment * 12;
     const postRefiDSCR = FinancialCalculations.calculateDSCR(annualNOI, annualDebtService);

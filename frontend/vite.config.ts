@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // Allow network access for iPhone testing
     port: 3000,
     proxy: {
       '/api': {

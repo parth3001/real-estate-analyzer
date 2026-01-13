@@ -38,6 +38,285 @@ The platform has evolved into a sophisticated investment intelligence system wit
 
 ## Data Flow Patterns
 
+### Investment Strategy Data Flow Architecture
+
+**Critical Architectural Pattern**: The platform uses **different data flow patterns** for different investment strategies. Understanding this is essential for debugging calculation issues or adding new fields.
+
+---
+
+#### Strategy Router Overview
+
+The system routes property analysis based on `investmentStrategy` field:
+
+```
+User Selection (Property Wizard Step 0)
+    ↓
+investmentStrategy: 'buy-hold' | 'brrrr' | 'house-hack'
+    ↓
+Backend Strategy Router (Investment Decision Engine)
+    ↓
+├─ buy-hold    → SFRAnalyzer (Direct Access)
+├─ brrrr       → Investment Decision Engine Orchestration → BRRRR Analyzer
+└─ house-hack  → (Planned)
+```
+
+**File Reference**: For complete architectural documentation, see `/docs/ARCHITECTURE.md` "Investment Strategy Architecture Patterns" section.
+
+---
+
+#### Buy & Hold Data Flow (Direct Analyzer Access)
+
+**Pattern**: Simple, direct pattern - **NO data transformation layer**
+
+```
+Frontend Wizard (collects propertyData)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller (/backend/src/controllers/deals.ts)
+    ├─→ convertWizardData(dealData) [Line 164-338]
+    │    ├─ Preserves ALL fields ✅
+    │    ├─ monthlyHOA: dealData.monthlyHOA ?? 0 (Line 293)
+    │    ├─ monthlyUtilities: dealData.monthlyUtilities ?? 0
+    │    └─ monthlyCapEx: dealData.monthlyCapEx ?? 0
+    ↓
+SFRAnalyzer receives FULL dealData [Line 992]
+    ├─ new SFRAnalyzer(dealData, assumptions)
+    ├─ analysis = await analyzer.analyzeWithMarketIntelligence()
+    └─ ALL fields available (no data loss) ✅
+    ↓
+Investment Decision Engine (POST-analysis)
+    ├─ Receives completed analysis
+    └─ Generates verdict only (BUY/NEGOTIATE/CAUTION/PASS)
+    ↓
+Response: analysis + investmentDecision
+```
+
+**Key Characteristics**:
+- ✅ **No transformation layer** - analyzer gets full dealData
+- ✅ **All fields preserved** - nothing can be dropped
+- ✅ **Simple debugging** - input = output (no mapping to trace)
+
+---
+
+#### BRRRR Data Flow (Investment Decision Engine Orchestration)
+
+**Pattern**: Complex orchestration pattern - **HAS data transformation layer**
+
+```
+Frontend Wizard (collects propertyData + BRRRR-specific fields)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller (/backend/src/controllers/deals.ts)
+    ├─→ convertWizardData(dealData) [Line 164-338]
+    │    ├─ Preserves ALL fields ✅
+    │    ├─ monthlyHOA: dealData.monthlyHOA ?? 0
+    │    ├─ monthlyUtilities: dealData.monthlyUtilities ?? 0
+    │    └─ monthlyCapEx: dealData.monthlyCapEx ?? 0
+    ↓
+Investment Decision Engine (PRE-analysis orchestrator) ⚠️
+    ├─ generateInvestmentDecision() [Line 1151]
+    ├─ Detects strategy = 'brrrr' [Line 1581]
+    ├─ Calls generateBRRRRDecision() [Line 1583]
+    │
+    ├─→ DATA TRANSFORMATION LAYER [Lines 1981-1999] ⚠️
+    │    Maps: dealData → BRRRRInputs interface
+    │
+    │    const brrrInputs: BRRRRInputs = {
+    │      purchasePrice: propertyData.purchasePrice, ✅
+    │      downPayment: propertyData.downPayment, ✅
+    │      monthlyHOA: propertyData.monthlyHOA, ✅
+    │      monthlyUtilities: propertyData.monthlyUtilities, ✅
+    │      monthlyCapEx: propertyData.monthlyCapEx, ✅ (Issue #63 fix)
+    │      // ⚠️ RISK: Fields MUST be explicitly mapped or dropped!
+    │    }
+    ↓
+BRRRR Analyzer receives brrrInputs (NOT full dealData) ⚠️
+    ├─ const brrrAnalyzer = new BRRRRAnalyzer()
+    ├─ const brrrAnalysis = await brrrAnalyzer.analyze(brrrInputs)
+    └─ Only has fields that were explicitly mapped
+    ↓
+Investment Decision Engine (still orchestrating)
+    ├─ Generates BRRRR-specific verdict
+    ├─ Applies BRRRR scoring (70% Rule, capital recovery, etc.)
+    └─ Returns analysis + investmentDecision + strategySpecific
+    ↓
+Response: analysis with BRRRR-specific data
+```
+
+**Key Characteristics**:
+- ⚠️ **Transformation layer exists** - dealData → BRRRRInputs mapping
+- ⚠️ **Risk of field dropping** - fields MUST be explicitly added to BRRRRInputs interface
+- ⚠️ **Complex debugging** - need to trace mapping layer for missing fields
+
+---
+
+#### Multi-Family Data Flow (Direct Analyzer Access)
+
+**Pattern**: Simple, direct pattern - **SAME AS BUY & HOLD**
+
+```
+Frontend Form (collects MF-specific propertyData)
+    ↓
+POST /api/deals/analyze
+    ↓
+Backend Controller
+    ├─→ convertWizardData(dealData)
+    │    └─ Preserves ALL fields ✅
+    ↓
+MultiFamilyAnalyzer receives FULL dealData [Line 996]
+    ├─ new MultiFamilyAnalyzer(dealData, assumptions)
+    ├─ analysis = mfAnalyzer.analyze()
+    └─ ALL fields available (no data loss) ✅
+    ↓
+MFDecisionEngine (POST-analysis)
+    ├─ Receives completed analysis
+    └─ Generates MF-specific verdict
+    ↓
+Response: analysis + investmentDecision
+```
+
+---
+
+#### Critical Data Mapping Points
+
+**Layer 1: convertWizardData() - Preserves ALL Fields**
+
+File: `/backend/src/controllers/deals.ts` Line 293
+
+```typescript
+const convertedData = {
+  ...dealData,
+  maintenanceCost: maintenanceCost,
+
+  // ✅ NEW: Explicitly preserve operating expense fields (Jan 2026 - Issue #1 Fix)
+  monthlyHOA: dealData.monthlyHOA ?? 0,        // ✅ Preserved
+  monthlyUtilities: dealData.monthlyUtilities ?? 0,  // ✅ Preserved
+  monthlyCapEx: dealData.monthlyCapEx ?? 0,    // ✅ Preserved
+
+  investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+};
+```
+
+**Layer 2A: Buy & Hold - No Mapping (Direct Access)**
+- SFRAnalyzer gets full `convertedData`
+- No transformation, no field loss ✅
+
+**Layer 2B: BRRRR - Investment Decision Engine Mapping ⚠️**
+
+File: `/backend/src/services/investment/investmentDecisionEngine.ts` Lines 1981-1999
+
+```typescript
+// ⚠️ DATA TRANSFORMATION LAYER (BRRRR ONLY)
+const brrrInputs: BRRRRInputs = {
+  purchasePrice: propertyData.purchasePrice,
+  closingCosts: propertyData.closingCosts || 0,
+  downPayment: propertyData.downPayment,
+  interestRate: propertyData.interestRate,
+  loanTerm: propertyData.loanTerm,
+  brrrr: propertyData.brrrr,  // BRRRR-specific object
+  monthlyRent: propertyData.monthlyRent,
+  propertyTaxRate: propertyData.propertyTaxRate,
+  insuranceRate: propertyData.insuranceRate,
+  maintenanceCost: propertyData.maintenanceCost || 0,
+  propertyManagementRate: propertyData.propertyManagementRate || 0,
+  vacancyRate: propertyData.longTermAssumptions?.vacancyRate || 5,
+  monthlyHOA: propertyData.monthlyHOA,         // ✅ Mapped
+  monthlyUtilities: propertyData.monthlyUtilities,  // ✅ Mapped
+  monthlyCapEx: propertyData.monthlyCapEx,     // ✅ Mapped (Issue #63 fix - Jan 2026)
+  tenantTurnoverFees: propertyData.tenantTurnoverFees,
+  longTermAssumptions: propertyData.longTermAssumptions
+};
+
+// ⚠️ CRITICAL: If you add a new field to BasePropertyData,
+// you MUST add it to this mapping or BRRRR won't receive it!
+```
+
+**Layer 2C: Multi-Family - No Mapping (Direct Access)**
+- MultiFamilyAnalyzer gets full `convertedData`
+- No transformation, no field loss ✅
+
+---
+
+#### Field Preservation Table
+
+| Field | Layer 1 (convertWizardData) | Buy & Hold (Direct) | BRRRR (Mapped) | Multi-Family (Direct) |
+|-------|----------------------------|---------------------|----------------|----------------------|
+| `purchasePrice` | ✅ Preserved | ✅ Available | ✅ Mapped | ✅ Available |
+| `downPayment` | ✅ Preserved | ✅ Available | ✅ Mapped | ✅ Available |
+| `monthlyHOA` | ✅ Preserved (line 293) | ✅ Available | ✅ Mapped (line 1994) | ✅ Available |
+| `monthlyUtilities` | ✅ Preserved (line 293) | ✅ Available | ✅ Mapped (line 1995) | ✅ Available |
+| `monthlyCapEx` | ✅ Preserved (line 293) | ✅ Available | ✅ Mapped (line 1996) ⚠️ Issue #63 fix | ✅ Available |
+| `brrrr` (object) | ✅ Preserved | N/A | ✅ Mapped | N/A |
+| `units` (MF) | ✅ Preserved | N/A | N/A | ✅ Available |
+
+**Key Insight**: Only BRRRR has a data transformation layer where fields can be dropped if not explicitly mapped.
+
+---
+
+#### Issue #63 Example: monthlyCapEx Mapping Bug (January 2026)
+
+**Bug**: `monthlyCapEx` field not mapped in BRRRRInputs interface
+
+**Impact**:
+- ✅ Buy & Hold: Worked fine (direct access to dealData)
+- ✅ Multi-Family: Worked fine (direct access to dealData)
+- ❌ BRRRR: Field missing → operating expenses understated by $505/month
+
+**Root Cause**:
+```typescript
+// BEFORE FIX (Bug):
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyHOA: propertyData.monthlyHOA, ✅
+  monthlyUtilities: propertyData.monthlyUtilities, ✅
+  // monthlyCapEx: propertyData.monthlyCapEx,  ❌ MISSING!
+  tenantTurnoverFees: propertyData.tenantTurnoverFees, ✅
+};
+
+// RESULT: BRRRR Analyzer fell back to default calculation
+// Operating expenses: $1,134 (wrong) vs $1,639 (correct)
+// Cash flow: +$106 (wrong sign!) vs -$39 (correct)
+
+// AFTER FIX (January 2026):
+const brrrInputs: BRRRRInputs = {
+  // ... other fields
+  monthlyCapEx: propertyData.monthlyCapEx, ✅ FIXED
+};
+```
+
+**Lesson**: When adding fields to `BasePropertyData`, remember to add them to BRRRRInputs mapping for BRRRR.
+
+---
+
+#### Why Does BRRRR Use Different Architecture?
+
+**Historical Context**: BRRRR implemented December 2025 (commit `29207eb`)
+
+**BRRRR-Specific Requirements**:
+1. **Multi-Phase Analysis**: Purchase → Rehab → Seasoning → Refinance → Post-Refi Hold
+2. **Strategy-Specific Scoring**: 70% Rule validation, capital recovery calculation
+3. **Different Verdict Criteria**: Based on capital recovery, not just cash flow
+4. **Specialized Interface**: BRRRRInputs designed for BRRRR calculations
+
+**Architectural Decision**: Investment Decision Engine as orchestrator
+- Receives dealData from controller
+- Transforms to BRRRRInputs (strategy-specific interface)
+- Calls BRRRR Analyzer
+- Generates BRRRR-specific verdict
+
+**Trade-offs**:
+- ✅ BRRRR logic isolated and maintainable
+- ✅ BRRRR verdicts use appropriate scoring
+- ❌ Data transformation layer can drop fields (Issue #63 example)
+- ❌ Architectural inconsistency vs Buy & Hold
+- ❌ More complex debugging
+
+**Future Consideration**: Refactor to match Buy & Hold pattern (tracked in `/docs/TECHNICAL_ARCHITECTURE_BACKLOG.md`) after BRRRR is production-stable.
+
+---
+
 ### V3.0 Professional Assessment Integration (August 30, 2025)
 
 **Critical V3.0 Enhancements Applied**: The system now includes professional-grade Deal Quality scoring and comprehensive portfolio intelligence.
