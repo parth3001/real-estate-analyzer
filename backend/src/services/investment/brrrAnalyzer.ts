@@ -650,9 +650,12 @@ export class BRRRRAnalyzer {
      *
      * Note: CapEx added in Issue #55 fix (was missing $156/month)
      */
+    // P1 FIX (2026-01-12): Remove monthlyVacancy from operating expenses
+    // Vacancy is "above the line" EGI adjustment, NOT an operating expense
+    // This matches Issue #67 fix (management fee removal) and BiggerPockets methodology
     const monthlyOperatingExpenses = monthlyPropertyTax + monthlyInsurance +
                                       monthlyMaintenance + // Management fee removed (Issue #67)
-                                      monthlyVacancy + monthlyCapEx +  // ← ADDED for Issue #55
+                                      monthlyCapEx +  // ← ADDED for Issue #55
                                       monthlyHOA + monthlyUtilities +
                                       monthlyTurnoverCosts;
 
@@ -666,7 +669,8 @@ export class BRRRRAnalyzer {
 
     // NOI and DSCR (Industry Standard: EGI deducts vacancy + management "above the line")
     const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy - monthlyManagement;
-    const annualNOI = (effectiveGrossIncome - (monthlyOperatingExpenses - monthlyVacancy)) * 12;
+    // P1 FIX (2026-01-12): Simplified NOI formula (vacancy no longer in operating expenses)
+    const annualNOI = (effectiveGrossIncome - monthlyOperatingExpenses) * 12;
     const annualDebtService = newMonthlyPayment * 12;
     const postRefiDSCR = FinancialCalculations.calculateDSCR(annualNOI, annualDebtService);
 
