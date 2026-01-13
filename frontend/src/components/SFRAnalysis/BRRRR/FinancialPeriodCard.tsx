@@ -112,16 +112,6 @@ export const FinancialPeriodCard: React.FC<FinancialPeriodCardProps> = ({
                   emphasis="normal"
                 />
               )}
-              {metrics.expenseBreakdown.propertyManagement !== undefined && (
-                <MetricRow
-                  label="Property Management"
-                  value={metrics.expenseBreakdown.propertyManagement}
-                  format="currency"
-                  isExpense={true}
-                  showBorder={false}
-                  emphasis="normal"
-                />
-              )}
             </Box>
           )}
 

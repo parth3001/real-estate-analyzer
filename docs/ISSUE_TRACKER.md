@@ -1,11 +1,197 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-01-08
+**Last Updated**: 2026-01-12
 
 ---
 
 ## 🟡 **ACTIVE ISSUES** (2026-01-12)
+
+### Issue #72: Post-Refinance Cash Flow Calculation Discrepancy
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Calculation Accuracy)
+**Reported**: 2026-01-12 (McKinney TX UAT Validation - Second Test)
+**Component**: Backend - brrrAnalyzer.ts Post-Refinance Metrics
+**Category**: Financial Calculation Variance
+**Affects**: BRRRR Post-Refinance Cash Flow, Cash-on-Cash Return
+
+**Description**:
+Post-refinance monthly cash flow shows $544/month, but manual calculation suggests ~$351/month ($193 difference). This affects the calculated Cash-on-Cash return of 145.6%.
+
+**Test Case**:
+```
+McKinney TX Property:
+Monthly Rent: $3,200
+Vacancy (5%): $160
+Management (8% self-managed): $0
+Operating Expenses: $1,029
+New Mortgage (9%, $206,250): $1,660
+
+Platform Calculation:
+Cash Flow: $544/month
+
+Expected Calculation:
+EGI: $3,200 - $160 - $0 = $3,040
+Cash Flow: $3,040 - $1,029 - $1,660 = $351
+
+Difference: $544 - $351 = $193/month
+```
+
+**Business Impact**:
+- **Decision Confidence**: $193/month difference ($2,316/year) affects investment decisions
+- **Return Metrics**: Cash-on-Cash 145.6% vs expected ~94% (significant variance)
+- **Professional Credibility**: CPAs may question calculation methodology
+
+**Investigation Needed**:
+1. Verify operating expenses breakdown includes all items (CapEx, HOA, Utilities)
+2. Check if vacancy is being applied correctly in post-refi calculation
+3. Validate EGI calculation in post-refinance metrics
+4. Review BRRRRFinancialComparison.tsx data flow from backend
+
+**Estimated Effort**: 2-3 hours investigation + potential fix
+
+---
+
+### Issue #73: Post-Refinance DSCR Calculation Variance
+**Status**: 🔴 OPEN
+**Priority**: P3 - LOW (Informational Metric)
+**Reported**: 2026-01-12 (McKinney TX UAT Validation - Second Test)
+**Component**: Backend - brrrAnalyzer.ts DSCR Calculation
+**Category**: Financial Metric Variance
+**Affects**: BRRRR Post-Refinance DSCR
+
+**Description**:
+Post-refinance DSCR shows 1.08x, but expected calculation suggests ~1.21x based on displayed NOI and mortgage payment.
+
+**Test Case**:
+```
+McKinney TX Property:
+Monthly Rent: $3,200
+Vacancy (5%): $160
+Management: $0
+Operating Expenses: $1,029
+New Mortgage: $1,660
+
+Platform Calculation:
+DSCR: 1.08x
+
+Expected Calculation:
+Monthly NOI: $3,200 - $160 - $0 - $1,029 = $2,011
+DSCR: $2,011 / $1,660 = 1.21x
+
+Difference: 1.21x - 1.08x = 0.13x variance
+```
+
+**Business Impact**:
+- **Low Priority**: DSCR informational, not primary decision metric for BRRRR
+- **Lender Review**: May cause confusion if user shows to lender (1.08x vs 1.21x)
+- **Minor**: DSCR >1.0 in both cases (passes lender requirements)
+
+**Investigation Needed**:
+1. Verify NOI calculation used for DSCR (annual vs monthly)
+2. Check if DSCR uses different mortgage payment than displayed
+3. Validate DSCR formula implementation
+
+**Estimated Effort**: 1-2 hours investigation
+
+---
+
+### Issue #74: Year 10 Exit Scenario Wealth Calculation High Variance
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Long-Term Projections)
+**Reported**: 2026-01-12 (McKinney TX UAT Validation - Second Test)
+**Component**: Backend - brrrAnalyzer.ts Exit Scenario Calculations
+**Category**: Projection Calculation Variance
+**Affects**: BRRRR Tab 4 - Long-Term Analysis Exit Scenarios
+
+**Description**:
+Year 10 exit scenario shows Total Wealth Created of $416,759, but rough estimate suggests ~$178,857 (2.3x difference). This requires detailed year-by-year validation to confirm accuracy.
+
+**Test Case**:
+```
+McKinney TX Property:
+Initial Investment (Net): $72,154
+Property Value Year 10: $369,577 (3% appreciation from $275K ARV)
+
+Platform Calculation:
+Total Wealth Created: $416,759
+IRR: 7.1%
+Total Return: 109.5%
+
+Rough Expected:
+Cumulative Cash Flow (10 years): $544 × 120 = $65,280
+Mortgage Paydown: ~$19,000
+Appreciation: $369,577 - $275,000 = $94,577
+Total Wealth: $65,280 + $19,000 + $94,577 = $178,857
+
+Difference: $416,759 - $178,857 = $237,902
+```
+
+**Business Impact**:
+- **User Expectations**: Large variance may indicate calculation error or rough estimate incorrect
+- **Investment Decisions**: Users rely on exit scenarios for hold period planning
+- **Professional Review**: CPA may question 109.5% total return vs expected ~148%
+
+**Investigation Needed**:
+1. Perform detailed year-by-year manual validation against backend projections
+2. Verify cumulative cash flow calculation accounts for rent increases (3% annual)
+3. Check if platform includes equity buildup, tax benefits, or other wealth components
+4. Review ExitScenario interface and calculation methodology
+
+**Estimated Effort**: 3-4 hours detailed validation
+
+---
+
+### Issue #71: BRRRR Management Fee Displays in Operating Expenses (Frontend Display Bug)
+**Status**: ✅ RESOLVED & VALIDATED (2026-01-12)
+**Priority**: P0 - CRITICAL (UAT Blocker)
+**Reported**: 2026-01-12 (McKinney TX UAT Validation)
+**Resolved**: 2026-01-12 (Same day)
+**Validated**: 2026-01-12 (Second McKinney TX UAT - Self-Managed Property)
+**Discovered By**: Business Expert - UAT Manual Validation
+**Fixed By**: Senior Full-Stack Engineer
+**Component**: Frontend - FinancialPeriodCard.tsx (Lines 115-124 removed)
+**Category**: Display Logic Error (Backend calculations already correct)
+**Affects**: BRRRR Tab 2 (Financial Details) - Operating Expenses Breakdown
+
+**Description**:
+Property Management fee ($260/month) displayed in "Monthly Operating Expenses" breakdown despite backend correctly treating it as "above the line" revenue deduction. Backend calculations were already correct per P0 Fix #1 (Line 351 in brrrAnalyzer.ts), but frontend component still rendered the management fee display.
+
+**Business Impact**:
+- **UAT Failed**: McKinney TX validation showed management in expenses when it shouldn't
+- **User Confusion**: Displays contradicted BiggerPockets methodology
+- **Display Inconsistency**: Total operating expenses correct ($1,057) but breakdown incorrect
+
+**Root Cause**:
+FinancialPeriodCard.tsx Lines 115-124 rendered property management MetricRow regardless of backend accounting treatment.
+
+**Fix Applied**:
+```typescript
+// REMOVED Lines 115-124 from FinancialPeriodCard.tsx
+{metrics.expenseBreakdown.propertyManagement !== undefined && (
+  <MetricRow
+    label="Property Management"
+    value={metrics.expenseBreakdown.propertyManagement}
+    format="currency"
+    isExpense={true}
+    showBorder={false}
+    emphasis="normal"
+  />
+)}
+```
+
+**UAT Validation Results** (2026-01-12 - Second Test):
+✅ **Initial Hold Period**: Operating expenses show only Tax ($292), Insurance ($100), Maintenance ($146) - NO management fee displayed
+✅ **Post-Refinance Period**: Operating expenses show only Tax ($292), Insurance ($100), Maintenance ($146) - NO management fee displayed
+✅ **Total Operating Expenses**: $1,029 calculated correctly in both periods
+✅ **No Display Regression**: All other financial metrics display correctly
+
+**Test Property**: 12345 Main St, McKinney TX (Self-managed: 8% = $0/month)
+**Result**: Management fee correctly hidden even when value = $0
+
+**Status**: **PRODUCTION READY** ✅
+
+---
 
 ### Issue #70: BRRRR Calculation Assumptions Not Disclosed to Users (Transparency Gap)
 **Status**: 🔴 OPEN
