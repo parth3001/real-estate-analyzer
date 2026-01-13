@@ -321,6 +321,7 @@ export class BRRRRAnalyzer {
     );
 
     const monthlyPropertyTax = (inputs.purchasePrice * inputs.propertyTaxRate / 100) / 12;
+    // User Decision (2026-01-12): Use whatever user provides for insurance input
     const monthlyInsurance = (inputs.purchasePrice * inputs.insuranceRate / 100) / 12;
     const monthlyMaintenance = inputs.maintenanceCost / 12;
     const monthlyUtilities = inputs.monthlyUtilities ?? 0;
@@ -343,8 +344,12 @@ export class BRRRRAnalyzer {
     // CRITICAL: No vacancy during seasoning period
     // Property must be tenant-occupied to qualify for refinance
     // Vacancy rate is used for POST-refinance cash flow projections only
+    //
+    // P0 FIX (2026-01-12): Remove propertyManagement from holding costs
+    // Management fee is "above the line" - deducted from gross rent (line 352)
+    // Including it here causes double-counting (BiggerPockets validation)
     const totalHoldingCosts = mortgagePayments + propertyTax + insurance +
-                              utilities + maintenance + propertyManagement + hoa;
+                              utilities + maintenance + hoa;
 
     // Rental income during seasoning period
     const grossRentalIncome = inputs.monthlyRent * months;
@@ -395,7 +400,8 @@ export class BRRRRAnalyzer {
     );
 
     const cashOutProceeds = newLoanAmount - existingLoanBalance;
-    const refinanceClosingCosts = newLoanAmount * 0.02; // 2% estimate
+    // P0 FIX (2026-01-12): BiggerPockets standard is 2.5%, not 2%
+    const refinanceClosingCosts = newLoanAmount * 0.025; // 2.5% BiggerPockets standard
     const netCashOut = cashOutProceeds - refinanceClosingCosts;
 
     return {

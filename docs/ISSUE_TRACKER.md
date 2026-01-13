@@ -5,7 +5,48 @@
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-01-11)
+## 🟡 **ACTIVE ISSUES** (2026-01-12)
+
+### Issue #70: BRRRR Calculation Assumptions Not Disclosed to Users (Transparency Gap)
+**Status**: 🔴 OPEN
+**Priority**: P1 - HIGH (Trust & Professional Credibility)
+**Reported**: 2026-01-12
+**Component**: Frontend - Analysis Results Display + Backend calculationAssumptions
+**Category**: User Experience - Transparency & Trust
+**Affects**: ALL BRRRR analyses
+
+**Description**:
+Platform uses default assumptions and calculated parameters (e.g., 2.5% refinance closing costs) that are not disclosed to users in analysis results. Users cannot see what assumptions were used, reducing transparency and professional credibility.
+
+**Business Impact**:
+- **Trust Issue**: Users don't know what defaults were applied vs their inputs
+- **Professional Review**: CPAs/advisors need to see all assumptions
+- **Decision Confidence**: Users can't verify conservative/realistic assumptions
+- **Competitive Gap**: BiggerPockets shows all calculation parameters
+
+**Examples of Hidden Parameters**:
+1. **Refinance Closing Costs**: 2.5% default (not shown)
+2. **Vacancy During Seasoning**: 0% assumption (not disclosed)
+3. **Capital Deployed Method**: Method A - BiggerPockets (not explained)
+4. **Management Fee**: "Above the line" EGI treatment (not shown)
+
+**Proposed Solution**:
+Add expandable "Calculation Assumptions" section to BRRRR results:
+```
+📋 Assumptions Used
+━━━━━━━━━━━━━━━━━━
+Refinance Closing Costs: 2.5% ($5,156)
+Vacancy During Seasoning: 0% (tenant required)
+Capital Method: BiggerPockets net capital
+Management Fee: Deducted from gross rent
+Refinance LTV: 75% of ARV
+```
+
+**Estimated Effort**: 4-6 hours (2h backend, 2-4h frontend)
+
+---
+
+## 🟡 **RESOLVED ISSUES** (2026-01-11)
 
 ### Issue #67: BRRRR NOI Calculation Uses Wrong Accounting Method (P0 CRITICAL - Phase 2c)
 **Status**: ✅ RESOLVED (2026-01-11)
