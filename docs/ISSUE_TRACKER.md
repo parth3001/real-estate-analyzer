@@ -1,11 +1,11 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-01-12
+**Last Updated**: 2026-01-14
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-01-12)
+## 🟡 **ACTIVE ISSUES** (2026-01-14)
 
 ### Issue #72: Post-Refinance Cash Flow Calculation Discrepancy
 **Status**: 🔴 OPEN
@@ -229,6 +229,100 @@ Refinance LTV: 75% of ARV
 ```
 
 **Estimated Effort**: 4-6 hours (2h backend, 2-4h frontend)
+
+---
+
+### Issue #75: No Strategy Indicator on Analysis Results Page & Saved Properties List
+**Status**: ✅ RESOLVED
+**Priority**: P2 - MEDIUM (User Experience)
+**Reported**: 2026-01-14
+**Resolved**: 2026-01-14 (same day)
+**Component**: Frontend - Analysis Results Display + Saved Properties List
+**Category**: User Experience - Information Clarity
+**Affects**: ALL analyses (Buy & Hold, BRRRR, House Hacking, etc.)
+
+**Description**:
+When viewing analysis results or saved properties list, there was no visual indicator showing which investment strategy was selected (Buy & Hold, BRRRR, House Hacking, etc.). Users had to remember what they selected or scroll through inputs to determine the strategy context.
+
+**User Impact**:
+- **Confusion**: Users viewing saved analyses didn't know the strategy context
+- **Multiple Tabs**: When comparing multiple properties, couldn't tell which strategy each used
+- **Screenshots**: Shared analysis screenshots didn't show the strategy
+- **Professional Review**: CPAs/partners reviewing analysis needed strategy context
+- **Mobile**: Action buttons hidden on mobile viewport, debug panel visible in production
+
+**Example Scenarios**:
+1. User analyzes same property with Buy & Hold vs BRRRR → Couldn't distinguish in results
+2. User saves 10 analyses → Had to remember which strategy each used
+3. User shares screenshot with partner → Partner didn't know if it's Buy & Hold or BRRRR
+4. User returns to saved analysis 1 week later → No visual reminder of strategy
+
+**Solution Implemented** (Commit ceafff7):
+
+**1. Strategy Badge Component** (AnalysisResults.tsx)
+- Created `/frontend/src/components/common/StrategyBadge.tsx` (173 lines)
+- Displays strategy with icon + label + description
+- Color-coded: Blue (Buy & Hold), Purple (BRRRR), Green (House Hacking), Orange (Fix & Flip)
+- Placement: Below Investment Decision Hero, above key metrics
+- Responsive: Full details desktop, compact mobile
+
+**2. Strategy Icons** (SavedProperties.tsx)
+- Created `/frontend/src/utils/strategyHelpers.ts` (151 lines) - shared utility
+- Property icon circles now color-coded by strategy
+- Desktop: 64x64px colored circles
+- Mobile: 40x40px colored circles (previously hidden)
+- Graceful fallback: Gray icons for MF properties and legacy data
+
+**3. Mobile Action Buttons** (SFRAnalysis.tsx)
+- Fixed hidden Update Deal, Edit Property, Add to Pipeline buttons
+- Responsive Stack: Vertical on mobile (<600px), horizontal on desktop (≥600px)
+- Touch-friendly: 48px minimum height for mobile accessibility
+
+**4. Production Cleanup**
+- Removed green debug panel from SFRAnalysis.tsx (40 lines deleted)
+
+**Files Changed**:
+- ✅ `/frontend/src/components/common/StrategyBadge.tsx` (NEW - 173 lines)
+- ✅ `/frontend/src/utils/strategyHelpers.ts` (NEW - 151 lines)
+- ✅ `/frontend/src/components/SFRAnalysis/AnalysisResults.tsx` (+8 lines)
+- ✅ `/frontend/src/pages/SavedProperties.tsx` (+49 -38 lines)
+- ✅ `/frontend/src/pages/SFRAnalysis.tsx` (+56 -61 lines)
+
+**Testing**:
+- ✅ Tested on actual mobile device (iPhone)
+- ✅ Strategy badge visible on Analysis Results page
+- ✅ Strategy icons visible on Saved Properties list
+- ✅ Action buttons accessible on mobile
+- ✅ No debug panel artifacts
+- ✅ Desktop regression testing passed
+
+**Business Impact**:
+- Mobile users (40%+ traffic) can now access all functionality
+- Strategy differentiation improves portfolio management UX
+- Professional appearance with debug cleanup
+- Consistent design system (Apple HIG principles)
+
+**Resolution**: ✅ COMPLETE
+
+Implemented comprehensive strategy indicator system across both Analysis Results and Saved Properties pages. Solution includes:
+- Reusable StrategyBadge component with icon + color coding
+- Strategy-aware property icons on Saved Properties list
+- Mobile-responsive design (vertical stack on mobile, horizontal on desktop)
+- Shared utility for consistent color/icon configuration
+- Graceful handling of legacy data and Multi-Family properties
+
+**Git Commit**: ceafff7
+**Implementation Time**: 3.5 hours (including planning, implementation, testing)
+**Actual vs Estimated**: Exceeded scope - implemented both analysis results AND saved properties list with mobile improvements
+- Improves user experience significantly
+- Quick win with high user impact
+- Enhances professional appearance
+
+**Related Issues**: None
+
+**Screenshots Needed**: (To be added during implementation)
+- Before: Analysis results without indicator
+- After: Analysis results with strategy badge
 
 ---
 
