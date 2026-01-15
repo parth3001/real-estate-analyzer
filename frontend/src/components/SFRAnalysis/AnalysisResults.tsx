@@ -46,6 +46,7 @@ import IntelligenceMultiplier from './IntelligenceMultiplier';
 import InvestmentDecisionHero from './InvestmentDecisionHero';
 import SimplePortfolioSelector from './SimplePortfolioSelector';
 import EducationalModal from '../common/EducationalModal';
+import StrategyBadge from '../common/StrategyBadge';
 // Tax components replaced with educational versions
 import TaxEducationSummary from '../AnalysisResults/TaxEducationSummary';
 // Story 4.2: Unit Mix Analysis Tab
@@ -1006,6 +1007,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 propertyData={propertyData}
               />
             )}
+
+            {/* Issue #75: Strategy Indicator Badge - Shows which investment strategy is being analyzed */}
+            <Box sx={{ mb: 3 }}>
+              <StrategyBadge
+                strategy={analysis?.strategy || propertyData?.strategy || 'buy-hold'}
+              />
+            </Box>
 
             {/* Portfolio Context removed - now shown in Investment Decision Hero tabs */}
 

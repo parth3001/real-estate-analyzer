@@ -26,6 +26,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import HomeIcon from '@mui/icons-material/Home';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent } from '../utils/formatters';
+import { getStrategyIconConfig } from '../utils/strategyHelpers';
 
 interface SavedProperty {
   _id: string;
@@ -410,25 +411,35 @@ const SavedProperties: React.FC = () => {
                   }
                 }}
               >
-                {/* Placeholder for future property image (64x64px) */}
-                <Box
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    flexShrink: 0,
-                    backgroundColor: '#F2F2F7',
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    // Mobile: hide placeholder
-                    '@media (max-width: 900px)': {
-                      display: 'none'
-                    }
-                  }}
-                >
-                  <HomeIcon sx={{ fontSize: 28, color: '#C7C7CC' }} />
-                </Box>
+                {/* Issue #75: Strategy-aware property icon (64x64px desktop, 40x40px mobile) */}
+                {(() => {
+                  const iconConfig = getStrategyIconConfig(
+                    property.propertyType,
+                    property.investmentStrategy || property.strategy
+                  );
+                  const Icon = iconConfig.Icon;
+
+                  return (
+                    <Box
+                      sx={{
+                        width: { xs: 40, md: 64 },
+                        height: { xs: 40, md: 64 },
+                        flexShrink: 0,
+                        backgroundColor: iconConfig.bgColor,
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                          transform: 'scale(1.05)'
+                        }
+                      }}
+                    >
+                      <Icon sx={{ fontSize: { xs: 20, md: 28 }, color: iconConfig.color }} />
+                    </Box>
+                  );
+                })()}
 
                 {/* Verdict Badge */}
                 <Box sx={{ width: 110, flexShrink: 0 }}>
