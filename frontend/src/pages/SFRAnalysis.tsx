@@ -820,7 +820,12 @@ const SFRAnalysis: React.FC = () => {
         {/* Page Header */}
         <Box sx={{ mb: 4 }}>
           <AppleCard padding="large">
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={3}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+              spacing={3}
+            >
               <Box sx={{ flex: 1 }}>
                 {/* Dynamic Title: Property Address when analysis exists, generic when input */}
                 {activeSection === 'results' && propertyData?.propertyAddress ? (
