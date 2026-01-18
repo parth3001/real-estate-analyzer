@@ -403,21 +403,25 @@ const SampleAnalysisPage: React.FC = () => {
                   width: { xs: '100%', sm: 'auto' }
                 }}
               >
-                <AppleButton
-                  variant={selectedStrategy === 'buy-hold' ? 'primary' : 'secondary'}
-                  onClick={() => handleStrategyChange('buy-hold')}
-                  sx={{ flex: 1, minHeight: 48 }}
-                >
-                  Buy & Hold
-                </AppleButton>
+                <Box sx={{ flex: 1 }}>
+                  <AppleButton
+                    variant={selectedStrategy === 'buy-hold' ? 'primary' : 'secondary'}
+                    onClick={() => handleStrategyChange('buy-hold')}
+                    fullWidth
+                  >
+                    Buy & Hold
+                  </AppleButton>
+                </Box>
 
-                <AppleButton
-                  variant={selectedStrategy === 'brrrr' ? 'primary' : 'secondary'}
-                  onClick={() => handleStrategyChange('brrrr')}
-                  sx={{ flex: 1, minHeight: 48 }}
-                >
-                  BRRRR
-                </AppleButton>
+                <Box sx={{ flex: 1 }}>
+                  <AppleButton
+                    variant={selectedStrategy === 'brrrr' ? 'primary' : 'secondary'}
+                    onClick={() => handleStrategyChange('brrrr')}
+                    fullWidth
+                  >
+                    BRRRR
+                  </AppleButton>
+                </Box>
               </Stack>
             </Box>
           )}
