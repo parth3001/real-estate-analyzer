@@ -1530,17 +1530,28 @@ export const getSampleSFR = (_req: Request, res: Response): void => {
  */
 export const getSampleAnalysis = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Support strategy query parameter: /sample-analysis?strategy=brrrr
-    const strategy = req.query.strategy as string;
+    // Support both propertyType and strategy query parameters
+    // Examples: ?propertyType=mf | ?propertyType=sfr&strategy=brrrr | ?strategy=brrrr (backward compatible)
+    const propertyType = req.query.propertyType as string || 'sfr';
+    const strategy = req.query.strategy as string || 'buy-hold';
 
-    // Sample property IDs by strategy
+    // Sample property IDs by property type and strategy
     const SAMPLE_DEALS = {
-      'buy-hold': '6934e9689d4a338e22720233', // Charlotte property - Buy & Hold
-      'brrrr': '69540f21b1d42cdaf0cc3d20'      // Dallas property - BRRRR
+      'sfr-buy-hold': '6934e9689d4a338e22720233', // Charlotte property - Buy & Hold
+      'sfr-brrrr': '69540f21b1d42cdaf0cc3d20',    // Dallas property - BRRRR
+      'mf': '696c31694bf2c626338f31a4'            // Multi-Family property
     };
 
-    // Default to Buy & Hold if no strategy specified or invalid strategy
-    const sampleDealId = SAMPLE_DEALS[strategy as keyof typeof SAMPLE_DEALS] || SAMPLE_DEALS['buy-hold'];
+    // Route based on property type first, then strategy
+    let sampleDealId: string;
+
+    if (propertyType === 'mf') {
+      sampleDealId = SAMPLE_DEALS['mf'];
+    } else {
+      // SFR - use strategy to determine property
+      const key = `sfr-${strategy}` as keyof typeof SAMPLE_DEALS;
+      sampleDealId = SAMPLE_DEALS[key] || SAMPLE_DEALS['sfr-buy-hold'];
+    }
 
     const deal = await dealService.getDealById(sampleDealId);
 
@@ -1550,7 +1561,7 @@ export const getSampleAnalysis = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    logger.info(`Returning ${strategy || 'buy-hold'} sample analysis for SEO landing page`);
+    logger.info(`Returning ${propertyType} ${propertyType === 'sfr' ? strategy : ''} sample analysis for SEO landing page`);
     res.json(deal);
   } catch (error) {
     logger.error('Error fetching sample analysis:', error);

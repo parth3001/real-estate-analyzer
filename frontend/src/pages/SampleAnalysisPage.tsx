@@ -23,7 +23,8 @@ import {
   Bathtub as BathIcon,
   SquareFoot as SquareFootIcon,
   WarningAmber as WarningAmberIcon,
-  Share as ShareIcon
+  Share as ShareIcon,
+  Apartment as ApartmentIcon
 } from '@mui/icons-material';
 import {
   Facebook as FacebookIcon,
@@ -40,7 +41,7 @@ import { appleColors, appleShadows, appleBorderRadius } from '../theme/appleDesi
 import { formatCurrency } from '../utils/formatters';
 import analyzrLogo from '../assets/analyzr-logo.png';
 import api from '../services/api';
-import type { SFRPropertyData } from '../types/property';
+import type { SFRPropertyData, MultiFamilyPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 
 const SampleAnalysisPage: React.FC = () => {
@@ -49,7 +50,7 @@ const SampleAnalysisPage: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [propertyData, setPropertyData] = useState<SFRPropertyData | null>(null);
+  const [propertyData, setPropertyData] = useState<SFRPropertyData | MultiFamilyPropertyData | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [selectedPropertyType, setSelectedPropertyType] = useState<'sfr' | 'mf'>('sfr');
   const [selectedStrategy, setSelectedStrategy] = useState<'buy-hold' | 'brrrr'>('buy-hold');
@@ -62,61 +63,89 @@ const SampleAnalysisPage: React.FC = () => {
     }
   }, [user, location.pathname, navigate]);
 
-  // Fetch real analysis from backend based on selected strategy
+  // Helper function to construct SFR property data from deal object
+  const constructSFRPropertyData = (deal: any): SFRPropertyData => {
+    return {
+      propertyType: 'SFR',
+      strategy: deal.strategy || selectedStrategy,
+      propertyName: deal.propertyName || '',
+      propertyAddress: deal.propertyAddress,
+      purchasePrice: deal.purchasePrice,
+      downPayment: deal.downPayment,
+      interestRate: deal.interestRate,
+      loanTerm: deal.loanTerm,
+      propertyTaxRate: deal.propertyTaxRate,
+      insuranceRate: deal.insuranceRate,
+      propertyManagementRate: deal.propertyManagementRate,
+      yearBuilt: deal.yearBuilt,
+      closingCosts: deal.closingCosts,
+      capitalInvestments: deal.capitalInvestments,
+      monthlyRent: deal.monthlyRent,
+      squareFootage: deal.squareFootage,
+      bedrooms: deal.bedrooms,
+      bathrooms: deal.bathrooms,
+      maintenanceCost: deal.maintenanceCost,
+      tenantTurnoverFees: deal.tenantTurnoverFees,
+      longTermAssumptions: deal.longTermAssumptions
+    };
+  };
+
+  // Helper function to construct MF property data from deal object
+  const constructMFPropertyData = (deal: any): MultiFamilyPropertyData => {
+    return {
+      propertyType: 'MF',
+      propertyName: deal.propertyName || '',
+      propertyAddress: deal.propertyAddress,
+      purchasePrice: deal.purchasePrice,
+      downPayment: deal.downPayment,
+      interestRate: deal.interestRate,
+      loanTerm: deal.loanTerm,
+      totalUnits: deal.totalUnits,
+      totalSqft: deal.totalSqft,
+      yearBuilt: deal.yearBuilt,
+      buildingType: deal.buildingType,
+      propertyTaxRate: deal.propertyTaxRate,
+      insuranceRate: deal.insuranceRate,
+      propertyManagementRate: deal.propertyManagementRate,
+      maintenanceCostPerUnit: deal.maintenanceCostPerUnit,
+      closingCosts: deal.closingCosts,
+      capitalInvestments: deal.capitalInvestments,
+      unitTypes: deal.unitTypes || [],
+      commonAreaUtilities: deal.commonAreaUtilities || {},
+      longTermAssumptions: deal.longTermAssumptions,
+      tenantTurnoverFees: deal.tenantTurnoverFees
+    };
+  };
+
+  // Fetch real analysis from backend based on selected property type and strategy
   useEffect(() => {
     const fetchSampleAnalysis = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Fetching sample analysis for strategy:', selectedStrategy);
-        // Use configured API service - handles environment URLs automatically
-        // This endpoint is PUBLIC (no auth required) - backend allows anonymous access
-        const response = await api.get(`/deals/sample-analysis?strategy=${selectedStrategy}`);
+        setError(null);
+
+        // Build query params based on property type
+        let queryParams = '';
+        if (selectedPropertyType === 'mf') {
+          queryParams = '?propertyType=mf';
+        } else {
+          queryParams = `?propertyType=sfr&strategy=${selectedStrategy}`;
+        }
+
+        const response = await api.get(`/deals/sample-analysis${queryParams}`);
         const deal = response.data;
-        console.log('📦 Received deal:', {
-          address: deal.propertyAddress?.street,
-          strategy: deal.strategy,
-          verdict: deal.analysis?.investmentDecision?.verdict,
-          primaryReason: deal.analysis?.investmentDecision?.primaryReason
-        });
 
-        // Property data is stored at root level in Deal schema, not nested
-        // Construct SFRPropertyData from deal's root-level fields
-        const constructedPropertyData: SFRPropertyData = {
-          propertyType: 'SFR',
-          strategy: deal.strategy || selectedStrategy, // Include strategy for StrategyBadge
-          propertyName: deal.propertyName || '',
-          propertyAddress: deal.propertyAddress,
-          purchasePrice: deal.purchasePrice,
-          downPayment: deal.downPayment,
-          interestRate: deal.interestRate,
-          loanTerm: deal.loanTerm,
-          propertyTaxRate: deal.propertyTaxRate,
-          insuranceRate: deal.insuranceRate,
-          propertyManagementRate: deal.propertyManagementRate,
-          yearBuilt: deal.yearBuilt,
-          closingCosts: deal.closingCosts,
-          capitalInvestments: deal.capitalInvestments,
-          monthlyRent: deal.monthlyRent,
-          squareFootage: deal.squareFootage,
-          bedrooms: deal.bedrooms,
-          bathrooms: deal.bathrooms,
-          maintenanceCost: deal.maintenanceCost,
-          tenantTurnoverFees: deal.tenantTurnoverFees,
-          longTermAssumptions: deal.longTermAssumptions
-        };
+        // Construct property data based on type
+        let constructedPropertyData;
+        if (selectedPropertyType === 'mf') {
+          constructedPropertyData = constructMFPropertyData(deal);
+        } else {
+          constructedPropertyData = constructSFRPropertyData(deal);
+        }
 
-        // CRITICAL FIX: Deep clone to break ALL object references
-        // JSON parse/stringify creates completely new objects with no shared references
+        // Deep clone analysis to break all object references
         const freshAnalysis = deal.analysis ? JSON.parse(JSON.stringify(deal.analysis)) : null;
 
-        console.log('✅ Setting fresh analysis state:', {
-          verdict: freshAnalysis?.investmentDecision?.verdict,
-          primaryReason: freshAnalysis?.investmentDecision?.primaryReason,
-          cashFlow: freshAnalysis?.monthlyAnalysis?.cashFlow,
-          strategy: freshAnalysis?.strategy
-        });
-
-        // Set state with constructed property data and fresh analysis object
         setPropertyData(constructedPropertyData);
         setAnalysis(freshAnalysis);
         setLoading(false);
@@ -128,7 +157,7 @@ const SampleAnalysisPage: React.FC = () => {
     };
 
     fetchSampleAnalysis();
-  }, [selectedStrategy]);
+  }, [selectedPropertyType, selectedStrategy]);
 
   // Handle strategy change with fade animation
   const handleStrategyChange = (newStrategy: 'buy-hold' | 'brrrr') => {
@@ -140,6 +169,25 @@ const SampleAnalysisPage: React.FC = () => {
       setSelectedStrategy(newStrategy);
       setIsTransitioning(false);
     }, 200); // Match fade-out duration
+  };
+
+  // Handle property type change with fade animation
+  const handlePropertyTypeChange = (newType: 'sfr' | 'mf') => {
+    if (newType === selectedPropertyType) return;
+
+    // Set states immediately, React 19 batches updates
+    setIsTransitioning(true);
+    setSelectedPropertyType(newType);
+
+    // Reset strategy to buy-hold when switching to MF
+    if (newType === 'mf') {
+      setSelectedStrategy('buy-hold');
+    }
+
+    // Clear transition flag after animation completes
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
   };
 
   // Loading state
@@ -376,7 +424,7 @@ const SampleAnalysisPage: React.FC = () => {
           {/* Property Type Selector */}
           <PropertyTypeSelector
             selectedType={selectedPropertyType}
-            onTypeChange={setSelectedPropertyType}
+            onTypeChange={handlePropertyTypeChange}
           />
 
           {/* Strategy Selector - Only show for SFR */}
@@ -525,7 +573,7 @@ const SampleAnalysisPage: React.FC = () => {
           </Box>
 
           {/* Property Overview Card with Fade Animation */}
-          <Fade in={!isTransitioning} timeout={200}>
+          <Fade in={!isTransitioning} timeout={selectedPropertyType === 'mf' ? 300 : 200}>
             <Card
               sx={{
                 borderRadius: appleBorderRadius.xl,
@@ -534,44 +582,41 @@ const SampleAnalysisPage: React.FC = () => {
               }}
             >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                    <LocationIcon sx={{ color: appleColors.gray[600] }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {propertyData.propertyAddress.street}
+              {/* Property Details - Different layout for MF vs SFR */}
+              {selectedPropertyType === 'mf' ? (
+                // Multi-Family Property Overview
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <LocationIcon sx={{ color: appleColors.gray[600] }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {propertyData.propertyAddress.street}
+                      </Typography>
+                    </Stack>
+                    <Typography variant="body1" sx={{ color: appleColors.gray[700], mb: 3 }}>
+                      {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state}{' '}
+                      {propertyData.propertyAddress.zipCode}
                     </Typography>
-                  </Stack>
-                  <Typography variant="body1" sx={{ color: appleColors.gray[700], mb: 3 }}>
-                    {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state}{' '}
-                    {propertyData.propertyAddress.zipCode}
-                  </Typography>
 
-                  <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                    <Chip
-                      icon={<BedIcon />}
-                      label={`${propertyData.bedrooms} bed`}
-                      sx={{ fontWeight: 500 }}
-                    />
-                    <Chip
-                      icon={<BathIcon />}
-                      label={`${propertyData.bathrooms} bath`}
-                      sx={{ fontWeight: 500 }}
-                    />
-                    <Chip
-                      icon={<SquareFootIcon />}
-                      label={`${propertyData.squareFootage?.toLocaleString()} sqft`}
-                      sx={{ fontWeight: 500 }}
-                    />
-                    <Chip
-                      label={`Built ${propertyData.yearBuilt}`}
-                      sx={{ fontWeight: 500 }}
-                    />
-                  </Stack>
-                </Grid>
+                    <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                      <Chip
+                        icon={<ApartmentIcon />}
+                        label={`${(propertyData as MultiFamilyPropertyData).totalUnits} units`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                      <Chip
+                        icon={<SquareFootIcon />}
+                        label={`${(propertyData as MultiFamilyPropertyData).totalSqft?.toLocaleString()} sqft`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                      <Chip
+                        label={`Built ${propertyData.yearBuilt}`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                    </Stack>
+                  </Grid>
 
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Stack spacing={2}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box>
                       <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
                         Purchase Price
@@ -580,27 +625,89 @@ const SampleAnalysisPage: React.FC = () => {
                         {formatCurrency(propertyData.purchasePrice)}
                       </Typography>
                     </Box>
+                  </Grid>
 
-                    <Box>
-                      <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
-                        Monthly Rent
-                      </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 600, color: appleColors.success[600] }}>
-                        {formatCurrency(propertyData.monthlyRent)}/mo
-                      </Typography>
-                    </Box>
-
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Box>
                       <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
                         Monthly Cash Flow
                       </Typography>
                       <Typography variant="h4" sx={{ fontWeight: 600, color: appleColors.success[600] }}>
-                        {formatCurrency(analysis.monthlyAnalysis.cashFlow || 0)}/mo
+                        {formatCurrency(analysis?.monthlyAnalysis?.cashFlow || 0)}/mo
                       </Typography>
                     </Box>
-                  </Stack>
+                  </Grid>
                 </Grid>
-              </Grid>
+              ) : (
+                // Single-Family Property Overview
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <LocationIcon sx={{ color: appleColors.gray[600] }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {propertyData.propertyAddress.street}
+                      </Typography>
+                    </Stack>
+                    <Typography variant="body1" sx={{ color: appleColors.gray[700], mb: 3 }}>
+                      {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state}{' '}
+                      {propertyData.propertyAddress.zipCode}
+                    </Typography>
+
+                    <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                      <Chip
+                        icon={<BedIcon />}
+                        label={`${(propertyData as SFRPropertyData).bedrooms} bed`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                      <Chip
+                        icon={<BathIcon />}
+                        label={`${(propertyData as SFRPropertyData).bathrooms} bath`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                      <Chip
+                        icon={<SquareFootIcon />}
+                        label={`${(propertyData as SFRPropertyData).squareFootage?.toLocaleString()} sqft`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                      <Chip
+                        label={`Built ${propertyData.yearBuilt}`}
+                        sx={{ fontWeight: 500 }}
+                      />
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
+                          Purchase Price
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 600, color: appleColors.gray[900] }}>
+                          {formatCurrency(propertyData.purchasePrice)}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
+                          Monthly Rent
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 600, color: appleColors.success[600] }}>
+                          {formatCurrency((propertyData as SFRPropertyData).monthlyRent)}/mo
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 0.5 }}>
+                          Monthly Cash Flow
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 600, color: appleColors.success[600] }}>
+                          {formatCurrency(analysis?.monthlyAnalysis?.cashFlow || 0)}/mo
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              )}
 
               {/* Key Metrics Preview */}
               <Box
@@ -619,7 +726,7 @@ const SampleAnalysisPage: React.FC = () => {
                       Cap Rate
                     </Typography>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      {analysis.keyMetrics.capRate?.toFixed(1)}%
+                      {analysis?.keyMetrics?.capRate?.toFixed(1)}%
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 6, sm: 3 }}>
@@ -627,7 +734,7 @@ const SampleAnalysisPage: React.FC = () => {
                       IRR (10yr)
                     </Typography>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      {((analysis.keyMetrics.irr || 0) * 100).toFixed(1)}%
+                      {((analysis?.keyMetrics?.irr || 0) * 100).toFixed(1)}%
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 6, sm: 3 }}>
@@ -635,7 +742,7 @@ const SampleAnalysisPage: React.FC = () => {
                       Cash on Cash
                     </Typography>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      {analysis.keyMetrics.cashOnCashReturn?.toFixed(1)}%
+                      {analysis?.keyMetrics?.cashOnCashReturn?.toFixed(1)}%
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 6, sm: 3 }}>
@@ -643,7 +750,7 @@ const SampleAnalysisPage: React.FC = () => {
                       Deal Quality
                     </Typography>
                     <Typography variant="h5" sx={{ fontWeight: 600, color: appleColors.success[600] }}>
-                      {analysis.investmentDecision?.professionalAssessment?.dealQuality || analysis.investmentDecision?.score}/100
+                      {analysis?.investmentDecision?.professionalAssessment?.dealQuality || analysis?.investmentDecision?.score}/100
                     </Typography>
                   </Grid>
                 </Grid>
@@ -724,10 +831,10 @@ const SampleAnalysisPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <Fade in={!isTransitioning} timeout={200}>
+        <Fade in={!isTransitioning} timeout={selectedPropertyType === 'mf' ? 300 : 200}>
           <Box>
             <AnalysisResults
-              key={selectedStrategy}
+              key={`${selectedPropertyType}-${selectedStrategy}`}
               analysis={analysis}
               propertyData={propertyData}
             />

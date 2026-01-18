@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Home as HomeIcon, Apartment as ApartmentIcon } from '@mui/icons-material';
 import { appleColors, appleShadows, appleBorderRadius } from '../../theme/appleDesignSystem';
 
@@ -90,17 +90,24 @@ const PropertyTypeSelector: React.FC<PropertyTypeSelectorProps> = ({
           </CardContent>
         </Card>
 
-        {/* Multi-Family Card (Coming Soon) */}
+        {/* Multi-Family Card */}
         <Card
+          onClick={() => onTypeChange('mf')}
           sx={{
             width: { xs: '100%', md: '240px' },
             height: { xs: '100px', md: '120px' },
-            cursor: 'not-allowed',
-            border: `1px solid ${appleColors.gray[300]}`,
-            backgroundColor: appleColors.gray[50],
+            cursor: selectedType === 'mf' ? 'default' : 'pointer',
+            border: selectedType === 'mf'
+              ? `2px solid ${appleColors.primary[500]}`
+              : `1px solid ${appleColors.gray[300]}`,
+            backgroundColor: selectedType === 'mf' ? 'white' : appleColors.gray[50],
+            boxShadow: selectedType === 'mf' ? appleShadows.md : 'none',
             borderRadius: appleBorderRadius.lg,
-            opacity: 0.7,
-            position: 'relative'
+            transition: 'all 0.2s ease',
+            '&:hover': selectedType !== 'mf' ? {
+              borderColor: appleColors.gray[400],
+              boxShadow: appleShadows.sm
+            } : {}
           }}
         >
           <CardContent
@@ -117,7 +124,7 @@ const PropertyTypeSelector: React.FC<PropertyTypeSelectorProps> = ({
             <ApartmentIcon
               sx={{
                 fontSize: '32px',
-                color: appleColors.gray[400],
+                color: selectedType === 'mf' ? appleColors.primary[500] : appleColors.gray[400],
                 mb: 1
               }}
             />
@@ -126,28 +133,12 @@ const PropertyTypeSelector: React.FC<PropertyTypeSelectorProps> = ({
               sx={{
                 fontSize: { xs: '1rem', md: '1.125rem' },
                 fontWeight: 600,
-                color: appleColors.gray[500],
-                textAlign: 'center',
-                mb: 1
+                color: selectedType === 'mf' ? appleColors.gray[900] : appleColors.gray[600],
+                textAlign: 'center'
               }}
             >
               Multi-Family
             </Typography>
-            <Chip
-              label="COMING SOON"
-              size="small"
-              sx={{
-                backgroundColor: appleColors.warning[500],
-                color: 'white',
-                fontSize: '0.688rem',
-                fontWeight: 700,
-                letterSpacing: '0.5px',
-                height: '20px',
-                '& .MuiChip-label': {
-                  px: 1
-                }
-              }}
-            />
           </CardContent>
         </Card>
       </Box>

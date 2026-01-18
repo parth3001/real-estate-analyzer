@@ -1008,12 +1008,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               />
             )}
 
-            {/* Issue #75: Strategy Indicator Badge - Shows which investment strategy is being analyzed */}
-            <Box sx={{ mb: 3 }}>
-              <StrategyBadge
-                strategy={analysis?.strategy || propertyData?.strategy || 'buy-hold'}
-              />
-            </Box>
+            {/* Issue #75: Strategy Indicator Badge - Shows which investment strategy is being analyzed (SFR only) */}
+            {propertyData?.propertyType === 'SFR' && (
+              <Box sx={{ mb: 3 }}>
+                <StrategyBadge
+                  strategy={analysis?.strategy || propertyData?.strategy || 'buy-hold'}
+                />
+              </Box>
+            )}
 
             {/* Portfolio Context removed - now shown in Investment Decision Hero tabs */}
 
