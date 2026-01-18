@@ -1528,9 +1528,20 @@ export const getSampleSFR = (_req: Request, res: Response): void => {
  * Returns the pre-analyzed Charlotte property deal with complete calculations
  * PUBLIC ENDPOINT - No authentication required
  */
-export const getSampleAnalysis = async (_req: Request, res: Response): Promise<void> => {
+export const getSampleAnalysis = async (req: Request, res: Response): Promise<void> => {
   try {
-    const sampleDealId = '6934e9689d4a338e22720233'; // Charlotte property - real analyzed deal
+    // Support strategy query parameter: /sample-analysis?strategy=brrrr
+    const strategy = req.query.strategy as string;
+
+    // Sample property IDs by strategy
+    const SAMPLE_DEALS = {
+      'buy-hold': '6934e9689d4a338e22720233', // Charlotte property - Buy & Hold
+      'brrrr': '69540f21b1d42cdaf0cc3d20'      // Dallas property - BRRRR
+    };
+
+    // Default to Buy & Hold if no strategy specified or invalid strategy
+    const sampleDealId = SAMPLE_DEALS[strategy as keyof typeof SAMPLE_DEALS] || SAMPLE_DEALS['buy-hold'];
+
     const deal = await dealService.getDealById(sampleDealId);
 
     if (!deal) {
@@ -1539,7 +1550,7 @@ export const getSampleAnalysis = async (_req: Request, res: Response): Promise<v
       return;
     }
 
-    logger.info('Returning sample analysis for SEO landing page');
+    logger.info(`Returning ${strategy || 'buy-hold'} sample analysis for SEO landing page`);
     res.json(deal);
   } catch (error) {
     logger.error('Error fetching sample analysis:', error);

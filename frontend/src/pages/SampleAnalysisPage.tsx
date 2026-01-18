@@ -9,7 +9,8 @@ import {
   Chip,
   Stack,
   Container,
-  CircularProgress
+  CircularProgress,
+  Fade
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -33,6 +34,7 @@ import {
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import StickyHeader from '../components/SampleAnalysis/StickyHeader';
 import PropertyTypeSelector from '../components/SampleAnalysis/PropertyTypeSelector';
+import { AppleButton } from '../components/ui/AppleComponents';
 import { useAuth } from '../contexts/AuthContext';
 import { appleColors, appleShadows, appleBorderRadius } from '../theme/appleDesignSystem';
 import { formatCurrency } from '../utils/formatters';
@@ -50,6 +52,8 @@ const SampleAnalysisPage: React.FC = () => {
   const [propertyData, setPropertyData] = useState<SFRPropertyData | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [selectedPropertyType, setSelectedPropertyType] = useState<'sfr' | 'mf'>('sfr');
+  const [selectedStrategy, setSelectedStrategy] = useState<'buy-hold' | 'brrrr'>('buy-hold');
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Smart redirect: If user is logged in and visiting root path, redirect to dashboard
   useEffect(() => {
@@ -58,19 +62,28 @@ const SampleAnalysisPage: React.FC = () => {
     }
   }, [user, location.pathname, navigate]);
 
-  // Fetch real analysis from backend
+  // Fetch real analysis from backend based on selected strategy
   useEffect(() => {
     const fetchSampleAnalysis = async () => {
       try {
+        setLoading(true);
+        console.log('🔄 Fetching sample analysis for strategy:', selectedStrategy);
         // Use configured API service - handles environment URLs automatically
         // This endpoint is PUBLIC (no auth required) - backend allows anonymous access
-        const response = await api.get('/deals/sample-analysis');
+        const response = await api.get(`/deals/sample-analysis?strategy=${selectedStrategy}`);
         const deal = response.data;
+        console.log('📦 Received deal:', {
+          address: deal.propertyAddress?.street,
+          strategy: deal.strategy,
+          verdict: deal.analysis?.investmentDecision?.verdict,
+          primaryReason: deal.analysis?.investmentDecision?.primaryReason
+        });
 
         // Property data is stored at root level in Deal schema, not nested
         // Construct SFRPropertyData from deal's root-level fields
         const constructedPropertyData: SFRPropertyData = {
           propertyType: 'SFR',
+          strategy: deal.strategy || selectedStrategy, // Include strategy for StrategyBadge
           propertyName: deal.propertyName || '',
           propertyAddress: deal.propertyAddress,
           purchasePrice: deal.purchasePrice,
@@ -92,9 +105,20 @@ const SampleAnalysisPage: React.FC = () => {
           longTermAssumptions: deal.longTermAssumptions
         };
 
-        // Set state with constructed property data and analysis
+        // CRITICAL FIX: Deep clone to break ALL object references
+        // JSON parse/stringify creates completely new objects with no shared references
+        const freshAnalysis = deal.analysis ? JSON.parse(JSON.stringify(deal.analysis)) : null;
+
+        console.log('✅ Setting fresh analysis state:', {
+          verdict: freshAnalysis?.investmentDecision?.verdict,
+          primaryReason: freshAnalysis?.investmentDecision?.primaryReason,
+          cashFlow: freshAnalysis?.monthlyAnalysis?.cashFlow,
+          strategy: freshAnalysis?.strategy
+        });
+
+        // Set state with constructed property data and fresh analysis object
         setPropertyData(constructedPropertyData);
-        setAnalysis(deal.analysis);
+        setAnalysis(freshAnalysis);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching sample analysis:', err);
@@ -104,7 +128,19 @@ const SampleAnalysisPage: React.FC = () => {
     };
 
     fetchSampleAnalysis();
-  }, []);
+  }, [selectedStrategy]);
+
+  // Handle strategy change with fade animation
+  const handleStrategyChange = (newStrategy: 'buy-hold' | 'brrrr') => {
+    if (newStrategy === selectedStrategy) return;
+
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setSelectedStrategy(newStrategy);
+      setIsTransitioning(false);
+    }, 200); // Match fade-out duration
+  };
 
   // Loading state
   if (loading) {
@@ -343,6 +379,49 @@ const SampleAnalysisPage: React.FC = () => {
             onTypeChange={setSelectedPropertyType}
           />
 
+          {/* Strategy Selector - Only show for SFR */}
+          {selectedPropertyType === 'sfr' && (
+            <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: 2,
+                  color: appleColors.gray[600],
+                  fontSize: '0.938rem',
+                  fontWeight: 500
+                }}
+              >
+                Choose Investment Strategy:
+              </Typography>
+
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{
+                  maxWidth: 400,
+                  margin: '0 auto',
+                  width: { xs: '100%', sm: 'auto' }
+                }}
+              >
+                <AppleButton
+                  variant={selectedStrategy === 'buy-hold' ? 'primary' : 'secondary'}
+                  onClick={() => handleStrategyChange('buy-hold')}
+                  sx={{ flex: 1, minHeight: 48 }}
+                >
+                  Buy & Hold
+                </AppleButton>
+
+                <AppleButton
+                  variant={selectedStrategy === 'brrrr' ? 'primary' : 'secondary'}
+                  onClick={() => handleStrategyChange('brrrr')}
+                  sx={{ flex: 1, minHeight: 48 }}
+                >
+                  BRRRR
+                </AppleButton>
+              </Stack>
+            </Box>
+          )}
+
           {/* Social Sharing Section */}
           <Box sx={{ mt: 3, mb: 2, textAlign: 'center' }}>
             <Typography
@@ -441,14 +520,15 @@ const SampleAnalysisPage: React.FC = () => {
             </Stack>
           </Box>
 
-          {/* Property Overview Card */}
-          <Card
-            sx={{
-              borderRadius: appleBorderRadius.xl,
-              boxShadow: appleShadows.xl,
-              mt: 4
-            }}
-          >
+          {/* Property Overview Card with Fade Animation */}
+          <Fade in={!isTransitioning} timeout={200}>
+            <Card
+              sx={{
+                borderRadius: appleBorderRadius.xl,
+                boxShadow: appleShadows.xl,
+                mt: 4
+              }}
+            >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -624,6 +704,7 @@ const SampleAnalysisPage: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
+          </Fade>
         </Container>
       </Box>
 
@@ -639,7 +720,15 @@ const SampleAnalysisPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <AnalysisResults analysis={analysis} propertyData={propertyData} />
+        <Fade in={!isTransitioning} timeout={200}>
+          <Box>
+            <AnalysisResults
+              key={selectedStrategy}
+              analysis={analysis}
+              propertyData={propertyData}
+            />
+          </Box>
+        </Fade>
       </Container>
 
       {/* Educational Disclaimer Banner */}

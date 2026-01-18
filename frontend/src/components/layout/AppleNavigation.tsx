@@ -840,7 +840,7 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}
       >
-        v4.1.0
+        v4.2.0
       </Box>
     </Box>
   );

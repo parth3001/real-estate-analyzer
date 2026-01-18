@@ -39,18 +39,18 @@ const WhatsNewPage: React.FC = () => {
       {/* SEO Meta Tags */}
       <Helmet>
         {/* Primary Meta Tags */}
-        <title>What's New - REanalyzr v4.1 | Latest Features & Updates</title>
+        <title>What's New - REanalyzr v4.2 | BRRRR Strategy Analysis Live</title>
         <meta
           name="title"
-          content="What's New - REanalyzr v4.1 | Latest Features & Updates"
+          content="What's New - REanalyzr v4.2 | BRRRR Strategy Analysis Live"
         />
         <meta
           name="description"
-          content="Discover the latest features in REanalyzr v4.1: Simplified property wizard, unified analysis experience, progressive metrics, and saved properties redesign. See our roadmap for BRRRR & house hacking analysis coming Q1 2026."
+          content="Discover the latest features in REanalyzr v4.2: BRRRR strategy analysis now live! Plus simplified property wizard, unified analysis experience, and more. House hacking coming Q1 2026."
         />
         <meta
           name="keywords"
-          content="real estate software updates, rental property calculator features, investment analysis tools, property analyzer changelog, REanalyzr updates, BRRRR analysis, house hacking calculator, multi-family analysis"
+          content="real estate software updates, rental property calculator features, investment analysis tools, property analyzer changelog, REanalyzr updates, BRRRR analysis calculator, capital recovery rate, house hacking calculator, multi-family analysis, refinance calculator"
         />
 
         {/* Open Graph / Facebook */}
@@ -58,11 +58,11 @@ const WhatsNewPage: React.FC = () => {
         <meta property="og:url" content="https://reanalyzr.com/whats-new" />
         <meta
           property="og:title"
-          content="What's New in REanalyzr v4.1 - Simplified Analysis Experience"
+          content="What's New in REanalyzr v4.2 - BRRRR Strategy Analysis Live"
         />
         <meta
           property="og:description"
-          content="REanalyzr v4.1 brings simplified property input, unified experience for all users, and enhanced property list UX. Coming soon: BRRRR & house hacking analysis."
+          content="REanalyzr v4.2 brings BRRRR strategy analysis with capital recycling metrics. Plus v4.1 simplified wizard and unified experience. House hacking coming Q1 2026."
         />
         <meta property="og:image" content="https://reanalyzr.com/og-image-whats-new.png" />
 
@@ -71,11 +71,11 @@ const WhatsNewPage: React.FC = () => {
         <meta property="twitter:url" content="https://reanalyzr.com/whats-new" />
         <meta
           property="twitter:title"
-          content="What's New in REanalyzr v4.1 - Simplified Analysis Experience"
+          content="What's New in REanalyzr v4.2 - BRRRR Strategy Analysis Live"
         />
         <meta
           property="twitter:description"
-          content="REanalyzr v4.1: Streamlined wizard, unified experience, progressive metrics. BRRRR & house hacking analysis coming Q1 2026."
+          content="REanalyzr v4.2: BRRRR strategy analysis with capital recovery metrics. Streamlined wizard, unified experience, progressive metrics. House hacking coming Q1 2026."
         />
         <meta property="twitter:image" content="https://reanalyzr.com/og-image-whats-new.png" />
 
@@ -90,10 +90,10 @@ const WhatsNewPage: React.FC = () => {
             name: 'REanalyzr',
             applicationCategory: 'FinanceApplication',
             operatingSystem: 'Web',
-            softwareVersion: '4.1.0',
+            softwareVersion: '4.2.0',
             releaseNotes: 'https://reanalyzr.com/whats-new',
             datePublished: '2025-04-01',
-            dateModified: '2025-12-14',
+            dateModified: '2026-01-17',
             description: 'Professional real estate investment analysis platform with AI-powered insights',
             offers: {
               '@type': 'Offer',
@@ -103,6 +103,7 @@ const WhatsNewPage: React.FC = () => {
             featureList: [
               'Simplified Property Wizard',
               'Multi-Family Analysis',
+              'BRRRR Strategy Analysis',
               'Investment Decision Engine',
               'AI-Enhanced Analysis',
               'Portfolio Intelligence',
@@ -116,9 +117,9 @@ const WhatsNewPage: React.FC = () => {
           {JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Article',
-            headline: 'REanalyzr v4.1 Release - Simplified Analysis Experience',
+            headline: 'REanalyzr v4.2 Release - BRRRR Strategy Analysis',
             description:
-              'Version 4.1 brings streamlined property wizard, unified experience, progressive metric disclosure, and enhanced property list UX. Roadmap includes BRRRR and house hacking analysis for Q1 2026.',
+              'Version 4.2 adds BRRRR strategy analysis with capital recovery metrics and post-refi cash flow. Version 4.1 brought simplified wizard and unified experience. House hacking coming Q1 2026.',
             author: {
               '@type': 'Organization',
               name: 'REanalyzr'
@@ -131,8 +132,8 @@ const WhatsNewPage: React.FC = () => {
                 url: 'https://reanalyzr.com/analyzr-logo.png'
               }
             },
-            datePublished: '2025-12-14',
-            dateModified: '2025-12-14',
+            datePublished: '2026-01-17',
+            dateModified: '2026-01-17',
             mainEntityOfPage: {
               '@type': 'WebPage',
               '@id': 'https://reanalyzr.com/whats-new'
@@ -154,7 +155,7 @@ const WhatsNewPage: React.FC = () => {
           We're constantly improving to give you institutional-grade analysis with consumer-grade simplicity
         </Typography>
         <Chip
-          label="Version 4.1 - Latest"
+          label="Version 4.2 - Latest"
           color="primary"
           sx={{ mt: 2, fontSize: '14px', fontWeight: 600, px: 2, py: 1 }}
         />
@@ -163,29 +164,29 @@ const WhatsNewPage: React.FC = () => {
       {/* Latest Release Highlight */}
       <Card sx={{ mb: 6, borderRadius: '24px', overflow: 'hidden', boxShadow: 6 }}>
         <Box sx={{
-          background: `linear-gradient(135deg, ${appleColors.blue[500]} 0%, ${appleColors.blue[600]} 100%)`,
+          background: `linear-gradient(135deg, ${appleColors.orange[500]} 0%, ${appleColors.orange[600]} 100%)`,
           p: 4,
           color: 'white'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <SpeedIcon sx={{ fontSize: 48 }} />
+            <AutoAwesomeIcon sx={{ fontSize: 48 }} />
             <Box>
               <Typography variant="h4" fontWeight={700}>
-                Simplified Wizard & Analysis Experience
+                BRRRR Strategy Analysis
               </Typography>
               <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                Version 4.1 • Released December 2025
+                Version 4.2 • Released January 2026
               </Typography>
             </Box>
           </Box>
         </Box>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" fontWeight={600} gutterBottom>
-            Professional Analysis, Consumer Simplicity
+            Capital Recycling for Infinite Returns
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
-            We dramatically simplified the property input wizard and analysis results page while keeping all the institutional-grade metrics you need.
-            Faster property analysis without sacrificing depth.
+            Analyze Buy, Rehab, Rent, Refinance, Repeat investments with the same institutional-grade metrics
+            you trust for buy-and-hold properties. Model capital recovery and post-refinance cash flow.
           </Typography>
 
           <Grid container spacing={3}>
@@ -193,9 +194,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Streamlined Property Wizard</Typography>
+                  <Typography fontWeight={600}>Capital Recovery Rate</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    4-step guided input with RentCast auto-population. Get from address to analysis in under 5 minutes.
+                    Track how much of your initial investment you recover through cash-out refinance. Target: 70%+
                   </Typography>
                 </Box>
               </Box>
@@ -204,9 +205,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Unified Experience</Typography>
+                  <Typography fontWeight={600}>Post-Refi Cash Flow</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Removed Pro/Learning mode toggle. Everyone gets strategy-aware metrics tailored to their investment approach.
+                    See monthly cash flow after refinancing with higher debt service. Ensure positive cash flow post-refi.
                   </Typography>
                 </Box>
               </Box>
@@ -215,9 +216,9 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Progressive Metric Disclosure</Typography>
+                  <Typography fontWeight={600}>70% Rule Validation</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    3-tier system shows core metrics first, advanced metrics on-demand. See what you need, when you need it.
+                    Automatic check: Purchase + Rehab ≤ 70% of ARV. Know if the deal qualifies for BRRRR before you buy.
                   </Typography>
                 </Box>
               </Box>
@@ -226,19 +227,19 @@ const WhatsNewPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <CheckCircleIcon sx={{ color: appleColors.green[500], flexShrink: 0 }} />
                 <Box>
-                  <Typography fontWeight={600}>Improved Property List UX</Typography>
+                  <Typography fontWeight={600}>Landing Page Sample</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Saved properties list redesigned with responsive layout, IRR column, and better mobile experience.
+                    Try BRRRR analysis on our sample Dallas property. Compare side-by-side with buy-and-hold strategy.
                   </Typography>
                 </Box>
               </Box>
             </Grid>
           </Grid>
 
-          <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
+          <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
             <Typography variant="body2">
-              <strong>What changed:</strong> We listened to investor feedback and removed complexity without removing power.
-              Same professional analysis, 40% less cognitive load.
+              <strong>Live Now:</strong> Visit the homepage and toggle between "Buy & Hold" and "BRRRR" strategies
+              to see how capital recycling transforms your returns.
             </Typography>
           </Alert>
         </CardContent>
@@ -250,6 +251,29 @@ const WhatsNewPage: React.FC = () => {
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* v4.2 */}
+        <Card sx={{ borderRadius: '16px', borderLeft: `4px solid ${appleColors.orange[500]}` }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h6" fontWeight={600}>
+                v4.2 - BRRRR Strategy Analysis
+              </Typography>
+              <Chip label="January 2026" size="small" variant="outlined" color="primary" />
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Analyze Buy, Rehab, Rent, Refinance, Repeat investments with capital recycling metrics and post-refinance cash flow projections.
+            </Typography>
+            <Box component="ul" sx={{ pl: 2, mt: 1, '& li': { mb: 0.5 } }}>
+              <li><Typography variant="body2">Capital Recovery Rate calculation (target: 70%+ of initial investment)</Typography></li>
+              <li><Typography variant="body2">Post-Refinance Cash Flow analysis with updated debt service</Typography></li>
+              <li><Typography variant="body2">70% Rule validation for BRRRR viability check</Typography></li>
+              <li><Typography variant="body2">After-Repair Value (ARV) and refinance scenario modeling</Typography></li>
+              <li><Typography variant="body2">Sample BRRRR analysis on landing page (Dallas, TX property)</Typography></li>
+              <li><Typography variant="body2">Strategy indicator badges throughout analysis results</Typography></li>
+            </Box>
+          </CardContent>
+        </Card>
+
         {/* v4.1 */}
         <Card sx={{ borderRadius: '16px', borderLeft: `4px solid ${appleColors.blue[500]}` }}>
           <CardContent>
@@ -445,12 +469,12 @@ const WhatsNewPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <AutoAwesomeIcon sx={{ fontSize: 32, color: appleColors.orange[500] }} />
                   <Typography variant="h6" fontWeight={600}>
-                    BRRRR & House Hacking Analysis
+                    House Hacking Analysis
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Strategy-specific metrics for Buy, Rehab, Rent, Refinance, Repeat and house hacking investments.
-                  Model renovation costs, after-repair value, refinance scenarios, and live-in rental offsets.
+                  Strategy-specific metrics for owner-occupied rental properties. Model live-in rental offsets,
+                  FHA 3.5% down financing, and reduced qualifying income for house hacking investments.
                 </Typography>
                 <Chip label="Q1 2026" size="small" sx={{ mt: 2 }} />
               </CardContent>
@@ -547,7 +571,7 @@ const WhatsNewPage: React.FC = () => {
           Follow our progress and request features you need.
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Version 4.1.0 • Last updated: December 14, 2025
+          Version 4.2.0 • Last updated: January 17, 2026
         </Typography>
       </Box>
     </Container>
