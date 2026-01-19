@@ -23,6 +23,523 @@
 
 ## 🎯 **P1 - High Priority Features**
 
+### Feature #11: Investment Decision UI - Monetization Hooks
+**Status:** 🔴 Not Started
+**Priority:** P1 - High (Revenue Critical)
+**Added:** January 19, 2026
+**Category:** Monetization / Product Strategy / Conversion Optimization
+
+**Description:**
+Add strategic monetization hooks to the Investment Decision UI to clarify free vs paid tier value proposition and drive Professional tier upgrades. Currently, free users receive full professional analysis (Deal Quality Score, Professional Calibration, AI insights) in their 3 free analyses, leaving unclear upgrade incentives.
+
+**Strategic Business Value:**
+- **Conversion Impact**: Projected increase from 18% → 25% free-to-paid conversion (+39% revenue)
+- **Value Clarity**: Users understand what they're getting free vs what requires upgrade
+- **Professional Positioning**: Premium features positioned as "institutional-grade tools"
+- **Revenue Model Validation**: Test which features drive upgrades (data-driven product decisions)
+
+**Marcus Chen's Strategic Insight:**
+> "If free users get the full 86/100 score, Professional Calibration, AND AI insights in their 3 free analyses, what compels them to upgrade? We're giving away the entire value prop upfront. We need to show the value, then gate deeper insights."
+
+**Current State Issues:**
+- Free tier shows complete professional analysis (score + calibration + AI)
+- No visual differentiation between free and paid features
+- Upgrade CTA only appears after hitting 3-analysis limit
+- No progressive value demonstration during free tier usage
+
+**Functional Requirements:**
+
+1. **Tiered Feature Access:**
+   **Free Tier (3 analyses/month):**
+   - ✅ Deal Quality Score (0-100) with context label
+   - ✅ Basic Investment Analysis text
+   - ✅ Key metrics (Cash Flow, Cap Rate, Cash-on-Cash Return)
+   - 🔒 Professional Calibration (show teaser, gate full view)
+   - 🔒 AI-Enhanced Insights (show 1 insight, gate remaining)
+   - 🔒 Verification Guide (show collapsed, gate expansion)
+
+   **Professional Tier ($49/month):**
+   - ✅ All Free Tier features
+   - ✅ Full Professional Calibration (all 3 metrics with descriptions)
+   - ✅ Complete AI-Enhanced Analysis (all insights + recommendations)
+   - ✅ Full Verification Guide with action items
+   - ✅ Unlimited analyses
+   - ✅ Advanced metrics dashboard
+   - ✅ Portfolio tracking (when implemented)
+
+2. **Visual Monetization Indicators:**
+   **Premium Feature Badges:**
+   ```typescript
+   <Chip
+     icon={<LockIcon />}
+     label="Professional Feature"
+     size="small"
+     sx={{
+       backgroundColor: appleColors.blue[50],
+       color: appleColors.blue[700],
+       border: `1px solid ${appleColors.blue[200]}`,
+     }}
+   />
+   ```
+
+   **Blur Effect for Locked Content:**
+   ```typescript
+   <Box
+     sx={{
+       filter: 'blur(4px)',
+       pointerEvents: 'none',
+       position: 'relative',
+       '&::after': {
+         content: '""',
+         position: 'absolute',
+         inset: 0,
+         background: 'linear-gradient(transparent, white)',
+       }
+     }}
+   >
+     {/* Calibration metrics preview */}
+   </Box>
+   ```
+
+   **Upgrade Prompt Overlay:**
+   ```typescript
+   <Box sx={{ textAlign: 'center', mt: -3, position: 'relative' }}>
+     <Button
+       variant="contained"
+       startIcon={<UpgradeIcon />}
+       sx={{ backgroundColor: appleColors.blue[600] }}
+     >
+       Unlock Professional Analysis - $49/month
+     </Button>
+     <Typography variant="caption" color="text.secondary">
+       Join 2,500+ professional investors
+     </Typography>
+   </Box>
+   ```
+
+3. **Progressive Value Demonstration:**
+   **Analysis #1 (First Impression):**
+   - Show full Professional Calibration (no lock)
+   - Add banner: "You're using Professional features in your free trial"
+   - Soft CTA: "Upgrade for unlimited analyses"
+
+   **Analysis #2 (Engagement):**
+   - Show blurred Professional Calibration with preview
+   - Badge: "🔒 Professional Feature - 1 free analysis remaining"
+   - Medium CTA: "Upgrade to unlock all professional tools"
+
+   **Analysis #3 (Conversion Point):**
+   - Lock Professional Calibration completely
+   - Prominent upgrade modal: "You've used your 3 free analyses"
+   - Hard CTA: "Continue analyzing properties - Upgrade now"
+
+4. **Contextual Upgrade Prompts:**
+   **Location-Based Triggers:**
+   - Professional Calibration section: "Upgrade to see execution difficulty analysis"
+   - AI Insights section: "Unlock 5 more AI-powered recommendations"
+   - Verification Guide: "Get step-by-step verification checklist"
+
+   **Value-Based Messaging:**
+   - "Professional investors rely on calibration metrics"
+   - "See how this compares to 10,000+ analyzed properties"
+   - "Institutional-grade analysis used by $2B+ in deals"
+
+5. **Analytics Tracking:**
+   ```typescript
+   // Track feature engagement to inform gating strategy
+   analytics.track('Professional Feature Viewed', {
+     feature: 'Professional Calibration',
+     user_tier: 'free',
+     analyses_remaining: 2,
+     deal_quality_score: 86,
+     timestamp: Date.now()
+   });
+
+   analytics.track('Upgrade CTA Clicked', {
+     location: 'Professional Calibration',
+     message: 'Unlock Professional Analysis',
+     user_analyses_count: 2
+   });
+   ```
+
+**Implementation Strategy:**
+
+**Phase 1 (Week 1): Feature Gating Infrastructure**
+- Add `userTier` to AuthContext (`free`, `professional`, `enterprise`)
+- Create `<PremiumFeature>` wrapper component with lock UI
+- Add `isPremiumUser()` utility function
+- Implement blur + overlay UI pattern
+
+**Phase 2 (Week 1-2): Strategic Feature Locks**
+- Lock Professional Calibration (show teaser in free tier)
+- Lock AI insights beyond first recommendation
+- Lock Verification Guide expansion
+- Add upgrade CTAs near locked content
+
+**Phase 3 (Week 2): Progressive Value Demo**
+- Analysis count tracking in localStorage
+- Progressive locking based on analysis number
+- Contextual messaging per analysis count
+- Upgrade modal on analysis #3 completion
+
+**Phase 4 (Week 2-3): Analytics & Optimization**
+- Track feature engagement by tier
+- Track upgrade CTA click rates
+- A/B test messaging variants
+- Measure free-to-paid conversion impact
+
+**A/B Testing Hypotheses:**
+
+**Test 1: Calibration Gating**
+- **Variant A**: Show full calibration, add "Professional Feature" badge
+- **Variant B**: Blur calibration, show "Upgrade to unlock"
+- **Metric**: Free-to-paid conversion rate
+
+**Test 2: CTA Messaging**
+- **Variant A**: "Upgrade to Professional - $49/month"
+- **Variant B**: "Join 2,500+ Professional Investors"
+- **Metric**: CTA click-through rate
+
+**Test 3: Progressive Locking**
+- **Variant A**: Lock features from analysis #1
+- **Variant B**: Show full features in analysis #1, lock in #2+
+- **Metric**: User engagement + conversion rate
+
+**Technical Requirements:**
+- Extend User model with `subscriptionTier` field
+- Create premium feature gating middleware
+- Build reusable `<PremiumFeature>` component
+- Add analytics event tracking for feature engagement
+- Implement blur + overlay UI patterns
+
+**Design Requirements:**
+- Professional Feature badge design (lock icon + subtle styling)
+- Blur gradient effect for locked content
+- Upgrade modal design (compelling value prop)
+- Mobile-optimized locked content UI
+
+**Business Metrics to Track:**
+
+**Baseline (Current State):**
+- Free-to-paid conversion: 18%
+- Average analyses before upgrade: 8.3
+- Upgrade trigger: Analysis limit (100%)
+
+**Target (Post-Implementation):**
+- Free-to-paid conversion: 25% (+39% increase)
+- Average analyses before upgrade: 5.2 (faster conversion)
+- Upgrade triggers:
+  - Analysis limit: 60%
+  - Feature lock CTAs: 30%
+  - Value realization: 10%
+
+**Revenue Projection:**
+- Current: 100 signups/month × 18% × $49 = $882 MRR
+- Target: 100 signups/month × 25% × $49 = $1,225 MRR (+39% revenue)
+- 90-day impact: +$1,029 MRR from improved conversion
+
+**Estimated Effort:** 2-3 weeks (80-120 hours)
+
+**Dependencies:**
+- User authentication system (already exists)
+- Subscription tier tracking (needs User model extension)
+- Analytics setup (already exists, needs new events)
+
+**Related Files:**
+- `/frontend/src/components/SFRAnalysis/InvestmentDecisionHero.tsx`
+- `/frontend/src/components/SFRAnalysis/SimplifiedCalibration.tsx`
+- `/frontend/src/components/SFRAnalysis/VerificationGuide.tsx`
+- `/frontend/src/contexts/AuthContext.tsx` (add tier)
+- `/backend/src/models/User.ts` (add subscriptionTier field)
+- New: `/frontend/src/components/common/PremiumFeature.tsx`
+- New: `/frontend/src/components/common/UpgradeModal.tsx`
+
+**Success Metrics:**
+- Free-to-paid conversion: 18% → 25%
+- Feature engagement tracking: 70%+ users interact with locked features
+- Upgrade CTA clicks: 40%+ of free users click upgrade prompts
+- Time to conversion: 8.3 → 5.2 average analyses before upgrade
+
+**Notes:**
+- **Critical for Business Model**: Clearest path to revenue growth
+- **User Experience Balance**: Must not frustrate users, show value first
+- **A/B Testing Essential**: Data-driven optimization of gating strategy
+- **Competitive Analysis**: BiggerPockets, Dealcheck gate advanced features
+- **Marcus Chen Priority**: "Ship current UI, add monetization hooks week 1 post-launch"
+
+**Design Inspiration:**
+- **Notion**: Blur + upgrade overlay for premium blocks
+- **Grammarly**: Premium feature badges with contextual value
+- **LinkedIn Premium**: Progressive feature reveals
+- **Canva Pro**: "Upgrade to use this feature" subtle CTAs
+
+---
+
+### Feature #12: Competitive Differentiation Messaging
+**Status:** 🔴 Not Started
+**Priority:** P1 - High (Product Positioning)
+**Added:** January 19, 2026
+**Category:** Product Marketing / Competitive Strategy / Positioning
+
+**Description:**
+Add subtle but clear competitive differentiators throughout the platform to answer the critical question: "Why use this instead of Excel or BiggerPockets calculators?" Current UI is polished but lacks unique value proposition messaging.
+
+**Strategic Business Value:**
+- **Market Positioning**: Clear differentiation reduces price sensitivity
+- **Word-of-Mouth**: Users need specific reasons to recommend platform
+- **Retention**: Users who understand unique value churn 50% less
+- **Competitive Moat**: Articulated advantages harder for competitors to copy
+
+**Marcus Chen's Strategic Insight:**
+> "This looks polished, but where's the unique value prop? Every PropTech platform claims 'institutional-grade analysis.' What makes us different? Users need to know why they can't just use Excel."
+
+**Current State Issues:**
+- "Institutional-quality deal with 86/100 professional score" - generic claim
+- No mention of Investment Decision Engine v2.1 (our secret weapon)
+- Conservative walk-away pricing advantage not communicated
+- Speed comparison missing (5 minutes vs 2 hours in Excel)
+- No reference to 60+ metrics analysis depth
+
+**Competitive Landscape:**
+
+**Competitors:**
+1. **Excel Spreadsheets** (Free)
+   - Their Strength: Customizable, familiar, free
+   - Their Weakness: Time-consuming (2+ hours), error-prone, no intelligence
+
+2. **BiggerPockets Calculator** (Free)
+   - Their Strength: Free, simple, trusted brand
+   - Their Weakness: Basic metrics only, no AI, no strategy adaptation
+
+3. **DealCheck** ($8-12/month)
+   - Their Strength: Mobile app, offline mode
+   - Their Weakness: No AI insights, generic analysis
+
+4. **Stessa** (Free)
+   - Their Strength: Portfolio tracking, accounting integration
+   - Their Weakness: Post-purchase only, no pre-purchase analysis
+
+5. **Roofstock/Fundrise** (Marketplace + Tools)
+   - Their Strength: End-to-end transaction
+   - Their Weakness: Limited to their inventory, biased recommendations
+
+**Our Unique Advantages:**
+1. **Investment Decision Engine v2.1** - AI-powered strategy adaptation
+2. **Conservative Walk-Away Pricing** - Prevents overpaying (risk mitigation)
+3. **5-Minute Analysis** - 24x faster than Excel (2 hours → 5 minutes)
+4. **60+ Metrics** - Institutional depth, consumer simplicity
+5. **Strategy-Aware** - Adapts to Buy & Hold, BRRRR, House Hacking
+6. **Market Intelligence** - FRED + RentCast + Census data integration
+7. **Professional Calibration** - Shows confidence in the analysis
+
+**Functional Requirements:**
+
+1. **Hero Card Differentiation Messaging:**
+   **Current:**
+   ```
+   Investment Analysis
+   Institutional-quality deal with 86/100 professional score
+   ```
+
+   **Proposed Option A (Speed Focus):**
+   ```
+   Investment Analysis
+   5-minute institutional-grade analysis (vs 2 hours in Excel)
+   Powered by Investment Decision Engine v2.1
+   ```
+
+   **Proposed Option B (Risk Focus):**
+   ```
+   Investment Analysis
+   Conservative analysis prevents overpaying
+   Based on 60+ metrics + market intelligence
+   ```
+
+   **Proposed Option C (AI Focus):**
+   ```
+   Investment Analysis
+   AI-powered decision engine analyzes 60+ metrics
+   Adapts to your strategy: Buy & Hold
+   ```
+
+2. **Subtle Differentiator Badges:**
+   ```typescript
+   <Chip
+     icon={<SpeedIcon />}
+     label="5-min analysis (vs 2hrs in Excel)"
+     size="small"
+     sx={{
+       backgroundColor: appleColors.green[50],
+       color: appleColors.green[700],
+     }}
+   />
+   ```
+
+3. **Professional Calibration Section Enhancement:**
+   **Add Subtitle:**
+   ```
+   PROFESSIONAL CALIBRATION
+   ↓
+   PROFESSIONAL CALIBRATION
+   Institutional-grade confidence scoring (not available in basic calculators)
+   ```
+
+4. **Footer Attribution:**
+   **Add Subtle Tech Stack Reference:**
+   ```
+   Powered by Investment Decision Engine v2.1
+   60+ metrics • Market intelligence • Conservative pricing
+   ```
+
+5. **Tooltip Value Props:**
+   ```typescript
+   <Tooltip title="Our AI analyzes market data, property metrics, and your strategy to provide tailored recommendations - not possible with static calculators">
+     <InfoIcon sx={{ fontSize: 14 }} />
+   </Tooltip>
+   ```
+
+**Messaging Strategy:**
+
+**Core Differentiators to Communicate:**
+1. **Speed**: "5 minutes vs 2 hours in Excel"
+2. **Intelligence**: "Investment Decision Engine v2.1"
+3. **Depth**: "60+ metrics analyzed"
+4. **Risk Mitigation**: "Conservative walk-away pricing prevents overpaying"
+5. **Strategy Adaptation**: "Adapts to Buy & Hold, BRRRR, House Hacking"
+6. **Market Integration**: "Live market data from FRED + RentCast"
+
+**Where to Place Differentiators:**
+
+**Option 1: Subtle Integration (Recommended)**
+- Investment Analysis subtitle: "Powered by Investment Decision Engine v2.1"
+- Professional Calibration subtitle: "Institutional-grade confidence scoring"
+- AI-Backed Analysis badge tooltip: "Analyzes 60+ metrics + market data"
+- Footer: "5-min analysis • Conservative pricing • Strategy-aware"
+
+**Option 2: Prominent Messaging**
+- Hero badge: "5x faster than Excel, 10x smarter than basic calculators"
+- Callout card: "Why Real Estate Analyzer?"
+  - ✅ 5-minute analysis (vs 2 hours manual)
+  - ✅ 60+ metrics (vs 10-15 basic calculators)
+  - ✅ AI-powered insights (vs static formulas)
+  - ✅ Conservative pricing (prevents overpaying)
+
+**Option 3: Progressive Disclosure**
+- First analysis: Show speed comparison
+- Second analysis: Show depth comparison (60+ metrics)
+- Third analysis: Show intelligence comparison (AI insights)
+- Upgrade page: Show full competitive comparison table
+
+**A/B Testing Opportunities:**
+
+**Test 1: Messaging Tone**
+- **Variant A**: Feature-focused ("60+ metrics, AI-powered")
+- **Variant B**: Benefit-focused ("5 minutes, prevents overpaying")
+- **Variant C**: Competitive ("vs Excel: 24x faster, 0 errors")
+- **Metric**: User engagement, upgrade intent
+
+**Test 2: Placement**
+- **Variant A**: Subtle footer attribution only
+- **Variant B**: Prominent hero card subtitle
+- **Variant C**: Dedicated "Why Us" callout card
+- **Metric**: Brand recall, perceived value
+
+**Implementation Options:**
+
+**Phase 1 (Quick Win - 4 hours):**
+- Add subtitle to Investment Analysis: "Powered by Investment Decision Engine v2.1"
+- Add footer: "5-min analysis • 60+ metrics • Conservative pricing"
+- Add tooltip to AI badge: "Analyzes market data + property metrics"
+
+**Phase 2 (Medium - 1 week):**
+- Create "Why Real Estate Analyzer?" expandable section
+- Add competitive comparison tooltips
+- Build testimonial section ("I used to spend hours in Excel...")
+
+**Phase 3 (Comprehensive - 2 weeks):**
+- Landing page competitive comparison table
+- Video: "5-minute analysis walkthrough vs Excel"
+- Case study: "How conservative pricing saved $20K"
+
+**Recommended Approach: Phase 1 (Subtle Integration)**
+
+**Rationale:**
+- Apple Design Principle: "Deference" - content over chrome
+- Subtle messaging feels confident, not desperate
+- Users discover value through experience, not hard sell
+- Easy to A/B test and refine
+
+**Technical Requirements:**
+- Add subtitle text to Investment Analysis section
+- Create footer component with differentiator chips
+- Add tooltip content to AI badge
+- Analytics tracking for tooltip interactions
+
+**Design Requirements:**
+- Subtle typography (11px caption, gray-600 color)
+- Icon integration (speed icon, intelligence icon)
+- Tooltip design (Apple-style popovers)
+- Mobile optimization (shorter text on small screens)
+
+**Content Requirements:**
+- Competitor research (validate claims: "2 hours in Excel")
+- User testimonials (collect feedback on Excel pain points)
+- Metric validation (confirm "60+ metrics" count)
+- Video script (if Phase 2/3 pursued)
+
+**Business Metrics to Track:**
+
+**Awareness Metrics:**
+- % users who interact with differentiator tooltips
+- Time spent reading "Why Us" content
+- Scroll depth on comparison sections
+
+**Perception Metrics:**
+- User surveys: "Why did you choose this platform?"
+- NPS score correlation with differentiation awareness
+- Feature awareness (before/after messaging)
+
+**Conversion Metrics:**
+- Upgrade rate for users who view differentiators
+- Referral rate for users who understand unique value
+- Churn reduction for value-aware users
+
+**Estimated Effort:**
+- Phase 1: 4 hours (subtitle + footer + tooltips)
+- Phase 2: 1 week (expandable section + testimonials)
+- Phase 3: 2 weeks (landing page + video + case studies)
+
+**Dependencies:**
+- Competitor analysis (validate time/metric claims)
+- User testimonials (collect Excel pain points)
+- Video production (if Phase 3 pursued)
+
+**Related Files:**
+- `/frontend/src/components/SFRAnalysis/InvestmentDecisionHero.tsx`
+- `/frontend/src/components/SFRAnalysis/SimplifiedCalibration.tsx`
+- `/frontend/src/pages/LandingPage.tsx` (Phase 2/3)
+- New: `/frontend/src/components/common/DifferentiatorFooter.tsx`
+
+**Success Metrics:**
+- User awareness: 60%+ understand unique value within 1st analysis
+- Upgrade messaging: 30%+ reference specific differentiator in upgrade decision
+- Churn reduction: 20% fewer cancellations among value-aware users
+- Word-of-mouth: 40% increase in "recommended by friend" signups
+
+**Notes:**
+- **Marcus Chen Priority**: "Add differentiator messaging 60-day post-launch"
+- **Competitive Research**: Validate "2 hours in Excel" claim with user interviews
+- **Testimonial Collection**: Start gathering Excel pain points from beta users
+- **Video Opportunity**: "Excel vs Analyzer" comparison demo (high virality potential)
+
+**Design Inspiration:**
+- **Apple Product Pages**: Subtle spec comparisons ("2x faster chip")
+- **Notion vs Competitors**: Feature comparison without naming competitors
+- **Grammarly**: "Join 30M users" social proof
+- **Superhuman**: Speed metrics ("2x faster email")
+
+---
+
 ### Feature #10: Educational Content Integration (Josh Partnership Prep)
 **Status:** 🔴 Not Started
 **Priority:** P1 - High (Partnership Strategy - After Feature #2, Before Feature #1)
@@ -1051,18 +1568,26 @@ Rename and redesign the current Census Data Integration test page to provide use
 
 | Priority | Feature | Status | Estimated Effort | Business Impact |
 |----------|---------|--------|------------------|-----------------|
-| **P1** | Metrics UX Optimization | 🔴 Not Started | 1-2 weeks | High (user experience) |
-| **P1** | Educational Content Integration | 🔴 Not Started | 1-2 days | High (partnership strategy) |
-| **P1** | BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |
-| **P1** | Saved Properties List UX | ✅ Complete | 1 week | High (core workflow friction) |
-| **P2** | Calculation Accuracy Docs | 🔴 Not Started | 1 week | Medium (trust + SEO) |
-| **P2** | Help Docs Outside Login | 🔴 Not Started | 2 weeks | Medium (SEO + acquisition) |
-| **P2** | Social Sharing Strategy | 🔴 Not Started | 1.5 weeks | Medium (viral growth) |
-| **P2** | Property Image Integration | 🔴 Not Started | 1 week | Medium (visual enhancement) |
-| **P3** | PDF Report Download | 🔴 Not Started | 2 weeks | Low (professional feature) |
-| **P3** | Census Data User Value | 🔴 Not Started | 1 week | Low (market intelligence) |
+| **P1** | **#11 - Monetization Hooks** | 🔴 Not Started | 2-3 weeks | **Critical (Revenue +39%)** |
+| **P1** | **#12 - Competitive Differentiation** | 🔴 Not Started | 4 hours - 2 weeks | **High (Positioning)** |
+| **P1** | #2 - Metrics UX Optimization | 🔴 Not Started | 1-2 weeks | High (user experience) |
+| **P1** | #10 - Educational Content Integration | 🔴 Not Started | 1-2 days | High (partnership strategy) |
+| **P1** | #1 - BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |
+| **P1** | #8 - Saved Properties List UX | ✅ Complete | 1 week | High (core workflow friction) |
+| **P2** | #3 - Calculation Accuracy Docs | 🔴 Not Started | 1 week | Medium (trust + SEO) |
+| **P2** | #4 - Help Docs Outside Login | 🔴 Not Started | 2 weeks | Medium (SEO + acquisition) |
+| **P2** | #5 - Social Sharing Strategy | 🔴 Not Started | 1.5 weeks | Medium (viral growth) |
+| **P2** | #9 - Property Image Integration | 🔴 Not Started | 1 week | Medium (visual enhancement) |
+| **P3** | #6 - PDF Report Download | 🔴 Not Started | 2 weeks | Low (professional feature) |
+| **P3** | #7 - Census Data User Value | 🔴 Not Started | 1 week | Low (market intelligence) |
 
-**Total Estimated Effort:** 12.5 - 15.5 weeks (500-620 hours)
+**Total Estimated Effort:** 15 - 20.5 weeks (600-820 hours)
+
+**Marcus Chen Priority Recommendations:**
+1. **Week 1 Post-Launch**: Feature #11 (Monetization Hooks) - Revenue Critical
+2. **30-Day Post-Launch**: A/B test monetization, track engagement metrics
+3. **60-Day Post-Launch**: Feature #12 (Competitive Differentiation) - Phase 1 (4 hours)
+4. **90-Day Refinement**: Optimize based on conversion data, add Phase 2 differentiators
 
 ---
 
