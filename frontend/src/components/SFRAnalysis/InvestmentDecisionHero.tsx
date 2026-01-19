@@ -39,6 +39,12 @@ import { roundCurrency } from '../../utils/precision';
 // Architecture Fix: Removed InvestmentMessagingEngine - all messaging now from backend only
 // This ensures Single Source of Truth principle compliance
 
+// UI Redesign: New analytical components (non-directive presentation)
+import DealQualityHeader from './DealQualityHeader';
+import SimplifiedCalibration from './SimplifiedCalibration';
+import KeyAnalysisInsights from './KeyAnalysisInsights';
+import VerificationGuide from './VerificationGuide';
+
 // Minimal local interfaces (no business logic)
 interface GoalContext {
   exitStrategy?: string;
@@ -271,6 +277,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
+  const [verificationOpen, setVerificationOpen] = useState(false); // UX Improvement: Collapse verification guide by default
   
   // Fix floating-point precision in monetary values within text
   const formatPortfolioFitText = (text: string): string => {
@@ -448,127 +455,33 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
 
   return (
     <Box sx={{ mb: 4 }}>
-      {/* Main Hero Card */}
+      {/* Main Hero Card - UX Fix: Neutral styling (removed verdict-based colors) */}
       <Card
         sx={{
           borderRadius: '20px',
-          border: `3px solid ${verdictConfig.borderColor}`,
-          backgroundColor: verdictConfig.bgColor,
+          border: `1px solid ${appleColors.gray[200]}`, // UX Fix: Neutral gray (was verdict-based)
+          backgroundColor: appleColors.gray[50], // UX Fix: Neutral background
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)', // UX Fix: Subtle shadow for depth
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'visible',
           position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: -2,
-            left: -2,
-            right: -2,
-            bottom: -2,
-            borderRadius: '22px',
-            background: `linear-gradient(135deg, ${verdictConfig.color}20, ${verdictConfig.color}10)`,
-            zIndex: -1
-          }
         }}
       >
         <CardContent sx={{ p: 4 }}>
-          <Grid container spacing={4} alignItems="center">
-            {/* Verdict Icon and Label */}
-            <Grid size={{ xs: 12, md: 4 }}>
+          <Grid container spacing={4} alignItems="flex-start">
+            {/* UI Redesign: Deal Quality Score (left column - 50% on desktop) */}
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' }, mb: 2 }}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: '16px',
-                      backgroundColor: verdictConfig.color,
-                      mr: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <VerdictIcon sx={{ fontSize: 32, color: 'white' }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="h4"
-                      fontWeight={800}
-                      color={verdictConfig.color}
-                      sx={{ lineHeight: 1.1 }}
-                    >
-                      {investmentDecision.verdict}
+                {/* NEW: Deal Quality Header */}
+                {investmentDecision.professionalAssessment ? (
+                  <DealQualityHeader score={investmentDecision.professionalAssessment.dealQuality} />
+                ) : (
+                  <Alert severity="info" sx={{ borderRadius: '12px' }}>
+                    <Typography variant="body2" fontWeight={500}>
+                      Professional assessment unavailable. Basic analysis provided.
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      {verdictConfig.label}
-                    </Typography>
-                  </Box>
-                </Box>
-                
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Tooltip 
-                      title={`How confident we are that our ${investmentDecision.verdict} recommendation is correct. Based on 20+ factors including property fundamentals, market conditions, and risk assessment. 80%+ = strong conviction, 50-70% = proceed with caution, <50% = high uncertainty in recommendation.`}
-                      arrow
-                      placement="top"
-                    >
-                      <Chip
-                        label={`${investmentDecision.confidence}% Confidence`}
-                        sx={{
-                          backgroundColor: getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).color,
-                          color: 'white',
-                          fontWeight: 600,
-                          fontSize: '14px',
-                          height: 32,
-                          cursor: 'help'
-                        }}
-                      />
-                    </Tooltip>
-                  </Box>
-                  <Typography variant="caption" sx={{ color: appleColors.gray[600], fontWeight: 500, maxWidth: 300 }}>
-                    {investmentDecision.confidenceDescription || getConfidenceContext(investmentDecision.confidence, investmentDecision.verdict).description}
-                  </Typography>
-                  
-                  {/* V3.0 Professional Assessment Display */}
-                  {investmentDecision.professionalAssessment && (
-                    <Box sx={{ mt: 2, p: 2, backgroundColor: appleColors.gray[50], borderRadius: '12px', border: `1px solid ${appleColors.gray[200]}` }}>
-                      <Typography variant="caption" sx={{ color: appleColors.primary[600], fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '10px' }}>
-                        V3.0 Professional Calibration
-                      </Typography>
-                      
-                      <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
-                            Deal Quality
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
-                            {investmentDecision.professionalAssessment.dealQuality}/100
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
-                            Execution
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
-                            {100 - investmentDecision.professionalAssessment.executionDifficulty}/100
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" sx={{ color: appleColors.gray[600], fontSize: '10px' }}>
-                            Data Quality
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: appleColors.gray[800] }}>
-                            {investmentDecision.professionalAssessment.dataReliability}/100
-                          </Typography>
-                        </Box>
-                      </Box>
-                      
-                      <Typography variant="caption" sx={{ color: appleColors.gray[700], fontSize: '11px', fontStyle: 'italic', mt: 1, display: 'block' }}>
-                        {investmentDecision.professionalAssessment.primaryInsight}
-                      </Typography>
-                    </Box>
-                  )}
+                  </Alert>
+                )}
 
                   {/* Educational Disclaimer - Legal Protection */}
                   <Box sx={{
@@ -625,87 +538,132 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                       </Typography>
                     </Box>
                   )}
-                </Box>
               </Box>
             </Grid>
 
-            {/* Primary Reason */}
+            {/* UI Redesign: Analysis + Actions Combined (right column - 50% on desktop) */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Box>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 1, color: verdictConfig.color }}>
-                  {goalContextualHeader}
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    fontSize: '16px',
-                    lineHeight: 1.6,
-                    color: appleColors.gray[800],
-                    fontWeight: 500
-                  }}
-                >
-                  {investmentDecision.primaryReason}
-                </Typography>
-                
-                {/* Main card shows only primary reason - all details in expandable section */}
-                {investmentDecision.goalBasedReasoning && (
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mt: 2,
-                      fontSize: '14px',
-                      fontStyle: 'italic',
-                      color: appleColors.gray[600]
-                    }}
-                  >
-                    {investmentDecision.goalBasedReasoning}
-                  </Typography>
+                {/* View Details Button - Top Right */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
+                  <Stack spacing={2} alignItems={{ xs: 'center', md: 'flex-end' }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => setShowDetails(!showDetails)}
+                      endIcon={showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      sx={{
+                        borderRadius: '12px',
+                        backgroundColor: appleColors.primary[600],
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.5,
+                        '&:hover': {
+                          backgroundColor: appleColors.primary[700],
+                        }
+                      }}
+                    >
+                      {showDetails ? 'Hide Details' : 'View Details'}
+                    </Button>
+
+                    {/* AI-Backed Badge */}
+                    <Chip
+                      icon={<AIIcon />}
+                      label="AI-Backed Analysis"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        borderColor: appleColors.primary[300],
+                        color: appleColors.primary[600],
+                        fontWeight: 500,
+                        '& .MuiChip-icon': {
+                          color: appleColors.primary[500]
+                        }
+                      }}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Analysis Content */}
+                {investmentDecision.aiEnhancedContent?.reasoning?.explanation ? (
+                  <KeyAnalysisInsights content={investmentDecision.aiEnhancedContent.reasoning.explanation} />
+                ) : (
+                  /* Fallback: Show primary reason if no AI content */
+                  <Box>
+                    <Typography variant="h6" fontWeight={600} sx={{ mb: 1, color: appleColors.gray[900] }}>
+                      Investment Analysis
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontSize: '16px',
+                        lineHeight: 1.6,
+                        color: appleColors.gray[800],
+                        fontWeight: 500
+                      }}
+                    >
+                      {investmentDecision.primaryReason}
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Grid>
-
-            {/* Quick Actions */}
-            <Grid size={{ xs: 12, md: 2 }}>
-              <Stack spacing={2} alignItems={{ xs: 'center', md: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  onClick={() => setShowDetails(!showDetails)}
-                  endIcon={showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  sx={{
-                    borderRadius: '12px',
-                    backgroundColor: verdictConfig.color,
-                    fontWeight: 600,
-                    px: 3,
-                    py: 1.5,
-                    '&:hover': {
-                      backgroundColor: verdictConfig.color,
-                      opacity: 0.9
-                    }
-                  }}
-                >
-                  {showDetails ? 'Hide Details' : 'View Details'}
-                </Button>
-                
-                {/* AI-Backed Badge */}
-                <Box sx={{ textAlign: 'center' }}>
-                  <Chip
-                    icon={<AIIcon />}
-                    label="AI-Backed Analysis"
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      borderColor: appleColors.primary[300],
-                      color: appleColors.primary[600],
-                      fontWeight: 500,
-                      '& .MuiChip-icon': {
-                        color: appleColors.primary[500]
-                      }
-                    }}
-                  />
-                </Box>
-              </Stack>
-            </Grid>
           </Grid>
+
+          {/* UX Enhancement: Full-Width Professional Calibration (desktop horizontal layout) */}
+          {investmentDecision.professionalAssessment && (
+            <Box sx={{ mt: 4 }}>
+              <SimplifiedCalibration
+                dealQuality={investmentDecision.professionalAssessment.dealQuality}
+                executionDifficulty={investmentDecision.professionalAssessment.executionDifficulty}
+                dataReliability={investmentDecision.professionalAssessment.dataReliability}
+              />
+            </Box>
+          )}
+
+          {/* UI Redesign: Verification Guide - Collapsible (UX improvement) */}
+          <Box sx={{ mt: 3 }}>
+            {/* Collapse Header Button */}
+            <Button
+              fullWidth
+              onClick={() => setVerificationOpen(!verificationOpen)}
+              endIcon={verificationOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{
+                justifyContent: 'space-between',
+                textAlign: 'left',
+                p: 2,
+                backgroundColor: appleColors.blue[50],
+                borderRadius: '12px',
+                border: `1px solid ${appleColors.blue[200]}`,
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: appleColors.blue[100],
+                }
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600} color={appleColors.blue[800]} sx={{ fontSize: '16px' }}>
+                  Professional Verification Guide
+                </Typography>
+                <Typography variant="caption" color={appleColors.gray[600]} sx={{ fontSize: '13px' }}>
+                  3 steps to verify key assumptions
+                </Typography>
+              </Box>
+            </Button>
+
+            {/* Collapsible Content */}
+            <Collapse in={verificationOpen} timeout={300}>
+              <Box sx={{ mt: 2 }}>
+                <VerificationGuide
+                  propertyData={{
+                    monthlyRent: propertyData?.monthlyRent,
+                    propertyTax: propertyData?.propertyTax,
+                    insurance: propertyData?.insurance,
+                    maintenance: propertyData?.maintenance,
+                  }}
+                />
+              </Box>
+            </Collapse>
+          </Box>
         </CardContent>
       </Card>
 

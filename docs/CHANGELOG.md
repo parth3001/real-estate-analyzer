@@ -5,7 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-01-08
+## [Unreleased] - 2026-01-19
+
+### 🎨 Investment Decision Engine UI Redesign
+
+**Major User Interface Overhaul - Analytical Presentation**
+- **BREAKING UI CHANGE**: Removed directive verdict messaging (BUY/NEGOTIATE/PASS/CAUTION badges)
+- **NEW**: Lead with Deal Quality Score (0-100) from professional assessment
+- **NEW**: Simplified Professional Calibration display (3 metrics as bullet list)
+- **NEW**: AI-powered Key Analysis Insights with section headers (Cash Flow, Market Position, Improvements)
+- **NEW**: Property-specific Verification Guide (3-step professional checklist)
+- **Preserved**: All "View Details" functionality, tax summary, educational disclaimers
+- **Zero Backend Changes**: 100% pure frontend UI redesign, all existing APIs unchanged
+
+**Components Created**:
+- `DealQualityHeader.tsx` - Neutral score presentation (replaces verdict badge)
+- `SimplifiedCalibration.tsx` - 3-metric bullet list (Deal Quality, Execution Complexity, Data Completeness)
+- `KeyAnalysisInsights.tsx` - AI commentary parser with section headers
+- `VerificationGuide.tsx` - Property-specific 3-step verification checklist
+- `verdictUtils.ts` - Helper functions for score context and AI content parsing
+
+**Modified Components**:
+- `InvestmentDecisionHero.tsx` - Integrated 4 new components, removed ~60 lines of verdict badge code
+
+**Design Philosophy**:
+- Apple-inspired neutral gray theme (no color-coded judgments)
+- "Show what matters" not "Tell what to do" approach
+- Analytical presentation reduces liability while maintaining educational value
+- Professional calibration metrics provide transparency into scoring methodology
+
+**Mobile Responsive**:
+- All components tested on 375px viewport (iPhone SE)
+- Verification Guide expanded by default on mobile (critical info)
+- No horizontal scroll, proper touch targets (48px minimum)
+
+**Backward Compatibility**:
+- Handles missing `professionalAssessment` gracefully (shows info alert)
+- Falls back to `primaryReason` if no AI content available
+- Works with SFR, BRRRR, and Multi-Family property types
+- All existing data structures unchanged
+
+---
+
+## [Previous Release] - 2026-01-08
 
 ### 🐛 Critical Bug Fix
 

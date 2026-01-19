@@ -208,7 +208,8 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
   // Initialize drawer state - always closed on mobile initially
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Desktop sidebar open by default
   const [mobileOpen, setMobileOpen] = useState(false); // Mobile drawer closed by default
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [sidebarUserMenuAnchor, setSidebarUserMenuAnchor] = useState<null | HTMLElement>(null); // Sidebar profile menu
+  const [topbarUserMenuAnchor, setTopbarUserMenuAnchor] = useState<null | HTMLElement>(null); // Top-right avatar menu
   const [notificationMenuAnchor, setNotificationMenuAnchor] = useState<null | HTMLElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({
     analysis: true, // Default expanded
@@ -263,7 +264,8 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
 
   // Handle logout (preserving existing logic)
   const handleLogout = async () => {
-    setUserMenuAnchor(null);
+    setTopbarUserMenuAnchor(null);
+    setSidebarUserMenuAnchor(null);
     await logout();
   };
 
@@ -484,7 +486,10 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       }}
     >
       <Box
-        onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+        onClick={(e) => {
+          console.log('🖱️ SIDEBAR avatar clicked', e.currentTarget);
+          setSidebarUserMenuAnchor(e.currentTarget);
+        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -577,11 +582,13 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       elevation={0}
       sx={{
         width: isMobile ? '100%' : `calc(100% - ${sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH}px)`,
-        ml: isMobile ? 0 : `${sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH}px`,
+        left: isMobile ? 0 : `${sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH}px`,
+        right: 0,
         backgroundColor: 'background.paper',
         borderBottom: '1px solid',
         borderColor: 'grey.200',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        zIndex: (theme) => theme.zIndex.drawer + 1, // Ensure AppBar is above Drawer
       }}
     >
       <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -644,7 +651,9 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
 
           {/* User Menu */}
           <IconButton
-            onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+            onClick={(e) => {
+              setTopbarUserMenuAnchor(e.currentTarget);
+            }}
           >
             <Avatar
               sx={{
@@ -721,11 +730,32 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         {children || <Outlet />}
       </Box>
 
-      {/* User Menu - preserving all existing functionality */}
+      {/* User Menu - Top-right avatar menu */}
       <Menu
-        anchorEl={userMenuAnchor}
-        open={Boolean(userMenuAnchor)}
-        onClose={() => setUserMenuAnchor(null)}
+        anchorEl={topbarUserMenuAnchor}
+        open={Boolean(topbarUserMenuAnchor)}
+        container={() => document.body}
+        onClose={() => {
+          setTopbarUserMenuAnchor(null);
+        }}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        sx={{
+          '& .MuiMenu-paper': {
+            // Force menu to appear in top-right area
+            transform: 'none !important',
+            position: 'fixed !important',
+            top: '64px !important',
+            left: 'auto !important',
+            right: '16px !important',
+          }
+        }}
         PaperProps={{
           sx: {
             borderRadius: '12px',
@@ -767,11 +797,11 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           )}
         </Box>
 
-        <MenuItem onClick={() => { setUserMenuAnchor(null); navigate('/profile'); }}>
+        <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/profile'); }}>
           <PersonIcon sx={{ mr: 2 }} />
           My Profile
         </MenuItem>
-        <MenuItem onClick={() => { setUserMenuAnchor(null); navigate('/settings'); }}>
+        <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/settings'); }}>
           <SettingsIcon sx={{ mr: 2 }} />
           Settings
         </MenuItem>
@@ -780,13 +810,83 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
         {user?.role === 'admin' && (
           <>
             <Divider />
-            <MenuItem onClick={() => { setUserMenuAnchor(null); navigate('/admin/users'); }}>
+            <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/admin/users'); }}>
               <AdminPanelSettingsIcon sx={{ mr: 2 }} />
               User Management
             </MenuItem>
           </>
         )}
         
+        <Divider />
+        <MenuItem onClick={handleLogout}>
+          <LogoutIcon sx={{ mr: 2 }} />
+          Sign Out
+        </MenuItem>
+      </Menu>
+
+      {/* Sidebar User Menu */}
+      <Menu
+        anchorEl={sidebarUserMenuAnchor}
+        open={Boolean(sidebarUserMenuAnchor)}
+        onClose={() => {
+          console.log('🔴 SIDEBAR menu closing');
+          setSidebarUserMenuAnchor(null);
+        }}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            mt: 1,
+            minWidth: 200,
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'User'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email || 'user@example.com'}
+          </Typography>
+          {user?.role === 'admin' && (
+            <Chip
+              label="Administrator"
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ mt: 0.5 }}
+            />
+          )}
+        </Box>
+
+        <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/profile'); }}>
+          <PersonIcon sx={{ mr: 2 }} />
+          My Profile
+        </MenuItem>
+        <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/settings'); }}>
+          <SettingsIcon sx={{ mr: 2 }} />
+          Settings
+        </MenuItem>
+
+        {user?.role === 'admin' && (
+          <>
+            <Divider />
+            <MenuItem onClick={() => { setTopbarUserMenuAnchor(null); setSidebarUserMenuAnchor(null); navigate('/admin/users'); }}>
+              <AdminPanelSettingsIcon sx={{ mr: 2 }} />
+              User Management
+            </MenuItem>
+          </>
+        )}
+
         <Divider />
         <MenuItem onClick={handleLogout}>
           <LogoutIcon sx={{ mr: 2 }} />
