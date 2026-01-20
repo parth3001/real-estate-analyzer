@@ -220,23 +220,28 @@ Add strategic monetization hooks to the Investment Decision UI to clarify free v
 
 **Business Metrics to Track:**
 
-**Baseline (Current State):**
-- Free-to-paid conversion: 18%
-- Average analyses before upgrade: 8.3
-- Upgrade trigger: Analysis limit (100%)
+**Baseline Projection (Without Monetization Hooks):**
+- Free-to-paid conversion: ~18% (industry average for freemium SaaS)
+- Average analyses before upgrade: ~8-10 (hitting free tier limit)
+- Upgrade trigger: Analysis limit only (100%)
+- **Note**: Platform is pre-revenue, no payment system implemented yet
 
-**Target (Post-Implementation):**
-- Free-to-paid conversion: 25% (+39% increase)
-- Average analyses before upgrade: 5.2 (faster conversion)
-- Upgrade triggers:
+**Target (With Monetization Hooks):**
+- Free-to-paid conversion: 25% (+39% vs baseline)
+- Average analyses before upgrade: 5.2 (faster conversion cycle)
+- Upgrade triggers (diversified):
   - Analysis limit: 60%
   - Feature lock CTAs: 30%
   - Value realization: 10%
 
-**Revenue Projection:**
-- Current: 100 signups/month × 18% × $49 = $882 MRR
-- Target: 100 signups/month × 25% × $49 = $1,225 MRR (+39% revenue)
-- 90-day impact: +$1,029 MRR from improved conversion
+**Revenue Projection (Pre-Revenue Platform):**
+- **Current State**: $0 MRR (no payment system implemented yet)
+- **Projected with Payments + Monetization Hooks**:
+  - 100 signups/month × 25% conversion × $49 = $1,225 MRR
+  - First 90 days: ~$3,675 total revenue
+- **Baseline Comparison** (if we launched payments WITHOUT monetization hooks):
+  - 100 signups/month × 18% conversion × $49 = $882 MRR
+  - **Delta**: +$343 MRR/month from monetization optimization (+39%)
 
 **Estimated Effort:** 2-3 weeks (80-120 hours)
 
