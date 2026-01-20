@@ -326,6 +326,121 @@ Implemented comprehensive strategy indicator system across both Analysis Results
 
 ---
 
+### Issue #76: AI-Generated Analysis Uses Directive "CAUTION" Verdict Language (Legal Liability Risk)
+**Status**: 🔴 OPEN
+**Priority**: P1 - HIGH (Legal Liability / Product Strategy Violation)
+**Reported**: 2026-01-19
+**Component**: Backend - AI Prompt Engineering (aiEnhancedMessaging.ts)
+**Category**: AI Content Quality / Legal Liability
+**Affects**: Investment Decision Engine AI-generated commentary, Strategic Action Plans, Capital Strategy recommendations
+
+**Description**:
+When users add investment goals (e.g., "$1,000/month cash flow") to the AI analysis text field, the AI generates directive verdict language that contradicts the strategic decision to remove BUY/PASS/NEGOTIATE verdicts from the platform to avoid legal liability.
+
+**Example Issue**:
+```
+User Input Goal: "$1,000 monthly cash flow"
+Property Score: 59/100 (Acceptable deal requiring optimization)
+
+AI Output (PROBLEMATIC):
+"The algorithm recommended 'CAUTION' primarily due to the low
+monthly cash flow and the overall Deal Quality Score of 59/100,
+indicating potential risks in this investment."
+```
+
+**Strategic Context**:
+The platform underwent a major UI redesign (January 2026) to remove directive verdicts (BUY/PASS/NEGOTIATE) from Investment Decision Hero, replacing them with:
+- Objective Deal Quality Score (0-100)
+- Analytical context descriptions (e.g., "Acceptable deal requiring optimization")
+- Non-directive professional calibration metrics
+
+**The Problem**: AI is undermining this strategic decision by reintroducing directive language ("recommended 'CAUTION'") which creates the exact legal liability risk the redesign aimed to eliminate.
+
+**Business Impact**:
+- **Legal Liability**: AI making "recommendations" exposes platform to investment advice regulations
+- **Product Strategy Violation**: Contradicts intentional shift to analytical (not directive) language
+- **User Confusion**: Mixed messaging - UI says "analytical tool", AI says "algorithm recommends"
+- **Professional Credibility**: Directive language reduces platform's credibility as unbiased analysis tool
+
+**Root Cause**:
+AI prompt engineering in `aiEnhancedMessaging.ts` allows or encourages verdict language when analyzing user-defined investment goals. Prompts likely include context about historical verdicts (BUY/PASS/NEGOTIATE/CAUTION) that AI continues to reference.
+
+**Investigation Needed**:
+1. Review AI prompts in `aiEnhancedMessaging.ts` for verdict language keywords
+2. Check if Investment Decision Engine context passed to AI includes verdict data
+3. Identify all places where AI might generate directive recommendations
+4. Test AI output with various user goal scenarios to identify all directive language patterns
+
+**Proposed Solution**:
+**Phase 1: Prompt Engineering Update (4-6 hours)**
+1. Update all AI prompts to use analytical framing:
+   - ❌ "The algorithm recommended CAUTION"
+   - ✅ "The analysis indicates several optimization opportunities"
+
+2. Remove verdict keywords from AI context:
+   - Remove: CAUTION, RECOMMEND, BUY, PASS, NEGOTIATE
+   - Add: analytical, indicates, suggests, shows, optimization opportunities
+
+3. Update system instructions for AI:
+   - "You are an analytical assistant providing objective property analysis"
+   - "Never make buy/sell/hold recommendations"
+   - "Present data and metrics, let users make their own decisions"
+   - "Use phrases like 'The data shows...' not 'I recommend...'"
+
+4. Add post-processing validation:
+   - Regex filter to catch directive language before displaying to users
+   - Log any directive language occurrences for prompt refinement
+   - Alert developers if directive language detected
+
+**Phase 2: Comprehensive Testing (2 hours)**
+1. Test AI output with various user goals:
+   - Cash flow goals ($500, $1000, $2000/month)
+   - ROI targets (8%, 12%, 20%)
+   - Investment strategy goals (passive income, wealth building, etc.)
+
+2. Verify no directive language in:
+   - Strategic Action Plans
+   - Capital Strategy recommendations
+   - Portfolio Fit analysis
+   - Risk Assessment commentary
+
+**Phase 3: Monitoring & Refinement (Ongoing)**
+1. Implement logging for AI-generated content
+2. Weekly review of AI outputs for directive language
+3. User feedback mechanism to flag problematic AI recommendations
+4. Quarterly prompt engineering review and optimization
+
+**Estimated Effort**: 4-6 hours initial fix + 2 hours testing = 6-8 hours total
+
+**Files to Update**:
+- `/backend/src/services/aiService.ts` - AI prompt engineering
+- `/backend/src/services/investment/aiEnhancedMessaging.ts` - Context passing to AI
+- `/backend/src/services/investment/investmentDecisionEngine.ts` - Remove verdict data from AI context
+
+**Acceptance Criteria**:
+- ✅ AI generates no directive language (CAUTION, RECOMMEND, BUY, PASS, NEGOTIATE)
+- ✅ AI provides context-aware feedback based on user goals without making recommendations
+- ✅ All AI-generated content uses analytical framing ("The data shows..." not "I recommend...")
+- ✅ Post-processing validation catches any directive language before user display
+- ✅ Testing with 10+ user goal scenarios shows consistent analytical language
+
+**Related Issues**:
+- Investment Decision UI Redesign (January 2026) - Removed directive verdicts for liability reasons
+- Feature #12: Competitive Differentiation Messaging - Need to maintain analytical positioning
+
+**Screenshots Needed**:
+- Current AI output showing "recommended 'CAUTION'" language
+- Fixed AI output with analytical framing
+- Comparison of UI (analytical) vs AI (directive) messaging inconsistency
+
+**Priority Justification**:
+P1 - HIGH because this creates legal liability risk and directly contradicts the strategic product decision to eliminate directive language. While not a calculation error, it undermines platform positioning and exposes to regulatory risk.
+
+**Discovered By**: Marcus Chen (Strategic Product Advisor) during competitive differentiation analysis
+**Reported By**: User during goal-based AI analysis testing (2026-01-19)
+
+---
+
 ## 🟡 **RESOLVED ISSUES** (2026-01-11)
 
 ### Issue #67: BRRRR NOI Calculation Uses Wrong Accounting Method (P0 CRITICAL - Phase 2c)
