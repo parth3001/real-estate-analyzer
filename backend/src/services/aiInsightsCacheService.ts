@@ -28,7 +28,7 @@ interface CachedAIInsights {
 export class AIInsightsCacheService {
   private static readonly CACHE_PREFIX = 'ai_insights';
   private static readonly CACHE_TTL_HOURS = 24; // 24 hour TTL for AI insights
-  private static readonly VERSION = '2.0'; // Increment when AI prompts change
+  private static readonly VERSION = '2.1'; // Increment when AI prompts change (2.1: Issue #78 - personalized context)
 
   /**
    * Generate cache key based on property data and critical parameters
@@ -47,6 +47,10 @@ export class AIInsightsCacheService {
       insuranceRate: propertyData.insuranceRate,
       maintenanceCost: propertyData.maintenanceCost,
       propertyManagementRate: propertyData.propertyManagementRate,
+      // User's personal context (Issue #78) - different goals = different AI response
+      userContext: propertyData.enhancedGoals?.freeTextStrategy ||
+                   propertyData.enhancedGoals?.strategy ||
+                   'none',
       // Long-term assumptions
       assumptions: {
         projectionYears: propertyData.longTermAssumptions?.projectionYears,

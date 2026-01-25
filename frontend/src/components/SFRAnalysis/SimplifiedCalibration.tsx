@@ -1,45 +1,52 @@
 import React from 'react';
 import { Box, Typography, Grid } from '@mui/material';
 import { appleColors } from '../../theme/appleDesignSystem';
+import { getScoreColor } from '../../utils/scoreColors';
 
 interface SimplifiedCalibrationProps {
-  dealQuality: number;        // 0-100
-  executionDifficulty: number; // 0-100 (will be inverted to show ease)
-  dataReliability: number;     // 0-100
+  cashFlowScore: number;        // 0-100
+  irrScore: number;             // 0-100
+  marketStrengthScore: number;  // 0-100
+  cashFlowValue: string;        // e.g., "-$667/month"
+  irrValue: string;             // e.g., "14.32%" (IRR is inherently annualized)
+  marketStrengthValue: string;  // e.g., "Strong market"
 }
 
 /**
  * SimplifiedCalibration Component
  *
- * Displays 3 professional calibration metrics as bullet list.
- * Replaces old V3.0 calibration box with cleaner presentation.
- *
- * Note: Execution Difficulty is inverted (100 - difficulty) to show "Execution Ease"
- * Label update: "Data Quality" → "Data Completeness"
+ * Displays 3 key investment factors that drive Deal Quality score.
+ * Shows Cash Flow, Total Return (IRR), and Market Strength with actual values.
  */
 const SimplifiedCalibration: React.FC<SimplifiedCalibrationProps> = ({
-  dealQuality,
-  executionDifficulty,
-  dataReliability,
+  cashFlowScore,
+  irrScore,
+  marketStrengthScore,
+  cashFlowValue,
+  irrValue,
+  marketStrengthValue,
 }) => {
-  // Invert execution difficulty to show ease (higher = easier)
-  const executionEase = 100 - executionDifficulty;
-
   const metrics = [
     {
-      label: 'Deal Quality',
-      value: Math.round(dealQuality),
-      description: 'Weighted assessment of investment fundamentals',
+      icon: '💰',
+      label: 'Cash Flow',
+      value: Math.round(cashFlowScore),
+      actualValue: cashFlowValue,
+      description: '35% weight',
     },
     {
-      label: 'Execution Complexity',
-      value: Math.round(executionEase),
-      description: 'Difficulty level for executing this investment',
+      icon: '📈',
+      label: 'IRR',
+      value: Math.round(irrScore),
+      actualValue: irrValue,
+      description: '25% weight',
     },
     {
-      label: 'Data Completeness',
-      value: Math.round(dataReliability),
-      description: 'Quality and reliability of input data',
+      icon: '🏙️',
+      label: 'Market Strength',
+      value: Math.round(marketStrengthScore),
+      actualValue: marketStrengthValue,
+      description: '15% weight',
     },
   ];
 
@@ -67,24 +74,27 @@ const SimplifiedCalibration: React.FC<SimplifiedCalibrationProps> = ({
             <Box>
               {/* Label and Value */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 0.75 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '12px',
-                    color: appleColors.gray[600],
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.3,
-                    fontWeight: 600,
-                  }}
-                >
-                  {metric.label}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ fontSize: '16px' }}>{metric.icon}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '12px',
+                      color: appleColors.gray[600],
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.3,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {metric.label}
+                  </Typography>
+                </Box>
                 <Typography
                   variant="h6"
                   sx={{
                     fontSize: '18px',
                     fontWeight: 700,
-                    color: appleColors.gray[900],
+                    color: getScoreColor(metric.value),
                   }}
                 >
                   {metric.value}
@@ -116,7 +126,7 @@ const SimplifiedCalibration: React.FC<SimplifiedCalibrationProps> = ({
                   sx={{
                     width: `${metric.value}%`,
                     height: '100%',
-                    background: `linear-gradient(90deg, ${appleColors.primary[400]}, ${appleColors.primary[600]})`,
+                    backgroundColor: getScoreColor(metric.value),
                     borderRadius: '4px',
                     transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
@@ -134,6 +144,19 @@ const SimplifiedCalibration: React.FC<SimplifiedCalibrationProps> = ({
                 }}
               >
                 {metric.description}
+              </Typography>
+
+              {/* Actual Value */}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '13px',
+                  color: appleColors.gray[800],
+                  fontWeight: 600,
+                  mt: 0.5,
+                }}
+              >
+                {metric.actualValue}
               </Typography>
             </Box>
           </Grid>

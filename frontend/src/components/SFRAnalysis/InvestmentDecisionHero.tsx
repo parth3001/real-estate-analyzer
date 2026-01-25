@@ -44,12 +44,14 @@ import DealQualityHeader from './DealQualityHeader';
 import SimplifiedCalibration from './SimplifiedCalibration';
 import KeyAnalysisInsights from './KeyAnalysisInsights';
 import VerificationGuide from './VerificationGuide';
+import InvestmentStandardsGuide from './InvestmentStandardsGuide';
 
 // Minimal local interfaces (no business logic)
 interface GoalContext {
   exitStrategy?: string;
   portfolioStrategy?: string;
   experienceLevel?: string;
+  riskApproach?: string;
 }
 
 interface MessageResult {
@@ -278,6 +280,7 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('reasoning');
   const [verificationOpen, setVerificationOpen] = useState(false); // UX Improvement: Collapse verification guide by default
+  const [standardsOpen, setStandardsOpen] = useState(false); // Investment Standards Guide accordion
   
   // Fix floating-point precision in monetary values within text
   const formatPortfolioFitText = (text: string): string => {
@@ -583,28 +586,47 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                   </Stack>
                 </Box>
 
-                {/* Analysis Content */}
-                {investmentDecision.aiEnhancedContent?.reasoning?.explanation ? (
-                  <KeyAnalysisInsights content={investmentDecision.aiEnhancedContent.reasoning.explanation} />
-                ) : (
-                  /* Fallback: Show primary reason if no AI content */
-                  <Box>
-                    <Typography variant="h6" fontWeight={600} sx={{ mb: 1, color: appleColors.gray[900] }}>
-                      Investment Analysis
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontSize: '16px',
-                        lineHeight: 1.6,
-                        color: appleColors.gray[800],
-                        fontWeight: 500
-                      }}
-                    >
-                      {investmentDecision.primaryReason}
-                    </Typography>
-                  </Box>
-                )}
+                {/* Analysis Content - NOW GOAL-AWARE */}
+                {(() => {
+                  // Check if user has goals
+                  const hasGoals = investmentDecision.goalContext &&
+                    (investmentDecision.goalContext.exitStrategy ||
+                     investmentDecision.goalContext.portfolioStrategy ||
+                     investmentDecision.goalContext.riskApproach);
+
+                  // User has goals - show full AI analysis
+                  if (hasGoals) {
+                    if (investmentDecision.goalBasedReasoning) {
+                      return <KeyAnalysisInsights content={investmentDecision.goalBasedReasoning} />;
+                    } else if (investmentDecision.aiEnhancedContent?.reasoning?.explanation) {
+                      return <KeyAnalysisInsights content={investmentDecision.aiEnhancedContent.reasoning.explanation} />;
+                    }
+                  }
+
+                  // No goals - minimal text (don't repeat metrics)
+                  const dealQuality = investmentDecision.professionalAssessment?.dealQuality || 0;
+
+                  if (investmentDecision.aiEnhancedContent?.reasoning?.explanation) {
+                    // If AI generated short no-goals text, show it
+                    return <KeyAnalysisInsights content={investmentDecision.aiEnhancedContent.reasoning.explanation} />;
+                  }
+
+                  // Fallback minimal text
+                  return (
+                    <Box>
+                      <Typography variant="body2" sx={{
+                        fontSize: '14px',
+                        color: appleColors.gray[600],
+                        fontStyle: 'italic',
+                        lineHeight: 1.6
+                      }}>
+                        {dealQuality >= 60
+                          ? "Property meets professional standards. Review calibration metrics above for details."
+                          : "Property shows challenges in current configuration. Review professional calibration metrics above."}
+                      </Typography>
+                    </Box>
+                  );
+                })()}
               </Box>
             </Grid>
           </Grid>
@@ -613,57 +635,141 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
           {investmentDecision.professionalAssessment && (
             <Box sx={{ mt: 4 }}>
               <SimplifiedCalibration
-                dealQuality={investmentDecision.professionalAssessment.dealQuality}
-                executionDifficulty={investmentDecision.professionalAssessment.executionDifficulty}
-                dataReliability={investmentDecision.professionalAssessment.dataReliability}
+                cashFlowScore={investmentDecision.professionalAssessment.cashFlowScore || 0}
+                irrScore={investmentDecision.professionalAssessment.irrScore || 0}
+                marketStrengthScore={investmentDecision.professionalAssessment.marketStrengthScore || 0}
+                cashFlowValue={
+                  analysis?.monthlyAnalysis?.cashFlow !== undefined
+                    ? `${analysis.monthlyAnalysis.cashFlow < 0 ? '-' : ''}$${Math.abs(Math.round(analysis.monthlyAnalysis.cashFlow))}/month`
+                    : 'N/A'
+                }
+                irrValue={
+                  (() => {
+                    // Try multiple possible IRR locations
+                    const irr = (analysis as any)?.longTermAnalysis?.irr ??
+                                (analysis as any)?.keyMetrics?.irr ??
+                                (analysis as any)?.irr;
+
+                    if (irr !== undefined && irr !== null && !isNaN(irr)) {
+                      return `${(irr * 100).toFixed(2)}%`;
+                    }
+                    return 'N/A';
+                  })()
+                }
+                marketStrengthValue={
+                  (investmentDecision.professionalAssessment.marketStrengthScore || 0) >= 70
+                    ? 'Strong market'
+                    : (investmentDecision.professionalAssessment.marketStrengthScore || 0) >= 50
+                    ? 'Moderate market'
+                    : 'Weak market'
+                }
               />
             </Box>
           )}
 
-          {/* UI Redesign: Verification Guide - Collapsible (UX improvement) */}
-          <Box sx={{ mt: 3 }}>
-            {/* Collapse Header Button */}
-            <Button
-              fullWidth
-              onClick={() => setVerificationOpen(!verificationOpen)}
-              endIcon={verificationOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{
-                justifyContent: 'space-between',
-                textAlign: 'left',
-                p: 2,
-                backgroundColor: appleColors.blue[50],
-                borderRadius: '12px',
-                border: `1px solid ${appleColors.blue[200]}`,
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: appleColors.blue[100],
-                }
-              }}
-            >
-              <Box>
-                <Typography variant="subtitle1" fontWeight={600} color={appleColors.blue[800]} sx={{ fontSize: '16px' }}>
-                  Professional Verification Guide
-                </Typography>
-                <Typography variant="caption" color={appleColors.gray[600]} sx={{ fontSize: '13px' }}>
-                  3 steps to verify key assumptions
-                </Typography>
-              </Box>
-            </Button>
+          {/* UI Redesign: Two Accordions - Verification Guide + Investment Standards */}
+          <Grid container spacing={1.5} sx={{ mt: 3, width: '100%', mx: 0 }}>
+            {/* Professional Verification Guide */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Button
+                fullWidth
+                onClick={() => setVerificationOpen(!verificationOpen)}
+                endIcon={verificationOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                sx={{
+                  justifyContent: 'space-between',
+                  textAlign: 'left',
+                  p: 2,
+                  backgroundColor: appleColors.blue[50],
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: appleColors.blue[100],
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  }
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600} color={appleColors.blue[800]} sx={{ fontSize: '16px' }}>
+                    📋 Professional Verification Guide
+                  </Typography>
+                  <Typography variant="caption" color={appleColors.gray[600]} sx={{ fontSize: '13px' }}>
+                    3 steps to verify key assumptions
+                  </Typography>
+                </Box>
+              </Button>
 
-            {/* Collapsible Content */}
-            <Collapse in={verificationOpen} timeout={300}>
-              <Box sx={{ mt: 2 }}>
-                <VerificationGuide
-                  propertyData={{
-                    monthlyRent: propertyData?.monthlyRent,
-                    propertyTax: propertyData?.propertyTax,
-                    insurance: propertyData?.insurance,
-                    maintenance: propertyData?.maintenance,
+              <Collapse in={verificationOpen} timeout={300}>
+                <Card
+                  sx={{
+                    mt: 1,
+                    p: 2,
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    border: `1px solid ${appleColors.blue[200]}`,
+                    maxHeight: { xs: 'none', md: '500px' },
+                    overflowY: { xs: 'visible', md: 'auto' },
                   }}
-                />
-              </Box>
-            </Collapse>
-          </Box>
+                >
+                  <VerificationGuide
+                    propertyData={{
+                      monthlyRent: propertyData?.monthlyRent,
+                      propertyTax: propertyData?.propertyTax,
+                      insurance: propertyData?.insurance,
+                      maintenance: propertyData?.maintenance,
+                    }}
+                  />
+                </Card>
+              </Collapse>
+            </Grid>
+
+            {/* Investment Standards Guide */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Button
+                fullWidth
+                onClick={() => setStandardsOpen(!standardsOpen)}
+                endIcon={standardsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                sx={{
+                  justifyContent: 'space-between',
+                  textAlign: 'left',
+                  p: 2,
+                  backgroundColor: appleColors.gray[50],
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'white',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  }
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600} color={appleColors.primary[600]} sx={{ fontSize: '16px' }}>
+                    📊 Investment Standards Guide
+                  </Typography>
+                  <Typography variant="caption" color={appleColors.gray[600]} sx={{ fontSize: '13px' }}>
+                    Understanding score ranges
+                  </Typography>
+                </Box>
+              </Button>
+
+              <Collapse in={standardsOpen} timeout={300}>
+                <Card
+                  sx={{
+                    mt: 1,
+                    p: 2,
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    border: `1px solid ${appleColors.gray[200]}`,
+                    maxHeight: { xs: 'none', md: '500px' },
+                    overflowY: { xs: 'visible', md: 'auto' },
+                  }}
+                >
+                  <InvestmentStandardsGuide
+                    currentScore={investmentDecision.professionalAssessment?.dealQuality || 0}
+                  />
+                </Card>
+              </Collapse>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
 
@@ -773,8 +879,19 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
             <Box sx={{ p: 3 }}>
               {activeDetailTab === 'reasoning' && (
                 <Grid container spacing={3}>
-                  {/* AI-Enhanced Reasoning (80/20 approach) */}
-                  {investmentDecision.aiEnhancedContent?.reasoning ? (
+                  {/* AI-Enhanced Reasoning (80/20 approach) - Issue #78/#79 Fix: Use goalBasedReasoning */}
+                  {investmentDecision.goalBasedReasoning ? (
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                          Professional Analysis
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                          {investmentDecision.goalBasedReasoning}
+                        </Typography>
+                      </Grid>
+                    </>
+                  ) : investmentDecision.aiEnhancedContent?.reasoning ? (
                     <>
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>

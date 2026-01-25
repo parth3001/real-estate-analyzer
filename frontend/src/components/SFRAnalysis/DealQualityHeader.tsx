@@ -1,7 +1,8 @@
 import React from 'react';
-import { Typography, Card } from '@mui/material';
+import { Typography, Card, Box } from '@mui/material';
 import { appleColors } from '../../theme/appleDesignSystem';
 import { getScoreContext } from '../../utils/verdictUtils';
+import { getScoreColor } from '../../utils/scoreColors';
 
 interface DealQualityHeaderProps {
   score: number; // 0-100 from professionalAssessment.dealQuality
@@ -24,7 +25,7 @@ const DealQualityHeader: React.FC<DealQualityHeaderProps> = ({ score }) => {
         p: 4, // UX Enhancement: More padding for visual weight
         backgroundColor: 'white', // UX Enhancement: White background (not gray) for prominence
         borderRadius: '16px', // UX Enhancement: Larger radius
-        border: `2px solid ${appleColors.gray[200]}`,
+        border: `2px solid ${getScoreColor(score)}`,
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // UX Enhancement: Subtle shadow for elevation
         textAlign: 'center',
       }}
@@ -50,7 +51,7 @@ const DealQualityHeader: React.FC<DealQualityHeaderProps> = ({ score }) => {
         variant="h1"
         sx={{
           fontWeight: 800, // UX Enhancement: Heavier weight
-          color: appleColors.gray[900],
+          color: getScoreColor(score),
           fontSize: '96px', // UX Enhancement: 48px → 96px (2x larger)
           lineHeight: 1,
           mb: 1.5,
@@ -70,6 +71,18 @@ const DealQualityHeader: React.FC<DealQualityHeaderProps> = ({ score }) => {
           /100
         </Typography>
       </Typography>
+
+      {/* Colored accent line */}
+      <Box
+        sx={{
+          width: '120px',
+          height: '4px',
+          backgroundColor: getScoreColor(score),
+          borderRadius: '2px',
+          margin: '0 auto',
+          mb: 2,
+        }}
+      />
 
       {/* Context */}
       <Typography

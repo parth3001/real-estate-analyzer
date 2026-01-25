@@ -1917,12 +1917,22 @@ export class InvestmentDecisionEngine {
       // OPTIMIZATION 1C: Generate AI-enhanced content and sensitivity analysis IN PARALLEL
       // Parallel execution: ~8-10s vs 16s sequential (40% improvement)
       if (!skipEnhancements) {
+        // Extract sanitized goals for AI context (if available)
+        const sanitizedGoals = enhancedGoals?.sanitizedGoalContext || null;
+
+        logger.info('Sanitized goals for AI:', {
+          hasSanitizedGoals: !!sanitizedGoals,
+          hasText: !!sanitizedGoals?.sanitizedText,
+          strategy: sanitizedGoals?.strategy,
+          hasCashFlowTarget: !!sanitizedGoals?.numericGoals?.cashFlow
+        });
+
         // Run both operations in PARALLEL - they are independent
         const [aiEnhancedContent, sensitivityAnalysis] = await Promise.all([
-          // AI-enhanced content generation (20% of 80/20 approach)
+          // AI-enhanced content generation (20% of 80/20 approach) - NOW GOAL-AWARE
           (async () => {
             try {
-              const content = await aiEnhancedMessagingService.generateAllContent(decision, analysis, propertyData);
+              const content = await aiEnhancedMessagingService.generateAllContent(decision, analysis, propertyData, sanitizedGoals);
               return content;
             } catch (error) {
               logger.warn('AI-enhanced content generation failed, using fallback', error);
@@ -2124,10 +2134,15 @@ export class InvestmentDecisionEngine {
       if (!skipEnhancements) {
         try {
           logger.info('Generating AI-enhanced tab content for BRRRR');
+
+          // Extract sanitized goals for AI context (if available)
+          const sanitizedGoals = enhancedGoals?.sanitizedGoalContext || null;
+
           const aiEnhancedContent = await aiEnhancedMessagingService.generateAllContent(
             decision,
             analysis,
-            propertyData
+            propertyData,
+            sanitizedGoals // NOW GOAL-AWARE
           );
           decision.aiEnhancedContent = aiEnhancedContent;
           logger.info('AI-enhanced content generation completed');

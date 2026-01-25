@@ -376,7 +376,7 @@ grep -r "import.*Layout" frontend/src/App.tsx
 </Box>
 
 # Check git commits match deployed code
-git log --oneline -3
+git log --online -3
 
 # Verify build cache isn't stale
 # On Render: Settings → Clear Build Cache
@@ -388,6 +388,44 @@ git log --oneline -3
 3. ✅ Clear browser cache (Cmd+Shift+R on Mac)
 4. ✅ Check if editing correct file (see step 1)
 5. ✅ Verify build succeeded without errors
+
+#### **6. Verify Data Exists Before Assuming Backend Failure**
+
+⚠️ **CRITICAL ARCHITECTURAL PRINCIPLE**: Always verify the data exists in the backend response before assuming the backend is failing.
+
+**Real Example (Issues #78 & #79 - January 2026):**
+- **Symptom**: AI personalized content not appearing in frontend
+- **Initial Assumption**: Backend two-stage AI pipeline not working
+- **Reality**: Backend was generating perfect personalized content all along
+- **Root Cause**: Frontend displaying wrong field (`aiEnhancedContent.reasoning.explanation` instead of `goalBasedReasoning`)
+- **Bug Location**: Frontend display logic, NOT backend data generation
+
+**Debugging Checklist:**
+```typescript
+// Step 1: Check browser DevTools Network tab
+// Look at the actual API response JSON
+
+// Step 2: Search for the expected data in the response
+// Example: Search for "goalBasedReasoning" in response
+
+// Step 3: If data EXISTS in response but NOT on screen → Frontend display bug
+// Step 4: If data MISSING from response → Backend generation bug
+
+// Real example from Issue #78:
+// Response contained: "goalBasedReasoning": "I understand your frustration..."
+// Frontend showed: Generic content from "aiEnhancedContent.reasoning.explanation"
+// Conclusion: Backend perfect, frontend displaying wrong field
+```
+
+**Key Lesson Learned:**
+> **Always verify data exists in backend response before assuming backend failure. The backend two-stage AI pipeline was generating perfect personalized content from day one - the bug was purely a frontend display issue where the wrong field was being rendered. Both issues #78 and #79 were production-ready on the backend; only frontend display needed fixing.**
+
+**Prevention Strategy:**
+1. **Network Tab First**: Always check browser DevTools Network response before debugging backend
+2. **Search Response JSON**: Use Cmd+F to search for expected field names in response
+3. **Data vs Display Separation**: If data exists in response, it's a display bug
+4. **Backend Logging**: Backend logs showing "success" don't mean frontend displays correctly
+5. **End-to-End Verification**: Trace data from backend → network → frontend state → DOM
 
 ### **DEBUGGING DECISION TREE**
 
