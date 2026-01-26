@@ -26,6 +26,9 @@ import { MFDecisionEngine } from '../services/investment/MFDecisionEngine';
 // Import AI Goal Analysis
 import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiService';
 
+// Import Google Maps Service for Property Images (Feature #9)
+import googleMapsService from '../services/googleMapsService';
+
 /**
  * Generate portfolio context for investment decision enhancement
  * SAFE: This is an optional enhancement that doesn't affect core analysis
@@ -197,6 +200,9 @@ const convertWizardData = (dealData: any): any => {
       // Multi-Family properties can also use BRRRR strategy (future support)
       investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
 
+      // Feature #9: Explicitly preserve propertyVisuals field (Google Maps Integration)
+      propertyVisuals: dealData.propertyVisuals || null,
+
       longTermAssumptions: {
         ...dealData.longTermAssumptions,
         // ✅ ISSUE #53 FIX: Use ?? operator instead of || to preserve zero values
@@ -291,6 +297,9 @@ const convertWizardData = (dealData: any): any => {
     monthlyHOA: dealData.monthlyHOA ?? 0,
     monthlyUtilities: dealData.monthlyUtilities ?? 0,
     monthlyCapEx: dealData.monthlyCapEx ?? 0,
+
+    // Feature #9: Explicitly preserve propertyVisuals field (Google Maps Integration)
+    propertyVisuals: dealData.propertyVisuals || null,
 
     // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
     // Frontend sends 'strategy' field (property.ts:57), backend expects 'investmentStrategy' (investmentDecisionEngine.ts:1569)
@@ -1331,6 +1340,50 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
       portfolioId: dealData.portfolioId || null, // Include portfolioId from original request
       validationWarnings // Phase 1: Include validation warnings for frontend display
     };
+
+    // Feature #9: Fetch property visuals (moved to header - simple sequential approach)
+    if (dealData.propertyAddress) {
+      try {
+        const fullAddress = `${dealData.propertyAddress.street}, ${dealData.propertyAddress.city}, ${dealData.propertyAddress.state} ${dealData.propertyAddress.zipCode}`;
+
+        // Try to get coordinates (from RentCast, manual input, or geocoding)
+        let lat = dealData.latitude;
+        let lng = dealData.longitude;
+
+        // For SFR, check RentCast data
+        if (dealData.propertyType === 'SFR' && (dealData as any).rentCastData?.latitude) {
+          lat = (dealData as any).rentCastData.latitude;
+          lng = (dealData as any).rentCastData.longitude;
+          logger.info('📍 Using coordinates from RentCast', { lat, lng });
+        }
+
+        // Fallback: Geocode the address
+        if (!lat || !lng) {
+          logger.info('📍 Geocoding address for property visuals', { address: fullAddress });
+          const geocoded = await googleMapsService.geocodeAddress(fullAddress);
+          if (geocoded) {
+            lat = geocoded.lat;
+            lng = geocoded.lng;
+            logger.info('✅ Geocoded successfully', { lat, lng });
+          }
+        }
+
+        // Fetch visuals if we have coordinates
+        if (lat && lng) {
+          const propertyVisuals = await googleMapsService.getPropertyVisuals(fullAddress, lat, lng);
+          if (propertyVisuals && propertyVisuals.source && propertyVisuals.apiStatus) {
+            responseData.propertyVisuals = propertyVisuals;
+            logger.info('✅ Property visuals fetched and added to response', {
+              source: propertyVisuals.source,
+              apiStatus: propertyVisuals.apiStatus
+            });
+          }
+        }
+      } catch (error) {
+        logger.warn('Property visual fetch failed (non-critical):', error);
+        // Continue without visuals - this is optional enhancement
+      }
+    }
 
     logger.info('Returning analysis with portfolioId:', {
       hasPortfolioId: !!dealData.portfolioId,

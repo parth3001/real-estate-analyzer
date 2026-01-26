@@ -25,6 +25,7 @@ import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SimplePortfolioSelector } from '../components/SFRAnalysis/SimplePortfolioSelector';
+import PropertyImage from '../components/PropertyImage';
 import { AppleCard, AppleButton } from '../components/ui/AppleComponents';
 import { appleColors } from '../theme/appleDesignSystem';
 import { SFR_PROPERTY_DEFAULTS, DEFAULT_ENHANCED_GOALS } from '../constants/sfrPropertyDefaults';
@@ -415,7 +416,12 @@ const SFRAnalysis: React.FC = () => {
                                    dealAnalysis.investmentDecision;
           
           if (isAnalysisComplete) {
-            setAnalysis(dealAnalysis);
+            // Feature #9: Merge propertyVisuals from root level into analysis
+            // Backend stores propertyVisuals at root, but PropertyImage reads from analysis.propertyVisuals
+            setAnalysis({
+              ...dealAnalysis,
+              propertyVisuals: response.data.propertyVisuals
+            });
 
             // TAX INTELLIGENCE STATE VERIFICATION
             console.log('🔍 TAX LOAD VERIFY - Analysis set in state:', {
@@ -462,7 +468,10 @@ const SFRAnalysis: React.FC = () => {
       // Prepare the deal data with analysis
       const dealData = {
         ...propertyData,
-        analysis
+        analysis,
+        // Feature #9: Extract propertyVisuals to root level for MongoDB schema
+        // Backend Deal schema expects propertyVisuals at root, not nested in analysis
+        propertyVisuals: analysis?.propertyVisuals || null
       };
       
       // Debug: Check if portfolio context and tax analysis are being saved
@@ -498,6 +507,33 @@ const SFRAnalysis: React.FC = () => {
       
       if ((response.status === 201 || response.status === 200) && response.data) {
         console.log('Deal saved successfully:', response.data);
+
+        // Feature #9: Sync states with saved deal from MongoDB
+        // Backend returns: { _id, propertyVisuals (root), analysis (nested), ...otherFields }
+
+        // ALWAYS merge propertyVisuals into analysis state (foolproof pattern)
+        // Use saved analysis if exists, otherwise keep current analysis, but ALWAYS add propertyVisuals
+        setAnalysis(prev => ({
+          ...(response.data.analysis || prev),  // Use saved analysis if exists, fallback to current
+          propertyVisuals: response.data.propertyVisuals  // Always merge propertyVisuals from root
+        }));
+
+        // Update propertyData timestamps only (preserve form data)
+        if (!dealId && response.data._id) {
+          // New deal: Add MongoDB metadata
+          setPropertyData(prev => ({
+            ...prev,
+            _id: response.data._id,
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt
+          }));
+        } else if (dealId) {
+          // Existing deal: Update timestamp
+          setPropertyData(prev => ({
+            ...prev,
+            updatedAt: response.data.updatedAt
+          }));
+        }
 
         // TAX INTELLIGENCE POST-SAVE VERIFICATION
         console.log('🔍 TAX SAVE VERIFY - Check saved deal contains tax analysis:', {
@@ -829,47 +865,73 @@ const SFRAnalysis: React.FC = () => {
               <Box sx={{ flex: 1 }}>
                 {/* Dynamic Title: Property Address when analysis exists, generic when input */}
                 {activeSection === 'results' && propertyData?.propertyAddress ? (
-                  <>
-                    <Typography 
-                      variant="h4" 
-                      component="h1"
-                      sx={{ 
-                        fontWeight: 700,
-                        color: appleColors.gray[900],
-                        mb: 1,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      📍 {propertyData.propertyAddress.street}, {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state} {propertyData.propertyAddress.zipCode}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 1 }}>
-                      {propertyData.bedrooms && propertyData.bathrooms && (
-                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
-                          {propertyData.bedrooms} bed • {propertyData.bathrooms} bath
-                        </Typography>
-                      )}
-                      {propertyData.squareFootage && (
-                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
-                          • {propertyData.squareFootage.toLocaleString()} sqft
-                        </Typography>
-                      )}
-                      {propertyData.yearBuilt && (
-                        <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
-                          • Built {propertyData.yearBuilt}
-                        </Typography>
-                      )}
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    gap: { xs: 2, md: 3 },
+                    alignItems: { xs: 'stretch', md: 'flex-start' }
+                  }}>
+                    {/* Feature #9: Property Image - Left on desktop, top on mobile */}
+                    {analysis?.propertyVisuals && (
+                      <Box sx={{
+                        width: { xs: '100%', md: '40%', lg: '35%' },
+                        flexShrink: 0
+                      }}>
+                        <PropertyImage
+                          visuals={analysis.propertyVisuals}
+                          alt={`${propertyData.propertyAddress.street}, ${propertyData.propertyAddress.city}, ${propertyData.propertyAddress.state}`}
+                          height={240}
+                          width="100%"
+                          borderRadius={3}
+                        />
+                      </Box>
+                    )}
+
+                    {/* Property Details - Right on desktop, below on mobile */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="h4"
+                        component="h1"
+                        sx={{
+                          fontWeight: 700,
+                          color: appleColors.gray[900],
+                          mb: 1,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        📍 {propertyData.propertyAddress.street}, {propertyData.propertyAddress.city}, {propertyData.propertyAddress.state} {propertyData.propertyAddress.zipCode}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 1 }}>
+                        {propertyData.bedrooms && propertyData.bathrooms && (
+                          <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                            {propertyData.bedrooms} bed • {propertyData.bathrooms} bath
+                          </Typography>
+                        )}
+                        {propertyData.squareFootage && (
+                          <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                            • {propertyData.squareFootage.toLocaleString()} sqft
+                          </Typography>
+                        )}
+                        {propertyData.yearBuilt && (
+                          <Typography variant="body1" sx={{ color: appleColors.gray[700], fontWeight: 500 }}>
+                            • Built {propertyData.yearBuilt}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: appleColors.blue[600],
+                          fontWeight: 600
+                        }}
+                      >
+                        ${propertyData.purchasePrice?.toLocaleString()}
+                      </Typography>
                     </Box>
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        color: appleColors.blue[600],
-                        fontWeight: 600
-                      }}
-                    >
-                      ${propertyData.purchasePrice?.toLocaleString()}
-                    </Typography>
-                  </>
+                  </Box>
                 ) : (
                   <>
                     <Typography 

@@ -503,6 +503,16 @@ export interface IDeal extends Document {
     occupancyRate?: number;
     updatedAt: Date;
   };
+  propertyVisuals?: {
+    primaryImageUrl?: string | null;
+    streetViewStaticUrl?: string;
+    streetViewEmbedUrl?: string;
+    staticMapUrl?: string;
+    fetchedAt?: Date;
+    cacheExpiry?: Date;
+    source?: 'google-places' | 'street-view' | 'map-only';
+    apiStatus?: 'success' | 'partial' | 'fallback';
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -1283,7 +1293,27 @@ const DealSchema = new Schema({
   longTermAssumptions: { type: Schema.Types.Mixed, required: true },
   analysis: { type: AnalysisSchema },
   confidence: { type: ConfidenceSchema },
-  
+
+  // Property Visuals (Feature #9: Google Maps Integration)
+  propertyVisuals: {
+    primaryImageUrl: { type: String, default: null },
+    streetViewStaticUrl: { type: String },
+    streetViewEmbedUrl: { type: String },
+    staticMapUrl: { type: String },
+    fetchedAt: { type: Date },
+    cacheExpiry: { type: Date },
+    source: {
+      type: String,
+      enum: ['google-places', 'street-view', 'map-only'],
+      required: false  // FSE Fix: Optional field, omit if visual fetch fails
+    },
+    apiStatus: {
+      type: String,
+      enum: ['success', 'partial', 'fallback'],
+      required: false  // FSE Fix: Optional field, omit if visual fetch fails
+    }
+  },
+
   // Metadata
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

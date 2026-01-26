@@ -27,6 +27,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { getStrategyIconConfig } from '../utils/strategyHelpers';
+import PropertyImage from '../components/PropertyImage';
 
 interface SavedProperty {
   _id: string;
@@ -411,14 +412,67 @@ const SavedProperties: React.FC = () => {
                   }
                 }}
               >
-                {/* Issue #75: Strategy-aware property icon (64x64px desktop, 40x40px mobile) */}
+                {/* Feature #9: Property photo with strategy badge overlay (hybrid approach) */}
                 {(() => {
                   const iconConfig = getStrategyIconConfig(
                     property.propertyType,
                     property.investmentStrategy || property.strategy
                   );
                   const Icon = iconConfig.Icon;
+                  const hasPropertyVisuals = property.propertyVisuals?.primaryImageUrl ||
+                                             property.propertyVisuals?.streetViewStaticUrl ||
+                                             property.propertyVisuals?.staticMapUrl;
 
+                  // If property has image: Show photo with strategy badge overlay
+                  if (hasPropertyVisuals) {
+                    return (
+                      <Box
+                        sx={{
+                          width: { xs: 64, md: 100 },
+                          height: { xs: 48, md: 64 },
+                          flexShrink: 0,
+                          position: 'relative',
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          transition: 'transform 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)'
+                          }
+                        }}
+                      >
+                        {/* Property Photo */}
+                        <PropertyImage
+                          visuals={property.propertyVisuals}
+                          alt={property.propertyAddress?.street || 'Property'}
+                          height="100%"
+                          width="100%"
+                          borderRadius={1}
+                        />
+
+                        {/* Strategy Badge Overlay (bottom-right corner) */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: 4,
+                            right: 4,
+                            width: 20,
+                            height: 20,
+                            backgroundColor: iconConfig.bgColor,
+                            borderRadius: 0.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.9)',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                          }}
+                        >
+                          <Icon sx={{ fontSize: 12, color: iconConfig.color }} />
+                        </Box>
+                      </Box>
+                    );
+                  }
+
+                  // Fallback: No photo available - show full strategy icon (existing design)
                   return (
                     <Box
                       sx={{

@@ -18,6 +18,21 @@ export interface ValidationWarning {
   affectedMetric?: string;
 }
 
+/**
+ * Property Visuals (Feature #9: Google Maps Integration)
+ * URLs only - images served from Google CDN
+ */
+export interface PropertyVisuals {
+  primaryImageUrl?: string | null;      // Google Places photo
+  streetViewStaticUrl?: string;         // Static image for hero
+  streetViewEmbedUrl?: string;          // Interactive iframe URL
+  staticMapUrl?: string;                // Map with pin
+  fetchedAt?: Date;
+  cacheExpiry?: Date;
+  source?: 'google-places' | 'street-view' | 'map-only';
+  apiStatus?: 'success' | 'partial' | 'fallback';
+}
+
 export interface MonthlyExpenses {
   propertyTax: number;
   insurance: number;
@@ -285,4 +300,6 @@ export interface Analysis {
   // For House Hack: Will contain house hack specific data (Phase 2B)
   // For Buy & Hold: Undefined/null
   strategySpecific?: BRRRRAnalysis;
+  // Feature #9: Property Visuals (Google Maps Integration)
+  propertyVisuals?: PropertyVisuals;
 }
