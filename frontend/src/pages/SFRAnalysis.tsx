@@ -521,18 +521,24 @@ const SFRAnalysis: React.FC = () => {
         // Update propertyData timestamps only (preserve form data)
         if (!dealId && response.data._id) {
           // New deal: Add MongoDB metadata
-          setPropertyData(prev => ({
-            ...prev,
-            _id: response.data._id,
-            createdAt: response.data.createdAt,
-            updatedAt: response.data.updatedAt
-          }));
+          setPropertyData(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              _id: response.data._id,
+              createdAt: response.data.createdAt,
+              updatedAt: response.data.updatedAt
+            };
+          });
         } else if (dealId) {
           // Existing deal: Update timestamp
-          setPropertyData(prev => ({
-            ...prev,
-            updatedAt: response.data.updatedAt
-          }));
+          setPropertyData(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              updatedAt: response.data.updatedAt
+            };
+          });
         }
 
         // TAX INTELLIGENCE POST-SAVE VERIFICATION
