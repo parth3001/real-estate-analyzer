@@ -33,14 +33,21 @@ export const logger = winston.createLogger({
   transports: []
 });
 
-// Production: Only error logs to file
+// Production: Error logs to file + All logs to console (for Render dashboard visibility)
 if (process.env.NODE_ENV === 'production') {
+  // File transport for error logs only
   logger.add(new winston.transports.File({
     filename: 'logs/error.log',
     level: 'error',
     format: fileFormat,
     maxsize: 5242880, // 5MB
     maxFiles: 5
+  }));
+
+  // Console transport for Render dashboard (respects LOG_LEVEL env var)
+  logger.add(new winston.transports.Console({
+    level: process.env.LOG_LEVEL || 'error',  // Defaults to 'error', set LOG_LEVEL=info for debugging
+    format: consoleFormat
   }));
 } else {
   // Development: Full logging to files
