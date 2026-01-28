@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-dotenv.config();
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -25,20 +24,22 @@ import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
 
-const envPath = path.resolve(__dirname, '../.env');
-const result = dotenv.config({ path: envPath });
+// Load .env file only in development (production uses Render environment variables)
+if (process.env.NODE_ENV !== 'production') {
+  const envPath = path.resolve(__dirname, '../.env');
+  const result = dotenv.config({ path: envPath });
 
-// Only log .env loading in development or on error
-if (result.error) {
-  logger.error('❌ Error loading .env file:', result.error);
-} else if (process.env.NODE_ENV !== 'production') {
-  logger.info('✅ .env file loaded successfully');
-  logger.info('Environment:', {
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-    MONGODB_URI: process.env.MONGODB_URI ? 'configured' : 'missing'
-  });
+  if (result.error) {
+    logger.warn('⚠️  No .env file found (this is normal in production)');
+  } else {
+    logger.info('✅ .env file loaded successfully');
+    logger.info('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+      MONGODB_URI: process.env.MONGODB_URI ? 'configured' : 'missing'
+    });
+  }
 }
 
 const app = express();
