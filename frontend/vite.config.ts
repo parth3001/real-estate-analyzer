@@ -10,6 +10,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Ensure SEO files are copied to dist (sitemap.xml, robots.txt)
+  publicDir: 'public',
   server: {
     host: '0.0.0.0', // Allow network access for iPhone testing
     port: 3000,

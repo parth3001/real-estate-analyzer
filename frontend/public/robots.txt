@@ -1,13 +1,33 @@
 # REAnalyzr robots.txt - SEO Configuration
-# Allow all search engines to index public pages
+# Updated: January 27, 2026
+# Allow all search engines to index public pages only
 
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /dashboard/
-Disallow: /settings/
+
+# User-specific pages (require authentication)
+Disallow: /dashboard
+Disallow: /settings
 Disallow: /admin/
-Disallow: /profile/
+Disallow: /profile
+
+# Auth flow pages (transient, not SEO-valuable)
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+# Dynamic routes with IDs (not SEO-friendly)
+Disallow: /analysis/*
+Disallow: /portfolio/create
+Disallow: /portfolio/*/edit
+Disallow: /sfr-analysis/wizard
+Disallow: /sfr-analysis/brrrr
+
+# Development/testing pages
+Disallow: /census-test
 
 # Sitemap location
 Sitemap: https://reanalyzr.com/sitemap.xml

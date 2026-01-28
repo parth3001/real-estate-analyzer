@@ -104,4 +104,20 @@
     <priority>0.3</priority>
   </url>
 
+  <!-- Saved Properties (User Content Management) -->
+  <url>
+    <loc>https://reanalyzr.com/saved-properties</loc>
+    <lastmod>2025-01-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Market Data Page (Economic Insights) -->
+  <url>
+    <loc>https://reanalyzr.com/market-data</loc>
+    <lastmod>2025-01-27</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>
