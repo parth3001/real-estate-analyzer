@@ -1354,17 +1354,14 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
         if (dealData.propertyType === 'SFR' && (dealData as any).rentCastData?.latitude) {
           lat = (dealData as any).rentCastData.latitude;
           lng = (dealData as any).rentCastData.longitude;
-          logger.info('📍 Using coordinates from RentCast', { lat, lng });
         }
 
         // Fallback: Geocode the address
         if (!lat || !lng) {
-          logger.info('📍 Geocoding address for property visuals', { address: fullAddress });
           const geocoded = await googleMapsService.geocodeAddress(fullAddress);
           if (geocoded) {
             lat = geocoded.lat;
             lng = geocoded.lng;
-            logger.info('✅ Geocoded successfully', { lat, lng });
           }
         }
 
@@ -1373,10 +1370,6 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
           const propertyVisuals = await googleMapsService.getPropertyVisuals(fullAddress, lat, lng);
           if (propertyVisuals && propertyVisuals.source && propertyVisuals.apiStatus) {
             responseData.propertyVisuals = propertyVisuals;
-            logger.info('✅ Property visuals fetched and added to response', {
-              source: propertyVisuals.source,
-              apiStatus: propertyVisuals.apiStatus
-            });
           }
         }
       } catch (error) {

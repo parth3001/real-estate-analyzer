@@ -119,7 +119,7 @@ class GoogleMapsService {
       const searchResponse = await axios.get(searchUrl, { timeout: 5000 });
 
       if (searchResponse.data.status !== 'OK' || !searchResponse.data.results?.[0]) {
-        logger.info('No Google Places result found for address', { address });
+        // No Places result - normal fallback to Street View (not an error)
         return null;
       }
 
@@ -127,7 +127,7 @@ class GoogleMapsService {
 
       // Step 2: Check if place has photos
       if (!place.photos || place.photos.length === 0) {
-        logger.info('No photos available for place', { address, placeId: place.place_id });
+        // No photos - normal fallback to Street View (not an error)
         return null;
       }
 
@@ -135,7 +135,6 @@ class GoogleMapsService {
       const photoReference = place.photos[0].photo_reference;
       const photoUrl = `${BASE_URLS.places}/photo?maxwidth=800&photoreference=${photoReference}&key=${GOOGLE_MAPS_API_KEY}`;
 
-      logger.info('✅ Google Places image found', { address, photoUrl });
       return photoUrl;
 
     } catch (error: any) {
@@ -223,16 +222,10 @@ class GoogleMapsService {
     try {
       const url = `${BASE_URLS.geocode}?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
 
-      logger.info('📍 Geocoding address...', { address });
       const response = await axios.get(url, { timeout: 5000 });
 
       if (response.data.status === 'OK' && response.data.results?.[0]) {
         const location = response.data.results[0].geometry.location;
-        logger.info('✅ Geocoding successful', {
-          address,
-          lat: location.lat,
-          lng: location.lng
-        });
         return { lat: location.lat, lng: location.lng };
       }
 
@@ -255,8 +248,6 @@ class GoogleMapsService {
    * @returns PropertyVisuals object with all available visuals
    */
   async getPropertyVisuals(address: string, lat: number, lng: number): Promise<PropertyVisuals> {
-    const startTime = Date.now();
-
     // Initialize result object
     const visuals: PropertyVisuals = {
       fetchedAt: new Date(),
@@ -284,15 +275,6 @@ class GoogleMapsService {
 
       // Step 3: Generate static map (always include)
       visuals.staticMapUrl = this.getStaticMapUrl(lat, lng, '800x400', 15);
-
-      const duration = Date.now() - startTime;
-
-      logger.info('✅ Property visuals fetched', {
-        address,
-        source: visuals.source,
-        duration: `${duration}ms`,
-        hasPlacesPhoto: !!placesImage
-      });
 
       return visuals;
 
