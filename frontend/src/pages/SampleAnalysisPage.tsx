@@ -359,7 +359,7 @@ const SampleAnalysisPage: React.FC = () => {
             />
           </Box>
 
-          {/* Main Headline - Value Proposition */}
+          {/* Main Headline - SEO Optimized H1 */}
           <Typography
             variant="h1"
             sx={{
@@ -372,10 +372,10 @@ const SampleAnalysisPage: React.FC = () => {
               letterSpacing: '-0.02em'
             }}
           >
-            Professional Real Estate Analysis
+            Rental Property Calculator
           </Typography>
 
-          {/* Subheading - Enhanced Value Proposition */}
+          {/* Subheading - SEO Keywords */}
           <Typography
             variant="h5"
             sx={{
@@ -389,9 +389,9 @@ const SampleAnalysisPage: React.FC = () => {
               lineHeight: 1.4
             }}
           >
-            Institutional-grade metrics for individual investors.{' '}
+            Analyze buy & hold, BRRRR, and multi-family properties in 5 minutes.{' '}
             <Box component="span" sx={{ display: { xs: 'block', sm: 'inline' } }}>
-              No spreadsheets. No guesswork.
+              Calculate cap rate, cash flow, IRR, DSCR with institutional-grade metrics.
             </Box>
           </Typography>
 
@@ -1023,6 +1023,384 @@ const SampleAnalysisPage: React.FC = () => {
             capabilities with realistic market data. Actual results may vary based on local market
             conditions.
           </Typography>
+
+          {/* SEO Content Section - Added for organic search optimization */}
+          <Box sx={{ mt: 8, mb: 6, maxWidth: 900, mx: 'auto' }}>
+            <Typography
+              variant="h3"
+              sx={{
+                mb: 3,
+                fontSize: { xs: '1.5rem', md: '1.75rem' },
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              How to Use This Rental Property Calculator
+            </Typography>
+
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Our rental property calculator helps you analyze buy and hold, BRRRR, and multi-family
+              investment opportunities in minutes. Select a property type above to see a detailed financial
+              analysis including cash flow projections, cap rate, cash-on-cash return, IRR, DSCR, and 60+
+              institutional-grade metrics. No spreadsheets required.
+            </Typography>
+
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Whether you're evaluating your first rental property or expanding your real estate portfolio,
+              our calculator provides professional-level analysis that would typically require expensive
+              software or hours with spreadsheets. Switch between single-family (SFR) buy & hold, BRRRR
+              strategy, and multi-family properties to see how different investment approaches perform.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 6, mb: 6, maxWidth: 900, mx: 'auto' }}>
+            <Typography
+              variant="h3"
+              sx={{
+                mb: 3,
+                fontSize: { xs: '1.5rem', md: '1.75rem' },
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Understanding Rental Property Metrics
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                mb: 1.5,
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Cap Rate (Capitalization Rate)
+            </Typography>
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              The cap rate measures your property's return on investment based on net operating income.
+              Calculate it by dividing annual NOI by purchase price. A good cap rate for rental properties
+              typically ranges from 5-10%, depending on location and property type. Higher cap rates
+              indicate stronger cash flow relative to price.
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                mb: 1.5,
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Cash Flow
+            </Typography>
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Monthly cash flow is your rental income minus all expenses including mortgage, property taxes,
+              insurance, maintenance, and property management. Positive cash flow means the property pays
+              for itself and generates profit each month. Aim for at least $200-400 per property.
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                mb: 1.5,
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Cash-on-Cash Return
+            </Typography>
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              This metric shows your annual return on actual cash invested (down payment and closing costs).
+              Investors typically target 8-12% cash-on-cash return for solid rental properties. This helps
+              you compare rental property returns to other investment options.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 6, mb: 6, maxWidth: 900, mx: 'auto' }}>
+            <Typography
+              variant="h3"
+              sx={{
+                mb: 3,
+                fontSize: { xs: '1.5rem', md: '1.75rem' },
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Why Use a Rental Property Calculator?
+            </Typography>
+
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Real estate investing requires analyzing dozens of financial metrics to make informed decisions.
+              Our calculator replaces complex spreadsheets with an intuitive interface that shows you exactly
+              what matters: Is this property a good investment? Get instant analysis with professional-grade
+              calculations used by institutional investors.
+            </Typography>
+
+            <Typography
+              variant="body1"
+              paragraph
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Beyond basic calculations, we integrate real market data from FRED and RentCast APIs and provide
+              an Investment Decision Engine that scores each property (0-100) with a clear verdict: BUY,
+              NEGOTIATE, or PASS. This transforms you from calculating numbers to making confident investment
+              decisions backed by data.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 6, mb: 6, maxWidth: 900, mx: 'auto' }}>
+            <Typography
+              variant="h3"
+              sx={{
+                mb: 3,
+                fontSize: { xs: '1.5rem', md: '1.75rem' },
+                fontWeight: 600,
+                color: appleColors.gray[900]
+              }}
+            >
+              Frequently Asked Questions
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: appleColors.gray[900]
+                }}
+              >
+                What is a good cap rate for a rental property?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '1.063rem',
+                  lineHeight: 1.7,
+                  color: appleColors.gray[700]
+                }}
+              >
+                A good cap rate typically ranges from 5-10%, but varies by market. High-demand urban areas
+                may have 4-6% cap rates with strong appreciation, while emerging markets can offer 8-12%
+                with higher cash flow. Higher isn't always better—consider appreciation potential, property
+                quality, and market stability alongside cap rate.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: appleColors.gray[900]
+                }}
+              >
+                How much cash flow should a rental property generate?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '1.063rem',
+                  lineHeight: 1.7,
+                  color: appleColors.gray[700]
+                }}
+              >
+                Aim for at least $200-400 per month in cash flow per property after all expenses including
+                mortgage, taxes, insurance, maintenance, and property management. This provides a buffer
+                for unexpected repairs and vacancies while generating positive returns. Some investors use
+                the 1% rule: monthly rent should be at least 1% of purchase price.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: appleColors.gray[900]
+                }}
+              >
+                What's the difference between buy & hold and BRRRR?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '1.063rem',
+                  lineHeight: 1.7,
+                  color: appleColors.gray[700]
+                }}
+              >
+                Buy & hold means purchasing a property and renting it long-term for cash flow and appreciation.
+                BRRRR (Buy, Rehab, Rent, Refinance, Repeat) involves buying distressed properties, renovating
+                to increase value, renting, then refinancing to pull cash out for the next investment. BRRRR
+                can recycle capital faster but requires renovation expertise and higher risk tolerance.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: appleColors.gray[900]
+                }}
+              >
+                Do I need to sign up to use the calculator?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '1.063rem',
+                  lineHeight: 1.7,
+                  color: appleColors.gray[700]
+                }}
+              >
+                No signup required to view the sample analyses above. Switch between property types and
+                strategies to see full analysis results. To analyze your own properties with custom inputs,
+                create a free account to get 3 full analyses per month with all 60+ metrics, AI-powered
+                investment guidance, and ability to save properties.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: appleColors.gray[900]
+                }}
+              >
+                How accurate are the rental property calculations?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: '1.063rem',
+                  lineHeight: 1.7,
+                  color: appleColors.gray[700]
+                }}
+              >
+                Our calculations use institutional-grade formulas validated by CPAs and real estate
+                professionals. We integrate live market data from FRED (Federal Reserve) and RentCast APIs
+                for accurate rent estimates and economic indicators. The Investment Decision Engine analyzes
+                60+ metrics to provide professional-level guidance that typically requires expensive software
+                or financial advisors.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mt: 6, mb: 8, maxWidth: 900, mx: 'auto', textAlign: 'center' }}>
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: '1.063rem',
+                lineHeight: 1.7,
+                color: appleColors.gray[700]
+              }}
+            >
+              Ready to analyze your property?{' '}
+              <Link
+                to="/register"
+                style={{
+                  color: appleColors.primary[500],
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  borderBottom: `1px solid ${appleColors.primary[200]}`
+                }}
+              >
+                Sign up free
+              </Link>
+              {' '}for 3 full analyses per month. Need help getting started? Visit our{' '}
+              <Link
+                to="/help"
+                style={{
+                  color: appleColors.primary[500],
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  borderBottom: `1px solid ${appleColors.primary[200]}`
+                }}
+              >
+                investment guide
+              </Link>
+              {' '}or explore{' '}
+              <Link
+                to="/market-data"
+                style={{
+                  color: appleColors.primary[500],
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  borderBottom: `1px solid ${appleColors.primary[200]}`
+                }}
+              >
+                current market data
+              </Link>
+              .
+            </Typography>
+          </Box>
         </Container>
       </Box>
     </Box>
