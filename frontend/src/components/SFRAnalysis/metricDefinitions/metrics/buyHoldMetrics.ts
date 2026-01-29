@@ -151,7 +151,6 @@ export const TIER_2_METRICS: MetricDefinition[] = [
       }
       // Fallback (matches line 281)
       if (propertyData?.squareFootage && propertyData?.purchasePrice) {
-        console.warn('⚠️ TECH DEBT: Using frontend fallback for Price/SqFt. See Issue #31.');
         return propertyData.purchasePrice / propertyData.squareFootage;
       }
       return 0;
@@ -174,7 +173,6 @@ export const TIER_2_METRICS: MetricDefinition[] = [
       }
       // Fallback (matches line 288)
       if (propertyData?.squareFootage && propertyData?.monthlyRent) {
-        console.warn('⚠️ TECH DEBT: Using frontend fallback for Rent/SqFt. See Issue #31.');
         return propertyData.monthlyRent / propertyData.squareFootage;
       }
       return 0;
@@ -196,7 +194,6 @@ export const TIER_2_METRICS: MetricDefinition[] = [
       }
       // Fallback calculation (matches line 307-311)
       if (propertyData?.monthlyRent && propertyData?.purchasePrice) {
-        console.warn('⚠️ TECH DEBT: Using frontend fallback for GRM. See Issue #31.');
         return propertyData.purchasePrice / (propertyData.monthlyRent * 12);
       }
       return 0;
@@ -218,7 +215,6 @@ export const TIER_2_METRICS: MetricDefinition[] = [
       }
       // Fallback calculation (matches line 300-304)
       if (propertyData?.monthlyRent && propertyData?.purchasePrice) {
-        console.warn('⚠️ TECH DEBT: Using frontend fallback for 1% Rule. See Issue #31.');
         return (propertyData.monthlyRent / propertyData.purchasePrice) * 100;
       }
       return 0;
@@ -305,7 +301,6 @@ export const TIER_3_METRICS: MetricDefinition[] = [
       }
       // Fallback (matches line 323-327)
       if (propertyData?.bedrooms && propertyData?.purchasePrice) {
-        console.warn('⚠️ TECH DEBT: Using frontend fallback for Price/Bedroom. See Issue #31.');
         return propertyData.purchasePrice / propertyData.bedrooms;
       }
       return 0;

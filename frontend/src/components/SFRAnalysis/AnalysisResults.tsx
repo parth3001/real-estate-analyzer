@@ -121,42 +121,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   }, []);
 
   // ========================================
-  // METRICS REORGANIZATION: Debug Logging (Phase 1)
-  // Added: 2025-12-13
-  // Purpose: Validate data availability for zero-risk refactoring
+  // METRICS REORGANIZATION: Debug Logging removed for production
+  // Validation completed 2025-12-13 - metrics reorganization successful
   // ========================================
-  console.group('🔍 METRICS DEBUG - Reorganization Safety Check');
-  console.log('Analysis object available:', !!analysis);
-  console.log('Analysis keys:', analysis ? Object.keys(analysis) : 'MISSING');
-  console.log('keyMetrics available:', !!analysis?.keyMetrics);
-  console.log('keyMetrics count:', analysis?.keyMetrics ? Object.keys(analysis.keyMetrics).length : 0);
-  console.log('propertyData available:', !!propertyData);
-  console.log('propertyData keys:', propertyData ? Object.keys(propertyData) : 'MISSING');
-  console.log('monthlyAnalysis available:', !!analysis?.monthlyAnalysis);
-  console.log('longTermAnalysis available:', !!analysis?.longTermAnalysis);
-  console.log('investmentDecision available:', !!analysis?.investmentDecision);
-  console.log('Property type:', propertyData?.propertyType || 'UNKNOWN');
-  console.log('Current mode:', mode);
-  console.groupEnd();
-
-  // Debug: Log the analysis structure
-  console.log('AnalysisResults - analysis object:', analysis);
-  console.log('AnalysisResults - keyMetrics:', analysis?.keyMetrics);
-  console.log('AnalysisResults - monthlyAnalysis:', analysis?.monthlyAnalysis);
-  console.log('AnalysisResults - annualAnalysis (removed - using longTermAnalysis):', 'REMOVED');
-  console.log('AnalysisResults - longTermAnalysis:', analysis?.longTermAnalysis);
-
-  // Tax Intelligence debugging - correct data path
-  console.log('🔍 TAX COMPONENT DEBUG - Investment Decision Tax Analysis:', {
-    hasInvestmentDecision: !!analysis?.investmentDecision,
-    hasTaxAnalysis: !!analysis?.investmentDecision?.taxAnalysis,
-    taxAnalysisKeys: analysis?.investmentDecision?.taxAnalysis ? Object.keys(analysis.investmentDecision.taxAnalysis) : [],
-    optimalHoldPeriod: analysis?.investmentDecision?.taxAnalysis?.optimalHoldPeriod,
-    taxSavings: analysis?.investmentDecision?.taxAnalysis?.totalTaxSavingsAtOptimal,
-    willRenderTaxTab: !!analysis?.investmentDecision?.taxAnalysis || !!propertyData?.taxProfile,
-    hasTaxProfile: !!propertyData?.taxProfile,
-    hasTaxOptimization: !!analysis?.investmentDecision?.professionalAssessment?.taxOptimization
-  });
 
   // Story 4.1 & 4.2: Determine property type for conditional rendering
   const propertyType = propertyData?.propertyType || analysis?.propertyData?.propertyType;
