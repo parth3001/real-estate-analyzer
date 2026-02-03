@@ -39,7 +39,8 @@ import {
 import {
   SFR_PROPERTY_DEFAULTS,
   DEFAULT_WIZARD_PERCENTAGES,
-  DEFAULT_SMART_DEFAULTS
+  DEFAULT_SMART_DEFAULTS,
+  getTenantTurnoverDefaults
 } from '../../constants/sfrPropertyDefaults';
 
 // Import step components
@@ -153,7 +154,7 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
   useEffect(() => {
     const completedCount = state.completed.filter(Boolean).length;
     const dataQuality = calculateDataQualityScore();
-    
+
     setProgress(prev => ({
       ...prev,
       completedSteps: completedCount,
@@ -161,6 +162,27 @@ const PropertyWizard: React.FC<PropertyWizardProps> = ({
       dataQualityScore: dataQuality
     }));
   }, [state.completed, state.autoPopulated]);
+
+  // Apply strategy-based tenant turnover defaults
+  useEffect(() => {
+    if (state.data.strategy) {
+      const defaults = getTenantTurnoverDefaults(state.data.strategy);
+
+      // Only apply if user hasn't manually set values
+      const hasManualValues = state.manualOverrides.includes('tenantTurnoverFees.prepFees') ||
+                             state.manualOverrides.includes('tenantTurnoverFees.realtorCommission');
+
+      if (!hasManualValues) {
+        setState(prev => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            tenantTurnoverFees: defaults
+          }
+        }));
+      }
+    }
+  }, [state.data.strategy, state.manualOverrides]);
 
   // Calculate data quality score based on auto-populated fields and confidence
   const calculateDataQualityScore = useCallback((): number => {

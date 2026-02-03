@@ -538,65 +538,6 @@ const RentalStep: React.FC<WizardStepProps> = ({
 
         <Divider />
 
-        {/* Turnover Fees Section */}
-        <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CompareArrows color="primary" />
-            Tenant Turnover Costs
-          </Typography>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Unit Prep Fees"
-                type="number"
-                value={state.data.tenantTurnoverFees?.prepFees || ''}
-                onChange={(e) => onUpdate({
-                  data: {
-                    ...state.data,
-                    tenantTurnoverFees: {
-                      ...state.data.tenantTurnoverFees,
-                      prepFees: parseInt(e.target.value) || 0
-                    }
-                  }
-                })}
-                helperText="Cleaning, painting, minor repairs"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>
-                }}
-                placeholder="500"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Realtor Commission"
-                type="number"
-                value={state.data.tenantTurnoverFees?.realtorCommission || ''}
-                onChange={(e) => onUpdate({
-                  data: {
-                    ...state.data,
-                    tenantTurnoverFees: {
-                      ...state.data.tenantTurnoverFees,
-                      realtorCommission: parseFloat(e.target.value) || 0
-                    }
-                  }
-                })}
-                helperText="Months of rent for finding tenants"
-                InputProps={{
-                  endAdornment: <InputAdornment position="end">months</InputAdornment>
-                }}
-                inputProps={{ step: 0.5, min: 0, max: 2 }}
-                placeholder="0.5"
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Divider />
-
         {/* ===== Operating Reserves - Always Visible (Josh's UX Improvement - Jan 2026) ===== */}
         <Box sx={{ mb: 3 }}>
           <Typography
@@ -997,6 +938,67 @@ const RentalStep: React.FC<WizardStepProps> = ({
                       }}
                       inputProps={{ min: 1, max: 10, step: 0.5 }}
                       placeholder="2"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Tenant Turnover Assumptions */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  💼 Tenant Turnover Assumptions
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                  {state.data.strategy === 'brrrr'
+                    ? 'BRRRR properties typically have no turnover during short hold period (property vacant during rehab)'
+                    : 'Costs incurred when tenants move out and new tenants move in (typically every 2-4 years)'
+                  }
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Unit Prep Fees"
+                      type="number"
+                      value={state.data.tenantTurnoverFees?.prepFees ?? 0}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          tenantTurnoverFees: {
+                            ...state.data.tenantTurnoverFees,
+                            prepFees: parseInt(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      helperText="Cleaning, painting, minor repairs"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>
+                      }}
+                      placeholder={state.data.strategy === 'brrrr' ? '0' : '500'}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Realtor Commission"
+                      type="number"
+                      value={state.data.tenantTurnoverFees?.realtorCommission ?? 0}
+                      onChange={(e) => onUpdate({
+                        data: {
+                          ...state.data,
+                          tenantTurnoverFees: {
+                            ...state.data.tenantTurnoverFees,
+                            realtorCommission: parseFloat(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      helperText="Months of rent for finding tenants"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">months</InputAdornment>
+                      }}
+                      inputProps={{ step: 0.5, min: 0, max: 2 }}
+                      placeholder={state.data.strategy === 'brrrr' ? '0' : '0.5'}
                     />
                   </Grid>
                 </Grid>

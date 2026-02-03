@@ -38,11 +38,28 @@ export const DEFAULT_LONG_TERM_ASSUMPTIONS = {
   turnoverFrequency: 2
 };
 
-// Tenant turnover fees defaults  
-export const DEFAULT_TENANT_TURNOVER_FEES = {
-  prepFees: 500,
-  realtorCommission: 0.5
+/**
+ * Get strategy-aware tenant turnover defaults
+ * BRRRR: $0 (property vacant during rehab, no turnover in short hold period)
+ * Buy & Hold / House Hack: Industry standard ($500 + 0.5 months)
+ */
+export const getTenantTurnoverDefaults = (strategy?: 'buy-hold' | 'house-hack' | 'brrrr') => {
+  if (strategy === 'brrrr') {
+    return {
+      prepFees: 0,
+      realtorCommission: 0
+    };
+  }
+
+  // Default for Buy & Hold, House Hack, or no strategy
+  return {
+    prepFees: 500,
+    realtorCommission: 0.5
+  };
 };
+
+// Tenant turnover fees defaults (backward compatibility)
+export const DEFAULT_TENANT_TURNOVER_FEES = getTenantTurnoverDefaults();
 
 /**
  * Core SFR Property Default Values
