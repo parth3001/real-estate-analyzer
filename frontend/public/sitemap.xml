@@ -4,10 +4,10 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Homepage (Sample Analysis - Primary SEO URL) -->
+  <!-- Homepage (Calculator Landing Page - Primary SEO URL) -->
   <url>
     <loc>https://reanalyzr.com/</loc>
-    <lastmod>2025-12-07</lastmod>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -53,9 +53,17 @@
   <!-- Sample Analysis (Alias URL - canonical points to /) -->
   <url>
     <loc>https://reanalyzr.com/sample-analysis</loc>
-    <lastmod>2025-12-07</lastmod>
+    <lastmod>2026-02-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+
+  <!-- Pricing Page (Beta Offer) -->
+  <url>
+    <loc>https://reanalyzr.com/pricing</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
 
   <!-- Portfolio & Pipeline -->
