@@ -1847,3 +1847,171 @@ export const analyzeGoals = async (req: AuthenticatedRequest, res: Response): Pr
     });
   }
 };
+
+/**
+ * Analyze property anonymously (public calculator)
+ * No authentication required, no database save
+ * Uses same SFRAnalyzer as authenticated analysis
+ *
+ * @route POST /api/deals/analyze-anonymous
+ * @access Public
+ */
+export const analyzeAnonymous = async (req: Request, res: Response) => {
+  try {
+    const dealData = req.body;
+
+    // Enable SFR-specific expense logic for anonymous calculator
+    // This allows backend to include HOA, utilities, and CapEx in calculations
+    if (!dealData.propertyType) {
+      dealData.propertyType = 'SFR';
+    }
+
+    // Validate BRRRR inputs if applicable
+    if (dealData.investmentStrategy === 'brrrr') {
+      const validation = validateBRRRRInputs(dealData);
+      if (!validation.isValid) {
+        return res.status(400).json({
+          error: 'Invalid BRRRR inputs',
+          details: validation.errors
+        });
+      }
+    }
+
+    // Basic input validation
+    if (!dealData.purchasePrice || dealData.purchasePrice <= 0) {
+      return res.status(400).json({
+        error: 'Invalid input',
+        details: 'Purchase price is required and must be greater than 0'
+      });
+    }
+
+    // Create assumptions object with defaults (same pattern as authenticated endpoint)
+    const assumptions: AnalysisAssumptions = {
+      projectionYears: dealData.longTermAssumptions?.projectionYears ?? 10,
+      annualRentIncrease: dealData.longTermAssumptions?.annualRentIncrease ?? 2,
+      annualExpenseIncrease: dealData.longTermAssumptions?.annualExpenseIncrease ?? 2,
+      annualPropertyValueIncrease: dealData.longTermAssumptions?.annualPropertyValueIncrease ?? 3,
+      sellingCosts: dealData.longTermAssumptions?.sellingCostsPercentage ?? 6,
+      vacancyRate: dealData.longTermAssumptions?.vacancyRate ?? 5
+    };
+
+    // Use SAME analyzer as authenticated endpoint
+    const analyzer = new SFRAnalyzer(dealData, assumptions);
+    let analysis = analyzer.analyze();
+
+    // CRITICAL FIX: Add strategy field for frontend conditional rendering
+    // Frontend checks analysis.strategy === 'brrrr' to determine which metrics to display
+    (analysis as any).strategy = dealData.investmentStrategy; // 'brrrr' | 'buy-hold'
+
+    // ENHANCEMENT: Add Investment Decision Engine for Deal Quality Score
+    // This provides the same analysis quality as authenticated users
+    try {
+      const decisionEngine = new InvestmentDecisionEngine();
+
+      // Create minimal user context for anonymous users (no portfolio/goals)
+      const userContext = {
+        availableCash: dealData.totalInvestment || dealData.purchasePrice,
+        experienceLevel: 'intermediate' as const,
+        riskTolerance: 'moderate' as const,
+        investmentGoals: 'balanced' as const
+      };
+
+      // Get predictions from AI insights if available
+      const predictions = analysis.aiInsights?.boldPredictions || null;
+
+      // Market intelligence from analysis
+      const marketIntelligence = {
+        marketData: analysis.marketData,
+        marketInsights: analysis.marketInsights,
+        investmentTiming: analysis.investmentTiming
+      };
+
+      // Empty enhanced goals for anonymous users
+      const enhancedGoals = {};
+
+      // Generate investment decision (same API as authenticated)
+      const investmentDecision = await decisionEngine.generateInvestmentDecision(
+        dealData,
+        analysis,
+        predictions,
+        marketIntelligence,
+        userContext,
+        enhancedGoals
+      );
+
+      // Attach investment decision to analysis
+      analysis.investmentDecision = investmentDecision;
+
+      // Copy strategySpecific to root level (for BRRRR data)
+      // Type cast needed because strategySpecific is added dynamically by investmentDecisionEngine
+      const decisionWithStrategy = investmentDecision as any;
+      if (decisionWithStrategy.strategySpecific) {
+        (analysis as any).strategySpecific = decisionWithStrategy.strategySpecific;
+        logger.info('✅ Anonymous analysis enhanced with strategySpecific', {
+          strategy: dealData.investmentStrategy,
+          hasCapitalRecovery: !!decisionWithStrategy.strategySpecific.capitalRecovery,
+          hasPostRefinanceMetrics: !!decisionWithStrategy.strategySpecific.postRefinanceMetrics
+        });
+      }
+
+      logger.info('✅ Anonymous analysis enhanced with Investment Decision Engine', {
+        dealQuality: investmentDecision.professionalAssessment?.dealQuality,
+        verdict: investmentDecision.verdict,
+        strategy: dealData.investmentStrategy
+      });
+    } catch (error) {
+      // Graceful degradation: If Investment Decision Engine fails,
+      // continue with base analysis (don't block anonymous users)
+      logger.warn('Investment Decision Engine enhancement failed for anonymous analysis', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        strategy: dealData.investmentStrategy
+      });
+      // Analysis still has base calculations, just missing Deal Quality Score
+    }
+
+    // Add calculation assumptions to response for transparency display
+    (analysis as any).calculationAssumptions = {
+      vacancyRate: assumptions.vacancyRate,
+      capExRate: 5, // 5% of rent (industry standard)
+      turnoverFrequency: assumptions.turnoverFrequency || 2,
+      managementRate: dealData.propertyManagementRate || 0,
+      hoaFees: dealData.monthlyHOA || 0,
+      utilities: dealData.monthlyUtilities || 0,
+
+      // Calculate monthly impacts for display
+      monthlyImpacts: {
+        vacancy: Math.round((dealData.monthlyRent * (assumptions.vacancyRate / 100)) * 100) / 100,
+        capEx: Math.round((dealData.monthlyRent * 0.05) * 100) / 100,
+        turnover: Math.round(((500 + (dealData.monthlyRent * 0.5)) / (assumptions.turnoverFrequency || 2) / 12) * 100) / 100, // Approximate
+        management: dealData.propertyManagementRate
+          ? Math.round((dealData.monthlyRent * dealData.propertyManagementRate / 100) * 100) / 100
+          : 0,
+        hoa: dealData.monthlyHOA || 0,
+        utilities: dealData.monthlyUtilities || 0
+      }
+    };
+
+    // Log for analytics (no PII)
+    logger.info('Anonymous analysis completed', {
+      strategy: dealData.investmentStrategy,
+      purchasePrice: dealData.purchasePrice,
+      hasDealQualityScore: !!analysis.investmentDecision?.professionalAssessment?.dealQuality,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return analysis WITHOUT saving to database
+    return res.json({
+      success: true,
+      analysis,
+      isAnonymous: true,
+      message: 'Create account to save this analysis'
+    });
+
+  } catch (error) {
+    logger.error('Anonymous analysis error:', error);
+    return res.status(500).json({
+      error: 'Analysis failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};

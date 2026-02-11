@@ -172,6 +172,7 @@ export interface PostRefinanceMetrics {
   cashOnCashReturn: number; // On remaining capital
   annualNOI: number;
   postRefiDSCR: number;
+  postRefiBreakEvenOccupancy: number; // Issue #80 fix - BEO using post-refi mortgage
 }
 
 export interface Rule70Check {
@@ -271,9 +272,20 @@ export class BRRRRAnalyzer {
    * @returns Total cash invested by investor
    */
   calculateTotalInvestment(inputs: BRRRRInputs): number {
-    return inputs.downPayment +
+    const totalInvestment = inputs.downPayment +
            inputs.closingCosts +
            inputs.brrrr.rehabBudget;
+
+    // 🔍 DIAGNOSTIC LOGGING - Debug anonymous vs authenticated input mapping
+    logger.info('🔍 BRRRR Total Investment Calculation:', {
+      downPayment: inputs.downPayment,
+      closingCosts: inputs.closingCosts,
+      rehabBudget: inputs.brrrr.rehabBudget,
+      totalInvestment,
+      purchasePrice: inputs.purchasePrice // For reference
+    });
+
+    return totalInvestment;
   }
 
   // ====================================
@@ -311,6 +323,17 @@ export class BRRRRAnalyzer {
   calculateSeasoningCosts(inputs: BRRRRInputs): SeasoningCosts {
     // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
     const months = inputs.brrrr.seasoningPeriod ?? 12;
+
+    // 🔍 DIAGNOSTIC LOGGING - Debug seasoning cost inputs
+    logger.info('🔍 BRRRR Seasoning Costs Input Debug:', {
+      purchasePrice: inputs.purchasePrice,
+      propertyTaxRate: inputs.propertyTaxRate,
+      insuranceRate: inputs.insuranceRate,
+      maintenanceCost: inputs.maintenanceCost,
+      monthlyRent: inputs.monthlyRent,
+      propertyManagementRate: inputs.propertyManagementRate,
+      seasoningPeriod: months
+    });
 
     // Calculate monthly holding expenses
     const loanAmount = inputs.purchasePrice - inputs.downPayment;
@@ -477,6 +500,19 @@ export class BRRRRAnalyzer {
 
     const capitalRecoveryRate = (capitalRecovered / totalCapitalDeployed) * 100;
     const infiniteReturn = capitalRecovered >= totalCapitalDeployed;
+
+    // 🔍 DIAGNOSTIC LOGGING - Debug anonymous vs authenticated discrepancy (Issue: 11,353% vs 65.81%)
+    logger.info('🔍 BRRRR Capital Recovery Calculation Debug:', {
+      totalInvestment,
+      seasoningNetCashFlow: seasoningCosts.seasoningNetCashFlow,
+      totalCapitalDeployed,
+      capitalRecovered,
+      capitalRemaining,
+      capitalRecoveryRate: capitalRecoveryRate.toFixed(2) + '%',
+      infiniteReturn,
+      // Detailed breakdown for diagnosis:
+      calculation: `(${capitalRecovered.toFixed(2)} / ${totalCapitalDeployed.toFixed(2)}) * 100 = ${capitalRecoveryRate.toFixed(2)}%`
+    });
 
     return {
       totalCapitalDeployed,
@@ -665,7 +701,7 @@ export class BRRRRAnalyzer {
     // Cash-on-cash on REMAINING capital (if any)
     const cashOnCashReturn = capitalRecovery.capitalRemaining > 0
       ? (annualCashFlow / capitalRecovery.capitalRemaining) * 100
-      : 0; // Infinite return scenario
+      : null; // Infinite return scenario - let frontend display ∞%
 
     // NOI and DSCR (Industry Standard: EGI deducts vacancy + management "above the line")
     const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy - monthlyManagement;
@@ -673,6 +709,34 @@ export class BRRRRAnalyzer {
     const annualNOI = (effectiveGrossIncome - monthlyOperatingExpenses) * 12;
     const annualDebtService = newMonthlyPayment * 12;
     const postRefiDSCR = FinancialCalculations.calculateDSCR(annualNOI, annualDebtService);
+
+    /**
+     * ✅ ISSUE #80 FIX: Post-Refinance Break-Even Occupancy
+     *
+     * BUSINESS REQUIREMENT:
+     * - Investors need to see BEO for the ONGOING hold period (post-refinance)
+     * - Initial BEO (50.35%) uses initial low mortgage ($499/mo) - temporary period
+     * - Post-Refi BEO (81.0%) uses post-refi high mortgage ($1,418/mo) - long-term reality
+     *
+     * METHODOLOGY:
+     * - BEO = (Operating Expenses + Debt Service) / Gross Potential Rent * 100
+     * - Uses POST-REFINANCE mortgage payment (higher than initial)
+     * - Uses same operating expenses as post-refi cash flow calculation
+     * - Critical for BRRRR risk assessment: Capital recovery increases BEO
+     *
+     * RISK THRESHOLDS:
+     * - <75%: Low Risk (Green)
+     * - 75-85%: Moderate Risk (Orange)
+     * - >85%: High Risk (Red)
+     *
+     * @see /docs/ISSUE_TRACKER.md Issue #80
+     * @see /docs/MF_METRICS_REFERENCE.md for BEO definition
+     */
+    const postRefiBreakEvenOccupancy = FinancialCalculations.calculateBreakEvenOccupancy(
+      monthlyOperatingExpenses * 12,  // Annual operating expenses
+      newMonthlyPayment * 12,         // Annual post-refi debt service
+      inputs.monthlyRent * 12         // Annual gross potential rent
+    );
 
     return {
       newMonthlyPayment,
@@ -682,7 +746,8 @@ export class BRRRRAnalyzer {
       annualCashFlow,
       cashOnCashReturn,
       annualNOI,
-      postRefiDSCR
+      postRefiDSCR,
+      postRefiBreakEvenOccupancy  // Issue #80 fix
     };
   }
 

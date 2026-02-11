@@ -35,6 +35,7 @@ import {
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import StickyHeader from '../components/SampleAnalysis/StickyHeader';
 import PropertyTypeSelector from '../components/SampleAnalysis/PropertyTypeSelector';
+import PricingBadge from '../components/Pricing/PricingBadge';
 import { AppleButton } from '../components/ui/AppleComponents';
 import { useAuth } from '../contexts/AuthContext';
 import { appleColors, appleShadows, appleBorderRadius } from '../theme/appleDesignSystem';
@@ -43,6 +44,7 @@ import analyzrLogo from '../assets/analyzr-logo.png';
 import api from '../services/api';
 import type { SFRPropertyData, MultiFamilyPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
+import { analytics } from '../utils/analytics';
 
 const SampleAnalysisPage: React.FC = () => {
   const navigate = useNavigate();
@@ -62,6 +64,11 @@ const SampleAnalysisPage: React.FC = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [user, location.pathname, navigate]);
+
+  // Track page view on mount
+  useEffect(() => {
+    analytics.trackPageView('sample_analysis');
+  }, []);
 
   // Helper function to construct SFR property data from deal object
   const constructSFRPropertyData = (deal: any): SFRPropertyData => {
@@ -406,6 +413,11 @@ const SampleAnalysisPage: React.FC = () => {
               mt: 2
             }}
           />
+
+          {/* Pricing Badge */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+            <PricingBadge onClick={() => navigate('/pricing')} />
+          </Box>
 
           {/* Demo Context Label */}
           <Typography

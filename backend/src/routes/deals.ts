@@ -9,6 +9,7 @@ import {
   getSampleMF,
   getSampleAnalysis,
   analyzeDeal,
+  analyzeAnonymous,
   getQuickPredictions,
   analyzeGoals
 } from '../controllers/deals';
@@ -42,6 +43,10 @@ router.use(logRequestBody);
 
 // PUBLIC: Sample analysis for SEO landing page (NO AUTH REQUIRED)
 router.get('/sample-analysis', getSampleAnalysis);
+
+// PUBLIC: Anonymous calculator analysis (NO AUTH REQUIRED)
+// Used by UniversalCalculator for BRRRR and Buy & Hold strategies
+router.post('/analyze-anonymous', analyzeAnonymous);
 
 // Sample endpoints (require authentication)
 router.get('/sample-sfr', authMiddleware, getSampleSFR);

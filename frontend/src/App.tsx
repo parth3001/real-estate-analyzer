@@ -33,6 +33,8 @@ import HelpPage from './pages/HelpPage';
 import WhatsNewPage from './pages/WhatsNewPage';
 import ContactPage from './pages/ContactPage';
 import SampleAnalysisPage from './pages/SampleAnalysisPage';
+import LandingPage from './pages/LandingPage';
+import PricingPage from './pages/PricingPage';
 import NotFound from './pages/NotFound';
 import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
@@ -53,6 +55,9 @@ import { ApplePortfolioWizard } from './components/Portfolio/ApplePortfolioWizar
 
 // Pipeline Components
 import PipelinePage from './pages/PipelinePage';
+
+// Calculator Components (Public - No Auth Required)
+import { UniversalCalculator } from './components/Calculator';
 
 // Analysis Details Component is now imported from pages
 
@@ -114,7 +119,7 @@ const HomeRouteSelector: React.FC = () => {
     return <Box sx={{ p: 4, textAlign: 'center' }}>Redirecting...</Box>;
   }
 
-  // Not logged in - show affiliate landing or sample page
+  // Not logged in - show affiliate landing or calculator landing page
   if (isAffiliateSite) {
     return (
       <React.Suspense fallback={<Box sx={{ p: 4, textAlign: 'center' }}>Loading...</Box>}>
@@ -123,7 +128,7 @@ const HomeRouteSelector: React.FC = () => {
     );
   }
 
-  return <SampleAnalysisPage />;
+  return <LandingPage />;
 };
 
 function App() {
@@ -195,8 +200,16 @@ function App() {
               {/* Public Routes - No login required */}
               <Route path="/" element={<HomeRouteSelector />} />
               <Route path="/sample-analysis" element={<SampleAnalysisPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/whats-new" element={<WhatsNewPage />} />
+
+              {/* Public Calculator Routes - No authentication required */}
+              <Route path="/calculator" element={<UniversalCalculator />} />
+              <Route path="/calculator/brrrr" element={<UniversalCalculator />} />
+              <Route path="/calculator/buy-hold" element={<UniversalCalculator />} />
+              <Route path="/brrrr-calculator" element={<UniversalCalculator />} />
+              <Route path="/rental-property-calculator" element={<UniversalCalculator />} />
 
               {/* Protected Routes (authentication required) */}
               <Route

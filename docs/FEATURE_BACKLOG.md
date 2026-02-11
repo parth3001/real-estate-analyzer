@@ -1,6 +1,6 @@
 # 🚀 Feature Backlog
 
-**Last Updated:** December 13, 2025
+**Last Updated:** January 28, 2026
 **Purpose:** Centralized tracking of future enhancements, feature requests, and strategic initiatives
 
 ---
@@ -280,7 +280,473 @@ Add strategic monetization hooks to the Investment Decision UI to clarify free v
 
 ---
 
-### Feature #12: Competitive Differentiation Messaging
+### Feature #12: SEO Phase 2 - Public Calculator Landing Pages
+**Status:** 🔴 Not Started
+**Priority:** P1 - High (Growth & Acquisition)
+**Added:** January 28, 2026
+**Category:** SEO / Organic Growth / User Acquisition
+
+**Description:**
+Build 3 dedicated public calculator landing pages targeting high-volume keywords (29,100 monthly searches) to drive organic traffic and zero-CAC user acquisition. Following Phase 1 foundation (homepage optimization, sitemap, robots.txt), Phase 2 creates standalone SEO-optimized calculators that rank independently and funnel users into the full product experience.
+
+**Strategic Business Value:**
+- **Zero CAC Growth**: Organic search = no acquisition cost (vs $45-50 paid CAC)
+- **Scalable Channel**: Once ranked, calculators drive passive leads 24/7
+- **Target Searches**: 29,100 monthly searches across 3 calculator types
+- **Crexi Model**: Public tools → signup for advanced features (proven freemium funnel)
+- **Competitive Moat**: Most competitors gate calculators behind login (we don't)
+- **Long-Term Asset**: SEO compounds - rankings improve over time
+- **Content Marketing**: Each calculator = pillar content for backlinks/social
+
+**Marcus Chen's Strategic Insight:**
+> "Phase 1 got us indexed, Phase 2 gets us traffic. Three public calculators targeting 29K monthly searches = 500-1,000 visitors/day within 12 months. That's $0 CAC growth compounding every month. This is how Crexi built their early funnel - give away the basic tool, monetize the workflow. We should prioritize this before Feature #11 Monetization Hooks because we need traffic to monetize."
+
+**Phase 1 Foundation (Completed):**
+- ✅ Homepage H1 optimization: "Rental Property Calculator" (18,100 searches/mo)
+- ✅ Updated sitemap.xml (15 URLs indexed)
+- ✅ Comprehensive robots.txt (block non-SEO pages)
+- ✅ 750 words SEO content on homepage
+- ✅ Google Search Console configured
+- **Baseline**: 37 impressions/3mo, 6 clicks, 8 indexed pages
+
+**Phase 2 Target Keywords & Monthly Searches:**
+1. **"rental property calculator"** - 18,100 searches/mo (homepage already targets)
+2. **"brrrr calculator"** - 6,600 searches/mo (NEW dedicated page)
+3. **"cap rate calculator"** - 4,400 searches/mo (NEW dedicated page)
+4. **Total**: 29,100 monthly searches (excluding homepage)
+
+**Functional Requirements:**
+
+**1. /rental-property-calculator - General Purpose Calculator**
+**URL**: `https://reanalyzr.com/rental-property-calculator`
+**Target Keyword**: "rental property calculator" (18,100 searches/mo)
+**Priority**: Medium (homepage already targets this, page reinforces)
+
+**Design Philosophy**: Simple 8-field input form → 5-metric instant results → CTA to full analysis
+
+**Input Fields (8 fields):**
+- Purchase Price ($)
+- Down Payment (%)
+- Interest Rate (%)
+- Loan Term (years)
+- Monthly Rent ($)
+- Property Taxes (% or $)
+- Insurance ($/month)
+- HOA/Other ($/month)
+
+**Output Metrics (5 metrics):**
+- Monthly Cash Flow
+- Cap Rate
+- Cash-on-Cash Return
+- Total Monthly Payment
+- Debt Service Coverage Ratio (DSCR)
+
+**CTA Strategy:**
+- Primary: "Get Full 60+ Metric Analysis (Free)" → /register → /sfr-analysis/wizard
+- Secondary: "See Sample Property Analysis" → / (homepage sample analysis)
+- Tertiary: Internal links to /brrrr-calculator, /cap-rate-calculator
+
+**SEO Content (800 words):**
+- H1: "Free Rental Property Calculator - Instant ROI Analysis"
+- H2: "How to Use This Calculator"
+- H2: "Understanding Your Results"
+- H3: Cap Rate, Cash Flow, Cash-on-Cash Return explanations
+- H2: "Why Rental Property Investors Use This Calculator"
+- FAQ: 5 questions (What is a good cap rate? What is cash-on-cash return? etc.)
+- Internal links: /help, /register, /market-data
+
+**2. /brrrr-calculator - BRRRR Strategy Calculator**
+**URL**: `https://reanalyzr.com/brrrr-calculator`
+**Target Keyword**: "brrrr calculator" (6,600 searches/mo)
+**Priority**: High (underserved keyword, high intent)
+
+**Design Philosophy**: BRRRR-specific inputs (ARV, rehab costs) → BRRRR metrics (refinance proceeds, cash left in deal)
+
+**Input Fields (12 fields):**
+- Purchase Price ($)
+- Rehab Budget ($)
+- After Repair Value (ARV) ($)
+- Down Payment (%)
+- Initial Interest Rate (%)
+- Refinance Interest Rate (%)
+- Refinance LTV (%) [typically 75%]
+- Loan Term (years)
+- Monthly Rent (after rehab) ($)
+- Property Taxes (% or $)
+- Insurance ($/month)
+- Vacancy Rate (%)
+
+**Output Metrics (8 metrics):**
+- Total Investment (purchase + rehab + closing)
+- Refinance Loan Amount (75% ARV)
+- Cash Recovered in Refinance
+- Cash Left in Deal (investment - recovered)
+- Infinite Return Achieved? (Yes/No)
+- Monthly Cash Flow (after refinance)
+- Cap Rate (on ARV)
+- Cash-on-Cash Return (on cash left in deal)
+
+**BRRRR-Specific Features:**
+- 70% Rule Validation: "Purchase + Rehab should be ≤70% of ARV" (green/red indicator)
+- Infinite Return Badge: If cash left in deal = $0, show "🎯 Infinite Return Achieved!"
+- Refinance Timeline: "Assuming 6-month rehab + 6-month seasoning = 12 months to refinance"
+
+**CTA Strategy:**
+- Primary: "Run Full BRRRR Analysis with AI Insights (Free)" → /register → /sfr-analysis?strategy=brrrr
+- Secondary: "Learn BRRRR Strategy" → /help/brrrr-strategy (future educational content)
+- Tertiary: "Calculate Cap Rate" → /cap-rate-calculator
+
+**SEO Content (800 words):**
+- H1: "Free BRRRR Calculator - Buy Rehab Rent Refinance Repeat"
+- H2: "What is the BRRRR Strategy?"
+- H2: "How to Use This BRRRR Calculator"
+- H3: Understanding ARV, 70% Rule, Infinite Return
+- H2: "BRRRR Success Metrics"
+- FAQ: 5 questions (What is the 70% rule? How does refinancing work? What is infinite return?)
+- Internal links: /rental-property-calculator, /register, /help
+
+**3. /cap-rate-calculator - Cap Rate Calculator**
+**URL**: `https://reanalyzr.com/cap-rate-calculator`
+**Target Keyword**: "cap rate calculator" (4,400 searches/mo)
+**Priority**: High (single-purpose tool, high conversion intent)
+
+**Design Philosophy**: Ultra-simple 3-field calculator → instant cap rate → educational content
+
+**Input Fields (3 fields only):**
+- Property Purchase Price ($)
+- Annual Rental Income ($)
+- Annual Operating Expenses ($)
+
+**Output Metrics (3 metrics):**
+- Cap Rate (%)
+- Net Operating Income (NOI) ($)
+- Cap Rate Quality Indicator (Excellent/Good/Fair/Poor)
+
+**Cap Rate Benchmarks:**
+- 10%+ = Excellent (green)
+- 7-10% = Good (light green)
+- 5-7% = Fair (yellow)
+- <5% = Poor (red)
+
+**CTA Strategy:**
+- Primary: "Calculate 60+ More Metrics (Free)" → /register → /sfr-analysis
+- Secondary: "Try Full Property Analysis" → /rental-property-calculator
+- Tertiary: "Understanding Cap Rate" → /help/cap-rate-guide (future)
+
+**SEO Content (700 words):**
+- H1: "Free Cap Rate Calculator - Real Estate Investment ROI"
+- H2: "What is Cap Rate?"
+- H2: "How to Calculate Cap Rate"
+- Formula: Cap Rate = (NOI / Purchase Price) × 100
+- H2: "What is a Good Cap Rate?"
+- Market comparisons: Class A (4-6%), Class B (5-7%), Class C (7-10%)
+- H2: "Cap Rate vs Other Metrics"
+- Comparison: Cap Rate vs Cash-on-Cash vs IRR
+- FAQ: 5 questions (What is a good cap rate? Does cap rate include mortgage? etc.)
+
+**Shared UI/UX Design (All 3 Calculators):**
+
+**Layout Structure:**
+```
+┌────────────────────────────────────────┐
+│ [REAnalyzr Logo]  [Login] [Sign Up]   │ ← Header
+├────────────────────────────────────────┤
+│                                        │
+│   H1: Free [Calculator Name]          │
+│   Subheading: [Value Prop]            │
+│                                        │
+│ ┌────────────┐  ┌──────────────────┐  │
+│ │  INPUT     │  │   RESULTS        │  │
+│ │  FORM      │  │   METRICS        │  │
+│ │  8-12      │  │   Color-coded    │  │
+│ │  fields    │  │   with context   │  │
+│ │            │  │                  │  │
+│ │ [Calculate]│  │ [Get Full        │  │
+│ │            │  │  Analysis (Free)]│  │
+│ └────────────┘  └──────────────────┘  │
+│                                        │
+│   SEO CONTENT SECTION                  │
+│   ┌──────────────────────────────┐    │
+│   │ H2: How to Use               │    │
+│   │ H2: Understanding Results    │    │
+│   │ H2: Why Use This Calculator  │    │
+│   │ FAQ (5 questions)            │    │
+│   │ Internal Links               │    │
+│   └──────────────────────────────┘    │
+│                                        │
+│   [Footer: Legal, Help, Contact]      │
+└────────────────────────────────────────┘
+```
+
+**Design System (Apple-inspired):**
+- **Colors**: appleColors.blue (primary), appleColors.green (positive), appleColors.red (negative)
+- **Typography**: SF Pro Text, responsive sizing (16px body, 18px labels)
+- **Border Radius**: appleBorderRadius.large (12px cards)
+- **Shadows**: appleShadows.card (subtle depth)
+- **Spacing**: 24px between sections, 16px between fields
+- **Input Fields**: Material-UI outlined text fields with helper text
+- **Buttons**: Prominent CTA (height: 56px, border-radius: 12px)
+
+**Mobile Optimization:**
+- Single-column layout on mobile (<768px)
+- Input form above results (stack vertically)
+- Larger touch targets (56px button height)
+- Sticky "Calculate" button on mobile
+
+**Technical Implementation:**
+
+**Frontend Structure:**
+```
+/frontend/src/pages/
+  RentalPropertyCalculator.tsx   (new)
+  BRRRRCalculator.tsx             (new)
+  CapRateCalculator.tsx           (new)
+
+/frontend/src/components/calculators/
+  CalculatorLayout.tsx            (shared layout wrapper)
+  CalculatorInput.tsx             (reusable input component)
+  CalculatorResults.tsx           (reusable results component)
+  SEOContent.tsx                  (reusable SEO section)
+```
+
+**Calculation Logic:**
+- **Client-Side Only**: No backend required for basic calculations
+- **Instant Results**: Calculate on every input change (debounced 300ms)
+- **Validation**: Min/max ranges, percentage limits, required fields
+- **Error Handling**: Show helpful error messages (e.g., "Down payment cannot exceed purchase price")
+
+**Example Calculation (Cap Rate):**
+```typescript
+const calculateCapRate = (
+  purchasePrice: number,
+  annualRent: number,
+  annualExpenses: number
+): CapRateResult => {
+  const noi = annualRent - annualExpenses;
+  const capRate = (noi / purchasePrice) * 100;
+
+  return {
+    capRate: capRate.toFixed(2),
+    noi: noi,
+    quality: capRate >= 10 ? 'Excellent' :
+             capRate >= 7 ? 'Good' :
+             capRate >= 5 ? 'Fair' : 'Poor'
+  };
+};
+```
+
+**SEO Technical Requirements:**
+
+**1. React Helmet (Meta Tags):**
+```typescript
+<Helmet>
+  <title>Free BRRRR Calculator | Buy Rehab Rent Refinance - REAnalyzr</title>
+  <meta name="description" content="Free BRRRR calculator with ARV, rehab costs, and refinance analysis. Calculate infinite return, cash recovered, 70% rule validation instantly." />
+  <meta name="keywords" content="brrrr calculator, buy rehab rent refinance, infinite return calculator, arv calculator, 70% rule calculator" />
+  <link rel="canonical" href="https://reanalyzr.com/brrrr-calculator" />
+</Helmet>
+```
+
+**2. Structured Data (JSON-LD):**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BRRRR Calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free BRRRR calculator for real estate investors...",
+  "url": "https://reanalyzr.com/brrrr-calculator"
+}
+```
+
+**3. Sitemap Updates:**
+```xml
+<url>
+  <loc>https://reanalyzr.com/rental-property-calculator</loc>
+  <lastmod>2026-01-28</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.9</priority>
+</url>
+<url>
+  <loc>https://reanalyzr.com/brrrr-calculator</loc>
+  <lastmod>2026-01-28</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.9</priority>
+</url>
+<url>
+  <loc>https://reanalyzr.com/cap-rate-calculator</loc>
+  <lastmod>2026-01-28</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.9</priority>
+</url>
+```
+
+**4. Internal Linking Strategy:**
+- Homepage → All 3 calculators
+- Each calculator → Other 2 calculators
+- All calculators → /register, /help, /sample-analysis
+- Help pages → Calculators (future)
+
+**Content Marketing Strategy:**
+
+**Month 1-3: Launch & Baseline**
+- Week 1: Build all 3 calculators (10-12 hours)
+- Week 2: Deploy, submit to Google Search Console
+- Week 3-12: Monitor Search Console (impressions, clicks, position)
+- Target: 50-100 visitors/day by Month 3
+
+**Month 4-6: Content Amplification**
+- Reddit posts: r/realestateinvesting (30K members) - "I built a free BRRRR calculator"
+- BiggerPockets forum: Share calculator, ask for feedback
+- YouTube creators: Offer to embed calculator in their videos
+- Guest posts: Real estate blogs with backlinks to calculators
+
+**Month 7-12: Optimization & Scale**
+- A/B test headlines, CTAs, calculator layouts
+- Add calculators for more keywords: "fix and flip calculator" (2,900 searches), "house hacking calculator" (1,300 searches)
+- Build educational content around calculators
+- Target: 500-1,000 visitors/day by Month 12
+
+**Success Metrics:**
+
+**Traffic Metrics (Google Search Console):**
+- **Month 1**: 10-20 impressions/day, 1-2 clicks/day
+- **Month 3**: 100-200 impressions/day, 10-20 clicks/day
+- **Month 6**: 500-1,000 impressions/day, 50-100 clicks/day
+- **Month 12**: 2,000-3,000 impressions/day, 200-300 clicks/day
+
+**Keyword Rankings (Target Positions):**
+- **Month 3**: Position 20-30 (page 2-3)
+- **Month 6**: Position 10-15 (page 1 bottom)
+- **Month 12**: Position 3-7 (page 1 top half)
+
+**Conversion Metrics:**
+- **Calculator → Full Analysis**: 5-10% conversion rate
+- **Calculator → Register**: 2-5% conversion rate
+- **New Users from Calculators**: 50-100/month by Month 6
+
+**Business Impact:**
+- **Zero CAC Growth**: 100% organic traffic (no ad spend)
+- **Compound Growth**: Rankings improve monthly, traffic scales passively
+- **Reduced CAC Blended**: Organic + paid mix lowers average CAC from $45 to $30
+- **Content Asset**: Calculators = evergreen content for years
+- **Competitive Moat**: First-mover in SEO-optimized real estate calculators
+
+**ROI Projection:**
+
+**Investment:**
+- Development: 10-12 hours × $50/hr = $500-600 (one-time)
+- Ongoing: 2 hours/month content updates = $100/month
+
+**Return (12-month projection):**
+- Month 6: 50 signups/month × $49 × 18% conversion = $441 MRR
+- Month 12: 200 signups/month × $49 × 18% conversion = $1,764 MRR
+
+**ROI Calculation:**
+- Cost: $500 (dev) + $1,200 (12 months content) = $1,700
+- Revenue: $441 (M6) + $1,764 (M12) = $2,205 MRR by Month 12
+- **ROI**: 130% return in 12 months, then compounds infinitely
+
+**Conservative Scenario (50% traffic):**
+- Month 12: 100 signups/month × $49 × 18% = $882 MRR
+- **ROI**: Still 52% return in 12 months, low risk
+
+**Aggressive Scenario (200% traffic):**
+- Month 12: 400 signups/month × $49 × 18% = $3,528 MRR
+- **ROI**: 207% return in 12 months, high upside
+
+**Risk Analysis:**
+
+**Low Risk:**
+- ✅ Proven channel (Crexi, Mashvisor use this model)
+- ✅ Keywords have stable search volume (5+ years data)
+- ✅ One-time development cost (not recurring spend)
+- ✅ No external dependencies (no API costs)
+- ✅ Calculators work without backend (client-side only)
+
+**Medium Risk:**
+- ⚠️ SEO takes 6-12 months (delayed ROI)
+- ⚠️ Google algorithm changes could impact rankings
+- ⚠️ Competitors may copy strategy after seeing success
+
+**Mitigation:**
+- Start now to capture 12-month timeline advantage
+- Diversify traffic: SEO + Reddit + YouTube + partnerships
+- Build brand authority (harder to copy than tactics)
+
+**Estimated Effort:**
+- **Phase 2A (3 Calculators)**: 10-12 hours total
+  - Rental Property Calculator: 3-4 hours
+  - BRRRR Calculator: 4-5 hours (more complex inputs)
+  - Cap Rate Calculator: 2-3 hours (simplest)
+  - SEO content: 1 hour per calculator (800 words each)
+
+**Dependencies:**
+- React Helmet (already installed)
+- Material-UI components (already exists)
+- Apple Design System (already exists)
+- No backend changes required (client-side calculators)
+
+**Related Files:**
+- New: `/frontend/src/pages/RentalPropertyCalculator.tsx`
+- New: `/frontend/src/pages/BRRRRCalculator.tsx`
+- New: `/frontend/src/pages/CapRateCalculator.tsx`
+- New: `/frontend/src/components/calculators/CalculatorLayout.tsx`
+- Modified: `/frontend/public/sitemap.xml` (add 3 URLs)
+- Modified: `/frontend/src/App.tsx` (add 3 routes)
+
+**Design Inspiration:**
+- **Bankrate Calculators**: Simple inputs, instant results, educational content
+- **Nerdwallet Tools**: Clean design, mobile-first, strong CTAs
+- **BiggerPockets Calculator**: Community trust, clear explanations
+- **Mortgage Calculator (Google Featured Snippet)**: Ultra-simple UX
+
+**Competitive Analysis:**
+
+**Current Ranking Sites for "brrrr calculator":**
+1. BiggerPockets - Free, requires login (friction point)
+2. REIPro - Paid software ($50/month)
+3. Mashvisor - Freemium, gated after 1 calculation
+4. DealCheck - Mobile app, web version limited
+5. **Opportunity**: No truly free, no-login, web-based BRRRR calculator
+
+**Our Competitive Advantage:**
+- ✅ No login required (BiggerPockets requires signup)
+- ✅ 100% free (REIPro charges $50/month)
+- ✅ Unlimited calculations (Mashvisor gates after 1)
+- ✅ Web-based, mobile-responsive (DealCheck is app-first)
+- ✅ Full SEO content (competitors have minimal education)
+- ✅ Direct funnel to advanced tool (seamless upgrade path)
+
+**Priority Recommendation:**
+**P1 - High** (Growth & Acquisition, before Feature #11 Monetization Hooks)
+
+**Rationale:**
+1. **Traffic First, Monetization Second**: Need users to monetize (can't gate empty traffic)
+2. **12-Month Timeline**: SEO takes time, start now for compounding returns
+3. **Zero CAC Growth**: Only scalable channel without ad spend
+4. **Low Risk**: One-time $500 investment, infinite upside
+5. **Marcus Chen's Guidance**: "Build traffic before you optimize conversion"
+6. **Crexi Model**: Proven freemium funnel, we're just executing it
+
+**Notes:**
+- **Implementation Speed**: Prioritize BRRRR and Cap Rate calculators first (highest intent)
+- **Content Quality**: 800 words per calculator (not 300 word fluff)
+- **Mobile-First**: 40%+ traffic will be mobile, must be responsive
+- **CTA Testing**: A/B test "Get Full Analysis" vs "Try Advanced Features"
+- **Internal Linking**: Drive traffic to sample analysis page (demonstrate product quality)
+- **Long-Term Play**: This is 12-month ROI, not 30-day sprint
+- **Measure Everything**: Google Search Console, Google Analytics, conversion funnels
+
+---
+
+### Feature #13: Competitive Differentiation Messaging
 **Status:** 🔴 Not Started
 **Priority:** P1 - High (Product Positioning)
 **Added:** January 19, 2026
@@ -1606,7 +2072,8 @@ Rename and redesign the current Census Data Integration test page to provide use
 | Priority | Feature | Status | Estimated Effort | Business Impact |
 |----------|---------|--------|------------------|-----------------|
 | **P1** | **#11 - Monetization Hooks** | 🔴 Not Started | 2-3 weeks | **Critical (Revenue +39%)** |
-| **P1** | **#12 - Competitive Differentiation** | 🔴 Not Started | 4 hours - 2 weeks | **High (Positioning)** |
+| **P1** | **#12 - SEO Phase 2 Public Calculators** | 🔴 Not Started | 10-12 hours | **High (Zero-CAC Growth)** |
+| **P1** | **#13 - Competitive Differentiation** | 🔴 Not Started | 4 hours - 2 weeks | **High (Positioning)** |
 | **P1** | #2 - Metrics UX Optimization | 🔴 Not Started | 1-2 weeks | High (user experience) |
 | **P1** | #10 - Educational Content Integration | 🔴 Not Started | 1-2 days | High (partnership strategy) |
 | **P1** | #1 - BRRRR & House Hacking Engines | 🔴 Not Started | 2-3 weeks | High (revenue + differentiation) |

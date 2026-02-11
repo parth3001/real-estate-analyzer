@@ -145,7 +145,7 @@ export const FinancialPeriodCard: React.FC<FinancialPeriodCardProps> = ({
               </Typography>
             )}
 
-            {metrics.cashOnCashReturn !== undefined && (
+            {metrics.cashOnCashReturn !== undefined && metrics.cashOnCashReturn !== null && (
               <Typography
                 variant="caption"
                 sx={{
@@ -156,6 +156,20 @@ export const FinancialPeriodCard: React.FC<FinancialPeriodCardProps> = ({
                 }}
               >
                 Cash-on-Cash: {metrics.cashOnCashReturn.toFixed(1)}%
+              </Typography>
+            )}
+            {metrics.cashOnCashReturn === null && (
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  textAlign: 'right',
+                  color: 'success.main',
+                  fontWeight: 600,
+                  mt: 0.25
+                }}
+              >
+                Cash-on-Cash: ∞% (Infinite Return)
               </Typography>
             )}
           </Box>

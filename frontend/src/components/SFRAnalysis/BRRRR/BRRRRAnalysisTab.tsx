@@ -326,9 +326,20 @@ export const BRRRRAnalysisTab: React.FC<BRRRRAnalysisTabProps> = ({
               <Typography variant="body2" sx={{ color: appleColors.gray[600], mb: 1 }}>
                 Cash-on-Cash Return
               </Typography>
-              <Typography variant="h5" fontWeight={600}>
-                {formatPercent(postRefinance.cashOnCashReturn)}
-              </Typography>
+              {postRefinance.cashOnCashReturn === null || capitalRecovery.capitalRemaining <= 0 ? (
+                <Box>
+                  <Typography variant="h5" fontWeight={600} sx={{ color: appleColors.green[700] }}>
+                    ∞%
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: appleColors.gray[600] }}>
+                    Infinite Return
+                  </Typography>
+                </Box>
+              ) : (
+                <Typography variant="h5" fontWeight={600}>
+                  {formatPercent(postRefinance.cashOnCashReturn)}
+                </Typography>
+              )}
             </Box>
           </Grid>
 
@@ -348,6 +359,108 @@ export const BRRRRAnalysisTab: React.FC<BRRRRAnalysisTabProps> = ({
           <Typography variant="body2">
             These metrics reflect the property's performance after refinancing with the new larger mortgage.
             Your remaining capital ({formatCurrency(capitalRecovery.capitalRemaining)}) continues to work for you.
+          </Typography>
+        </Alert>
+      </Card>
+
+      {/* Break-Even Occupancy Comparison (Issue #80) */}
+      <Card elevation={1} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+          Break-Even Occupancy Analysis
+        </Typography>
+
+        <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 3 }}>
+          {/* Initial Hold BEO */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Card
+              elevation={1}
+              sx={{
+                height: '100%',
+                border: `1px solid ${appleColors.green[300]}`,
+                backgroundColor: appleColors.green[50]
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
+                    📊 Initial Hold (Months 1-12)
+                  </Typography>
+                </Box>
+                <Typography variant="h4" fontWeight={600} sx={{ color: appleColors.green[700] }}>
+                  {formatPercent(analysis.keyMetrics?.breakEvenOccupancy ?? 0)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: appleColors.gray[600], display: 'block', mt: 1 }}>
+                  Low Risk ✅ - During seasoning period
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Post-Refinance BEO */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Card
+              elevation={1}
+              sx={{
+                height: '100%',
+                border: postRefinance.postRefiBreakEvenOccupancy > 85
+                  ? `2px solid ${appleColors.red[500]}`
+                  : postRefinance.postRefiBreakEvenOccupancy > 75
+                    ? `2px solid ${appleColors.orange[500]}`
+                    : `1px solid ${appleColors.green[300]}`,
+                backgroundColor: postRefinance.postRefiBreakEvenOccupancy > 85
+                  ? appleColors.red[50]
+                  : postRefinance.postRefiBreakEvenOccupancy > 75
+                    ? appleColors.orange[50]
+                    : appleColors.green[50]
+              }}
+            >
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
+                    🏠 Post-Refinance (Years 1-30)
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="h4"
+                  fontWeight={600}
+                  sx={{
+                    color: postRefinance.postRefiBreakEvenOccupancy > 85
+                      ? appleColors.red[700]
+                      : postRefinance.postRefiBreakEvenOccupancy > 75
+                        ? appleColors.orange[700]
+                        : appleColors.green[700]
+                  }}
+                >
+                  {formatPercent(postRefinance.postRefiBreakEvenOccupancy)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: appleColors.gray[600], display: 'block', mt: 1 }}>
+                  {postRefinance.postRefiBreakEvenOccupancy > 85
+                    ? 'High Risk ⚠️ - Tight operating margin'
+                    : postRefinance.postRefiBreakEvenOccupancy > 75
+                      ? 'Moderate Risk ⚠️ - Monitor vacancy closely'
+                      : 'Low Risk ✅ - Healthy operating margin'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Educational Insight */}
+        <Alert
+          severity={postRefinance.postRefiBreakEvenOccupancy > 80 ? "warning" : "info"}
+          sx={{ mt: 2 }}
+        >
+          <Typography variant="body2">
+            <strong>BRRRR Break-Even Trade-off:</strong> After refinancing, your break-even occupancy increases from{' '}
+            <strong>{(analysis.keyMetrics?.breakEvenOccupancy ?? 0).toFixed(1)}%</strong> to{' '}
+            <strong>{postRefinance.postRefiBreakEvenOccupancy.toFixed(1)}%</strong>{' '}
+            due to the higher mortgage payment. This is the long-term reality you'll operate under for the next{' '}
+            {propertyData.loanTerm || 30} years.
+            {postRefinance.postRefiBreakEvenOccupancy > 80 && (
+              <span style={{ color: appleColors.orange[800] }}>
+                {' '}⚠️ Monitor tenant retention carefully to maintain positive cash flow.
+              </span>
+            )}
           </Typography>
         </Alert>
       </Card>

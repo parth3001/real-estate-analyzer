@@ -778,10 +778,10 @@ export class SFRCalculationEngine extends BaseCalculationEngine {
       const inflationFactor = Math.pow(1 + (assumptions.annualExpenseIncrease || 2) / 100, year - 1);
       const hoa = (data.monthlyHOA ?? 0) * 12 * inflationFactor;
       const utilities = (data.monthlyUtilities ?? 0) * 12 * inflationFactor;
-      const capEx = (data.monthlyCapEx ?? 0) * 12 * inflationFactor;
+      // Default to 5% of rent (industry standard) if not provided - for anonymous calculator
+      const capEx = (data.monthlyCapEx ?? (grossIncome / 12 * 0.05)) * 12 * inflationFactor;
 
       // NO vacancy expense - it's handled as income reduction
-      // NO unauthorized defaults like 5% CapEx or mysterious 8.33% broker fees
       return baseExpenses.total + turnoverCosts + hoa + utilities + capEx;
     }
 

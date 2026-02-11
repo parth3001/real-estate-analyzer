@@ -207,14 +207,24 @@ New item to add?
 
 ### **Investment Decision Engine v2.1**
 - 🎯 **Primary Engine**: `/backend/src/services/investment/investmentDecisionEngine.ts`
-- 📊 **Sophisticated Scoring**: 0-100 property quality score + BUY/NEGOTIATE/PASS verdicts
+- 📊 **Deal Quality Score**: 0-100 analytical scoring with professional benchmarks
+- 🎨 **UI Presentation**: Score-based (not directive verdicts) - neutral analytical approach
+- 📊 **Score Ranges**:
+  - 80-100: "Above professional standards" (Green)
+  - 65-79: "Meets professional standards" (Blue/Yellow)
+  - 50-64: "Requires optimization" (Orange)
+  - 0-49: "Below professional standards" (Red)
 - 🛡️ **Conservative Logic**: Walk-away price validation prevents overpaying
 - 🎪 **Strategy-Aware**: Adapts to house hacking, geographic expansion, cash flow focus
 - 📈 **Comprehensive Testing**: 10/10 realistic scenario tests passing
+- 🔧 **Backend Architecture**: Still contains `verdict` field internally ('BUY'|'PASS'|'NEGOTIATE'|'CAUTION') for calculation logic, but frontend intentionally hides this and displays only Deal Quality Score
 
 ### **Data Flow Integrity**
 ```
-User Input (Frontend) → Backend Decision Engine → Single Verdict + Score → Frontend Display
+User Input (Frontend) → Backend Decision Engine → Deal Quality Score (0-100) → Frontend Display
+                                ↓
+                Backend: verdict (internal) + professionalAssessment.dealQuality
+                Frontend: Shows ONLY dealQuality score (hides verdict)
                                 ↓
                     No Duplicate Logic, No Contradictory Messages
 ```
@@ -843,10 +853,11 @@ Fix doesn't work after 2 attempts?
 
 #### **✅ COMPLETED DELIVERABLES (100% Success)**
 1. **🎯 V3.0 Professional Calibration Fixed**
-   - **Issue**: Investment Decision Engine showing incorrect verdicts (56/100 → PASS instead of CAUTION)
+   - **Issue**: Investment Decision Engine showing incorrect Deal Quality Scores (56/100 scoring inconsistencies)
    - **Root Cause**: IRR scoring thresholds in decimal format (0.12) while system uses percentage format (12%)
    - **Solution**: Updated IRR_THRESHOLDS from decimal to percentage format in investmentDecisionEngine.ts
-   - **Result**: 75-100% verdict accuracy across all test scenarios
+   - **Result**: 75-100% Deal Quality Score accuracy across all test scenarios
+   - **Note**: Backend verdict logic (BUY/NEGOTIATE/CAUTION/PASS) also fixed but not displayed in UI - only Deal Quality Score shown to users
    - **Validation**: `quick-verdict-test.js`, `realistic-verdict-test.js`, `metrics-consistency-test.js`
 
 2. **🛠️ Financial Metrics Consistency Audit Complete**
@@ -878,33 +889,37 @@ Fix doesn't work after 2 attempts?
    - Tests content meaningfulness and actionability
    - **Status**: 100% passing (4/4 tests)
 
-3. **`quick-verdict-test.js`** - V3.0 verdict boundary testing
-   - Tests all 4 verdict categories (BUY, NEGOTIATE, CAUTION, PASS)
+3. **`quick-verdict-test.js`** - V3.0 scoring boundary testing
+   - Tests all 4 internal verdict categories (BUY, NEGOTIATE, CAUTION, PASS) - backend logic only
+   - Tests corresponding Deal Quality Score ranges (80+, 65-79, 50-64, 0-49)
    - Uses strategic price manipulation for boundary testing
    - **Status**: 75% passing (3/4 tests, minor NEGOTIATE calibration needed)
+   - **Note**: Tests backend verdict logic, though frontend displays only Deal Quality Score
 
 4. **`realistic-verdict-test.js`** - Real property scenario testing
    - Uses actual Fayetteville, NC property data
    - Tests Deal Quality score range expansion (48-89 vs previous 56-59 plateau)
-   - Validates professional-grade verdict accuracy
+   - Validates professional-grade scoring accuracy
    - **Status**: 100% passing (4/4 tests)
 
 #### **🎯 KEY TECHNICAL ACHIEVEMENTS**
 - **Deal Quality Range**: Expanded from 3-point plateau (56-59) to full 41-point range (48-89)
 - **IRR Scoring Differentiation**: Restored from 100/100 plateau to proper tier scoring (50-100)
-- **Verdict Accuracy**: Consistent 75-100% across all test scenarios
+- **Scoring Accuracy**: Consistent 75-100% Deal Quality Score accuracy across all test scenarios
+- **Backend Verdict Logic**: Internal verdict calculations (BUY/NEGOTIATE/CAUTION/PASS) fixed but not displayed in UI
 - **AI Content Quality**: Eliminated $0 data corruption, meaningful recommendations generated
 - **System Consistency**: Single source of truth maintained for all financial calculations
 
 #### **📊 BUSINESS IMPACT DELIVERED**
-- **Investment Decision Quality**: Professional-grade 75-100% verdict accuracy
-- **User Experience**: AI content now provides actionable, realistic recommendations  
+- **Investment Decision Quality**: Professional-grade 75-100% Deal Quality Score accuracy
+- **UI Clarity**: Non-directive analytical scoring (80+ = above professional standards)
+- **User Experience**: AI content now provides actionable, realistic recommendations
 - **System Reliability**: Eliminated data corruption issues in user-facing content
 - **Professional Credibility**: Calculations match industry standards with proper formatting
 
 #### **🚦 PRODUCTION READINESS STATUS**
 - **V3.0 Calibration**: ✅ PRODUCTION READY (75-100% accuracy achieved)
-- **Financial Metrics**: ✅ PRODUCTION READY (single source of truth validated) 
+- **Financial Metrics**: ✅ PRODUCTION READY (single source of truth validated)
 - **AI Content**: ✅ PRODUCTION READY (data pipeline fixed, meaningful output)
 - **Test Coverage**: ✅ COMPREHENSIVE (4 new test files, full system validation)
 
@@ -912,7 +927,7 @@ Fix doesn't work after 2 attempts?
 - **Portfolio Feature Development**: Can proceed with confidence in stable foundation
 - **Enhanced AI Features**: Data pipeline integrity ensures reliable enhancements
 - **Scaling Preparation**: Financial calculation accuracy validated for higher volumes
-- **User Onboarding**: Professional-grade verdicts ready for user-facing deployment
+- **User Onboarding**: Professional-grade Deal Quality Score system ready for user-facing deployment
 
 ### **Critical Fixes Applied (Latest Session)**
 
@@ -953,19 +968,22 @@ You are a Senior QE Engineer with 20 years of experience in quality assurance, i
 - **Tools**: MongoDB testing, React Testing Library, GitHub Actions
 
 **Platform-Specific Knowledge**
-- **Investment Decision Engine v2.1**: Testing 0-100 scoring, BUY/NEGOTIATE/PASS verdicts
+- **Investment Decision Engine v2.1**: Testing 0-100 Deal Quality Score accuracy, professional calibration metrics
+- **Backend Testing**: Verify internal verdict logic (BUY/NEGOTIATE/CAUTION/PASS) even though not displayed in UI
+- **UI Testing**: Verify Deal Quality Score display (0-100), contextual labels ("Above/Meets/Requires/Below professional standards"), color coding
 - **Property Wizard**: 4-step flow testing with RentCast auto-population
 - **Financial Precision**: Ensuring full floating-point precision (no rounding in calculations)
 - **AI Content Pipeline**: Validating GPT-4o-mini integration, preventing $0 data corruption
-- **Test Files**: metrics-consistency-test.js, test-ai-content-fix.js, realistic-verdict-test.js
+- **Test Files**: metrics-consistency-test.js, test-ai-content-fix.js, realistic-verdict-test.js, quick-verdict-test.js
 
 **Testing Philosophy**
 - Mathematical accuracy is non-negotiable - every cent matters
 - Test financial calculations with edge cases (negative interest, 0% down)
 - Regression tests for every calculation change
-- 75-100% verdict accuracy is the minimum bar
+- 75-100% Deal Quality Score accuracy is the minimum bar
+- Test backend verdict logic even if not displayed (ensures calculation integrity)
 - Cross-browser testing essential for financial data display
-- Always create documentation of your plan and what you have created 
+- Always create documentation of your plan and what you have created
 - Leverages platform capabilities for creating tests rather than fictional workflows or API
 
 **Current Focus**
@@ -1068,7 +1086,7 @@ I'm a real estate investor with 20 years of experience who has built a portfolio
 
 *Years 1-5: Getting Started ($0-1M)*
 - **Challenges**: Analysis paralysis, understanding metrics, finding deals
-- **Platform Need**: Property Wizard for confidence, clear verdict explanations
+- **Platform Need**: Property Wizard for confidence, clear Deal Quality Score interpretation
 - **Key Metrics**: Cash flow, cap rate basics, simple ROI
 
 *Years 5-10: Growth Phase ($1-5M)*
@@ -1089,7 +1107,8 @@ I'm a real estate investor with 20 years of experience who has built a portfolio
 - **Subscription Value**: $49/mo justified if it saves 2 hours or catches one bad deal
 
 **Key Platform Features That Matter**
-- Investment Decision Engine verdicts - Clear BUY/NEGOTIATE/PASS guidance
+- Deal Quality Score - Neutral analytical scoring (80+ = above professional standards)
+- Professional Calibration - Understand the "why" behind the score (Cash Flow 100/100, IRR 0/100, Market Strength 70/100)
 - Portfolio context - How does this property fit my goals?
 - Market intelligence - Local trends, not national averages
 - Speed - Competitive markets need <5 minute analysis
@@ -1114,17 +1133,21 @@ You are a Senior UX Designer with 18 years of experience:
 
 **Real Estate Platform Design Focus**
 - **Property Wizard**: 4-step flow that feels like a conversation, not a form
-- **Investment Decision Hero**: Visual verdict with clear reasoning hierarchy
+- **Investment Decision Display**: Large Deal Quality Score (87/100) with contextual label ("Above professional standards")
+- **Professional Calibration**: Horizontal progress bars showing factor breakdown (Cash Flow 100/100, IRR 0/100, Market Strength 70/100)
 - **Portfolio Dashboard**: Scannable overview with progressive detail disclosure
 - **Mobile Experience**: 40%+ usage - must equal desktop quality
 - **Trust Building**: Show calculation transparency without overwhelming
+- **Design Philosophy**: Analytical (not directive) - show data, let users decide
 
 **Platform-Specific Design Decisions**
-- **Color System**: Green/red for verdicts, but accessible (WCAG 2.1 AA)
+- **Color System**: Score-based gradient (green for high 80+, yellow for medium 65-79, orange for low 50-64, red for poor <50) - accessible (WCAG 2.1 AA)
 - **Typography**: SF Pro for Apple aesthetic, tabular nums for financial data
-- **Information Hierarchy**: Verdict → Score → Key Metrics → Details
+- **Score Display**: Massive 96px font for Deal Quality Score (visual dominance), 16px contextual label
+- **Information Hierarchy**: Deal Quality Score → Contextual Label → Professional Calibration Bars → Key Metrics → Details
 - **Progressive Disclosure**: Basic view for beginners, advanced for pros
 - **Error Prevention**: Smart defaults, validation before calculation
+- **No Directive Language**: Removed "BUY/NEGOTIATE/PASS" badges - replaced with neutral analytical scoring
 
 **Current Design Challenges**
 - Simplifying Portfolio Setup: 5-minute goal, currently too complex
@@ -1353,7 +1376,7 @@ I'm a growth marketing specialist with 18 years of experience scaling SaaS platf
 *Onboarding Flow Optimization*
 - **Wizard Adoption**: 4-step property wizard increases completion 45%
 - **Progressive Profiling**: Collect investor goals after first analysis
-- **Quick Win**: Show property verdict within 30 seconds of signup
+- **Quick Win**: Show Deal Quality Score analysis within 30 seconds of signup
 - **Education Timing**: Introduce advanced features after 3rd analysis
 
 *Email Marketing That Converts*
@@ -1669,40 +1692,50 @@ const MobilePropertyWizard = {
 
 **Investment Decision Display (Mobile)**
 ```typescript
-// Hierarchy for 375px viewport
+// Hierarchy for 375px viewport (updated for Deal Quality Score system)
 const MobileDecisionHierarchy = [
   // Above the fold (instant understanding)
   {
     priority: 1,
-    element: 'VerdictBadge',      // BUY/NEGOTIATE/PASS
+    element: 'DealQualityScore',  // 87/100 - Large display (96px font on desktop, scaled for mobile)
     size: 'prominent',
     position: 'top-center',
+    color: 'score-based-gradient', // Green 80+, Yellow 65-79, Orange 50-64, Red <50
   },
   {
     priority: 2,
-    element: 'PropertyScore',     // 0-100 with arc
-    size: 'large',
-    position: 'below-verdict',
+    element: 'ScoreContext',      // "Above professional standards"
+    size: 'medium',
+    position: 'below-score',
+    fontSize: '16px',
   },
   {
     priority: 3,
-    element: 'KeyMetrics',        // 3 most important
+    element: 'ProfessionalCalibration', // Cash Flow 100/100, IRR 0/100, Market Strength 70/100
+    layout: 'horizontal-progress-bars',
+    collapsed: false,              // Show 3 key factors on mobile
+  },
+  {
+    priority: 4,
+    element: 'KeyMetrics',        // Monthly cash flow, Cap Rate, Cash-on-Cash
     layout: 'horizontal-cards',
     metrics: ['cashFlow', 'capRate', 'cashOnCash'],
   },
-  
+
   // Below fold (scroll for details)
   {
-    priority: 4,
+    priority: 5,
     element: 'SecondaryMetrics',
     layout: 'accordion',           // Tap to expand
   },
   {
-    priority: 5,
+    priority: 6,
     element: 'AIInsights',
     layout: 'collapsible-card',
   },
 ];
+
+// NOTE: No verdict badges (BUY/NEGOTIATE/PASS) displayed - replaced with analytical scoring
 ```
 
 **Responsive Data Tables**

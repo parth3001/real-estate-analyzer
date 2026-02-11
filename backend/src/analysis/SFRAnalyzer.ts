@@ -192,10 +192,12 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     debug('Turnover Cost Impact:', metrics.turnoverCostImpact);
     debug('=====================');
 
-    // Add rehab metrics if applicable
-    if (this.data.afterRepairValue && this.data.renovationCosts) {
+    // Add rehab metrics ONLY for BRRRR strategy
+    if ((this.data as any).investmentStrategy === 'brrrr' &&
+        this.data.afterRepairValue &&
+        this.data.renovationCosts) {
       metrics.afterRepairValueRatio = this.data.afterRepairValue / this.data.purchasePrice;
-      metrics.rehabROI = ((this.data.afterRepairValue - this.data.purchasePrice) / 
+      metrics.rehabROI = ((this.data.afterRepairValue - this.data.purchasePrice) /
                          this.data.renovationCosts) * 100;
     }
 

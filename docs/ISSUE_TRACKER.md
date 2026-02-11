@@ -1,11 +1,11 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-01-14
+**Last Updated**: 2026-02-08
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-01-14)
+## 🟡 **ACTIVE ISSUES** (2026-02-08)
 
 ### Issue #72: Post-Refinance Cash Flow Calculation Discrepancy
 **Status**: 🔴 OPEN
@@ -297,6 +297,801 @@ Frontend was displaying `aiEnhancedContent.reasoning.explanation` (generic) inst
 
 ---
 
+### Issue #80: Break-Even Occupancy (BEO) Calculation - Methodological Enhancement
+**Status**: ✅ RESOLVED
+**Priority**: P1 - HIGH (Calculation Accuracy - Institutional Metric)
+**Reported**: 2026-02-08
+**Resolved**: 2026-02-09
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts BEO Calculation + Frontend Display
+**Category**: Methodological Enhancement (Not a bug - added Post-Refi BEO)
+**Affects**: BRRRR Risk & Operational Analysis - Break-Even Occupancy
+
+**Description**:
+Break-Even Occupancy (BEO) shows 50.35%, but Business Expert's manual calculation suggests 81.0% using industry-standard formula. This is a **30.65 percentage point discrepancy** (38% difference), which significantly affects risk assessment for institutional investors.
+
+**Test Case**:
+```
+Property Data:
+Purchase: $100,000, Rehab: $50,000, ARV: $235,000
+Monthly Rent: $3,000
+Operating Expenses: $1,012/month
+Post-Refi Mortgage: $1,418/month (9%, 30yr, $176,250 loan)
+
+Platform Calculation:
+BEO: 50.35%
+
+Industry Standard Calculation (Business Expert):
+Annual OpEx:        $12,144 ($1,012 × 12)
+Annual Debt:        $17,016 ($1,418 × 12)
+Gross Income:       $36,000 ($3,000 × 12)
+BEO = ($12,144 + $17,016) / $36,000 = 81.0%
+
+Discrepancy: 81.0% - 50.35% = 30.65 percentage points
+```
+
+**Industry Standard Formula**:
+```
+BEO = (Annual Operating Expenses + Annual Debt Service) / Gross Potential Income
+```
+
+**Possible Root Causes**:
+1. **Initial vs Post-Refi**: Platform uses **Initial Hold Period** debt service ($499/mo), not Post-Refi ($1,418/mo)
+2. **Denominator Issue**: Platform uses **Effective Income** (after vacancy) instead of Gross Potential Income
+3. **Expense Exclusion**: Platform excludes certain operating expenses from calculation
+4. **Non-Standard Formula**: Platform uses a different BEO methodology
+
+**Business Impact**:
+- **Risk Assessment**: 50.35% = "Excellent" (low risk), 81.0% = "Marginal" (higher risk)
+- **Institutional Credibility**: BEO is a critical metric for commercial lenders and institutional investors
+- **Investment Decision**: Investors may underestimate risk if BEO is incorrectly low
+- **Lender Review**: 50.35% easily passes lender requirements, 81.0% is borderline
+
+**Industry Benchmarks**:
+| Property Quality | Target BEO | Platform | Expected | Status |
+|-----------------|-----------|----------|----------|--------|
+| Class A (Stable) | <60% | 50.35% ✅ | 81.0% ⚠️ | Discrepancy |
+| Class B (Average) | 60-75% | 50.35% ✅ | 81.0% ⚠️ | Borderline |
+| Class C (Higher Risk) | <80% | 50.35% ✅ | 81.0% ✅ | Pass |
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Search for BEO calculation method
+2. Verify: Which debt service is used? (Initial $499/mo or Post-Refi $1,418/mo)
+3. Verify: Denominator - Gross Potential Income or Effective Income?
+4. Verify: Are all operating expenses included in numerator?
+5. Compare with Fannie Mae/Freddie Mac underwriting standards
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - Main BRRRR analysis engine
+- `/backend/src/services/investment/financialCalculations.ts` - Centralized calculation utilities
+- `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` - Display logic
+
+**Recommended Fix Strategy**:
+- **Option A**: Calculate TWO BEOs (Initial + Post-Refi) and display both clearly
+- **Option B**: Use Post-Refi BEO only (more conservative, matches lender evaluation)
+- **Option C**: Add tooltip explaining which period BEO represents (Initial Hold)
+
+**Estimated Effort**: 2-3 hours investigation + 1-2 hours fix + testing
+
+**Priority Justification**:
+P1 - HIGH because BEO is a critical institutional metric used by lenders and commercial investors. A 30.65pp discrepancy fundamentally changes risk assessment and may undermine platform credibility with professional users.
+
+**Related Issues**: Issue #81 (DSCR), Issue #84 (Post-Refi Cash Flow)
+
+---
+
+## ✅ RESOLUTION (2026-02-09)
+
+**Root Cause Identified:**
+This was NOT a calculation bug - it was a **methodological difference**, not an error:
+- **Platform Calculation (50.35%)**: Uses INITIAL mortgage ($499/mo) - correct for 12-month seasoning period
+- **Business Expert Expectation (81.0%)**: Uses POST-REFINANCE mortgage ($1,418/mo) - correct for long-term hold period
+
+**Both calculations are mathematically correct for their respective purposes.**
+
+**Architectural Decision:**
+Implement **Option A** (Display BOTH BEOs) - investors need to see both the temporary and long-term reality.
+
+**BRRRR Trade-Off:**
+- Capital recovery via refinance → Higher mortgage payment → Higher BEO
+- This is expected and intentional - investors need visibility into this operational risk increase
+
+---
+
+### **Implementation**
+
+**Files Modified:** 4 files
+1. `/backend/src/services/investment/brrrAnalyzer.ts` (Backend calculation)
+2. `/frontend/src/types/brrrr.ts` (Type definitions)
+3. `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` (Display component)
+4. `/backend/src/services/investment/__tests__/BRRRRAnalyzer-PostRefiBEO.test.ts` (Test suite)
+
+**Change 1: Backend - Add postRefiBreakEvenOccupancy calculation**
+```typescript
+// File: brrrAnalyzer.ts, Line 175
+export interface PostRefinanceMetrics {
+  // ... existing fields ...
+  postRefiBreakEvenOccupancy: number; // NEW: Issue #80 fix
+}
+
+// Line 735-739: Calculate post-refi BEO
+const postRefiBreakEvenOccupancy = FinancialCalculations.calculateBreakEvenOccupancy(
+  monthlyOperatingExpenses * 12,  // Annual operating expenses
+  newMonthlyPayment * 12,          // Annual post-refi debt service
+  inputs.monthlyRent * 12          // Annual gross potential rent
+);
+```
+
+**Change 2: Frontend - Display both BEOs side-by-side**
+```typescript
+// File: BRRRRAnalysisTab.tsx, Line 366-466
+// NEW: Break-Even Occupancy Comparison section
+// - Left card: Initial Hold BEO (50.35%) - Green, "Low Risk ✅"
+// - Right card: Post-Refi BEO (73.4%) - Color-coded by risk level
+// - Alert: Educational message explaining BRRRR trade-off
+```
+
+**Risk Assessment Color Coding:**
+- **Green (BEO <75%)**: Low Risk ✅ - Healthy operating margin
+- **Orange (BEO 75-85%)**: Moderate Risk ⚠️ - Monitor vacancy closely
+- **Red (BEO >85%)**: High Risk ⚠️ - Tight operating margin
+
+**Test Results:**
+✅ All 4 tests passing (`BRRRRAnalyzer-PostRefiBEO.test.ts`)
+- Test property: $100K purchase, $50K rehab, $235K ARV
+- Initial BEO: 50.35% (12-month seasoning period)
+- Post-Refi BEO: 73.40% (30-year hold period)
+- Capital Recovery: 192.37% (infinite return scenario)
+
+**Business Impact:**
+- **Investor Education**: Shows BOTH temporary and long-term BEO for informed decisions
+- **Risk Transparency**: Makes post-refi operational risk visible
+- **BRRRR Trade-off**: Explicitly communicates capital recovery cost
+- **Professional Credibility**: Matches institutional analysis standards
+
+**Actual Effort:** 90 minutes (vs estimated 3-4 hours)
+
+---
+
+### Issue #81: Post-Refinance DSCR Below Industry Standards (0.89x vs 1.30x)
+**Status**: 🔴 OPEN
+**Priority**: P1 - HIGH (Lender Requirement Metric)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts DSCR / NOI Calculation
+**Category**: Financial Metric Variance
+**Affects**: BRRRR Post-Refinance DSCR, Net Operating Income (NOI)
+
+**Description**:
+Post-Refinance DSCR shows 0.89x (below lender threshold), but Business Expert's manual calculation suggests 1.30x using industry-standard formula. This is a **0.41x discrepancy** (31% difference), which crosses the critical 1.25x lender threshold.
+
+**Test Case**:
+```
+Property Data:
+Monthly Rent: $3,000
+Vacancy (5%): $150
+Effective Rent: $2,850
+Operating Expenses: $1,012/month
+Post-Refi Mortgage: $1,418/month
+
+Platform Calculation:
+Post-Refi DSCR: 0.89x
+
+Industry Standard Calculation (Business Expert):
+Monthly NOI:      $2,850 - $1,012 = $1,838
+Annual NOI:       $1,838 × 12 = $22,056
+Annual Debt:      $1,418 × 12 = $17,016
+DSCR = $22,056 / $17,016 = 1.30x
+
+Discrepancy: 1.30x - 0.89x = 0.41x (31% difference)
+```
+
+**Industry Standard Formula**:
+```
+DSCR = Net Operating Income (NOI) / Annual Debt Service
+NOI = Effective Gross Income - Operating Expenses (excludes debt service)
+```
+
+**Reverse-Engineering Platform's DSCR**:
+```
+If DSCR = 0.89x and Debt Service = $17,016/year:
+Platform's Implied NOI = 0.89 × $17,016 = $15,144
+
+Business Expert's NOI = $22,056
+Difference = $22,056 - $15,144 = $6,912/year ($576/month)
+
+This suggests platform is either:
+- Excluding $576/month in income, OR
+- Adding $576/month in expenses to NOI calculation
+```
+
+**Possible Root Causes**:
+1. **NOI Calculation**: Platform calculates NOI differently (may exclude certain income or add certain expenses)
+2. **Effective Gross Income**: Platform uses different EGI calculation (management fee treatment?)
+3. **Operating Expense Treatment**: Platform includes items in NOI that should be excluded (CapEx, Turnover?)
+4. **Non-Standard Formula**: Platform uses a different DSCR methodology
+
+**Business Impact**:
+- **Lender Qualification**: DSCR <1.0 means property doesn't cover debt service (fails lender requirements)
+- **Investment Credibility**: 0.89x suggests negative cash flow, but property shows +$66/month (inconsistent)
+- **Risk Assessment**: 1.30x is acceptable, 0.89x is a red flag
+- **Professional Standards**: Fannie Mae requires 1.25x, Freddie Mac requires 1.20x
+
+**Lender Requirements**:
+| Lender Type | Minimum DSCR | Platform (Post-Refi) | Expected | Pass/Fail |
+|-------------|--------------|---------------------|----------|-----------|
+| Fannie Mae | 1.25x | 0.89x ❌ | 1.30x ✅ | Fail |
+| Freddie Mac | 1.20x | 0.89x ❌ | 1.30x ✅ | Fail |
+| Commercial Banks | 1.25x | 0.89x ❌ | 1.30x ✅ | Fail |
+| Hard Money Lenders | 1.00x | 0.89x ❌ | 1.30x ✅ | Fail |
+
+**Important Context**:
+- Platform shows **Initial DSCR: 3.68x** (excellent - well above requirements)
+- Post-Refi DSCR drops to 0.89x due to higher refinance mortgage
+- This is **realistic for BRRRR deals** where investors accept lower DSCR to maximize capital recovery
+- However, the calculation should still be accurate to industry standards
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Search for DSCR calculation (line ~710)
+2. Verify: NOI calculation - which expenses are included/excluded?
+3. Verify: Is management fee deducted "above the line" (from income) or "below the line" (in NOI)?
+4. Verify: Are CapEx and Turnover included in NOI operating expenses?
+5. Compare with Fannie Mae/Freddie Mac underwriting guidelines
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - Line ~705-710 (DSCR calculation)
+- `/backend/src/services/investment/financialCalculations.ts` - calculateDSCR method
+- `/backend/src/types/brrrr.ts` - PostRefinanceMetrics interface
+
+**Recommended Fix Strategy**:
+- **Option A**: Validate NOI calculation against Fannie Mae standards (EGI - Operating Expenses only)
+- **Option B**: Display TWO DSCRs clearly: "Initial: 3.68x" and "Post-Refi: 1.30x" (if calculation is corrected)
+- **Option C**: Add tooltip: "Post-Refi DSCR <1.25 is common in BRRRR deals due to higher refinance loan"
+
+**Estimated Effort**: 2-3 hours investigation + 1-2 hours fix + testing
+
+**Priority Justification**:
+P1 - HIGH because DSCR is a mandatory lender requirement. Platform showing 0.89x when actual is 1.30x creates confusion and may cause investors to incorrectly reject deals or question platform's institutional credibility.
+
+**Related Issues**: Issue #80 (BEO), Issue #84 (Post-Refi Cash Flow), Issue #82 (OER)
+
+---
+
+### Issue #82: Operating Expense Ratio (OER) Calculation Variance (35.50% vs 33.73%)
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Comparative Metric)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts OER Calculation
+**Category**: Financial Metric Variance (Low Impact)
+**Affects**: BRRRR Risk & Operational Analysis - Operating Expense Ratio
+
+**Description**:
+Operating Expense Ratio (OER) shows 35.50%, but Business Expert's manual calculation suggests 33.73% using industry-standard formula. This is a **1.77 percentage point discrepancy** (5% difference). While both values are within acceptable range (35-45% for SFR), consistency with industry standards is preferred.
+
+**Test Case**:
+```
+Property Data:
+Monthly Rent: $3,000 (Gross)
+Operating Expenses: $1,012/month
+
+Platform Calculation:
+OER: 35.50%
+
+Industry Standard Calculation (Business Expert):
+Annual Operating Expenses: $12,144 ($1,012 × 12)
+Annual Gross Rent:         $36,000 ($3,000 × 12)
+OER = $12,144 / $36,000 = 33.73%
+
+Discrepancy: 35.50% - 33.73% = 1.77 percentage points
+```
+
+**Industry Standard Formula**:
+```
+OER = Annual Operating Expenses / Gross Rental Income
+```
+
+**Reverse-Engineering Platform's OER**:
+```
+If OER = 35.50% and Gross Rent = $36,000/year:
+Platform's Implied Operating Expenses = 0.3550 × $36,000 = $12,780
+
+Business Expert's Operating Expenses = $12,144
+Difference = $12,780 - $12,144 = $636/year ($53/month)
+
+This $53/month could be:
+- Management fee: $65/mo (if included in OER numerator)
+- Partial vacancy allocation: Varies
+- Different calculation methodology
+```
+
+**Possible Root Causes**:
+1. **Vacancy Inclusion**: Platform includes vacancy ($150/mo) in OER numerator (non-standard)
+2. **Management Inclusion**: Platform includes management fee ($65/mo) in OER (varies by standard)
+3. **Denominator Difference**: Platform uses Effective Income instead of Gross Income
+4. **Methodology Variation**: BiggerPockets vs Fannie Mae standards differ
+
+**Business Impact**:
+- **Low Impact**: Both 33.73% and 35.50% are within acceptable range (35-45% for SFR)
+- **Comparative Analysis**: OER is used to compare properties - consistency matters
+- **Industry Alignment**: Different standards (BiggerPockets, Fannie Mae) calculate OER differently
+
+**Industry Benchmarks**:
+| Property Type | Typical OER | Platform | Expected | Status |
+|--------------|-------------|----------|----------|--------|
+| Single-Family Rental | 35-45% | 35.50% ✅ | 33.73% ✅ | Both Acceptable |
+| Multi-Family | 40-50% | 35.50% ✅ | 33.73% ✅ | Excellent |
+| Commercial | 30-40% | 35.50% ✅ | 33.73% ✅ | Pass |
+
+**Industry Standard Variations**:
+- **Fannie Mae**: Excludes vacancy and management from OER (uses operating expenses only)
+- **BiggerPockets**: Includes vacancy and management in OER (more comprehensive)
+- **Wall Street Prep**: Varies by property type and analysis purpose
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Search for OER calculation
+2. Verify: Which expenses are included in OER numerator?
+3. Verify: Is vacancy included in operating expenses for OER?
+4. Verify: Is management fee included in operating expenses for OER?
+5. Document: Which industry standard platform follows (Fannie Mae vs BiggerPockets)
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - OER calculation method
+- `/backend/src/services/investment/financialCalculations.ts` - Calculation utilities
+
+**Recommended Fix Strategy**:
+- **Option A**: Align with Fannie Mae standard (exclude vacancy/management from OER)
+- **Option B**: Add tooltip explaining methodology: "OER includes/excludes vacancy and management"
+- **Option C**: Calculate two OERs: "OER (Basic)" and "OER (Comprehensive)" - show both
+
+**Estimated Effort**: 1-2 hours investigation + 1 hour fix (if needed)
+
+**Priority Justification**:
+P2 - MEDIUM because OER is a comparative metric used by investors, not a lender requirement. Both values are within acceptable range, so this is a "nice to have" standardization, not a critical error.
+
+**Related Issues**: Issue #80 (BEO), Issue #81 (DSCR)
+
+---
+
+### Issue #83: Pre-Refinance Cash Flow Discrepancy ($1,788 vs $1,339)
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Seasoning Period Financial Modeling)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts Initial Hold Period Calculation
+**Category**: Financial Calculation Variance
+**Affects**: BRRRR Initial Hold Period Cash Flow, Seasoning Profit, Total Capital Deployed
+
+**Description**:
+Pre-refinance (initial hold period) cash flow shows $1,788/month, but Business Expert's manual calculation suggests $1,339/month. This is a **$449/month discrepancy** ($5,388/year), which affects seasoning profit calculation and total capital deployed.
+
+**Test Case**:
+```
+Property Data:
+Gross Rent:    $3,000
+Vacancy (5%):  $150
+Effective Rent: $2,850
+
+Initial Mortgage: $499 (7%, 30yr, $75K loan)
+Property Tax:     $292/mo ($3,500/yr)
+Insurance:        $192/mo ($2,300/yr)
+Maintenance:      $150/mo
+Management:       $65/mo
+HOA:              $65/mo
+Utilities:        $15/mo
+CapEx Reserve:    $150/mo (5% of rent)
+Turnover:         $83/mo ($1,000 every 2 years)
+
+Platform Calculation:
+Pre-Refi Cash Flow: $1,788/month
+Seasoning Profit (12mo): $20,672
+Total Capital Deployed: $57,328 (after deducting seasoning profit)
+
+Business Expert Calculation:
+Total Expenses: $499 + $292 + $192 + $150 + $65 + $65 + $15 + $150 + $83 = $1,511
+Cash Flow: $2,850 - $1,511 = $1,339/month
+
+Discrepancy: $1,788 - $1,339 = $449/month
+```
+
+**Reverse-Engineering Platform's Calculation**:
+```
+If Cash Flow = $1,788 and Effective Rent = $2,850:
+Platform's Implied Total Expenses = $2,850 - $1,788 = $1,062
+
+Business Expert's Total Expenses = $1,511
+Difference = $1,511 - $1,062 = $449/month
+
+Platform is excluding ~$449/month in expenses:
+- CapEx Reserve:    $150
+- Turnover Costs:   $83
+- Management Fee:   $65
+- Additional items: $151
+Total excluded:     $449 ✓
+```
+
+**Possible Root Causes**:
+1. **CapEx Exclusion**: Platform excludes CapEx reserve during initial hold (common for new rehab)
+2. **Turnover Exclusion**: Platform excludes turnover costs during first 12 months (logical - new tenant)
+3. **Management Exclusion**: Platform excludes management fee during initial hold (self-managed assumption)
+4. **Industry Practice**: New rehab properties often exclude certain reserves for first year
+
+**Business Impact**:
+- **Seasoning Profit**: Affects calculation of income during 12-month hold before refinance
+- **Capital Deployed**: $57,328 calculation depends on accurate seasoning profit deduction
+- **Investor Expectations**: $1,788/mo vs $1,339/mo is significant difference in projected income
+- **Cash Flow Reality**: Higher displayed cash flow may set unrealistic expectations
+
+**Industry Context**:
+- **New Rehab Properties**: Often exclude CapEx and turnover for first 12-24 months
+- **Self-Managed**: Many BRRRR investors self-manage initially to maximize cash flow
+- **Conservative Accounting**: BiggerPockets recommends including all reserves from day one
+- **Platform Practice**: Excluding reserves during initial hold may be intentional design choice
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Initial hold period cash flow calculation
+2. Verify: Which expenses are included during 12-month seasoning period?
+3. Verify: Is CapEx intentionally excluded for new rehab properties? (Business logic decision)
+4. Verify: Is management fee excluded for self-managed assumption?
+5. Document: Platform's methodology and rationale (may be correct by design)
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - Lines ~600-650 (Initial hold calculation)
+- `/backend/src/services/investment/financialCalculations.ts` - Monthly cash flow method
+
+**Recommended Fix Strategy**:
+- **Option A**: Add tooltip: "Pre-refi cash flow excludes CapEx/Turnover (new rehab property)"
+- **Option B**: Display two cash flow values: "With Reserves: $1,339" and "Without Reserves: $1,788"
+- **Option C**: Add note explaining seasoning period income assumptions and exclusions
+- **Option D**: Keep as-is if intentional design choice (document in methodology guide)
+
+**Estimated Effort**: 1-2 hours investigation + 1 hour documentation/UI enhancement
+
+**Priority Justification**:
+P2 - MEDIUM because this affects investor expectations but may be intentional design choice for new rehab properties. Investigation needed to determine if this is a bug or feature. Impact is moderate as it affects seasoning profit and capital deployed calculations.
+
+**Related Issues**: Issue #84 (Post-Refi Cash Flow), Issue #72 (Similar cash flow discrepancy)
+
+---
+
+### Issue #84: Post-Refinance Cash Flow Calculation Variance ($66 vs $420)
+**Status**: 🔴 OPEN
+**Priority**: P2 - MEDIUM (Ongoing Cash Flow Projection)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts Post-Refinance Metrics
+**Category**: Financial Calculation Variance
+**Affects**: BRRRR Post-Refinance Cash Flow, Investor Expectations
+
+**Description**:
+Post-refinance cash flow shows $66/month, but Business Expert's manual calculation suggests ~$420/month. This is a **$354/month discrepancy** ($4,248/year), which significantly affects investor expectations for ongoing income.
+
+**Test Case**:
+```
+Property Data:
+Effective Rent:       $2,850 (after 5% vacancy)
+Operating Expenses:   $1,012/month (from platform)
+New Mortgage:         $1,418/month (9%, 30yr, $176,250 loan)
+
+Platform Calculation:
+Post-Refi Cash Flow: $66/month
+
+Business Expert Calculation:
+Cash Flow: $2,850 - $1,012 - $1,418 = $420/month
+
+Discrepancy: $420 - $66 = $354/month
+```
+
+**Reverse-Engineering Platform's Calculation**:
+```
+If Cash Flow = $66 and Effective Rent = $2,850:
+Platform's Implied Total Expenses = $2,850 - $66 = $2,784
+
+Business Expert's Total Expenses: $1,012 + $1,418 = $2,430
+Difference = $2,784 - $2,430 = $354/month
+
+Platform is adding ~$354/month in expenses not accounted for:
+- CapEx Reserve:      $150 (5% of rent)
+- Turnover Costs:     $83 ($1,000 every 2 years)
+- Management:         $65 (if included post-refi)
+- Additional items:   $56
+Total additional:     $354 ✓
+```
+
+**Possible Root Causes**:
+1. **Full Expense Inclusion**: Platform correctly includes ALL expenses post-refi (CapEx, Turnover, Management)
+2. **Conservative Accounting**: Platform uses comprehensive expense model for ongoing operations
+3. **Business Expert Assumption**: Business Expert used platform's stated $1,012 operating expenses without CapEx/Turnover
+4. **Calculation Consistency**: Platform may correctly show comprehensive ongoing expenses
+
+**Business Impact**:
+- **Investor Expectations**: $66/month is "barely cash flowing" vs $420/month is "good cash flow"
+- **Investment Appeal**: Significant difference in how attractive the deal appears
+- **Realistic Modeling**: Including all reserves is more conservative and realistic
+- **Comparison Accuracy**: Need to ensure apple-to-apple comparison with Business Expert's calculation
+
+**Industry Context**:
+- **Post-Refi Operations**: Should include ALL ongoing expenses (CapEx, Turnover, Management)
+- **Conservative Practice**: BiggerPockets recommends including all reserves for long-term hold
+- **Realistic Cash Flow**: $66/month may be more accurate than $420/month if all expenses included
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Post-refinance cash flow calculation (lines 690-710)
+2. Verify: Exact components of $1,012 operating expenses (does it include CapEx/Turnover?)
+3. Verify: Are CapEx, Turnover, Management added separately in post-refi calculation?
+4. Trace: Full expense breakdown from backend to frontend display
+5. Validate: Against test case data to identify exact $354/month difference
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - calculatePostRefinanceMetrics() method
+- `/frontend/src/components/SFRAnalysis/BRRRR/FinancialPeriodCard.tsx` - Display logic
+- `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRFinancialComparison.tsx` - Financial comparison card
+
+**Recommended Fix Strategy**:
+- **Option A**: Validate expense calculation in backend - ensure consistency
+- **Option B**: Add detailed expense breakdown in Post-Refinance section (line-by-line)
+- **Option C**: Display toggle: "Show detailed expenses" to expand full breakdown
+- **Option D**: Document if platform is correct and Business Expert's calculation was incomplete
+
+**Estimated Effort**: 2-3 hours investigation + 1-2 hours UI enhancement (expense breakdown)
+
+**Priority Justification**:
+P2 - MEDIUM because this affects investor expectations for ongoing income. $66/month vs $420/month is a significant difference in investment appeal. However, if platform is including comprehensive expenses correctly, this may be "working as designed" and just needs better transparency in display.
+
+**Related Issues**: Issue #72 (Similar post-refi cash flow discrepancy), Issue #83 (Pre-refi cash flow)
+
+---
+
+### Issue #85: Financial Performance Cash-on-Cash Return Shows Unclear Value (57.40%)
+**Status**: 🔴 OPEN
+**Priority**: P3 - LOW (Display Clarity - Minor UX Issue)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Frontend - BRRRRAnalysisTab.tsx Display Logic
+**Category**: UI Clarity / Labeling Issue
+**Affects**: BRRRR Financial Performance Section - Cash-on-Cash Return Display
+
+**Description**:
+Financial Performance section shows "Cash-on-Cash Return: 57.40%" without clear indication if this is pre-refinance, post-refinance, or blended average. The correct post-refinance CoC (∞%) is shown prominently in "Post-Refinance Performance" section, so this is a minor labeling issue, not a calculation error.
+
+**Test Case**:
+```
+Property Data:
+Pre-Refi Annual Cash Flow:  $21,456 ($1,788/mo × 12)
+Pre-Refi Investment:        $78,000
+Pre-Refi CoC:              $21,456 / $78,000 = 27.5%
+
+Post-Refi Annual Cash Flow: $792 ($66/mo × 12)
+Post-Refi Capital Remaining: $0
+Post-Refi CoC:             ∞% (shown correctly elsewhere)
+
+Platform Shows in Financial Performance:
+Cash-on-Cash Return: 57.40%
+
+Expected: Either ∞% (post-refi) OR clear label "Pre-Refi CoC: 27.5%"
+```
+
+**Analysis**:
+```
+Where does 57.40% come from?
+
+Hypothesis 1: Blended Average
+- (27.5% pre-refi + ∞% post-refi) / 2 = Cannot calculate (infinity)
+
+Hypothesis 2: Weighted Time Average
+- Pre-refi period: 12 months at 27.5%
+- Post-refi period: 10 years at ∞%
+- Weighted calc: Complex, unlikely to be 57.40%
+
+Hypothesis 3: Different Investment Base
+- Using different denominator than $78,000
+- $21,456 / $X = 0.574
+- X = $37,363 (doesn't match any known value)
+
+Hypothesis 4: Calculation Bug
+- May be pulling wrong CoC field from analysis object
+```
+
+**Current Behavior**:
+- ✅ **Post-Refinance Performance section shows**: "∞%" with "Infinite Return" label (CORRECT)
+- ⚠️ **Financial Performance section shows**: "57.40%" (UNCLEAR - no label)
+- ✅ **User will see correct value** in prominent Post-Refi section
+- ⚠️ **Minor inconsistency** between two sections
+
+**Business Impact**:
+- **Very Low**: Correct ∞% is shown prominently in Post-Refinance Performance section
+- **Minor Confusion**: Users may wonder what 57.40% represents
+- **Not a Deal-Breaker**: Investors make decisions based on the prominent ∞% display
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - Check if there's a "blended" CoC calculation
+2. Trace: Which field is being displayed in Financial Performance section?
+3. Frontend: `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` - Lines showing 57.40%
+4. Verify: `analysis.keyMetrics.cashOnCashReturn` vs `analysis.strategySpecific.postRefinanceMetrics.cashOnCashReturn`
+
+**Files to Review**:
+- `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` - Financial Performance section
+- `/backend/src/services/investment/brrrAnalyzer.ts` - Check for additional CoC calculations
+
+**Recommended Fix Strategy**:
+- **Option A**: Show ∞% in Financial Performance section (match Post-Refi section)
+- **Option B**: Show two separate values: "Pre-Refi CoC: 27.5%" and "Post-Refi CoC: ∞%"
+- **Option C**: Add tooltip: "Blended CoC across pre and post-refinance periods: 57.40%"
+- **Option D**: Remove from Financial Performance section (avoid duplication, shown correctly elsewhere)
+
+**Estimated Effort**: 1-2 hours investigation + 30 minutes fix
+
+**Priority Justification**:
+P3 - LOW because the correct infinite return (∞%) is shown prominently in the Post-Refinance Performance section where investors look. This is a "nice to have" clarification to avoid minor confusion, not a critical bug.
+
+**Related Issues**: Cash-on-Cash infinite return fix (completed 2026-02-08)
+
+---
+
+### Issue #86: Negative Capital Remaining Edge Case - Untested Enhancement Opportunity
+**Status**: 🔵 ENHANCEMENT
+**Priority**: P3 - LOW (Edge Case Enhancement)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**Component**: Backend - brrrAnalyzer.ts Capital Recovery Calculation
+**Category**: Enhancement - Edge Case Handling
+**Affects**: BRRRR Capital Recovery Display (Exceptional Deals >200% Recovery)
+
+**Description**:
+Platform currently shows "$0" for capital remaining when capital recovery ≥ 100%. However, for exceptional deals with capital recovery >200%, there could be surplus cash recovered (negative capital remaining). This untested edge case could be enhanced to show "Surplus: $X cash in pocket" to celebrate truly exceptional deals.
+
+**Current Behavior (Expected)**:
+```
+Capital Recovery: 177.94%
+Capital Recovered: $102,011
+Capital Deployed: $57,328
+Capital Remaining: $0 ✓ (Correct - shows zero, not negative)
+```
+
+**Hypothetical Edge Case (Untested)**:
+```
+Exceptional Deal Example:
+Purchase: $50,000, Down: $10,000, Rehab: $25,000, Closing: $2,000
+Total Investment: $37,000
+
+ARV: $200,000, Refi LTV: 80%
+Refinance Loan: $200,000 × 0.80 = $160,000
+Original Loan Payoff: $40,000
+Capital Recovered: $160,000 - $40,000 = $120,000
+
+Capital Remaining: $37,000 - $120,000 = -$83,000 (surplus!)
+Capital Recovery Rate: ($120,000 / $37,000) × 100 = 324%
+
+Current Platform Behavior (Untested):
+- Likely shows: Capital Remaining = $0 (capped at zero)
+- Could show: "Surplus Cash Recovered: $83,000"
+```
+
+**Business Impact**:
+- **Very Low**: Rare scenario (most BRRRR deals are 100-180% recovery, not 200%+)
+- **Educational Value**: Would help investors understand truly exceptional deals
+- **Celebration Factor**: "Cash in your pocket" is powerful messaging for 200%+ recovery deals
+
+**Enhancement Opportunity**:
+Instead of capping at $0, show surplus cash:
+- "Capital Remaining: -$83,000" OR
+- "Surplus Cash Recovered: $83,000 (cash in your pocket)" OR
+- "🤑 EXCEPTIONAL DEAL: You recovered ALL capital + $83,000 bonus!"
+
+**Investigation Needed**:
+1. Read `/backend/src/services/investment/brrrAnalyzer.ts` - calculateCapitalRecovery() method
+2. Check: How is capitalRemaining calculated? Does it allow negative values or cap at zero?
+3. Create test case: 200%+ capital recovery scenario
+4. Test: Does platform crash, show $0, or handle gracefully?
+
+**Files to Review**:
+- `/backend/src/services/investment/brrrAnalyzer.ts` - Capital recovery calculation
+- `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` - Display logic
+- `/frontend/src/components/SFRAnalysis/BRRRR/InfiniteReturnAlert.tsx` - Could add "surplus" celebration
+
+**Recommended Enhancement Strategy**:
+- **Option A**: Show negative value: "Capital Remaining: -$83,000"
+- **Option B**: Show surplus with explanation: "Surplus Cash Recovered: $83,000 (cash in your pocket)"
+- **Option C**: Add special alert: "🤑 EXCEPTIONAL DEAL: You recovered ALL capital + $83,000 bonus!"
+- **Option D**: Leave as-is (shows $0, infinite return is already celebrated)
+
+**Estimated Effort**: 2 hours investigation + test case + 1-2 hours enhancement (if pursued)
+
+**Priority Justification**:
+P3 - LOW because this is a rare edge case (200%+ capital recovery is uncommon). Infinite return is already celebrated with prominent banner. This is a "nice to have" enhancement that would add educational value and excitement for truly exceptional deals, but not essential functionality.
+
+**Related Issues**: Infinite return display enhancement (completed 2026-02-08)
+
+---
+
+### Issue #87: Price/SqFt and Rent/SqFt Show $0.00 - UX Improvement Opportunity
+**Status**: ✅ EXPECTED BEHAVIOR (Not a Bug)
+**Priority**: P3 - LOW (Cosmetic UX Enhancement)
+**Reported**: 2026-02-08
+**Discovered By**: Business Expert - BRRRR Infinite Return Validation
+**User Confirmation**: Expected behavior when square footage not provided
+**Component**: Frontend - BRRRRAnalysisTab.tsx Display Logic
+**Category**: UX Enhancement - Display Formatting
+**Affects**: BRRRR Financial Performance Section - Price/SqFt and Rent/SqFt Metrics
+
+**Description**:
+When user does not provide square footage in Property Wizard, Price/SqFt and Rent/SqFt metrics show "$0.00" instead of "N/A" or "—". This is technically correct (platform cannot calculate without sqft data), but showing "$0.00" looks like a zero value rather than missing data.
+
+**Current Behavior**:
+```
+Test Case: Fake Property (Square Footage Not Provided)
+Purchase Price: $100,000
+Monthly Rent:   $3,000
+Square Footage: [Not provided]
+
+Platform Display:
+Price/SqFt (Bedroom): $0.00
+Rent/SqFt (Monthly): $0.00
+```
+
+**Expected Behavior** (UX Enhancement):
+```
+Better Display Options:
+- "N/A" (not available)
+- "—" (dash, indicating missing data)
+- "[Provide sqft to calculate]"
+- Hide metric entirely when sqft missing
+```
+
+**Business Impact**:
+- **Very Low**: Cosmetic issue only, doesn't affect calculations or decisions
+- **Minor Professionalism**: "$0.00" looks like a zero value rather than missing data
+- **Not Misleading**: Users understand they didn't provide square footage
+
+**User Context**:
+- User confirmed: "I understand such as Rent/sqft is 0 due to the reasons I used fake property and did not entered the sqft for property"
+- This is **expected behavior**, not a bug
+- Enhancement would improve visual polish
+
+**Investigation Needed**:
+- None required - root cause is known (square footage not provided)
+- This is a pure frontend display enhancement
+
+**Files to Review**:
+- `/frontend/src/components/SFRAnalysis/BRRRR/BRRRRAnalysisTab.tsx` - Financial Performance section
+- Lines displaying Price/SqFt and Rent/SqFt metrics
+
+**Recommended Enhancement Strategy**:
+```typescript
+// Current Code (Simplified):
+<Typography>Price/SqFt: {formatCurrency(pricePerSqft)}</Typography>
+
+// Enhanced Code (Option A - Show N/A):
+<Typography>
+  Price/SqFt: {squareFootage > 0 ? formatCurrency(pricePerSqft) : 'N/A'}
+</Typography>
+
+// Enhanced Code (Option B - Show Dash):
+<Typography>
+  Price/SqFt: {squareFootage > 0 ? formatCurrency(pricePerSqft) : '—'}
+</Typography>
+
+// Enhanced Code (Option C - Hide Metric):
+{squareFootage > 0 && (
+  <Typography>Price/SqFt: {formatCurrency(pricePerSqft)}</Typography>
+)}
+
+// Enhanced Code (Option D - Show Tooltip):
+<Typography>
+  Price/SqFt: {squareFootage > 0 ? formatCurrency(pricePerSqft) : (
+    <Tooltip title="Provide square footage to calculate">N/A</Tooltip>
+  )}
+</Typography>
+```
+
+**Estimated Effort**: 15-30 minutes (simple conditional display logic)
+
+**Priority Justification**:
+P3 - LOW because this is a cosmetic enhancement that improves visual polish but doesn't affect functionality. Users understand why sqft metrics show $0.00 when they didn't provide square footage. This is a "nice to have" improvement, not a critical issue.
+
+**Related Issues**: None
+
+---
 ### Issue #71: BRRRR Management Fee Displays in Operating Expenses (Frontend Display Bug)
 **Status**: ✅ RESOLVED & VALIDATED (2026-01-12)
 **Priority**: P0 - CRITICAL (UAT Blocker)

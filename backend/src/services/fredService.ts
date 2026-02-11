@@ -35,7 +35,7 @@ export class FredService {
       baseURL: this.baseUrl,
       timeout: 15000,
       params: {
-        api_key: this.apiKey,
+        ...(this.apiKey && { api_key: this.apiKey }),
         file_type: 'json'
       }
     });

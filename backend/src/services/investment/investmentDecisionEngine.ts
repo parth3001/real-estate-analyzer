@@ -1983,6 +1983,17 @@ export class InvestmentDecisionEngine {
   ): Promise<InvestmentDecision> {
     logger.info('BRRRR Decision Engine: Starting BRRRR-specific analysis');
 
+    // 🔍 DIAGNOSTIC LOGGING - Verify this method is being called for anonymous
+    logger.info('🔍 BRRRR Decision Engine Entry Point:', {
+      purchasePrice: propertyData.purchasePrice,
+      downPayment: propertyData.downPayment,
+      closingCosts: propertyData.closingCosts,
+      rehabBudget: propertyData.brrrr?.rehabBudget,
+      arv: propertyData.brrrr?.afterRepairValue,
+      hasAnalysis: !!analysis,
+      isAnonymous: !propertyData._id // Heuristic: no _id = anonymous
+    });
+
     try {
       // 1. Run BRRRR Analyzer
       const brrrAnalyzer = new BRRRRAnalyzer();

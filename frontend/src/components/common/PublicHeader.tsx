@@ -1,38 +1,27 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Public Header Component
+ * Used for public pages (Landing, Calculator) - shows before user scrolls
+ */
+
+import React from 'react';
 import { Box, Button, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { appleColors } from '../../theme/appleDesignSystem';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 
-const StickyHeader: React.FC = () => {
+const PublicHeader: React.FC = () => {
   const navigate = useNavigate();
-  const [isSticky, setIsSticky] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      // Sticky after 100px scroll
-      setIsSticky(window.scrollY > 100);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
-        boxShadow: isSticky ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-        transition: 'box-shadow 0.3s ease, opacity 0.3s ease',
-        opacity: isSticky ? 1 : 0,
-        pointerEvents: isSticky ? 'auto' : 'none',
-        height: { xs: '56px', md: '64px' }
+        borderBottom: '1px solid',
+        borderColor: 'rgba(0, 0, 0, 0.08)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1100,
       }}
     >
       <Container maxWidth="lg">
@@ -49,7 +38,7 @@ const StickyHeader: React.FC = () => {
             component="img"
             src={analyzrLogo}
             alt="REanalyzr"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => navigate('/')}
             sx={{
               height: { xs: '28px', md: '32px' },
               width: 'auto',
@@ -61,7 +50,7 @@ const StickyHeader: React.FC = () => {
             }}
           />
 
-          {/* Sample Analysis + Pricing + Login + What's New + Sign Up CTAs */}
+          {/* Navigation Links */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, md: 2 } }}>
             {/* Sample Analysis Link */}
             <Button
@@ -73,7 +62,7 @@ const StickyHeader: React.FC = () => {
                 textTransform: 'none',
                 padding: { xs: '6px 12px', md: '8px 16px' },
                 minWidth: 'auto',
-                display: { xs: 'none', sm: 'inline-flex' }, // Hide on mobile to save space
+                display: { xs: 'none', sm: 'inline-flex' },
                 '&:hover': {
                   backgroundColor: 'transparent',
                   color: appleColors.primary[500],
@@ -118,7 +107,7 @@ const StickyHeader: React.FC = () => {
                 textTransform: 'none',
                 padding: { xs: '6px 12px', md: '8px 16px' },
                 minWidth: 'auto',
-                display: { xs: 'none', sm: 'inline-flex' }, // Hide on mobile to save space
+                display: { xs: 'none', sm: 'inline-flex' },
                 '&:hover': {
                   backgroundColor: 'transparent',
                   color: appleColors.primary[500],
@@ -181,4 +170,4 @@ const StickyHeader: React.FC = () => {
   );
 };
 
-export default StickyHeader;
+export default PublicHeader;

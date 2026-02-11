@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
 import { useAffiliate } from '../../contexts/AffiliateContext';
 import type { RegisterData, AuthFormErrors } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
+import { analytics } from '../../utils/analytics';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -21,6 +22,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const { isMobile, isTablet } = useResponsive();
   const { affiliateCode } = useAffiliate();
   const [searchParams] = useSearchParams();
+  const hasTrackedSignupStart = useRef(false);
 
   // Get email/name from URL params (Flodesk redirect)
   const urlEmail = searchParams.get('email') || '';
@@ -51,6 +53,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [honeypot, setHoneypot] = useState(''); // Bot detection field
+
+  // Track signup started on first field change
+  const trackSignupStart = () => {
+    if (!hasTrackedSignupStart.current) {
+      analytics.trackSignupStarted(affiliateCode ? 'affiliate' : 'direct');
+      hasTrackedSignupStart.current = true;
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -86,6 +96,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       };
 
       await register(registrationData);
+
+      // Track successful signup
+      analytics.trackSignupCompleted(affiliateCode ? 'affiliate' : 'direct');
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -93,6 +107,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       }
     } catch (error) {
       console.error('Registration failed:', error);
+
+      // Track failed signup
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      analytics.trackSignupFailed(errorMessage);
     }
   };
 
@@ -320,6 +338,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 }}>BUY/NEGOTIATE/PASS verdicts with walk-away prices—not just numbers</span>
               </div>
             </div>
+            <div style={getFeatureStyle()}>
+              <span style={{
+                fontSize: isTablet ? '18px' : '20px',
+                color: '#10B981',
+                fontWeight: 600
+              }}>✓</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{
+                  ...getFeatureTextStyle(),
+                  fontWeight: 600,
+                  fontSize: isTablet ? '0.938rem' : '1rem'
+                }}>Beta Early Access</span>
+                <span style={{
+                  fontSize: isTablet ? '0.75rem' : '0.813rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.3
+                }}>Join now, pay $0/month forever—lock in before $14.99/month launch</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -355,12 +392,34 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             </span>
           </div>
           <p style={{
-            color: '#6b7280',
-            fontSize: isMobile ? '0.875rem' : isTablet ? '1rem' : '1.25rem',
+            textAlign: 'center',
             marginBottom: isMobile ? '20px' : isTablet ? '28px' : '40px',
             lineHeight: 1.4
           }}>
-            Start analyzing properties for free. No credit card required.
+            <span style={{
+              display: 'block',
+              color: '#0a0a0a',
+              fontWeight: 600,
+              marginBottom: '8px',
+              fontSize: isMobile ? '1rem' : isTablet ? '1.125rem' : '1.375rem'
+            }}>
+              Join beta now and lock in $0/month forever.
+            </span>
+            <span style={{
+              display: 'block',
+              color: '#6b7280',
+              fontSize: isMobile ? '0.813rem' : isTablet ? '0.938rem' : '1.125rem',
+              marginBottom: '12px'
+            }}>
+              ($14.99/month after public launch)
+            </span>
+            <span style={{
+              display: 'block',
+              color: '#9ca3af',
+              fontSize: isMobile ? '0.75rem' : isTablet ? '0.875rem' : '1rem'
+            }}>
+              No credit card required.
+            </span>
           </p>
 
           {error && (
@@ -422,7 +481,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 <input
                   type="text"
                   value={formData.firstName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  onChange={(e) => {
+                    trackSignupStart();
+                    setFormData(prev => ({ ...prev, firstName: e.target.value }));
+                  }}
                   style={getInputStyle()}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#6366f1';
@@ -441,7 +503,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 <input
                   type="text"
                   value={formData.lastName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  onChange={(e) => {
+                    trackSignupStart();
+                    setFormData(prev => ({ ...prev, lastName: e.target.value }));
+                  }}
                   style={getInputStyle()}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#6366f1';
@@ -462,7 +527,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => {
+                  trackSignupStart();
+                  setFormData(prev => ({ ...prev, email: e.target.value }));
+                }}
                 style={getInputStyle()}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#6366f1';
@@ -482,7 +550,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               <input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => {
+                  trackSignupStart();
+                  setFormData(prev => ({ ...prev, password: e.target.value }));
+                }}
                 style={getInputStyle()}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#6366f1';

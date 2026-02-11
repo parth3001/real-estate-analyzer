@@ -4,6 +4,7 @@ import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
 import type { LoginCredentials } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
+import { analytics } from '../../utils/analytics';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -33,6 +34,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       await login(formData);
+
+      // Track successful login
+      analytics.trackLoginSuccess();
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -40,17 +45,27 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
     } catch (error) {
       console.error('Login failed:', error);
+
+      // Track failed login
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      analytics.trackLoginFailed(errorMessage);
     }
   };
 
   const handleDemoLogin = async () => {
+    // TODO: Demo feature not yet implemented
+    // Credentials scrambled for security until demo feature is properly set up
     const demoCredentials: LoginCredentials = {
-      email: 'admin@reanalyzr.com',
-      password: 'Spring@2025',
+      email: 'demo-disabled@reanalyzr.com',
+      password: 'DEMO_FEATURE_DISABLED_SCRAMBLED_PASSWORD_2025',
     };
     setFormData(demoCredentials);
     try {
       await login(demoCredentials);
+
+      // Track successful demo login
+      analytics.trackLoginSuccess();
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -58,6 +73,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }
     } catch (error) {
       console.error('Demo login failed:', error);
+
+      // Track failed demo login
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      analytics.trackLoginFailed(errorMessage);
     }
   };
 

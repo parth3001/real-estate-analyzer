@@ -111,9 +111,10 @@ export interface PostRefinanceMetrics {
   monthlyOperatingExpenses: number;
   monthlyCashFlow: number;
   annualCashFlow: number;
-  cashOnCashReturn: number;
+  cashOnCashReturn: number | null; // null = infinite return (capitalRemaining <= 0)
   annualNOI: number;
   postRefiDSCR: number;
+  postRefiBreakEvenOccupancy: number; // Issue #80 fix - BEO using post-refi mortgage
 }
 
 export interface Rule70Check {
