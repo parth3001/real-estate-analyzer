@@ -213,6 +213,26 @@ export const propertyApi = {
     }
   },
 
+  // Analyze property anonymously (no auth required)
+  // Used by public calculators (BRRRR, Buy & Hold)
+  analyzeAnonymous: async (propertyData: Partial<PropertyData>): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post('/deals/analyze-anonymous', propertyData);
+      return {
+        data: {
+          success: true,
+          analysis: response.data.analysis,
+          isAnonymous: true,
+          message: response.data.message || 'Analysis complete'
+        },
+        status: response.status,
+      };
+    } catch (error) {
+      console.error('Anonymous analysis failed:', error);
+      throw error;
+    }
+  },
+
   // NEW: Fast AI Predictions (3-4 seconds vs 76+ seconds)
   getQuickPredictions: async (propertyData: PropertyData): Promise<ApiResponse<{
     predictions: {
@@ -1566,6 +1586,60 @@ export const commandCenterApi = {
       console.error('Error fetching focused dashboard data:', error);
       throw error;
     }
+  }
+};
+
+// ===== Anonymous Analysis LocalStorage Helpers =====
+// Used by public calculators to save analysis before user creates account
+
+/**
+ * Save anonymous analysis to localStorage for conversion flow
+ * When user creates account, we can retrieve and save their analysis
+ */
+export const saveAnonymousAnalysis = (
+  propertyData: Partial<PropertyData>,
+  analysis: any
+): void => {
+  try {
+    const savedAnalysis = {
+      propertyData,
+      analysis,
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem('pendingAnalysis', JSON.stringify(savedAnalysis));
+  } catch (error) {
+    console.error('Failed to save analysis to localStorage:', error);
+  }
+};
+
+/**
+ * Retrieve pending analysis from localStorage
+ * Used after user creates account to save their work
+ */
+export const getPendingAnalysis = (): {
+  propertyData: Partial<PropertyData>;
+  analysis: any;
+  timestamp: string;
+} | null => {
+  try {
+    const saved = localStorage.getItem('pendingAnalysis');
+    if (!saved) return null;
+    return JSON.parse(saved);
+  } catch (error) {
+    console.error('Failed to retrieve pending analysis:', error);
+    return null;
+  }
+};
+
+/**
+ * Clear pending analysis from localStorage
+ * Called after successfully saving to database
+ */
+export const clearPendingAnalysis = (): void => {
+  try {
+    localStorage.removeItem('pendingAnalysis');
+  } catch (error) {
+    console.error('Failed to clear pending analysis:', error);
   }
 };
 

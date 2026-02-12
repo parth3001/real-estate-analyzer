@@ -22,7 +22,7 @@ export const SaveAnalysisCTA: React.FC<SaveAnalysisCTAProps> = ({ analysis, form
 
   const handleCreateAccount = () => {
     // Navigate to registration page
-    // The pending analysis is already saved to localStorage by calculatorService
+    // The pending analysis is already saved to localStorage by UniversalCalculator
     navigate('/register');
   };
 

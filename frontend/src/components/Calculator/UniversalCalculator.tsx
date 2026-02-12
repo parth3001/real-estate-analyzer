@@ -12,7 +12,7 @@ import { BRRRRInputForm } from './BRRRRInputForm';
 import { BuyHoldInputForm } from './BuyHoldInputForm';
 import { CalculatorResults } from './CalculatorResults';
 import type { Analysis } from '../../types/analysis';
-import { analyzeAnonymous, saveAnonymousAnalysis } from './calculatorService';
+import { propertyApi, saveAnonymousAnalysis } from '../../services/api';
 import { defaultBuyHoldData, defaultBRRRRData, type CalculatorFormData } from './types';
 import { analytics } from '../../utils/analytics';
 
@@ -91,17 +91,17 @@ export const UniversalCalculator: React.FC = () => {
         }
       };
 
-      const response = await analyzeAnonymous(backendPayload as any);
-      setAnalysis(response.analysis);
+      const response = await propertyApi.analyzeAnonymous(backendPayload as any);
+      setAnalysis(response.data.analysis);
 
       // Track calculator completion
       analytics.trackCalculatorCompleted(
         data.investmentStrategy,
-        response.analysis.investmentDecision?.professionalAssessment?.dealQuality || 0
+        response.data.analysis.investmentDecision?.professionalAssessment?.dealQuality || 0
       );
 
       // Save to localStorage for potential account creation
-      saveAnonymousAnalysis(backendPayload as any, response.analysis);
+      saveAnonymousAnalysis(backendPayload as any, response.data.analysis);
     } catch (err) {
       console.error('Analysis failed:', err);
       setError(err instanceof Error ? err.message : 'Analysis failed. Please check your inputs.');
