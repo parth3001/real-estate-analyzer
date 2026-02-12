@@ -20,20 +20,24 @@ const PricingPage: React.FC = () => {
 
   // Both tiers have IDENTICAL features - only difference is price
   const features = [
-    'Unlimited property analysis',
-    'Save unlimited deals',
-    'Buy & Hold calculator',
-    'BRRRR strategy calculator',
-    'Detailed financial metrics',
-    'Market intelligence data',
-    'AI-powered insights',
-    'Mobile access'
+    'Unlimited property analyses',
+    'Single-family & multi-family properties (2-32 units)',
+    '28 professional metrics (Cap Rate, DSCR, IRR, NOI, Cash-on-Cash)',
+    'Real-time market intelligence (FRED + Census data)',
+    'AI Deal Quality Score (0-100 professional benchmarking)',
+    'Buy & Hold + BRRRR strategy analysis',
+    'Portfolio tracking and analytics',
+    'Save and compare unlimited deals'
   ];
 
   const faqItems: FAQItem[] = [
     {
       question: 'What happens when beta ends?',
       answer: 'If you join during beta, you pay $0/month forever. No strings attached.\nNew users after launch pay $14.99/month.'
+    },
+    {
+      question: 'What\'s included in "professional metrics"?',
+      answer: 'You get the same 28 institutional-grade metrics that institutional investors use: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return, Gross Rent Multiplier, Debt Yield, Break-Even Occupancy, Operating Expense Ratio, and more. Plus real-time market intelligence from FRED economic data and Census demographics.'
     },
     {
       question: 'Do I need a credit card?',
@@ -85,7 +89,7 @@ const PricingPage: React.FC = () => {
               letterSpacing: '-0.02em'
             }}
           >
-            Simple, Transparent Pricing
+            Professional Analysis. Accessible Pricing.
           </Typography>
 
           {/* Page Subtitle */}
@@ -97,12 +101,12 @@ const PricingPage: React.FC = () => {
               fontWeight: 400,
               color: appleColors.gray[600],
               mb: { xs: 6, md: 8 },
-              maxWidth: '600px',
+              maxWidth: '700px',
               mx: 'auto',
               lineHeight: 1.5
             }}
           >
-            Professional real estate analysis without the professional price tag.
+            The tools that Wall Street uses cost $50,000+/year. REanalyzr gives you the same analysis—free forever when you join during Beta.
           </Typography>
 
           {/* Pricing Cards */}
@@ -137,7 +141,7 @@ const PricingPage: React.FC = () => {
                 title="Professional"
                 price="$14.99"
                 priceUnit="per month"
-                badge="COMING SOON"
+                badge="AFTER BETA ENDS"
                 features={features}
                 ctaLabel="Join Beta to Lock In Free"
                 ctaAction={() => navigate('/register')}
@@ -175,7 +179,7 @@ const PricingPage: React.FC = () => {
                   mt: { xs: 1, sm: 0 }
                 }}
               >
-                {' '}Beta users pay $0/month forever, new users after launch pay $14.99/month.
+                {' '}Beta users pay $0/month forever and keep lifetime free access to all current features. New users after launch pay $14.99/month.
               </Box>
             </Typography>
           </Box>

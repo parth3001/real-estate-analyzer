@@ -53,11 +53,12 @@ const LandingPage: React.FC = () => {
             sx={{
               color: 'text.secondary',
               fontSize: { xs: '0.95rem', sm: '1rem' },
-              maxWidth: '700px',
-              mx: 'auto'
+              maxWidth: '800px',
+              mx: 'auto',
+              lineHeight: 1.6
             }}
           >
-            Analyze BRRRR and Buy & Hold deals in 5 minutes with professional-grade metrics.
+            Get institutional-grade analysis in 5 minutes—the same 28 metrics institutional investors use to evaluate properties. Not your basic calculator. Free forever for Beta users.
           </Typography>
         </Box>
 
@@ -90,6 +91,47 @@ const LandingPage: React.FC = () => {
           >
             View example analysis from beta investor →
           </MuiLink>
+        </Box>
+
+        {/* Why REanalyzr Is Different Section */}
+        <Box sx={{ mt: 8, mb: 8 }}>
+          <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 5, textAlign: 'center', fontSize: { xs: '1.75rem', md: '2.25rem' } }}>
+            Why REanalyzr Is Different
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 4 }}>
+            {/* Column 1: 5-Minute Analysis */}
+            <Box sx={{ textAlign: 'center', px: 2 }}>
+              <Box sx={{ fontSize: '3rem', mb: 2 }}>⚡</Box>
+              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
+                5-Minute Analysis
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                Get a complete investment analysis in 5 minutes—not 2 hours in Excel. Enter your property details and get instant results.
+              </Typography>
+            </Box>
+
+            {/* Column 2: 28 Professional Metrics */}
+            <Box sx={{ textAlign: 'center', px: 2 }}>
+              <Box sx={{ fontSize: '3rem', mb: 2 }}>📊</Box>
+              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
+                28 Professional Metrics
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—the same formulas institutional investors use, validated by CPAs for accuracy.
+              </Typography>
+            </Box>
+
+            {/* Column 3: AI-Powered Confidence */}
+            <Box sx={{ textAlign: 'center', px: 2 }}>
+              <Box sx={{ fontSize: '3rem', mb: 2 }}>🎯</Box>
+              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
+                AI-Powered Confidence
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                Deal Quality Score (0-100) tells you instantly if this deal meets professional standards. Stop guessing. Start knowing.
+              </Typography>
+            </Box>
+          </Box>
         </Box>
 
         {/* SEO Content Sections */}
@@ -202,6 +244,22 @@ const LandingPage: React.FC = () => {
               Rental Property Calculator FAQ
             </Typography>
             <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
+                  How is REanalyzr different from free calculators?
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                  Free calculators give you basic math with generic assumptions. REanalyzr gives you the same 28 professional metrics that institutional investors use—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus real-time market data for your specific location. It's the difference between guessing and knowing.
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
+                  Do I need real estate experience to use this?
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                  No. REanalyzr is designed for everyone from first-time investors to experienced portfolio builders. Our AI Deal Quality Score (0-100) gives you an instant verdict—this deal is above or below professional standards—so you can make confident decisions in 5 minutes, even if you've never analyzed a property before.
+                </Typography>
+              </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
                   How accurate is this BRRRR calculator?

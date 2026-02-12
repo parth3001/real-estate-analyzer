@@ -1,9 +1,52 @@
 # Project Context for Claude
 
-## 🎯 **Strategic Vision**
-**Evolving from single-family analyzer to comprehensive multi-asset investment platform**
-- Target: Multi-family, commercial (retail/office/industrial), alternative assets (self-storage, mobile homes, data centers)
-- Mission: Transform novice investors into professional-level thinkers with institutional-grade analysis
+## 🎯 **Strategic Vision: Data Democratization for Real Estate Investors**
+
+### **Mission**
+**Democratize institutional-grade real estate underwriting for individual investors.**
+
+We exist to eliminate the information asymmetry between Wall Street and Main Street real estate investors.
+
+### **The Problem We're Solving**
+- **Institutional investors** (Blackstone, Starwood, Goldman Sachs) pay $50,000+ per year for Bloomberg terminals, CoStar subscriptions, and proprietary underwriting platforms
+- **Individual investors** (1-10 properties) are forced to use Excel spreadsheets, free calculators with inaccurate formulas, or pay $2,000+ for single property appraisals
+- **Result**: Information asymmetry where individuals unknowingly overpay for properties, miss cash flow red flags, and make undisciplined investment decisions
+
+### **Our Solution**
+Give individual investors the same institutional-grade analysis that Wall Street uses—for $0 to $49 per month:
+- **Same metrics**: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return (institutional formulas, CPA-validated)
+- **Same market intelligence**: FRED economic data, Census demographics, RentCast comparable properties
+- **Same decision frameworks**: Investment Decision Engine with professional benchmarks (Deal Quality Score 0-100)
+- **Same AI insights**: GPT-4o-mini enhanced analysis (market predictions, risk assessment, portfolio fit)
+- **Zero compromise on quality**: Professional-grade calculations accessible to everyday Joe investor
+
+### **Brand Promise**
+> **"Institutional-grade analysis. Individual investor access. Zero compromise on quality."**
+
+### **Target Customer**
+- **Primary**: Individual real estate investors (1-10 properties, $75K-250K annual income)
+- **Profile**: Professionals seeking passive income, financial freedom, generational wealth
+- **Pain Points**: Analysis paralysis, uncertainty about deal quality, fear of overpaying
+- **Aspiration**: Make professional-level investment decisions with confidence
+
+### **Competitive Moat**
+We are NOT a commodity calculator. We are a **democratized institutional platform**:
+- **Commodity calculators**: Basic math, no market context, generic recommendations
+- **REanalyzr**: Institutional metrics + real-time market intelligence + AI-powered decision engine + professional benchmarks
+
+### **Empowerment Philosophy**
+- **Tone**: "You deserve access to this data" (empowering, not aggressive)
+- **Education**: Teach institutional thinking, not just provide results
+- **Transparency**: Show calculation methodologies, explain professional standards
+- **Accessibility**: Simple interfaces for complex institutional-grade analysis
+
+### **Strategic Evolution**
+- **Phase 1 (Current)**: Single-Family Residential + BRRRR Strategy + Buy & Hold
+- **Phase 2 (Q2-Q3 2026)**: Multi-Family Properties (2-32 units)
+- **Phase 3 (2027)**: Commercial Real Estate (retail, office, industrial)
+- **Phase 4 (2027+)**: Alternative Assets (self-storage, mobile home parks, data centers)
+
+**End Goal**: Comprehensive multi-asset investment platform where individual investors analyze any property type with institutional-grade precision.
 
 ## 🏗️ **Current Architecture**
 - **Frontend**: React 19 + TypeScript + Material-UI v7 + Vite
@@ -23,6 +66,23 @@
 - **ATTOM Data API**: Comprehensive property details, tax assessments, ownership history
 - **Insurance APIs**: Risk assessment automation (Steadily, Cape Analytics, or BuildFax)
 - **Enhanced RentCast**: Address autocomplete and expanded property data
+
+## 🌐 **Frontend API Communication Standards**
+
+⚠️ **MANDATORY FOR ARCHITECT/ENGINEER PERSONAS:**
+
+**Before adding new API endpoints or HTTP calls, MUST read:**
+1. **`/docs/FRONTEND_API_STANDARDS.md`** - Frontend API implementation patterns (code examples, checklists)
+2. **`/docs/ARCHITECTURE_V3.md`** - Current production architecture (system overview, existing endpoints)
+
+**Critical Rules:**
+- ALL frontend API calls use axios from `/frontend/src/services/api.ts`
+- NEVER use `fetch()` for API calls
+- NEVER create parallel HTTP client files (e.g., `calculatorService.ts`)
+- `VITE_API_URL` = base domain only (NO `/api` suffix)
+  - Production: `https://real-estate-analyzer-api.onrender.com`
+
+**See `/docs/FRONTEND_API_STANDARDS.md` for complete implementation guide.**
 
 ## 💰 **Revenue Model (Subscription Tiers)**
 - **Free Tier**: $0/month - 3 analyses/month, basic features

@@ -403,7 +403,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               marginBottom: '8px',
               fontSize: isMobile ? '1rem' : isTablet ? '1.125rem' : '1.375rem'
             }}>
-              Join beta now and lock in $0/month forever.
+              Join now and keep unlimited access forever—including future features like commercial real estate analysis.
             </span>
             <span style={{
               display: 'block',
@@ -412,13 +412,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               marginBottom: '12px'
             }}>
               ($14.99/month after public launch)
-            </span>
-            <span style={{
-              display: 'block',
-              color: '#9ca3af',
-              fontSize: isMobile ? '0.75rem' : isTablet ? '0.875rem' : '1rem'
-            }}>
-              No credit card required.
             </span>
           </p>
 
@@ -669,6 +662,42 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
+
+          {/* Trust Signals */}
+          <div style={{
+            marginTop: isMobile ? '24px' : '32px',
+            marginBottom: isMobile ? '16px' : '20px',
+            padding: isMobile ? '16px' : '20px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '12px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: isMobile ? '8px' : '10px',
+              fontSize: isMobile ? '0.75rem' : '0.875rem',
+              color: '#6b7280',
+              lineHeight: 1.5
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ color: '#10B981', fontWeight: 600, flexShrink: 0 }}>✓</span>
+                <span>28 professional metrics used by institutional investors</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ color: '#10B981', fontWeight: 600, flexShrink: 0 }}>✓</span>
+                <span>CPA-validated calculations</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ color: '#10B981', fontWeight: 600, flexShrink: 0 }}>✓</span>
+                <span>Real-time market data (FRED + Census)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ color: '#10B981', fontWeight: 600, flexShrink: 0 }}>✓</span>
+                <span>Free forever for Beta users—no catch</span>
+              </div>
+            </div>
+          </div>
 
           <p style={getBottomTextStyle()}>
             Already have an account?{' '}
