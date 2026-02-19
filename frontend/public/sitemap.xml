@@ -133,4 +133,19 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Blog Pages (SEO Content) -->
+  <url>
+    <loc>https://reanalyzr.com/blog</loc>
+    <lastmod>2026-02-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://reanalyzr.com/blog/brrrr-calculator-guide</loc>
+    <lastmod>2026-02-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

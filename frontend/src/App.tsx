@@ -48,6 +48,9 @@ import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
 import MarketDataPage from './pages/MarketDataPage';
 import AnalysisDetails from './pages/AnalysisDetails';
+import BlogListPage from './pages/BlogListPage';
+import BlogPostPage from './pages/BlogPostPage';
+import BRRRRCalculatorPage from './pages/BRRRRCalculatorPage';
 
 // Portfolio Components
 import PortfolioDashboard from './pages/PortfolioDashboard';
@@ -208,8 +211,12 @@ function App() {
               <Route path="/calculator" element={<UniversalCalculator />} />
               <Route path="/calculator/brrrr" element={<UniversalCalculator />} />
               <Route path="/calculator/buy-hold" element={<UniversalCalculator />} />
-              <Route path="/brrrr-calculator" element={<UniversalCalculator />} />
+              <Route path="/brrrr-calculator" element={<BRRRRCalculatorPage />} />
               <Route path="/rental-property-calculator" element={<UniversalCalculator />} />
+
+              {/* Blog Routes - Public, No Auth Required */}
+              <Route path="/blog" element={<BlogListPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
 
               {/* Protected Routes (authentication required) */}
               <Route

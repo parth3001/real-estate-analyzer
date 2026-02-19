@@ -516,6 +516,62 @@ User Input → Portfolio Context → Analysis Engine → Aggregation → AI Insi
 - **User Data Priority**: No smart defaults or overrides
 - **Ownership Percentage**: Support for partial ownership
 
+---
+
+## 📝 Blog System Architecture (Added February 2026)
+
+### Overview
+Static markdown-based content system for SEO-driven blog articles. No CMS, no database — plain `.md` files with YAML frontmatter loaded at build time via Vite's `import.meta.glob`.
+
+### Design Decision
+Chose static markdown over a CMS because:
+- No additional infrastructure (no Contentful, no Sanity, no backend changes)
+- Editable by non-engineers (plain text files)
+- Zero runtime dependencies — parsed entirely at build time
+- Automatically code-split by Vite
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `/frontend/src/content/blog/*.md` | Blog post source files (YAML frontmatter + markdown body) |
+| `/frontend/src/utils/blogUtils.ts` | Browser-safe frontmatter parser + `getAllPosts()` / `getPostBySlug()` |
+| `/frontend/src/pages/BlogListPage.tsx` | Route: `/blog` — lists all posts as cards |
+| `/frontend/src/pages/BlogPostPage.tsx` | Route: `/blog/:slug` — renders individual post with full SEO |
+| `/frontend/src/pages/BRRRRCalculatorPage.tsx` | Route: `/brrrr-calculator` — SEO wrapper around UniversalCalculator |
+| `/frontend/public/blog/` | Static image assets referenced by blog posts |
+| `/frontend/public/sitemap.xml` | Updated with `/blog` and `/blog/:slug` entries (priority 0.8) |
+
+### Frontmatter Schema
+```yaml
+---
+title: string          # Page <title> and H1
+slug: string           # URL path: /blog/{slug}
+date: string           # ISO date (YYYY-MM-DD)
+description: string    # Meta description (155 chars max)
+keywords: string[]     # Meta keywords array
+readingTime: string    # Display only (e.g. "10 min read")
+---
+```
+
+### Technical Notes
+- **Browser-safe parser**: `gray-matter` was removed — it uses Node.js `Buffer` which crashes in the browser. Replaced with inline regex parser in `blogUtils.ts`.
+- **Vite import**: Uses `import.meta.glob('../content/blog/*.md', { as: 'raw', eager: true })` — statically imports all `.md` files at build time.
+- **Adding new posts**: Drop a `.md` file in `/frontend/src/content/blog/` — it appears automatically on next build.
+- **SEO per post**: `BlogPostPage.tsx` sets `<title>`, `<meta description>`, `<link rel="canonical">`, `og:title`, `og:description`, `og:url`, `og:type`, `article:published_time` dynamically from frontmatter.
+
+### BRRRRCalculatorPage SEO Wrapper
+`UniversalCalculator` is shared across `/brrrr-calculator`, `/calculator/buy-hold`, and `/calculator` routes. BRRRR-specific SEO tags (title, canonical, og:url, JSON-LD FAQ schema) are applied via a thin `BRRRRCalculatorPage` wrapper rather than inside `UniversalCalculator` directly — preventing BRRRR tags from appearing on buy-hold routes.
+
+### Routes Added to App.tsx
+```
+/blog                    → BlogListPage
+/blog/:slug              → BlogPostPage
+/brrrr-calculator        → BRRRRCalculatorPage (wraps UniversalCalculator)
+```
+
+---
+
 ## 🔄 Data Flow Architecture
 
 ### Full Analysis Flow (SFR Property)
