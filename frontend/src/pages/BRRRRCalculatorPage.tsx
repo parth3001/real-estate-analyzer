@@ -1,13 +1,12 @@
 /**
  * BRRRR Calculator Page
- * Thin SEO wrapper around UniversalCalculator for the /brrrr-calculator route.
- * Adds page-specific Helmet tags, canonical URL, og tags, and JSON-LD FAQ schema.
- * UniversalCalculator is also used for /calculator/buy-hold so SEO tags live here.
+ * SEO wrapper that renders full LandingPage with BRRRR-specific meta tags.
+ * Provides unique title/description for SEO while maintaining full marketing content.
  */
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { UniversalCalculator } from '../components/Calculator/UniversalCalculator';
+import LandingPage from './LandingPage';
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -83,6 +82,7 @@ const faqSchema = {
 const BRRRRCalculatorPage: React.FC = () => {
   return (
     <>
+      {/* Override LandingPage's Helmet tags with BRRRR-specific SEO */}
       <Helmet>
         <title>BRRRR Calculator: Calculate Capital Recovery &amp; Infinite Returns | REanalyzr</title>
         <meta
@@ -100,7 +100,8 @@ const BRRRRCalculatorPage: React.FC = () => {
         <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
       </Helmet>
 
-      <UniversalCalculator />
+      {/* Render full landing page with all marketing content */}
+      <LandingPage />
     </>
   );
 };
