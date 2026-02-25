@@ -155,4 +155,11 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://reanalyzr.com/blog/cap-rate-calculator-guide</loc>
+    <lastmod>2026-02-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

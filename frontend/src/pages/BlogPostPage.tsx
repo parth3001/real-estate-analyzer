@@ -270,7 +270,7 @@ const BlogPostPage: React.FC = () => {
               </ReactMarkdown>
             </Box>
 
-            {/* Inline CTA at bottom of article */}
+            {/* Inline CTA at bottom of article - contextual based on article topic */}
             <Box
               sx={{
                 mx: { xs: 3, md: 6 },
@@ -289,15 +289,19 @@ const BlogPostPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                Run your own BRRRR analysis
+                {post.slug.includes('cap-rate')
+                  ? 'Calculate your cap rate now'
+                  : 'Run your own BRRRR analysis'}
               </Typography>
               <Typography
                 sx={{ color: 'rgba(255,255,255,0.85)', mb: 2.5, fontSize: '0.938rem' }}
               >
-                28 metrics. No login. Results in 60 seconds.
+                {post.slug.includes('cap-rate')
+                  ? 'Free calculator. Institutional-grade formulas. Results in 60 seconds.'
+                  : '28 metrics. No login. Results in 60 seconds.'}
               </Typography>
               <Button
-                onClick={() => navigate('/brrrr-calculator')}
+                onClick={() => navigate(post.slug.includes('cap-rate') ? '/cap-rate-calculator' : '/brrrr-calculator')}
                 variant="contained"
                 sx={{
                   backgroundColor: '#ffffff',
@@ -311,7 +315,9 @@ const BlogPostPage: React.FC = () => {
                   '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
                 }}
               >
-                Try the BRRRR Calculator →
+                {post.slug.includes('cap-rate')
+                  ? 'Try the Cap Rate Calculator →'
+                  : 'Try the BRRRR Calculator →'}
               </Button>
             </Box>
           </Box>
