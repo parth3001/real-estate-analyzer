@@ -58,10 +58,10 @@ export const SaveAnalysisCTA: React.FC<SaveAnalysisCTAProps> = ({ analysis, form
         <Box sx={{ bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
           <Stack spacing={1}>
             <BenefitItem icon="✅" text="Save and compare unlimited properties" />
-            <BenefitItem icon="📊" text="Build and track your deal pipeline" />
-            <BenefitItem icon="🎯" text="Get Investment Decision Engine verdicts" />
+            <BenefitItem icon="📊" text="Track your deal pipeline from lead to close" />
+            <BenefitItem icon="🎯" text="See deal impact to your portfolio goals" />
             <BenefitItem icon="🤖" text="Access AI-powered market insights" />
-            <BenefitItem icon="📈" text="Portfolio analytics and performance tracking" />
+            <BenefitItem icon="📈" text="Monitor portfolio health and performance" />
           </Stack>
         </Box>
 

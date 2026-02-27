@@ -310,7 +310,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
                 fontWeight: 500
               }}
             >
-              Test your market assumptions — free forever for beta users
+              Track your deal pipeline • See portfolio impact • Test market assumptions
             </Typography>
 
             <Button
@@ -333,7 +333,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
                 }
               }}
             >
-              Test Your Market Assumptions - Free Beta Access
+              Unlock Full Analysis - Free Beta Access
             </Button>
 
             <Typography
@@ -651,8 +651,8 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
             Unlock Full BRRRR Analysis
           </Typography>
           <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6 }}>
-            • See your 70% Rule validation (did you overpay?)<br/>
-            • View break-even occupancy risk analysis<br/>
+            • Track your deal pipeline from lead to close<br/>
+            • See how this deal impacts your portfolio goals<br/>
             • Test different refinance scenarios<br/>
             • Adjust assumptions for YOUR market
           </Typography>

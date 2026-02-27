@@ -26,7 +26,8 @@ const PricingPage: React.FC = () => {
     'Real-time market intelligence (FRED + Census data)',
     'AI Deal Quality Score (0-100 professional benchmarking)',
     'Buy & Hold + BRRRR strategy analysis',
-    'Portfolio tracking and analytics',
+    'Track your deal pipeline from lead to close',
+    'See deal impact to your portfolio goals',
     'Save and compare unlimited deals'
   ];
 

@@ -230,6 +230,14 @@ const LandingPage: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
+                  Deal Pipeline & Portfolio Tracking
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                  Track your deal pipeline from lead to close. See how each property impacts your portfolio goals. Monitor performance, visualize geographic diversification, and get AI-powered insights on portfolio health.
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
                   Free with Beta Access
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
