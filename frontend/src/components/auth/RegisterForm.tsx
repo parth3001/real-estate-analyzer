@@ -125,14 +125,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     position: 'fixed' as const,
     top: 0,
     left: 0,
-    overflow: isMobile || isTablet ? 'auto' : 'hidden',
+    overflow: 'auto',
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
   });
 
   const getHeroStyle = () => ({
     width: isMobile || isTablet ? '100%' : '50%',
-    height: isMobile || isTablet ? '35vh' : '100vh', // Smaller hero for register (more form fields)
-    minHeight: isMobile ? '250px' : isTablet ? '300px' : '100vh',
+    height: isMobile || isTablet ? '20vh' : '100vh', // Reduced mobile hero height for faster access to form
+    minHeight: isMobile ? '150px' : isTablet ? '300px' : '100vh',
     background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
     display: 'flex',
     flexDirection: 'column' as const,
@@ -199,12 +199,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const getFormContainerStyle = () => ({
     width: isMobile || isTablet ? '100%' : '50%',
-    height: isMobile || isTablet ? '65vh' : '100vh', // Mobile: 65vh leaves space for keyboard
+    height: isMobile || isTablet ? '80vh' : '100vh', // Mobile: 80vh complements 20vh hero (total 100vh)
     minHeight: isMobile || isTablet ? 'auto' : '100vh',
     background: 'white',
     display: 'flex',
     flexDirection: 'column' as const,
-    justifyContent: isMobile || isTablet ? 'flex-start' : 'center', // Mobile: align to top so content accessible
+    justifyContent: 'flex-start', // Changed desktop from 'center' to 'flex-start' for natural scrolling
     alignItems: 'center',
     padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
     boxSizing: 'border-box' as const,

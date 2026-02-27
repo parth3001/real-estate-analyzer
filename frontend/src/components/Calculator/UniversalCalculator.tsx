@@ -7,6 +7,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Container, Paper, Alert, CircularProgress } from '@mui/material';
+import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
 import { CalculatorTabs, type CalculatorStrategy } from './CalculatorTabs';
 import { BRRRRInputForm } from './BRRRRInputForm';
 import { BuyHoldInputForm } from './BuyHoldInputForm';
@@ -17,6 +19,7 @@ import { defaultBuyHoldData, defaultBRRRRData, type CalculatorFormData } from '.
 import { analytics } from '../../utils/analytics';
 
 export const UniversalCalculator: React.FC = () => {
+  const location = useLocation();
   const [activeStrategy, setActiveStrategy] = useState<CalculatorStrategy>('buy-hold');
   const [formData, setFormData] = useState<CalculatorFormData>(defaultBuyHoldData);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -28,6 +31,18 @@ export const UniversalCalculator: React.FC = () => {
 
   // Track calculator started (only once per session)
   const hasTrackedStart = useRef(false);
+
+  // Determine canonical URL based on route
+  const getCanonicalUrl = () => {
+    const path = location.pathname;
+    if (path === '/calculator/brrrr') {
+      return 'https://reanalyzr.com/brrrr-calculator';
+    }
+    if (path === '/calculator' || path === '/calculator/buy-hold' || path === '/rental-property-calculator') {
+      return 'https://reanalyzr.com/';
+    }
+    return 'https://reanalyzr.com/';
+  };
 
   // Analysis function
   const runAnalysis = async (data: CalculatorFormData) => {
@@ -155,10 +170,16 @@ export const UniversalCalculator: React.FC = () => {
   }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 } }}>
-        {/* Tab Navigation */}
-        <CalculatorTabs activeStrategy={activeStrategy} onStrategyChange={handleStrategyChange} />
+    <>
+      {/* Add canonical tag for SEO */}
+      <Helmet>
+        <link rel="canonical" href={getCanonicalUrl()} />
+      </Helmet>
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 } }}>
+          {/* Tab Navigation */}
+          <CalculatorTabs activeStrategy={activeStrategy} onStrategyChange={handleStrategyChange} />
 
         {/* Error Alert */}
         {error && (
@@ -184,10 +205,15 @@ export const UniversalCalculator: React.FC = () => {
         )}
 
         {/* Results */}
-        <CalculatorResults analysis={analysis} loading={loading} />
+        <CalculatorResults
+          analysis={analysis}
+          loading={loading}
+          formData={formData}
+        />
 
-        {/* CTA is now inside CalculatorResults component with approved text */}
-      </Paper>
-    </Container>
+          {/* CTA is now inside CalculatorResults component with approved text */}
+        </Paper>
+      </Container>
+    </>
   );
 };

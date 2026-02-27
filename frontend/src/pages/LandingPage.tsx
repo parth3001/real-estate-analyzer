@@ -30,6 +30,7 @@ const LandingPage: React.FC = () => {
           name="keywords"
           content="BRRRR calculator, buy and hold calculator, rental property calculator, real estate investment calculator, deal analyzer"
         />
+        <link rel="canonical" href="https://reanalyzr.com/" />
       </Helmet>
 
       {/* Public Header */}

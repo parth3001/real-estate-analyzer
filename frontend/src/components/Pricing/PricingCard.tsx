@@ -21,9 +21,15 @@ interface PricingCardProps {
   priceUnit: string;
   badge?: string;
   features: string[];
-  ctaLabel: string;
-  ctaAction: () => void;
+  ctaLabel?: string;
+  ctaAction?: () => void;
   isPrimary?: boolean;
+  hideButton?: boolean;
+  scarcityMessage?: {
+    primary: string;
+    secondary?: string;
+  };
+  replacementText?: string;
 }
 
 const PricingCard: React.FC<PricingCardProps> = ({
@@ -35,7 +41,10 @@ const PricingCard: React.FC<PricingCardProps> = ({
   features,
   ctaLabel,
   ctaAction,
-  isPrimary = false
+  isPrimary = false,
+  hideButton = false,
+  scarcityMessage,
+  replacementText
 }) => {
   const isBeta = tier === 'beta';
 
@@ -171,22 +180,76 @@ const PricingCard: React.FC<PricingCardProps> = ({
           ))}
         </List>
 
-        {/* CTA Button */}
-        <Button
-          variant={isBeta ? 'contained' : 'outlined'}
-          fullWidth
-          onClick={ctaAction}
-          sx={{
-            py: { xs: 1.5, md: 2 },
-            fontSize: { xs: '1rem', md: '1.125rem' },
-            fontWeight: 600,
-            textTransform: 'none',
-            borderRadius: '12px',
-            ...ctaStyles
-          }}
-        >
-          {ctaLabel}
-        </Button>
+        {/* CTA Button or Replacement Text */}
+        {hideButton ? (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 2,
+              px: 3,
+              backgroundColor: appleColors.gray[50],
+              borderRadius: '12px',
+              border: `1px solid ${appleColors.gray[200]}`
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.938rem',
+                color: appleColors.gray[600],
+                fontWeight: 500
+              }}
+            >
+              📅 {replacementText || 'Available when beta ends'}
+            </Typography>
+          </Box>
+        ) : (
+          <Button
+            variant={isBeta ? 'contained' : 'outlined'}
+            fullWidth
+            onClick={ctaAction}
+            sx={{
+              py: { xs: 1.5, md: 2 },
+              fontSize: { xs: '1rem', md: '1.125rem' },
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '12px',
+              ...ctaStyles
+            }}
+          >
+            {ctaLabel}
+          </Button>
+        )}
+
+        {/* Scarcity Message (appears after button/replacement text) */}
+        {scarcityMessage && (
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography
+              sx={{
+                fontSize: '0.813rem',
+                color: appleColors.orange[600],
+                fontWeight: 600,
+                mb: 0.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.5
+              }}
+            >
+              ⚠️ {scarcityMessage.primary}
+            </Typography>
+            {scarcityMessage.secondary && (
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  color: appleColors.gray[500],
+                  lineHeight: 1.4
+                }}
+              >
+                {scarcityMessage.secondary}
+              </Typography>
+            )}
+          </Box>
+        )}
 
         {/* Fine Print (Beta only) */}
         {isBeta && (

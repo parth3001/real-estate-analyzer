@@ -20,14 +20,18 @@ import {
 import Grid from '@mui/system/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { Analysis } from '../../types/analysis';
+import type { CalculatorFormData } from './types';
 import { getScoreColor } from '../../utils/scoreColors';
 import { getScoreContext } from '../../utils/verdictUtils';
 import { CalculationAssumptions } from './CalculationAssumptions';
+import { LockedAssumptionsCard } from './LockedAssumptionsCard';
+import { HiddenSectionTeaser } from './HiddenSectionTeaser';
 import { analytics } from '../../utils/analytics';
 
 interface CalculatorResultsProps {
   analysis: Analysis | null;
   loading: boolean;
+  formData: CalculatorFormData;
 }
 
 const formatCurrency = (value: number | null | undefined): string => {
@@ -45,7 +49,7 @@ const formatPercent = (value: number | null | undefined): string => {
   return `${value.toFixed(2)}%`;
 };
 
-export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, loading }) => {
+export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, loading, formData }) => {
   if (loading) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -163,140 +167,6 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
         </Paper>
       )}
 
-      {/* Beta Lock-In CTA - Apple-Inspired Design */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 3, sm: 4 },
-          mt: 3,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 3,
-          textAlign: 'center',
-          maxWidth: { xs: '100%', md: '480px' },
-          mx: 'auto'
-        }}
-      >
-        {/* Badge */}
-        <Box
-          component="span"
-          sx={{
-            display: 'inline-block',
-            px: 2,
-            py: 0.5,
-            bgcolor: '#D1F2EB',
-            color: '#0A6847',
-            borderRadius: 2,
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            mb: 2
-          }}
-        >
-          🎉 Beta Access: Free Forever
-        </Box>
-
-        {/* Benefits - Single Line with Bullets */}
-        <Typography
-          variant="body1"
-          sx={{
-            mb: 3,
-            color: 'text.secondary',
-            fontSize: '0.9375rem',
-            lineHeight: 1.6
-          }}
-        >
-          Save deals • Custom assumptions • Detailed score breakdowns
-        </Typography>
-
-        {/* CTA Button */}
-        <Button
-          variant="contained"
-          size="large"
-          href="/register"
-          onClick={() => {
-            analytics.trackCTAClick('beta_signup', 'after_results');
-          }}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minWidth: { sm: '240px' },
-            height: '52px',
-            borderRadius: '12px',
-            fontSize: '1.0625rem',
-            fontWeight: 600,
-            textTransform: 'none',
-            bgcolor: '#0071E3',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            mb: 2,
-            '&:hover': {
-              bgcolor: '#0077ED',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-              transform: 'scale(1.02)',
-            },
-            '&:active': {
-              transform: 'scale(0.98)',
-            },
-            transition: 'all 0.2s ease'
-          }}
-        >
-          Claim Free Beta Access
-        </Button>
-
-        {/* Pricing Comparison */}
-        <Box sx={{ mt: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'text.primary',
-              fontWeight: 500,
-              mb: 0.5
-            }}
-          >
-            Join now: $0/month
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'text.secondary',
-              fontSize: '0.875rem'
-            }}
-          >
-            After Q2 2026: $14.99/month
-          </Typography>
-        </Box>
-      </Paper>
-
-      {/* Sample Analysis Link - After Beta CTA */}
-      <Box sx={{ textAlign: 'center', mt: 3, mb: 3 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            color: 'text.secondary',
-            mb: 0.5,
-            fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-          }}
-        >
-          Want to see what beta investors unlock?
-        </Typography>
-        <MuiLink
-          href="/sample-analysis"
-          onClick={() => {
-            analytics.trackCTAClick('sample_analysis', 'after_results');
-          }}
-          sx={{
-            color: '#0071E3',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: { xs: '0.95rem', sm: '1rem' },
-            '&:hover': {
-              textDecoration: 'underline',
-            }
-          }}
-        >
-          View complete analysis example →
-        </MuiLink>
-      </Box>
-
       {/* Key Metrics Summary - Always Visible (Above Fold) */}
       <Paper elevation={2} sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
@@ -401,6 +271,84 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
           )}
         </Grid>
       </Paper>
+
+      {/* Buy & Hold: Locked Assumptions + Early CTA */}
+      {strategy === 'buy-hold' && (
+        <>
+          {/* Locked Long-Term Assumptions - Buy & Hold Only */}
+          <LockedAssumptionsCard
+            strategy="buy-hold"
+            assumptions={{
+              rentGrowth: formData.longTermAssumptions?.annualRentIncrease || 2,
+              propertyAppreciation: formData.longTermAssumptions?.annualPropertyValueIncrease || 3,
+              expenseGrowth: formData.longTermAssumptions?.annualExpenseIncrease || 2,
+              sellingCosts: formData.longTermAssumptions?.sellingCostsPercentage || 6,
+            }}
+            placementContext="early"
+          />
+
+          {/* Early CTA for Buy & Hold */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              mt: 3,
+              mb: 3,
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              textAlign: 'center'
+            }}
+          >
+            <Typography
+              variant="body1"
+              sx={{
+                mb: 2,
+                color: 'text.primary',
+                fontSize: '1rem',
+                fontWeight: 500
+              }}
+            >
+              Test your market assumptions — free forever for beta users
+            </Typography>
+
+            <Button
+              variant="contained"
+              size="large"
+              href="/register"
+              onClick={() => {
+                analytics.trackCTAClick('beta_signup', 'buy_hold_early_cta');
+              }}
+              sx={{
+                minWidth: '280px',
+                height: '48px',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                bgcolor: '#0071E3',
+                '&:hover': {
+                  bgcolor: '#0077ED',
+                }
+              }}
+            >
+              Test Your Market Assumptions - Free Beta Access
+            </Button>
+
+            <Typography
+              variant="body2"
+              sx={{
+                mt: 2,
+                color: 'text.secondary',
+                fontSize: '0.875rem'
+              }}
+            >
+              No credit card • $0/month forever
+            </Typography>
+          </Paper>
+        </>
+      )}
 
       {/* Monthly Analysis Accordion */}
       <Accordion defaultExpanded>
@@ -657,131 +605,81 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
                 </Box>
               </Grid>
 
-              {/* 70% Rule Check */}
+              {/* 70% Rule Check - Hidden Behind Signup */}
               <Grid size={{ xs: 12 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom fontWeight={600}>
-                  70% Rule Check
-                </Typography>
-                <Box sx={{ pl: 2, mt: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Max Allowable Purchase (70% Rule):</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {formatCurrency(analysis.strategySpecific.rule70Check?.maxAllowablePurchase)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Actual Purchase Price:</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {formatCurrency(analysis.strategySpecific.rule70Check?.actualPurchase)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Status:</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={analysis.strategySpecific.rule70Check?.meets70Rule ? 'success.main' : 'warning.main'}
-                    >
-                      {analysis.strategySpecific.rule70Check?.meets70Rule
-                        ? '✓ Meets 70% Rule'
-                        : `⚠️ Over by ${formatCurrency(Math.abs(analysis.strategySpecific.rule70Check?.margin ?? 0))}`
-                      }
-                    </Typography>
-                  </Box>
-                </Box>
+                <HiddenSectionTeaser
+                  title="70% Rule Validation: Hidden"
+                  description="Professional BRRRR investors use the 70% rule to ensure they don't overpay on purchase price. Did your purchase pass this institutional test?"
+                  severity="warning"
+                />
               </Grid>
             </Grid>
           </AccordionDetails>
         </Accordion>
 
-        {/* Break-Even Occupancy Analysis (Issue #80) - BRRRR Strategy ONLY */}
-        {strategySpecific?.postRefinanceMetrics?.postRefiBreakEvenOccupancy && (
-          <Accordion sx={{ mt: 2 }} defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6">Break-Even Occupancy Analysis</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Grid container spacing={2}>
-              {/* Initial Hold BEO */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.lighter', borderRadius: 1, border: '1px solid', borderColor: 'success.main' }}>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                    📊 Initial Hold (Months 1-12)
-                  </Typography>
-                  <Typography variant="h4" fontWeight={600} sx={{ color: 'success.dark', mb: 1 }}>
-                    {formatPercent(keyMetrics?.breakEvenOccupancy ?? 0)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Low Risk ✅ - During seasoning period
-                  </Typography>
-                </Box>
-              </Grid>
+        {/* Break-Even Occupancy Analysis - Hidden Behind Signup */}
+        <HiddenSectionTeaser
+          title="Risk Analysis: Break-Even Occupancy - Hidden"
+          description="Your post-refinance break-even occupancy determines if this cash flow is sustainable. With high break-even occupancy, vacancy could wipe out your cash flow."
+          severity="error"
+        />
 
-              {/* Post-Refinance BEO */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    p: 2,
-                    borderRadius: 1,
-                    border: '2px solid',
-                    borderColor: strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 85
-                      ? 'error.main'
-                      : strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 75
-                        ? 'warning.main'
-                        : 'success.main',
-                    bgcolor: strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 85
-                      ? 'error.lighter'
-                      : strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 75
-                        ? 'warning.lighter'
-                        : 'success.lighter'
-                  }}
-                >
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                    🏠 Post-Refinance (Years 1-30)
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    fontWeight={600}
-                    sx={{
-                      color: strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 85
-                        ? 'error.dark'
-                        : strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 75
-                          ? 'warning.dark'
-                          : 'success.dark',
-                      mb: 1
-                    }}
-                  >
-                    {formatPercent(strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 85
-                      ? 'High Risk ⚠️ - Tight operating margin'
-                      : strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 75
-                        ? 'Moderate Risk ⚠️ - Monitor vacancy'
-                        : 'Low Risk ✅ - Healthy operating margin'}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
+        {/* Locked Assumptions for BRRRR */}
+        <LockedAssumptionsCard
+          strategy="brrrr"
+          assumptions={{
+            refinanceLTV: formData.refinanceLTV || 75,
+            refinanceRate: formData.refinanceRate || formData.interestRate,
+          }}
+          placementContext="late"
+        />
 
-            {/* Educational Insight */}
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                <strong>BRRRR Break-Even Trade-off:</strong> After refinancing, your break-even occupancy increases from{' '}
-                <strong>{(keyMetrics?.breakEvenOccupancy ?? 0).toFixed(1)}%</strong> to{' '}
-                <strong>{strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy.toFixed(1)}%</strong>{' '}
-                due to the higher mortgage payment. This is the long-term reality you'll operate under for 30 years.
-                {strategySpecific.postRefinanceMetrics.postRefiBreakEvenOccupancy > 80 && (
-                  <span style={{ color: 'warning.dark', fontWeight: 600 }}>
-                    {' '}⚠️ Monitor tenant retention carefully to maintain positive cash flow.
-                  </span>
-                )}
-              </Typography>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-        )}
+        {/* Late CTA for BRRRR - After Hidden Sections */}
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            mt: 3,
+            mb: 3,
+            bgcolor: 'primary.main',
+            color: 'white',
+            textAlign: 'center',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+            Unlock Full BRRRR Analysis
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6 }}>
+            • See your 70% Rule validation (did you overpay?)<br/>
+            • View break-even occupancy risk analysis<br/>
+            • Test different refinance scenarios<br/>
+            • Adjust assumptions for YOUR market
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            href="/register"
+            onClick={() => {
+              analytics.trackCTAClick('beta_signup', 'brrrr_late_cta');
+            }}
+            sx={{
+              bgcolor: 'white',
+              color: 'primary.main',
+              '&:hover': { bgcolor: 'grey.100' },
+              minWidth: '280px',
+              height: '56px',
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              textTransform: 'none',
+            }}
+          >
+            Test Your Assumptions - Free Beta Access
+          </Button>
+          <Typography variant="caption" sx={{ display: 'block', mt: 2, opacity: 0.9 }}>
+            No credit card • $0/month forever
+          </Typography>
+        </Paper>
         </>
       ) : longTermAnalysis ? (
         <Accordion sx={{ mt: 2 }}>

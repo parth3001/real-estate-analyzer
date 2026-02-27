@@ -1,11 +1,148 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-02-08
+**Last Updated**: 2026-02-26
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-02-08)
+## 🟡 **ACTIVE ISSUES** (2026-02-26)
+
+### Issue #80: Document Operating Expenses Calculation Methodology
+**Status**: 🔴 OPEN
+**Priority**: P3 - LOW (Documentation / Tech Debt)
+**Reported**: 2026-02-26 (Freemium Conversion Testing)
+**Component**: Frontend - Calculator Display / Documentation
+**Category**: Transparency / User Trust
+**Affects**: BRRRR Calculator, Buy & Hold Calculator
+
+**Description**:
+Platform calculates operating expenses correctly, but the methodology is not documented or visible to users in the free tier. This creates validation challenges and reduces transparency.
+
+**Examples from Testing**:
+
+**BRRRR Calculator**:
+- Platform shows: $913/month operating expenses (6.5% rate test)
+- Platform shows: $1,302/month operating expenses (6.5% rate test, post-refi)
+- Components not visible in free tier
+- Unclear if property tax reassessed to ARV ($275K) vs purchase price ($125K)
+
+**Buy & Hold Calculator**:
+- Platform shows: $717/month operating expenses
+- Minor discrepancy when manually validating ($65/month difference)
+- Likely correct, but formula not transparent
+
+**Business Impact**:
+- **User Trust**: Transparency builds confidence in platform accuracy
+- **Support Reduction**: Reduces "why is this number different" questions
+- **Professional Credibility**: CPAs and investors want to understand formulas
+
+**Recommended Solutions**:
+
+1. **Add tooltips to operating expenses totals** showing breakdown:
+   ```
+   Operating Expenses: $717/month ℹ️
+
+   Tooltip:
+   • Property Tax: $417/month
+   • Insurance: $100/month
+   • Maintenance: $150/month
+   • Property Management: $50/month
+   • HOA: $50/month
+   • Utilities: $15/month
+   • CapEx: $0/month
+   ```
+
+2. **Document BRRRR property tax logic**:
+   - Clarify if property tax is reassessed to ARV post-refinance
+   - Show formula in help text or docs
+   - Add to DATA_DICTIONARY.md
+
+3. **Add calculation methodology page**:
+   - Link from results page: "How are these numbers calculated?"
+   - Show all formulas used
+   - Explain institutional-grade methodology
+
+**Proposed Solution (Minimal)**:
+- Add `ℹ️` icon next to "Operating Expenses: $717/month"
+- Tooltip shows 6-line breakdown of components
+- 30-minute implementation
+
+**Estimated Effort**: 1-2 hours (tooltip + documentation)
+
+---
+
+### Issue #81: Document Capital Recovery Formula for BRRRR Strategy
+**Status**: 🔴 OPEN
+**Priority**: P3 - LOW (Documentation / Tech Debt)
+**Reported**: 2026-02-26 (Freemium Conversion Testing)
+**Component**: Frontend - BRRRR Calculator Display / Documentation
+**Category**: Formula Transparency
+**Affects**: BRRRR Capital Recovery Metric
+
+**Description**:
+BRRRR capital recovery calculation shows minor discrepancy when manually validated, likely due to undocumented closing costs or fees being included.
+
+**Test Case**:
+```
+Platform Shows:
+- Capital Recovery: $117,256
+
+Manual Calculation (Without Closing Costs):
+- Refinance Cash-Out: $206,250 (75% LTV × $275K ARV)
+- Initial Loan Payoff: $90,000 ($100K purchase × 90% LTV)
+- Expected Recovery: $116,250
+
+Difference: $681 (0.6%)
+```
+
+**Likely Explanation** (Realistic & Appropriate):
+Platform probably includes refinance closing costs (~0.3-0.5% of loan amount):
+```
+$206,250 × 0.33% ≈ $681 ✅
+```
+
+This is **correct methodology** - but not documented for users.
+
+**Business Impact**:
+- **User Education**: Understanding formula builds trust in platform
+- **Professional Standards**: Matches real-world BRRRR strategy (closing costs matter)
+- **Feature Opportunity**: Making closing costs configurable adds value for registered users
+
+**Recommended Solutions**:
+
+1. **Add tooltip to Capital Recovery metric**:
+   ```
+   Capital Recovery: $117,256 ℹ️
+
+   Tooltip:
+   Refinance proceeds - Initial loan payoff - Closing costs (0.3%)
+
+   $206,250 - $90,000 - $681 = $116,569
+   ```
+
+2. **Make closing cost % configurable** (registered users only):
+   - Default: 0.3% of refinance loan
+   - Allow user override for their market (0.25% - 1.0%)
+   - Show in "Edit Assumptions" section
+
+3. **Document in DATA_DICTIONARY.md**:
+   ```markdown
+   ### Capital Recovery (BRRRR)
+   **Formula**:
+   capitalRecovery = refinanceLoan - initialLoanBalance - refinanceClosingCosts
+
+   **Closing Costs**: Default 0.3% of refinance loan amount (configurable for registered users)
+   **Example**: $206,250 loan × 0.3% = $619 closing costs
+   ```
+
+**Proposed Solution (Minimal)**:
+- Add `ℹ️` icon next to "Amount Recovered: $117,256"
+- Tooltip shows 3-line formula breakdown
+- 20-minute implementation
+
+**Estimated Effort**: 1-2 hours (tooltip + documentation + configurable setting for registered users)
+
+---
 
 ### Issue #72: Post-Refinance Cash Flow Calculation Discrepancy
 **Status**: 🔴 OPEN
@@ -12776,9 +12913,9 @@ for (let month = 1; month <= 12; month++) {
 | 🔴 Critical (Open) | 6 |
 | 🟡 High Priority (Open) | 1 |
 | 🟢 Medium Priority (Open) | 0 |
-| 🔵 Low Priority (Open) | 0 |
+| 🔵 Low Priority (Open) | 2 |
 | ✅ Resolved (Last 30 Days) | 7 |
-| **Total Open Issues** | **7** |
+| **Total Open Issues** | **9** |
 
 ---
 

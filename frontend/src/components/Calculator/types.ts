@@ -82,7 +82,7 @@ export const defaultBRRRRData: CalculatorFormData = {
   rehabCosts: 0,
   arv: 0,
   refinanceLTV: 75,
-  refinanceRate: 7.5,
+  // refinanceRate removed - will use interestRate as fallback in CalculatorResults.tsx
   monthlyRent: 0,
   propertyTax: 0,
   insurance: 0,

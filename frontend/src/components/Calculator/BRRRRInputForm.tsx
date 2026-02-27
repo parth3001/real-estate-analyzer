@@ -159,35 +159,6 @@ export const BRRRRInputForm: React.FC<BRRRRInputFormProps> = ({ formData, onChan
                 required
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Refinance LTV"
-                type="number"
-                value={formData.refinanceLTV || ''}
-                onChange={handleChange('refinanceLTV')}
-                slotProps={{
-                  input: {
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  },
-                }}
-                helperText="Typically 70-75% of ARV"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Refinance Interest Rate"
-                type="number"
-                value={formData.refinanceRate || ''}
-                onChange={handleChange('refinanceRate')}
-                slotProps={{
-                  input: {
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  },
-                }}
-              />
-            </Grid>
           </Grid>
         </AccordionDetails>
       </Accordion>

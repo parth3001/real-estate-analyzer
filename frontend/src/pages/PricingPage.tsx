@@ -131,6 +131,10 @@ const PricingPage: React.FC = () => {
                 ctaLabel="Claim Free Beta Access"
                 ctaAction={() => navigate('/register')}
                 isPrimary={true}
+                scarcityMessage={{
+                  primary: "Limited beta spots — may close anytime",
+                  secondary: "Beta members keep $0/mo pricing forever, even after we launch paid plans."
+                }}
               />
             </Grid>
 
@@ -143,8 +147,8 @@ const PricingPage: React.FC = () => {
                 priceUnit="per month"
                 badge="AFTER BETA ENDS"
                 features={features}
-                ctaLabel="Join Beta to Lock In Free"
-                ctaAction={() => navigate('/register')}
+                hideButton={true}
+                replacementText="Available when beta ends"
                 isPrimary={false}
               />
             </Grid>
