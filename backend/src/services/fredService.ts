@@ -23,7 +23,8 @@ export class FredService {
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
 
   constructor() {
-    this.apiKey = process.env.FRED_API_KEY;
+    // Trim the API key to remove any accidental whitespace
+    this.apiKey = process.env.FRED_API_KEY?.trim();
     this.baseUrl = process.env.FRED_BASE_URL || 'https://api.stlouisfed.org/fred';
 
     // FRED API key is optional - many endpoints work without it
@@ -463,5 +464,22 @@ export class FredService {
   }
 }
 
-// Export singleton instance
-export const fredService = new FredService();
+// Lazy singleton instance - only instantiate when first accessed
+// This ensures dotenv.config() has run first in index.ts
+let _fredServiceInstance: FredService | null = null;
+
+function getFredServiceInstance(): FredService {
+  if (!_fredServiceInstance) {
+    _fredServiceInstance = new FredService();
+  }
+  return _fredServiceInstance;
+}
+
+// Export singleton instance with lazy initialization
+export const fredService = new Proxy({} as FredService, {
+  get(_target, prop) {
+    const instance = getFredServiceInstance();
+    const value = (instance as any)[prop];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  }
+});

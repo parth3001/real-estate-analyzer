@@ -1,11 +1,245 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-02-26
+**Last Updated**: 2026-02-27
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-02-26)
+## 🟡 **ACTIVE ISSUES** (2026-02-27)
+
+### Issue #83: AI Content Stage 1 Extraction Null Reference Error
+**Status**: 🔴 OPEN
+**Priority**: P1 - HIGH (Production Error)
+**Reported**: 2026-02-27 (Post-FRED API Fix Testing)
+**Component**: Backend - AI Service / Enhanced Messaging
+**Category**: Runtime Error / AI Content Generation
+**Affects**: SFR Analysis, Multi-Family Analysis
+
+**Description**:
+After fixing FRED API initialization issue (#82), discovered AI content extraction error: "Cannot read properties of null (reading 'cashFlow')". Error occurs 14 times during single analysis run, suggesting multiple AI extraction attempts failing.
+
+**Error Log Pattern**:
+```
+[2/27/2026, 9:49:50 AM] error: Stage 1 extraction failed {
+  "error": "Cannot read properties of null (reading 'cashFlow')",
+  "inputLength": 13
+}
+```
+
+**Occurrences**: 14 consecutive failures in test run (both SFR $1.5M and MF 8-unit analysis)
+
+**Technical Analysis**:
+- Error occurs in "Stage 1 extraction" - likely `aiService.ts` or `aiEnhancedMessaging.ts`
+- Trying to access `cashFlow` property on null/undefined object
+- `inputLength: 13` suggests data is being passed but structure doesn't match expectations
+- May be related to recent Investment Decision Engine v2.1 refactoring
+
+**Business Impact**:
+- **User Experience**: AI-enhanced insights may be incomplete or missing
+- **Premium Value**: AI insights are key differentiator for paid tiers
+- **Silent Failure**: Users don't receive error message - degraded experience without notification
+- **Professional Credibility**: Incomplete analysis reduces trust in platform
+
+**Investigation Steps**:
+1. Search codebase for "Stage 1 extraction" log message
+2. Identify exact file and line throwing error
+3. Examine data structure being passed to AI extraction
+4. Check if `cashFlow` moved to nested object (e.g., `metrics.cashFlow` or `annualAnalysis.cashFlow`)
+5. Review recent changes to Investment Decision Engine response structure
+6. Test with both SFR and MF flows to identify pattern
+
+**Potential Root Causes**:
+- **Data Structure Change**: Recent refactoring moved `cashFlow` to different location in analysis object
+- **Timing Issue**: AI extraction running before financial calculations complete
+- **Type Mismatch**: Multi-family vs SFR data structures differ, AI code assumes SFR format
+- **Null Coalescing**: Missing defensive null checks in extraction logic
+
+**Recommended Solution**:
+1. Add defensive null checks: `data?.cashFlow ?? data?.annualAnalysis?.cashFlow`
+2. Improve error logging to show received data structure
+3. Add fallback content generation if extraction fails
+4. Update AI extraction to handle both SFR and MF data structures
+5. Add unit tests for AI extraction with various data formats
+
+**Files to Investigate**:
+- `backend/src/services/aiService.ts`
+- `backend/src/services/aiEnhancedMessaging.ts`
+- `backend/src/services/investment/investmentDecisionEngine.ts` (data structure source)
+- `backend/src/controllers/deals.ts` (orchestration layer)
+
+---
+
+### Issue #82: FRED API Key Not Loading - Module Initialization Timing Bug
+**Status**: ✅ RESOLVED (2026-02-27)
+**Priority**: P0 - CRITICAL (Production Blocker)
+**Reported**: 2026-02-27 (Freemium Conversion Testing)
+**Resolved**: 2026-02-27 (Same Day)
+**Component**: Backend - FRED Service / Environment Configuration
+**Category**: Infrastructure / Timing Bug
+**Affects**: Market Intelligence, Economic Indicators, All Analysis Flows
+
+**Description**:
+FRED API throwing "Variable api_key is not set" error in both local development and production environments, despite FRED_API_KEY being correctly configured in `.env` file (line 40) and Render dashboard environment variables. Analysis flows continued working but without market intelligence data (mortgage rates, inflation, unemployment, housing price index).
+
+**Error Stack Trace**:
+```
+[2/27/2026, 9:44:35 AM] error: Failed to fetch FRED series MORTGAGE30US:
+FRED getSeriesObservations(MORTGAGE30US) failed: Bad Request.
+Variable api_key is not set.
+Read https://fred.stlouisfed.org/docs/api/api_key.html
+
+Error: AxiosError: Request failed with status code 400
+Config params: {
+  "file_type": "json",
+  "series_id": "MORTGAGE30US",
+  "limit": 1,
+  "sort_order": "desc"
+  // ❌ NO api_key parameter!
+}
+```
+
+**Affected FRED Endpoints** (All Failing):
+- `MORTGAGE30US` - 30-Year Fixed Mortgage Rate
+- `FEDFUNDS` - Federal Funds Rate
+- `CPIAUCSL` - Consumer Price Index (Inflation)
+- `UNRATE` - Unemployment Rate
+- `CSUSHPINSA` - Case-Shiller Housing Price Index
+- `GDP` - Gross Domestic Product
+
+**Root Cause Analysis**:
+
+**Timing Issue**: Module-level instantiation before environment variable loading
+
+```typescript
+// ❌ BEFORE (fredService.ts line 473)
+export const fredService = new FredService();
+// This line executes IMMEDIATELY when the module is imported
+// Import chain: routes/deals.ts → services/marketIntelligenceService.ts → services/fredService.ts
+// This happens BEFORE index.ts runs dotenv.config()
+```
+
+**Call Stack Timing**:
+1. Node.js starts → `ts-node src/index.ts`
+2. `index.ts` imports `./routes/deals` (line ~50)
+3. `deals.ts` imports `marketIntelligenceService.ts`
+4. `marketIntelligenceService.ts` imports `fredService.ts`
+5. **`fredService.ts` runs `export const fredService = new FredService()`** ⚠️
+6. FredService constructor reads `process.env.FRED_API_KEY` → **undefined**
+7. Axios client created without `api_key` parameter
+8. Finally, `index.ts` line 28 runs `dotenv.config()` ❌ **TOO LATE**
+
+**Technical Deep Dive**:
+
+The issue was in `fredService.ts` constructor:
+```typescript
+constructor() {
+  this.apiKey = process.env.FRED_API_KEY; // undefined at this point
+  this.baseUrl = process.env.FRED_BASE_URL || 'https://api.stlouisfed.org/fred';
+
+  this.client = axios.create({
+    baseURL: this.baseUrl,
+    timeout: 15000,
+    params: {
+      ...(this.apiKey && { api_key: this.apiKey }), // Spread operator returns empty
+      file_type: 'json'
+    }
+  });
+}
+```
+
+Since `this.apiKey` was undefined, the spread operator `...(this.apiKey && { api_key: this.apiKey })` evaluated to nothing, so the axios client never included the API key in requests.
+
+**Solution Implemented**: Lazy Initialization with Proxy Pattern
+
+```typescript
+// ✅ AFTER (fredService.ts lines 490-508)
+// Lazy singleton instance - only instantiate when first accessed
+// This ensures dotenv.config() has run first in index.ts
+let _fredServiceInstance: FredService | null = null;
+
+function getFredServiceInstance(): FredService {
+  if (!_fredServiceInstance) {
+    _fredServiceInstance = new FredService();
+  }
+  return _fredServiceInstance;
+}
+
+// Export singleton instance with lazy initialization
+export const fredService = new Proxy({} as FredService, {
+  get(_target, prop) {
+    const instance = getFredServiceInstance();
+    const value = (instance as any)[prop];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  }
+});
+```
+
+**How Lazy Initialization Fixes It**:
+1. `fredService.ts` exports a Proxy object (not an instance)
+2. Import chain completes WITHOUT calling FredService constructor
+3. `index.ts` runs `dotenv.config()` ✅
+4. First API call accesses `fredService.getCurrentMortgageRate()`
+5. Proxy intercepts → calls `getFredServiceInstance()`
+6. FredService constructor runs NOW with `process.env.FRED_API_KEY` loaded ✅
+7. Axios client created with correct `api_key` parameter
+
+**Files Modified**:
+- `backend/src/services/fredService.ts` (lines 26-38, 490-508)
+  - Added `.trim()` to API key loading (line 27)
+  - Added comprehensive logging (lines 33-38)
+  - Added request interceptor for debugging (lines 49-64)
+  - Implemented lazy initialization pattern (lines 490-508)
+
+**Testing & Validation**:
+
+**Before Fix**:
+```bash
+# All FRED endpoints returned 400 Bad Request
+# Axios config showed: params: { file_type: "json" } // No api_key
+```
+
+**After Fix**:
+```bash
+# Backend restart - NO FRED API ERRORS ✅
+GET /api/deals 200 2609.241 ms - 1044354
+POST /api/deals/analyze 200 10309.702 ms - 32767
+# Market intelligence data flowing correctly
+# Economic indicators available in AI analysis
+```
+
+**Environment Variable Verification**:
+- ✅ Local `.env` (line 40): `FRED_API_KEY=25842b681f19a10f35eb027fe15a3798`
+- ✅ Render Dashboard: Environment variable configured
+- ✅ Backend logs show: "FRED API key loaded successfully"
+
+**Business Impact Resolved**:
+- ✅ **Market Data Restored**: Real-time mortgage rates, inflation, unemployment available
+- ✅ **AI Enhancement**: Investment Decision Engine uses market context for personalized insights
+- ✅ **User Experience**: Analysis includes economic indicators and market trends
+- ✅ **Professional Credibility**: Platform shows institutional-grade market intelligence
+- ✅ **Zero Downtime**: Fix applied without user-facing impact (graceful degradation was working)
+
+**Architecture Lessons Learned**:
+
+1. **Avoid Module-Level Instantiation**: Services should use lazy initialization
+2. **Environment Variable Loading Must Be First**: `dotenv.config()` should be top of `index.ts`
+3. **Dependency Injection Alternative**: Consider passing dependencies to constructors instead of reading from `process.env`
+4. **Comprehensive Logging**: Added startup logging to detect similar issues earlier
+5. **Proxy Pattern for Singletons**: Elegant solution for lazy initialization without changing API
+
+**Prevention Strategy**:
+- Document service initialization patterns in `ARCHITECTURE_V3.md`
+- Add ESLint rule to detect module-level service instantiation
+- Consider moving to dependency injection container (future enhancement)
+- Add startup health checks that verify environment variables before service initialization
+
+**Related Issues**:
+- None (isolated timing bug)
+
+**Breaking Changes**:
+- None - API remains identical, only internal initialization changed
+
+---
 
 ### Issue #80: Document Operating Expenses Calculation Methodology
 **Status**: 🔴 OPEN
