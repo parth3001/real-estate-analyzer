@@ -33,24 +33,24 @@ const PricingPage: React.FC = () => {
 
   const faqItems: FAQItem[] = [
     {
-      question: 'What happens when beta ends?',
-      answer: 'If you join during beta, you pay $0/month forever. No strings attached.\nNew users after launch pay $14.99/month.'
+      question: 'Is this really free forever?',
+      answer: 'Yes. Join during beta and you keep $0/month pricing forever—even when we launch paid plans in Q3 2026. No credit card required. No strings attached.'
     },
     {
-      question: 'What\'s included in "professional metrics"?',
-      answer: 'You get the same 28 institutional-grade metrics that institutional investors use: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return, Gross Rent Multiplier, Debt Yield, Break-Even Occupancy, Operating Expense Ratio, and more. Plus real-time market intelligence from FRED economic data and Census demographics.'
+      question: 'What\'s included in "institutional-grade analysis"?',
+      answer: 'You get the same 28 professional metrics that Wall Street uses: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return, Gross Rent Multiplier, Debt Yield, Break-Even Occupancy, Operating Expense Ratio, and more. Plus real-time economic data from FRED and Census demographics for every US market.'
     },
     {
-      question: 'Do I need a credit card?',
-      answer: 'No. Create your free account and start analyzing deals immediately.'
+      question: 'What does "unlimited" really mean?',
+      answer: 'Analyze as many properties as you want. Save all your deals. Track your entire pipeline. No artificial limits. No hidden fees. No "gotchas."'
     },
     {
-      question: 'What\'s included in "unlimited analysis"?',
-      answer: 'Analyze as many properties as you want. Save all your deals.\nNo artificial limits. No hidden fees.'
+      question: 'Why are you offering this for free?',
+      answer: 'We\'re in beta and building the future of real estate analysis. Your feedback helps us create a better product. In exchange, early adopters get free access forever as a thank you for helping us improve.'
     },
     {
       question: 'Can I use this without creating an account?',
-      answer: 'Yes! Use our anonymous calculator for unlimited free analysis.\nCreate an account to save your work and access saved deals anytime.'
+      answer: 'Yes! Use our public calculator for unlimited free analysis without signing up. Create an account to save your work, track deals over time, and access portfolio insights.'
     }
   ];
 
@@ -61,10 +61,10 @@ const PricingPage: React.FC = () => {
 
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>Pricing - REanalyzr | Free Beta Access</title>
+        <title>Free Beta Access - REanalyzr | Lock In $0/Month Forever</title>
         <meta
           name="description"
-          content="Join REanalyzr beta and get free access forever. Professional real estate analysis for $0/month. Lock in before $14.99/month public launch."
+          content="Join REanalyzr beta and get institutional-grade real estate analysis free forever. Early adopters keep $0/month pricing even after paid plans launch in Q3 2026. No credit card required."
         />
         <link rel="canonical" href="https://reanalyzr.com/pricing" />
       </Helmet>
@@ -83,14 +83,14 @@ const PricingPage: React.FC = () => {
             variant="h1"
             sx={{
               textAlign: 'center',
-              fontSize: { xs: '2.5rem', md: '3rem' },
+              fontSize: { xs: '2.5rem', md: '3.5rem' },
               fontWeight: 700,
               color: appleColors.gray[900],
               mb: 2,
               letterSpacing: '-0.02em'
             }}
           >
-            Professional Analysis. Accessible Pricing.
+            Join Our Beta — Get Lifetime Free Access
           </Typography>
 
           {/* Page Subtitle */}
@@ -98,95 +98,41 @@ const PricingPage: React.FC = () => {
             variant="h2"
             sx={{
               textAlign: 'center',
-              fontSize: { xs: '1.125rem', md: '1.25rem' },
+              fontSize: { xs: '1.125rem', md: '1.375rem' },
               fontWeight: 400,
               color: appleColors.gray[600],
               mb: { xs: 6, md: 8 },
-              maxWidth: '700px',
+              maxWidth: '800px',
               mx: 'auto',
-              lineHeight: 1.5
+              lineHeight: 1.6
             }}
           >
-            The tools that Wall Street uses cost $50,000+/year. REanalyzr gives you the same analysis—free forever when you join during Beta.
+            We're building the future of real estate investment analysis. Help us shape the product and lock in <Box component="span" sx={{ fontWeight: 600, color: appleColors.green[600] }}>$0/month pricing forever</Box>.
           </Typography>
 
-          {/* Pricing Cards */}
-          <Grid
-            container
-            spacing={{ xs: 3, md: 4 }}
-            sx={{
-              mb: { xs: 8, md: 12 },
-              maxWidth: '1000px',
-              mx: 'auto'
-            }}
-          >
-            {/* Beta Card */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <PricingCard
-                tier="beta"
-                title="Beta Access"
-                price="FREE"
-                priceUnit="Forever"
-                badge="🎉 LIMITED TIME"
-                features={features}
-                ctaLabel="Claim Free Beta Access"
-                ctaAction={() => navigate('/register')}
-                isPrimary={true}
-                scarcityMessage={{
-                  primary: "Limited beta spots — may close anytime",
-                  secondary: "Beta members keep $0/mo pricing forever, even after we launch paid plans."
-                }}
-              />
-            </Grid>
-
-            {/* Post-Launch Card */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <PricingCard
-                tier="post-launch"
-                title="Professional"
-                price="$14.99"
-                priceUnit="per month"
-                badge="AFTER BETA ENDS"
-                features={features}
-                hideButton={true}
-                replacementText="Available when beta ends"
-                isPrimary={false}
-              />
-            </Grid>
-          </Grid>
-
-          {/* Clarification Text - Apple Deference Principle */}
+          {/* Single Pricing Card - Centered */}
           <Box
             sx={{
-              textAlign: 'center',
               mb: { xs: 8, md: 12 },
-              px: 3,
-              maxWidth: '700px',
+              maxWidth: '600px',
               mx: 'auto'
             }}
           >
-            <Typography
-              variant="body1"
-              sx={{
-                fontSize: { xs: '0.938rem', md: '1.063rem' },
-                color: appleColors.gray[600],
-                lineHeight: 1.6,
-                fontWeight: 400
+            <PricingCard
+              tier="beta"
+              title="Institutional-Grade Analysis"
+              price="$0"
+              priceUnit="per month, forever"
+              badge="🎉 FREE BETA ACCESS"
+              features={features}
+              ctaLabel="Sign Up Free — Lock In $0 Forever"
+              ctaAction={() => navigate('/register')}
+              isPrimary={true}
+              scarcityMessage={{
+                primary: "🔒 Early adopters keep free access forever, even after we launch paid plans in Q3 2026",
+                secondary: "No credit card required • Full access immediately"
               }}
-            >
-              Both plans include identical features. The only difference is price:
-              <Box
-                component="span"
-                sx={{
-                  color: appleColors.gray[900],
-                  fontWeight: 600,
-                  display: { xs: 'block', sm: 'inline' },
-                  mt: { xs: 1, sm: 0 }
-                }}
-              >
-                {' '}Beta users pay $0/month forever and keep lifetime free access to all current features. New users after launch pay $14.99/month.
-              </Box>
-            </Typography>
+            />
           </Box>
 
           {/* FAQ Section */}

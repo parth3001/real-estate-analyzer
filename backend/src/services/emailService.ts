@@ -16,11 +16,16 @@ export class EmailService {
   private FRONTEND_URL: string;
 
   constructor() {
-    this.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // DEFENSIVE: Remove trailing slashes from FRONTEND_URL to prevent double slashes in email links
+    // Issue: FRONTEND_URL="https://reanalyzr.com/" + "/verify-email" = "//verify-email" (404 error)
+    // Fix: Strip trailing slashes using regex
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    this.FRONTEND_URL = frontendUrl.replace(/\/+$/, '');
 
     if (process.env.RESEND_API_KEY) {
       this.resend = new Resend(process.env.RESEND_API_KEY);
       logger.info('[EmailService] Resend client initialized successfully');
+      logger.info(`[EmailService] FRONTEND_URL normalized to: ${this.FRONTEND_URL}`);
     } else {
       logger.warn('[EmailService] RESEND_API_KEY not configured - emails will not be sent');
     }
