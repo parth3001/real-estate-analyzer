@@ -7,6 +7,9 @@ export interface CalculatorFormData {
   // Strategy
   investmentStrategy: 'brrrr' | 'buy-hold';
 
+  // Property Identification (Optional)
+  propertyAddress?: string;  // "1234 Main St, Austin, TX 78701" or "Austin rental"
+
   // Purchase
   purchasePrice: number;
   downPayment: number;
@@ -48,6 +51,7 @@ export interface CalculatorFormData {
 
 export const defaultBuyHoldData: CalculatorFormData = {
   investmentStrategy: 'buy-hold',
+  propertyAddress: '',  // Optional field, default empty
   purchasePrice: 0,
   downPayment: 0,
   interestRate: 7.5,
@@ -74,6 +78,7 @@ export const defaultBuyHoldData: CalculatorFormData = {
 
 export const defaultBRRRRData: CalculatorFormData = {
   investmentStrategy: 'brrrr',
+  propertyAddress: '',  // Optional field, default empty
   purchasePrice: 0,
   downPayment: 0,
   interestRate: 8.5,

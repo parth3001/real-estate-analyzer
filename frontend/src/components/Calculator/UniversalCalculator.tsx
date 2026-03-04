@@ -138,7 +138,7 @@ export const UniversalCalculator: React.FC = () => {
     setError(null);
   };
 
-  // Handle form field changes with debounce
+  // Handle form field changes (no auto-calculation)
   const handleFieldChange = (field: keyof CalculatorFormData, value: any) => {
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
@@ -148,16 +148,11 @@ export const UniversalCalculator: React.FC = () => {
       analytics.trackCalculatorStarted(activeStrategy);
       hasTrackedStart.current = true;
     }
+  };
 
-    // Clear existing timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Set new timer for debounced analysis (500ms delay)
-    debounceTimer.current = setTimeout(() => {
-      runAnalysis(newFormData);
-    }, 500);
+  // Handle manual calculation trigger
+  const handleCalculate = () => {
+    runAnalysis(formData);
   };
 
   // Cleanup on unmount
@@ -191,9 +186,19 @@ export const UniversalCalculator: React.FC = () => {
         {/* Input Form */}
         <Box sx={{ mb: 4 }}>
           {activeStrategy === 'brrrr' ? (
-            <BRRRRInputForm formData={formData} onChange={handleFieldChange} />
+            <BRRRRInputForm
+              formData={formData}
+              onChange={handleFieldChange}
+              onCalculate={handleCalculate}
+              loading={loading}
+            />
           ) : (
-            <BuyHoldInputForm formData={formData} onChange={handleFieldChange} />
+            <BuyHoldInputForm
+              formData={formData}
+              onChange={handleFieldChange}
+              onCalculate={handleCalculate}
+              loading={loading}
+            />
           )}
         </Box>
 

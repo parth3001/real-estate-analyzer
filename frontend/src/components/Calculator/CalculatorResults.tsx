@@ -26,6 +26,7 @@ import { getScoreContext } from '../../utils/verdictUtils';
 import { CalculationAssumptions } from './CalculationAssumptions';
 import { LockedAssumptionsCard } from './LockedAssumptionsCard';
 import { HiddenSectionTeaser } from './HiddenSectionTeaser';
+import { EmailPdfSection } from './EmailPdfSection';
 import { analytics } from '../../utils/analytics';
 
 interface CalculatorResultsProps {
@@ -166,6 +167,9 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
           </Typography>
         </Paper>
       )}
+
+      {/* Email PDF Section - Anonymous User Only */}
+      <EmailPdfSection analysis={analysis} formData={formData} />
 
       {/* Key Metrics Summary - Always Visible (Above Fold) */}
       <Paper elevation={2} sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>

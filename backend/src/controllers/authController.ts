@@ -4,6 +4,7 @@ import { authService, RegisterData, LoginData } from '../services/authService';
 import { emailService } from '../services/emailService';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import AnonymousPdfRequest from '../models/AnonymousPdfRequest';
 
 /**
  * Validation rules for user registration
@@ -113,6 +114,34 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}${registrationMetadata.affiliateCode ? ` | Affiliate: ${registrationMetadata.affiliateCode}` : ''}`);
 
     const result = await authService.register(userData, registrationMetadata);
+
+    // ============================================================
+    // PDF Conversion Attribution: Mark any PDF requests as converted
+    // ============================================================
+    // Check if this user previously requested PDFs as anonymous user
+    // Update all matching PDF requests to mark them as converted
+    try {
+      const updateResult = await AnonymousPdfRequest.updateMany(
+        {
+          email: userData.email.toLowerCase().trim(),
+          convertedToSignup: false
+        },
+        {
+          $set: {
+            convertedToSignup: true,
+            signupDate: new Date(),
+            userId: result.user.id
+          }
+        }
+      );
+
+      if (updateResult.modifiedCount > 0) {
+        logger.info(`[AuthController] PDF conversion attribution: Marked ${updateResult.modifiedCount} PDF request(s) as converted for ${userData.email}`);
+      }
+    } catch (error) {
+      // Don't fail registration if conversion attribution fails
+      logger.error(`[AuthController] Failed to update PDF conversion attribution for ${userData.email}:`, error);
+    }
 
     // Send verification email asynchronously (don't block response)
     if (!result.user.isVerified) {

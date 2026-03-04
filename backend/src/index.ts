@@ -20,6 +20,7 @@ import commandCenterRouter from './routes/commandCenter';
 import educationRouter from './routes/education';
 import contactRouter from './routes/contact';
 import feedbackRouter from './routes/feedback';
+import pdfRouter from './routes/pdf';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
@@ -143,6 +144,7 @@ app.use('/api/command-center', commandCenterRouter);
 app.use('/api/education', educationRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/feedback', feedbackRouter);
+app.use('/api/pdf', pdfRouter);  // PDF routes (has its own rate limiting in pdfRateLimiter middleware)
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

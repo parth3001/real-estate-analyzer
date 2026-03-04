@@ -14,6 +14,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   InputAdornment,
+  Button,
+  CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/system/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -22,9 +24,11 @@ import type { CalculatorFormData } from './types';
 interface BuyHoldInputFormProps {
   formData: CalculatorFormData;
   onChange: (field: keyof CalculatorFormData, value: any) => void;
+  onCalculate: () => void;
+  loading: boolean;
 }
 
-export const BuyHoldInputForm: React.FC<BuyHoldInputFormProps> = ({ formData, onChange }) => {
+export const BuyHoldInputForm: React.FC<BuyHoldInputFormProps> = ({ formData, onChange, onCalculate, loading }) => {
   const handleChange = (field: keyof CalculatorFormData) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -32,10 +36,39 @@ export const BuyHoldInputForm: React.FC<BuyHoldInputFormProps> = ({ formData, on
     onChange(field, value);
   };
 
+  const handleTextChange = (field: keyof CalculatorFormData) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    onChange(field, event.target.value);
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Purchase Section - Always Visible */}
+      {/* Property Address Section - Optional */}
       <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+        Property Identification (Optional)
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth
+            label="Property Address (Optional)"
+            type="text"
+            value={formData.propertyAddress || ''}
+            onChange={handleTextChange('propertyAddress')}
+            placeholder="1234 Main St, Austin, TX 78701"
+            helperText="Add an address to easily identify this property in your PDF analysis"
+            slotProps={{
+              input: {
+                startAdornment: <InputAdornment position="start">📍</InputAdornment>,
+              },
+            }}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Purchase Section - Always Visible */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         Purchase Details
       </Typography>
       <Grid container spacing={2}>
@@ -283,6 +316,36 @@ export const BuyHoldInputForm: React.FC<BuyHoldInputFormProps> = ({ formData, on
         </AccordionDetails>
       </Accordion>
 
+      {/* Calculate Button */}
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={onCalculate}
+          disabled={loading || !formData.purchasePrice || !formData.monthlyRent || !formData.downPayment}
+          sx={{
+            minWidth: '200px',
+            height: '56px',
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '8px',
+            bgcolor: 'primary.main',
+            '&:hover': {
+              bgcolor: 'primary.dark',
+            },
+          }}
+        >
+          {loading ? (
+            <>
+              <CircularProgress size={24} sx={{ mr: 1, color: 'white' }} />
+              Calculating...
+            </>
+          ) : (
+            'Calculate'
+          )}
+        </Button>
+      </Box>
     </Box>
   );
 };

@@ -1,10 +1,12 @@
 import { Resend } from 'resend';
 import { logger } from '../utils/logger';
+import { EmailPdfAttachment } from '../types/pdf.types';
 
 export interface EmailTemplate {
   to: string;
   subject: string;
   html: string;
+  attachments?: EmailPdfAttachment[];  // ✨ NEW: Support for PDF attachments
 }
 
 export class EmailService {
@@ -113,12 +115,25 @@ export class EmailService {
         return;
       }
 
-      await this.resend.emails.send({
+      // Prepare email payload
+      const emailPayload: any = {
         from: this.FROM_EMAIL,
         to: template.to,
         subject: template.subject,
         html: template.html
-      });
+      };
+
+      // Add attachments if present (for PDF emails)
+      if (template.attachments && template.attachments.length > 0) {
+        emailPayload.attachments = template.attachments.map(att => ({
+          filename: att.filename,
+          content: att.content,
+        }));
+
+        logger.info(`[EmailService] Sending email with ${template.attachments.length} attachment(s) to: ${template.to}`);
+      }
+
+      await this.resend.emails.send(emailPayload);
 
       logger.info(`[EmailService] Email sent successfully to: ${template.to}`);
     } catch (error) {
@@ -445,6 +460,244 @@ export class EmailService {
           <div class="footer">
             <p style="margin: 0;">© 2025 REanalyzr Contact Form</p>
             <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">Automated contact form notification</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * ✨ NEW: Send anonymous PDF analysis email
+   *
+   * @param email - Recipient email address
+   * @param attachment - PDF attachment object
+   * @param strategy - Investment strategy ('brrrr' | 'buy-hold')
+   * @param dealQualityScore - Deal Quality Score (0-100)
+   * @param propertyAddress - Optional property address for personalization
+   */
+  async sendAnonymousPdfEmail(
+    email: string,
+    attachment: EmailPdfAttachment,
+    strategy: string,
+    dealQualityScore: number,
+    propertyAddress?: string,
+    analysis?: any  // Full analysis object for metrics display
+  ): Promise<void> {
+    const template = this.getAnonymousPdfEmailTemplate(strategy, dealQualityScore, propertyAddress, analysis);
+
+    // Enhanced subject line with score and optional address
+    const subject = propertyAddress
+      ? `${propertyAddress} - ${dealQualityScore}/100 Analysis ✅`
+      : `Your Property Analysis: ${dealQualityScore}/100 Score ✅`;
+
+    await this.sendEmail({
+      to: email,
+      subject,
+      html: template,
+      attachments: [attachment]
+    });
+
+    logger.info(`[EmailService] Anonymous PDF email sent to: ${email} | Strategy: ${strategy} | Score: ${dealQualityScore}`);
+  }
+
+  /**
+   * ✨ NEW: Anonymous PDF email template with enhanced UX
+   */
+  private getAnonymousPdfEmailTemplate(strategy: string, dealQualityScore: number, propertyAddress?: string, analysis?: any): string {
+    const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
+    const scoreLabel = dealQualityScore >= 80
+      ? 'Above professional standards'
+      : dealQualityScore >= 65
+        ? 'Meets professional standards'
+        : dealQualityScore >= 50
+          ? 'Requires optimization'
+          : 'Below professional standards';
+
+    const scoreColor = dealQualityScore >= 80
+      ? '#4CAF50'
+      : dealQualityScore >= 65
+        ? '#2196F3'
+        : dealQualityScore >= 50
+          ? '#FF9800'
+          : '#F44336';
+
+    // Detect BRRRR vs Buy & Hold strategy
+    const isBRRRR = strategy === 'brrrr';
+
+    // Format metrics from analysis - BRRRR uses post-refinance metrics
+    let monthlyCashFlow: string;
+    let cashFlowColor: string;
+    let metric2Label: string;
+    let metric2Value: string;
+    let metric3Label: string;
+    let metric3Value: string;
+
+    if (isBRRRR) {
+      // BRRRR: Show post-refinance metrics from strategySpecific.postRefinanceMetrics
+      const postRefiCashFlow = (analysis as any)?.strategySpecific?.postRefinanceMetrics?.monthlyCashFlow !== undefined
+        ? (analysis as any).strategySpecific.postRefinanceMetrics.monthlyCashFlow
+        : analysis?.monthlyAnalysis?.cashFlow || 0;
+
+      monthlyCashFlow = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(postRefiCashFlow);
+      cashFlowColor = postRefiCashFlow >= 0 ? '#4CAF50' : '#F44336';
+
+      // Capital Recovery (BRRRR-specific) from strategySpecific.capitalRecovery
+      const capitalRecovery = (analysis as any)?.strategySpecific?.capitalRecovery?.capitalRecoveryRate !== undefined
+        ? (analysis as any).strategySpecific.capitalRecovery.capitalRecoveryRate
+        : 0;
+      const isInfiniteReturn = (analysis as any)?.strategySpecific?.capitalRecovery?.capitalRemaining === 0;
+
+      metric2Label = 'Capital Recovery';
+      metric2Value = isInfiniteReturn
+        ? `${capitalRecovery.toFixed(1)}% 🚀 Infinite Return`
+        : `${capitalRecovery.toFixed(1)}%`;
+
+      // Post-Refi CoC Return from strategySpecific.postRefinanceMetrics
+      const postRefiCoC = (analysis as any)?.strategySpecific?.postRefinanceMetrics?.cashOnCashReturn;
+      metric3Label = 'Post-Refi CoC Return';
+      metric3Value = isInfiniteReturn ? '∞%' : (postRefiCoC !== undefined ? `${postRefiCoC.toFixed(1)}%` : 'N/A');
+
+    } else {
+      // Buy & Hold: Show traditional metrics
+      const buyHoldCashFlow = analysis?.monthlyAnalysis?.cashFlow !== undefined
+        ? analysis.monthlyAnalysis.cashFlow
+        : 0;
+
+      monthlyCashFlow = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(buyHoldCashFlow);
+      cashFlowColor = buyHoldCashFlow >= 0 ? '#4CAF50' : '#F44336';
+
+      metric2Label = 'Cap Rate';
+      metric2Value = analysis?.keyMetrics?.capRate !== undefined
+        ? `${analysis.keyMetrics.capRate.toFixed(1)}%`
+        : 'N/A';
+
+      metric3Label = 'Cash-on-Cash Return';
+      metric3Value = analysis?.keyMetrics?.cashOnCashReturn !== undefined
+        ? `${analysis.keyMetrics.cashOnCashReturn.toFixed(1)}%`
+        : 'N/A';
+    }
+
+    // Score-based next step recommendation
+    let nextStepAction: string;
+    let nextStepReasoning: string;
+
+    if (dealQualityScore >= 80) {
+      nextStepAction = 'Make an offer';
+      nextStepReasoning = 'This is a strong deal by professional standards';
+    } else if (dealQualityScore >= 65) {
+      nextStepAction = 'Negotiate the price';
+      nextStepReasoning = "There's potential here with better terms";
+    } else if (dealQualityScore >= 50) {
+      nextStepAction = 'Run more scenarios';
+      nextStepReasoning = 'Adjust your assumptions to improve returns';
+    } else {
+      nextStepAction = 'Keep searching';
+      nextStepReasoning = 'Compare this to other opportunities in your market';
+    }
+
+    const signupUrl = `${this.FRONTEND_URL}/register?source=pdf_email&score=${dealQualityScore}`;
+    const unsubscribeUrl = `${this.FRONTEND_URL}/unsubscribe`;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Property Analysis - REanalyzr</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; padding: 0; background-color: #ffffff; }
+          .container { max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); padding: 48px 40px 32px; text-align: center; }
+          .logo { color: white; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1.5px; }
+          .tagline { color: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 500; letter-spacing: 3px; margin: 12px 0 0; text-transform: uppercase; }
+          .content { padding: 48px 40px; }
+          .score-box { text-align: center; background-color: #f9fafb; padding: 32px; margin: 24px 0; border-radius: 12px; border-left: 4px solid ${scoreColor}; }
+          .score-value { font-size: 48px; font-weight: 700; color: ${scoreColor}; margin: 0; }
+          .score-label { font-size: 14px; color: #6b7280; margin-top: 8px; }
+          .button { display: inline-block; background: #0a0a0a; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 600; font-size: 16px; margin: 24px 0; transition: all 0.2s; }
+          .button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2); }
+          .footer { padding: 32px 40px; background-color: #f9fafb; color: #6b7280; font-size: 14px; text-align: center; border-top: 1px solid #e5e7eb; }
+          .disclaimer { padding: 16px; background-color: #fef2f2; border-radius: 8px; margin-top: 24px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">REanalyzr</h1>
+            <p class="tagline">Property Analysis Report</p>
+          </div>
+
+          <div class="content">
+            <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">Your Analysis is Ready! 📊</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">
+              ${propertyAddress ? `We've analyzed <strong>${propertyAddress}</strong> using our` : 'We\'ve completed your'}
+              ${strategyLabel} investment strategy calculator. Your professional-grade analysis is attached as a PDF.
+            </p>
+
+            <div class="score-box">
+              <p style="margin: 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Deal Quality Score</p>
+              <p class="score-value">${dealQualityScore}/100</p>
+              <p class="score-label">${scoreLabel}</p>
+            </div>
+
+            ${analysis ? `
+            <h3 style="color: #0a0a0a; font-weight: 600; margin-top: 32px;">Your Investment Summary${isBRRRR ? ' (BRRRR)' : ''}</h3>
+            <table style="width: 100%; background-color: #f9fafb; border-radius: 8px; overflow: hidden; margin: 16px 0;">
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 16px; color: #6b7280; font-size: 14px;">${isBRRRR ? 'Post-Refi Cash Flow' : 'Monthly Cash Flow'}</td>
+                <td style="padding: 16px; text-align: right; font-weight: 600; font-size: 16px; color: ${cashFlowColor};">${monthlyCashFlow}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 16px; color: #6b7280; font-size: 14px;">${metric2Label}</td>
+                <td style="padding: 16px; text-align: right; font-weight: 600; font-size: 16px;">${metric2Value}</td>
+              </tr>
+              <tr>
+                <td style="padding: 16px; color: #6b7280; font-size: 14px;">${metric3Label}</td>
+                <td style="padding: 16px; text-align: right; font-weight: 600; font-size: 16px;">${metric3Value}</td>
+              </tr>
+            </table>
+            <p style="text-align: center; margin: 16px 0; color: #6b7280; font-size: 14px;">
+              📎 See full analysis in attached PDF →
+            </p>
+            ` : ''}
+
+            <h3 style="color: #0a0a0a; font-weight: 600; margin-top: 32px;">📊 Your Next Steps</h3>
+            <ol style="color: #374151; line-height: 1.8; padding-left: 24px;">
+              <li><strong>Review the attached PDF</strong> — Your complete 2-page analysis with all metrics</li>
+              <li><strong>${nextStepAction}</strong> — ${nextStepReasoning}</li>
+              <li><strong>Share with your team</strong> — Forward this email to your lender, CPA, or investment partner</li>
+              <li><strong>Track future deals</strong> — <a href="${signupUrl}" style="color: #0a0a0a; text-decoration: none; font-weight: 600;">Create a free account</a> to save and compare your next properties</li>
+            </ol>
+
+            <div style="text-align: center; margin: 40px 0 32px;">
+              <a href="${signupUrl}" class="button">Save Future Deals in Deal Pipeline →</a>
+              <p style="margin: 12px 0 0; color: #6b7280; font-size: 14px;">
+                Organize your properties • Track your pipeline • Compare multiple deals
+              </p>
+            </div>
+
+            <h3 style="color: #0a0a0a; font-weight: 600; margin-top: 32px;">📎 What's in the PDF</h3>
+            <ul style="color: #374151; line-height: 1.8; font-size: 14px;">
+              <li><strong>Investment Decision Score</strong> — Professional-grade 0-100 analytical rating</li>
+              <li><strong>Property Details</strong> — Purchase price, square footage, price per sq ft</li>
+              <li><strong>Financing Breakdown</strong> — Down payment, loan amount, monthly payments</li>
+              <li><strong>Cash Flow Analysis</strong> — Monthly and annual net cash flow</li>
+              <li><strong>Key Investment Metrics</strong> — Cap Rate, Cash-on-Cash Return, IRR, DSCR, GRM</li>
+            </ul>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 32px;">
+              <strong>Questions?</strong> Reply to this email or reach out to our support team. We're here to help you make confident investment decisions.
+            </p>
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0;">© 2026 REanalyzr. Institutional-Grade Analysis for Individual Investors.</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">reanalyzr.com</p>
+            <p style="margin: 16px 0 0; font-size: 11px; color: #9ca3af;">
+              Don't want PDF analysis emails? <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+            </p>
           </div>
         </div>
       </body>

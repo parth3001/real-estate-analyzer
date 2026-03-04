@@ -1011,6 +1011,827 @@ Add subtle but clear competitive differentiators throughout the platform to answ
 
 ---
 
+### Feature #14: Email-First Authentication + Free Forever Calculator Strategy
+**Status:** 🔴 Not Started
+**Priority:** P1 - High (Conversion Strategy & Business Model)
+**Added:** February 28, 2026
+**Category:** Freemium Strategy / Authentication / Product Positioning
+**Business Expert Perspective:** Marcus Chen
+
+---
+
+## **Strategic Vision**
+
+Transform the freemium model to **free unlimited calculator forever** (manual entry, zero API costs) + **Pro tier ($14.99/month)** with address-based intelligence, market data, AI insights, and saved analyses workflow.
+
+**Core Insight:** Free tier proves platform quality at zero cost. Pro tier sells intelligence and workflow (not calculator access). Clean product separation drives clear value proposition and sustainable 97% margin business model.
+
+---
+
+## **Business Expert (Marcus Chen) Strategic Assessment**
+
+> "This is the freemium model done right. Most platforms gate the calculator at 3 analyses and create negative sentiment ('why are you cutting me off?'). We're doing the opposite: prove quality with unlimited free access, then sell the intelligence layer (address lookup, market data, AI) and workflow layer (saved analyses, scenario testing, portfolio tracking). The free tier costs us $0 in API calls - it's pure trust building with infinite scalability. The Pro tier has 97% margins because one $14.99 subscriber covers 299 analyses worth of API costs. This is how you build a category-defining platform."
+
+**Key Strategic Principles:**
+
+**1. Free Forever = Trust Building at Zero Cost**
+- Free tier uses manual number entry (no address lookup)
+- No API calls: No RentCast, no FRED, no OpenAI, no Census
+- Basic analysis with core metrics (Deal Quality Score, Cash Flow, Cap Rate, DSCR, IRR)
+- Advanced BRRRR metrics hidden (unlocked in Pro)
+- Advanced Buy & Hold metrics hidden (unlocked in Pro)
+- Cost to platform: $0.00 per analysis (negligible server compute)
+- Risk: None - unlimited use costs nothing
+- Value: Prove calculation accuracy, build user trust, demonstrate platform quality
+
+**2. Pro Tier = Full Analysis + Intelligence + Workflow**
+- **Full Analysis (All Metrics Unlocked):**
+  - Complete BRRRR analysis (all tabs, all advanced metrics)
+  - Complete Buy & Hold analysis (scenario modeling, all metrics)
+  - Multi-Family properties (2-32 units) - backend ready
+  - House hacking strategies (coming soon)
+- **Intelligence Layer:**
+  - Address-based entry: "123 Main St, Dallas, TX" → RentCast auto-fills data
+  - Market intelligence: FRED economic data, Census demographics
+  - AI-powered insights: OpenAI personalized recommendations
+- **Workflow Features:**
+  - Saved analyses: All properties stored by address, instant scenario testing
+  - Deal pipeline: Organize properties (Leads → Analyzing → Under Contract → Closed)
+  - Portfolio tracking: 7 goal types, performance analytics
+
+**3. Clean Product Separation**
+- **Free Tier:** Anonymous calculator, manual entry, unlimited use, zero database storage
+- **Pro Tier:** Logged-in intelligence platform, address-based, market data, AI, saved workflow
+- No messy middle tier - binary choice creates clarity
+
+**4. Business Model Economics**
+- **Free Tier:** $0 cost per analysis → Infinite scalability, zero burn risk
+- **Pro Tier:** $0.05 cost per analysis (API calls) → $14.99 revenue → 97% margin
+- **ROI:** 1 Pro subscriber covers 299 analyses worth of API costs
+- **Conversion:** 25% of users upgrade (industry-leading for freemium)
+- **Churn:** <5% monthly (value-based conversion, not forced upgrade)
+
+**5. No Import Feature (Intentional)**
+- Prior free analyses (manual entry) are NOT imported to Pro account
+- Why: Avoid feature hell, drive early conversion, maintain clean architecture
+- Communication: Transparent in FAQ ("No import - upgrade early to save future work")
+- Psychology: Users upgrade when they see value, not out of regret
+
+---
+
+## **Real Estate Investment Expert Validation**
+
+**Investor Profile:** 20 years experience, $10M portfolio, started with Excel spreadsheets
+
+> "As an investor who spent years in Excel hell, I would have paid $14.99/month in a heartbeat for saved analyses with instant scenario testing. The free unlimited calculator proves you're legit - most platforms want my credit card upfront. When you say 'free forever,' I trust you enough to actually try it. Then after I manually enter data for 2-3 properties, I realize: 'I could just enter the address and get market intelligence + AI insights + save these for comparison.' That's when I upgrade - not because you cut me off, but because I see the workflow value. This strategy nails the psychology of how investors actually think."
+
+**User Psychology - Why This Works:**
+
+**The Free Calculator Experience:**
+- I'm at a property showing, pull out my phone
+- Enter purchase price, down payment, rent, taxes manually
+- Get basic analysis instantly (Deal Quality Score, core metrics: Cash Flow, Cap Rate, DSCR, IRR)
+- Advanced BRRRR and Buy & Hold metrics locked (visible but grayed out with "Unlock in Pro")
+- Optionally enter email → PDF sent (no account creation, just convenience)
+- I can do this 100 times - costs you nothing, proves your accuracy
+
+**The Conversion Moment (Self-Directed):**
+- After 2-3 manual entries, I think: "This is tedious. I wish I could just enter the address."
+- I see the CTA: "Pro users enter address, get auto-filled data + market intelligence"
+- I calculate ROI: $14.99/month ÷ 2 hours saved per property = $7.50/hour value
+- Easy decision: Upgrade to save time and get better insights
+
+**The Pro Tier Value (What I'm Actually Paying For):**
+1. **Full Analysis Unlocked:** All advanced BRRRR metrics + Buy & Hold scenario modeling + Multi-Family (2-32 units)
+2. **Time Savings:** Address entry vs 20 manual fields = 5 minutes saved per property
+3. **Market Intelligence:** Population growth, income trends, economic indicators (can't get this in Excel)
+4. **AI Insights:** "This neighborhood is gentrifying" (actionable intelligence)
+5. **Saved Analyses:** Compare 123 Main St vs 456 Oak Ave side-by-side
+6. **Scenario Testing:** Change down payment from 20% → 25%, see results instantly (no re-entering data)
+7. **Workflow Tools:** Deal pipeline (organize by stage) + Portfolio tracking (7 goal types, performance analytics)
+
+**ROI from Investor Perspective:**
+- Analyze 3 properties/month × 5 minutes saved = 15 minutes/month time savings
+- Avoid 1 bad deal/year due to better intelligence = $10,000-50,000 saved
+- $14.99/month = cost of one dinner out
+- **Decision:** No-brainer upgrade
+
+---
+
+## **Current State vs New Strategy**
+
+### **CURRENT MODEL (Beta - What We Have Now):**
+
+**Free Tier (Beta Users):**
+- Unlimited analyses (no limits during beta)
+- Manual number entry OR Property Wizard (address-based entry)
+- Full analysis with all features unlocked during beta
+- Portfolio tracking (built and working)
+- Deal pipeline (built and working)
+- All beta users grandfathered at $0/month forever
+
+**Post-Beta Model ($14.99/month):**
+- New users after beta pay $14.99/month
+- All features currently available to beta users
+
+**Issues with Current Beta Model (Why Feature #14 is Needed):**
+- No differentiation between free and paid tiers yet
+- When beta ends, unclear what free users vs paid users get
+- Need to prepare freemium model for post-beta launch
+- Must define feature separation before charging $14.99/month
+
+### **NEW STRATEGY (Feature #14 - Post-Beta Freemium Model):**
+
+**Free Tier (Anonymous Calculator):**
+- ✅ Unlimited analyses forever (no limits)
+- ✅ Manual number entry (purchase price, rent, taxes, etc.)
+- ✅ Basic analysis results (Deal Quality Score, core metrics: Cash Flow, Cap Rate, DSCR, IRR)
+- ❌ Advanced BRRRR metrics locked (visible but grayed out)
+- ❌ Advanced Buy & Hold metrics locked (visible but grayed out)
+- ✅ Optional email for PDF delivery (no account creation)
+- ✅ Zero API costs (no address lookup, no market data, no AI)
+- ✅ Completely anonymous (no login, no tracking, no database storage)
+
+**Pro Tier ($14.99/month):**
+- ✅ Everything in Free, PLUS:
+- ✅ **Full Analysis Unlocked:**
+  - Complete BRRRR analysis (all tabs, all advanced metrics)
+  - Complete Buy & Hold analysis (scenario modeling, all metrics)
+  - Multi-Family properties (2-32 units) - backend ready, frontend pending
+  - House hacking strategies (coming soon)
+- ✅ **Intelligence Layer:**
+  - Address-based entry (auto-fill via RentCast API)
+  - Market intelligence (FRED economic data, Census demographics)
+  - AI-powered insights (OpenAI personalized recommendations)
+- ✅ **Workflow Features:**
+  - Save all analyses by address (database storage)
+  - Modify assumptions instantly (scenario testing without re-entry)
+  - Portfolio tracking (7 goal types, performance analytics) - already built
+  - Deal pipeline (organize properties by stage) - already built
+
+**Value Proposition Clarity:**
+- **Free:** Basic calculator (prove quality, unlimited use, zero friction, zero cost)
+- **Pro:** Full analysis + intelligence + workflow ($14.99/month, 97% margin at $0.05 cost per analysis)
+
+---
+
+## **User Journeys**
+
+### **Journey 1: Free User (Never Upgrades)**
+
+**Persona:** Casual investor, analyzing 1-2 properties per year
+
+1. Lands on public calculator
+2. Enters manual data for Property A → Gets basic analysis (Deal Quality Score + core metrics)
+3. Sees advanced metrics locked: "Unlock complete BRRRR analysis + Buy & Hold scenarios in Pro"
+4. Optionally enters email → PDF sent
+5. Sees CTA: "Upgrade to Pro for full analysis + address lookup + market intelligence"
+6. Thinks: "I only analyze 1-2 properties/year, basic analysis is fine"
+7. Continues using free calculator indefinitely
+
+**Outcome:** Happy free user, zero cost to platform, potential future upgrader
+
+---
+
+### **Journey 2: Pro User (Upgrades After 3-5 Properties)**
+
+**Persona:** Active investor, analyzing 5-10 properties per month
+
+1. Lands on public calculator
+2. Analyzes Property #1 manually → Gets basic analysis, sees locked advanced metrics
+3. Analyzes Property #2 manually → Thinks "manual entry is tedious + I want those advanced metrics"
+4. Analyzes Property #3 manually → Sees CTA about full analysis + address lookup + workflow
+5. Clicks "Upgrade to Pro - $14.99/month"
+6. Email-first signup: Enters email → Magic link sent → Click to create account
+7. Completes Stripe payment → User.subscriptionTier = 'professional'
+8. Redirected to Pro dashboard
+9. Starts new analysis: Enters "123 Main St, Dallas, TX 75001"
+10. RentCast auto-fills rent, property details, comparables
+11. FRED provides market intelligence, Census provides demographics
+12. AI generates personalized insights
+13. Analysis saved automatically by address
+14. All metrics unlocked: Complete BRRRR + Buy & Hold scenario modeling + Multi-Family support
+15. Opens saved "123 Main St" analysis → Clicks "Modify Assumptions"
+16. Changes down payment from 20% → 25% → Results update instantly
+17. Compares multiple scenarios side-by-side
+18. Organizes properties in Deal Pipeline (Leads → Analyzing → Under Contract)
+19. Tracks performance in Portfolio Dashboard (7 goal types)
+20. Analyzes 10 more properties over next month using address entry
+
+**Outcome:** High-value Pro subscriber, low churn (value-based upgrade from locked metrics + workflow efficiency)
+
+---
+
+### **Journey 3: Pro User (Upgrades After 1 Property)**
+
+**Persona:** Institutional investor or realtor, values time over money
+
+1. Lands on calculator
+2. Starts entering manual data → Sees CTA immediately
+3. Thinks: "I analyze 50+ properties/month, manual entry is insane"
+4. Clicks "Upgrade to Pro" immediately
+5. Creates account, pays $14.99/month
+6. Uses address-based entry exclusively
+7. Saves all 50+ analyses per month
+8. Shares analyses with clients (if realtor) or partners (if investor)
+
+**Outcome:** Power user, high engagement, potential Enterprise tier candidate
+
+---
+
+## **Conversion Strategy (Static CTA)**
+
+### **Critical Constraint: Anonymous = No Tracking**
+
+Since free tier is completely anonymous (no login, no cookies, no localStorage), the platform **cannot track** if user is on Analysis #1, #2, or #100.
+
+**Solution: Static CTA on Every Analysis Result**
+
+**CTA Placement:**
+- Displayed on analysis results page
+- Same message for every user, every time
+- Not blocking (user can dismiss or ignore)
+- Clear value differentiation
+
+**CTA Messaging:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Unlock Full Analysis + Intelligence + Workflow
+
+FREE (what you're using now):
+✅ Unlimited calculator access
+✅ Manual number entry
+✅ Basic analysis (Deal Quality Score, core metrics)
+❌ Advanced BRRRR metrics locked
+❌ Advanced Buy & Hold metrics locked
+
+PRO ($14.99/month):
+✅ Complete BRRRR analysis (all tabs, all metrics unlocked)
+✅ Complete Buy & Hold scenario modeling
+✅ Multi-Family properties (2-32 units)
+✅ Enter property ADDRESS (auto-fill data via RentCast)
+✅ Market intelligence (FRED economic data, Census demographics)
+✅ AI-powered insights (personalized recommendations)
+✅ Save all analyses by address
+✅ Modify assumptions instantly (scenario testing)
+✅ Portfolio tracking (7 goal types, performance analytics)
+✅ Deal pipeline (organize properties by stage)
+
+[Continue Free] or [Upgrade to Pro - $14.99/month]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**User Self-Selects When to Upgrade:**
+- After 1st analysis (realizes address entry saves time)
+- After 5th analysis (tired of manual entry)
+- After 20th analysis (wants to save and compare properties)
+- Never (happy with free calculator)
+
+**No Pressure, No Tracking, Just Clear Value:**
+- Upgrade when YOU see the value
+- Not when WE force you with artificial limits
+
+---
+
+## **No Import Feature - Strategic Rationale**
+
+### **What "No Import" Means:**
+
+When a user upgrades to Pro after using free calculator 50 times:
+- Those 50 prior analyses (manual entry, anonymous) are **NOT imported** into Pro account
+- They stay in email PDFs (if user entered email for PDF delivery)
+- Only **FUTURE analyses** (after Pro upgrade) are saved in database
+
+### **Why This Is Intentional:**
+
+**1. Avoid Feature Hell:**
+- Importing requires complex UI: "Select which analyses to import"
+- Data mapping issues: Free tier = manual entry, Pro tier = address-based
+- Edge cases: What if data conflicts? What if address invalid?
+- Maintenance burden forever (every data model change breaks import)
+
+**2. Drive Early Conversion:**
+- If users know "no import," they upgrade earlier (when they see value)
+- vs "I'll use free for 100 analyses, then upgrade and import everything"
+- Early upgraders have lower churn (value-based vs regret-based)
+
+**3. Clean Architecture:**
+- Free tier: No database storage, completely stateless, zero persistence
+- Pro tier: All analyses saved in MongoDB, address-indexed, full history
+- No migration layer, no data transformation, no edge cases
+
+**4. Honest Communication Builds Trust:**
+- Transparent about limitation upfront
+- Users appreciate honesty vs hidden limitations discovered later
+- "We don't import to keep platform simple" = respectable engineering choice
+
+### **How to Communicate This:**
+
+**FAQ Entry:**
+```
+Q: Can I import my prior free analyses after upgrading to Pro?
+
+A: No. We intentionally keep the platform simple by not offering import features.
+
+Why?
+- Free tier: Anonymous calculations (no database storage)
+- Pro tier: Saved analyses starting from upgrade date
+- Import would add complexity without significant value
+
+Best practice: Upgrade early (when you see the value) to maximize saved analyses.
+
+Your prior free analyses:
+- Still available in email PDFs (if you opted for email delivery)
+- Can be re-entered manually if needed (rare)
+- Most users don't need prior analyses after upgrading
+```
+
+**In CTA Messaging (Optional Transparency):**
+```
+Note: Pro tier saves all FUTURE analyses. Prior free analyses stay in
+email PDFs (we don't import to keep the platform simple). Upgrade when
+you're ready to save your work going forward.
+```
+
+---
+
+## **Email-First Authentication (Pro Tier Only)**
+
+### **When Account Creation Happens:**
+
+**Free Tier:** NEVER (completely anonymous)
+
+**Pro Tier:** ONLY when user clicks "Upgrade to Pro"
+
+### **Account Creation Flow (Passwordless Magic Link):**
+
+**Step 1: User Clicks "Upgrade to Pro"**
+- CTA button on analysis results page
+- Or "Upgrade" link in navigation header
+
+**Step 2: Email Entry**
+```
+┌─────────────────────────────────────────────┐
+│  Upgrade to Professional ($14.99/month)     │
+│                                             │
+│  Enter your email to get started:          │
+│  ┌─────────────────────────────────────┐   │
+│  │ your.email@example.com              │   │
+│  └─────────────────────────────────────┘   │
+│                                             │
+│  [Send Magic Link]                         │
+│                                             │
+│  We'll email you a secure login link.      │
+│  No password required.                      │
+└─────────────────────────────────────────────┘
+```
+
+**Step 3: Magic Link Email Sent**
+```
+Subject: Access Your Real Estate Analyzer Pro Account
+
+Hi there,
+
+Click the button below to create your Pro account and complete payment:
+
+[Create My Pro Account] (magic link button)
+
+This link expires in 15 minutes.
+
+Questions? Reply to this email.
+
+—
+Real Estate Analyzer Team
+```
+
+**Step 4: User Clicks Magic Link**
+- JWT token validates identity
+- Auto-login (no password needed)
+- Redirected to account setup page
+
+**Step 5: Complete Profile (Optional)**
+```
+┌─────────────────────────────────────────────┐
+│  Welcome! Complete your profile:            │
+│                                             │
+│  First Name: ┌──────────────────────────┐  │
+│              │                          │  │
+│              └──────────────────────────┘  │
+│                                             │
+│  Last Name:  ┌──────────────────────────┐  │
+│              │                          │  │
+│              └──────────────────────────┘  │
+│                                             │
+│  [Continue to Payment]                     │
+│                                             │
+│  (Optional: Add password for future login) │
+└─────────────────────────────────────────────┘
+```
+
+**Step 6: Stripe Payment**
+- Stripe Checkout modal opens
+- User enters credit card
+- Subscription created ($14.99/month)
+
+**Step 7: Redirect to Pro Dashboard**
+- User.subscriptionTier = 'professional'
+- Welcome message: "You're now a Pro member!"
+- CTA: "Start your first address-based analysis"
+
+### **Future Login (For Returning Pro Users):**
+
+**Option A: Magic Link (Passwordless):**
+- User enters email → Magic link sent → Click to login
+- No password needed (same flow as signup)
+
+**Option B: Email + Password (If User Set Password):**
+- Traditional login form
+- Email + password → JWT token → Logged in
+
+**Option C: "Remember Me" (JWT Persistence):**
+- JWT token stored in localStorage (7-day expiry)
+- User stays logged in across browser sessions
+- Auto-logout after 7 days or manual logout
+
+---
+
+## **Business Model Economics**
+
+### **Free Tier Costs:**
+
+**Per Analysis:**
+- API calls: $0.00 (no RentCast, no FRED, no OpenAI, no Census)
+- Server compute: ~$0.001 (negligible - basic math calculations)
+- Database storage: $0.00 (no persistence, stateless calculations)
+- Email PDF (optional): ~$0.01 (SendGrid/Mailgun transactional email)
+
+**Total cost per free analysis:** $0.01 or less
+
+**Scalability:** Infinite (costs don't increase with volume)
+
+### **Pro Tier Costs:**
+
+**Per Analysis:**
+- RentCast API: ~$0.02 (property data, rent estimates, comparables)
+- FRED API: ~$0.00 (free tier, 1000 requests/day)
+- Census API: ~$0.00 (free, unlimited)
+- OpenAI API: ~$0.02 (GPT-4o-mini, ~1000 tokens per analysis)
+- Database storage: ~$0.001 (MongoDB Atlas, negligible per document)
+- Server compute: ~$0.001 (same as free tier)
+
+**Total cost per Pro analysis:** ~$0.05
+
+### **Revenue Model:**
+
+**Pro Subscription:** $14.99/month
+
+**Break-Even Analysis:**
+- $14.99/month ÷ $0.05 per analysis = **299 analyses per month to break even**
+- Typical Pro user: 10-20 analyses per month
+- **Margin per subscriber:** $14.99 - (15 × $0.05) = $14.24/month = **95% margin**
+
+### **Projections (100 Total Users Example):**
+
+**Scenario: 100 users use free calculator, 25 upgrade to Pro**
+
+**Free Tier:**
+- 75 users × 5 analyses/month × $0.01 = $3.75/month cost
+- Revenue: $0
+- Loss: $3.75/month (acceptable trust-building cost)
+
+**Pro Tier:**
+- 25 users × $14.99 = $374.75/month revenue
+- 25 users × 15 analyses/month × $0.05 = $18.75/month cost
+- Profit: $356/month
+
+**Net Business:**
+- Total revenue: $374.75/month
+- Total costs: $22.50/month
+- **Net profit: $352.25/month**
+- **Margin: 94%**
+
+**Unit Economics:**
+- CAC (Customer Acquisition Cost): ~$0 (organic traffic from free tier)
+- LTV (Lifetime Value): $14.99/month × 24 months avg retention = $359.76
+- LTV:CAC ratio: Infinite (zero paid acquisition)
+
+---
+
+## **Competitive Differentiation**
+
+### **vs Excel (Free):**
+
+**Excel Strengths:**
+- Free, customizable, familiar to investors
+- Full control over formulas and assumptions
+
+**Our Free Tier Advantage:**
+- Same calculations, faster UI (no spreadsheet setup)
+- Mobile-friendly (Excel on phone is painful)
+- Instant results (no formula debugging)
+
+**Our Pro Tier Advantage:**
+- Address lookup (Excel requires manual data research)
+- Market intelligence (Excel has no live data integration)
+- AI insights (Excel cannot generate contextual recommendations)
+- Saved analyses (Excel = file management hell)
+
+### **vs BiggerPockets Calculator (Free):**
+
+**BiggerPockets Strengths:**
+- Free, trusted brand, large community
+- Simple interface, good for beginners
+
+**Our Free Tier Advantage:**
+- Same features (both free unlimited calculators)
+- Better UX (modern React vs older interface)
+
+**Our Pro Tier Advantage:**
+- Address-based entry (BP requires manual entry)
+- Market intelligence (BP has no FRED/Census integration)
+- AI insights (BP has no AI)
+- Saved analyses with scenario testing (BP doesn't save or allow instant modifications)
+
+### **vs DealCheck ($8-12/month):**
+
+**DealCheck Strengths:**
+- Mobile app, offline mode
+- Saved analyses, scenario comparisons
+
+**Our Free Tier Advantage:**
+- Unlimited calculator access (DealCheck gates at 3 analyses)
+- No paywall (DealCheck forces upgrade)
+
+**Our Pro Tier Advantage:**
+- Better AI insights (DealCheck has basic AI, we use GPT-4o-mini with market context)
+- Market intelligence integration (FRED + Census data)
+- Lower price ($14.99 vs $12/month, similar value but more features)
+
+### **vs Stessa (Free):**
+
+**Stessa Strengths:**
+- Free portfolio tracking
+- Accounting integration, bank sync
+- Property management features
+
+**Our Advantage:**
+- **PRE-purchase analysis** (Stessa is POST-purchase only)
+- Stessa helps you track properties you already own
+- We help you decide WHICH properties to buy
+- Different use case, not direct competition
+
+### **Our Unique Market Position:**
+
+✅ **Only platform with FREE unlimited calculator** (no 3-analysis limit, no paywall)
+
+✅ **+ Pro intelligence tier** (address-based, market data, AI, workflow)
+
+✅ **= Clear value proposition:** Free = calculator, Pro = intelligence platform
+
+✅ **Zero-cost trust building** (free tier costs $0 in API calls)
+
+✅ **Category-defining positioning:** "The calculator is free. Intelligence is Pro."
+
+---
+
+## **Success Metrics & KPIs**
+
+### **Free Tier Metrics:**
+
+**Usage:**
+- Total free analyses per month (target: unlimited growth, zero cost concern)
+- Unique users (estimated via IP, not tracking)
+- PDF email opt-in rate (target: 40%+)
+
+**Quality:**
+- Analysis completion rate (user fills all fields vs abandons)
+- Calculation accuracy validation (compare vs known properties)
+
+### **Conversion Metrics:**
+
+**Free-to-Pro Conversion:**
+- Target: 25% of free users eventually upgrade
+- Industry benchmark: 2-5% for freemium SaaS
+- Our advantage: Clear value differentiation (address vs manual entry)
+
+**Time to Conversion:**
+- Target: Users upgrade within 30 days of first free analysis
+- Hypothesis: Users who see value upgrade early (self-selection)
+
+**Conversion Attribution:**
+- CTA clicks per 1000 free analyses (target: 100+ clicks = 10% CTR)
+- CTA-to-signup conversion (target: 25% of clicks complete signup)
+
+### **Pro Tier Metrics:**
+
+**Revenue:**
+- MRR (Monthly Recurring Revenue): 25 users × $14.99 = $374.75
+- ARR (Annual Recurring Revenue): $374.75 × 12 = $4,497
+- ARPU (Average Revenue Per User): $14.99/month
+
+**Retention:**
+- Churn rate: Target <5% monthly (<60% annual churn)
+- Hypothesis: Value-based upgraders churn less than forced upgraders
+- Retention drivers: Saved analyses (lock-in), workflow efficiency (habit formation)
+
+**Engagement:**
+- Analyses per Pro user per month (target: 10-20)
+- Address-based analyses (should be 100% - no manual entry for Pro users)
+- Saved analyses accessed (target: 50%+ users re-open saved properties)
+- Scenario testing usage (target: 30%+ users modify assumptions)
+
+**Unit Economics:**
+- CAC: ~$0 (organic from free tier, no paid acquisition yet)
+- LTV: $14.99/month × 24 months = $359.76
+- LTV:CAC: Infinite (zero acquisition cost)
+- Margin: 95% (revenue - API costs)
+
+### **Product-Market Fit Signals:**
+
+**Strong PMF Indicators:**
+- 40%+ retention at month 3 (users see ongoing value)
+- 25%+ free-to-paid conversion (clear value prop resonates)
+- <5% monthly churn (sticky product, essential workflow)
+- 50%+ users re-open saved analyses (workflow adoption)
+- NPS >50 (user advocacy, word-of-mouth growth)
+
+**Weak PMF Signals (Red Flags):**
+- <10% free-to-paid conversion (value prop unclear)
+- >10% monthly churn (not sticky, easily replaced)
+- Low scenario testing usage (users not using Pro features)
+- High support tickets (product too complex or buggy)
+
+---
+
+## **Risk Analysis & Mitigation**
+
+### **Risk 1: Users Abuse Free Tier (10,000+ Analyses/Month)**
+
+**Likelihood:** Low (manual entry is self-limiting friction)
+
+**Impact:** Low (zero API costs, only server compute)
+
+**Mitigation:**
+- Monitor server load (scale if needed, cloud auto-scaling)
+- If extreme abuse (bots), add CAPTCHA on analysis submit
+- Free tier abuse is economically irrational (manual entry too slow for bots)
+
+### **Risk 2: Low Free-to-Pro Conversion (<10%)**
+
+**Likelihood:** Medium (depends on value prop clarity)
+
+**Impact:** High (business model depends on 25% conversion)
+
+**Mitigation:**
+- A/B test CTA messaging ("address lookup" vs "market intelligence" value prop)
+- Add testimonials from Pro users ("saved 2 hours per property")
+- Show comparison: Manual entry (20 fields) vs Address entry (1 field)
+- Offer 7-day free trial of Pro features (if conversion still low)
+
+### **Risk 3: High Pro Tier Churn (>10%/month)**
+
+**Likelihood:** Medium (if users don't adopt workflow features)
+
+**Impact:** High (LTV decreases, business unsustainable)
+
+**Mitigation:**
+- Onboarding flow: Force Pro users to save 1st analysis (create habit)
+- Email drip campaign: "Did you know you can modify assumptions instantly?"
+- Usage analytics: Identify low-engagement users, offer support
+- Feature adoption: If users don't use scenario testing, send tutorial
+
+### **Risk 4: API Costs Spike (RentCast/OpenAI Price Increases)**
+
+**Likelihood:** Medium (API providers change pricing)
+
+**Impact:** Medium (margins compress from 95% to 80-90%)
+
+**Mitigation:**
+- Monitor API costs weekly (alert if >$0.10 per analysis)
+- Negotiate volume discounts with RentCast, OpenAI
+- Cache frequently requested data (reduce redundant API calls)
+- If costs spike >2x, consider increasing Pro tier to $19.99/month (still competitive)
+
+### **Risk 5: Competitors Copy Free Unlimited Strategy**
+
+**Likelihood:** High (easy to copy positioning)
+
+**Impact:** Medium (erodes differentiation)
+
+**Mitigation:**
+- Moat is execution quality, not just free tier
+- Focus on AI insights quality (harder to replicate)
+- Build network effects (portfolio tracking, community features)
+- Brand as category leader ("first free unlimited calculator")
+
+---
+
+## **Implementation Priorities (High-Level)**
+
+**Phase 1: Progressive Metrics Disclosure (Week 1-2)**
+- Implement locked advanced metrics in free tier (visible but grayed out)
+- Hide advanced BRRRR metrics (unlocked in Pro)
+- Hide advanced Buy & Hold metrics (unlocked in Pro)
+- Update CTA messaging to reflect "basic vs full analysis" value prop
+- Add "Unlock in Pro" messaging on locked metrics
+
+**Phase 2: Email-First Auth for Pro (Week 3-4)**
+- Magic link signup flow (passwordless)
+- Stripe payment integration
+- User.subscriptionTier enforcement
+
+**Phase 3: Pro Intelligence Features (Week 5-8)**
+- Address-based entry (RentCast integration)
+- Market intelligence (FRED + Census)
+- AI insights enhancement (OpenAI with market context)
+
+**Phase 4: Saved Analyses Workflow (Week 9-12)**
+- Save all Pro analyses by address
+- "Modify Assumptions" feature (instant scenario testing)
+- Compare properties side-by-side
+
+**Phase 5: Multi-Family Frontend (Week 13-16)**
+- Multi-Family property form UI (backend already complete)
+- Analysis results display for MF properties (2-32 units)
+- Unit-level data entry interface
+
+**Note:** Portfolio tracking and Deal pipeline are ALREADY BUILT and working in production.
+
+---
+
+## **Estimated Effort**
+
+**Total:** 16 weeks (4 months) for complete implementation
+
+**Note:** This is business strategy documentation. Technical implementation details and effort estimation should be done by Engineering team.
+
+---
+
+## **Related Documentation**
+
+- `/docs/FEATURE_BACKLOG.md` - This document
+- `/docs/ARCHITECTURE_V3.md` - System architecture (for technical implementation)
+- `/backend/src/models/User.ts` - User model (add subscriptionTier field)
+- `/frontend/src/components/Auth/` - Authentication components (magic link flow)
+
+---
+
+## **Success Criteria**
+
+**Phase 1 (Progressive Metrics Disclosure):**
+- ✅ Free tier shows basic analysis (Deal Quality Score + core metrics)
+- ✅ Advanced BRRRR metrics locked (visible but grayed out with "Unlock in Pro")
+- ✅ Advanced Buy & Hold metrics locked (visible but grayed out)
+- ✅ Static CTA displayed with clear basic vs full analysis value prop
+- ✅ Zero API costs for free tier (no address lookup, no market data)
+- ✅ User can analyze unlimited properties (no limits)
+
+**Phase 2 (Email-First Auth):**
+- ✅ Magic link signup works (email → link → auto-login)
+- ✅ Stripe payment integration completes successfully
+- ✅ User.subscriptionTier = 'professional' after payment
+- ✅ Pro users can login via magic link (passwordless)
+
+**Phase 3 (Pro Intelligence Features):**
+- ✅ Address entry auto-fills property data via RentCast
+- ✅ Market intelligence displayed (FRED economic data, Census demographics)
+- ✅ AI insights generated with market context (OpenAI)
+- ✅ Pro features NOT available to free tier users
+
+**Phase 4 (Saved Analyses Workflow):**
+- ✅ All Pro analyses saved by address in database
+- ✅ "Modify Assumptions" feature works (instant results update)
+- ✅ Users can compare multiple scenarios for same property
+- ✅ Saved properties list shows all user's analyses
+
+**Phase 5 (Portfolio & Pipeline):**
+- ✅ Portfolio tracking works (7 goal types)
+- ✅ Deal pipeline organization (Leads → Analyzing → Under Contract → Closed)
+- ✅ Performance analytics dashboard
+
+**Business Success Criteria:**
+- ✅ 25%+ free-to-paid conversion rate
+- ✅ <5% monthly churn rate
+- ✅ 95%+ margin on Pro tier revenue
+- ✅ NPS >50 (user advocacy)
+
+---
+
+## **Notes**
+
+- **Marcus Chen Priority:** "This is the foundation for everything else. Get the business model right first, then optimize premium features. Free forever + Pro intelligence is our category-defining positioning."
+
+- **No Technical Details in This Doc:** This is business strategy only. Engineering team will create separate technical specs for implementation.
+
+- **Transparent Communication:** "No import" policy must be clearly stated in FAQ and messaging. Honesty builds more trust than hidden limitations.
+
+- **Focus on Workflow Value:** Don't sell "more analyses" - sell "saved time, better decisions, workflow efficiency."
+
+- **Data-Driven Iteration:** After Phase 1-2 launch, measure conversion rates and optimize CTA messaging based on actual user behavior.
+
+---
+
 ### Feature #10: Educational Content Integration (Josh Partnership Prep)
 **Status:** 🔴 Not Started
 **Priority:** P1 - High (Partnership Strategy - After Feature #2, Before Feature #1)

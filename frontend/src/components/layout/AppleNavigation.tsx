@@ -118,14 +118,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     path: '/market-data',
     badge: null
   },
-  // Development/Testing routes
-  ...(process.env.NODE_ENV === 'development' ? [{
-    id: 'census-test',
-    label: 'Census Data Test',
+  {
+    id: 'census-demographics',
+    label: 'Demographics',
     icon: MapIcon,
     path: '/census-test',
-    badge: null
-  }] : []),
+    badge: 'Beta'
+  },
   // Admin routes
   ...(userRole === 'admin' ? [{
     id: 'admin',
@@ -170,7 +169,7 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
   if (userMode === 'novice') {
     return allItems.filter(item => {
       // Hide advanced features in novice mode
-      const noviceHiddenItems = ['market-data', 'admin', 'census-test'];
+      const noviceHiddenItems = ['market-data', 'admin'];
       
       if (noviceHiddenItems.includes(item.id)) {
         return false;

@@ -120,6 +120,33 @@ const trackLoginFailed = (errorMessage: string) => {
 };
 
 /**
+ * PDF request tracking
+ */
+const trackPdfRequestInitiated = (strategy: 'brrrr' | 'buy-hold', dealScore?: number) => {
+  trackEvent('pdf_request_initiated', {
+    strategy,
+    deal_score: dealScore,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+const trackPdfRequestSuccess = (strategy: 'brrrr' | 'buy-hold', dealScore?: number) => {
+  trackEvent('pdf_request_success', {
+    strategy,
+    deal_score: dealScore,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+const trackPdfRequestFailed = (strategy: 'brrrr' | 'buy-hold', errorType: string) => {
+  trackEvent('pdf_request_failed', {
+    strategy,
+    error_type: errorType,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+/**
  * Exported analytics object with all tracking functions
  */
 export const analytics = {
@@ -141,6 +168,11 @@ export const analytics = {
   // Login tracking
   trackLoginSuccess,
   trackLoginFailed,
+
+  // PDF tracking
+  trackPdfRequestInitiated,
+  trackPdfRequestSuccess,
+  trackPdfRequestFailed,
 };
 
 // Default export for convenience
