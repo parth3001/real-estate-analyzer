@@ -697,6 +697,13 @@ export class EmailService {
             </p>
           </div>
 
+          <!-- Beta Disclaimer -->
+          <div style="margin: 32px 0 24px; padding: 16px; background-color: #F5F5F5; border-radius: 8px; border-left: 4px solid #9ca3af;">
+            <p style="margin: 0; font-size: 11px; color: #666666; line-height: 1.5;">
+              <strong>BETA DISCLAIMER:</strong> REanalyzr is currently in beta. This analysis is for educational and informational purposes only. REanalyzr provides professional-grade calculations but does not constitute financial, legal, or investment advice. Always consult with qualified professionals (CPA, attorney, financial advisor) before making investment decisions. Past performance does not guarantee future results. Real estate investing involves risk including loss of principal.
+            </p>
+          </div>
+
           <div class="footer">
             <p style="margin: 0;">© 2026 REanalyzr. Institutional-Grade Analysis for Individual Investors.</p>
             <p style="margin: 8px 0 0; font-size: 12px; color: #9ca3af;">reanalyzr.com</p>
