@@ -59,7 +59,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               letterSpacing: '-0.02em'
             }}
           >
-            Rental Property Investment Calculator
+            Rental Property Calculator & Deal Analyzer
           </Typography>
 
           {/* Subheadline */}
@@ -76,7 +76,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               mx: 'auto'
             }}
           >
-            Analyze rental properties in minutes using 28 professional investment metrics and instantly see a Deal Quality Score that tells you if the deal meets institutional investment standards.
+            Analyze rental properties in minutes using 28 professional investment metrics and instantly see a Deal Quality Score that tells you if the deal meets professional investment standards.
           </Typography>
 
           {/* Supporting Line */}
