@@ -52,6 +52,7 @@ import BlogListPage from './pages/BlogListPage';
 import BlogPostPage from './pages/BlogPostPage';
 import BRRRRCalculatorPage from './pages/BRRRRCalculatorPage';
 import CapRateCalculatorPage from './pages/CapRateCalculatorPage';
+import RentalPropertyCalculatorPage from './pages/RentalPropertyCalculatorPage';
 
 // Portfolio Components
 import PortfolioDashboard from './pages/PortfolioDashboard';
@@ -214,7 +215,7 @@ function App() {
               <Route path="/calculator/buy-hold" element={<UniversalCalculator />} />
               <Route path="/brrrr-calculator" element={<BRRRRCalculatorPage />} />
               <Route path="/cap-rate-calculator" element={<CapRateCalculatorPage />} />
-              <Route path="/rental-property-calculator" element={<UniversalCalculator />} />
+              <Route path="/rental-property-calculator" element={<RentalPropertyCalculatorPage />} />
 
               {/* Blog Routes - Public, No Auth Required */}
               <Route path="/blog" element={<BlogListPage />} />
