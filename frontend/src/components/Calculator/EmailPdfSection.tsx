@@ -144,7 +144,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <EmailIcon sx={{ mr: 1, color: 'primary.main' }} />
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Email Me This Analysis
+          Email My Deal Report
         </Typography>
       </Box>
 
@@ -155,8 +155,11 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
           severity="success"
           sx={{ mb: 2 }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            PDF sent successfully! Check your email inbox (and spam folder).
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            On its way to your inbox!
+          </Typography>
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+            Check your email in the next 2 minutes. (Don't forget to check spam if you don't see it.)
           </Typography>
         </Alert>
       )}
@@ -180,7 +183,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'flex-start' }}>
           <TextField
             type="email"
-            placeholder="your.email@example.com"
+            placeholder="Enter your email"
             value={email}
             onChange={handleEmailChange}
             disabled={loading || success}
@@ -192,8 +195,10 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
                 borderRadius: '8px',
               },
             }}
-            inputProps={{
-              'aria-label': 'Email address',
+            slotProps={{
+              input: {
+                'aria-label': 'Email address',
+              }
             }}
           />
           <Button
@@ -222,7 +227,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
             ) : success ? (
               'Sent ✓'
             ) : (
-              'Email PDF'
+              'Send My Report'
             )}
           </Button>
         </Box>
@@ -239,7 +244,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
           lineHeight: 1.4,
         }}
       >
-        📧 We'll email you the PDF analysis. We don't share your email with anyone.
+        We'll email your full analysis. No spam, no sharing.
         {' '}
         <Typography
           component="span"

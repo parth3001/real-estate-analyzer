@@ -492,9 +492,7 @@ export class EmailService {
     const template = this.getAnonymousPdfEmailTemplate(strategy, dealQualityScore, propertyAddress, analysis);
 
     // Enhanced subject line with score and optional address
-    const subject = propertyAddress
-      ? `${propertyAddress} - ${dealQualityScore}/100 Analysis ✅`
-      : `Your Property Analysis: ${dealQualityScore}/100 Score ✅`;
+    const subject = `Your REanalyzr Deal Report: ${propertyAddress || 'Property Analysis'} (${dealQualityScore}/100)`;
 
     await this.sendEmail({
       to: email,
@@ -631,14 +629,13 @@ export class EmailService {
         <div class="container">
           <div class="header">
             <h1 class="logo">REanalyzr</h1>
-            <p class="tagline">Property Analysis Report</p>
+            <p class="tagline">Deal Quality Score: ${dealQualityScore}/100</p>
           </div>
 
           <div class="content">
             <h2 style="color: #0a0a0a; margin-top: 0; font-size: 28px; font-weight: 600;">Your Analysis is Ready! 📊</h2>
             <p style="color: #374151; line-height: 1.6; font-size: 16px;">
-              ${propertyAddress ? `We've analyzed <strong>${propertyAddress}</strong> using our` : 'We\'ve completed your'}
-              ${strategyLabel} investment strategy calculator. Your professional-grade analysis is attached as a PDF.
+              We analyzed ${propertyAddress ? `<strong>${propertyAddress}</strong>` : 'your property'} using our ${strategyLabel} calculator. You got a <strong>${dealQualityScore}/100 Deal Quality Score</strong>. Your full professional-grade analysis is attached below — here's what it means for your deal.
             </p>
 
             <div class="score-box">
@@ -668,18 +665,18 @@ export class EmailService {
             </p>
             ` : ''}
 
-            <h3 style="color: #0a0a0a; font-weight: 600; margin-top: 32px;">📊 Your Next Steps</h3>
+            <h3 style="color: #0a0a0a; font-weight: 600; margin-top: 32px;">What's next?</h3>
             <ol style="color: #374151; line-height: 1.8; padding-left: 24px;">
-              <li><strong>Review the attached PDF</strong> — Your complete 2-page analysis with all metrics</li>
+              <li><strong>Review the PDF</strong> — All the metrics and details are in your 2-page analysis</li>
               <li><strong>${nextStepAction}</strong> — ${nextStepReasoning}</li>
-              <li><strong>Share with your team</strong> — Forward this email to your lender, CPA, or investment partner</li>
-              <li><strong>Track future deals</strong> — <a href="${signupUrl}" style="color: #0a0a0a; text-decoration: none; font-weight: 600;">Create a free account</a> to save and compare your next properties</li>
+              <li><strong>Share it</strong> — Forward this to your CPA, lender, or partner</li>
+              <li><strong>Track your deals</strong> — <a href="${signupUrl}" style="color: #0a0a0a; text-decoration: none; font-weight: 600;">Create a free account</a> to compare this to your next property</li>
             </ol>
 
             <div style="text-align: center; margin: 40px 0 32px;">
-              <a href="${signupUrl}" class="button">Save Future Deals in Deal Pipeline →</a>
+              <a href="${signupUrl}" class="button">Track My Next Deals (Free Forever) →</a>
               <p style="margin: 12px 0 0; color: #6b7280; font-size: 14px;">
-                Organize your properties • Track your pipeline • Compare multiple deals
+                Save deals • Track your pipeline • Compare properties side-by-side
               </p>
             </div>
 
@@ -693,7 +690,7 @@ export class EmailService {
             </ul>
 
             <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 32px;">
-              <strong>Questions?</strong> Reply to this email or reach out to our support team. We're here to help you make confident investment decisions.
+              <strong>Questions?</strong> Reply to this email. We'll help you figure out if this deal is worth it.
             </p>
           </div>
 
