@@ -27,6 +27,16 @@ The rule came out of the early-to-mid 2010s, when interest rates sat at 3–4%, 
 
 Here's why that math doesn't hold anymore. Interest rates are 7–8%, not 3–4%. Most lenders cap investment property cash-out refinances at 75% LTV, not 80%. Appreciation has moderated to 3–4% in most markets. The result: an investor following the 70% rule to the letter in 2026 might still leave 10–20% of their capital trapped in the deal — and they may have passed on stronger deals along the way because the rule said no.
 
+---
+
+> **Analyze this deal instantly**
+>
+> Run the same analysis professional investors use — including cap rate, cash flow, and deal quality scoring.
+>
+> 👉 [Try the free rental property calculator](/rental-property-calculator)
+
+---
+
 ## When the 70% Rule Works
 
 The 70% rule isn't dead. There are three scenarios where it still serves you well.
@@ -112,6 +122,11 @@ The 70% rule said $170K. The capital recovery formula — once you define your a
 ### Why This Formula Is Better
 
 It accounts for your actual LTV. The difference between 75% and 80% LTV is enormous on a $300K property — $15K in refinance proceeds. The 70% rule doesn't distinguish between the two. It lets you define your own capital recovery target instead of forcing you into a 100%-or-nothing framework. And it adjusts automatically for market conditions — if rates rise and lenders tighten LTV to 70%, the formula recalibrates while the 70% rule stays static.
+
+**Related guides:**
+- [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)
+- [How to Calculate ARV (After-Repair Value)](/blog/arv-calculator-guide)
+- [Cap Rate Calculator: Complete Investor's Guide](/blog/cap-rate-calculator-guide)
 
 ## Real Deal Analysis: 70% Rule vs. Capital Recovery Formula
 

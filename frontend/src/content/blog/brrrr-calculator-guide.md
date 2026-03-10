@@ -25,6 +25,16 @@ BRRRR works best for investors who want to scale a rental portfolio without rais
 
 Here's the thing most BRRRR content won't tell you: the concept is simple, but the math is where deals live or die.
 
+---
+
+> **Analyze this deal instantly**
+>
+> Run the same analysis professional investors use — including cap rate, cash flow, and deal quality scoring.
+>
+> 👉 [Try the free rental property calculator](/rental-property-calculator)
+
+---
+
 ## The 6 BRRRR Numbers That Determine If a Deal Works
 
 Every BRRRR deal comes down to six metrics. Miss one and you could end up with a property that looked great on a napkin but bleeds cash in reality. Let's walk through each one using a real example: a $150K purchase, $30K rehab, $220K ARV, renting at $1,400/month, with a 75% LTV refinance at 7% interest.
@@ -158,6 +168,11 @@ Buy and hold is simpler. You buy a rent-ready property, place a tenant, and coll
 **When BRRRR makes sense:** You have rehab experience or a trusted contractor, your market has undervalued distressed properties available, and you want to scale beyond 2–3 properties without raising new capital each time.
 
 See the full comparison with real numbers in our BRRRR vs Buy and Hold guide (coming soon).
+
+**Related guides:**
+- [Cap Rate Calculator: Complete Investor's Guide](/blog/cap-rate-calculator-guide)
+- [BRRRR 70% Rule: When It Works (And When It Fails)](/blog/brrrr-70-percent-rule-guide)
+- [How to Calculate ARV (After-Repair Value)](/blog/arv-calculator-guide)
 
 ## Frequently Asked Questions
 

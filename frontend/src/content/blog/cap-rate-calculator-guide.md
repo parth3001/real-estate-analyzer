@@ -67,6 +67,14 @@ This makes cap rate the **best initial screening tool** for comparing properties
 
 ---
 
+> **Analyze this deal instantly**
+>
+> Run the same analysis professional investors use — including cap rate, cash flow, and deal quality scoring.
+>
+> 👉 [Try the free rental property calculator](/rental-property-calculator)
+
+---
+
 ## What's a Good Cap Rate?
 
 **There is no universal "good" cap rate.** What's excellent in Beverly Hills (4%) would be concerning in Detroit (4%).
@@ -195,6 +203,10 @@ This is where most investors get confused. **Cap rate and cash-on-cash return me
 - Calculating breakeven financing terms
 
 **Pro Tip:** Always calculate BOTH. Cap rate tells you if the property is a good asset. Cash-on-cash tells you if it's a good deal for you.
+
+**Related guides:**
+- [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)
+- [How to Calculate ARV (After-Repair Value)](/blog/arv-calculator-guide)
 
 ---
 

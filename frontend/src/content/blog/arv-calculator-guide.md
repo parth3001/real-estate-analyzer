@@ -23,6 +23,16 @@ Most investors use Zillow's Zestimate or Realtor.com's automated valuation model
 
 The right approach: use comparable sales in the same neighborhood, adjust for differences in size, condition, and features, and target 3–5 recent comps sold within the last 6 months and within 0.5 miles of your property.
 
+---
+
+> **Analyze this deal instantly**
+>
+> Run the same analysis professional investors use — including cap rate, cash flow, and deal quality scoring.
+>
+> 👉 [Try the free rental property calculator](/rental-property-calculator)
+
+---
+
 ## The 3 Methods Appraisers Use to Calculate ARV
 
 When an appraiser shows up to value your property for the refinance, they're using one of three established methods. Knowing which one applies to your deal — and how to replicate it yourself — is the difference between an ARV estimate that holds up and one that falls apart at the finish line.
@@ -148,6 +158,10 @@ The 70% rule is a quick screening formula that uses ARV to determine the maximum
 Using the Dallas example: ARV of $260K × 0.70 = $182K − $35K rehab = $147K maximum purchase price. The actual purchase was $180K — above the 70% rule threshold. That's why capital recovery was 91% instead of 100%+. The deal still works, but paying $33K over the 70% rule maximum is the reason it doesn't achieve infinite return.
 
 The 70% rule is a quick-filter before making an offer. It ensures you leave enough margin for capital recovery, but it doesn't account for closing costs, holding costs, or financing terms. For a full picture, run the deal through a [BRRRR Calculator](/blog/brrrr-calculator-guide) that factors in all six metrics — capital recovery, cash-on-cash return, DSCR, monthly cash flow, and infinite return potential.
+
+**Related guides:**
+- [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)
+- [BRRRR 70% Rule: When It Works (And When It Fails)](/blog/brrrr-70-percent-rule-guide)
 
 ## Frequently Asked Questions
 

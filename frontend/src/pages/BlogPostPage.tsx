@@ -270,7 +270,7 @@ const BlogPostPage: React.FC = () => {
               </ReactMarkdown>
             </Box>
 
-            {/* Inline CTA at bottom of article - contextual based on article topic */}
+            {/* Inline CTA at bottom of article - universal CTA for rental property calculator */}
             <Box
               sx={{
                 mx: { xs: 3, md: 6 },
@@ -289,19 +289,15 @@ const BlogPostPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {post.slug.includes('cap-rate')
-                  ? 'Calculate your cap rate now'
-                  : 'Run your own BRRRR analysis'}
+                Ready to analyze your next deal?
               </Typography>
               <Typography
                 sx={{ color: 'rgba(255,255,255,0.85)', mb: 2.5, fontSize: '0.938rem' }}
               >
-                {post.slug.includes('cap-rate')
-                  ? 'Free calculator. Institutional-grade formulas. Results in 60 seconds.'
-                  : '28 metrics. No login. Results in 60 seconds.'}
+                Use the REanalyzr rental property calculator to evaluate cash flow, cap rate, and investment quality in minutes.
               </Typography>
               <Button
-                onClick={() => navigate(post.slug.includes('cap-rate') ? '/cap-rate-calculator' : '/brrrr-calculator')}
+                onClick={() => navigate('/rental-property-calculator')}
                 variant="contained"
                 sx={{
                   backgroundColor: '#ffffff',
@@ -315,9 +311,7 @@ const BlogPostPage: React.FC = () => {
                   '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' },
                 }}
               >
-                {post.slug.includes('cap-rate')
-                  ? 'Try the Cap Rate Calculator →'
-                  : 'Try the BRRRR Calculator →'}
+                👉 Run your free deal analysis here
               </Button>
             </Box>
           </Box>
