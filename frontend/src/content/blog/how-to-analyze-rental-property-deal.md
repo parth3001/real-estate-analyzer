@@ -1,5 +1,5 @@
 ---
-title: "How to Analyze a Rental Property Deal (Step-by-Step Guide)"
+title: "How to Analyze a Rental Property (Step-by-Step Investor Guide)"
 slug: "how-to-analyze-rental-property-deal"
 date: "2026-03-10"
 description: "Learn the exact step-by-step process professional investors use to analyze rental properties—from estimating value through calculating the metrics that determine buy, negotiate, or pass."
@@ -7,7 +7,7 @@ keywords: ["how to analyze rental property", "rental property analysis", "evalua
 readingTime: "13 min read"
 ---
 
-# How to Analyze a Rental Property Deal (Step-by-Step Guide)
+# How to Analyze a Rental Property (Step-by-Step Investor Guide)
 
 Most rental properties that look profitable on a listing don't survive real analysis. The rent-to-price ratio checks out, the neighborhood seems solid, and the seller's pro forma shows healthy cash flow — until you plug in actual vacancy rates, maintenance costs, and today's mortgage payments. What looked like $300/month in cash flow becomes $40 or goes negative entirely.
 
@@ -25,7 +25,7 @@ Every rental analysis starts with two numbers: what the property costs and what 
 
 From these two numbers you get your baseline: gross monthly rent and annual rental income. A property renting at $2,200/month produces $26,400 in gross annual income. That's the starting point — every calculation that follows subtracts from this number.
 
-If the property needs renovation, estimate the after-repair value (ARV) using the [comp-based methodology appraisers use](/blog/arv-calculator-guide). ARV matters for refinance strategies like BRRRR, but even for a standard buy-and-hold, knowing the post-renovation value helps you understand whether your purchase price leaves room for equity. For BRRRR investors, understanding the relationship between purchase price, ARV, and capital recovery is critical. The traditional [70% rule](/blog/brrrr-70-percent-rule-guide) provides a quick screening formula, though it may need adjustment in today's lending environment.
+If the property needs renovation, estimate the after-repair value (ARV) using the [comp-based methodology appraisers use](/blog/arv-calculator-guide). ARV matters for refinance strategies like BRRRR, but even for a standard buy-and-hold, knowing the post-renovation value helps you understand whether your purchase price leaves room for equity. BRRRR investors rely heavily on ARV calculations. [Learn how to estimate ARV correctly →](/blog/arv-calculator-guide). For BRRRR investors, understanding the relationship between purchase price, ARV, and capital recovery is critical. The traditional [70% rule](/blog/brrrr-70-percent-rule-guide) provides a quick screening formula, though it may need adjustment in today's lending environment.
 
 ## Step 2: Calculate Total Investment Cost
 
@@ -95,7 +95,7 @@ This is the exact approach REanalyzr's analysis engine uses — 60+ financial me
 >
 > Instead of calculating everything manually, you can analyze rental deals instantly using the REanalyzr Rental Property Calculator.
 >
-> 👉 [Try the free calculator](/rental-property-calculator)
+> 👉 [Try the Rental Property Calculator](https://reanalyzr.com/rental-property-calculator)
 
 ---
 
@@ -149,6 +149,6 @@ The framework in this guide works for every rental property — single-family, d
 >
 > Use the REanalyzr Rental Property Calculator to evaluate deals in minutes and get a Deal Quality Score.
 >
-> 👉 [Run your analysis here](/rental-property-calculator)
+> 👉 [Try the Rental Property Calculator](https://reanalyzr.com/rental-property-calculator)
 
 ---
