@@ -160,6 +160,7 @@ Using the Dallas example: ARV of $260K × 0.70 = $182K − $35K rehab = $147K ma
 The 70% rule is a quick-filter before making an offer. It ensures you leave enough margin for capital recovery, but it doesn't account for closing costs, holding costs, or financing terms. For a full picture, run the deal through a [BRRRR Calculator](/blog/brrrr-calculator-guide) that factors in all six metrics — capital recovery, cash-on-cash return, DSCR, monthly cash flow, and infinite return potential.
 
 **Related guides:**
+- [How to Analyze a Rental Property Deal (Step-by-Step)](/blog/how-to-analyze-rental-property-deal)
 - [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)
 - [BRRRR 70% Rule: When It Works (And When It Fails)](/blog/brrrr-70-percent-rule-guide)
 

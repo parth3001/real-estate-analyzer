@@ -170,6 +170,7 @@ Buy and hold is simpler. You buy a rent-ready property, place a tenant, and coll
 See the full comparison with real numbers in our BRRRR vs Buy and Hold guide (coming soon).
 
 **Related guides:**
+- [How to Analyze a Rental Property Deal (Step-by-Step)](/blog/how-to-analyze-rental-property-deal)
 - [Cap Rate Calculator: Complete Investor's Guide](/blog/cap-rate-calculator-guide)
 - [BRRRR 70% Rule: When It Works (And When It Fails)](/blog/brrrr-70-percent-rule-guide)
 - [How to Calculate ARV (After-Repair Value)](/blog/arv-calculator-guide)

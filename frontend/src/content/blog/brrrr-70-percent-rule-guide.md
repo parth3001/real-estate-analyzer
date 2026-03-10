@@ -124,6 +124,7 @@ The 70% rule said $170K. The capital recovery formula — once you define your a
 It accounts for your actual LTV. The difference between 75% and 80% LTV is enormous on a $300K property — $15K in refinance proceeds. The 70% rule doesn't distinguish between the two. It lets you define your own capital recovery target instead of forcing you into a 100%-or-nothing framework. And it adjusts automatically for market conditions — if rates rise and lenders tighten LTV to 70%, the formula recalibrates while the 70% rule stays static.
 
 **Related guides:**
+- [How to Analyze a Rental Property Deal (Step-by-Step)](/blog/how-to-analyze-rental-property-deal)
 - [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)
 - [How to Calculate ARV (After-Repair Value)](/blog/arv-calculator-guide)
 - [Cap Rate Calculator: Complete Investor's Guide](/blog/cap-rate-calculator-guide)
