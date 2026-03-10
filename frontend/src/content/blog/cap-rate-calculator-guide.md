@@ -204,6 +204,8 @@ This is where most investors get confused. **Cap rate and cash-on-cash return me
 
 **Pro Tip:** Always calculate BOTH. Cap rate tells you if the property is a good asset. Cash-on-cash tells you if it's a good deal for you.
 
+Want to see how cap rate fits into a complete rental property analysis? Read our guide on [how to analyze a rental property](/blog/how-to-analyze-rental-property-deal) to see all the metrics working together.
+
 **Related guides:**
 - [How to Analyze a Rental Property Deal (Step-by-Step)](/blog/how-to-analyze-rental-property-deal)
 - [BRRRR Calculator: Complete Investor's Guide](/blog/brrrr-calculator-guide)

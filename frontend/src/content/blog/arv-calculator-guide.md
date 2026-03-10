@@ -188,6 +188,8 @@ For deals where you're stretching on purchase price or the ARV is uncertain, a p
 
 A solid ARV estimate is the foundation of every profitable BRRRR deal. Get it right and the rest of the math works. Get it wrong and no amount of cash flow optimization saves you.
 
+Once you know your ARV, you'll want to [analyze a rental property deal](/blog/how-to-analyze-rental-property-deal) using all the key metrics — not just ARV, but cap rate, cash flow, and DSCR combined.
+
 **Run your ARV calculation:** Plug your property details and comps into the [ARV Calculator](/arv-calculator) — same comp-adjustment methodology appraisers use, results in 60 seconds. No login required.
 
 **Analyze the full deal:** Once you have your ARV, run it through the complete [BRRRR Calculator](/brrrr-calculator) to see capital recovery, cash-on-cash return, DSCR, and whether you're in infinite return territory. [Try REanalyzr free →](/register)
