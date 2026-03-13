@@ -14,7 +14,6 @@ import {
   Chip,
   Divider,
   LinearProgress,
-  Fade,
   Collapse
 } from '@mui/material';
 import {
@@ -151,30 +150,11 @@ const WizardStep: React.FC<WizardStepProps> = ({
           <Divider />
         </Box>
 
-        {/* Validation Messages */}
-        <Box sx={{ mb: 2 }}>
-          {/* Errors */}
-          {validation?.errors && Object.entries(validation.errors).map(([field, message]) => (
-            <Fade in key={`error-${field}`}>
-              <Alert severity="error" sx={{ mb: 1 }} variant="outlined">
-                <Typography variant="body2">
-                  <strong>{field}:</strong> {message}
-                </Typography>
-              </Alert>
-            </Fade>
-          ))}
-
-          {/* Warnings */}
-          {validation?.warnings && Object.entries(validation.warnings).map(([field, message]) => (
-            <Fade in key={`warning-${field}`}>
-              <Alert severity="warning" sx={{ mb: 1 }} variant="outlined">
-                <Typography variant="body2">
-                  <strong>{field}:</strong> {message}
-                </Typography>
-              </Alert>
-            </Fade>
-          ))}
-        </Box>
+        {/*
+          Validation Messages: Removed redundant top-level alerts
+          Errors are shown inline via TextField error prop + helperText
+          This provides cleaner UI and follows Apple HIG contextual error principle
+        */}
 
         {/* Main Content */}
         <Box sx={{ flex: 1 }}>
