@@ -144,9 +144,22 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <EmailIcon sx={{ mr: 1, color: 'primary.main' }} />
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Email My Deal Report
+          Get Your Deal Analysis Report (Free)
         </Typography>
       </Box>
+
+      {/* Description */}
+      <Typography
+        variant="body2"
+        sx={{
+          color: 'text.secondary',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          mb: 2
+        }}
+      >
+        Receive your deal summary including Deal Quality Score, cash flow analysis, cap rate, DSCR, and key investment metrics—delivered instantly to your inbox.
+      </Typography>
 
       {/* Success Message */}
       {success && (
@@ -183,7 +196,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'flex-start' }}>
           <TextField
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter your email to receive the report"
             value={email}
             onChange={handleEmailChange}
             disabled={loading || success}
@@ -244,19 +257,7 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
           lineHeight: 1.4,
         }}
       >
-        We'll email your full analysis. No spam, no sharing.
-        {' '}
-        <Typography
-          component="span"
-          variant="caption"
-          sx={{
-            color: 'text.secondary',
-            fontSize: '0.75rem',
-            fontStyle: 'italic',
-          }}
-        >
-          (Limited to 5 PDFs per hour per user)
-        </Typography>
+        We'll email your complete report instantly. No spam, ever.
       </Typography>
     </Paper>
   );

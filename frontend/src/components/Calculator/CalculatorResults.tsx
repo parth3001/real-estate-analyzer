@@ -165,6 +165,17 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
           >
             {getScoreContext(analysis.investmentDecision.professionalAssessment.dealQuality)}
           </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '14px',
+              fontWeight: 400,
+              mt: 1
+            }}
+          >
+            Full deal analysis report available below.
+          </Typography>
         </Paper>
       )}
 
