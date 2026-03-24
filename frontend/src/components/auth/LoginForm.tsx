@@ -263,18 +263,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
             style={getLogoStyle()}
           />
           <h1 style={getTitleStyle()}>
-            Professional Real Estate Analysis.
+            Welcome Back to REanalyzr
           </h1>
           <h2 style={{
             ...getTitleStyle(),
             fontSize: isMobile ? '2.5rem' : isTablet ? '3.5rem' : '4.5rem',
             margin: '0 0 24px 0'
           }}>
-            Zero Spreadsheets. Zero Guesswork.
+            Screen Deals. Track Pipeline. See Portfolio Impact.
           </h2>
           <p style={getSubtitleStyle()}>
-            REAnalyzr brings institutional-grade property analysis to individual investors.
-            Calculate NOI, Cap Rate, IRR, and 25+ metrics in seconds—no Excel required.
+            Structured rental property analysis to screen deals faster with less guesswork. Track your pipeline, analyze properties, and understand portfolio impact in one workflow.
           </p>
 
           <div style={getFeaturesStyle()}>
@@ -327,12 +326,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
                   ...getFeatureTextStyle(),
                   fontWeight: 600,
                   fontSize: isTablet ? '1.125rem' : '1.25rem'
-                }}>AI Investment Advisor</span>
+                }}>Deal Quality Score</span>
                 <span style={{
                   fontSize: isTablet ? '0.875rem' : '0.938rem',
                   color: 'rgba(255, 255, 255, 0.7)',
                   lineHeight: 1.4
-                }}>BUY/NEGOTIATE/PASS verdicts with walk-away prices—not just numbers</span>
+                }}>Deal Quality Score (0-100) helps you screen deals based on your own standards and risk tolerance—not just numbers</span>
               </div>
             </div>
           </div>

@@ -428,7 +428,7 @@ I built REanalyzr as a more comprehensive alternative:
 Would you consider adding it to your list?
 
 Link: https://reanalyzr.com
-Description: "Free rental property calculator with 28 institutional-grade metrics, AI insights, and multi-family support"
+Description: "Free rental property calculator with structured workflow, Deal Quality Score screening, and multi-family support"
 
 No worries if it's not a fit - just thought your readers might find it valuable!
 
@@ -470,14 +470,15 @@ Subject: Free property analysis tool for your investor clients
 
 Hi [Agent Name],
 
-I'm Parth - real estate investor and tech leader based in [City/Your Location]. I built REanalyzr, a free property analysis tool that helps investors make confident decisions faster.
+I'm Parth - real estate investor and tech leader based in [City/Your Location]. I built REanalyzr, a free property analysis tool that helps investors screen rental deals faster with less guesswork.
 
 I noticed you work with investor clients in [Their City]. Would you be interested in offering REanalyzr to them?
 
 **What your clients get:**
-- Professional-grade analysis (28 institutional metrics)
+- Structured workflow for screening rental deals
+- Deal Quality Score (0-100) based on their risk tolerance
 - Single-family and multi-family support (2-32 units)
-- AI-powered market insights using FRED + Census data
+- AI-powered market insights using real-time data
 - BRRRR strategy analysis with capital recovery
 - Completely free while in Beta
 

@@ -155,10 +155,10 @@ const PipelineHealthMonitor: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="h5" fontWeight={700}>
-              Pipeline Health Monitor
+              Your Deal Pipeline
             </Typography>
             <Tooltip
-              title="Real-time view of your property deal pipeline showing stage distribution, conversion rates, and time tracking for active opportunities."
+              title="Stay organized with all your deals in one place. Track where each property stands and see conversion rates from initial screening to contract."
               placement="top"
               arrow
             >

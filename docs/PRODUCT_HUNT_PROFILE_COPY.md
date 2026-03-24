@@ -4,12 +4,12 @@
 
 **Version 1: Technical Builder Focus (150 chars)**
 ```
-Software engineer & real estate investor. Built REanalyzr nights/weekends to solve my own analysis paralysis problem. Now helping 1000+ investors make confident decisions.
+Software engineer & real estate investor. Built REanalyzr nights/weekends to solve my own analysis paralysis problem. Now helping 1000+ investors screen rental deals with less guesswork.
 ```
 
 **Version 2: Problem-Solver Focus (160 chars)**
 ```
-Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr to bring institutional-grade tools to individual investors.
+Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr to give individual investors a structured workflow for screening rental deals.
 ```
 
 **Version 3: Mission-Driven Focus (155 chars)**
@@ -33,9 +33,9 @@ I'm a software engineer with a passion for real estate investing. After spending
 
 So I built REanalyzr.
 
-What started as a personal tool to help me make better investment decisions has grown into a platform serving 1000+ investors. I code nights and weekends to bring institutional-grade analysis tools to individual investors who don't have access to Wall Street resources.
+What started as a personal tool to help me screen rental deals has grown into a platform serving 1000+ investors. I code nights and weekends to give individual investors a structured workflow for analyzing rental properties without spreadsheet chaos.
 
-REanalyzr combines real-time market data (FRED, RentCast, Census), professional-grade financial calculations, and AI-powered insights to help investors go from "Is this a good deal?" to confident action in under 5 minutes.
+REanalyzr combines real-time market data (FRED, RentCast, Census), Deal Quality Score screening framework, and AI-powered insights to help investors screen rental deals faster with less guesswork—in under 5 minutes.
 
 I'm bootstrapping this journey, learning in public, and building based on real investor feedback. If you've ever felt analysis paralysis staring at a property listing, REanalyzr is built for you.
 
@@ -191,19 +191,19 @@ Now helping investors worldwide.
 
 **Be Prepared to Answer**:
 1. "What's your unfair advantage over competitors?"
-   - Real investor using own tool + CPA-validated calculations
+   - Real investor using own tool + structured workflow approach
 
 2. "How are you different from BiggerPockets calculator?"
-   - RentCast integration, AI insights, portfolio tracking, mobile-first
+   - We solve problems calculators don't: Reduce guesswork (Deal Quality Score), Stay organized (pipeline tracking), See the bigger picture (portfolio context)
 
 3. "What's your business model?"
-   - Freemium: Free tier (3 analyses/month), Paid tiers ($49-$399/mo)
+   - Freemium: Free tier (3 analyses/month), Paid tier ($19.99/mo for beta users)
 
 4. "Are you going full-time on this?"
    - "Building nights/weekends for now, focused on Product-Market Fit first"
 
 5. "What's your biggest challenge?"
-   - "Getting investors to trust AI-powered verdicts over their Excel instincts"
+   - "Getting investors to move from Excel spreadsheets to structured workflows"
 
 ---
 
@@ -236,23 +236,23 @@ RE investor democratizing analysis.
 
 **Short Version (150 chars) - For Twitter/Social**:
 ```
-Full-stack engineer & real estate investor. Built REanalyzr nights/weekends to bring institutional-grade analysis tools to individual investors. 🏠💻
+Full-stack engineer & real estate investor. Built REanalyzr nights/weekends to give investors a structured workflow for screening rental deals. 🏠💻
 ```
 
 **Medium Version (280 chars) - For Product Hunt**:
 ```
-Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr nights/weekends to bring institutional-grade tools to individual investors. Helping investors go from "Is this a good deal?" to confident action in under 5 minutes. 🏠💻🚀
+Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr nights/weekends to give individual investors a structured workflow for screening rental deals. Help investors screen deals faster with less guesswork—in under 5 minutes. 🏠💻🚀
 ```
 
 **Long Version (520 chars) - For PH Extended Bio**:
 ```
-Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr nights/weekends to bring institutional-grade tools to individual investors.
+Full-stack engineer who got tired of Excel spreadsheets for rental property analysis. Built REanalyzr nights/weekends to give individual investors a structured workflow for screening rental deals.
 
 🏠 Real estate investor since 2018
 💻 Passionate about data-driven decisions
 🚀 Building in public, learning every day
 
-REanalyzr combines real-time market data, professional financial calculations, and AI insights to help investors go from "Is this a good deal?" to confident action in under 5 minutes.
+REanalyzr combines real-time market data, Deal Quality Score screening framework, and AI insights to help investors screen rental deals faster with less guesswork—in under 5 minutes.
 
 Let's democratize real estate investing together.
 ```

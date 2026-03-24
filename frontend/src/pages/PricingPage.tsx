@@ -37,8 +37,8 @@ const PricingPage: React.FC = () => {
       answer: 'Yes. Join during beta and you keep $0/month pricing forever—even when we launch paid plans in Q3 2026. No credit card required. No strings attached.'
     },
     {
-      question: 'What\'s included in "institutional-grade analysis"?',
-      answer: 'You get the same 28 professional metrics that Wall Street uses: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return, Gross Rent Multiplier, Debt Yield, Break-Even Occupancy, Operating Expense Ratio, and more. Plus real-time economic data from FRED and Census demographics for every US market.'
+      question: 'What\'s included in the analysis?',
+      answer: 'You get a structured workflow with 28 professional metrics: Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return, Gross Rent Multiplier, Debt Yield, Break-Even Occupancy, Operating Expense Ratio, and more. Plus Deal Quality Score to help you screen deals based on your own standards and risk tolerance, with real-time economic data from FRED and Census demographics for every US market.'
     },
     {
       question: 'What does "unlimited" really mean?',
@@ -64,7 +64,7 @@ const PricingPage: React.FC = () => {
         <title>Free Beta Access - REanalyzr | Lock In $0/Month Forever</title>
         <meta
           name="description"
-          content="Join REanalyzr beta and get institutional-grade real estate analysis free forever. Early adopters keep $0/month pricing even after paid plans launch in Q3 2026. No credit card required."
+          content="Join REanalyzr beta and get structured rental property analysis free forever. Early adopters keep $0/month pricing even after paid plans launch in Q3 2026. No credit card required."
         />
         <link rel="canonical" href="https://reanalyzr.com/pricing" />
       </Helmet>
@@ -120,7 +120,7 @@ const PricingPage: React.FC = () => {
           >
             <PricingCard
               tier="beta"
-              title="Institutional-Grade Analysis"
+              title="Structured Rental Property Analysis"
               price="$0"
               priceUnit="per month, forever"
               badge="🎉 FREE BETA ACCESS"

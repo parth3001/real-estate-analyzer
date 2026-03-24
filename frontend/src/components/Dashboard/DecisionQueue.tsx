@@ -8,9 +8,6 @@ import {
   Tooltip
 } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Info as InfoIcon,
   ArrowForward as ArrowForwardIcon,
   Schedule as ScheduleIcon,
   AttachMoney as AttachMoneyIcon,
@@ -21,13 +18,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { AppleCard, AppleButton } from '../ui/AppleComponents';
 import { propertyApi, pipelineApi } from '../../services/api';
+import { getScoreColor } from '../../utils/scoreColors';
 
 interface DecisionItem {
   id: string;
   propertyName: string;
   address: string;
   askingPrice: number;
-  verdict: 'BUY' | 'NEGOTIATE' | 'CAUTION' | 'PASS';
   dealQuality: number;
   cashFlow: number;
   analysisDate: string;
@@ -36,12 +33,6 @@ interface DecisionItem {
   pipelineStage?: string;
 }
 
-const VERDICT_CONFIG = {
-  BUY: { color: 'success', icon: CheckCircleIcon },
-  NEGOTIATE: { color: 'warning', icon: InfoIcon },
-  CAUTION: { color: 'warning', icon: InfoIcon },
-  PASS: { color: 'error', icon: CancelIcon }
-};
 
 const DecisionQueue: React.FC = () => {
   const navigate = useNavigate();
@@ -85,21 +76,20 @@ const DecisionQueue: React.FC = () => {
           .filter((deal: any) => {
             // More flexible checks for different data structures
             const hasAnalysis = !!(deal.analysis || deal.analysisResults || deal.analysisData);
-            const hasVerdict = !!(deal.investmentDecision?.verdict || deal.verdict || deal.analysis?.verdict || deal.quickMetrics?.verdict);
+            const hasDealQuality = !!(deal.investmentDecision?.professionalAssessment?.dealQuality || deal.dealQuality || deal.analysis?.dealQuality || deal.quickMetrics?.dealQuality);
             // More lenient active check - if no stage is defined, assume it's active
             const isActive = !deal.currentStage || (deal.currentStage !== 'CLOSED' && deal.currentStage !== 'LOST');
 
             console.log(`Decision Queue Filter - Property ${deal._id}:`, {
               hasAnalysis,
-              hasVerdict,
+              hasDealQuality,
               isActive,
               currentStage: deal.currentStage,
-              qualifies: hasAnalysis && hasVerdict && isActive,
-              analysisData: deal.analysis || deal.analysisResults || deal.analysisData || 'none',
-              verdictData: deal.investmentDecision?.verdict || deal.verdict || deal.analysis?.verdict || deal.quickMetrics?.verdict || 'none'
+              qualifies: hasAnalysis && hasDealQuality && isActive,
+              analysisData: deal.analysis || deal.analysisResults || deal.analysisData || 'none'
             });
 
-            return hasAnalysis && hasVerdict && isActive;
+            return hasAnalysis && hasDealQuality && isActive;
           })
           .map((deal: any) => {
             // Flexible data extraction
@@ -120,9 +110,6 @@ const DecisionQueue: React.FC = () => {
             // Price fallbacks
             const askingPrice = deal.purchasePrice || deal.askingPrice || 0;
 
-            // Verdict fallbacks
-            const verdict = investmentDecision.verdict || deal.verdict || analysis.verdict || deal.quickMetrics?.verdict || 'REVIEW';
-
             // Deal quality fallbacks
             const dealQuality = investmentDecision.professionalAssessment?.dealQuality ||
                               deal.dealQuality ||
@@ -139,7 +126,6 @@ const DecisionQueue: React.FC = () => {
               propertyName,
               address,
               askingPrice,
-              verdict,
               dealQuality,
               cashFlow,
               analysisDate: analysisDate.toISOString(),
@@ -177,10 +163,6 @@ const DecisionQueue: React.FC = () => {
     if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
     if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
     return `$${Math.round(amount).toLocaleString()}`;
-  };
-
-  const getVerdictColor = (verdict: string) => {
-    return VERDICT_CONFIG[verdict as keyof typeof VERDICT_CONFIG]?.color || 'default';
   };
 
   const getDaysColor = (days: number): string => {
@@ -227,12 +209,15 @@ const DecisionQueue: React.FC = () => {
     return (
       <AppleCard padding="large">
         <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
-          Decision Queue
+          Deal Screening Queue
         </Typography>
         <Box sx={{ textAlign: 'center', py: 4 }}>
-          <CheckCircleIcon sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            No pending decisions. All properties are handled!
+          <AnalysisIcon sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
+          <Typography variant="body1" fontWeight={600} sx={{ mb: 1 }}>
+            Your deal pipeline is clear!
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Ready to screen your next rental property opportunity?
           </Typography>
           <AppleButton
             variant="primary"
@@ -250,10 +235,10 @@ const DecisionQueue: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="h6" fontWeight={600}>
-            Decision Queue
+            Deal Screening Queue
           </Typography>
           <Tooltip
-            title="Properties with completed analysis that need your investment decision. Each property shows AI verdict, deal quality score, and projected cash flow to help you make informed investment choices."
+            title="Never lose track of a deal. All analyzed properties are here with Deal Quality Score (0-100) to help you screen opportunities based on YOUR standards—not guesswork."
             placement="top"
             arrow
           >
@@ -261,7 +246,7 @@ const DecisionQueue: React.FC = () => {
           </Tooltip>
         </Box>
         <Chip
-          label={`${decisions.length} Pending`}
+          label={`${decisions.length} ready to review`}
           size="small"
           color="primary"
         />
@@ -269,7 +254,6 @@ const DecisionQueue: React.FC = () => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {decisions.map((item) => {
-          const VerdictIcon = VERDICT_CONFIG[item.verdict as keyof typeof VERDICT_CONFIG]?.icon || InfoIcon;
           const sourceBadge = getSourceBadge(item);
 
           return (
@@ -326,21 +310,15 @@ const DecisionQueue: React.FC = () => {
                 </Typography>
               </Box>
 
-              {/* Row 3: Verdict, Deal Quality, Cash Flow */}
+              {/* Row 3: Deal Quality Score, Cash Flow */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Chip
-                  icon={<VerdictIcon />}
-                  label={item.verdict}
-                  color={getVerdictColor(item.verdict) as any}
+                  label={`Quality: ${Math.round(item.dealQuality)}/100`}
                   size="small"
-                />
-                <Chip
-                  label={`Quality: ${item.dealQuality}/100`}
-                  size="small"
-                  variant="outlined"
                   sx={{
-                    borderColor: item.dealQuality >= 70 ? 'success.main' :
-                               item.dealQuality >= 50 ? 'warning.main' : 'error.main'
+                    backgroundColor: getScoreColor(item.dealQuality),
+                    color: '#FFFFFF',
+                    fontWeight: 600
                   }}
                 />
                 <Chip

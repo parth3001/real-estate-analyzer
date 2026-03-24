@@ -9,6 +9,7 @@ import {
   Dashboard as DashboardIcon,
   TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Import new dashboard components
 import PipelineHealthMonitor from './PipelineHealthMonitor';
@@ -19,6 +20,7 @@ import ActivityTimeline from './ActivityTimeline';
 import FocusedDecisionCenter from './FocusedDecisionCenter';
 
 const InvestmentDashboard: React.FC = () => {
+  const { user } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [view, setView] = useState<'enhanced' | 'focused'>('enhanced');
 
@@ -70,16 +72,16 @@ const InvestmentDashboard: React.FC = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        mb: 4
+        mb: 3
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <DashboardIcon sx={{ fontSize: 32, color: 'primary.main' }} />
           <Box>
             <Typography variant="h4" fontWeight={700}>
-              Investment Dashboard
+              Your Investment Command Center
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Portfolio Intelligence & Decision Center
+            <Typography variant="body2" color="text.secondary">
+              Screen deals, track your pipeline, and see portfolio impact in one place.
             </Typography>
           </Box>
         </Box>
@@ -93,6 +95,23 @@ const InvestmentDashboard: React.FC = () => {
           </IconButton>
         </Box>
       </Box>
+
+      {/* Welcome Message */}
+      {user && (
+        <Box sx={{
+          mb: 3,
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Welcome back, {user.firstName || 'Investor'} 👋
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Stay organized with all your deals tracked in one workflow.
+          </Typography>
+        </Box>
+      )}
 
       {/* Pipeline Health Monitor - Full Width */}
       <Box

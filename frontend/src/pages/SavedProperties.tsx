@@ -27,6 +27,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import { propertyApi } from '../services/api';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { getStrategyIconConfig } from '../utils/strategyHelpers';
+import { getScoreColor } from '../utils/scoreColors';
 import PropertyImage from '../components/PropertyImage';
 
 interface SavedProperty {
@@ -191,21 +192,6 @@ const SavedProperties: React.FC = () => {
     setSelectedProperty(null);
   };
 
-  // Get verdict color based on verdict type
-  const getVerdictColor = (verdict?: string) => {
-    switch (verdict) {
-      case 'BUY':
-        return { bg: '#34C759', text: '#FFFFFF' };
-      case 'NEGOTIATE':
-        return { bg: '#FF9500', text: '#FFFFFF' };
-      case 'CAUTION':
-        return { bg: '#007AFF', text: '#FFFFFF' };
-      case 'PASS':
-        return { bg: '#FF3B30', text: '#FFFFFF' };
-      default:
-        return { bg: '#8E8E93', text: '#FFFFFF' };
-    }
-  };
 
   // Sort properties based on selected criteria
   const getSortedProperties = () => {
@@ -331,10 +317,10 @@ const SavedProperties: React.FC = () => {
             {/* Thumbnail column */}
             <Box sx={{ width: 64, flexShrink: 0 }} />
 
-            {/* Verdict column */}
+            {/* Deal Quality column */}
             <Box sx={{ width: 110, flexShrink: 0 }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Verdict
+                Deal Quality
               </Typography>
             </Box>
 
@@ -380,10 +366,8 @@ const SavedProperties: React.FC = () => {
           {/* Property Rows */}
           {sortedProperties.map((property) => {
             const dealQuality = property.analysis?.investmentDecision?.professionalAssessment?.dealQuality;
-            const verdict = property.analysis?.investmentDecision?.verdict;
             const cashFlow = property.analysis?.monthlyAnalysis?.cashFlow;
             const capRate = property.analysis?.keyMetrics?.capRate;
-            const verdictColors = getVerdictColor(verdict);
 
             return (
               <Box
@@ -495,14 +479,14 @@ const SavedProperties: React.FC = () => {
                   );
                 })()}
 
-                {/* Verdict Badge */}
+                {/* Deal Quality Score Badge */}
                 <Box sx={{ width: 110, flexShrink: 0 }}>
-                  {typeof dealQuality === 'number' && verdict ? (
+                  {typeof dealQuality === 'number' ? (
                     <Chip
-                      label={`${dealQuality} ${verdict}`}
+                      label={`${Math.round(dealQuality)}/100`}
                       sx={{
-                        backgroundColor: verdictColors.bg,
-                        color: verdictColors.text,
+                        backgroundColor: getScoreColor(dealQuality),
+                        color: '#FFFFFF',
                         fontWeight: 600,
                         fontSize: '0.8125rem',
                         height: 26

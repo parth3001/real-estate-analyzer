@@ -11,6 +11,7 @@ import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
 import { UniversalCalculator } from '../components/Calculator';
 import PublicHeader from '../components/common/PublicHeader';
 import { analytics } from '../utils/analytics';
+import { getScoreColor } from '../utils/scoreColors';
 
 const LandingPage: React.FC = () => {
   // Track page view on mount
@@ -24,7 +25,7 @@ const LandingPage: React.FC = () => {
         <title>BRRRR & Buy and Hold Calculator - Free Real Estate Analysis | Reanalyzr</title>
         <meta
           name="description"
-          content="Analyze rental property deals in 5 minutes with professional-grade metrics. Get deal scores for BRRRR and Buy & Hold strategies. Free calculator with beta access."
+          content="Screen rental deals faster with less guesswork. Analyze BRRRR and Buy & Hold properties with Deal Quality Score and structured workflow. Free forever for beta users."
         />
         <meta
           name="keywords"
@@ -47,7 +48,7 @@ const LandingPage: React.FC = () => {
               fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
             }}
           >
-            Real Estate Investment Calculator
+            Screen Rental Deals Faster With Less Guesswork
           </Typography>
           <Typography
             variant="body1"
@@ -59,8 +60,107 @@ const LandingPage: React.FC = () => {
               lineHeight: 1.6
             }}
           >
-            Get institutional-grade analysis in 5 minutes—the same 28 metrics institutional investors use to evaluate properties. Not your basic calculator. Free forever for Beta users.
+            Use Deal Quality Score, structured analysis, and portfolio-aware insights to evaluate opportunities without spreadsheet chaos. Analyze properties in 5 minutes—not 2 hours in Excel. Free forever for Beta users.
           </Typography>
+        </Box>
+
+        {/* Results Preview Card - Shows what users will get */}
+        <Box
+          component="a"
+          href="/sample-analysis"
+          sx={{
+            display: 'block',
+            maxWidth: '700px',
+            mx: 'auto',
+            mb: 3,
+            p: { xs: 2.5, sm: 3 },
+            backgroundColor: '#F9FAFB',
+            border: '1px solid #E5E7EB',
+            borderRadius: '12px',
+            textDecoration: 'none',
+            transition: 'all 0.2s ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              borderColor: '#D1D5DB'
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 2 }}>
+            {/* Deal Quality Score Preview */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: { xs: '100%', sm: '140px' },
+                p: 2,
+                backgroundColor: getScoreColor(87),
+                borderRadius: '8px',
+                color: '#FFFFFF'
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: { xs: '2.5rem', sm: '3rem' },
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  mb: 0.5
+                }}
+              >
+                87/100
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.75rem', sm: '0.813rem' },
+                  fontWeight: 500,
+                  opacity: 0.95,
+                  textAlign: 'center'
+                }}
+              >
+                Deal Quality Score
+              </Typography>
+            </Box>
+
+            {/* Preview Context */}
+            <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  fontWeight: 600,
+                  color: '#111827',
+                  mb: 0.5
+                }}
+              >
+                See What a Full Analysis Looks Like
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '0.938rem' },
+                  color: '#6B7280',
+                  lineHeight: 1.5
+                }}
+              >
+                Real example: $347K property in Austin, TX
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '0.938rem' },
+                  color: '#0071E3',
+                  fontWeight: 500,
+                  mt: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: { xs: 'center', sm: 'flex-start' },
+                  gap: 0.5
+                }}
+              >
+                View full example analysis →
+              </Typography>
+            </Box>
+          </Box>
         </Box>
 
         {/* Calculator embedded directly */}
@@ -97,7 +197,7 @@ const LandingPage: React.FC = () => {
         {/* Why REanalyzr Is Different Section */}
         <Box sx={{ mt: 8, mb: 8 }}>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 5, textAlign: 'center', fontSize: { xs: '1.75rem', md: '2.25rem' } }}>
-            Why REanalyzr Is Different
+            Three Problems We Solve
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 4 }}>
             {/* Column 1: 5-Minute Analysis */}
@@ -111,25 +211,25 @@ const LandingPage: React.FC = () => {
               </Typography>
             </Box>
 
-            {/* Column 2: 28 Professional Metrics */}
+            {/* Column 2: Reduce Guesswork */}
             <Box sx={{ textAlign: 'center', px: 2 }}>
               <Box sx={{ fontSize: '3rem', mb: 2 }}>📊</Box>
               <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                28 Professional Metrics
+                Reduce Guesswork
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—the same formulas institutional investors use, validated by CPAs for accuracy.
+                Deal Quality Score (0-100) gives you a consistent way to screen rental deals based on your own standards, strategy, and risk tolerance.
               </Typography>
             </Box>
 
-            {/* Column 3: AI-Powered Confidence */}
+            {/* Column 3: Stay Organized */}
             <Box sx={{ textAlign: 'center', px: 2 }}>
               <Box sx={{ fontSize: '3rem', mb: 2 }}>🎯</Box>
               <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                AI-Powered Confidence
+                Stay Organized
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                Deal Quality Score (0-100) tells you instantly if this deal meets professional standards. Stop guessing. Start knowing.
+                Track all your deals in one pipeline. Save analyses, compare properties side-by-side, and never rebuild the same work twice.
               </Typography>
             </Box>
           </Box>
@@ -143,7 +243,7 @@ const LandingPage: React.FC = () => {
               How the Rental Property Calculator Works
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.7 }}>
-              Our BRRRR calculator and Buy & Hold calculator provide institutional-grade real estate investment analysis in three simple steps:
+              Our BRRRR calculator and Buy & Hold calculator provide structured rental property analysis in three simple steps:
             </Typography>
             <Box sx={{ pl: 2 }}>
               <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
@@ -193,7 +293,7 @@ const LandingPage: React.FC = () => {
                   AI Deal Scoring Engine
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Get a 0-100 deal quality score powered by AI analysis. Our investment calculator evaluates cash flow, market conditions, and risk factors to give you clear BUY, NEGOTIATE, or PASS recommendations.
+                  Get a 0-100 deal quality score based on your own standards. Our investment calculator evaluates cash flow, market conditions, and risk factors to help you screen deals with less guesswork.
                 </Typography>
               </Box>
               <Box>

@@ -182,7 +182,7 @@ Stop guessing. Know if it's a good deal in 5 minutes
 ### **2. Short Description (260 characters max)**
 
 ```
-REanalyzr brings institutional-grade investment analysis to individual real estate investors. Analyze single-family or multi-family properties in 5 minutes with AI-powered insights, real-time market data, and professional financial calculations. Stop using Excel.
+REanalyzr gives real estate investors a structured workflow to screen rental deals, track opportunities, and understand portfolio impact. Analyze single-family or multi-family properties in 5 minutes with Deal Quality Score, real-time market data, and AI-powered insights. Stop using Excel.
 ```
 
 **Character count**: 254 chars (within limit)
@@ -202,24 +202,24 @@ You open Excel. Three hours later, you're still not sure if you've calculated th
 
 ## The Solution
 
-REanalyzr is a professional-grade investment platform that analyzes rental properties in 5 minutes - not 5 hours.
+REanalyzr gives you a structured workflow to screen rental deals in 5 minutes - not 5 hours.
 
 ### What Makes REanalyzr Different?
 
-🎯 **Investment Decision Engine**
-- Clear BUY/NEGOTIATE/PASS verdicts (no more guessing)
-- 0-100 Deal Quality score based on 15+ metrics
-- Conservative walk-away prices prevent overpaying
+🎯 **Deal Quality Score Screening Framework**
+- 0-100 Deal Quality score based on your standards and risk tolerance
+- Screen deals with consistent framework (not guesswork)
+- Conservative analysis helps prevent overpaying
 
 🏢 **Multi-Asset Support**
 - Single-family rentals (SFR)
 - Multi-family properties (2-32 units)
 - Commercial properties (coming Q2 2026)
 
-📊 **Institutional-Grade Calculations**
-- CPA-validated tax analysis
-- DSCR, Cap Rate, Cash-on-Cash, IRR
-- Fannie Mae/Freddie Mac underwriting standards
+📊 **Professional Financial Analysis**
+- DSCR, Cap Rate, Cash-on-Cash, IRR, and 20+ metrics
+- Consistent calculation methodology
+- Real-time market data integration
 
 🤖 **AI-Powered Insights**
 - GPT-4 analysis with real market intelligence

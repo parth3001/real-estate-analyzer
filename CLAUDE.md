@@ -23,11 +23,53 @@ Give individual investors the same institutional-grade analysis that Wall Street
 ### **Brand Promise**
 > **"Institutional-grade analysis. Individual investor access. Zero compromise on quality."**
 
-### **Target Customer**
-- **Primary**: Individual real estate investors (1-10 properties, $75K-250K annual income)
-- **Profile**: Professionals seeking passive income, financial freedom, generational wealth
-- **Pain Points**: Analysis paralysis, uncertainty about deal quality, fear of overpaying
-- **Aspiration**: Make professional-level investment decisions with confidence
+---
+
+## 📣 **Positioning & Messaging**
+
+### **What is REanalyzr?**
+
+**Core Definition:**
+> REanalyzr helps real estate investors analyze rental deals, track opportunities, and understand portfolio impact in one structured workflow.
+
+**Complete Messaging Framework:**
+→ `/docs/MESSAGING_FRAMEWORK.md` (problem hooks, solution statements, landing page templates, competitive context)
+
+**Go-to-Market Strategy:**
+→ `/docs/GTM_PARALLEL_EXECUTION_PLAN_FEB_2026.md` (SEO content, B2B outreach, link earning, product roadmap)
+
+**Product Strategy:**
+→ `/docs/DEAL_QUALITY_SCORE_PRODUCT_STRATEGY.md` (Deal Quality Score as hero feature, freemium funnel, competitive moat)
+
+### **Key Strategic Points (Quick Reference)**
+
+**Target Customer:**
+- Active investors analyzing 3-30 deals/year
+- Pain: Analysis paralysis, spreadsheet chaos, portfolio blindness
+- NOT beginners (they need education first, not tools)
+
+**Pricing:**
+- $19.99/month (locked in)
+- Beta users: $0/month forever
+- No other tiers to mention (avoid confusion)
+
+**Competitive Context:**
+- Primary competitor: BiggerPockets (free calculator, $39/month Pro)
+- We solve problems calculators don't solve (Decision confidence, Organization, Portfolio context)
+- **NEVER lead with competitor comparisons** - always lead with user problems
+
+**Messaging Approach:**
+- Problem → Solution → Features (in that order)
+- Empathetic, specific, problem-aware tone
+- No jargon, no feature lists in headlines
+- Value-first pricing presentation (ROI proof, not discount language)
+
+**Current Focus:**
+- Acquisition (top of funnel)
+- SEO content + link earning
+- Logged-in user retention comes later (solve acquisition first)
+
+---
 
 ### **Competitive Moat**
 We are NOT a commodity calculator. We are a **democratized institutional platform**:

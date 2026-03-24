@@ -160,10 +160,10 @@ You know the drill:
 3. I'll DM you the link → Upvote + comment (optional but appreciated)
 
 **What I'm launching**:
-REanalyzr - Real estate investment analysis platform (think "Stripe for rental property analysis" - institutional-grade calculations, AI insights, 5-minute analysis vs 3-hour Excel sessions)
+REanalyzr - Structured rental property analysis platform (screen deals faster with less guesswork - Deal Quality Score, pipeline tracking, portfolio impact analysis in 5 minutes vs 3-hour Excel sessions)
 
 **Why you might care**:
-If you're investing in RE (or thinking about it), this is built for analytical people like us. CPA-validated, professional metrics, mobile-first UX.
+If you're investing in RE (or thinking about it), this solves spreadsheet chaos. Consistent screening framework, organized deal tracking, mobile-first UX.
 
 **Can I count you in?**
 
@@ -186,7 +186,7 @@ Hey [Name],
 As a fellow real estate investor, I wanted to give you a heads-up: I'm launching REanalyzr on Product Hunt on [DATE] and would love your support!
 
 **What is REanalyzr?**
-Professional-grade rental property analysis in 5 minutes (vs 3 hours in Excel). Think BiggerPockets calculator meets AI-powered insights. Handles SFR and multi-family (2-32 units).
+Structured rental property analysis in 5 minutes (vs 3 hours in Excel). Screen deals with Deal Quality Score, track your pipeline, understand portfolio impact. Handles SFR and multi-family (2-32 units).
 
 **What is Product Hunt?**
 Daily "app store homepage" for new products. 50,000 people browse daily looking for new tools. Top 5 products get featured to 150K newsletter subscribers.

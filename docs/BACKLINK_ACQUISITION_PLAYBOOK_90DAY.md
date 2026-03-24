@@ -852,18 +852,19 @@ Subject: Free property analysis tool for your investor clients
 
 Hi [Agent Name],
 
-I'm Parth - real estate investor and tech leader. I built REanalyzr, a free property analysis tool that helps investors make confident decisions.
+I'm Parth - real estate investor and tech leader. I built REanalyzr, a free property analysis tool that helps investors screen rental deals faster with less guesswork.
 
 I noticed you work with investor clients in [City]. Would you be interested in offering REanalyzr to them?
 
 What they get:
-- Professional-grade analysis (28 metrics)
+- Structured workflow for screening rental deals
+- Deal Quality Score (0-100) based on their risk tolerance
 - Single-family and multi-family support
-- AI-powered insights
+- AI-powered market insights
 - Completely free while in Beta
 
 What you get:
-- Happy clients (better analysis = more confident buyers)
+- Happy clients (structured analysis = more confident buyers)
 - Tech-forward image
 - Zero cost
 

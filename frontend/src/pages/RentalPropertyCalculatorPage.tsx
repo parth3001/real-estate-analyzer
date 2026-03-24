@@ -22,7 +22,7 @@ const faqSchema = {
       name: 'How is REanalyzr different from free calculators?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Free calculators give you basic math with generic assumptions. REanalyzr gives you the same 28 professional metrics that institutional investors use—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus real-time market data for your specific location.',
+        text: 'REanalyzr gives you a structured workflow with 28 professional metrics—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus Deal Quality Score to help you screen deals based on your own standards and risk tolerance, with real-time market data for your specific location.',
       },
     },
     {
@@ -64,7 +64,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
         <title>Rental Property Investment Calculator - Free Deal Analysis | REanalyzr</title>
         <meta
           name="description"
-          content="Analyze rental properties in minutes using 28 professional investment metrics. Get Deal Quality Scores that show if your deal meets institutional investment standards. Free calculator."
+          content="Screen rental deals faster with less guesswork. Analyze properties with a structured workflow, Deal Quality Score, and see how each opportunity fits your investing strategy. Free calculator."
         />
         <meta
           name="keywords"
@@ -74,7 +74,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
         <meta property="og:title" content="Rental Property Investment Calculator - Free Deal Analysis | REanalyzr" />
         <meta
           property="og:description"
-          content="Analyze rental properties in minutes using 28 professional investment metrics. Get Deal Quality Scores that show if your deal meets institutional investment standards."
+          content="Screen rental deals faster with less guesswork. Structured workflow for analyzing rental properties with Deal Quality Score and portfolio impact insights."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://reanalyzr.com/rental-property-calculator" />
@@ -117,7 +117,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               mx: 'auto'
             }}
           >
-            Analyze rental properties in minutes using 28 professional investment metrics and instantly see a Deal Quality Score that tells you if the deal meets professional investment standards.
+            Analyze rental properties with a structured workflow, screen deals faster with Deal Quality Score, and see how each opportunity fits your investing strategy.
           </Typography>
 
           {/* Supporting Line */}
@@ -132,8 +132,8 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               lineHeight: 1.6
             }}
           >
-            Institutional-grade rental property analysis for individual investors.
-            Not just numbers — understand if your deal is actually worth buying.
+            Structured rental property analysis for individual investors.
+            Reduce guesswork with a consistent screening framework.
           </Typography>
 
           {/* Subtle Divider */}
@@ -208,7 +208,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               color: appleColors.gray[900]
             }}
           >
-            Why REanalyzr Is Different
+            Three Problems We Solve
           </Typography>
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -226,10 +226,10 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ fontSize: '2.5rem', mb: 2 }}>📊</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5, color: appleColors.gray[900] }}>
-                  28 Professional Metrics
+                  Reduce Guesswork
                 </Typography>
                 <Typography variant="body2" sx={{ color: appleColors.gray[600], lineHeight: 1.7 }}>
-                  Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—the same formulas institutional investors use, validated by CPAs for accuracy.
+                  Deal Quality Score (0-100) gives you a consistent way to screen rental deals based on your own standards, strategy, and risk tolerance.
                 </Typography>
               </Box>
             </Grid>
@@ -237,10 +237,10 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ fontSize: '2.5rem', mb: 2 }}>🎯</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5, color: appleColors.gray[900] }}>
-                  AI-Powered Confidence
+                  Stay Organized
                 </Typography>
                 <Typography variant="body2" sx={{ color: appleColors.gray[600], lineHeight: 1.7 }}>
-                  Deal Quality Score (0-100) tells you instantly if this deal meets professional standards. Stop guessing. Start knowing.
+                  Track all your deals in one pipeline. Save analyses, compare properties side-by-side, and never rebuild the same work twice.
                 </Typography>
               </Box>
             </Grid>
@@ -262,7 +262,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
             How the Rental Property Calculator Works
           </Typography>
           <Typography variant="body1" sx={{ mb: 4, color: appleColors.gray[700], lineHeight: 1.8 }}>
-            Our BRRRR calculator and Buy & Hold calculator provide institutional-grade real estate investment analysis in three simple steps:
+            Our BRRRR calculator and Buy & Hold calculator provide structured rental property analysis in three simple steps:
           </Typography>
           <Box component="ol" sx={{ pl: 3, '& li': { mb: 3, color: appleColors.gray[700], lineHeight: 1.8 } }}>
             <li>
@@ -328,7 +328,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
             {[
               {
                 title: 'AI Deal Scoring Engine',
-                description: 'Get a 0-100 deal quality score powered by AI analysis. Our investment calculator evaluates cash flow, market conditions, and risk factors to give you clear BUY, NEGOTIATE, or PASS recommendations.'
+                description: 'Get a 0-100 deal quality score based on your own standards. Our investment calculator evaluates cash flow, market conditions, and risk factors to help you screen deals with less guesswork.'
               },
               {
                 title: 'BRRRR Strategy Analysis',
@@ -387,7 +387,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
             {[
               {
                 q: 'How is REanalyzr different from free calculators?',
-                a: 'Free calculators give you basic math with generic assumptions. REanalyzr gives you the same 28 professional metrics that institutional investors use—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus real-time market data for your specific location. It\'s the difference between guessing and knowing.'
+                a: 'REanalyzr gives you a structured workflow with 28 professional metrics—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus Deal Quality Score to help you screen deals based on your own standards and risk tolerance, with real-time market data for your specific location.'
               },
               {
                 q: 'Do I need real estate experience to use this?',
@@ -395,7 +395,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               },
               {
                 q: 'How accurate is this BRRRR calculator?',
-                a: 'Our BRRRR calculator uses institutional-grade formulas validated by professional real estate investors. We model the complete Buy-Rehab-Rent-Refinance-Repeat cycle including capital recovery, forced equity, and post-refinance cash flow. Accuracy depends on your input data quality - use realistic rehab costs and ARV estimates for best results.'
+                a: 'Our BRRRR calculator uses consistent calculation methodology. We model the complete Buy-Rehab-Rent-Refinance-Repeat cycle including capital recovery, forced equity, and post-refinance cash flow. Accuracy depends on your input data quality - use realistic rehab costs and ARV estimates for best results.'
               },
               {
                 q: 'What is a good cap rate for rental property?',
