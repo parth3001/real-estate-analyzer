@@ -29,6 +29,9 @@ import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiServi
 // Import Google Maps Service for Property Images (Feature #9)
 import googleMapsService from '../services/googleMapsService';
 
+// Import Analytics Service for platform tracking
+import { analyticsService } from '../services/analyticsService';
+
 /**
  * Generate portfolio context for investment decision enhancement
  * SAFE: This is an optional enhancement that doesn't affect core analysis
@@ -628,7 +631,13 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
         investmentDecisionKeys: (newDeal.analysis as any)?.investmentDecision ? Object.keys((newDeal.analysis as any).investmentDecision) : []
       });
     }
-    
+
+    // Track deal saved for analytics dashboard
+    analyticsService.trackDealSaved(req.user?.id || '', {
+      dealId: newDeal._id.toString(),
+      strategy: dealData.investmentStrategy
+    });
+
     res.status(201).json(newDeal);
   } catch (error) {
     logger.error('Error creating deal:', error);
@@ -1400,6 +1409,13 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
       exitScenariosCount: (responseData.investmentDecision as any)?.strategySpecific?.exitScenarios?.length || 0
     });
 
+    // Track deal analysis for analytics dashboard
+    analyticsService.trackDealAnalyzed(req.user?.id || '', {
+      dealId: responseData._id,
+      strategy: dealData.investmentStrategy,
+      dealScore: responseData.investmentDecision?.professionalAssessment?.dealQuality
+    });
+
     // Return analysis with portfolioId
     res.json(responseData);
   } catch (error) {
@@ -1997,6 +2013,13 @@ export const analyzeAnonymous = async (req: Request, res: Response) => {
       purchasePrice: dealData.purchasePrice,
       hasDealQualityScore: !!analysis.investmentDecision?.professionalAssessment?.dealQuality,
       timestamp: new Date().toISOString()
+    });
+
+    // Track calculator completion for analytics dashboard
+    analyticsService.trackCalculatorCompleted({
+      strategy: dealData.investmentStrategy || 'buy-hold',
+      dealScore: analysis.investmentDecision?.professionalAssessment?.dealQuality,
+      userId: undefined // Anonymous user
     });
 
     // Return analysis WITHOUT saving to database

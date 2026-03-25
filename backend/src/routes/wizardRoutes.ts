@@ -8,6 +8,7 @@
 import express, { Router, Request, Response } from 'express';
 import { logger } from '../utils/logger';
 import { propertyDataAggregator } from '../services/propertyDataAggregator';
+import { authMiddleware } from '../middleware/auth';
 import {
   PropertyLookupRequest,
   SmartDefaultsRequest,
@@ -16,6 +17,10 @@ import {
 import { convertWizardToSFRData, analyzePropertyFromWizard, getRentEstimate, getPropertyTaxEstimate } from '../controllers/wizardController';
 
 const router: Router = express.Router();
+
+// Apply authentication middleware to all wizard routes
+// Wizard is only accessible to logged-in users
+router.use(authMiddleware);
 
 /**
  * POST /api/wizard/property-lookup

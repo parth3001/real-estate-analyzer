@@ -5,6 +5,7 @@ import { emailService } from '../services/emailService';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import AnonymousPdfRequest from '../models/AnonymousPdfRequest';
+import { analyticsService } from '../services/analyticsService';
 
 /**
  * Validation rules for user registration
@@ -153,6 +154,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     logger.info(`[AuthController] Registration successful for: ${result.user.email}`);
+
+    // Track user registration for analytics dashboard
+    analyticsService.trackUserRegistered(result.user.id, {
+      source: registrationMetadata.affiliateCode ? 'affiliate' : 'direct',
+      affiliateCode: registrationMetadata.affiliateCode || undefined
+    });
+
     res.status(201).json({
       message: 'User registered successfully. Please check your email to verify your account.',
       user: result.user,
@@ -191,6 +199,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const result = await authService.login(credentials);
 
     logger.info(`[AuthController] Login successful for: ${result.user.email}`);
+
+    // Track user login for analytics dashboard
+    analyticsService.trackUserLogin(result.user.id);
+
     res.json({
       message: 'Login successful',
       user: result.user,

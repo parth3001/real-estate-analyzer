@@ -139,6 +139,13 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
         icon: PersonIcon,
         path: '/admin/users',
         description: 'Manage users and permissions'
+      },
+      {
+        id: 'admin-analytics',
+        label: 'Analytics',
+        icon: AssessmentIcon,
+        path: '/admin/analytics',
+        description: 'Platform usage and metrics'
       }
     ]
   }] : []),
@@ -563,7 +570,8 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       '/help': 'Help & Documentation',
       '/profile': 'Profile',
       '/settings': 'Settings',
-      '/admin/users': 'User Management'
+      '/admin/users': 'User Management',
+      '/admin/analytics': 'Platform Analytics'
     };
     
     // Handle dynamic portfolio routes

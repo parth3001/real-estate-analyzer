@@ -13,6 +13,7 @@ import marketDataRouter from './routes/marketDataRoutes';
 import wizardRouter from './routes/wizardRoutes';
 import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
+import analyticsRouter from './routes/analytics';
 import quickAnalysisRouter from './routes/quickAnalysis';
 import portfoliosRouter from './routes/portfolios';
 import pipelineRouter from './routes/pipeline';
@@ -132,6 +133,7 @@ app.use((req, res, next) => {
 // Note: Auth routes have their own specific rate limiting in the router
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/analytics', analyticsRouter);
 app.use('/api/deals', calculationRateLimit, dealsRouter);
 app.use('/api/analyze', calculationRateLimit, analyzeRouter);
 app.use('/api/census', censusRouter);

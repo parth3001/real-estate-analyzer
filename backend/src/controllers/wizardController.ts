@@ -10,8 +10,10 @@ import { logger } from '../utils/logger';
 import { propertyDataAggregator } from '../services/propertyDataAggregator';
 import { rentEstimationService } from '../services/rentEstimationService';
 import { propertyTaxEstimationService } from '../services/propertyTaxEstimationService';
+import { analyticsService } from '../services/analyticsService';
 import { SFRData } from '../types/propertyTypes';
 import { WizardEnhancedSFRData } from '../types/wizardTypes';
+import { AuthenticatedRequest } from '../middleware/auth';
 
 // Default insurance rate from STATIC_ANALYSIS_DEFAULTS (0.35% rule)
 // Matches /shared/constants/analysisDefaults.ts:34
@@ -118,7 +120,7 @@ export const convertWizardToSFRData = async (req: Request, res: Response) => {
  * Enhanced property analysis that includes wizard metadata
  * Extends existing analysis with wizard-specific insights
  */
-export const analyzePropertyFromWizard = async (req: Request, res: Response) => {
+export const analyzePropertyFromWizard = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const wizardData = req.body;
     
@@ -203,6 +205,16 @@ export const analyzePropertyFromWizard = async (req: Request, res: Response) => 
       hasAnalysis: !!analysis,
       maintenanceInExpenses: analysis.monthlyAnalysis?.expenses?.breakdown?.maintenance,
       vacancyInExpenses: analysis.monthlyAnalysis?.expenses?.breakdown?.vacancy
+    });
+
+    // Track wizard completion for analytics dashboard
+    analyticsService.trackWizardCompleted({
+      strategy: wizardData.propertyData?.investmentStrategy || 'buy-hold',
+      dealScore: analysis.investmentDecision?.professionalAssessment?.dealQuality,
+      userId: req.user?.id
+    }).catch(error => {
+      // Log but don't break user flow if analytics tracking fails
+      logger.error('[ANALYTICS] Wizard tracking failed (non-blocking):', error);
     });
 
     res.status(200).json(analysis);

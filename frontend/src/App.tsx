@@ -46,6 +46,7 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
+import AdminAnalytics from './pages/AdminAnalytics';
 import MarketDataPage from './pages/MarketDataPage';
 import AnalysisDetails from './pages/AnalysisDetails';
 import BlogListPage from './pages/BlogListPage';
@@ -268,7 +269,8 @@ function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin/users" element={<AdminUserManagement />} />
-                
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
+
               </Route>
 
               {/* Catch all - 404 Not Found */}
