@@ -12,7 +12,12 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Chip,
+  ButtonGroup,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { subDays, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -22,27 +27,45 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import SaveIcon from '@mui/icons-material/Save';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchAnalyticsSummary } from '../services/analyticsApi';
-import type { AnalyticsSummary, AnalyticsTimePeriod } from '../types/analytics';
+import type { AnalyticsSummary } from '../types/analytics';
 
 const AdminAnalytics: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(7);
+  const [startDate, setStartDate] = useState<Date>(startOfDay(new Date()));
+  const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
   const [environment, setEnvironment] = useState<'all' | 'production' | 'development'>('production');
   const [refreshing, setRefreshing] = useState(false);
+  const [dateRangeError, setDateRangeError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
-  }, [timePeriod, environment]);
+  }, [startDate, endDate, environment]);
 
   const fetchData = async () => {
+    // Validate date range before fetching
+    const daysDiff = differenceInDays(endDate, startDate);
+
+    if (daysDiff < 0) {
+      setDateRangeError('End date must be after start date');
+      return;
+    }
+
+    if (daysDiff > 365) {
+      setDateRangeError('Date range cannot exceed 365 days');
+      return;
+    }
+
+    setDateRangeError(null);
+
     try {
       setLoading(true);
       setError(null);
       const response = await fetchAnalyticsSummary(
-        timePeriod,
+        startDate,
+        endDate,
         environment === 'all' ? undefined : environment
       );
       setSummary(response.data);
@@ -59,9 +82,27 @@ const AdminAnalytics: React.FC = () => {
     fetchData();
   };
 
-  const handleTimePeriodChange = (_event: React.MouseEvent<HTMLElement>, newPeriod: AnalyticsTimePeriod | null) => {
-    if (newPeriod !== null) {
-      setTimePeriod(newPeriod);
+  const handleQuickSelect = (type: 'today' | 'yesterday' | 'last7' | 'last30') => {
+    const today = new Date();
+
+    switch (type) {
+      case 'today':
+        setStartDate(startOfDay(today));
+        setEndDate(endOfDay(today));
+        break;
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        setStartDate(startOfDay(yesterday));
+        setEndDate(endOfDay(yesterday));
+        break;
+      case 'last7':
+        setStartDate(startOfDay(subDays(today, 6)));
+        setEndDate(endOfDay(today));
+        break;
+      case 'last30':
+        setStartDate(startOfDay(subDays(today, 29)));
+        setEndDate(endOfDay(today));
+        break;
     }
   };
 
@@ -96,27 +137,65 @@ const AdminAnalytics: React.FC = () => {
         </Alert>
       )}
 
+      {dateRangeError && (
+        <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setDateRangeError(null)}>
+          {dateRangeError}
+        </Alert>
+      )}
+
       {/* Controls */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Time Period Toggle */}
-            <ToggleButtonGroup
-              value={timePeriod}
-              exclusive
-              onChange={handleTimePeriodChange}
-              aria-label="time period"
-            >
-              <ToggleButton value={7} aria-label="7 days">
-                Last 7 days
-              </ToggleButton>
-              <ToggleButton value={30} aria-label="30 days">
-                Last 30 days
-              </ToggleButton>
-              <ToggleButton value={90} aria-label="90 days">
-                Last 90 days
-              </ToggleButton>
-            </ToggleButtonGroup>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Quick Select Buttons */}
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Quick Select:
+              </Typography>
+              <ButtonGroup variant="outlined" size="small">
+                <Button onClick={() => handleQuickSelect('today')}>Today</Button>
+                <Button onClick={() => handleQuickSelect('yesterday')}>Yesterday</Button>
+                <Button onClick={() => handleQuickSelect('last7')}>Last 7 days</Button>
+                <Button onClick={() => handleQuickSelect('last30')}>Last 30 days</Button>
+              </ButtonGroup>
+            </Box>
+
+            {/* Date Range Pickers */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={(newDate) => {
+                  if (newDate) {
+                    setStartDate(startOfDay(newDate));
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    sx: { minWidth: 200 }
+                  }
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                to
+              </Typography>
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={(newDate) => {
+                  if (newDate) {
+                    setEndDate(endOfDay(newDate));
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    sx: { minWidth: 200 }
+                  }
+                }}
+              />
+            </Box>
 
             {/* Environment Toggle */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -157,17 +236,20 @@ const AdminAnalytics: React.FC = () => {
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
-          </Box>
 
-          <Button
-            variant="outlined"
-            startIcon={refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
-            onClick={handleRefresh}
-            disabled={refreshing || loading}
-          >
-            Refresh
-          </Button>
-        </Box>
+            {/* Refresh Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                startIcon={refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
+                onClick={handleRefresh}
+                disabled={refreshing || loading}
+              >
+                Refresh
+              </Button>
+            </Box>
+          </Box>
+        </LocalizationProvider>
       </Paper>
 
       {/* Analytics Cards */}

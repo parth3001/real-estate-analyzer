@@ -211,7 +211,8 @@ export const analyzePropertyFromWizard = async (req: AuthenticatedRequest, res: 
     analyticsService.trackWizardCompleted({
       strategy: wizardData.propertyData?.investmentStrategy || 'buy-hold',
       dealScore: analysis.investmentDecision?.professionalAssessment?.dealQuality,
-      userId: req.user?.id
+      userId: req.user?.id,
+      userRole: req.user?.role
     }).catch(error => {
       // Log but don't break user flow if analytics tracking fails
       logger.error('[ANALYTICS] Wizard tracking failed (non-blocking):', error);

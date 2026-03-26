@@ -51,8 +51,15 @@ class AnalyticsService {
     strategy?: 'brrrr' | 'buy-hold';
     dealScore?: number;
     userId?: string;
+    userRole?: string;
   }): Promise<void> {
     try {
+      // Skip tracking for admin users
+      if (metadata.userRole === 'admin') {
+        logger.info('[ANALYTICS] ⏭️  Skipping admin wizard completion tracking');
+        return;
+      }
+
       await this.trackEvent('wizard_completed', {
         strategy: metadata.strategy,
         dealScore: metadata.dealScore,
@@ -78,8 +85,14 @@ class AnalyticsService {
   async trackUserRegistered(userId: string, metadata?: {
     source?: string;
     affiliateCode?: string;
-  }): Promise<void> {
+  }, userRole?: string): Promise<void> {
     try {
+      // Skip tracking for admin users
+      if (userRole === 'admin') {
+        logger.info('[ANALYTICS] ⏭️  Skipping admin registration tracking');
+        return;
+      }
+
       await this.trackEvent('user_registered', {
         source: metadata?.source || 'direct',
         affiliateCode: metadata?.affiliateCode
@@ -99,8 +112,14 @@ class AnalyticsService {
    * Track user login
    * Triggered when user successfully authenticates
    */
-  async trackUserLogin(userId: string): Promise<void> {
+  async trackUserLogin(userId: string, userRole?: string): Promise<void> {
     try {
+      // Skip tracking for admin users
+      if (userRole === 'admin') {
+        logger.info('[ANALYTICS] ⏭️  Skipping admin login tracking');
+        return;
+      }
+
       await this.trackEvent('user_login', {}, userId);
 
       logger.info('[ANALYTICS] User login', { userId });
@@ -117,8 +136,15 @@ class AnalyticsService {
     dealId?: string;
     strategy?: 'brrrr' | 'buy-hold';
     dealScore?: number;
+    userRole?: string;
   }): Promise<void> {
     try {
+      // Skip tracking for admin users
+      if (metadata.userRole === 'admin') {
+        logger.info('[ANALYTICS] ⏭️  Skipping admin deal analysis tracking');
+        return;
+      }
+
       await this.trackEvent('deal_analyzed', {
         dealId: metadata.dealId,
         strategy: metadata.strategy,
@@ -142,8 +168,15 @@ class AnalyticsService {
   async trackDealSaved(userId: string, metadata: {
     dealId: string;
     strategy?: 'brrrr' | 'buy-hold';
+    userRole?: string;
   }): Promise<void> {
     try {
+      // Skip tracking for admin users
+      if (metadata.userRole === 'admin') {
+        logger.info('[ANALYTICS] ⏭️  Skipping admin deal save tracking');
+        return;
+      }
+
       await this.trackEvent('deal_saved', {
         dealId: metadata.dealId,
         strategy: metadata.strategy
@@ -201,7 +234,8 @@ class AnalyticsService {
    * Returns counts for key metrics over specified time period
    */
   async getAnalyticsSummary(
-    days: number = 7,
+    startDate: Date,
+    endDate: Date,
     environment?: 'development' | 'production'
   ): Promise<{
     calculatorSubmissions: number;
@@ -213,9 +247,6 @@ class AnalyticsService {
     environment: string;
     period: { start: Date; end: Date };
   }> {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
 
     try {
       const eventTypes: AnalyticsEventType[] = [

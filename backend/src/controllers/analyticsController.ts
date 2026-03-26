@@ -12,22 +12,49 @@ import { AuthenticatedRequest } from '../types/auth';
 
 class AnalyticsController {
   /**
-   * Get analytics summary for specified time period
-   * GET /api/analytics/summary?days=7&environment=production
+   * Get analytics summary for specified date range
+   * GET /api/analytics/summary?startDate=2025-01-01&endDate=2025-01-08&environment=production
    *
    * Query Params:
-   * - days: 7 | 30 | 90 (default: 7)
+   * - startDate: ISO date string (required)
+   * - endDate: ISO date string (required)
    * - environment: 'development' | 'production' (optional, default: all)
    */
   async getAnalyticsSummary(req: AuthenticatedRequest, res: Response) {
     try {
-      const days = parseInt(req.query.days as string) || 7;
+      const startDateStr = req.query.startDate as string;
+      const endDateStr = req.query.endDate as string;
       const environment = req.query.environment as 'development' | 'production' | undefined;
 
-      // Validate days parameter
-      if (![7, 30, 90].includes(days)) {
+      // Validate required parameters
+      if (!startDateStr || !endDateStr) {
         return res.status(400).json({
-          error: 'Invalid days parameter. Must be 7, 30, or 90.'
+          error: 'startDate and endDate are required query parameters'
+        });
+      }
+
+      // Parse dates
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      // Validate date parsing
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({
+          error: 'Invalid date format. Use ISO date strings (e.g., 2025-01-08)'
+        });
+      }
+
+      // Validate date range (max 365 days)
+      const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 365) {
+        return res.status(400).json({
+          error: 'Date range cannot exceed 365 days'
+        });
+      }
+
+      if (daysDiff < 0) {
+        return res.status(400).json({
+          error: 'End date must be after start date'
         });
       }
 
@@ -38,18 +65,19 @@ class AnalyticsController {
         });
       }
 
-      const summary = await analyticsService.getAnalyticsSummary(days, environment);
+      const summary = await analyticsService.getAnalyticsSummary(startDate, endDate, environment);
 
       logger.info(`[ANALYTICS] Summary requested by ${req.user?.email}`, {
         adminId: req.user?.id,
-        days,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        daysDiff,
         environment: environment || 'all'
       });
 
       res.json({
         message: 'Analytics summary retrieved successfully',
-        data: summary,
-        period: `Last ${days} days`
+        data: summary
       });
 
     } catch (error: any) {

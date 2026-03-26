@@ -159,7 +159,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     analyticsService.trackUserRegistered(result.user.id, {
       source: registrationMetadata.affiliateCode ? 'affiliate' : 'direct',
       affiliateCode: registrationMetadata.affiliateCode || undefined
-    });
+    }, result.user.role);
 
     res.status(201).json({
       message: 'User registered successfully. Please check your email to verify your account.',
@@ -201,7 +201,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     logger.info(`[AuthController] Login successful for: ${result.user.email}`);
 
     // Track user login for analytics dashboard
-    analyticsService.trackUserLogin(result.user.id);
+    analyticsService.trackUserLogin(result.user.id, result.user.role);
 
     res.json({
       message: 'Login successful',

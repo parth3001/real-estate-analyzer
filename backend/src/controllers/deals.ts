@@ -635,7 +635,8 @@ export const createDeal = async (req: AuthenticatedRequest, res: Response): Prom
     // Track deal saved for analytics dashboard
     analyticsService.trackDealSaved(req.user?.id || '', {
       dealId: newDeal._id.toString(),
-      strategy: dealData.investmentStrategy
+      strategy: dealData.investmentStrategy,
+      userRole: req.user?.role
     });
 
     res.status(201).json(newDeal);
@@ -1413,7 +1414,8 @@ export const analyzeDeal = async (req: AuthenticatedRequest, res: Response): Pro
     analyticsService.trackDealAnalyzed(req.user?.id || '', {
       dealId: responseData._id,
       strategy: dealData.investmentStrategy,
-      dealScore: responseData.investmentDecision?.professionalAssessment?.dealQuality
+      dealScore: responseData.investmentDecision?.professionalAssessment?.dealQuality,
+      userRole: req.user?.role
     });
 
     // Return analysis with portfolioId

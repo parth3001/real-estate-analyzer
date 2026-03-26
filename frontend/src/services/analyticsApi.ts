@@ -9,20 +9,24 @@ import type { AnalyticsResponse, AnalyticsTimePeriod } from '../types/analytics'
  */
 
 /**
- * Fetch analytics summary for specified time period
- * @param days - Time period (7, 30, or 90 days)
+ * Fetch analytics summary for specified date range
+ * @param startDate - Start date for the analytics period
+ * @param endDate - End date for the analytics period
  * @param environment - Filter by environment ('development', 'production', or undefined for all)
  * @returns Analytics summary data
  */
 export const fetchAnalyticsSummary = async (
-  days: AnalyticsTimePeriod = 7,
+  startDate: Date,
+  endDate: Date,
   environment?: 'development' | 'production'
 ): Promise<AnalyticsResponse> => {
-  let url = `/analytics/summary?days=${days}`;
+  const params = new URLSearchParams();
+  params.append('startDate', startDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+  params.append('endDate', endDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
   if (environment) {
-    url += `&environment=${environment}`;
+    params.append('environment', environment);
   }
-  const response = await api.get(url);
+  const response = await api.get(`/analytics/summary?${params.toString()}`);
   return response.data;
 };
 
