@@ -49,6 +49,7 @@ const BlogPostPage: React.FC = () => {
         <meta property="og:description" content={post.description} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={`https://reanalyzr.com/blog/${post.slug}`} />
+        {post.featuredImage && <meta property="og:image" content={`https://reanalyzr.com${post.featuredImage}`} />}
         {post.date && <meta property="article:published_time" content={post.date} />}
       </Helmet>
 
@@ -152,6 +153,21 @@ const BlogPostPage: React.FC = () => {
             </Box>
 
             <Divider sx={{ borderColor: 'rgba(0,0,0,0.06)' }} />
+
+            {/* Featured Image */}
+            {post.featuredImage && (
+              <Box
+                component="img"
+                src={post.featuredImage}
+                alt={post.title}
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  borderRadius: 0,
+                }}
+              />
+            )}
 
             {/* Article body */}
             <Box

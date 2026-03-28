@@ -16,6 +16,7 @@ export interface BlogPost {
   description: string;
   keywords: string[];
   readingTime: string;
+  featuredImage?: string;
   content: string;
 }
 
@@ -75,6 +76,7 @@ function parsePost(raw: string, filename: string): BlogPost {
     description: (data.description as string) || '',
     keywords: (data.keywords as string[]) || [],
     readingTime: (data.readingTime as string) || '',
+    featuredImage: (data.featuredImage as string) || '',
     content,
   };
 }
