@@ -951,8 +951,8 @@ function ProfessionalReportPdfDocument({
           React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.cashOnCashReturn !== undefined ? formatPercent(keyMetrics.cashOnCashReturn) : 'N/A')
         ),
         React.createElement(View, { style: proStyles.metricCard },
-          React.createElement(Text, { style: proStyles.metricLabel }, `IRR (${propertyData?.projectionYears || 10}-Year)`),
-          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.irr !== undefined ? formatPercent(keyMetrics.irr) : 'N/A')
+          React.createElement(Text, { style: proStyles.metricLabel }, `IRR (${userProjectionYears || 10}-Year)`),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.irr !== undefined ? formatPercent(keyMetrics.irr < 1 ? keyMetrics.irr * 100 : keyMetrics.irr) : 'N/A')
         ),
         React.createElement(View, { style: proStyles.metricCard },
           React.createElement(Text, { style: proStyles.metricLabel }, 'DSCR'),
