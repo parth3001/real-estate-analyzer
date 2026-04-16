@@ -488,6 +488,632 @@ function AnalysisPdfDocument({
 }
 
 // ============================================================
+// Professional Report Styles (multi-page banker/underwriter report)
+// ============================================================
+
+const proStyles = StyleSheet.create({
+  page: {
+    padding: 40,
+    paddingBottom: 60,
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    marginBottom: 15,
+    borderBottom: '2pt solid #1565C0',
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1565C0',
+    marginBottom: 3,
+  },
+  headerSubtitle: {
+    fontSize: 10,
+    color: '#666666',
+  },
+  headerAddress: {
+    fontSize: 11,
+    color: '#333333',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1565C0',
+    marginBottom: 8,
+    marginTop: 12,
+    borderBottom: '1pt solid #E0E0E0',
+    paddingBottom: 4,
+  },
+  row: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    marginBottom: 4,
+    paddingVertical: 2,
+  },
+  rowAlt: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    marginBottom: 4,
+    paddingVertical: 2,
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 4,
+    borderRadius: 2,
+  },
+  label: {
+    fontSize: 9,
+    color: '#555555',
+    flex: 1,
+  },
+  value: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#212121',
+    textAlign: 'right' as const,
+  },
+  // Score section
+  scoreBox: {
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 4,
+    alignItems: 'center' as const,
+  },
+  scoreValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  scoreLabel: {
+    fontSize: 10,
+    marginTop: 3,
+  },
+  // Two-column layout
+  twoCol: {
+    flexDirection: 'row' as const,
+    gap: 15,
+  },
+  col: {
+    flex: 1,
+  },
+  // Metrics grid
+  metricCard: {
+    padding: 8,
+    marginBottom: 6,
+    backgroundColor: '#F5F7FA',
+    borderRadius: 3,
+    borderLeft: '3pt solid #1565C0',
+  },
+  metricLabel: {
+    fontSize: 8,
+    color: '#666666',
+    marginBottom: 2,
+  },
+  metricValue: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#212121',
+  },
+  // Table styles
+  table: {
+    marginTop: 8,
+  },
+  tableHeaderRow: {
+    flexDirection: 'row' as const,
+    backgroundColor: '#1565C0',
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  tableHeaderCell: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'right' as const,
+    flex: 1,
+    paddingHorizontal: 2,
+  },
+  tableHeaderCellFirst: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'left' as const,
+    width: 30,
+    paddingHorizontal: 2,
+  },
+  tableRow: {
+    flexDirection: 'row' as const,
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    borderBottom: '0.5pt solid #E0E0E0',
+  },
+  tableRowAlt: {
+    flexDirection: 'row' as const,
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    borderBottom: '0.5pt solid #E0E0E0',
+    backgroundColor: '#F8F9FA',
+  },
+  tableCell: {
+    fontSize: 7,
+    color: '#333333',
+    textAlign: 'right' as const,
+    flex: 1,
+    paddingHorizontal: 2,
+  },
+  tableCellFirst: {
+    fontSize: 7,
+    color: '#333333',
+    fontWeight: 'bold',
+    textAlign: 'left' as const,
+    width: 30,
+    paddingHorizontal: 2,
+  },
+  // Footer
+  footer: {
+    position: 'absolute' as const,
+    bottom: 20,
+    left: 40,
+    right: 40,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    borderTop: '0.5pt solid #CCCCCC',
+    paddingTop: 6,
+  },
+  footerText: {
+    fontSize: 7,
+    color: '#999999',
+  },
+  disclaimer: {
+    marginTop: 15,
+    padding: 8,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 3,
+  },
+  disclaimerText: {
+    fontSize: 7,
+    color: '#888888',
+    lineHeight: 1.4,
+  },
+  // BRRRR highlight
+  brrrrSection: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 3,
+    borderLeft: '3pt solid #4CAF50',
+  },
+});
+
+// ============================================================
+// Professional Report PDF Document (multi-page)
+// ============================================================
+
+function ProfessionalReportPdfDocument({
+  analysis,
+  formData,
+  strategy,
+  senderName,
+  rawPropertyData,
+}: {
+  analysis: AnalysisResult<SFRMetrics>;
+  formData: PdfFormData;
+  strategy: PdfStrategy;
+  senderName?: string;
+  rawPropertyData?: any;
+}) {
+  const dealQualityScore = analysis.investmentDecision?.professionalAssessment?.dealQuality || 0;
+  const scoreStyles = getScoreStyles(dealQualityScore);
+  const scoreLabel = getScoreLabel(dealQualityScore);
+  const isBrrrr = strategy === 'brrrr';
+  const projections = (analysis as any).longTermAnalysis?.projections || [];
+  // Merge property data: prefer rawPropertyData (from frontend), then analysis.propertyData, then formData
+  const propertyData = rawPropertyData || (analysis as any).propertyData || formData;
+  const lta = propertyData?.longTermAssumptions || {};
+  const userProjectionYears = lta.projectionYears
+    || propertyData?.projectionYears
+    || formData.projectionYears
+    || (analysis as any).longTermAnalysis?.projectionYears;
+  const projectionCount = Math.min(projections.length, userProjectionYears || (isBrrrr ? 15 : 10));
+  const strategySpec = (analysis as any).strategySpecific;
+  const keyMetrics = analysis.keyMetrics || {} as any;
+  const monthly = analysis.monthlyAnalysis || {} as any;
+  const annual = analysis.annualAnalysis || {} as any;
+  const exitAnalysis = (analysis as any).longTermAnalysis?.exitAnalysis;
+  const weightedComponents = analysis.investmentDecision?.professionalAssessment?.weightedComponents;
+
+  const strategyLabel = isBrrrr ? 'BRRRR Strategy' : 'Buy & Hold';
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const addressStr = formData.propertyAddress || propertyData?.address || propertyData?.propertyAddress?.street || 'Property Analysis';
+
+  // Helper to create data row with alternating background
+  const dataRow = (label: string, value: string, alt: boolean = false) =>
+    React.createElement(View, { style: alt ? proStyles.rowAlt : proStyles.row },
+      React.createElement(Text, { style: proStyles.label }, label),
+      React.createElement(Text, { style: proStyles.value }, value)
+    );
+
+  // Page footer component
+  const PageFooter = ({ pageNum }: { pageNum: number }) =>
+    React.createElement(View, { style: proStyles.footer, fixed: true } as any,
+      React.createElement(Text, { style: proStyles.footerText }, `REanalyzr | Institutional-Grade Analysis | reanalyzr.com | ${dateStr}`),
+      React.createElement(Text, { style: proStyles.footerText }, `Page ${pageNum}`)
+    );
+
+  // Subtle page header for pages 2+ (light branding)
+  const PageHeader = () =>
+    React.createElement(View, { style: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 6, borderBottom: '0.5pt solid #E0E0E0' } },
+      React.createElement(Text, { style: { fontSize: 10, fontWeight: 'bold', color: '#1565C0' } }, 'REanalyzr'),
+      React.createElement(Text, { style: { fontSize: 8, color: '#999999' } }, addressStr)
+    );
+
+  // ---- PAGE 1: Executive Summary ----
+  const page1 = React.createElement(
+    Page, { size: 'A4', style: proStyles.page },
+
+    // Branded Header
+    React.createElement(View, { style: proStyles.header },
+      React.createElement(View, { style: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 } },
+        React.createElement(View, null,
+          React.createElement(Text, { style: { fontSize: 22, fontWeight: 'bold', color: '#1565C0', letterSpacing: -0.5 } }, 'REanalyzr'),
+          React.createElement(Text, { style: { fontSize: 9, color: '#90A4AE', marginTop: 1 } }, 'Institutional-Grade Analysis')
+        ),
+        React.createElement(View, { style: { alignItems: 'flex-end' } },
+          React.createElement(Text, { style: { fontSize: 8, color: '#999999' } }, 'reanalyzr.com'),
+          React.createElement(Text, { style: { fontSize: 8, color: '#999999' } }, dateStr)
+        )
+      ),
+      React.createElement(Text, { style: { fontSize: 14, fontWeight: 'bold', color: '#333333', marginBottom: 3 } }, 'Property Analysis Report'),
+      React.createElement(Text, { style: proStyles.headerAddress }, addressStr),
+      React.createElement(Text, { style: proStyles.headerSubtitle },
+        `${strategyLabel}${senderName ? ` | Prepared by ${senderName}` : ''}`)
+    ),
+
+    // Deal Quality Score
+    React.createElement(View, {
+      style: {
+        ...proStyles.scoreBox,
+        backgroundColor: dealQualityScore >= 80 ? '#E8F5E9' : dealQualityScore >= 65 ? '#FFF3E0' : '#FFEBEE',
+      }
+    },
+      React.createElement(Text, { style: { fontSize: 10, fontWeight: 'bold', color: '#555', marginBottom: 4 } }, 'Deal Quality Score'),
+      React.createElement(Text, {
+        style: {
+          ...proStyles.scoreValue,
+          color: dealQualityScore >= 80 ? '#2E7D32' : dealQualityScore >= 65 ? '#E65100' : '#C62828',
+        }
+      }, `${dealQualityScore}/100`),
+      React.createElement(Text, {
+        style: {
+          ...proStyles.scoreLabel,
+          color: dealQualityScore >= 80 ? '#2E7D32' : dealQualityScore >= 65 ? '#E65100' : '#C62828',
+        }
+      }, scoreLabel)
+    ),
+
+    // Professional Calibration
+    ...(weightedComponents ? [
+      React.createElement(View, { style: { marginTop: 8, marginBottom: 8 } },
+        React.createElement(Text, { style: { fontSize: 10, fontWeight: 'bold', color: '#333', marginBottom: 6 } }, 'Professional Calibration'),
+        ...(Object.entries(weightedComponents) as [string, any][]).map(([key, comp]) =>
+          React.createElement(View, { style: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 }, key },
+            React.createElement(Text, { style: { fontSize: 8, color: '#666', width: 80 } },
+              key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())),
+            React.createElement(View, { style: { flex: 1, height: 8, backgroundColor: '#E0E0E0', borderRadius: 4, marginHorizontal: 6 } },
+              React.createElement(View, { style: { width: `${Math.min(comp.score || 0, 100)}%`, height: 8, backgroundColor: '#1565C0', borderRadius: 4 } })
+            ),
+            React.createElement(Text, { style: { fontSize: 8, fontWeight: 'bold', color: '#333', width: 30, textAlign: 'right' } },
+              `${Math.round(comp.score || 0)}/100`)
+          )
+        )
+      )
+    ] : []),
+
+    // Hero Metrics
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Key Highlights'),
+    React.createElement(View, { style: proStyles.twoCol },
+      React.createElement(View, { style: proStyles.col },
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Monthly Cash Flow'),
+          React.createElement(Text, { style: proStyles.metricValue },
+            isBrrrr && strategySpec?.postRefinanceMetrics?.monthlyCashFlow !== undefined
+              ? formatCurrency(strategySpec.postRefinanceMetrics.monthlyCashFlow)
+              : monthly?.cashFlow !== undefined ? formatCurrency(monthly.cashFlow) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Cap Rate'),
+          React.createElement(Text, { style: proStyles.metricValue },
+            keyMetrics.capRate !== undefined ? formatPercent(keyMetrics.capRate) : 'N/A')
+        )
+      ),
+      React.createElement(View, { style: proStyles.col },
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Cash-on-Cash Return'),
+          React.createElement(Text, { style: proStyles.metricValue },
+            isBrrrr && strategySpec?.postRefinanceMetrics?.cashOnCashReturn !== undefined
+              ? formatPercent(strategySpec.postRefinanceMetrics.cashOnCashReturn)
+              : keyMetrics.cashOnCashReturn !== undefined ? formatPercent(keyMetrics.cashOnCashReturn) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'DSCR'),
+          React.createElement(Text, { style: proStyles.metricValue },
+            isBrrrr && strategySpec?.postRefinanceMetrics?.postRefiDSCR !== undefined
+              ? strategySpec.postRefinanceMetrics.postRefiDSCR.toFixed(2)
+              : keyMetrics.dscr !== undefined ? keyMetrics.dscr.toFixed(2) : 'N/A')
+        )
+      )
+    ),
+
+    PageFooter({ pageNum: 1 })
+  );
+
+  // ---- PAGE 2: Property & Financing ----
+  const page2 = React.createElement(
+    Page, { size: 'A4', style: proStyles.page },
+
+    PageHeader(),
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Property Details'),
+    dataRow('Address', addressStr),
+    dataRow('Purchase Price', formatCurrency(formData.purchasePrice), true),
+    formData.squareFeet ? dataRow('Square Footage', `${formData.squareFeet.toLocaleString()} sq ft`) : null,
+    formData.squareFeet ? dataRow('Price per Sq Ft', formatCurrency(formData.purchasePrice / formData.squareFeet), true) : null,
+    propertyData?.bedrooms ? dataRow('Bedrooms / Bathrooms', `${propertyData.bedrooms} bed / ${propertyData.bathrooms || 'N/A'} bath`) : null,
+    propertyData?.yearBuilt ? dataRow('Year Built', `${propertyData.yearBuilt}`, true) : null,
+    propertyData?.propertyType ? dataRow('Property Type', propertyData.propertyType) : null,
+
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Financing'),
+    dataRow('Down Payment', `${formatCurrency(formData.downPayment)} (${((formData.downPayment / formData.purchasePrice) * 100).toFixed(0)}%)`),
+    dataRow('Loan Amount', formatCurrency(formData.purchasePrice - formData.downPayment), true),
+    propertyData?.interestRate !== undefined ? dataRow('Interest Rate', formatPercent(propertyData.interestRate)) : null,
+    propertyData?.loanTerm ? dataRow('Loan Term', `${propertyData.loanTerm} years`, true) : null,
+    monthly?.expenses?.debt ? dataRow('Monthly Mortgage', formatCurrency(monthly.expenses.debt)) : null,
+    propertyData?.closingCosts !== undefined ? dataRow('Closing Costs', formatCurrency(propertyData.closingCosts), true) : null,
+
+    // BRRRR-specific financing
+    ...(isBrrrr ? [
+      React.createElement(Text, { style: proStyles.sectionTitle }, 'BRRRR Strategy Details'),
+      React.createElement(View, { style: proStyles.brrrrSection },
+        dataRow('Rehab Budget', formData.rehabCost ? formatCurrency(formData.rehabCost) : 'N/A'),
+        dataRow('After Repair Value (ARV)', formData.afterRepairValue ? formatCurrency(formData.afterRepairValue) : 'N/A', true),
+        propertyData?.refinanceLTV ? dataRow('Refinance LTV', formatPercent(propertyData.refinanceLTV)) : null,
+        propertyData?.seasoningPeriod ? dataRow('Seasoning Period', `${propertyData.seasoningPeriod} months`, true) : null,
+        propertyData?.refinanceInterestRate !== undefined ? dataRow('Refinance Interest Rate', formatPercent(propertyData.refinanceInterestRate)) : null
+      )
+    ] : []),
+
+    PageFooter({ pageNum: 2 })
+  );
+
+  // ---- PAGE 3: Income, Expenses & Assumptions ----
+  const expenses = monthly?.expenses || {} as any;
+  const breakdown = expenses.breakdown || {} as any;
+
+  const page3 = React.createElement(
+    Page, { size: 'A4', style: proStyles.page },
+
+    PageHeader(),
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Monthly Income'),
+    dataRow('Gross Monthly Rent', formatCurrency(formData.monthlyRent)),
+    monthly?.income?.effective !== undefined
+      ? dataRow('Effective Gross Income', formatCurrency(monthly.income.effective), true) : null,
+
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Monthly Expenses'),
+    breakdown.propertyTax !== undefined ? dataRow('Property Tax', formatCurrency(breakdown.propertyTax)) : null,
+    breakdown.insurance !== undefined ? dataRow('Insurance', formatCurrency(breakdown.insurance), true) : null,
+    breakdown.maintenance !== undefined ? dataRow('Maintenance', formatCurrency(breakdown.maintenance)) : null,
+    breakdown.propertyManagement !== undefined ? dataRow('Property Management', formatCurrency(breakdown.propertyManagement), true) : null,
+    breakdown.vacancy !== undefined ? dataRow('Vacancy Reserve', formatCurrency(breakdown.vacancy)) : null,
+    breakdown.hoa !== undefined && breakdown.hoa > 0 ? dataRow('HOA', formatCurrency(breakdown.hoa), true) : null,
+    breakdown.landlordUtilities !== undefined && breakdown.landlordUtilities > 0 ? dataRow('Utilities', formatCurrency(breakdown.landlordUtilities)) : null,
+    breakdown.sfrCapEx !== undefined && breakdown.sfrCapEx > 0 ? dataRow('CapEx Reserve', formatCurrency(breakdown.sfrCapEx), true) : null,
+    expenses.total !== undefined ? dataRow('Total Monthly Expenses', formatCurrency(expenses.total)) : null,
+
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Assumptions'),
+    (() => {
+      // lta already resolved at top of function from propertyData.longTermAssumptions
+      const rows: any[] = [];
+      if (lta.vacancyRate !== undefined) rows.push(dataRow('Vacancy Rate', formatPercent(lta.vacancyRate)));
+      if (lta.annualRentIncrease !== undefined) rows.push(dataRow('Annual Rent Growth', formatPercent(lta.annualRentIncrease), true));
+      if (lta.annualPropertyValueIncrease !== undefined) rows.push(dataRow('Annual Appreciation', formatPercent(lta.annualPropertyValueIncrease)));
+      if (lta.inflationRate !== undefined) rows.push(dataRow('Inflation Rate', formatPercent(lta.inflationRate), true));
+      if (lta.sellingCostsPercentage !== undefined) rows.push(dataRow('Selling Costs', formatPercent(lta.sellingCostsPercentage)));
+      if (propertyData?.propertyTaxRate !== undefined) rows.push(dataRow('Property Tax Rate', formatPercent(propertyData.propertyTaxRate), true));
+      if (propertyData?.propertyManagementRate !== undefined) rows.push(dataRow('Property Management', formatPercent(propertyData.propertyManagementRate)));
+      if (lta.projectionYears) rows.push(dataRow('Projection Period', `${lta.projectionYears} years`, true));
+      if (lta.turnoverFrequency) rows.push(dataRow('Tenant Turnover', `Every ${lta.turnoverFrequency} years`));
+      return rows.length > 0 ? React.createElement(View, null, ...rows) : dataRow('Using default assumptions', 'Standard');
+    })(),
+
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Annual Summary'),
+    annual?.noi !== undefined ? dataRow('Net Operating Income (NOI)', formatCurrency(annual.noi)) : null,
+    annual?.debtService !== undefined ? dataRow('Annual Debt Service', formatCurrency(annual.debtService), true) : null,
+    annual?.cashFlow !== undefined ? dataRow('Annual Cash Flow', formatCurrency(annual.cashFlow)) : null,
+
+    PageFooter({ pageNum: 3 })
+  );
+
+  // ---- PAGE 4: Key Investment Metrics ----
+  const page4 = React.createElement(
+    Page, { size: 'A4', style: proStyles.page },
+
+    PageHeader(),
+    React.createElement(Text, { style: proStyles.sectionTitle }, 'Key Investment Metrics'),
+    React.createElement(View, { style: proStyles.twoCol },
+      React.createElement(View, { style: proStyles.col },
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Cap Rate'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.capRate !== undefined ? formatPercent(keyMetrics.capRate) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Cash-on-Cash Return'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.cashOnCashReturn !== undefined ? formatPercent(keyMetrics.cashOnCashReturn) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, `IRR (${propertyData?.projectionYears || 10}-Year)`),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.irr !== undefined ? formatPercent(keyMetrics.irr) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'DSCR'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.dscr !== undefined ? keyMetrics.dscr.toFixed(2) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Gross Rent Multiplier'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.grossRentMultiplier !== undefined ? keyMetrics.grossRentMultiplier.toFixed(2) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Total ROI'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.totalROI !== undefined ? formatPercent(keyMetrics.totalROI) : 'N/A')
+        )
+      ),
+      React.createElement(View, { style: proStyles.col },
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Break-Even Occupancy'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.breakEvenOccupancy !== undefined ? formatPercent(keyMetrics.breakEvenOccupancy) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Equity Multiple'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.equityMultiple !== undefined ? `${keyMetrics.equityMultiple.toFixed(2)}x` : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, '1% Rule'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.onePercentRuleValue !== undefined ? formatCurrency(keyMetrics.onePercentRuleValue) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Price per Sq Ft'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.pricePerSqft !== undefined ? formatCurrency(keyMetrics.pricePerSqft) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Debt Yield'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.debtYield !== undefined ? formatPercent(keyMetrics.debtYield) : 'N/A')
+        ),
+        React.createElement(View, { style: proStyles.metricCard },
+          React.createElement(Text, { style: proStyles.metricLabel }, 'Gross Yield'),
+          React.createElement(Text, { style: proStyles.metricValue }, keyMetrics.grossYield !== undefined ? formatPercent(keyMetrics.grossYield) : 'N/A')
+        )
+      )
+    ),
+
+    // BRRRR-specific metrics
+    ...(isBrrrr && strategySpec ? [
+      React.createElement(Text, { style: proStyles.sectionTitle }, 'BRRRR Capital Recovery'),
+      React.createElement(View, { style: proStyles.brrrrSection },
+        strategySpec.capitalRecovery?.capitalRecoveryRate !== undefined
+          ? dataRow('Capital Recovery Rate', formatPercent(strategySpec.capitalRecovery.capitalRecoveryRate)) : null,
+        strategySpec.capitalRecovery?.capitalRemaining !== undefined
+          ? dataRow('Cash Left in Deal', formatCurrency(strategySpec.capitalRecovery.capitalRemaining), true) : null,
+        keyMetrics.forcedEquity !== undefined
+          ? dataRow('Forced Equity', formatCurrency(keyMetrics.forcedEquity)) : null,
+        strategySpec.postRefinanceMetrics?.monthlyCashFlow !== undefined
+          ? dataRow('Post-Refi Monthly Cash Flow', formatCurrency(strategySpec.postRefinanceMetrics.monthlyCashFlow), true) : null,
+        strategySpec.postRefinanceMetrics?.postRefiDSCR !== undefined
+          ? dataRow('Post-Refi DSCR', strategySpec.postRefinanceMetrics.postRefiDSCR.toFixed(2)) : null,
+        strategySpec.postRefinanceMetrics?.cashOnCashReturn !== undefined
+          ? dataRow('Post-Refi Cash-on-Cash', formatPercent(strategySpec.postRefinanceMetrics.cashOnCashReturn), true) : null,
+        strategySpec.rule70Check
+          ? dataRow('70% Rule', strategySpec.rule70Check.meets70Rule ? 'PASS' : 'FAIL') : null
+      )
+    ] : []),
+
+    PageFooter({ pageNum: 4 })
+  );
+
+  // ---- PAGE 5: Projection Table ----
+  const tableColumns = ['Year', 'Property Value', 'Gross Rent', 'Expenses', 'NOI', 'Debt Service', 'Cash Flow', 'Equity'];
+
+  const projectionPages = projectionCount > 0 ? [
+    React.createElement(
+      Page, { size: 'A4', style: proStyles.page },
+
+      PageHeader(),
+      React.createElement(Text, { style: proStyles.sectionTitle },
+        `${projectionCount}-Year Projection`),
+
+      React.createElement(View, { style: proStyles.table },
+        // Header row
+        React.createElement(View, { style: proStyles.tableHeaderRow },
+          ...tableColumns.map((col, i) =>
+            React.createElement(Text, {
+              style: i === 0 ? proStyles.tableHeaderCellFirst : proStyles.tableHeaderCell,
+              key: `h-${i}`
+            }, col)
+          )
+        ),
+
+        // Data rows
+        ...projections.slice(0, projectionCount).map((proj: any, i: number) =>
+          React.createElement(View, {
+            style: i % 2 === 0 ? proStyles.tableRow : proStyles.tableRowAlt,
+            key: `r-${i}`
+          },
+            React.createElement(Text, { style: proStyles.tableCellFirst }, `${proj.year}`),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.propertyValue || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.grossIncome || proj.grossRent || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.operatingExpenses || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.noi || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.debtService || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.cashFlow || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(proj.equity || 0))
+          )
+        )
+      ),
+
+      // Exit Analysis
+      ...(exitAnalysis ? [
+        React.createElement(Text, { style: { ...proStyles.sectionTitle, marginTop: 15 } }, 'Exit Analysis'),
+        exitAnalysis.projectedSalePrice !== undefined
+          ? dataRow('Projected Sale Price', formatCurrency(exitAnalysis.projectedSalePrice)) : null,
+        exitAnalysis.sellingCosts !== undefined
+          ? dataRow('Selling Costs', formatCurrency(exitAnalysis.sellingCosts), true) : null,
+        exitAnalysis.mortgagePayoff !== undefined
+          ? dataRow('Mortgage Payoff', formatCurrency(exitAnalysis.mortgagePayoff)) : null,
+        exitAnalysis.netProceeds !== undefined
+          ? dataRow('Net Proceeds', formatCurrency(exitAnalysis.netProceeds), true) : null,
+        exitAnalysis.totalProfit !== undefined
+          ? dataRow('Total Profit', formatCurrency(exitAnalysis.totalProfit)) : null,
+        exitAnalysis.roi !== undefined
+          ? dataRow('ROI', formatPercent(exitAnalysis.roi), true) : null,
+      ] : []),
+
+      // BRRRR Exit Scenarios
+      ...(isBrrrr && strategySpec?.exitScenarios?.length > 0 ? [
+        React.createElement(Text, { style: { ...proStyles.sectionTitle, marginTop: 12 } }, 'BRRRR Exit Scenarios'),
+        React.createElement(View, { style: proStyles.tableHeaderRow },
+          React.createElement(Text, { style: proStyles.tableHeaderCellFirst }, 'Year'),
+          React.createElement(Text, { style: proStyles.tableHeaderCell }, 'Sale Price'),
+          React.createElement(Text, { style: proStyles.tableHeaderCell }, 'Net Proceeds'),
+          React.createElement(Text, { style: proStyles.tableHeaderCell }, 'Total Return'),
+          React.createElement(Text, { style: proStyles.tableHeaderCell }, 'IRR')
+        ),
+        ...strategySpec.exitScenarios.map((scenario: any, i: number) =>
+          React.createElement(View, {
+            style: i % 2 === 0 ? proStyles.tableRow : proStyles.tableRowAlt,
+            key: `exit-${i}`
+          },
+            React.createElement(Text, { style: proStyles.tableCellFirst }, `Year ${scenario.year}`),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(scenario.salePrice || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(scenario.netProceeds || scenario.proceeds || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, formatCurrency(scenario.totalReturn || 0)),
+            React.createElement(Text, { style: proStyles.tableCell }, scenario.irr !== undefined ? formatPercent(scenario.irr) : 'N/A')
+          )
+        )
+      ] : []),
+
+      // Disclaimer
+      React.createElement(View, { style: proStyles.disclaimer },
+        React.createElement(Text, { style: proStyles.disclaimerText },
+          'This analysis is for educational and informational purposes only. REanalyzr provides professional-grade calculations but does not constitute financial, legal, or investment advice. Always consult with qualified professionals (CPA, attorney, financial advisor) before making investment decisions. Past performance does not guarantee future results. Real estate investing involves risk including loss of principal.')
+      ),
+
+      PageFooter({ pageNum: 5 })
+    )
+  ] : [];
+
+  return React.createElement(Document, null, page1, page2, page3, page4, ...projectionPages);
+}
+
+// ============================================================
 // PDF Service Class
 // ============================================================
 
@@ -590,6 +1216,49 @@ export class PdfService {
       });
 
       throw new Error('PDF generation failed');
+    }
+  }
+
+  /**
+   * Generate professional multi-page report PDF (for authenticated share)
+   */
+  async generateProfessionalReportPdf(
+    analysis: AnalysisResult<SFRMetrics>,
+    formData: PdfFormData,
+    strategy: PdfStrategy,
+    senderName?: string,
+    rawPropertyData?: any
+  ): Promise<PdfGenerationResult> {
+    const startTime = Date.now();
+
+    try {
+      const checksum = this.generateChecksum(analysis, formData);
+
+      logger.info('[PdfService] Starting professional report PDF generation', {
+        strategy,
+        dealQualityScore: analysis.investmentDecision?.professionalAssessment?.dealQuality || 0,
+      });
+
+      const doc = ProfessionalReportPdfDocument({ analysis, formData, strategy, senderName, rawPropertyData });
+      const pdfBlob = await pdf(doc).toBlob();
+      const arrayBuffer = await pdfBlob.arrayBuffer();
+      const pdfBuffer = Buffer.from(arrayBuffer);
+
+      const duration = Date.now() - startTime;
+      const fileSizeBytes = pdfBuffer.length;
+
+      logger.info('[PdfService] Professional report PDF generated', {
+        durationMs: duration,
+        fileSizeKB: Math.round(fileSizeBytes / 1024),
+      });
+
+      return { pdfBuffer, fileSizeBytes, generationTimeMs: duration, checksum };
+    } catch (error) {
+      logger.error('[PdfService] Failed to generate professional report PDF', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: Date.now() - startTime,
+      });
+      throw new Error('Professional report PDF generation failed');
     }
   }
 

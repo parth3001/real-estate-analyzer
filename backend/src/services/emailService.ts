@@ -6,7 +6,8 @@ export interface EmailTemplate {
   to: string;
   subject: string;
   html: string;
-  attachments?: EmailPdfAttachment[];  // ✨ NEW: Support for PDF attachments
+  attachments?: EmailPdfAttachment[];
+  cc?: string[];
 }
 
 export class EmailService {
@@ -127,6 +128,11 @@ export class EmailService {
         subject: template.subject,
         html: template.html
       };
+
+      // Add CC if present
+      if (template.cc && template.cc.length > 0) {
+        emailPayload.cc = template.cc;
+      }
 
       // Add attachments if present (for PDF emails)
       if (template.attachments && template.attachments.length > 0) {
@@ -502,6 +508,155 @@ export class EmailService {
     });
 
     logger.info(`[EmailService] Anonymous PDF email sent to: ${email} | Strategy: ${strategy} | Score: ${dealQualityScore}`);
+  }
+
+  /**
+   * Send shared analysis email (authenticated user sharing with banker/underwriter)
+   */
+  async sendShareAnalysisEmail(
+    recipientEmail: string,
+    ccEmail: string | undefined,
+    personalNote: string | undefined,
+    attachment: EmailPdfAttachment,
+    strategy: string,
+    dealQualityScore: number,
+    senderName: string,
+    senderEmail: string,
+    propertyAddress?: string,
+    analysis?: any
+  ): Promise<void> {
+    const template = this.getShareAnalysisEmailTemplate(
+      strategy, dealQualityScore, senderName, senderEmail, personalNote, propertyAddress, analysis
+    );
+
+    const addressLabel = propertyAddress || 'Property Analysis';
+    const subject = `Property Analysis: ${addressLabel} | Deal Score: ${dealQualityScore}/100 — Shared by ${senderName}`;
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html: template,
+      attachments: [attachment],
+      ...(ccEmail ? { cc: [ccEmail] } : {}),
+    });
+
+    logger.info(`[EmailService] Share analysis email sent to: ${recipientEmail} from: ${senderEmail} | Score: ${dealQualityScore}`);
+  }
+
+  /**
+   * Professional share analysis email template (no marketing CTAs, numbers-focused)
+   */
+  private getShareAnalysisEmailTemplate(
+    strategy: string,
+    dealQualityScore: number,
+    senderName: string,
+    senderEmail: string,
+    personalNote?: string,
+    propertyAddress?: string,
+    analysis?: any
+  ): string {
+    const strategyLabel = strategy === 'brrrr' ? 'BRRRR Strategy' : 'Buy & Hold';
+    const scoreColor = dealQualityScore >= 80 ? '#2E7D32' : dealQualityScore >= 65 ? '#E65100' : '#C62828';
+    const scoreLabel = dealQualityScore >= 80
+      ? 'Above professional standards'
+      : dealQualityScore >= 65
+        ? 'Meets professional standards'
+        : dealQualityScore >= 50
+          ? 'Requires optimization'
+          : 'Below professional standards';
+
+    const keyMetrics = analysis?.keyMetrics || {};
+    const monthly = analysis?.monthlyAnalysis || {};
+    const isBrrrr = strategy === 'brrrr';
+    const strategySpec = analysis?.strategySpecific;
+
+    const monthlyCashFlow = isBrrrr && strategySpec?.postRefinanceMetrics?.monthlyCashFlow !== undefined
+      ? strategySpec.postRefinanceMetrics.monthlyCashFlow
+      : monthly?.cashFlow;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 24px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">REanalyzr</h1>
+              <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 12px;">Property Analysis Report</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <p style="margin: 0 0 16px 0; color: #333333; font-size: 14px; line-height: 1.6;">
+                <strong>${senderName}</strong> (${senderEmail}) has shared a property analysis with you via REanalyzr.
+              </p>
+
+              ${personalNote ? `
+              <div style="background-color: #f8f9fa; border-left: 3px solid #1565C0; padding: 12px 16px; margin: 0 0 20px 0; border-radius: 0 4px 4px 0;">
+                <p style="margin: 0; color: #555555; font-size: 13px; font-style: italic;">"${personalNote}"</p>
+              </div>
+              ` : ''}
+
+              <!-- Property & Score -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0;">
+                <tr>
+                  <td style="background-color: #f8f9fa; padding: 16px; border-radius: 8px;">
+                    ${propertyAddress ? `<p style="margin: 0 0 8px 0; color: #333333; font-size: 15px; font-weight: 600;">${propertyAddress}</p>` : ''}
+                    <span style="display: inline-block; background-color: ${isBrrrr ? '#E8F5E9' : '#E3F2FD'}; color: ${isBrrrr ? '#2E7D32' : '#1565C0'}; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px; margin-bottom: 8px;">${strategyLabel}</span>
+                    <p style="margin: 0; color: ${scoreColor}; font-size: 36px; font-weight: 700; letter-spacing: -1px;">${dealQualityScore}/100</p>
+                    <p style="margin: 4px 0 0 0; color: ${scoreColor}; font-size: 12px;">${scoreLabel}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Key Metrics Summary -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #e0e0e0; border-radius: 8px; border-collapse: separate;">
+                <tr style="background-color: #f5f7fa;">
+                  <td style="font-size: 12px; color: #666; padding: 14px 16px;">Cap Rate</td>
+                  <td style="font-size: 14px; font-weight: 600; color: #212121; text-align: right; padding: 14px 16px;">${keyMetrics.capRate !== undefined ? keyMetrics.capRate.toFixed(1) + '%' : 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; color: #666; padding: 14px 16px;">Monthly Cash Flow</td>
+                  <td style="font-size: 14px; font-weight: 600; color: #212121; text-align: right; padding: 14px 16px;">${monthlyCashFlow !== undefined ? '$' + Math.round(monthlyCashFlow).toLocaleString() : 'N/A'}</td>
+                </tr>
+                <tr style="background-color: #f5f7fa;">
+                  <td style="font-size: 12px; color: #666; padding: 14px 16px;">DSCR</td>
+                  <td style="font-size: 14px; font-weight: 600; color: #212121; text-align: right; padding: 14px 16px;">${keyMetrics.dscr !== undefined ? keyMetrics.dscr.toFixed(2) : 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; color: #666; padding: 14px 16px;">Cash-on-Cash Return</td>
+                  <td style="font-size: 14px; font-weight: 600; color: #212121; text-align: right; padding: 14px 16px;">${keyMetrics.cashOnCashReturn !== undefined ? keyMetrics.cashOnCashReturn.toFixed(1) + '%' : 'N/A'}</td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 8px 0; color: #333333; font-size: 13px; line-height: 1.5;">
+                The complete analysis report is attached as a PDF, including property details, financing assumptions, key metrics, and ${isBrrrr ? '15' : '10'}-year projections.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 20px 32px; border-top: 1px solid #e0e0e0;">
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 10px; line-height: 1.5;">
+                This analysis is for informational purposes only and does not constitute financial, legal, or investment advice. Always consult with qualified professionals before making investment decisions.
+              </p>
+              <p style="margin: 0; color: #bbbbbb; font-size: 10px;">
+                Generated by REanalyzr | reanalyzr.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
   }
 
   /**

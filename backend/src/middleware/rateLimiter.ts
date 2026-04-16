@@ -234,6 +234,70 @@ export function clearAllRateLimits(): void {
 }
 
 // ============================================================
+// Authenticated PDF Share Rate Limiter
+// ============================================================
+
+const SHARE_MAX_REQUESTS = PDF_CONSTANTS.SHARE_RATE_LIMIT_MAX_REQUESTS;  // 10 shares per hour
+const SHARE_WINDOW_MS = PDF_CONSTANTS.SHARE_RATE_LIMIT_WINDOW_MS;        // 1 hour
+
+const shareRateLimitCache = new LRUCache<string, RateLimitEntry>({
+  max: MAX_CACHE_SIZE,
+  ttl: SHARE_WINDOW_MS,
+  updateAgeOnGet: false,
+  updateAgeOnHas: false,
+});
+
+/**
+ * Authenticated PDF Share Rate Limiter
+ * Limits to 10 shares per hour per user ID (not IP)
+ */
+export function authenticatedPdfRateLimiter(req: Request, res: Response, next: NextFunction): void {
+  const userId = (req as any).user?.id;
+  const key = userId || getClientIp(req);  // Fallback to IP if no user (defensive)
+
+  const now = Date.now();
+  const entry = shareRateLimitCache.get(key);
+
+  let allowed = true;
+  let remaining = SHARE_MAX_REQUESTS - 1;
+  let resetAt = now + SHARE_WINDOW_MS;
+  let retryAfter: number | undefined;
+
+  if (!entry) {
+    shareRateLimitCache.set(key, { count: 1, resetAt });
+  } else if (now >= entry.resetAt) {
+    shareRateLimitCache.set(key, { count: 1, resetAt });
+  } else if (entry.count >= SHARE_MAX_REQUESTS) {
+    allowed = false;
+    remaining = 0;
+    resetAt = entry.resetAt;
+    retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+  } else {
+    entry.count++;
+    shareRateLimitCache.set(key, entry);
+    remaining = SHARE_MAX_REQUESTS - entry.count;
+    resetAt = entry.resetAt;
+  }
+
+  res.setHeader('X-RateLimit-Limit', SHARE_MAX_REQUESTS);
+  res.setHeader('X-RateLimit-Remaining', remaining);
+  res.setHeader('X-RateLimit-Reset', Math.floor(resetAt / 1000));
+
+  if (!allowed) {
+    res.setHeader('Retry-After', retryAfter!);
+    logger.warn(`[RateLimiter] Share rate limit exceeded for user: ${key}`);
+    res.status(429).json({
+      error: `Rate limit exceeded. You can share ${SHARE_MAX_REQUESTS} analyses per hour. Try again in ${Math.ceil(retryAfter! / 60)} minutes.`,
+      retryAfter,
+      type: 'rate-limit',
+    });
+    return;
+  }
+
+  next();
+}
+
+// ============================================================
 // Export Default Middleware
 // ============================================================
 

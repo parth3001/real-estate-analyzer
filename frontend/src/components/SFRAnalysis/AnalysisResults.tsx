@@ -2605,6 +2605,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         description="Learn how to interpret AI-powered insights and make data-driven investment decisions"
         videoUrl="https://www.youtube.com/embed/fa-VZ-SDxgY"
       />
+
     </Box>
   );
 };

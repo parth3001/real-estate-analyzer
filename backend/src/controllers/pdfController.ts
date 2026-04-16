@@ -23,6 +23,8 @@ import { AnalysisResult, SFRMetrics } from '../types/analysis';
 import pdfService from '../services/pdfService';
 import { emailService } from '../services/emailService';
 import AnonymousPdfRequest from '../models/AnonymousPdfRequest';
+import SharedAnalysis from '../models/SharedAnalysis';
+import { AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
 // ============================================================
@@ -270,6 +272,192 @@ export async function sendAnonymousPdf(req: Request, res: Response): Promise<voi
       error: 'Failed to generate and send PDF. Please try again later.',
       type: errorType,
     });
+  }
+}
+
+// ============================================================
+// Share Analysis (Authenticated)
+// ============================================================
+
+/**
+ * Share Analysis via Email
+ *
+ * POST /api/pdf/share-analysis
+ * Requires authentication
+ */
+export async function shareAnalysis(req: Request, res: Response): Promise<void> {
+  const startTime = Date.now();
+  const authReq = req as AuthenticatedRequest;
+  const userId = authReq.user?.id;
+  const senderEmail = authReq.user?.email;
+
+  if (!userId || !senderEmail) {
+    res.status(401).json({ error: 'Authentication required', type: 'validation-error' });
+    return;
+  }
+
+  try {
+    const { recipientEmail, ccEmail, personalNote, analysis, propertyData, strategy } = req.body;
+
+    // Validate recipient email
+    if (!recipientEmail || !isValidEmail(recipientEmail)) {
+      res.status(400).json({ error: 'Valid recipient email is required', type: 'validation-error' });
+      return;
+    }
+
+    // Validate CC email if provided
+    if (ccEmail && !isValidEmail(ccEmail)) {
+      res.status(400).json({ error: 'Invalid CC email address', type: 'validation-error' });
+      return;
+    }
+
+    // Validate strategy
+    if (!strategy || (strategy !== 'brrrr' && strategy !== 'buy-hold')) {
+      res.status(400).json({ error: 'Invalid strategy. Must be "brrrr" or "buy-hold"', type: 'validation-error' });
+      return;
+    }
+
+    // Validate analysis data
+    if (!analysis || typeof analysis !== 'object') {
+      res.status(400).json({ error: 'Analysis data is required', type: 'validation-error' });
+      return;
+    }
+
+    const dealQualityScore = analysis.investmentDecision?.professionalAssessment?.dealQuality || 0;
+    const propertyAddress = propertyData?.address || propertyData?.propertyAddress?.street || '';
+
+    // Build formData from propertyData for PDF generation
+    const formData: PdfFormData = {
+      purchasePrice: propertyData?.purchasePrice || 0,
+      downPayment: propertyData?.downPayment || 0,
+      monthlyRent: propertyData?.monthlyRent || 0,
+      squareFeet: propertyData?.squareFootage || propertyData?.squareFeet || 0,
+      investmentStrategy: strategy as PdfStrategy,
+      projectionYears: propertyData?.projectionYears,
+      rehabCost: propertyData?.rehabBudget || propertyData?.brrrr?.rehabBudget,
+      afterRepairValue: propertyData?.afterRepairValue || propertyData?.brrrr?.afterRepairValue,
+      propertyAddress,
+    };
+
+    logger.info('[PdfController] Share analysis request', {
+      userId,
+      recipientEmail: recipientEmail.substring(0, 5) + '...',
+      strategy,
+      dealQualityScore,
+    });
+
+    // Generate checksum
+    const dataString = JSON.stringify({ analysis, propertyData });
+    const analysisChecksum = crypto.createHash(PDF_CONSTANTS.CHECKSUM_ALGORITHM).update(dataString).digest('hex');
+
+    // Generate professional report PDF
+    const senderName = senderEmail.split('@')[0]; // Simple name extraction
+    const pdfResult = await pdfService.generateProfessionalReportPdf(
+      analysis,
+      formData,
+      strategy as PdfStrategy,
+      senderName,
+      propertyData  // Pass full propertyData for assumptions access
+    );
+
+    logger.info('[PdfController] Professional PDF generated', {
+      fileSizeKB: Math.round(pdfResult.fileSizeBytes / 1024),
+      generationTimeMs: pdfResult.generationTimeMs,
+    });
+
+    // Prepare attachment
+    const filename = pdfService.generateFilename(strategy as PdfStrategy, propertyAddress);
+    const attachment = {
+      filename,
+      content: pdfResult.pdfBuffer,
+      contentType: PDF_CONSTANTS.PDF_CONTENT_TYPE,
+    };
+
+    // Send email
+    await emailService.sendShareAnalysisEmail(
+      recipientEmail,
+      ccEmail,
+      personalNote,
+      attachment,
+      strategy,
+      dealQualityScore,
+      senderName,
+      senderEmail,
+      propertyAddress,
+      analysis
+    );
+
+    // Save share record
+    const shareRecord = new SharedAnalysis({
+      userId,
+      senderEmail,
+      recipientEmail: recipientEmail.toLowerCase().trim(),
+      ccEmail: ccEmail ? ccEmail.toLowerCase().trim() : undefined,
+      personalNote: personalNote ? personalNote.trim().substring(0, 500) : undefined,
+      strategy,
+      propertyAddress,
+      dealQualityScore,
+      analysisChecksum,
+      pdfFileSizeBytes: pdfResult.fileSizeBytes,
+      status: 'sent',
+    });
+
+    await shareRecord.save();
+
+    const totalDuration = Date.now() - startTime;
+    logger.info('[PdfController] Share analysis completed', {
+      shareId: shareRecord._id,
+      totalDurationMs: totalDuration,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Analysis sent to ${recipientEmail}!`,
+      shareId: shareRecord._id.toString(),
+    });
+
+  } catch (error) {
+    logger.error('[PdfController] Failed to share analysis', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId,
+      totalDurationMs: Date.now() - startTime,
+    });
+
+    res.status(500).json({
+      error: 'Failed to share analysis. Please try again.',
+      type: error instanceof Error && error.message.includes('email') ? 'email-failed' : 'generation-failed',
+    });
+  }
+}
+
+/**
+ * Get Share History
+ *
+ * GET /api/pdf/share-history
+ * Requires authentication
+ */
+export async function getShareHistory(req: Request, res: Response): Promise<void> {
+  const authReq = req as AuthenticatedRequest;
+  const userId = authReq.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+
+    const shares = await SharedAnalysis.find({ userId, status: 'sent' })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select('recipientEmail ccEmail strategy propertyAddress dealQualityScore createdAt')
+      .exec();
+
+    res.status(200).json({ shares });
+  } catch (error) {
+    logger.error('[PdfController] Failed to get share history', { error, userId });
+    res.status(500).json({ error: 'Failed to retrieve share history' });
   }
 }
 

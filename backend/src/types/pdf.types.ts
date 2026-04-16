@@ -238,14 +238,53 @@ export function isValidPdfStrategy(value: any): value is PdfStrategy {
 }
 
 // ============================================================
+// Share Analysis Types (Authenticated PDF Sharing)
+// ============================================================
+
+export interface ShareAnalysisRequest {
+  recipientEmail: string;
+  ccEmail?: string;
+  personalNote?: string;
+  analysis: any;
+  propertyData: any;
+  strategy: PdfStrategy;
+}
+
+export interface ShareAnalysisResponse {
+  success: boolean;
+  message: string;
+  shareId: string;
+}
+
+export interface ISharedAnalysis {
+  userId: string;
+  senderEmail: string;
+  recipientEmail: string;
+  ccEmail?: string;
+  personalNote?: string;
+  strategy: PdfStrategy;
+  propertyAddress?: string;
+  dealQualityScore: number;
+  analysisChecksum: string;
+  pdfFileSizeBytes: number;
+  status: 'sent' | 'failed';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================
 // Constants
 // ============================================================
 
 export const PDF_CONSTANTS = {
-  // Rate Limiting
+  // Rate Limiting (Anonymous)
   RATE_LIMIT_MAX_REQUESTS: 5,           // 5 PDFs per hour per IP
   RATE_LIMIT_WINDOW_MS: 60 * 60 * 1000, // 1 hour in milliseconds
   RATE_LIMIT_CACHE_MAX_SIZE: 5000,      // Max IPs to track in LRU cache
+
+  // Rate Limiting (Authenticated Share)
+  SHARE_RATE_LIMIT_MAX_REQUESTS: 10,          // 10 shares per hour per user
+  SHARE_RATE_LIMIT_WINDOW_MS: 60 * 60 * 1000, // 1 hour in milliseconds
 
   // PDF Generation
   PDF_MAX_FILE_SIZE_BYTES: 5 * 1024 * 1024,  // 5MB max (target: 100-300KB)

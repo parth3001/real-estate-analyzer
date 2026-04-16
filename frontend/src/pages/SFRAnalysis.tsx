@@ -15,11 +15,14 @@ import {
   useTheme
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import SendIcon from '@mui/icons-material/Send';
 import { AutoAwesome, Edit, DataUsage as SampleDataIcon, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import SFRPropertyForm from '../components/SFRAnalysis/SFRPropertyForm';
 import PropertyWizard from '../components/SFRAnalysis/PropertyWizard';
 import { propertyApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import ShareAnalysisDialog from '../components/SFRAnalysis/ShareAnalysisDialog';
 import { pipelineApi } from '../services/pipelineApi';
 import type { SFRPropertyData } from '../types/property';
 import type { Analysis } from '../types/analysis';
@@ -47,6 +50,8 @@ const SFRAnalysis: React.FC = () => {
   const [dealId, setDealId] = useState<string | null>(null);
   const [pipelineDealId, setPipelineDealId] = useState<string | null>(null); // Track Pipeline deal ID separately
   const [isAddingToPipeline, setIsAddingToPipeline] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const { user } = useAuth();
   
   // Input method state
   const [inputMethod, setInputMethod] = useState<'wizard' | 'manual'>('wizard');
@@ -1009,6 +1014,17 @@ const SFRAnalysis: React.FC = () => {
                         {isAddingToPipeline ? 'Adding...' : 'Add to Pipeline'}
                       </AppleButton>
                     )}
+
+                    {/* Share Analysis Button - authenticated users only */}
+                    {user && analysis && (
+                      <AppleButton
+                        variant="secondary"
+                        onClick={() => setShareDialogOpen(true)}
+                        icon={<SendIcon />}
+                      >
+                        Share Analysis
+                      </AppleButton>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1290,6 +1306,17 @@ const SFRAnalysis: React.FC = () => {
         />
 
         {/* Debug Panel - Completely removed (previously lines 1209-1248) */}
+
+        {/* Share Analysis Dialog */}
+        {analysis && propertyData && (
+          <ShareAnalysisDialog
+            open={shareDialogOpen}
+            onClose={() => setShareDialogOpen(false)}
+            analysis={analysis}
+            propertyData={propertyData}
+            strategy={propertyData?.strategy || (analysis as any)?.strategy || 'buy-hold'}
+          />
+        )}
       </Container>
   );
 };

@@ -1643,4 +1643,27 @@ export const clearPendingAnalysis = (): void => {
   }
 };
 
-export default api; 
+// ============================================================
+// PDF Share API
+// ============================================================
+
+export const pdfApi = {
+  shareAnalysis: async (data: {
+    recipientEmail: string;
+    ccEmail?: string;
+    personalNote?: string;
+    analysis: any;
+    propertyData: any;
+    strategy: string;
+  }) => {
+    const response = await api.post('/pdf/share-analysis', data);
+    return response.data;
+  },
+
+  getShareHistory: async (limit?: number) => {
+    const response = await api.get(`/pdf/share-history${limit ? `?limit=${limit}` : ''}`);
+    return response.data;
+  },
+};
+
+export default api;
