@@ -1,8 +1,8 @@
 ---
-title: "BRRRR 70% Rule: When It Works and When It Destroys Your Deal (2026)"
+title: "BRRRR 70% Rule Calculator: Find Your Max Offer Price"
 slug: "brrrr-70-percent-rule-guide"
 date: "2026-03-09"
-description: "The 70% rule says never pay more than (ARV × 70%) - rehab. But in 2026's 7%+ interest rate environment, this formula leaves capital trapped. Here's the updated math."
+description: "The 70% rule tells you the max price to pay for a BRRRR deal. Use our free calculator: enter ARV + rehab costs, get your number instantly. No signup required."
 keywords: ["BRRRR 70% rule", "70 percent rule real estate", "BRRRR rule", "maximum allowable offer", "BRRRR formula", "capital recovery BRRRR"]
 readingTime: "8 min read"
 ---

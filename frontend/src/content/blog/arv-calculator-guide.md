@@ -1,8 +1,8 @@
 ---
-title: "ARV Calculator: How to Estimate After-Repair Value Like an Appraiser (2026)"
+title: "ARV Calculator: Estimate After-Repair Value (Free Tool)"
 slug: "arv-calculator-guide"
 date: "2026-03-08"
-description: "Learn the 3 methods appraisers use to calculate ARV—with real comps from Dallas, Phoenix, and Atlanta. Avoid the $40K mistakes most BRRRR investors make."
+description: "Calculate ARV the way appraisers do with 3 proven methods and real comps. Free ARV calculator — enter comps, get your after-repair value in seconds. No signup."
 keywords: ["ARV calculator", "how to calculate ARV", "after repair value", "estimate ARV", "BRRRR ARV", "real estate comps", "ARV formula"]
 readingTime: "9 min read"
 ---

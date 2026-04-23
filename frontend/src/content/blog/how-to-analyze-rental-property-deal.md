@@ -1,8 +1,8 @@
 ---
-title: "How to Analyze a Rental Property (Step-by-Step Investor Guide)"
+title: "How to Analyze a Rental Property in 7 Steps (Free Tool)"
 slug: "how-to-analyze-rental-property-deal"
 date: "2026-03-10"
-description: "Learn the exact step-by-step process professional investors use to analyze rental properties—from estimating value through calculating the metrics that determine buy, negotiate, or pass."
+description: "Step-by-step process pro investors use to analyze rentals — from value to cash flow to buy/pass decision. Free calculator built in. No signup required."
 keywords: ["how to analyze rental property", "rental property analysis", "evaluate rental property deal", "rental property calculator", "cash flow analysis", "rental property metrics", "investment property analysis"]
 readingTime: "13 min read"
 ---

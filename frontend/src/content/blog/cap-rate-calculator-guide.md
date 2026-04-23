@@ -1,8 +1,8 @@
 ---
-title: "Cap Rate Calculator: The Complete Investor's Guide (2026)"
+title: "Cap Rate Calculator: Free NOI & Yield Tool"
 slug: "cap-rate-calculator-guide"
 date: "2026-02-25"
-description: "Learn how to calculate cap rate correctly, what's considered good across property classes, and avoid the 5 mistakes that cost investors $30K+. Real examples included."
+description: "Free cap rate calculator with realistic expense defaults. Enter rent, expenses, and purchase price — see if your deal beats the market in seconds. No signup."
 keywords: ["cap rate calculator", "calculate cap rate", "what is cap rate", "good cap rate", "cap rate formula", "cap rate vs cash on cash", "NOI calculation", "rental property analysis"]
 readingTime: "12 min read"
 ---

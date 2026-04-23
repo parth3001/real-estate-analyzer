@@ -162,4 +162,32 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://reanalyzr.com/blog/arv-calculator-guide</loc>
+    <lastmod>2026-03-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://reanalyzr.com/blog/brrrr-70-percent-rule-guide</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://reanalyzr.com/blog/how-to-analyze-rental-property-deal</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://reanalyzr.com/blog/roth-ira-rental-property</loc>
+    <lastmod>2026-03-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

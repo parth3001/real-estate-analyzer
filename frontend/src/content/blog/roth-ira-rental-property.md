@@ -1,8 +1,8 @@
 ---
-title: "Should You Pull From Your Roth IRA to Buy a Rental Property? [2026 Math]"
+title: "Roth IRA for Rental Property: The Real Math (2026)"
 slug: "roth-ira-rental-property"
 date: "2026-03-28"
-description: "Real math on Roth IRA vs rental property returns. Why $330/month cash flow becomes -$220/month after vacancy, maintenance, and turnover. Free calculator."
+description: "Real math on Roth IRA vs rental property returns. Why $330/month cash flow becomes -$220/month after vacancy, maintenance, and turnover. Free calculator inside."
 keywords: ["roth ira rental property", "pull from roth ira real estate", "roth ira vs rental property", "withdraw roth ira rental", "use roth ira down payment", "roth ira real estate investment", "rental property calculator"]
 readingTime: "12 min read"
 featuredImage: "/blog/roth-ira-rental-property-hero.png"

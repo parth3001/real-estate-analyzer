@@ -1,8 +1,8 @@
 ---
-title: "BRRRR Calculator: The Complete Investor's Guide (2026)"
+title: "BRRRR Calculator: Analyze Your Deal Free in Minutes"
 slug: "brrrr-calculator-guide"
 date: "2026-02-17"
-description: "Learn the 6 metrics that determine whether a BRRRR deal builds wealth or traps your capital — with real calculator outputs and worked examples."
+description: "Free BRRRR calculator shows if your deal recycles capital or traps it. Enter purchase price, rehab, and ARV — get 6 investor metrics instantly. No signup."
 keywords: ["BRRRR calculator", "BRRRR strategy", "BRRRR real estate", "BRRRR method calculator", "capital recovery", "real estate investing"]
 readingTime: "10 min read"
 ---
