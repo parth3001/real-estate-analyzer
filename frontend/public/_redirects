@@ -15,5 +15,11 @@
 /signup           /register        301
 /signup/          /register        301
 
+# Prerendered blog posts — serve the per-post static HTML so Googlebot sees
+# unique <title> and meta description on first-pass crawl. Must come before
+# the SPA catch-all below.
+/blog             /blog/index.html                 200
+/blog/*           /blog/:splat/index.html          200
+
 # SPA fallback - catch all other routes and serve index.html (must be last)
 /*                /index.html      200
