@@ -190,10 +190,11 @@ connectToDatabase()
     app.listen(port, () => {
       logger.info(`🚀 Server running on port ${port}`);
 
-      // Smoke tests rely on legacy password login. Skip them by default now
-      // that magic-link is the primary auth. Opt in with RUN_SMOKE_TESTS=true
-      // once the smoke-test harness is rewritten to use magic-link consume.
-      if (process.env.RUN_SMOKE_TESTS === 'true') {
+      // Smoke tests mint a JWT in-process for an existing admin user
+      // (no password login needed). Opt out with SKIP_SMOKE_TESTS=true.
+      if (process.env.SKIP_SMOKE_TESTS === 'true') {
+        logger.info('[startup] Smoke tests skipped (SKIP_SMOKE_TESTS=true)');
+      } else {
         import('./testApiOnStartup').then(mod => {
           mod.runApiSmokeTests().catch((err: any) => {
             logger.error('API smoke tests failed:', err);
@@ -201,8 +202,6 @@ connectToDatabase()
         }).catch((err: any) => {
           logger.error('Could not import API smoke test module:', err);
         });
-      } else {
-        logger.info('[startup] Smoke tests skipped (set RUN_SMOKE_TESTS=true to enable)');
       }
     });
   })

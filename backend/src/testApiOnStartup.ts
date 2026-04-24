@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { logger } from './utils/logger';
+import { User } from './models/User';
+import { authService } from './services/authService';
 
 const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3001';
 
-// Test credentials
-const TEST_CREDENTIALS = {
-  email: process.env.SMOKE_TEST_EMAIL || 'admin@realestateanalyzer.com',
-  password: process.env.SMOKE_TEST_PASSWORD || 'Spring@2025'
-};
+// Preferred admin for smoke tests. If SMOKE_TEST_EMAIL is unset, we fall
+// back to the first admin user in the DB. No password is needed — we mint
+// a JWT in-process using the existing signing key.
+const SMOKE_TEST_EMAIL = (process.env.SMOKE_TEST_EMAIL || '').trim().toLowerCase();
 
 let authToken: string | null = null;
 
@@ -18,39 +19,36 @@ const REQUIRED_FIELDS = [
   'keyMetrics',
 ];
 
+/**
+ * Mint a JWT directly for a real admin user. This bypasses the HTTP auth
+ * endpoints (password login is deprecated; magic-link requires an email
+ * round-trip that doesn't make sense in a self-test). The token is
+ * produced by the same authService.generateTokens call that the live
+ * magic-link verify endpoint uses, so it exercises the same JWT code
+ * path that real users hit.
+ */
 async function authenticateForTests(): Promise<boolean> {
   try {
-    logger.info('[AUTH] Authenticating for smoke tests...');
-    logger.info('[AUTH] Using credentials:', { email: TEST_CREDENTIALS.email, passwordLength: TEST_CREDENTIALS.password.length });
-    logger.info('[AUTH] Attempting login to:', `${BASE_URL}/api/auth/login`);
-    
-    const res = await axios({
-      method: 'post',
-      url: `${BASE_URL}/api/auth/login`,
-      data: TEST_CREDENTIALS,
-      timeout: 5000
-    });
-    
-    logger.info('[AUTH] Login response status:', res.status);
-    logger.info('[AUTH] Login response data keys:', Object.keys(res.data || {}));
-    
-    if (res.data?.accessToken) {
-      authToken = res.data.accessToken;
-      logger.info(`[AUTH] Successfully authenticated as ${TEST_CREDENTIALS.email}`);
-      logger.info(`[AUTH] Token length: ${authToken.length}`);
-      return true;
-    } else {
-      logger.warn('[AUTH] No access token received');
-      logger.warn('[AUTH] Response data:', res.data);
+    const user = SMOKE_TEST_EMAIL
+      ? await User.findOne({ email: SMOKE_TEST_EMAIL })
+      : await User.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+
+    if (!user) {
+      logger.warn(
+        `[AUTH] No admin user found${SMOKE_TEST_EMAIL ? ` for email "${SMOKE_TEST_EMAIL}"` : ''}. ` +
+          `Smoke tests will run without auth (endpoints requiring it will fail).`
+      );
       return false;
     }
+
+    const tokens = authService.generateTokens(user);
+    authToken = tokens.accessToken;
+
+    logger.info(`[AUTH] Smoke-test JWT minted for ${user.email} (role=${user.role})`);
+    return true;
   } catch (err: any) {
-    logger.error('[AUTH] Authentication failed with error:', {
-      message: err.message,
-      status: err.response?.status,
-      statusText: err.response?.statusText,
-      data: err.response?.data,
-      url: err.config?.url
+    logger.error('[AUTH] Could not mint smoke-test JWT:', {
+      message: err?.message,
     });
     return false;
   }
@@ -125,24 +123,20 @@ export async function runApiSmokeTests() {
     // Add a delay to ensure server is fully initialized
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // 0. Authenticate first
-    logger.info('[SMOKE TEST] Starting authentication...');
-    logger.info('[SMOKE TEST] Test credentials:', { email: TEST_CREDENTIALS.email, hasPassword: !!TEST_CREDENTIALS.password });
-    
+    // 0. Mint a smoke-test JWT for an existing admin user.
+    logger.info('[SMOKE TEST] Minting auth token...');
     let authSuccess = false;
     try {
       authSuccess = await authenticateForTests();
-      logger.info('[SMOKE TEST] Authentication result:', authSuccess);
     } catch (error) {
-      logger.error('[SMOKE TEST] Authentication threw error:', error);
+      logger.error('[SMOKE TEST] Auth threw error:', error);
     }
-    
+
     if (!authSuccess) {
-      logger.warn('⚠️  Authentication failed - some tests may fail');
-      logger.warn(`⚠️  Make sure admin user exists with email: ${TEST_CREDENTIALS.email}`);
-      logger.warn(`⚠️  Current authToken value: ${authToken ? 'EXISTS' : 'NULL'}`);
+      logger.warn('⚠️  No smoke-test JWT — authenticated endpoints will fail.');
+      logger.warn('⚠️  Set SMOKE_TEST_EMAIL to a real admin email, or ensure one admin user exists.');
     } else {
-      logger.info(`✅ Authentication successful - token acquired`);
+      logger.info('✅ Smoke-test JWT acquired');
     }
     
     // 1. Test health endpoint (no auth required)
