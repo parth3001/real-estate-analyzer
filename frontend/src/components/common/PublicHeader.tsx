@@ -143,7 +143,8 @@ const PublicHeader: React.FC = () => {
               What's New
             </Button>
 
-            {/* Sign-in — single entry, magic link replaces login+register split */}
+            {/* Auth entry — magic link unifies sign in + sign up. Labeling it
+                as both reassures new visitors they have a path here. */}
             <Button
               onClick={() => navigate('/login')}
               variant="outlined"
@@ -156,6 +157,7 @@ const PublicHeader: React.FC = () => {
                 padding: { xs: '6px 16px', md: '8px 20px' },
                 borderRadius: '8px',
                 borderWidth: '1.5px',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   backgroundColor: appleColors.primary[50],
                   borderColor: appleColors.primary[600],
@@ -163,7 +165,7 @@ const PublicHeader: React.FC = () => {
                 }
               }}
             >
-              Sign in
+              Log in / Sign up
             </Button>
           </Box>
         </Box>
