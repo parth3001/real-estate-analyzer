@@ -25,7 +25,13 @@ export interface DualModePreferences {
 
 export interface IUser extends Document {
   email: string;
-  password: string;
+  /**
+   * Legacy password field. Retained on the schema as optional so pre-existing
+   * bcrypt hashes are preserved until the final migration removes them. New
+   * users created via magic-link have no password set. No code path reads
+   * this field after the magic-link cutover.
+   */
+  password?: string;
   firstName: string;
   lastName: string;
   role: 'user' | 'admin';
@@ -73,21 +79,24 @@ const UserSchema = new Schema<IUser>({
       'Please enter a valid email address'
     ]
   },
+  // Legacy field. Kept optional to preserve existing bcrypt hashes; new
+  // magic-link-created accounts leave this unset.
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters long'],
-    select: false // Don't include password in queries by default
+    required: false,
+    select: false
   },
   firstName: {
     type: String,
-    required: [true, 'First name is required'],
+    required: false,
+    default: '',
     trim: true,
     maxlength: [50, 'First name cannot exceed 50 characters']
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
+    required: false,
+    default: '',
     trim: true,
     maxlength: [50, 'Last name cannot exceed 50 characters']
   },
@@ -198,13 +207,13 @@ const UserSchema = new Schema<IUser>({
 // Index for faster queries
 UserSchema.index({ email: 1 });
 
-// Hash password before saving
+// Hash password before saving — only runs for legacy password-set code paths.
+// Magic-link users never populate this field, so the hook is a no-op for them.
 UserSchema.pre('save', async function(next) {
-  // Only hash password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
+  if (!this.password) return next();
 
   try {
-    // Hash password with cost of 12
     const saltRounds = 12;
     this.password = await bcrypt.hash(this.password, saltRounds);
     next();
@@ -213,8 +222,10 @@ UserSchema.pre('save', async function(next) {
   }
 });
 
-// Instance method to check password
+// Instance method to check password (legacy; kept so existing tests/tools
+// that reference it still compile. Magic-link flow never calls this.)
 UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) return false;
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {

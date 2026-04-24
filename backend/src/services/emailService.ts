@@ -6,6 +6,9 @@ export interface EmailTemplate {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  from?: string;
+  replyTo?: string;
   attachments?: EmailPdfAttachment[];
   cc?: string[];
 }
@@ -123,11 +126,14 @@ export class EmailService {
 
       // Prepare email payload
       const emailPayload: any = {
-        from: this.FROM_EMAIL,
+        from: template.from || this.FROM_EMAIL,
         to: template.to,
         subject: template.subject,
         html: template.html
       };
+
+      if (template.text) emailPayload.text = template.text;
+      if (template.replyTo) emailPayload.reply_to = template.replyTo;
 
       // Add CC if present
       if (template.cc && template.cc.length > 0) {
@@ -867,6 +873,257 @@ export class EmailService {
       </body>
       </html>
     `;
+  }
+
+  /**
+   * Magic-link sign-in email. Two variants:
+   *   - isNewUser: welcoming, sets expectations about REanalyzr
+   *   - returning: lightweight re-engagement block with last deal (if present)
+   *
+   * Personalization data is fetched defensively — any failure falls back to
+   * the new-user template. Auth must never be blocked by the retention layer.
+   */
+  async sendMagicLinkEmail(
+    email: string,
+    rawToken: string,
+    opts: {
+      isNewUser: boolean;
+      firstName?: string;
+      userId?: import('mongoose').Types.ObjectId | string;
+    }
+  ): Promise<void> {
+    const verifyUrl = `${this.FRONTEND_URL}/auth/verify?token=${rawToken}`;
+    const fromAddress = 'REanalyzr <login@reanalyzr.com>';
+
+    let personalization: { lastDeal: { addressLine: string; headlineMetric: string | null } | null; monthlyAnalyzedCount: number } = {
+      lastDeal: null,
+      monthlyAnalyzedCount: 0,
+    };
+
+    if (!opts.isNewUser && opts.userId) {
+      try {
+        const { getUserEmailContext } = await import('./dealEmailHelper');
+        personalization = await getUserEmailContext(opts.userId as any);
+      } catch (err) {
+        logger.warn('[EmailService] personalization lookup failed', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const firstName = (opts.firstName || '').trim();
+    const subject = opts.isNewUser
+      ? 'Welcome to REanalyzr — your sign-in link'
+      : 'Your REanalyzr sign-in link';
+
+    const preheader = opts.isNewUser
+      ? 'Click the link to finish signing in. No password needed.'
+      : 'One click to pick up where you left off.';
+
+    const html = this.getMagicLinkEmailTemplate({
+      verifyUrl,
+      isNewUser: opts.isNewUser,
+      firstName,
+      preheader,
+      lastDeal: personalization.lastDeal,
+      monthlyAnalyzedCount: personalization.monthlyAnalyzedCount,
+    });
+
+    const text = this.getMagicLinkEmailText({
+      verifyUrl,
+      isNewUser: opts.isNewUser,
+      firstName,
+      lastDeal: personalization.lastDeal,
+      monthlyAnalyzedCount: personalization.monthlyAnalyzedCount,
+    });
+
+    await this.sendEmail({
+      to: email,
+      subject,
+      html,
+      text,
+      from: fromAddress,
+      replyTo: 'support@reanalyzr.com',
+    });
+
+    logger.info(`[EmailService] Magic link email sent to: ${email} (new=${opts.isNewUser})`);
+  }
+
+  private getMagicLinkEmailTemplate(args: {
+    verifyUrl: string;
+    isNewUser: boolean;
+    firstName: string;
+    preheader: string;
+    lastDeal: { addressLine: string; headlineMetric: string | null } | null;
+    monthlyAnalyzedCount: number;
+  }): string {
+    const greeting = args.firstName
+      ? (args.isNewUser ? `Welcome, ${this.escapeHtml(args.firstName)}.` : `Welcome back, ${this.escapeHtml(args.firstName)}.`)
+      : (args.isNewUser ? 'Welcome to REanalyzr.' : 'Welcome back.');
+
+    const newUserSection = `
+      <h3 style="font-size: 17px; font-weight: 600; color: #1d1d1f; margin: 32px 0 12px;">What you can do with REanalyzr:</h3>
+      <ul style="font-size: 15px; color: #515154; line-height: 1.7; padding-left: 20px; margin: 0 0 8px;">
+        <li>Analyze any rental in seconds — cash flow, cap rate, IRR</li>
+        <li>Run BRRRR and fix-and-flip deals</li>
+        <li>Save deals and compare side by side</li>
+      </ul>
+    `;
+
+    const returningDealBlock = args.lastDeal
+      ? `
+        <h3 style="font-size: 17px; font-weight: 600; color: #1d1d1f; margin: 32px 0 12px;">Picking up where you left off:</h3>
+        <p style="margin: 0; font-size: 14px; color: #86868b;">Your last deal:</p>
+        <p style="margin: 4px 0 0; font-size: 16px; font-weight: 600; color: #1d1d1f;">${this.escapeHtml(args.lastDeal.addressLine)}</p>
+        ${args.lastDeal.headlineMetric ? `<p style="margin: 4px 0 16px; font-size: 14px; color: #515154;">${this.escapeHtml(args.lastDeal.headlineMetric)}</p>` : ''}
+      `
+      : newUserSection;
+
+    const monthlyLine =
+      !args.isNewUser && args.monthlyAnalyzedCount > 0
+        ? `<p style="font-size: 14px; color: #515154; margin: 20px 0 0; line-height: 1.6;">You've analyzed ${args.monthlyAnalyzedCount} ${args.monthlyAnalyzedCount === 1 ? 'property' : 'properties'} this month. Ready to run another one?</p>`
+        : '';
+
+    const middleSection = args.isNewUser ? newUserSection : returningDealBlock + monthlyLine;
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>Sign in to REanalyzr</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .bg-body { background-color: #000 !important; }
+      .bg-card { background-color: #1c1c1e !important; }
+      .text-primary { color: #f5f5f7 !important; }
+      .text-secondary { color: #aeaeb2 !important; }
+      .text-muted { color: #8e8e93 !important; }
+      .border-card { border-color: rgba(255,255,255,0.08) !important; }
+    }
+  </style>
+</head>
+<body class="bg-body" style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro','SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">${this.escapeHtml(args.preheader)}</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f7;" class="bg-body">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;overflow:hidden;" class="bg-card border-card">
+          <tr>
+            <td style="padding:40px 40px 24px;">
+              <div style="font-size:22px;font-weight:700;color:#1d1d1f;letter-spacing:-0.02em;" class="text-primary">REanalyzr</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 8px;">
+              <h1 style="margin:0;font-size:24px;font-weight:700;color:#1d1d1f;letter-spacing:-0.02em;line-height:1.3;" class="text-primary">${greeting}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 40px 8px;">
+              <p style="margin:0;font-size:16px;line-height:1.6;color:#515154;" class="text-secondary">Tap the button below to finish signing in to REanalyzr.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:28px 40px 8px;">
+              <a href="${args.verifyUrl}" target="_blank" rel="noopener"
+                 style="display:inline-block;background:#0071e3;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 28px;border-radius:10px;min-width:200px;text-align:center;">
+                Sign in to REanalyzr
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 40px 8px;">
+              <p style="margin:0;font-size:13px;color:#86868b;font-style:italic;" class="text-muted">This link expires in 15 minutes and can only be used once.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 40px;">
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.06);margin:16px 0;">
+              ${middleSection}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 40px 32px;">
+              <hr style="border:none;border-top:1px solid rgba(0,0,0,0.06);margin:16px 0 20px;">
+              <p style="margin:0;font-size:13px;color:#86868b;line-height:1.6;" class="text-muted">If you didn't request this, ignore the email. Your account stays safe.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px 32px;background:#fafafa;border-top:1px solid rgba(0,0,0,0.04);" class="bg-card">
+              <p style="margin:0;font-size:12px;color:#86868b;line-height:1.6;" class="text-muted">REanalyzr · reanalyzr.com</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#86868b;line-height:1.6;" class="text-muted">Questions? Reply to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  private getMagicLinkEmailText(args: {
+    verifyUrl: string;
+    isNewUser: boolean;
+    firstName: string;
+    lastDeal: { addressLine: string; headlineMetric: string | null } | null;
+    monthlyAnalyzedCount: number;
+  }): string {
+    const greeting = args.firstName
+      ? (args.isNewUser ? `Welcome, ${args.firstName}.` : `Welcome back, ${args.firstName}.`)
+      : (args.isNewUser ? 'Welcome to REanalyzr.' : 'Welcome back.');
+
+    const lines = [
+      greeting,
+      '',
+      'Tap the link below to finish signing in to REanalyzr:',
+      args.verifyUrl,
+      '',
+      'This link expires in 15 minutes and can only be used once.',
+      '',
+    ];
+
+    if (args.isNewUser) {
+      lines.push(
+        'What you can do with REanalyzr:',
+        '  • Analyze any rental in seconds — cash flow, cap rate, IRR',
+        '  • Run BRRRR and fix-and-flip deals',
+        '  • Save deals and compare side by side',
+        ''
+      );
+    } else if (args.lastDeal) {
+      lines.push('Picking up where you left off:');
+      lines.push(`Your last deal: ${args.lastDeal.addressLine}`);
+      if (args.lastDeal.headlineMetric) lines.push(args.lastDeal.headlineMetric);
+      lines.push('');
+      if (args.monthlyAnalyzedCount > 0) {
+        lines.push(
+          `You've analyzed ${args.monthlyAnalyzedCount} ${args.monthlyAnalyzedCount === 1 ? 'property' : 'properties'} this month. Ready to run another one?`,
+          ''
+        );
+      }
+    }
+
+    lines.push(
+      "If you didn't request this, ignore the email. Your account stays safe.",
+      '',
+      'REanalyzr · reanalyzr.com',
+      'Questions? Reply to this email.'
+    );
+
+    return lines.join('\n');
+  }
+
+  private escapeHtml(s: string): string {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 }
 

@@ -1330,6 +1330,11 @@ DealSchema.index({ investmentStrategy: 1 });
 // Index 2: User + Strategy (most common query: "show me MY BRRRR deals")
 DealSchema.index({ userId: 1, investmentStrategy: 1 });
 
+// Indexes 3 & 4: Supports magic-link email personalization
+// "most recent deal for user" and "deals created this month" — see dealEmailHelper.
+DealSchema.index({ userId: 1, updatedAt: -1 });
+DealSchema.index({ userId: 1, createdAt: -1 });
+
 // DEFERRED indexes (add when >1K BRRRR deals):
 // - BRRRR Leaderboard: { investmentStrategy: 1, 'analysis.strategySpecific.capitalRecovery.capitalRecoveryRate': -1 }
 // - ARV Analysis: { investmentStrategy: 1, 'brrrr.afterRepairValue': -1 }

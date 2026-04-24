@@ -12,6 +12,7 @@ import censusRouter from './routes/censusRoutes';
 import marketDataRouter from './routes/marketDataRoutes';
 import wizardRouter from './routes/wizardRoutes';
 import authRouter from './routes/auth';
+import magicLinkRouter from './routes/magicLink';
 import adminRouter from './routes/admin';
 import analyticsRouter from './routes/analytics';
 import quickAnalysisRouter from './routes/quickAnalysis';
@@ -131,6 +132,7 @@ app.use((req, res, next) => {
 
 // Routes with specific rate limiting
 // Note: Auth routes have their own specific rate limiting in the router
+app.use('/api/auth', magicLinkRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);

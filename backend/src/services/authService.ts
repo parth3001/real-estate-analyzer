@@ -384,7 +384,7 @@ export class AuthService {
   /**
    * Generate access and refresh tokens for user
    */
-  private generateTokens(user: IUser): Pick<AuthTokens, 'accessToken' | 'refreshToken'> {
+  public generateTokens(user: IUser): Pick<AuthTokens, 'accessToken' | 'refreshToken'> {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new Error('JWT_SECRET not configured');
