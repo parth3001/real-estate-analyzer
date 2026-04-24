@@ -21,7 +21,11 @@ export interface BlogPost {
 }
 
 // Vite statically imports all markdown files at build time
-const postFiles = import.meta.glob('../content/blog/*.md', { as: 'raw', eager: true });
+const postFiles = import.meta.glob('../content/blog/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
 
 /**
  * Parse YAML frontmatter from a markdown string.
