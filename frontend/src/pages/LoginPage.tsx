@@ -1,207 +1,424 @@
 /**
- * Magic-link sign-in page (replaces both /login and /register).
- * One email field, one CTA, passive Terms acceptance.
+ * Magic-link sign-in page. Preserves the platform's split-screen design
+ * language (dark hero + white form panel) while replacing the password
+ * form with a single email input.
+ *
+ * Context-aware copy via ?ref query param:
+ *   - ref=unlock → headline reframed as "Unlock your analysis"
+ *     (the user just clicked Unlock Full Analysis on the calculator)
+ *   - default → generic "Welcome back" / sign-in framing
  */
 
 import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Alert,
-  Link,
-} from '@mui/material';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { authApi } from '../services/api';
-import { appleColors } from '../theme/appleDesignSystem';
+import { useResponsive } from '../hooks/useResponsive';
+import analyzrLogo from '../assets/analyzr-logo.png';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const { isMobile, isTablet } = useResponsive();
+
+  const refMode = params.get('ref'); // 'unlock' | null
+  const isUnlock = refMode === 'unlock';
+
   const [email, setEmail] = useState('');
+  const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isValid = EMAIL_REGEX.test(email.trim());
+  const trimmed = email.trim();
+  const isValid = EMAIL_REGEX.test(trimmed);
+  const showInvalidMsg = touched && trimmed.length > 0 && !isValid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched(true);
     if (!isValid || submitting) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const res = await authApi.requestMagicLink(email.trim());
+      const res = await authApi.requestMagicLink(trimmed);
 
       if (res.status === 429) {
-        const retry = (res.data as any)?.retryAfter || '15 minutes';
-        setError(`Too many sign-in attempts. Try again in ${retry}.`);
+        setError('Too many sign-in attempts. Try again in 15 minutes.');
         setSubmitting(false);
         return;
       }
-
       if (res.status >= 400) {
         setError('Something went wrong. Try again.');
         setSubmitting(false);
         return;
       }
 
-      navigate(`/auth/check-email?email=${encodeURIComponent(email.trim())}`);
+      const refParam = isUnlock ? '&ref=unlock' : '';
+      navigate(`/auth/check-email?email=${encodeURIComponent(trimmed)}${refParam}`);
     } catch {
       setError('Something went wrong. Try again.');
       setSubmitting(false);
     }
   };
 
+  // ---------- Copy ----------
+  const rightH1 = isUnlock ? 'Unlock your analysis' : 'Welcome back';
+  const rightSubhead = isUnlock
+    ? "Enter your email — we'll send you a one-click link so you can see your full analysis."
+    : "Enter your email — we'll send you a one-click sign-in link. No password needed.";
+
+  // ---------- Styles (mirrors old LoginForm shell to preserve brand) ----------
+  const containerStyle: React.CSSProperties = {
+    width: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: (isMobile || isTablet ? 'column' : 'row') as 'column' | 'row',
+    margin: 0,
+    padding: 0,
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    overflow: 'hidden',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+  };
+
+  const heroStyle: React.CSSProperties = {
+    width: isMobile || isTablet ? '100%' : '50%',
+    height: isMobile || isTablet ? 'auto' : '100vh',
+    minHeight: isMobile ? '320px' : isTablet ? '380px' : '100vh',
+    background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: isMobile ? '32px 20px' : isTablet ? '40px 30px' : '40px',
+    boxSizing: 'border-box',
+    overflow: 'auto',
+  };
+
+  const heroContentStyle: React.CSSProperties = {
+    maxWidth: isMobile ? '100%' : isTablet ? '500px' : '560px',
+    width: '100%',
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  };
+
+  const logoStyle: React.CSSProperties = {
+    height: isMobile ? '52px' : isTablet ? '72px' : '120px',
+    width: 'auto',
+    marginBottom: isMobile ? '16px' : isTablet ? '24px' : '36px',
+    objectFit: 'contain',
+    display: 'block',
+  };
+
+  const heroTitleStyle: React.CSSProperties = {
+    fontSize: isMobile ? '1.75rem' : isTablet ? '2.5rem' : '3.25rem',
+    fontWeight: 700,
+    margin: '0 0 8px 0',
+    letterSpacing: isMobile ? '-0.5px' : isTablet ? '-1.5px' : '-2px',
+    color: 'white',
+    lineHeight: 1.05,
+  };
+
+  const heroSubtitleStyle: React.CSSProperties = {
+    fontSize: isMobile ? '0.938rem' : isTablet ? '1.125rem' : '1.25rem',
+    color: 'rgba(255,255,255,0.75)',
+    margin: isMobile ? '12px 0 0' : isTablet ? '16px 0 28px' : '20px 0 36px',
+    lineHeight: 1.5,
+    fontWeight: 300,
+    maxWidth: '520px',
+  };
+
+  const featuresStyle: React.CSSProperties = {
+    display: isMobile ? 'none' : 'flex',
+    flexDirection: 'column',
+    gap: isTablet ? '20px' : '28px',
+    alignItems: 'flex-start',
+    maxWidth: '400px',
+    margin: '0 auto',
+  };
+
+  const featureStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: isTablet ? '14px' : '20px',
+  };
+
+  const formContainerStyle: React.CSSProperties = {
+    width: isMobile || isTablet ? '100%' : '50%',
+    height: isMobile || isTablet ? 'auto' : '100vh',
+    flex: isMobile || isTablet ? '1 0 auto' : 'none',
+    background: '#ffffff',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: isMobile ? '32px 20px' : isTablet ? '40px 30px' : '48px',
+    boxSizing: 'border-box',
+    overflowY: 'auto',
+  };
+
+  const formInnerStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '440px',
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    height: isMobile ? '52px' : '56px',
+    padding: isMobile ? '0 16px' : '0 20px',
+    border: `2px solid ${showInvalidMsg ? '#ef4444' : '#e5e7eb'}`,
+    borderRadius: '12px',
+    fontSize: isMobile ? '1rem' : '1.063rem',
+    backgroundColor: '#fff',
+    color: '#000',
+    outline: 'none',
+    transition: 'border-color 0.15s',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '8px',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: '#374151',
+  };
+
+  const buttonDisabled = !isValid || submitting;
+  const buttonStyle: React.CSSProperties = {
+    width: '100%',
+    height: isMobile ? '52px' : '56px',
+    borderRadius: '12px',
+    fontSize: isMobile ? '1rem' : '1.063rem',
+    fontWeight: 600,
+    border: 'none',
+    cursor: buttonDisabled ? 'not-allowed' : 'pointer',
+    transition: 'all 0.2s',
+    backgroundColor: buttonDisabled ? '#e5e7eb' : '#0a0a0a',
+    color: buttonDisabled ? '#9ca3af' : '#ffffff',
+    fontFamily: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+  };
+
   return (
-    <Box sx={{ backgroundColor: '#f5f5f7', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Container maxWidth="sm" sx={{ flex: 1, display: 'flex', alignItems: 'center', py: { xs: 4, md: 8 } }}>
-        <Box
-          sx={{
-            width: '100%',
-            backgroundColor: '#ffffff',
-            borderRadius: '20px',
-            border: '1px solid rgba(0,0,0,0.08)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            p: { xs: 3, md: 5 },
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: '20px',
-              fontWeight: 700,
-              color: appleColors.gray[900],
-              letterSpacing: '-0.02em',
-              mb: { xs: 4, md: 5 },
-            }}
-          >
-            REanalyzr
-          </Typography>
+    <div style={containerStyle}>
+      {/* HERO — preserves platform identity */}
+      <div style={heroStyle}>
+        <div style={heroContentStyle}>
+          <img src={analyzrLogo} alt="REanalyzr" style={logoStyle} />
 
-          <Typography
-            component="h1"
-            sx={{
-              fontSize: { xs: '1.875rem', md: '2.5rem' },
-              fontWeight: 700,
-              color: appleColors.gray[900],
-              letterSpacing: '-0.02em',
-              lineHeight: 1.15,
-              mb: 2,
-            }}
-          >
-            Run the numbers on your next deal
-          </Typography>
+          <h1 style={heroTitleStyle}>
+            {isUnlock ? 'Unlock Your Full Analysis' : 'Welcome Back to REanalyzr'}
+          </h1>
 
-          <Typography
-            sx={{
-              fontSize: '16px',
-              color: appleColors.gray[600],
-              lineHeight: 1.5,
-              mb: 4,
-            }}
-          >
-            Enter your email and we'll send you a one-click sign-in link. No password needed.
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: '10px' }} onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit} noValidate>
-            <TextField
-              fullWidth
-              type="email"
-              label="Email address"
-              placeholder="you@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={submitting}
-              autoComplete="email"
-              inputMode="email"
-              autoFocus
-              inputProps={{ 'aria-label': 'Email address' }}
-              sx={{
-                mb: 2.5,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  height: 56,
-                  fontSize: '17px',
-                  '& fieldset': { borderColor: appleColors.gray[200] },
-                  '&:hover fieldset': { borderColor: appleColors.gray[400] },
-                  '&.Mui-focused fieldset': { borderColor: appleColors.primary[500], borderWidth: 2 },
-                },
-              }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={!isValid || submitting}
-              sx={{
-                backgroundColor: appleColors.primary[500],
-                color: '#ffffff',
-                fontSize: '16px',
+          {!isMobile && (
+            <h2
+              style={{
+                ...heroTitleStyle,
+                fontSize: isTablet ? '1.625rem' : '2.25rem',
+                letterSpacing: isTablet ? '-1px' : '-1.5px',
+                margin: '0 0 12px 0',
+                color: 'rgba(255,255,255,0.95)',
                 fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '12px',
-                height: 56,
-                boxShadow: 'none',
-                '&:hover': { backgroundColor: appleColors.primary[600], boxShadow: 'none' },
-                '&.Mui-disabled': { backgroundColor: appleColors.primary[500], opacity: 0.4, color: '#ffffff' },
               }}
             >
-              {submitting ? (
-                <>
-                  <CircularProgress size={18} sx={{ color: '#fff', mr: 1 }} />
-                  Sending…
-                </>
-              ) : (
-                'Send me a link →'
-              )}
-            </Button>
-          </Box>
+              Screen Deals. Track Pipeline. See Portfolio Impact.
+            </h2>
+          )}
 
-          <Typography
-            sx={{
-              fontSize: '13px',
-              color: appleColors.gray[500],
-              textAlign: 'center',
-              mt: 4,
-              mb: 2,
+          <p style={heroSubtitleStyle}>
+            {isUnlock
+              ? "You're seconds away from the full analysis — break-even, 10-year projections, editable assumptions, and side-by-side deal comparisons."
+              : 'Structured rental property analysis to screen deals faster with less guesswork. Your pipeline, your numbers, one workflow.'}
+          </p>
+
+          <div style={featuresStyle}>
+            {[
+              { title: 'Instant Analysis', sub: 'Professional metrics in seconds, not hours' },
+              { title: 'No Spreadsheets', sub: 'Automated calculations prevent costly mistakes' },
+              { title: 'Deal Quality Score', sub: 'Screen deals against your own standards — not just numbers' },
+            ].map((f) => (
+              <div key={f.title} style={featureStyle}>
+                <span
+                  style={{
+                    fontSize: isTablet ? '20px' : '22px',
+                    color: '#10b981',
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    flexShrink: 0,
+                  }}
+                >
+                  ✓
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
+                  <span
+                    style={{
+                      fontSize: isTablet ? '1.063rem' : '1.125rem',
+                      color: 'rgba(255,255,255,0.95)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {f.title}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: isTablet ? '0.875rem' : '0.938rem',
+                      color: 'rgba(255,255,255,0.65)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {f.sub}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* FORM */}
+      <div style={formContainerStyle}>
+        <div style={formInnerStyle}>
+          <h2
+            style={{
+              fontSize: isMobile ? '1.75rem' : '2rem',
+              fontWeight: 700,
+              color: '#0a0a0a',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.02em',
             }}
           >
-            🔒 Secure sign-in by email
-          </Typography>
+            {rightH1}
+          </h2>
+          <p
+            style={{
+              fontSize: isMobile ? '0.938rem' : '1rem',
+              color: '#6b7280',
+              margin: '0 0 32px 0',
+              lineHeight: 1.55,
+            }}
+          >
+            {rightSubhead}
+          </p>
 
-          <Typography
-            sx={{
-              fontSize: '12px',
-              color: appleColors.gray[500],
+          {error && (
+            <div
+              role="alert"
+              style={{
+                backgroundColor: '#fef2f2',
+                color: '#b91c1c',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                fontSize: '0.875rem',
+                marginBottom: '20px',
+                border: '1px solid #fecaca',
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={{ marginBottom: showInvalidMsg ? '6px' : '20px' }}>
+              <label htmlFor="magic-email" style={labelStyle}>
+                Email address
+              </label>
+              <input
+                id="magic-email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                autoFocus
+                required
+                value={email}
+                placeholder="you@email.com"
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched(true)}
+                disabled={submitting}
+                style={inputStyle}
+                onFocus={(e) => {
+                  if (!showInvalidMsg) e.currentTarget.style.borderColor = '#0a0a0a';
+                }}
+              />
+            </div>
+
+            {showInvalidMsg && (
+              <p
+                style={{
+                  fontSize: '0.813rem',
+                  color: '#b91c1c',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                Please enter a valid email address.
+              </p>
+            )}
+
+            <button type="submit" style={buttonStyle} disabled={buttonDisabled}>
+              {submitting ? 'Sending…' : 'Send me a link →'}
+            </button>
+          </form>
+
+          <p
+            style={{
+              fontSize: '0.813rem',
+              color: '#6b7280',
+              margin: '20px 0 0 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            <LockOutlinedIcon sx={{ fontSize: 14, color: '#6b7280' }} />
+            Secure sign-in by email
+          </p>
+
+          <p
+            style={{
+              fontSize: '0.813rem',
+              color: '#6b7280',
+              margin: '8px 0 0 0',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            Already have an account? We'll recognize you automatically.
+          </p>
+
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: '#9ca3af',
+              marginTop: '32px',
               textAlign: 'center',
               lineHeight: 1.6,
             }}
           >
             By continuing you agree to our{' '}
-            <Link component={RouterLink} to="/terms" sx={{ color: appleColors.gray[600] }}>
+            <RouterLink to="/terms" style={{ color: '#6b7280', textDecoration: 'underline' }}>
               Terms
-            </Link>{' '}
+            </RouterLink>{' '}
             and{' '}
-            <Link component={RouterLink} to="/privacy" sx={{ color: appleColors.gray[600] }}>
+            <RouterLink to="/privacy" style={{ color: '#6b7280', textDecoration: 'underline' }}>
               Privacy Policy
-            </Link>
+            </RouterLink>
             .
-          </Typography>
-        </Box>
-      </Container>
-    </Box>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

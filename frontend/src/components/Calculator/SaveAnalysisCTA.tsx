@@ -21,13 +21,14 @@ export const SaveAnalysisCTA: React.FC<SaveAnalysisCTAProps> = ({ analysis, form
   const navigate = useNavigate();
 
   const handleCreateAccount = () => {
-    // Navigate to registration page
-    // The pending analysis is already saved to localStorage by UniversalCalculator
-    navigate('/register');
+    // Magic-link flow: both "create account" and "sign in" go to the same
+    // email-entry page. ref=unlock triggers the unlock-framed headline so
+    // the user sees continuity with the "Unlock Full Analysis" moment.
+    // Their in-progress analysis is already in localStorage.
+    navigate('/login?ref=unlock');
   };
 
   const handleLogin = () => {
-    // Navigate to login page
     navigate('/login');
   };
 

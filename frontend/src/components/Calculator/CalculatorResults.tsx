@@ -331,7 +331,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
             <Button
               variant="contained"
               size="large"
-              href="/register"
+              href="/login?ref=unlock"
               onClick={() => {
                 analytics.trackCTAClick('beta_signup', 'buy_hold_early_cta');
               }}
@@ -674,7 +674,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
           <Button
             variant="contained"
             size="large"
-            href="/register"
+            href="/login?ref=unlock"
             onClick={() => {
               analytics.trackCTAClick('beta_signup', 'brrrr_late_cta');
             }}
