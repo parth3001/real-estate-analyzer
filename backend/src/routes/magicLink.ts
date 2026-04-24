@@ -10,10 +10,15 @@ import {
 
 const router = Router();
 
-// Per-IP: 3 requests / 15min. Matches existing emailRateLimit tightness.
+// Per-IP: 10 requests / 15min. A single user can easily hit multiple requests
+// legitimately (typo, resend, log-out-and-back, testing). The POST always
+// returns 200 regardless of success, so we can't skip-successful-requests.
+// Tighter limits create false-positive lockouts that are worse than the
+// abuse vector they prevent. Email-based limit below catches the real
+// case (one address being spammed).
 const magicLinkIpLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3,
+  max: 10,
   message: {
     error: 'Too many sign-in requests. Try again in 15 minutes.',
     retryAfter: '15 minutes',
