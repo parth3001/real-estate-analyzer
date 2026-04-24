@@ -143,30 +143,9 @@ const PublicHeader: React.FC = () => {
               What's New
             </Button>
 
-            {/* Login Link */}
+            {/* Sign-in — single entry, magic link replaces login+register split */}
             <Button
               onClick={() => navigate('/login')}
-              sx={{
-                color: appleColors.gray[700],
-                fontSize: { xs: '0.875rem', md: '0.938rem' },
-                fontWeight: 500,
-                textTransform: 'none',
-                padding: { xs: '6px 12px', md: '8px 16px' },
-                minWidth: 'auto',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  textDecoration: 'underline',
-                  textDecorationThickness: '1px',
-                  textUnderlineOffset: '4px'
-                }
-              }}
-            >
-              Login
-            </Button>
-
-            {/* Sign Up Button */}
-            <Button
-              onClick={() => navigate('/register')}
               variant="outlined"
               sx={{
                 color: appleColors.primary[500],
@@ -184,7 +163,7 @@ const PublicHeader: React.FC = () => {
                 }
               }}
             >
-              Sign Up Free
+              Sign in
             </Button>
           </Box>
         </Box>

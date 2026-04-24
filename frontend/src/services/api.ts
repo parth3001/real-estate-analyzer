@@ -1086,6 +1086,62 @@ export const authApi = {
       throw error;
     }
   },
+
+  // Request a magic-link sign-in email. Backend always returns 200
+  // (regardless of whether the email is registered) to prevent enumeration.
+  requestMagicLink: async (email: string): Promise<ApiResponse<{ ok: boolean }>> => {
+    try {
+      const response = await api.post('/auth/magic-link', { email });
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { ok: false },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
+
+  // Consume a magic-link token and — on success — store the returned
+  // JWT pair + user data so subsequent requests authenticate normally.
+  verifyMagicLink: async (
+    token: string
+  ): Promise<
+    ApiResponse<{
+      ok: boolean;
+      accessToken?: string;
+      refreshToken?: string;
+      user?: any;
+      reason?: 'expired' | 'used' | 'invalid';
+      email?: string;
+    }>
+  > => {
+    try {
+      const response = await api.get('/auth/magic-link/verify', {
+        params: { token },
+      });
+
+      if (response.data?.ok && response.data.accessToken) {
+        tokenUtils.setAccessToken(response.data.accessToken);
+        tokenUtils.setRefreshToken(response.data.refreshToken);
+        tokenUtils.setUserData(response.data.user);
+      }
+
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          data: error.response?.data || { ok: false, reason: 'invalid' as const },
+          status: error.response?.status || 500,
+          message: error.response?.data?.error || error.message,
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 // Scenario-related types

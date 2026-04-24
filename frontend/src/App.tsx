@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Typography } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -38,10 +38,8 @@ import PricingPage from './pages/PricingPage';
 import NotFound from './pages/NotFound';
 import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import PasswordResetPage from './pages/PasswordResetPage';
-import EmailVerificationPage from './pages/EmailVerificationPage';
+import CheckEmailPage from './pages/CheckEmailPage';
+import MagicLinkVerifyPage from './pages/MagicLinkVerifyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
@@ -161,39 +159,22 @@ function App() {
                 } 
               />
               <Route
-                path="/register"
+                path="/auth/check-email"
                 element={
                   <GuestRoute>
-                    <AuthLayout>
-                      <RegisterPage />
-                    </AuthLayout>
+                    <CheckEmailPage />
                   </GuestRoute>
                 }
               />
               <Route
-                path="/forgot-password"
-                element={
-                  <GuestRoute>
-                    <ForgotPasswordPage />
-                  </GuestRoute>
-                }
+                path="/auth/verify"
+                element={<MagicLinkVerifyPage />}
               />
-              <Route
-                path="/reset-password"
-                element={
-                  <GuestRoute>
-                    <PasswordResetPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/verify-email"
-                element={
-                  <GuestRoute>
-                    <EmailVerificationPage />
-                  </GuestRoute>
-                }
-              />
+              {/* Legacy auth routes — magic-link replaces them. Redirect to /login. */}
+              <Route path="/register" element={<Navigate to="/login" replace />} />
+              <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
+              <Route path="/reset-password" element={<Navigate to="/login" replace />} />
+              <Route path="/verify-email" element={<Navigate to="/login" replace />} />
               <Route
                 path="/terms"
                 element={
