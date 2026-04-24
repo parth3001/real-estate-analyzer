@@ -58,10 +58,21 @@ router.post(
 );
 
 /**
- * GET /api/auth/magic-link/verify?token=xxx
- * Consume a magic link. Returns JWT pair + user on success,
- * or { ok: false, reason: 'expired'|'used'|'invalid' } on failure.
+ * POST /api/auth/magic-link/verify
+ *
+ * Consume a magic link. Token comes from the request body, NOT the query
+ * string, specifically to avoid email-scanner prefetch consumption:
+ * inbox anti-phishing scanners (Gmail, Outlook, corporate) fetch URLs
+ * in emails to vet them; a GET endpoint would let those fetches burn
+ * the one-time token before the user ever clicks. POST with body is
+ * never pre-fetched.
+ *
+ * The frontend's /auth/verify page shows an interstitial "Continue"
+ * button so the POST only fires on a genuine human click.
+ *
+ * Returns JWT pair + user on success, or
+ * { ok: false, reason: 'expired'|'used'|'invalid' } on failure.
  */
-router.get('/magic-link/verify', validateMagicLinkVerify, verifyMagicLink);
+router.post('/magic-link/verify', validateMagicLinkVerify, verifyMagicLink);
 
 export default router;

@@ -1120,9 +1120,8 @@ export const authApi = {
     }>
   > => {
     try {
-      const response = await api.get('/auth/magic-link/verify', {
-        params: { token },
-      });
+      // POST, not GET: avoids email-scanner prefetch consuming one-time tokens.
+      const response = await api.post('/auth/magic-link/verify', { token });
 
       if (response.data?.ok && response.data.accessToken) {
         tokenUtils.setAccessToken(response.data.accessToken);

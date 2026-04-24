@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { body, query, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import { MagicLinkToken } from '../models/MagicLinkToken';
 import { User } from '../models/User';
 import { emailService } from '../services/emailService';
@@ -119,7 +119,7 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
     return;
   }
 
-  const rawToken = String(req.query.token || '');
+  const rawToken = String(req.body?.token || '');
   if (!rawToken) {
     res.status(400).json({ ok: false, reason: 'invalid' satisfies VerifyFailureReason });
     return;
@@ -227,7 +227,7 @@ export const validateMagicLinkRequest = [
 ];
 
 export const validateMagicLinkVerify = [
-  query('token')
+  body('token')
     .isString()
     .isLength({ min: 64, max: 64 })
     .matches(/^[a-f0-9]+$/)
