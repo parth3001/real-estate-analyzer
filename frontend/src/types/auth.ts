@@ -120,7 +120,13 @@ export interface AuthContextType {
   updateProfile: (data: ProfileUpdateData) => Promise<void>;
   changePassword: (data: PasswordChangeData) => Promise<void>;
   clearError: () => void;
-  
+
+  // Hydrates the context state immediately after magic-link verify
+  // stores tokens in localStorage. Without this, ProtectedRoute reads
+  // stale isAuthenticated=false and bounces the user back to /login
+  // even though the JWT is already valid.
+  setAuthenticatedUser: (user: User) => void;
+
   // Utility
   getToken: () => string | null;
   refreshToken: () => Promise<void>;

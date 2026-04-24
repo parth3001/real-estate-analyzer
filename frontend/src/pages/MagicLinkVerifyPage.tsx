@@ -27,6 +27,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CircularProgress from '@mui/material/CircularProgress';
 import { authApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import analyzrLogo from '../assets/analyzr-logo.png';
 
@@ -39,6 +40,7 @@ const TOKEN_REGEX = /^[a-f0-9]{64}$/;
 const MagicLinkVerifyPage: React.FC = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { setAuthenticatedUser } = useAuth();
   const { isMobile, isTablet } = useResponsive();
 
   const rawToken = params.get('token') || '';
@@ -59,9 +61,12 @@ const MagicLinkVerifyPage: React.FC = () => {
     try {
       const res = await authApi.verifyMagicLink(rawToken);
 
-      if (res.data?.ok && res.data.accessToken) {
+      if (res.data?.ok && res.data.accessToken && res.data.user) {
+        // Tokens are already stored by authApi.verifyMagicLink. Sync the
+        // user into AuthContext so ProtectedRoute reads isAuthenticated=true
+        // before we navigate; otherwise /dashboard bounces back to /login.
+        setAuthenticatedUser(res.data.user);
         setPhase('success');
-        // Small beat so the user sees "Signed in" before the redirect.
         setTimeout(() => navigate('/dashboard'), 300);
         return;
       }

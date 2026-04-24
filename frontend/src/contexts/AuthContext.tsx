@@ -250,6 +250,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  // Magic-link flow stores tokens in localStorage directly (via authApi.verifyMagicLink).
+  // This method syncs that state into the reducer so ProtectedRoute sees
+  // isAuthenticated=true immediately, without a page reload.
+  const setAuthenticatedUser = (nextUser: User): void => {
+    dispatch({ type: 'AUTH_SUCCESS', payload: nextUser });
+  };
+
   // Get token function
   const getToken = (): string | null => {
     return tokenUtils.getAccessToken();
@@ -286,7 +293,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateProfile,
     changePassword,
     clearError,
-    
+    setAuthenticatedUser,
+
     // Utility
     getToken,
     refreshToken,
