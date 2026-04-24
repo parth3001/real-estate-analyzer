@@ -22,11 +22,13 @@ const fileFormat = winston.format.combine(
   winston.format.json()
 );
 
-// Determine log level based on environment
-// 🔍 ISSUE #53 DEBUG: Temporarily set to 'error' to silence noise
+// Determine log level based on environment. Respect LOG_LEVEL env if set.
+// Prod defaults to 'error' (quiet, only real problems). Dev defaults to
+// 'info' so smoke tests, startup banners, and diagnostic context are
+// visible while you're working.
 const logLevel = process.env.NODE_ENV === 'production'
-  ? (process.env.LOG_LEVEL || 'error')  // Production: Only errors by default
-  : (process.env.LOG_LEVEL || 'error');   // Development: TEMPORARILY 'error' to reduce logs
+  ? (process.env.LOG_LEVEL || 'error')
+  : (process.env.LOG_LEVEL || 'info');
 
 export const logger = winston.createLogger({
   level: logLevel,
