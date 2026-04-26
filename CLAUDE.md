@@ -29,11 +29,14 @@ Give individual investors the same institutional-grade analysis that Wall Street
 
 ### **What is REanalyzr?**
 
-**Core Definition:**
-> REanalyzr helps real estate investors analyze rental deals, track opportunities, and understand portfolio impact in one structured workflow.
+**📌 Strategic Source of Truth (READ FIRST):**
+→ `/docs/PRODUCT_CONTEXT.md` — Canonical positioning, target user, what's live, non-negotiables. **Overrides any conflicting positioning in older messaging docs.**
+
+**Core Definition (per PRODUCT_CONTEXT.md):**
+> REanalyzr is a three-layer real estate investment platform: Deal Analysis + Deal Pipeline + Portfolio Impact. NOT a calculator. Honest analysis (frequent low scores on bad deals) is the moat. Portfolio supports ALL property types including commercial.
 
 **Complete Messaging Framework:**
-→ `/docs/MESSAGING_FRAMEWORK.md` (problem hooks, solution statements, landing page templates, competitive context)
+→ `/docs/MESSAGING_FRAMEWORK.md` (problem hooks, solution statements, landing page templates, competitive context — where this conflicts with PRODUCT_CONTEXT.md, PRODUCT_CONTEXT wins)
 
 **Go-to-Market Strategy:**
 → `/docs/GTM_PARALLEL_EXECUTION_PLAN_FEB_2026.md` (SEO content, B2B outreach, link earning, product roadmap)
@@ -49,9 +52,9 @@ Give individual investors the same institutional-grade analysis that Wall Street
 - NOT beginners (they need education first, not tools)
 
 **Pricing:**
-- $19.99/month (locked in)
-- Beta users: $0/month forever
-- No other tiers to mention (avoid confusion)
+- $19.99/month (locked in) — Stripe NOT integrated yet (target: June 1, 2026)
+- Beta users: free, but **do not lead with "free forever for beta" in marketing copy** (per PRODUCT_CONTEXT.md — attracts wrong users, signals impermanence)
+- No other tiers to mention publicly (avoid confusion)
 
 **Competitive Context:**
 - Primary competitor: BiggerPockets (free calculator, $39/month Pro)

@@ -1,442 +1,694 @@
 /**
- * Landing Page - Calculator-First Homepage
+ * Landing Page — Three-Layer Platform Positioning
  *
- * Ultra-minimal landing page with calculator embedded directly
- * Apple-inspired design with positive CTAs to sample analysis
+ * Per /docs/PRODUCT_CONTEXT.md (Apr 25, 2026):
+ *   Three-layer platform — Deal Analysis + Pipeline + Portfolio.
+ *   Honest analysis is the moat. Portfolio supports all property
+ *   types including commercial.
+ *
+ * Public copy never uses "verdict" or "PASS"/"BUY" labels — score
+ * + color + contextual label only. (Liability concern; see memory:
+ * feedback_no_verdict_in_public_copy.md.)
  */
 
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
-import { UniversalCalculator } from '../components/Calculator';
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Paper,
+  Button,
+  Link as MuiLink
+} from '@mui/material';
 import PublicHeader from '../components/common/PublicHeader';
+import { UniversalCalculator } from '../components/Calculator';
 import { analytics } from '../utils/analytics';
 import { getScoreColor } from '../utils/scoreColors';
 
+// Fake illustrative numbers — labeled "Sample analysis" in the UI.
+const SAMPLE_SCORE = 34;
+const SAMPLE = {
+  property: '4-bed SFR · Phoenix, AZ · $425,000 list',
+  metrics: [
+    { label: 'Monthly cash flow', value: '−$485', note: 'negative' },
+    { label: 'DSCR', value: '0.89', note: 'lenders require 1.25' },
+    { label: 'Cap rate', value: '4.1%', note: 'market avg 6.2%' },
+    { label: '1% rule', value: 'Fails', note: 'rent is 0.52% of price' }
+  ],
+  walkAway: '$342,000'
+};
+
+const FAQ_ITEMS = [
+  {
+    q: 'How is REanalyzr different from free calculators?',
+    a: "Calculators give you the math. REanalyzr connects each deal to a pipeline of properties you're tracking and to the portfolio you already own — including commercial. You get a Deal Quality Score (0–100), 28+ professional metrics, real market data for your specific location, and the same framework applied to every deal."
+  },
+  {
+    q: 'Do I need real estate experience to use this?',
+    a: "No. The Deal Quality Score gives you a 0–100 score with the full breakdown — you decide whether the deal fits your standards. Whether you're analyzing your first property or your 30th, the framework is the same."
+  },
+  {
+    q: 'Why do so many deals come back red?',
+    a: "Most deals don't pencil. Conservative underwriting surfaces the marginal ones that look good on paper but bleed in year three. Showing you the math behind a low score is more useful than rationalizing a borderline deal into a green one."
+  },
+  {
+    q: 'Does the portfolio support commercial properties?',
+    a: 'Yes. The portfolio tracker accepts SFR, multi-family, BRRRR properties, and commercial (strip mall, office, mixed-use). Add what you already own and see how each new deal shifts your cash flow and concentration before you make the offer.'
+  },
+  {
+    q: 'How accurate is the BRRRR calculator?',
+    a: 'The BRRRR analyzer uses institutional-grade formulas validated by professional real estate investors. It models the full Buy-Rehab-Rent-Refinance-Repeat cycle including capital recovery, forced equity, and post-refinance cash flow. Accuracy depends on your input quality — use realistic rehab costs and ARV estimates.'
+  },
+  {
+    q: 'What is a good cap rate for rental property?',
+    a: 'Cap rates typically range from 5–10% depending on market and property class. 8–10%+ signals strong cash-flow markets, 5–7% appreciation-focused markets, below 5% premium or overheated. The cap rate calculator compares your deal against local benchmarks.'
+  },
+  {
+    q: 'Can I use this for multi-family properties?',
+    a: 'Yes. The platform supports single-family homes, duplexes, triplexes, and multi-family up to 32 units. Enter unit-level details for accurate cash flow analysis. Multi-family-specific metrics include per-unit NOI, vacancy rates, and operating expense ratios.'
+  },
+  {
+    q: 'What metrics does the analyzer provide?',
+    a: 'Cap Rate, Cash-on-Cash Return, IRR, DSCR, NOI, Cash Flow, Total ROI, Payback Period, Gross Rent Multiplier, Operating Expense Ratio, Break-Even Occupancy, Equity Multiple, and 15+ more — across 10-year projections for both Buy & Hold and BRRRR strategies.'
+  },
+  {
+    q: 'Do I need to create an account to use the calculator?',
+    a: 'No. Run analyses anonymously. Create a free account when you want to save deals to your pipeline, compare properties, and track portfolio impact across what you already own.'
+  },
+  {
+    q: 'How is this different from Excel spreadsheets?',
+    a: 'Real-time market data, AI-powered scoring, and instant analysis (5 minutes vs 2+ hours in Excel). No formulas to debug, no version conflicts. Built-in validation, professional-grade output, and the deals stay in your pipeline so you can revisit them later.'
+  },
+  {
+    q: 'What is DSCR and why does it matter?',
+    a: 'DSCR (Debt Service Coverage Ratio) measures whether rental income covers mortgage payments. The DSCR calculator helps you qualify for investment property loans. Lenders typically require 1.25x minimum (Fannie Mae/Freddie Mac standard); higher DSCR means stronger financing position and better loan terms.'
+  },
+  {
+    q: 'Can I analyze fix-and-flip properties?',
+    a: 'Yes. The BRRRR analyzer handles fix-and-flip scenarios — model rehab costs, ARV, holding costs, and sale proceeds. Output includes profit margins, ROI, and annualized returns.'
+  }
+];
+
+const PRIMARY_CTA_HREF = '/sfr-analysis';
+const ACCENT = '#0071E3';
+
+const ctaButtonSx = {
+  bgcolor: ACCENT,
+  color: '#FFFFFF',
+  px: 4,
+  py: 1.5,
+  borderRadius: '999px',
+  fontSize: '1.0625rem',
+  fontWeight: 500,
+  textTransform: 'none' as const,
+  boxShadow: 'none',
+  '&:hover': { bgcolor: '#0058B3', boxShadow: 'none' }
+};
+
 const LandingPage: React.FC = () => {
-  // Track page view on mount
   useEffect(() => {
     analytics.trackPageView('landing');
   }, []);
 
+  const sampleColor = getScoreColor(SAMPLE_SCORE);
+
   return (
     <>
       <Helmet>
-        <title>BRRRR & Buy and Hold Calculator - Free Real Estate Analysis | Reanalyzr</title>
+        <title>REanalyzr — Analyze Any Deal. Track Every Property. See Your Full Portfolio.</title>
         <meta
           name="description"
-          content="Screen rental deals faster with less guesswork. Analyze BRRRR and Buy & Hold properties with Deal Quality Score and structured workflow. Free forever for beta users."
+          content="REanalyzr is a three-layer real estate platform: analyze BRRRR, Buy & Hold, and Multi-Family deals; track them in one pipeline; see portfolio impact across all your properties — including commercial — before you buy."
         />
         <meta
           name="keywords"
-          content="BRRRR calculator, buy and hold calculator, rental property calculator, real estate investment calculator, deal analyzer"
+          content="real estate investment platform, rental property analysis, BRRRR analyzer, buy and hold calculator, multi-family analyzer, portfolio tracker, commercial real estate"
         />
         <link rel="canonical" href="https://reanalyzr.com/" />
       </Helmet>
 
-      {/* Public Header */}
       <PublicHeader />
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Ultra-minimal hero section */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 600,
-              mb: 2,
-              fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
-            }}
-          >
-            Screen Rental Deals Faster With Less Guesswork
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.secondary',
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              maxWidth: '800px',
-              mx: 'auto',
-              lineHeight: 1.6
-            }}
-          >
-            Use Deal Quality Score, structured analysis, and portfolio-aware insights to evaluate opportunities without spreadsheet chaos. Analyze properties in 5 minutes—not 2 hours in Excel. Free forever for Beta users.
-          </Typography>
-        </Box>
+      {/* ============== HERO ============== */}
+      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#FFFFFF' }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={{ xs: 5, md: 6 }} alignItems="center">
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Typography
+                component="h1"
+                sx={{
+                  fontSize: { xs: '2.125rem', sm: '2.75rem', md: '3.25rem' },
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  color: '#111827',
+                  mb: 3
+                }}
+              >
+                Analyze Any Deal. Track Every Property. See Your Full Portfolio — All In One Place.
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: '1.0625rem', md: '1.125rem' },
+                  lineHeight: 1.6,
+                  color: '#4B5563',
+                  mb: 4,
+                  maxWidth: '620px'
+                }}
+              >
+                BRRRR, Buy &amp; Hold, Multi-Family, and commercial — one platform that connects every deal to the portfolio you've already built. Built to flag the deals that don't work, not just the ones that do.
+              </Typography>
+              <Button variant="contained" size="large" href={PRIMARY_CTA_HREF} sx={ctaButtonSx}>
+                Run a Deal Now →
+              </Button>
+              <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#6B7280' }}>
+                Five minutes from address to score. Free during beta.
+              </Typography>
+              <MuiLink
+                href="#calculator"
+                sx={{
+                  display: 'inline-block',
+                  mt: 1.25,
+                  fontSize: '0.9375rem',
+                  color: '#6B7280',
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline', color: ACCENT }
+                }}
+              >
+                Or try the free calculator first ↓
+              </MuiLink>
+            </Grid>
 
-        {/* Results Preview Card - Shows what users will get */}
-        <Box
-          component="a"
-          href="/sample-analysis"
-          sx={{
-            display: 'block',
-            maxWidth: '700px',
-            mx: 'auto',
-            mb: 3,
-            p: { xs: 2.5, sm: 3 },
-            backgroundColor: '#F9FAFB',
-            border: '1px solid #E5E7EB',
-            borderRadius: '12px',
-            textDecoration: 'none',
-            transition: 'all 0.2s ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-              borderColor: '#D1D5DB'
-            }
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 2 }}>
-            {/* Deal Quality Score Preview */}
-            <Box
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Box
+                sx={{
+                  bgcolor: '#FFFFFF',
+                  border: `2px solid ${sampleColor}`,
+                  borderRadius: '16px',
+                  p: { xs: 3, md: 3.5 },
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.06)'
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.6875rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#6B7280',
+                    mb: 1.5
+                  }}
+                >
+                  Sample analysis
+                </Typography>
+
+                <Box sx={{ textAlign: 'center', mb: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '4.5rem', md: '5rem' },
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      color: sampleColor
+                    }}
+                  >
+                    {SAMPLE_SCORE}
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: { xs: '2rem', md: '2.25rem' },
+                        color: '#9CA3AF',
+                        fontWeight: 700,
+                        ml: 0.5
+                      }}
+                    >
+                      /100
+                    </Typography>
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: '80px',
+                      height: '3px',
+                      bgcolor: sampleColor,
+                      borderRadius: '2px',
+                      mx: 'auto',
+                      my: 1.5
+                    }}
+                  />
+                  <Typography sx={{ fontSize: '0.9375rem', fontWeight: 500, color: '#374151' }}>
+                    Below professional standards
+                  </Typography>
+                </Box>
+
+                <Box sx={{ borderTop: '1px solid #E5E7EB', pt: 2 }}>
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#6B7280', mb: 1.5 }}>
+                    {SAMPLE.property}
+                  </Typography>
+                  {SAMPLE.metrics.map((m, idx) => (
+                    <Box
+                      key={m.label}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        py: 1,
+                        borderBottom: idx < SAMPLE.metrics.length - 1 ? '1px solid #F3F4F6' : 'none'
+                      }}
+                    >
+                      <Typography sx={{ fontSize: '0.875rem', color: '#374151' }}>
+                        {m.label}
+                      </Typography>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.9375rem',
+                            fontWeight: 600,
+                            color: '#111827',
+                            fontVariantNumeric: 'tabular-nums'
+                          }}
+                        >
+                          {m.value}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+                          {m.note}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+
+                <Box
+                  sx={{
+                    mt: 2,
+                    pt: 2,
+                    borderTop: '1px solid #E5E7EB',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <Typography sx={{ fontSize: '0.8125rem', color: '#6B7280' }}>
+                    Walk-away price
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      fontVariantNumeric: 'tabular-nums'
+                    }}
+                  >
+                    {SAMPLE.walkAway}
+                  </Typography>
+                </Box>
+
+                <MuiLink
+                  href="/sample-analysis"
+                  sx={{
+                    display: 'block',
+                    textAlign: 'center',
+                    mt: 2.5,
+                    color: ACCENT,
+                    fontSize: '0.9375rem',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  See the full sample analysis →
+                </MuiLink>
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  color: '#9CA3AF',
+                  textAlign: 'center',
+                  mt: 1.5
+                }}
+              >
+                This is the deal report most calculators won't show you.
+              </Typography>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* ============== ANALYZE. TRACK. UNDERSTAND. ============== */}
+      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#F9FAFB' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography
+              component="h2"
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: { xs: '100%', sm: '140px' },
-                p: 2,
-                backgroundColor: getScoreColor(87),
-                borderRadius: '8px',
-                color: '#FFFFFF'
+                fontSize: { xs: '1.875rem', md: '2.5rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: '#111827',
+                mb: 2
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: { xs: '2.5rem', sm: '3rem' },
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  mb: 0.5
-                }}
-              >
-                87/100
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: '0.75rem', sm: '0.813rem' },
-                  fontWeight: 500,
-                  opacity: 0.95,
-                  textAlign: 'center'
-                }}
-              >
-                Deal Quality Score
-              </Typography>
-            </Box>
-
-            {/* Preview Context */}
-            <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-              <Typography
-                sx={{
-                  fontSize: { xs: '1rem', sm: '1.125rem' },
-                  fontWeight: 600,
-                  color: '#111827',
-                  mb: 0.5
-                }}
-              >
-                See What a Full Analysis Looks Like
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.938rem' },
-                  color: '#6B7280',
-                  lineHeight: 1.5
-                }}
-              >
-                Real example: $347K property in Austin, TX
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.938rem' },
-                  color: '#0071E3',
-                  fontWeight: 500,
-                  mt: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: { xs: 'center', sm: 'flex-start' },
-                  gap: 0.5
-                }}
-              >
-                View full example analysis →
-              </Typography>
-            </Box>
+              Analyze. Track. Understand.
+            </Typography>
+            <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563', maxWidth: '640px', mx: 'auto' }}>
+              One place to evaluate a deal, organize what you've found, and see how it fits the properties you already own.
+            </Typography>
           </Box>
-        </Box>
 
-        {/* Calculator embedded directly */}
-        <UniversalCalculator />
-
-        {/* Sample analysis CTA - positive framing */}
-        <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'text.secondary',
-              mb: 1,
-              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-            }}
-          >
-            Want to see what a full analysis looks like?
-          </Typography>
-          <MuiLink
-            href="/sample-analysis"
-            sx={{
-              color: '#0071E3',
-              textDecoration: 'none',
-              fontWeight: 500,
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              '&:hover': {
-                textDecoration: 'underline',
+          <Grid container spacing={3}>
+            {[
+              {
+                eyebrow: 'Analyze',
+                title: 'Run any deal. Any strategy.',
+                body: 'BRRRR, Buy & Hold, and Multi-Family — same structured framework, same Deal Quality Score, same honest math. No spreadsheet rebuild for every property type. Conservative underwriting catches the deals that look good on paper but bleed in year three.',
+                link: { label: 'See a full analysis →', href: '/sample-analysis' }
+              },
+              {
+                eyebrow: 'Track',
+                title: 'From first look to closing day.',
+                body: 'Save every property you analyze. Track status from "reviewing" to "offer made" to "closed" or "passed." Compare three duplexes from last month side-by-side in seconds. The deals you walk away from matter as much as the ones you close.',
+                link: { label: 'Tour the pipeline →', href: '/pipeline' }
+              },
+              {
+                eyebrow: 'Understand',
+                title: 'See the effect before you buy.',
+                body: 'Add the rentals, multi-family, and commercial properties you already own. Then run a new deal and see exactly how it shifts your cash flow, geographic concentration, and goal progress — before you make an offer. Nobody else connects deal decisions to portfolio reality.',
+                link: { label: 'See portfolio impact →', href: '/portfolio' }
               }
+            ].map((card) => (
+              <Grid size={{ xs: 12, md: 4 }} key={card.eyebrow}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    bgcolor: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '16px',
+                    p: { xs: 3, md: 3.5 },
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: ACCENT,
+                      mb: 1.5
+                    }}
+                  >
+                    {card.eyebrow}
+                  </Typography>
+                  <Typography
+                    component="h3"
+                    sx={{
+                      fontSize: '1.375rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      mb: 1.5,
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    {card.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '1rem', lineHeight: 1.65, color: '#4B5563', flexGrow: 1 }}>
+                    {card.body}
+                  </Typography>
+                  <MuiLink
+                    href={card.link.href}
+                    sx={{
+                      mt: 2.5,
+                      color: ACCENT,
+                      fontSize: '0.9375rem',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' }
+                    }}
+                  >
+                    {card.link.label}
+                  </MuiLink>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* ============== CALCULATOR EMBED ============== */}
+      <Box
+        component="section"
+        id="calculator"
+        sx={{ py: { xs: 6, md: 10 }, bgcolor: '#FFFFFF', scrollMarginTop: '80px' }}
+      >
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.25rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: '#111827',
+                mb: 2
+              }}
+            >
+              Run your own numbers. Get a Deal Quality Score in 60 seconds.
+            </Typography>
+            <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563', maxWidth: '640px', mx: 'auto' }}>
+              Try it free. Save the deal to track it in your pipeline and see how it fits your portfolio.
+            </Typography>
+          </Box>
+          <UniversalCalculator />
+        </Container>
+      </Box>
+
+      {/* ============== SOCIAL PROOF ============== */}
+      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#F9FAFB' }}>
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.25rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: '#111827'
+              }}
+            >
+              Join investors analyzing deals the honest way.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={3} sx={{ mb: { xs: 5, md: 6 } }}>
+            {[
+              { stat: '100+', label: 'deals analyzed by beta investors' },
+              { stat: '3', label: 'strategies supported — BRRRR, Buy & Hold, Multi-Family' },
+              { stat: '0', label: 'spreadsheets required' }
+            ].map((s) => (
+              <Grid size={{ xs: 12, sm: 4 }} key={s.label}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '2.5rem', md: '3rem' },
+                      fontWeight: 800,
+                      color: '#111827',
+                      lineHeight: 1,
+                      mb: 1
+                    }}
+                  >
+                    {s.stat}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280' }}>
+                    {s.label}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Box sx={{ borderTop: '1px solid #E5E7EB', pt: 5, textAlign: 'center', maxWidth: '720px', mx: 'auto' }}>
+            <Typography
+              sx={{
+                fontSize: { xs: '1.125rem', md: '1.25rem' },
+                lineHeight: 1.6,
+                color: '#374151',
+                fontStyle: 'italic',
+                mb: 2
+              }}
+            >
+              "We built REanalyzr to surface the deals that don't pencil — not just the ones that do. In honest underwriting, most deals come back red. If we're not showing you that math clearly, we're just another calculator. And the world has enough calculators."
+            </Typography>
+            <Typography sx={{ fontSize: '0.875rem', color: '#6B7280' }}>
+              — REanalyzr team
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* ============== HOW IT WORKS ============== */}
+      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#FFFFFF' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: '1.875rem', md: '2.5rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: '#111827',
+                mb: 2
+              }}
+            >
+              How REanalyzr works.
+            </Typography>
+            <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563' }}>
+              Three steps. Five minutes. One platform.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={{ xs: 4, md: 5 }}>
+            {[
+              {
+                num: '01',
+                title: 'Analyze',
+                body: 'Enter the address (or fill in the details manually). Pick your strategy — BRRRR, Buy & Hold, or Multi-Family. Get a Deal Quality Score (0–100) with the full breakdown: cash flow, cap rate, DSCR, IRR, and a walk-away price.'
+              },
+              {
+                num: '02',
+                title: 'Save to Pipeline',
+                body: 'Move it from "reviewing" to "offer made" to "closed" or "passed." Every analysis stays in one place. Revisit your numbers, compare deals side-by-side, never rebuild a spreadsheet.'
+              },
+              {
+                num: '03',
+                title: 'See Portfolio Impact',
+                body: 'Connect the deal to the properties you already own — SFR, multi-family, or commercial. See how cash flow, concentration risk, and goal progress shift before you make the offer.'
+              }
+            ].map((step) => (
+              <Grid size={{ xs: 12, md: 4 }} key={step.num}>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: ACCENT,
+                      letterSpacing: '0.08em',
+                      mb: 1.5
+                    }}
+                  >
+                    {step.num}
+                  </Typography>
+                  <Typography
+                    component="h3"
+                    sx={{
+                      fontSize: '1.5rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      mb: 1.5,
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    {step.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '1rem', lineHeight: 1.65, color: '#4B5563' }}>
+                    {step.body}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Box sx={{ textAlign: 'center', mt: { xs: 5, md: 7 } }}>
+            <Button variant="contained" size="large" href={PRIMARY_CTA_HREF} sx={ctaButtonSx}>
+              Run a Deal Now →
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* ============== FINAL CTA ============== */}
+      <Box component="section" sx={{ py: { xs: 7, md: 11 }, bgcolor: '#0F172A' }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: { xs: '2rem', md: '2.75rem' },
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              color: '#FFFFFF',
+              mb: 2
             }}
           >
-            View example analysis from beta investor →
-          </MuiLink>
-        </Box>
-
-        {/* Why REanalyzr Is Different Section */}
-        <Box sx={{ mt: 8, mb: 8 }}>
-          <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 5, textAlign: 'center', fontSize: { xs: '1.75rem', md: '2.25rem' } }}>
-            Three Problems We Solve
+            Ready to stop guessing on deals?
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 4 }}>
-            {/* Column 1: 5-Minute Analysis */}
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Box sx={{ fontSize: '3rem', mb: 2 }}>⚡</Box>
-              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                5-Minute Analysis
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                Get a complete investment analysis in 5 minutes—not 2 hours in Excel. Enter your property details and get instant results.
-              </Typography>
-            </Box>
+          <Typography
+            sx={{
+              fontSize: { xs: '1.0625rem', md: '1.125rem' },
+              lineHeight: 1.6,
+              color: '#CBD5E1',
+              mb: 4,
+              maxWidth: '600px',
+              mx: 'auto'
+            }}
+          >
+            Run your first analysis in five minutes. See exactly why a deal works or doesn't — before you waste a weekend on it.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            href={PRIMARY_CTA_HREF}
+            sx={{
+              bgcolor: '#FFFFFF',
+              color: '#0F172A',
+              px: 4,
+              py: 1.5,
+              borderRadius: '999px',
+              fontSize: '1.0625rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#F1F5F9', boxShadow: 'none' }
+            }}
+          >
+            Run a Deal Now →
+          </Button>
+          <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#94A3B8' }}>
+            Five minutes from address to score. Free during beta.
+          </Typography>
+        </Container>
+      </Box>
 
-            {/* Column 2: Reduce Guesswork */}
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Box sx={{ fontSize: '3rem', mb: 2 }}>📊</Box>
-              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                Reduce Guesswork
+      {/* ============== FAQ (moved below CTA, kept for SEO) ============== */}
+      <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor: '#FFFFFF' }}>
+        <Container maxWidth="md">
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: { xs: '1.5rem', md: '1.75rem' },
+              fontWeight: 600,
+              color: '#111827',
+              mb: 4,
+              textAlign: 'center'
+            }}
+          >
+            Common questions
+          </Typography>
+          {FAQ_ITEMS.map((item) => (
+            <Box key={item.q} sx={{ mb: 3.5 }}>
+              <Typography
+                component="h3"
+                sx={{ fontSize: '1.0625rem', fontWeight: 600, color: '#111827', mb: 1 }}
+              >
+                {item.q}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                Deal Quality Score (0-100) gives you a consistent way to screen rental deals based on your own standards, strategy, and risk tolerance.
-              </Typography>
-            </Box>
-
-            {/* Column 3: Stay Organized */}
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Box sx={{ fontSize: '3rem', mb: 2 }}>🎯</Box>
-              <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                Stay Organized
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                Track all your deals in one pipeline. Save analyses, compare properties side-by-side, and never rebuild the same work twice.
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* SEO Content Sections */}
-        <Box sx={{ mt: 8, mb: 6 }}>
-          {/* How It Works Section */}
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 3, textAlign: 'center' }}>
-              How the Rental Property Calculator Works
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.7 }}>
-              Our BRRRR calculator and Buy & Hold calculator provide structured rental property analysis in three simple steps:
-            </Typography>
-            <Box sx={{ pl: 2 }}>
-              <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>1. Enter Property Details:</strong> Input your purchase price, financing terms, and rental income estimates. Our calculator works for single-family rentals, BRRRR strategy properties, and traditional buy-and-hold investments.
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>2. Get Professional Metrics:</strong> Instantly calculate cap rate, cash flow, IRR (Internal Rate of Return), DSCR (Debt Service Coverage Ratio), cash-on-cash return, and NOI (Net Operating Income). Our real estate investment calculator uses the same formulas professional investors rely on.
-              </Typography>
-              <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
-                <strong>3. Analyze Results:</strong> Review your investment property analysis with AI-powered insights and deal quality scoring. Compare BRRRR vs Buy & Hold strategies side-by-side to find the best approach for your investment goals.
+              <Typography sx={{ fontSize: '0.9375rem', lineHeight: 1.7, color: '#4B5563' }}>
+                {item.a}
               </Typography>
             </Box>
-          </Box>
-
-          {/* Why Professional Investors Use This Calculator */}
-          <Box sx={{ mb: 6, py: 4, bgcolor: '#f9fafb', borderRadius: 2, px: 3 }}>
-            <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 3, textAlign: 'center' }}>
-              Why Professional Investors Use This Real Estate Calculator
-            </Typography>
-            <Box component="ul" sx={{ pl: 2 }}>
-              <Typography component="li" variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>Cap Rate Calculator Accuracy:</strong> Calculate capitalization rates using institutional formulas. Understand if you're paying a fair price based on NOI and property value.
-              </Typography>
-              <Typography component="li" variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>Cash Flow Calculator with Operating Expenses:</strong> Factor in property taxes, insurance, HOA fees, utilities, maintenance, and CapEx reserves. Get realistic monthly cash flow projections.
-              </Typography>
-              <Typography component="li" variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>IRR Calculator for Long-Term Returns:</strong> See your annualized Internal Rate of Return over 10+ years. Compare investment property performance against stocks, bonds, and other asset classes.
-              </Typography>
-              <Typography component="li" variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                <strong>DSCR Calculator for Financing:</strong> Ensure lenders will approve your rental property loan. DSCR above 1.25x gives you negotiating power with banks.
-              </Typography>
-              <Typography component="li" variant="body1" sx={{ lineHeight: 1.7 }}>
-                <strong>BRRRR Calculator with Refinance Analysis:</strong> Model the Buy, Rehab, Rent, Refinance, Repeat strategy. Calculate forced equity, post-refinance cash flow, and capital recovery timelines.
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Calculator Features Grid */}
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 4, textAlign: 'center' }}>
-              Investment Property Calculator Features
-            </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  AI Deal Scoring Engine
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Get a 0-100 deal quality score based on your own standards. Our investment calculator evaluates cash flow, market conditions, and risk factors to help you screen deals with less guesswork.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  BRRRR Strategy Analysis
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Model the entire BRRRR cycle with our specialized calculator. Track capital recovery, refinance scenarios, and post-rehab property values. See how much capital you can recycle into your next deal.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Multi-Strategy Support
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Switch between Buy & Hold calculator and BRRRR calculator instantly. Compare strategies side-by-side to determine which approach maximizes your ROI for each rental property.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Real-Time Market Data
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Our real estate investment calculator integrates mortgage rates, housing trends, and economic indicators. Make data-driven decisions based on current market conditions.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  10-Year Financial Projections
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Visualize rental income growth, property appreciation, and equity build-up over time. Our investment property calculator shows year-by-year cash flow, NOI, and total returns.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Deal Pipeline & Portfolio Tracking
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Track your deal pipeline from lead to close. See how each property impacts your portfolio goals. Monitor performance, visualize geographic diversification, and get AI-powered insights on portfolio health.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Free with Beta Access
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Join during beta and get unlimited property analysis forever. No credit card required. Save deals, compare properties, and access professional-grade rental property calculator tools.
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* FAQ Section */}
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 4, textAlign: 'center' }}>
-              Rental Property Calculator FAQ
-            </Typography>
-            <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  How is REanalyzr different from free calculators?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Free calculators give you basic math with generic assumptions. REanalyzr gives you the same 28 professional metrics that institutional investors use—Cap Rate, DSCR, IRR, NOI, Cash-on-Cash Return—plus real-time market data for your specific location. It's the difference between guessing and knowing.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Do I need real estate experience to use this?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  No. REanalyzr is designed for everyone from first-time investors to experienced portfolio builders. Our AI Deal Quality Score (0-100) gives you an instant verdict—this deal is above or below professional standards—so you can make confident decisions in 5 minutes, even if you've never analyzed a property before.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  How accurate is this BRRRR calculator?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Our BRRRR calculator uses institutional-grade formulas validated by professional real estate investors. We model the complete Buy-Rehab-Rent-Refinance-Repeat cycle including capital recovery, forced equity, and post-refinance cash flow. Accuracy depends on your input data quality - use realistic rehab costs and ARV estimates for best results.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  What is a good cap rate for rental property?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Good cap rates typically range from 5-10% depending on market and property class. Our cap rate calculator shows: 8-10%+ = strong cash flow market, 5-7% = appreciation-focused market, below 5% = premium or overheated market. Use our investment property calculator to compare your deal against local market benchmarks.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Can I use this for multi-family properties?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Yes! Our rental property calculator supports single-family homes, duplexes, triplexes, and small multi-family properties. Enter unit-level details for accurate cash flow analysis. Multi-family calculator features include per-unit metrics, vacancy rates, and operating expense ratios.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  What metrics does your investment calculator provide?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Our real estate calculator computes 25+ metrics including: Cap Rate, Cash-on-Cash Return, IRR, DSCR, NOI, Cash Flow, Total ROI, Payback Period, Gross Rent Multiplier, Operating Expense Ratio, Break-Even Occupancy, and Equity Multiple. Both Buy & Hold and BRRRR calculators include 10-year projections.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Do I need to create an account to use the calculator?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  No! Use our rental property calculator instantly without signing up. Anonymous analysis is free and unlimited. Create a free account to save deals, compare properties, and access AI insights. Beta users get lifetime free access to all calculator features.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  How is this different from Excel spreadsheets?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Our investment property calculator integrates real-time market data, provides AI-powered deal scoring, and offers instant analysis (5 minutes vs 2+ hours with Excel). No formulas to debug, no version conflicts. Get professional-grade rental property analysis with built-in validation and investor-friendly visualizations.
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  What is DSCR and why does it matter?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  DSCR (Debt Service Coverage Ratio) measures if rental income covers mortgage payments. Our DSCR calculator helps you qualify for investment property loans. Lenders require 1.25x minimum (Fannie Mae/Freddie Mac standard). Higher DSCR = stronger financing position and better loan terms.
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
-                  Can I analyze fix-and-flip properties?
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
-                  Yes! Use our BRRRR calculator for fix-and-flip analysis. Model rehab costs, after-repair value (ARV), holding costs, and sale proceeds. Our calculator shows profit margins, ROI, and annualized returns. Perfect for flippers evaluating deals at auctions or wholesalers.
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Container>
+          ))}
+        </Container>
+      </Box>
     </>
   );
 };
