@@ -115,7 +115,7 @@ const LandingPage: React.FC = () => {
   const sampleColor = getScoreColor(SAMPLE_SCORE);
 
   return (
-    <>
+    <div data-clarity-unmask="True">
       <Helmet>
         <title>REanalyzr — Analyze Any Deal. Track Every Property. See Your Full Portfolio.</title>
         <meta
@@ -689,7 +689,7 @@ const LandingPage: React.FC = () => {
           ))}
         </Container>
       </Box>
-    </>
+    </div>
   );
 };
 

@@ -245,7 +245,7 @@ const SampleAnalysisPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: appleColors.gray[50] }}>
+    <Box data-clarity-unmask="True" sx={{ minHeight: '100vh', backgroundColor: appleColors.gray[50] }}>
       {/* Sticky Header */}
       <StickyHeader />
 

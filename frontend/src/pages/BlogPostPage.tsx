@@ -37,7 +37,7 @@ const BlogPostPage: React.FC = () => {
   };
 
   return (
-    <>
+    <div data-clarity-unmask="True">
       <Helmet>
         <title>{post.title} | REanalyzr</title>
         <meta name="description" content={post.description} />
@@ -349,7 +349,7 @@ const BlogPostPage: React.FC = () => {
           </Button>
         </Container>
       </Box>
-    </>
+    </div>
   );
 };
 

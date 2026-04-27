@@ -178,7 +178,7 @@ const TermsOfServicePage: React.FC = () => {
         <div style={getSectionStyle()}>
           <h2 style={getSectionTitleStyle()}>9. Privacy Policy</h2>
           <p style={getTextStyle()}>
-            Your privacy is important to us. Our Privacy Policy explains how we collect, use, and protect your information
+            Your privacy is important to us. Our <Link to="/privacy" style={{ color: '#0071E3', textDecoration: 'underline' }}>Privacy Policy</Link> explains how we collect, use, and protect your information
             when you use our Service.
           </p>
         </div>
@@ -386,7 +386,7 @@ const TermsOfServicePage: React.FC = () => {
             <li>You retain ownership of data you input into the Service.</li>
           </ul>
           <p style={getTextStyle()}>
-            Our Privacy Policy (separate document) provides detailed information about data collection, use, and protection.
+            Our <Link to="/privacy" style={{ color: '#0071E3', textDecoration: 'underline' }}>Privacy Policy</Link> provides detailed information about data collection, use, and protection.
           </p>
         </div>
 

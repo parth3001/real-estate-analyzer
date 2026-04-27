@@ -41,6 +41,7 @@ import LoginPage from './pages/LoginPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import MagicLinkVerifyPage from './pages/MagicLinkVerifyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
@@ -183,6 +184,7 @@ function App() {
                   </GuestRoute>
                 }
               />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
               {/* Public Routes - No login required */}
               <Route path="/" element={<HomeRouteSelector />} />
