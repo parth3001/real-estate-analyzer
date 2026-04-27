@@ -166,19 +166,6 @@ const LandingPage: React.FC = () => {
               <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#6B7280' }}>
                 Five minutes from address to score. Free during beta.
               </Typography>
-              <MuiLink
-                href="#calculator"
-                sx={{
-                  display: 'inline-block',
-                  mt: 1.25,
-                  fontSize: '0.9375rem',
-                  color: '#6B7280',
-                  textDecoration: 'none',
-                  '&:hover': { textDecoration: 'underline', color: ACCENT }
-                }}
-              >
-                Or try the free calculator first ↓
-              </MuiLink>
             </Grid>
 
             <Grid size={{ xs: 12, md: 5 }}>
