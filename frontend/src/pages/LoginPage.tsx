@@ -6,7 +6,8 @@
  * Context-aware copy via ?ref query param:
  *   - ref=unlock → headline reframed as "Unlock your analysis"
  *     (the user just clicked Unlock Full Analysis on the calculator)
- *   - default → generic "Welcome back" / sign-in framing
+ *   - default → neutral "Sign in or sign up" framing (same magic-link flow
+ *     handles both new accounts and returning users)
  */
 
 import React, { useState } from 'react';
@@ -66,10 +67,10 @@ const LoginPage: React.FC = () => {
   };
 
   // ---------- Copy ----------
-  const rightH1 = isUnlock ? 'Unlock your analysis' : 'Welcome back';
+  const rightH1 = isUnlock ? 'Unlock your analysis' : 'Sign in or sign up';
   const rightSubhead = isUnlock
     ? "Enter your email — we'll send you a one-click link so you can see your full analysis."
-    : "Enter your email — we'll send you a one-click sign-in link. No password needed.";
+    : "Enter your email — we'll send you a one-click link. No password needed. New here? We'll create your account automatically.";
 
   // ---------- Styles (mirrors old LoginForm shell to preserve brand) ----------
   const containerStyle: React.CSSProperties = {
@@ -219,7 +220,7 @@ const LoginPage: React.FC = () => {
           <img src={analyzrLogo} alt="REanalyzr" style={logoStyle} />
 
           <h1 style={heroTitleStyle}>
-            {isUnlock ? 'Unlock Your Full Analysis' : 'Welcome Back to REanalyzr'}
+            {isUnlock ? 'Unlock Your Full Analysis' : 'Sign In or Sign Up'}
           </h1>
 
           {!isMobile && (
@@ -394,7 +395,7 @@ const LoginPage: React.FC = () => {
               lineHeight: 1.5,
             }}
           >
-            Already have an account? We'll recognize you automatically.
+            New or returning — we'll get you to the right place.
           </p>
 
           <p
