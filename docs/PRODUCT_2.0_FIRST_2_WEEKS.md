@@ -32,7 +32,7 @@ Calling these out so Founder can correct in review. Defaults applied:
 
 | Q# | Question | Bias applied | Reasoning |
 |---|---|---|---|
-| 1 | Q&A migration scope (W3) | **Wrap first; refactor wave 2 if needed** | Doesn't impact weeks 1-2 (W3 starts week 3+) |
+| 1 | Q&A migration scope (W3) | ✅ **LOCKED 2026-05-11: Option B — re-architect during the lift** | Founder rationale: not in a rush; cleaner foundation worth the time. W3-S5 stays L-sized (5-10 days) per original backlog estimate. Doesn't impact weeks 1-2 (W3 starts week 3+) but locks W3 total at 22-30 story-days. |
 | 2 | Offline + sync tier (W6-S11) | **Tier 2 (capture queue, no conflict resolution)** | Doesn't impact weeks 1-2 (W6 starts week 4+) |
 | 3 | Golden set sizing (W8-S5) | **Ship with 100 scenarios; grow to 180 across wave 1** | W8-S5 starts week 3+; weeks 1-2 set up the harness only |
 | 4 | Founder-historical backfill volume (W10) | **Assume 50-200 real analyses; supplement with synthetic** | Affects W10 sizing (week 4+); doesn't impact weeks 1-2 |

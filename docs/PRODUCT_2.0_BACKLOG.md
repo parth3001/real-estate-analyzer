@@ -597,7 +597,7 @@ These workstreams **shape** the engineering backlog (B2B prospect feedback updat
 
 Items needing decisions before specific stories can be sized firm.
 
-1. **W3-S4/S5 Q&A migration scope.** The `aiEnhancedMessagingService` lift is L-sized. Worth a deep architect review of whether the existing service can be wrapped (smaller scope) vs. genuinely re-architected (longer but cleaner). Recommend: wrap first; refactor in wave 2 if behavioral parity is hard to maintain.
+1. ✅ **RESOLVED 2026-05-11: W3-S4/S5 Q&A migration scope — Option B (re-architect now).** The `aiEnhancedMessagingService` lift is L-sized; founder confirmed "not in a rush; cleaner foundation worth the time." W3-S5 stays at the original L sizing (5-10 story-days); W3 workstream total locked at 22-30 story-days. Re-architect includes: separate the four cache boundaries per agent mesh §5.2, convert string templates to typed tool definitions, restructure the 5 content types as proper structured outputs, add typed Zod schemas for all outputs.
 
 2. **W6-S11 offline + sync scope.** Largest single story in wave 1. Three sub-tiers possible:
    - Tier 1: Read-only offline (browse cached analyses); no offline writes. ~3 days.
