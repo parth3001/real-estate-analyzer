@@ -184,6 +184,13 @@ Pricing context: **$19.99/month retail** per the locked memory (Apr 25, 2026). N
 - Q&A follow-up unlimited within reason (rate-limited per session, not per month)
 - No adversarial critique on free tier (BUY-band auto-critique disabled; manual critique gated)
 
+**First-touch chat cost from hero embed (new in wave 1):** the hero embed on LandingPage and wrapper pages (per [PRODUCT_2.0_FRONTEND.md §7.5](PRODUCT_2.0_FRONTEND.md)) means every public visitor who submits a property in the hero incurs LLM cost — even before signup. Anti-abuse measures:
+- Minimum 5 characters of input before "send" enables (anti-bot, anti-accidental-trigger)
+- Per-IP rate limit on anonymous first-touch chat (e.g., 3 requests per IP per hour)
+- Anonymous-session cost cap: $0.10 / session (~4-5 LLM turns before requiring signup to continue)
+- Free-tier 3-analyses-per-month cap applies once signup happens — covers chat-driven signups identically to wizard signups
+- All anonymous traffic flows through standard CostEvent collection; aggregate-cost dashboard surfaces anomalies
+
 ### 5.2 Retail paid tier ($19.99/month)
 
 **Limits:** Unlimited analyses per the locked pricing path.
@@ -621,3 +628,4 @@ Marketplace economics are secondary to substrate accumulation. **If marketplace 
 
 - **2026-05-10 (v1):** Initial draft. Pricing baseline (Anthropic Haiku 4.5 / Sonnet 4.6 / Opus 4.7, May 2026), model-tier routing per agent and tool with cost justification, per-query archetypes (analyze property, BUY-band with critique, Q&A follow-up, override), per-tier price-point analysis ($0 / $19.99 / $200 projection / $2K projection) with unit economics calculations, caching strategy across three caches (prompt cache, semantic cache, tool-result cache), three-level cost-cap enforcement (per-query / per-user / per-org), `CostEvent` operational collection separate from substrate, monitoring + anomaly detection, cost regression as eval gate, single-provider position with degraded-mode fallback, wave 1.5 / wave 2 cost implications, 6 open questions flagged.
 - **2026-05-10 (v1.1):** Added §4.5 (per-analysis cost at-a-glance summary with 7 scenarios) — establishes ~$0.021 standard analysis cost as headline reference. Added §5.6 (hybrid pricing model — Path A subscription locked + proposed per-analysis pay-as-you-go layer for non-subscribers, B2B per-deal API, B2B trial conversion; with architectural implications and self-selecting conversion math). Added §12 (agent marketplace pricing — distribution channel strategy with per-call pricing principles, indicative prices for revisit, marketplaces to consider, substrate-seeding framing per thesis §4.3). Per-analysis cost and hybrid pricing now documented as revisitable strategic surface.
+- **2026-05-10 (v1.2):** §5.1 (free tier) extended with first-touch hero-embed chat cost discipline — anti-bot 5-char minimum, per-IP rate limit, anonymous-session cap of $0.10. Reflects the wave 1 hero-chat-embed in LandingPage (see [PRODUCT_2.0_FRONTEND.md §7.5](PRODUCT_2.0_FRONTEND.md)) which exposes anonymous traffic to LLM cost for the first time.

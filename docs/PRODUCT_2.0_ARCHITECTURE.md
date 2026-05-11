@@ -458,9 +458,14 @@ Both write the same event type. The structured modal adds `justification` and `a
 ### 11.1 Coexistence
 
 - **`/sfr-analysis` wizard:** stays operational. No rewrite. Continues to serve users who prefer forms.
+- **`/mf-analysis` wizard (existing, [MFAnalysis.tsx](../frontend/src/pages/MFAnalysis.tsx)):** stays operational. Strangler-fig applies symmetrically with SFR wizard.
 - **`/app` chat surface:** new. The default destination for new traffic.
-- **Marketing homepage at `reanalyzr.com`:** stays as-is per thesis non-negotiable. Hiring-manager optics are not a tradeoff.
-- **Affiliate landing pages (e.g. `theficouple.reanalyzr.com`):** continue to work, route into `/app` or `/sfr-analysis` based on existing affiliate config.
+- **Marketing positioning copy** at `reanalyzr.com` stays as-is per thesis non-negotiable. **The interaction model changes — the hero's embedded `<UniversalCalculator />` is replaced by an embedded chat input that redirects to `/app` on first submit with the user's input pre-loaded.** Positioning copy, sample analysis card, FAQ, footer, all unchanged. Single change point at LandingPage.tsx (line 450).
+- **SEO calculator wrappers** at `/brrrr-calculator` and `/cap-rate-calculator` are thin wrappers around the same `LandingPage` component — they automatically inherit the hero-chat-embed change. SEO meta and FAQ schemas per page unchanged.
+- **`/rental-property-calculator`** is a separate landing page (not a LandingPage wrapper) — also gets a chat-embed replacement of its standalone `<UniversalCalculator />` for surface consistency.
+- **Standalone calculator routes** `/calculator`, `/calculator/brrrr`, `/calculator/buy-hold` are **deprecated and removed in wave 1.** No production users; no SEO traffic landing on these routes (the SEO surfaces are the wrapper pages above). Removing them simplifies the routing surface without traffic impact.
+- **`/sample-analysis`** stays as-is. Pre-baked walkthrough; doesn't need chat replacement; remains as social-proof content linked from LandingPage.
+- **Affiliate landing pages (e.g. `theficouple.reanalyzr.com`):** continue to work, route into `/sfr-analysis` until per-affiliate migration to `/app` (wave 2 decision per affiliate).
 
 ### 11.2 Cold-start surface
 
@@ -503,6 +508,7 @@ Single highest-leverage thing we can do between wave 1 and wave 2: instrument ex
 - Implementation cost: ~2 days per service. Single-line `eventsRepo.writePortfolioEvent(...)` / `writePipelineEvent(...)` calls at write points
 - No behavior change. No new endpoints. No new dashboards.
 - **Earns substrate weight 14+ weeks earlier.** When outcome capture lights up, `pipeline_deal_closed` events are the lowest-friction precursor to `OutcomeEvent` — the calibration loop has a year of history instead of starting from zero.
+- **Also in wave 1.5:** both `/sfr-analysis` and `/mf-analysis` wizard backends instrumented to emit the same `AnalysisEvent` + `DecisionEvent` shape that `tool:score_deal` produces from chat. Cross-surface substrate consistency — analyses are queryable identically whether they originated from wizard or chat. Existing wizard UIs unchanged.
 
 #### 11.5.2 Wave 1.5 — Portfolio model B2B variant flag
 
@@ -661,3 +667,4 @@ These are NOT decisions to revisit during decomposition. Either explicitly defer
 - **2026-05-10 (v1):** Initial draft. Backend decisions locked from architect-design conversation: MongoDB events store, custom orchestrator, enrichment as tool not agent, MCP first, hybrid conversation memory, open-input cold-start surface. Companion docs deferred to follow-up PRs.
 - **2026-05-10 (v1.1):** Added §1.5 — Non-negotiable: AI never produces the scoring decision. Captures the deterministic-engine principle (auditability + calibration moat + user protection + compliance) and makes explicit that personas flow into the algorithmic core as deterministic configuration, not AI input. Paired with [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) DecisionEvent shape correction.
 - **2026-05-10 (v1.2):** Added §5.5 (Wave 2 preview: portfolio-agent + pipeline-agent + market-data agent) and §11.5 (Existing features strangler-fig coverage: untouched in wave 1, substrate-instrumented in wave 1.5, agent-wrapped in wave 2). Paired with new event types in [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) §3.10 (PortfolioEvent) and §3.11 (PipelineEvent), and open question #6 in [PRODUCT_2.0_AGENT_MESH.md](PRODUCT_2.0_AGENT_MESH.md) (B2B portfolio variant).
+- **2026-05-10 (v1.3):** §11.1 corrected after architect re-read of actual frontend code. The marketing landing page at `/` is `LandingPage.tsx` which already embeds `<UniversalCalculator />` at line 450; `/brrrr-calculator` and `/cap-rate-calculator` are SEO wrappers around the same LandingPage; `/rental-property-calculator` is a separate landing page with its own hero. Wave 1 hero-chat-embed change replaces the calculator in LandingPage (single change point cascades to 3 routes) plus same change in RentalPropertyCalculatorPage. Standalone `/calculator` routes deprecated (zero users, zero SEO traffic). MF wizard at `/mf-analysis` exists and stays operational symmetrically with `/sfr-analysis`; both wizard backends instrumented in wave 1.5. Cost discipline for first-touch hero chat documented in [PRODUCT_2.0_COSTS.md §5.1](PRODUCT_2.0_COSTS.md); frontend hero-embed mechanics in [PRODUCT_2.0_FRONTEND.md §7.5](PRODUCT_2.0_FRONTEND.md).

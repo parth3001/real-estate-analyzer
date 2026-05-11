@@ -33,24 +33,64 @@
 ## 1. Routing — what lives where
 
 ```
-reanalyzr.com/                  ← Marketing homepage (UNCHANGED per thesis non-negotiable)
-reanalyzr.com/app               ← New chat surface (wave 1)
-reanalyzr.com/sfr-analysis      ← Existing 4-step wizard (UNCHANGED, kept as fallback)
-reanalyzr.com/portfolio         ← Existing PortfolioDashboard (UNCHANGED, wave 2 gets agent overlay)
-reanalyzr.com/pipeline          ← Existing pipeline views (UNCHANGED, wave 2 gets agent overlay)
-reanalyzr.com/blog/...          ← Existing blog system (UNCHANGED)
-reanalyzr.com/brrrr-calculator  ← Existing calculator wrapper (UNCHANGED)
-reanalyzr.com/login             ← Magic-link auth (UNCHANGED beyond PR #1 copy)
-theficouple.reanalyzr.com/      ← Existing affiliate landing (UNCHANGED)
+PUBLIC SURFACES (anonymous)
+reanalyzr.com/                          ← LandingPage (positioning unchanged; hero
+                                          embeds chat input — wave 1 change)
+reanalyzr.com/brrrr-calculator          ← SEO wrapper around LandingPage
+                                          (inherits hero-chat-embed automatically)
+reanalyzr.com/cap-rate-calculator       ← SEO wrapper around LandingPage
+                                          (inherits hero-chat-embed automatically)
+reanalyzr.com/rental-property-calculator ← Separate landing with custom hero
+                                          (gets chat embed too, for consistency)
+reanalyzr.com/sample-analysis           ← Guided pre-baked walkthrough (UNCHANGED)
+reanalyzr.com/pricing                   ← UNCHANGED
+reanalyzr.com/blog, /blog/:slug         ← UNCHANGED
+reanalyzr.com/login                     ← Magic-link auth (UNCHANGED post PR #1)
+
+DEPRECATED IN WAVE 1 (no users, no SEO traffic):
+reanalyzr.com/calculator                ← REMOVED in wave 1
+reanalyzr.com/calculator/brrrr          ← REMOVED in wave 1
+reanalyzr.com/calculator/buy-hold       ← REMOVED in wave 1
+
+NEW IN WAVE 1:
+reanalyzr.com/app                       ← Chat surface (full-screen, persistent)
+
+LOGGED-IN SURFACES (auth required)
+reanalyzr.com/dashboard                 ← UNCHANGED
+reanalyzr.com/sfr-analysis              ← SFR wizard (UNCHANGED; instrumented in wave 1.5)
+reanalyzr.com/mf-analysis               ← MF wizard (UNCHANGED; instrumented in wave 1.5)
+reanalyzr.com/portfolio                 ← UNCHANGED (wave 2 gets agent overlay)
+reanalyzr.com/pipeline                  ← UNCHANGED (wave 2 gets agent overlay)
+reanalyzr.com/saved-properties          ← UNCHANGED
+reanalyzr.com/analysis/:id              ← UNCHANGED
+reanalyzr.com/profile, /settings        ← UNCHANGED
+
+AFFILIATE SUBDOMAINS
+theficouple.reanalyzr.com/              ← AffiliateLandingPage (UNCHANGED)
+                                          Per-affiliate migration to /app is wave 2+
 ```
 
-**The only new top-level route in wave 1 is `/app`.** Everything else stays exactly as it is today.
+**Wave 1 routing changes are narrow:**
+1. Add `/app` (new chat surface)
+2. Modify `LandingPage` to embed chat in the hero where `<UniversalCalculator />` currently lives (single change point — line 450 of LandingPage.tsx cascades to `/`, `/brrrr-calculator`, `/cap-rate-calculator`)
+3. Modify `RentalPropertyCalculatorPage` similarly (separate file; same chat-embed pattern)
+4. Remove `/calculator`, `/calculator/brrrr`, `/calculator/buy-hold` routes (zero-impact: no users, SEO traffic lands on wrapper pages instead)
 
-**Affiliate landing routing:** existing affiliate detection (in [affiliateDetector.ts](../frontend/src/utils/affiliateDetector.ts)) continues to work. Affiliate-driven traffic hits the existing affiliate landing page; CTAs that previously routed to `/sfr-analysis` continue routing there until affiliate flows are explicitly migrated. **Per-affiliate migration to `/app` is a wave 2 decision** — wave 1 affiliate users get the existing wizard, which is their lowest-friction path.
+**Affiliate landing routing:** existing affiliate detection (in [affiliateDetector.ts](../frontend/src/utils/affiliateDetector.ts)) continues to work. CTAs that previously routed to `/sfr-analysis` continue routing there until per-affiliate migration to `/app` (wave 2 decision per affiliate).
+
+**SFR and MF wizards both stay operational.** Strangler-fig applies symmetrically. Both backends are instrumented in wave 1.5 to emit the same substrate events (`AnalysisEvent` + `DecisionEvent`) that `tool:score_deal` produces from chat — cross-surface consistency.
 
 ---
 
 ## 2. Cold-start surface — open input chat
+
+The cold-start surface has **two entry shapes**:
+
+1. **Hero embed on LandingPage / wrapper pages** (`/`, `/brrrr-calculator`, `/cap-rate-calculator`, `/rental-property-calculator`) — chat input lives directly in the hero, replacing the embedded `<UniversalCalculator />`. On first submit, redirects to `/app` with the user's input pre-loaded and the agent's first turn already in flight.
+
+2. **Standalone `/app` route** — full-screen chat surface for returning users, logged-in users, and anyone navigating directly. Same chat agent, same structured controls.
+
+Both entry shapes use the same backend orchestrator and same agent stack. The hero embed is **just the first turn of a chat conversation** — the redirect to `/app` is seamless because the input is forwarded as the first ConversationEvent of that session.
 
 Per [PRODUCT_2.0_ARCHITECTURE.md §11.2](PRODUCT_2.0_ARCHITECTURE.md): open input, no upfront form. The agent extracts intent from whatever the user types.
 
@@ -395,6 +435,28 @@ Existing affiliate detection routes traffic to the appropriate landing page (e.g
 
 **Migration trigger:** affiliate partners may request migration to chat when they see retention data improve for chat-onboarded users. Wave 2 work.
 
+### 7.5 Hero embedded chat — single change point in LandingPage
+
+The hero embed replaces the existing `<UniversalCalculator />` widget at line 450 of [LandingPage.tsx](../frontend/src/pages/LandingPage.tsx). Three routes inherit this change for free:
+
+| Route | Mechanism |
+|---|---|
+| `/` (HomeRouteSelector → LandingPage) | Direct render |
+| `/brrrr-calculator` | [BRRRRCalculatorPage](../frontend/src/pages/BRRRRCalculatorPage.tsx) imports and renders LandingPage with BRRRR-specific Helmet meta |
+| `/cap-rate-calculator` | [CapRateCalculatorPage](../frontend/src/pages/CapRateCalculatorPage.tsx) — same pattern |
+
+[RentalPropertyCalculatorPage.tsx](../frontend/src/pages/RentalPropertyCalculatorPage.tsx) is the outlier — uses its own custom hero rather than wrapping LandingPage. Same chat-embed pattern applies (replace `<UniversalCalculator />` in its hero too) but it's a separate code change. Single chat-embed React component, used in both LandingPage and RentalPropertyCalculatorPage.
+
+**Standalone `/calculator`, `/calculator/brrrr`, `/calculator/buy-hold` routes are removed** in wave 1. Zero-impact: no users, no SEO traffic landing on these routes (SEO traffic lands on the wrapper pages above). Removing them simplifies the routing surface and eliminates a parallel calculator-only UX that no longer serves a purpose.
+
+**Hero embed component behavior:**
+- Accepts user input (text or voice)
+- On submit, generates a session UUID, stores the first input + sessionId in sessionStorage, redirects to `/app?session=<id>`
+- `/app` reads sessionStorage on mount, kicks off the chat agent's first turn using the stored input (no double-render, no second input prompt)
+- If user backs out before submit, sessionStorage is cleared on page hide
+
+**Cost discipline at first-touch:** see [PRODUCT_2.0_COSTS.md §5.1](PRODUCT_2.0_COSTS.md) for first-touch homepage chat cost considerations and rate-limiting recommendations. Hero embed requires at least 5 characters of input before "send" enables — anti-bot, anti-accidental-trigger.
+
 ---
 
 ## 8. State management
@@ -501,3 +563,4 @@ Critical paths:
 ## 12. Changelog
 
 - **2026-05-10 (v1):** Initial draft. Routing (one new route `/app`, everything else unchanged), cold-start surface with open-input chat + activation moment + B2B-routed greeting variant, inline structured control catalog (9 components), mobile patterns anchored in Sterling apple persona expertise (cellular streaming, voice via native STT, touch gestures, token-cost-aware UX), streaming UI patterns (token-by-token, structured outputs, cancellation, error rendering), offline + sync with conflict resolution semantics, strangler-fig integration (existing wizard untouched, shared substrate, deferred promotion path), state management (React + React Query + IndexedDB, no redux for wave 1), accessibility (WCAG 2.1 AA target), testing across component / integration / E2E / cross-device, 6 open questions flagged.
+- **2026-05-10 (v1.1):** §1 routing corrected after architect re-read of actual frontend code. The marketing homepage is `LandingPage.tsx` at `/`, which already embeds `<UniversalCalculator />` at line 450; `/brrrr-calculator` and `/cap-rate-calculator` are SEO wrappers around the same LandingPage component; `/rental-property-calculator` is a separate landing page with its own hero. Standalone `/calculator/*` routes deprecated (no users, no SEO traffic). MF wizard at `/mf-analysis` exists and stays operational; both wizard backends instrumented in wave 1.5. §2 (cold-start surface) extended with hero-embed entry shape. New §7.5 details hero embedded chat single change point with route inheritance map and chat-embed component behavior. Earlier "Stories 2.1-2.6 deprecatable" claim retracted.
