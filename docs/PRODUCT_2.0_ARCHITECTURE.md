@@ -287,6 +287,20 @@ Two synthetic personas configured at the prompt/instruction level:
 
 **Kill criterion (per thesis §5.5):** if 4 weeks of running these personas don't produce useful disagreement signal (i.e. critiques are either trivially agreeing or producing noise), scope down to one persona or pause. Instrument from day one so the kill decision is data-driven, not vibes.
 
+### 5.5 Wave 2 preview — portfolio-agent, pipeline-agent, market-data agent
+
+Per [thesis §5.2](REANALYZR_2.0_THESIS_AND_DECOMPOSITION_v3.md), wave 2 adds three agents. They are explicitly **NOT in wave 1 scope.** The architecture supports them without rework when wave 2 lands.
+
+| Wave 2 agent | Wraps | Lift difficulty | New chat capability |
+|---|---|---|---|
+| Portfolio agent | [portfolioAnalyticsService](../backend/src/services/portfolio/), [portfolioPropertyMetricsService](../backend/src/services/portfolio/), [enhancedPortfolioAI](../backend/src/services/portfolio/enhancedPortfolioAI.ts) | Medium | "How does this deal fit my portfolio?", "What's my portfolio health?", "Which deal should I sell first?" |
+| Pipeline agent | Pipeline services + [PipelineDeal](../backend/src/models/PipelineDeal.ts) model | Medium | "Which deals need review this week?", "Show pipeline by next action", "What's my close rate this quarter?" |
+| Market-data agent | (Net-new — no clean lift target) | High | "What's the rent trend in Phoenix?", "Compare cap rates across my markets" |
+
+**The deterministic-scoring non-negotiable extends to wave 2.** Portfolio analytics calculations stay in deterministic code; AI provides explanation and personalization. Pipeline state transitions are deterministic; AI helps prioritize. Same boundary as wave 1.
+
+**B2B variant flag:** The existing Portfolio model is retail-shaped (goals: cash flow / wealth building / diversification / tax optimization). B2B buyers (lenders, consultancies) need a different portfolio shape — loan portfolios with regulatory views, default-rate aggregations, audit-trail-per-portfolio. Recommend adding `portfolioType: 'retail' | 'b2b_loan' | 'b2b_advisory'` to the Portfolio model in wave 1.5 (cheap, non-breaking) so wave 2's portfolio-agent can branch on it without a schema migration. The actual B2B portfolio shape is wave 2 design.
+
 ---
 
 ## 6. Tool design
@@ -472,6 +486,38 @@ Existing UI components are reused where possible; new wrappers handle chat-threa
 
 Same chat surface, single column. Voice input button prominent (property-tour use case). Verdict cards collapse by default to score + label, tap to expand. Bottom nav: Chat • Watchlist • Portfolio • Account. See [PRODUCT_2.0_FRONTEND.md](PRODUCT_2.0_FRONTEND.md) for streaming-on-cellular patterns and offline+sync handling.
 
+### 11.5 Existing features (portfolio, pipeline) — strangler-fig coverage
+
+The current production features **Portfolio Analysis** and **Deal Pipeline** stay **completely untouched in wave 1.** Strangler-fig discipline:
+
+- **REST endpoints** (`/api/portfolios/*`, `/api/pipeline/*`) continue serving
+- **Existing UI** (PortfolioDashboard, ApplePortfolioWizard, AddManualPropertyModal, pipeline views) continues working
+- **Services** (portfolioAnalyticsService, portfolioPropertyMetricsService, enhancedPortfolioAI, pipeline services) **not touched** in wave 1
+- **Chat surface in wave 1 is deal-analysis-only.** If a user asks about their portfolio in chat, the deal-scoring agent acknowledges the gap: "Portfolio context is in the dashboard — visit `/portfolio` for that view. I'll be able to answer portfolio questions here in wave 2." Honest, doesn't fake the capability.
+
+#### 11.5.1 Wave 1.5 — substrate instrumentation (parallel, ~weeks 10-14)
+
+Single highest-leverage thing we can do between wave 1 and wave 2: instrument existing portfolio and pipeline services to emit substrate events without changing their behavior.
+
+- New event types: `PortfolioEvent`, `PipelineEvent` (see [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) §3.10, §3.11)
+- Implementation cost: ~2 days per service. Single-line `eventsRepo.writePortfolioEvent(...)` / `writePipelineEvent(...)` calls at write points
+- No behavior change. No new endpoints. No new dashboards.
+- **Earns substrate weight 14+ weeks earlier.** When outcome capture lights up, `pipeline_deal_closed` events are the lowest-friction precursor to `OutcomeEvent` — the calibration loop has a year of history instead of starting from zero.
+
+#### 11.5.2 Wave 1.5 — Portfolio model B2B variant flag
+
+Add `portfolioType: 'retail' | 'b2b_loan' | 'b2b_advisory'` to the Portfolio model. Default `'retail'` for all existing records (non-breaking). Wave 2's portfolio-agent will branch on this; without the field, wave 2 would need a schema migration. **Recommended in wave 1.5** while we're already touching portfolio code for event instrumentation.
+
+#### 11.5.3 Wave 2 — portfolio-agent and pipeline-agent
+
+Per §5.5. Wraps existing services. Chat surface extends to portfolio and pipeline queries. Existing dashboards remain operational throughout. Eventual deprecation of the wizard/dashboard surfaces is a **separate decision, not part of this rewrite.**
+
+#### 11.5.4 Risks tracked
+
+1. **Scope-creep pressure.** Once wave 1 chat ships for deals, users will ask "why can't I ask about my portfolio in chat?" Honor the thesis non-negotiable: deflect to existing dashboard until wave 2 ships. Discipline > velocity.
+2. **Substrate-instrumentation drift.** If we skip wave 1.5 and only start emitting portfolio/pipeline events in wave 2, we lose 14+ weeks of substrate weight. The 2-day-per-service cost is well worth the substrate accumulation.
+3. **Cost-tier implications for AI portfolio insights.** [enhancedPortfolioAI](../backend/src/services/portfolio/enhancedPortfolioAI.ts) currently runs without per-user cost gating. When it becomes the wave 2 portfolio-agent, it needs tier-aware cost discipline per [PRODUCT_2.0_COSTS.md](PRODUCT_2.0_COSTS.md). To address when drafting the cost doc.
+
 ---
 
 ## 12. Open architecture questions (§10 of thesis) — answers
@@ -614,3 +660,4 @@ These are NOT decisions to revisit during decomposition. Either explicitly defer
 
 - **2026-05-10 (v1):** Initial draft. Backend decisions locked from architect-design conversation: MongoDB events store, custom orchestrator, enrichment as tool not agent, MCP first, hybrid conversation memory, open-input cold-start surface. Companion docs deferred to follow-up PRs.
 - **2026-05-10 (v1.1):** Added §1.5 — Non-negotiable: AI never produces the scoring decision. Captures the deterministic-engine principle (auditability + calibration moat + user protection + compliance) and makes explicit that personas flow into the algorithmic core as deterministic configuration, not AI input. Paired with [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) DecisionEvent shape correction.
+- **2026-05-10 (v1.2):** Added §5.5 (Wave 2 preview: portfolio-agent + pipeline-agent + market-data agent) and §11.5 (Existing features strangler-fig coverage: untouched in wave 1, substrate-instrumented in wave 1.5, agent-wrapped in wave 2). Paired with new event types in [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) §3.10 (PortfolioEvent) and §3.11 (PipelineEvent), and open question #6 in [PRODUCT_2.0_AGENT_MESH.md](PRODUCT_2.0_AGENT_MESH.md) (B2B portfolio variant).

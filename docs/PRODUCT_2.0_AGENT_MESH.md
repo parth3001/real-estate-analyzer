@@ -787,8 +787,11 @@ These don't block the agent mesh from shipping — they need answers before spec
 
 5. **Prompt cache cost / hit-rate validation.** The cache-boundary design in §5.2 assumes Anthropic's prompt cache delivers ~95% hit rate after warm-up. Validate empirically in first 2 weeks of running; tune boundaries if hit rate is lower.
 
+6. **B2B portfolio variant (wave 2 design, recommended schema prep in wave 1.5).** The retail portfolio model (goals: cash flow / wealth building / diversification / tax optimization) doesn't fit B2B portfolios — lenders have loan portfolios with regulatory views; consultancies have advisory portfolios with per-client segmentation. The wave 2 portfolio-agent will need branching on `portfolioType: 'retail' | 'b2b_loan' | 'b2b_advisory'`. Recommend adding the field to the Portfolio model in wave 1.5 (non-breaking, default `'retail'`) so wave 2 doesn't need a schema migration. Actual B2B portfolio shape and queries are wave 2 design. See [PRODUCT_2.0_ARCHITECTURE.md §11.5.2](PRODUCT_2.0_ARCHITECTURE.md).
+
 ---
 
 ## 11. Changelog
 
 - **2026-05-10 (v1):** Initial draft. Orchestrator (intent classifier, routing, conversation memory, streaming, error handling), tool registry pattern with 9 wave-1 tools, three agent specifications (deal-scoring, Q&A, adversarial critic), prompt structure with explicit cache boundaries, MCP server interface, streaming and cancellation semantics, observability, testing strategy.
+- **2026-05-10 (v1.1):** Added open question #6 (B2B portfolio variant) — recommends adding `portfolioType` field to Portfolio model in wave 1.5 to avoid schema migration when wave 2's portfolio-agent ships. See [PRODUCT_2.0_ARCHITECTURE.md §11.5](PRODUCT_2.0_ARCHITECTURE.md) for full strategy.

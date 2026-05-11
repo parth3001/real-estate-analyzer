@@ -507,6 +507,70 @@ interface OutcomePayload {
 
 ---
 
+### 3.10 PortfolioEvent
+
+**Status:** **Schema ships in wave 1; capture lights up in wave 1.5** (instrumentation pass on existing portfolio services without changing their behavior).
+
+**Purpose:** Captures changes to user portfolios — additions, removals, goal updates, analytics recalculations, AI insight generation. Feeds the substrate's portfolio dimension and prepares for the wave 2 portfolio-agent. See [PRODUCT_2.0_ARCHITECTURE.md §11.5](PRODUCT_2.0_ARCHITECTURE.md) for the strangler-fig coverage strategy.
+
+**When written (wave 1.5):**
+- Single-line `eventsRepo.writePortfolioEvent(...)` calls inserted into existing services at write points
+- Existing services ([portfolioService](../backend/src/services/portfolioService.ts), [portfolioAnalyticsService](../backend/src/services/portfolio/), [enhancedPortfolioAI](../backend/src/services/portfolio/enhancedPortfolioAI.ts)) otherwise unchanged
+
+**Payload (discriminated by `subType`):**
+
+```ts
+type PortfolioPayload =
+  | { subType: 'portfolio_created';      portfolioId: ObjectId; goals: PortfolioGoals; }
+  | { subType: 'property_added';         portfolioId: ObjectId; dealId: ObjectId; ownershipPct: number; }
+  | { subType: 'property_removed';       portfolioId: ObjectId; dealId: ObjectId; }
+  | { subType: 'goal_updated';           portfolioId: ObjectId; oldGoals: PortfolioGoals; newGoals: PortfolioGoals; }
+  | { subType: 'analytics_recalculated'; portfolioId: ObjectId; trigger: 'property_change' | 'manual' | 'scheduled'; durationMs: number; }
+  | { subType: 'ai_insight_generated';   portfolioId: ObjectId; insightType: 'health_check' | 'peer_comparison' | 'goal_path'; tokenCost: number; }
+  | { subType: 'recommendation_viewed';  portfolioId: ObjectId; recommendationId: ObjectId; };
+```
+
+**Writer (wave 1.5):** Existing portfolio services (instrumented). **Writer (wave 2):** Also `agent:portfolio` for chat-driven portfolio actions.
+
+**Reader pattern:**
+- By `portfolioId` (full history of a portfolio)
+- By `userId` + recent (portfolio activity timeline)
+- Aggregate `analytics_recalculated.durationMs` (performance drift detection)
+- Aggregate `ai_insight_generated.tokenCost` per portfolio (cost monitoring)
+
+---
+
+### 3.11 PipelineEvent
+
+**Status:** **Schema ships in wave 1; capture lights up in wave 1.5.**
+
+**Purpose:** Captures deal-pipeline state transitions. The single highest-leverage event for outcome capture — `pipeline_deal_closed` is the lowest-friction precursor to `OutcomeEvent` (§3.9). When outcome capture lights up in wave 2 or 3, a one-time backfill converts historical `pipeline_deal_closed` events with `finalOutcome: 'closed'` into `OutcomeEvent`s.
+
+**When written (wave 1.5):**
+- Instrumentation inserted into existing pipeline services and controllers
+- Existing pipeline UI and REST endpoints unchanged
+
+**Payload:**
+
+```ts
+type PipelinePayload =
+  | { subType: 'deal_added_to_pipeline';   pipelineDealId: ObjectId; dealId: ObjectId; stage: string; }
+  | { subType: 'pipeline_stage_changed';   pipelineDealId: ObjectId; oldStage: string; newStage: string; reason?: string; }
+  | { subType: 'next_action_set';          pipelineDealId: ObjectId; action: string; dueDate: Date; }
+  | { subType: 'pipeline_deal_closed';     pipelineDealId: ObjectId; finalOutcome: 'closed' | 'walked' | 'fell_through' | 'expired'; }
+  | { subType: 'pipeline_note_added';      pipelineDealId: ObjectId; noteId: ObjectId; };
+```
+
+**Writer (wave 1.5):** Existing pipeline services (instrumented). **Writer (wave 2):** Also `agent:pipeline`.
+
+**Reader pattern:**
+- By `pipelineDealId` (deal's pipeline history)
+- By `userId` + `subType: 'pipeline_deal_closed'` (close rate, outcome distribution — feeds calibration analysis)
+- Aggregate stage-transition timings (pipeline velocity insights for B2B underwriting workflows)
+- **Outcome backfill source** when outcome capture lights up — schema alignment between `pipeline_deal_closed.finalOutcome` and `OutcomeEvent.outcome` is intentional.
+
+---
+
 ## 4. Mongoose schema implementation
 
 ### 4.1 Discriminator pattern
@@ -912,6 +976,7 @@ These aren't blocking the substrate ship — they need answers before specific d
 ## 13. Changelog
 
 - **2026-05-10 (v1):** Initial draft. 9 event types specified with full schemas. Repository pattern, Mongoose discriminators, DB-role enforcement, indexing, query recipes, schema evolution rules, storage projections.
+- **2026-05-10 (v1.2):** Added §3.10 PortfolioEvent and §3.11 PipelineEvent — schema-ready, capture in wave 1.5 via instrumentation pass on existing portfolio/pipeline services. PipelineEvent.pipeline_deal_closed is intentional schema-alignment with OutcomeEvent for future backfill. See [PRODUCT_2.0_ARCHITECTURE.md §11.5](PRODUCT_2.0_ARCHITECTURE.md) for full strangler-fig coverage strategy.
 - **2026-05-10 (v1.1):** Corrections after architect review of [investmentDecisionEngine.ts](../backend/src/services/investment/investmentDecisionEngine.ts):
   - DecisionEvent payload corrected to drop legacy `verdict` field; `dealQuality` (0-100) is now the single source of truth, aligned with the engine's own V3.0 migration direction
   - Added §3.3.1 critical-flag score-capping rules (replaces legacy "force-PASS verdict" override pattern)
