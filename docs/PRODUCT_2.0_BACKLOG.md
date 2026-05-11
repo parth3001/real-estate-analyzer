@@ -699,7 +699,18 @@ Items needing decisions before specific stories can be sized firm.
 
 5. ✅ **RESOLVED 2026-05-11: W22 dashboards — Option A (full React in-house).** Founder confirmed. Rationale: brand-consistent screenshots for LinkedIn modernization-series content (substrate observability dashboards become Track 3 content surfaces); in-app aesthetic uniform across all admin views; no external service dependency. W22 stays at 5-7 story-days as originally scoped. Consistent with W24a-S4 (override-pattern dashboard already React per Q4 decision). No critical-path impact.
 
-6. **Wave 1 exit criteria.** What signals "wave 1 is done"? Bias: (a) all 12 wave 1 workstreams ship; (b) ≥80% calibration check pass rate; (c) ≥85% prompt cache hit rate; (d) substrate has ≥1000 real-or-backfilled events; (e) chat handles end-to-end flow on `/app` for a representative deal. Confirm with founder before locking.
+6. ✅ **RESOLVED 2026-05-11: Wave 1 exit criteria — 8-criterion all-pass set (no two-of-N threshold).** Founder accepted revised set. Wave 1 is done when **ALL** of the following are true:
+
+   1. **All 12 wave 1 workstreams ship + W24a** (basic completeness — W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W22, W24a)
+   2. **100% calibration check pass on the regression set**, with any documented exceptions explicitly approved by founder (preserves deterministic-scoring non-negotiable per architecture §1.5)
+   3. **≥85% prompt cache hit rate** on observed traffic (cost economics validation per cost doc §6.1)
+   4. **≥500 substrate events** in production (foundational substrate signal — mix of founder backfill + adversarial seeding + organic traffic; reduced from earlier 1000 estimate given W24b community ramp-up takes time)
+   5. **Average per-query cost ≤$0.025** on observed traffic (unit economics validation per cost doc §4.5)
+   6. **Chat handles end-to-end on `/app`** for a representative deal — verifiable smoke test
+   7. **At least 1 B2B demo** completed end-to-end on the new chat surface (Track 2 handoff signal)
+   8. **At least 2 Track 3 LinkedIn posts** in the modernization-of-modern-stack series shipped (Track 3 surface alive per W24b)
+
+   **Each signal is independently load-bearing — wave 1 is not done if any fail.** Missing a signal triggers either an explicit wave 1 extension OR a revision of the criterion with stated rationale; not a soft-pass. Connects to thesis §12 week 12-20 checkpoints — wave 1 exit is the foundation for those validation gates.
 
 ---
 
