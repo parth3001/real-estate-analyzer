@@ -237,7 +237,7 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W6-S8 | Voice input (native STT) — mic button + transcription → input field | M | Apple Speech / Android SpeechRecognizer wired; transcription editable before send |
 | W6-S9 | Cancellation UX — stop button during generation | XS | Single-tap cancel; partial content preserved; server-side abort |
 | W6-S10 | B2B-routed greeting variant (?ref=demo, ?lender=name) | XS | URL parameter sets investorType + institutionContext on first ProfileEvent |
-| W6-S11 | Offline + sync — IndexedDB caching + queue for offline writes + conflict resolution UI | L | Offline browsing works; queued writes sync on reconnect; conflict UI surfaces dual overrides |
+| W6-S11 | Offline read-only — IndexedDB caching of prior analyses + audit trail bundles | S | Cached substrate events render offline; audit trail consumption works offline (per Tier 1 decision; resolved §10) |
 | W6-S12 | Accessibility audit + WCAG 2.1 AA compliance | M | axe-core passes; screen-reader tested; keyboard navigation verified |
 
 **Total: ~25-35 story-days. 12-18 founder review hours.**
@@ -412,14 +412,14 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W3 — Wave 1 agent mesh (deal-scoring + Q&A) | 22-30 | 10-14 |
 | W4 — Tool registry + tools | 16-22 | 8-12 |
 | W5 — Adversarial critic agent | 10-14 | 4-6 |
-| W6 — Chat-native frontend | 25-35 | 12-18 |
+| W6 — Chat-native frontend | 16-26 | 8-13 |
 | W7 — Hero embed + calculator deprecation | 3-5 | 2-3 |
 | W8 — Eval scaffolding | 20-28 | 10-14 |
 | W9 — Cost economics | 12-18 | 6-9 |
 | W10 — Founder-historical backfill | 5-8 | 3-5 |
 | W11 — MCP edges (minimum) | 5-8 | 2-4 |
 | W22 — Observability (minimum) | 5-7 | 3-4 |
-| **Wave 1 total** | **~155-220 story-days** | **~70-105 founder review hours** |
+| **Wave 1 total** | **~146-211 story-days** (down from 155-220 after Q2 Tier 1 lock) | **~66-100 founder review hours** |
 
 **Calendar projection (informational):**
 - At 12-15 founder review hours/week sustained (per thesis §7), ~6-9 weeks of pure review bandwidth
@@ -599,11 +599,7 @@ Items needing decisions before specific stories can be sized firm.
 
 1. ✅ **RESOLVED 2026-05-11: W3-S4/S5 Q&A migration scope — Option B (re-architect now).** The `aiEnhancedMessagingService` lift is L-sized; founder confirmed "not in a rush; cleaner foundation worth the time." W3-S5 stays at the original L sizing (5-10 story-days); W3 workstream total locked at 22-30 story-days. Re-architect includes: separate the four cache boundaries per agent mesh §5.2, convert string templates to typed tool definitions, restructure the 5 content types as proper structured outputs, add typed Zod schemas for all outputs.
 
-2. **W6-S11 offline + sync scope.** Largest single story in wave 1. Three sub-tiers possible:
-   - Tier 1: Read-only offline (browse cached analyses); no offline writes. ~3 days.
-   - Tier 2: Offline capture queue (write new properties); sync on reconnect without conflict resolution. ~7 days.
-   - Tier 3: Full offline + sync + conflict resolution. ~12 days.
-   Decision: which tier ships in wave 1? Bias toward tier 2.
+2. ✅ **RESOLVED 2026-05-11: W6-S11 offline + sync scope — Tier 1 (read-only offline).** Founder confirmed "ship fast > offline capabilities — we need users first." Tier 1 ships in wave 1; Tier 2/3 deferred until real usage data warrants. W6-S11 resized from L (12 days) to S (3 days). **W6 workstream total reduced from 25-35 story-days to ~16-26 story-days** — meaningful critical-path savings. Tier 1 capabilities: cached prior analyses render offline, audit trail consumption works offline (B2B demo benefit). Skipped: property-tour capture flow, multi-device conflict resolution.
 
 3. **W8-S5 golden set sizing.** 180 scenarios is the doc target. Realistic to author all 180 with rubrics in wave 1, or ship with 100 and grow?
 
