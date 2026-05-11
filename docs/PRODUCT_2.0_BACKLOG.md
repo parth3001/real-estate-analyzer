@@ -287,7 +287,7 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W8-S2 | Calibration check fixture set — synthesize ~50 initial fixtures across scoring tiers + critical flags + persona variants | M | 50 fixtures cover all bands + edge cases; runtime <60s |
 | W8-S3 | Calibration check runner — run fixture inputs through existing engine direct + new agent pipeline; compare dealQuality + factor scores | S | Zero-tolerance comparison; failure report includes likely-cause heuristic |
 | W8-S4 | Founder-historical backfill conversion to fixture set — pipe ~200-500 personal analyses into calibration set (depends on W10) | M | Backfill set merged with synthetic edge cases; CI runtime <5min |
-| W8-S5 | Golden set scaffolding — 50 deal-scoring + 100 Q&A + 30 critic scenarios with behavioral rubrics | L | All 180 scenarios stored as fixtures; LLM-as-judge evaluator wired |
+| W8-S5 | Golden set scaffolding — ~30 deal-scoring + ~50 Q&A + ~20 critic scenarios with behavioral rubrics (wave 1 ship; grow to 180 incrementally per resolved §10 Q3) | M | ~100 scenarios stored as fixtures; LLM-as-judge evaluator wired; remaining ~80 scenarios deferred to wave 1.5 + wave 2 |
 | W8-S6 | Schema validation eval — strict deterministic check for all structured outputs | XS | All wave 1 output schemas validated; runtime <10s |
 | W8-S7 | Substrate write verification — per-tool + per-agent flow tests | S | Every tool that writes events tested; mock-LLM agent flow tests pass |
 | W8-S8 | Directive-language sanitization eval — regex over Q&A golden set, zero-tolerance | XS | Existing patterns ported; CI gates on any violation |
@@ -414,12 +414,12 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W5 — Adversarial critic agent | 10-14 | 4-6 |
 | W6 — Chat-native frontend | 16-26 | 8-13 |
 | W7 — Hero embed + calculator deprecation | 3-5 | 2-3 |
-| W8 — Eval scaffolding | 20-28 | 10-14 |
+| W8 — Eval scaffolding | 15-23 | 8-12 |
 | W9 — Cost economics | 12-18 | 6-9 |
 | W10 — Founder-historical backfill | 5-8 | 3-5 |
 | W11 — MCP edges (minimum) | 5-8 | 2-4 |
 | W22 — Observability (minimum) | 5-7 | 3-4 |
-| **Wave 1 total** | **~146-211 story-days** (down from 155-220 after Q2 Tier 1 lock) | **~66-100 founder review hours** |
+| **Wave 1 total** | **~141-206 story-days** (cumulative ~14 story-days saved across Q1-Q3 decisions) | **~64-98 founder review hours** |
 
 **Calendar projection (informational):**
 - At 12-15 founder review hours/week sustained (per thesis §7), ~6-9 weeks of pure review bandwidth
@@ -601,7 +601,7 @@ Items needing decisions before specific stories can be sized firm.
 
 2. ✅ **RESOLVED 2026-05-11: W6-S11 offline + sync scope — Tier 1 (read-only offline).** Founder confirmed "ship fast > offline capabilities — we need users first." Tier 1 ships in wave 1; Tier 2/3 deferred until real usage data warrants. W6-S11 resized from L (12 days) to S (3 days). **W6 workstream total reduced from 25-35 story-days to ~16-26 story-days** — meaningful critical-path savings. Tier 1 capabilities: cached prior analyses render offline, audit trail consumption works offline (B2B demo benefit). Skipped: property-tour capture flow, multi-device conflict resolution.
 
-3. **W8-S5 golden set sizing.** 180 scenarios is the doc target. Realistic to author all 180 with rubrics in wave 1, or ship with 100 and grow?
+3. ✅ **RESOLVED 2026-05-11: W8-S5 golden set sizing — Option A (100 in wave 1, grow to 180 over time).** Founder aligned. Wave 1 ships with ~30 deal-scoring + ~50 Q&A + ~20 adversarial scenarios (~100 total). Remaining 80 grow incrementally during wave 1.5 + wave 2 with real usage data informing which scenarios are highest-leverage. W8-S5 resized from L (10 days) to M (5-6 days); W8 workstream total reduced from 20-28 to ~15-23 story-days.
 
 4. **W10 founder-historical backfill volume.** How many real analyses does founder have? Affects W8-S4 and W10-S2 sizing. If <50, supplement heavily with synthetic.
 
