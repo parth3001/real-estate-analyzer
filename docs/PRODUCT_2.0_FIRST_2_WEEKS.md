@@ -386,7 +386,7 @@ I'll draft `PRODUCT_2.0_WEEKS_3_4.md` (next sprint planning artifact) once weeks
 ## 11. Open questions for weeks 1-2 specifically
 
 1. **Smoke test script (week 2 Friday)** — write it as part of W4-S4 sub-branch, or as a separate W4-S4-verify story?
-2. **MongoDB cluster choice for development.** Continue using Atlas dev cluster, or stand up local Docker mongo for faster iteration? Bias: Atlas (matches production exactly).
+2. ✅ **RESOLVED 2026-05-11: MongoDB cluster — Atlas only.** Founder policy locked: dev + prod use Atlas cloud exclusively. Local mongo (Docker or install) explicitly NOT acceptable. `mongodb-memory-server` in devDependencies is OK because it's unit-test-only (in-process ephemeral, never touches any cluster). W1-S5 DB role provisioning runs against Atlas; W1-S8 integration tests run against Atlas test cluster.
 3. **Anthropic SDK version pinning.** Pin to a specific version for wave 1 to avoid mid-sprint upgrades? Bias: yes — pin in package.json; explicit upgrades only.
 4. **CI cost.** Weeks 1-2 evals don't call real LLMs heavily, but W8-S5 onward will. Cap CI cost per PR at $0.50 starting week 3.
 
