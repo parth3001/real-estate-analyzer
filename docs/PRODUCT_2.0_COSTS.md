@@ -140,6 +140,29 @@ User: "Change vacancy to 8%."
 
 Cheap. The override itself is deterministic; only the explanation costs LLM tokens.
 
+### 4.5 Per-analysis cost summary — at-a-glance reference
+
+The single most-asked cost question is "what does one analysis cost us?" Cleanly:
+
+| Scenario | LLM cost | External APIs | Total | Notes |
+|---|---|---|---|---|
+| **Standard analysis** (analyze property, single turn) | $0.016 | ~$0.005 | **~$0.021** | The default. 95% of analyses fit this shape. |
+| **Standard + 1 Q&A follow-up** | $0.024 | ~$0.005 | ~$0.029 | User asks "why this score?" after seeing the verdict |
+| **Standard + override flow** | $0.022 | $0 | ~$0.022 | User adjusts an assumption; re-scoring is free |
+| **BUY-band analysis (auto critique)** | $0.126 | ~$0.005 | ~$0.131 | Score ≥ 80 triggers adversarial critic |
+| **Full session (analyze + 3 Q&A + 1 override + 1 manual critique)** | ~$0.150 | ~$0.005 | ~$0.155 | Engaged user, end-to-end interaction |
+| **Standard analysis with semantic cache hit on Q&A** | ~$0.010 | ~$0.005 | ~$0.015 | After cache warm-up; ~30% of Q&A turns |
+| **Standard analysis with cold cache (cache miss)** | ~$0.045 | ~$0.005 | ~$0.050 | First analysis in a new session before prompt cache populates |
+
+**Headline number to remember:** **standard property analysis costs us ~$0.021 (LLM + APIs).** Use this for pricing-model math.
+
+Cost drivers, ranked by impact on average per-analysis cost:
+1. Adversarial critic auto-invocation rate on BUY-band (~$0.105 differential per critiqued analysis; small share of analyses)
+2. Q&A follow-up volume per analysis (each turn adds ~$0.008)
+3. Prompt cache hit rate (target ≥85%; current uncached baseline cost is ~3x higher)
+4. Semantic cache effectiveness for repeat Q&A questions
+5. External API tier (RentCast pricing tier; FRED is free)
+
 ---
 
 ## 5. Per-tier price-point analysis
@@ -226,6 +249,65 @@ Pricing context: **$19.99/month retail** per the locked memory (Apr 25, 2026). N
 - A free-tier user discovers a way to issue 50 analyses/month via API loopholes → cap enforcement gap
 - A retail paid user issues 1000+ Q&A turns/month (effectively talking to the LLM, not analyzing) → not anticipated; cap if observed
 - A B2B institution requests adversarial critique on every metric override → cost balloons; design batch processing alternative
+
+### 5.6 Pricing model — locked, hybrid, marketplace (revisitable)
+
+Pricing is a load-bearing strategic surface, separate from cost economics. This section documents:
+1. **What's locked today** (Path A subscription)
+2. **A hybrid proposal** with per-analysis pay-as-you-go added as a supplementary layer
+3. **Marketplace pricing** (see §12 for the agent marketplace strategy this connects to)
+
+Pricing is **revisitable** — this section is the durable place to come back to when re-evaluating.
+
+#### 5.6.1 Locked today — Path A subscription
+
+Per the project memory (locked Apr 25, 2026):
+
+| Tier | Price | Limits | Status |
+|---|---|---|---|
+| Free | $0/month | 3 analyses/month | Locked, live |
+| Retail paid | $19.99/month | Unlimited analyses | Locked, NOT yet integrated (Stripe target: June 1, 2026) |
+
+This is the primary retail path. Substrate-moat dependence: subscription-driven engagement is what produces analysis volume, which produces override volume, which becomes the calibration moat. **Per-analysis pricing should not replace this for retail.**
+
+#### 5.6.2 Hybrid proposal — adding per-analysis pay-as-you-go (NOT locked, for revisit)
+
+A supplementary per-analysis pricing layer that **does not replace** subscription. Three new surfaces would be added on top of Path A:
+
+| New surface | Price (proposed) | Use case | Wave |
+|---|---|---|---|
+| **Pay-as-you-go retail** | $5-10 / analysis | Non-subscribers; one-off discovery; pre-signup trial without commitment | Wave 2 |
+| **B2B per-deal API** | $2-5 / call (volume-discountable) | Low-volume B2B clients; MCP API access; institutions wanting per-deal discrete invoicing | Wave 2 |
+| **B2B trial conversion** | First 5 analyses free, then $5 / analysis until subscribe | Lowers commitment friction for B2B pilot conversations (per thesis Track 2) | Wave 2 |
+
+**Why per-analysis is supplementary, not replacement (retail):**
+- Substrate moat depends on engaged unlimited users running analyses without per-action cost friction
+- A 30-analyses/month retail user would pay $30-300 under per-deal vs. $19.99 unlimited — prices out the most-engaged users (the ones building the substrate fastest)
+- Discovery friction: tests in proptech show first-impression paywall at any price converts worse than "free 3 trials this month"
+
+**Why per-deal makes sense for B2B specifically:**
+- Procurement preferences vary — some lenders prefer discrete per-deal invoicing for audit/compliance
+- Low-volume B2B (hard-money shops doing 5-10 deals/year) doesn't fit monthly subscription
+- MCP API access (B2B integration) maps naturally to per-call pricing
+
+**Self-selecting conversion logic:** price per-analysis **above** the unlimited break-even (`$19.99 ÷ 4 = $5/analysis`). At $5-10 per analysis non-subscriber, subscription wins for anyone running >4 analyses/month. No need to force conversion — the math forces it.
+
+**Architectural implications if/when we add per-analysis:**
+- Stripe integration extends from subscriptions to one-time Payment Intents (Stripe natively supports both)
+- New event type: `PaymentEvent` — captures per-deal payments alongside subscription billing. Operational collection (like CostEvent), not substrate.
+- Per-query cost cap (§7.1) becomes load-bearing — a $5 per-analysis sale that costs $1.20 in tokens is unacceptable margin compression. $1.00 hard cap is sufficient; just enforced more strictly.
+- MCP API authentication needs per-call billing hooks — each tool invocation on a per-deal API key generates a `PaymentEvent` and decrements credit or charges stored payment method.
+- Free-trial mechanics get more flexible — "3 free analyses OR $5 each — your choice" with both paths visible.
+
+None of these are wave 1 critical. Per-analysis layering lands in wave 2 or 3 without rework.
+
+#### 5.6.3 Open pricing decisions (for revisit)
+
+1. **Per-analysis retail price point.** $5 / $7 / $10 — needs validation. Higher prices push more to subscription; lower prices may compete with subscription unintentionally.
+2. **B2B per-deal price points.** $2-5/call is a working assumption. Real prices set by first B2B demo signal (per thesis Appendix B).
+3. **Volume discounts on B2B per-deal API.** Tiered (e.g., 1000+ calls/month → $1.50/call) makes the per-deal API competitive with subscription at high volume. Defer concrete tiers to first B2B pilot.
+4. **Whether to bundle adversarial critique into per-analysis price.** Critique adds ~$0.105 cost per critiqued analysis. At $5/analysis with auto-critique on BUY band, margin is still ~98%. Bundle by default; revisit if data shows differently.
+5. **Retail trial conversion via per-analysis.** Run an experiment in wave 2 — does adding "or $5 per analysis" as an alternative to subscription change conversion rates? Hypothesis: increases first-touch revenue from non-subscribers; doesn't materially shift subscription conversion either direction.
 
 ---
 
@@ -446,7 +528,80 @@ Mostly cheap. Pipeline state queries and aggregations are deterministic. AI port
 
 ---
 
-## 12. Open questions
+## 12. Agent marketplace pricing — distribution channel (revisitable)
+
+**Strategic context per thesis §4.3:** the MCP / agent-marketplace play is **awareness channel only, not revenue assumption.** Don't budget revenue on it; do prepare architecture for it.
+
+The architecture is already marketplace-ready — [PRODUCT_2.0_AGENT_MESH.md §6](PRODUCT_2.0_AGENT_MESH.md) ships MCP-compatible edges from day one, with the `toolRegistry` as the single source of truth and MCP server as the first edge. A2A and OpenAI Assistants adapters layer on the same registry when those standards converge.
+
+This section documents pricing considerations for when marketplace exposure goes live — wave 2 or later.
+
+### 12.1 What's exposed to the marketplace
+
+Recap from agent mesh §6.3:
+- **Tools** exposed via MCP (calibrated, deterministic where applicable, instrumented for cost tracking)
+- **Agents NOT exposed** — the platform's reasoning layer (deal-scoring orchestrator, Q&A agent, adversarial critic) stays internal. External clients bring their own reasoning; we provide the calibrated tools.
+
+Marketplace pricing therefore applies to **tool calls**, not full agent invocations. The MCP server hosts the toolRegistry and bills per call.
+
+### 12.2 Marketplaces to consider
+
+| Marketplace | Status (May 2026) | Pricing model | Platform cut |
+|---|---|---|---|
+| **Anthropic MCP marketplace** | Most concretely specified; aligned with SDK | Per-call pricing typical; provider sets price | TBD — historically 15-30% platform fees on similar SaaS marketplaces |
+| **Google A2A** | Standard hasn't fully converged | Unknown; speculate per-call or revenue share | Unknown |
+| **OpenAI Assistants / GPT Store-style** | Different abstraction (agents, not tools) | Subscription / revenue-share | 20-30% typical for GPT Store |
+| **Direct partnerships** (custom MCP server for specific B2B client) | Bespoke | Negotiated | None — direct revenue |
+
+Wave 1 architecture supports all of these via the adapter pattern. **No commitment required to any specific marketplace.**
+
+### 12.3 Marketplace pricing principles (proposed)
+
+When marketplace listings go live, pricing should follow these principles:
+
+1. **Per-call, not subscription.** Marketplace consumers don't want to manage subscriptions across multiple providers. Per-call pricing is the marketplace-native shape.
+
+2. **Price above platform-native B2B per-deal price.** Marketplace adds platform cut + reduced control over user relationship. Marketplace `enrich_property` call may cost end-user $5 if platform-native API is $3. Difference covers platform fee + accounts for less-engaged usage patterns.
+
+3. **Bundle tool sequences for typical user flows.** "Full analysis" bundle (`enrich_property` + `compute_analysis` + `score_deal`) priced as a single unit, even though it's three tool calls. Easier for marketplace users; better margin for us.
+
+4. **Free / trial tier in marketplace.** First N calls free per user (marketplace-managed) — drives discovery without revenue commitment. Substrate-seeding benefit applies whether the user converts or not.
+
+5. **No adversarial critique in marketplace listing initially.** Opus cost ($0.11/call) + marketplace cut + reduced control = unfavorable economics for awareness-channel work. Keep critique platform-only until marketplace volumes justify; revisit then.
+
+6. **No bundle discounts for high volume on marketplace.** Volume discounts incentivize direct relationships, not marketplace usage. Volume customers should be routed to direct B2B pilot conversations.
+
+### 12.4 Indicative marketplace pricing (for revisit)
+
+Treat these as starting points, not commitments. Validate against marketplace platform fees when each marketplace's economics solidify.
+
+| Marketplace listing | Indicative price | Platform-native equivalent | Notes |
+|---|---|---|---|
+| Single tool call (`enrich_property`) | $0.50 - $1.00 / call | ~$3-5 / call (B2B per-deal API tier) | Lower than direct because consumers self-serve through marketplace, lower commitment per call |
+| Full-analysis bundle (`enrich` + `compute` + `score`) | $3 - $5 / bundle | $5-10 / analysis (pay-as-you-go) | Comparable to retail per-analysis; marketplace consumers price-shop |
+| Q&A on a previously-scored deal | $0.50 / call | Bundled in subscription | Marketplace-only standalone offering — value depends on whether external clients want our scoring framework |
+| Adversarial critique (single persona) | $1 - $2 / call | Bundled in B2B subscription | Deferred per principle 5 above |
+
+### 12.5 Marketplace as substrate-seeding channel (the actual value)
+
+Per the thesis, the substrate is the moat. Marketplace listings produce substrate writes the same way platform-native usage does:
+- `enrich_property` calls write event traces (via tool execution, ConversationEvent ports through orchestrator-equivalent on the MCP edge)
+- `compute_analysis` + `score_deal` calls produce AnalysisEvents and DecisionEvents
+- Override calls (if exposed) produce OverrideEvents — particularly high-signal because marketplace users may include underwriters from different institutions, broadening calibration data
+
+Marketplace economics are secondary to substrate accumulation. **If marketplace listings generate 100K analyses with negligible revenue, that's still substrate weight at scale.** Frame the marketplace as a substrate-seeding channel with optional revenue, not the inverse.
+
+### 12.6 Open marketplace decisions (for revisit)
+
+1. **Anthropic MCP marketplace timeline.** When does Anthropic ship a discoverable marketplace? Pricing model details? Defer marketplace listing decisions until Anthropic's economics are clear.
+2. **OpenAI Assistants strategy.** OpenAI's marketplace ecosystem has different abstractions. Worth listing there? Wait until A2A / Assistants converge before answering.
+3. **Direct MCP server hosting for B2B pilots.** A specific B2B client may want their own MCP endpoint (custom configuration, isolated billing). This is the highest-value marketplace use case — not really a marketplace at all, but a custom deployment. Likely first revenue from this channel.
+4. **Substrate signal isolation across marketplace channels.** Should marketplace-sourced substrate events be tagged (e.g., `source: 'mcp_marketplace'`) for analytics? Bias: yes — substrate signal from marketplace users differs from platform-native users and should be analyzable separately.
+5. **Audit-trail consumption via marketplace.** Some B2B marketplace users may want to consume our audit-trail data (`render_audit_trail` tool output). Charging for read-only audit-trail access — different price point than analysis tools. Defer.
+
+---
+
+## 13. Open questions
 
 1. **Anthropic batch API for adversarial-critic batched seeding runs.** Anthropic's batch API offers ~50% cost reduction with 24h turnaround. For periodic offline adversarial passes (per agent mesh §4.3), batch is the right tier. Implementation deferred to when batched seeding work begins (weeks 10+).
 
@@ -462,6 +617,7 @@ Mostly cheap. Pipeline state queries and aggregations are deterministic. AI port
 
 ---
 
-## 13. Changelog
+## 14. Changelog
 
 - **2026-05-10 (v1):** Initial draft. Pricing baseline (Anthropic Haiku 4.5 / Sonnet 4.6 / Opus 4.7, May 2026), model-tier routing per agent and tool with cost justification, per-query archetypes (analyze property, BUY-band with critique, Q&A follow-up, override), per-tier price-point analysis ($0 / $19.99 / $200 projection / $2K projection) with unit economics calculations, caching strategy across three caches (prompt cache, semantic cache, tool-result cache), three-level cost-cap enforcement (per-query / per-user / per-org), `CostEvent` operational collection separate from substrate, monitoring + anomaly detection, cost regression as eval gate, single-provider position with degraded-mode fallback, wave 1.5 / wave 2 cost implications, 6 open questions flagged.
+- **2026-05-10 (v1.1):** Added §4.5 (per-analysis cost at-a-glance summary with 7 scenarios) — establishes ~$0.021 standard analysis cost as headline reference. Added §5.6 (hybrid pricing model — Path A subscription locked + proposed per-analysis pay-as-you-go layer for non-subscribers, B2B per-deal API, B2B trial conversion; with architectural implications and self-selecting conversion math). Added §12 (agent marketplace pricing — distribution channel strategy with per-call pricing principles, indicative prices for revisit, marketplaces to consider, substrate-seeding framing per thesis §4.3). Per-analysis cost and hybrid pricing now documented as revisitable strategic surface.
