@@ -111,20 +111,6 @@ const getNavigationItems = (userRole?: string, userMode?: 'novice' | 'pro') => {
     path: '/pipeline',
     badge: null
   },
-  {
-    id: 'market-data',
-    label: 'Market Intelligence',
-    icon: AssessmentIcon,
-    path: '/market-data',
-    badge: null
-  },
-  {
-    id: 'census-demographics',
-    label: 'Demographics',
-    icon: MapIcon,
-    path: '/census-test',
-    badge: 'Beta'
-  },
   // Admin routes
   ...(userRole === 'admin' ? [{
     id: 'admin',
@@ -565,8 +551,6 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
       '/mf-analysis': 'Multi-Family Analysis',
       '/saved-properties': 'Saved Properties',
       '/portfolio': 'Portfolio Intelligence',
-      '/market-data': 'Market Intelligence',
-      '/census-test': 'Census Data Test',
       '/help': 'Help & Documentation',
       '/profile': 'Profile',
       '/settings': 'Settings',

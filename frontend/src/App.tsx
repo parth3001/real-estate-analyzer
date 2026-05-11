@@ -36,7 +36,6 @@ import SampleAnalysisPage from './pages/SampleAnalysisPage';
 import LandingPage from './pages/LandingPage';
 import PricingPage from './pages/PricingPage';
 import NotFound from './pages/NotFound';
-import CensusDataTestPage from './pages/CensusDataTestPage';
 import LoginPage from './pages/LoginPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import MagicLinkVerifyPage from './pages/MagicLinkVerifyPage';
@@ -46,7 +45,6 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminAnalytics from './pages/AdminAnalytics';
-import MarketDataPage from './pages/MarketDataPage';
 import AnalysisDetails from './pages/AnalysisDetails';
 import BlogListPage from './pages/BlogListPage';
 import BlogPostPage from './pages/BlogPostPage';
@@ -244,9 +242,7 @@ function App() {
                 <Route path="/pipeline" element={<PipelinePage />} />
                 
                 {/* Market & Tools */}
-                <Route path="/market-data" element={<MarketDataPage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                <Route path="/census-test" element={<CensusDataTestPage />} />
                 
                 {/* User Management */}
                 <Route path="/profile" element={<ProfilePage />} />
