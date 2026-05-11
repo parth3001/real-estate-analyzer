@@ -76,6 +76,7 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | **W21 — Raise enablement** | Admin (not engineering) | Founder; §9 |
 | **W22 — Substrate observability dashboards** | Wave 1 minimum + Wave 2 | Decomposed below (minimum) |
 | **W23 — Track 3 content production support** | Wave 2 | Sketched (§7) |
+| **W24 — Community substrate seeding (multi-channel)** | Wave 1 engineering + ongoing | Decomposed below (§3 extension) |
 
 ---
 
@@ -379,6 +380,96 @@ Mapping from thesis §8 candidate epics to wave assignment:
 
 ---
 
+### W24 — Community substrate seeding (multi-channel)
+
+**Goal:** Compound substrate weight beyond founder-historical backfill (W10) through ongoing product invitations + content + community outreach across three channels with distinct audience purposes.
+
+**Why now:** Surfaces from open-question #4 (founder-historical volume = 50-75 personal analyses) — community seeding is required to hit thesis substrate weight threshold (5K-10K analyses) within timeline. Multi-channel structure reflects audience reality (LinkedIn = tech / funding lever; Reddit+BP = substrate lever; B2B direct = Track 2 / pilot lever).
+
+#### W24a — Product invitation surfaces (wave 1 engineering)
+
+| ID | Story | Size | Exit criterion |
+|---|---|---|---|
+| W24a-S1 | Audit-trail anonymized share — public-share flow with privacy controls | M | Tech and RE audiences see different framings of same audit-trail; share URLs work; PII redacted |
+| W24a-S2 | Refer-a-friend mechanic with free-tier extension | M | Both inviter and invitee get +5 analyses/month for 3 months; substrate attribution preserved |
+| W24a-S3 | Public deal templates / shareable analyses | S | Template gallery on /sample-analysis; SEO-optimized URLs; substrate seeded from anonymous uses |
+| W24a-S4 | Override-pattern aggregation dashboard (admin-only) | S | Cross-user aggregation queries; visualized for both LinkedIn tech posts and RE-channel insight posts |
+
+**W24a total: ~10-16 story-days.**
+
+#### W24b — Channel content + outreach (founder hours, ongoing)
+
+**LinkedIn (tech audience):**
+
+**Primary content arc:** "How I modernized an app that was already on a modern stack" (~15 sub-topic series).
+
+**Refined voice rule:** Surface persona is "I architect modern apps." Reanalyzr appears as implementation context, never as headline subject. Posts lead with the architectural decision, not with the startup. (See risk register R-O3 refined voice rule.)
+
+15 sub-topics (all framed architect-first, Reanalyzr-as-substrate-example):
+
+1. The 24-month half-life of "modern" apps (calculator-category collapse argument)
+2. Re-shape vs rewrite — engineering judgment on a modern-stack app
+3. Choosing MongoDB over Postgres+jsonb for an append-only events store
+4. The deterministic-scoring non-negotiable — protecting calibration from AI drift
+5. Substrate as architectural primitive: when an append-only event log earns its place
+6. Wrapping vs rewriting — agent mesh on top of existing services
+7. What didn't need to change — strangler-fig in practice
+8. Cost economics as architectural concern (token budgets per subscription tier)
+9. Calibration check as moat protection — zero-tolerance CI gating
+10. B2B compliance constraints as architectural drivers (audit trail as event-sourced query)
+11. Wave 1 / 1.5 / 2 sequencing — incremental architectural change while in production
+12. Evals as competitive moat — calibration + golden sets + LLM-as-judge methodology
+13. Persona-driven scoring without putting AI in the decision path
+14. MCP-compatible edges when standards haven't converged
+15. What I'd rewrite if I were starting over (honest retrospective)
+
+**Secondary themes:** "Building a vertical AI agent — substrate as moat" (occasional), "What didn't work" interleaved (per thesis §6 — these land harder than wins).
+
+**Excluded by voice rule:** founder origin stories, growth metrics, MRR talk, pivot narratives, "I'm building Reanalyzr" framing.
+
+**Cadence:** 2-3 posts/week per thesis Track 3 voice rules.
+
+**Reddit / BiggerPockets / RE forums (RE audience — substrate channel):**
+
+- Active commenting on RE posts where someone asks "is this a good deal?" — offer engine analysis + invite contribution
+- Deal-of-the-week public analyses with RE-substantive framing
+- Market-specific substrate insight posts ("I analyzed 50 Phoenix MF deals — here's where investors override")
+- "Send me your deal, I'll analyze it" direct asks
+- Walk-away price reveals on real properties
+- Conservative-calibration value props ("why your calculator says BUY and ours says CAUTION")
+
+**Cadence:** Opportunistic engagement + 1-2 originating posts/week.
+
+**B2B direct outreach (Track 2 — founder-led):**
+
+- LinkedIn DMs to small lenders / credit union loan officers
+- Email cold outreach per thesis §6 Track 2 weeks 5-12 cadence
+- Conference / meetup B2B-relevant attendance + speaking
+
+#### W24c — B2B pilot intake substrate seeding (per-pilot, when activated)
+
+| ID | Story | Size | Exit criterion |
+|---|---|---|---|
+| W24c-S1 | Pilot data import tooling | M | Per-pilot historical-deal import; substrate writes attributed correctly |
+| W24c-S2 | Per-pilot configuration (cost caps, audit attribution, white-label hooks where applicable) | S | First B2B pilot deal flow seeding substrate at 10-50x retail rate per thesis §2.3 |
+
+**W24c total: ~5-8 story-days, allocated per pilot when activated. Not pre-allocated to wave 1.**
+
+#### W24 totals
+
+| Sub-stream | Wave 1 engineering | Ongoing founder time |
+|---|---|---|
+| W24a — Product invitation surfaces | 10-16 story-days | — |
+| W24b — Channel content + outreach | — | 2-3 LinkedIn posts/week + opportunistic RE engagement + Track 2 outreach |
+| W24c — B2B pilot intake | Per-pilot (5-8 days) | — |
+| **W24 total wave 1 engineering** | **10-16 story-days** | **Continuous founder time** |
+
+**Dependencies:** W1, W6, W7 for surface integration. W24a starts after `/app` is functional (~week 5+).
+
+**Risks:** Voice drift on LinkedIn (per R-O3 refined rule); RE-channel engagement low (per R-T4 substrate volume risk).
+
+---
+
 ### W22 — Substrate observability dashboards (wave 1 minimum)
 
 **Goal:** Internal dashboards over substrate event data — substrate weight, persona distribution, override frequency, cache hit rates, cost per tier. Per thesis §8 and Track 3 dual-purpose dashboard goals.
@@ -419,7 +510,8 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W10 — Founder-historical backfill | 5-8 | 3-5 |
 | W11 — MCP edges (minimum) | 5-8 | 2-4 |
 | W22 — Observability (minimum) | 5-7 | 3-4 |
-| **Wave 1 total** | **~141-206 story-days** (cumulative ~14 story-days saved across Q1-Q3 decisions) | **~64-98 founder review hours** |
+| W24a — Community substrate seeding (product surfaces) | 10-16 | 4-6 |
+| **Wave 1 total** | **~151-222 story-days** (cumulative ~14 saved across Q1-Q3 + W24a added per Q4) | **~68-104 founder review hours + ongoing W24b** |
 
 **Calendar projection (informational):**
 - At 12-15 founder review hours/week sustained (per thesis §7), ~6-9 weeks of pure review bandwidth
@@ -603,7 +695,7 @@ Items needing decisions before specific stories can be sized firm.
 
 3. ✅ **RESOLVED 2026-05-11: W8-S5 golden set sizing — Option A (100 in wave 1, grow to 180 over time).** Founder aligned. Wave 1 ships with ~30 deal-scoring + ~50 Q&A + ~20 adversarial scenarios (~100 total). Remaining 80 grow incrementally during wave 1.5 + wave 2 with real usage data informing which scenarios are highest-leverage. W8-S5 resized from L (10 days) to M (5-6 days); W8 workstream total reduced from 20-28 to ~15-23 story-days.
 
-4. **W10 founder-historical backfill volume.** How many real analyses does founder have? Affects W8-S4 and W10-S2 sizing. If <50, supplement heavily with synthetic.
+4. ✅ **RESOLVED 2026-05-11: W10 founder-historical backfill volume — 50-75 personal analyses.** Founder confirmed lower end of Range 2. W10 stays at 5-8 story-days as originally sized. W8-S4 calibration set = ~60 personal + ~100-150 synthetic edge cases = ~200 fixtures total — strong enough for zero-tolerance gating + meaningful early substrate weight. **Strategic addition:** community substrate seeding via multi-channel invitations introduced as W24 (see §3 extension below). LinkedIn voice refined (architect-first, Reanalyzr-as-substrate-example, not founder pitch) — see R-O3 in risk register.
 
 5. **W22 dashboards — engineering vs. low-code.** Build dashboards as React pages (W22 stories above) vs. wire substrate data into a low-code tool (Metabase, Retool). Bias: low-code for wave 1 minimum (faster); React when wave 2 needs designed-for-Track 3 polish.
 

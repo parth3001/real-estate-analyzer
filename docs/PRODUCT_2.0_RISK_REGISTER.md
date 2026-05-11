@@ -518,6 +518,8 @@ Per [thesis §3](REANALYZR_2.0_THESIS_AND_DECOMPOSITION_v3.md):
 
 **Risk framing:** Thesis §6 Track 3 voice rules require "engineer working through interesting problems publicly," not "founder building a startup." Voice can drift toward more conventional founder-marketing as posts accumulate.
 
+**Refined voice rule (2026-05-11):** Beyond thesis §6, the LinkedIn positioning is **"I architect modern apps"** as the surface persona. Reanalyzr appears in posts only as the implementation context for architectural decisions — never as the headline subject. Posts lead with the architectural decision (e.g., "When does a re-shape beat a rewrite?"), not with the startup (e.g., "I'm building Reanalyzr..."). Funding and career inbound flow from architectural credibility, not from pitches. Tech audience tunes in for substance; pitch framing makes them tune out. Primary content arc for wave 1 / 1.5: **"How I modernized an app that was already on a modern stack"** (~15 sub-topics, all framed architect-first).
+
 **What would falsify it:** Recent posts include traction metrics, MRR aspirations, growth signals, or pivot narratives — all explicitly avoided per thesis.
 
 **Observable signals:**
