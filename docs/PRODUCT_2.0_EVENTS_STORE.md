@@ -25,6 +25,8 @@
 - Eval-related test events (see [PRODUCT_2.0_EVALS.md](PRODUCT_2.0_EVALS.md))
 - Long-term archival / cold storage strategy — deferred to when collection sizes warrant it
 
+**Engine migration context this doc assumes:** The current production engine (`investmentDecisionEngine.ts`) is mid-migration from V2.1 verdict-based output to V3.0 Deal Quality scoring as the single source of truth. The legacy `verdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION'` categorical output is treated as a deprecated artifact; only `dealQuality` (0-100) is persisted to substrate in 2.0. AI agents never produce or modify this score — see [PRODUCT_2.0_ARCHITECTURE.md §1.5](PRODUCT_2.0_ARCHITECTURE.md) for the deterministic-scoring non-negotiable. Persona context (riskTolerance, investorType, etc.) flows into the engine as deterministic configuration, not as AI input.
+
 ---
 
 ## 1. Design principles
@@ -44,6 +46,8 @@ These are the discipline that makes the events store a moat rather than a log du
 6. **Self-contained snapshots for state-defining events.** AnalysisEvent and DecisionEvent embed the inputs and assumptions at the time of computation. We can replay any historical decision without joining against mutable user/portfolio data.
 
 7. **References by ID, never by embed.** Events reference each other (e.g., DecisionEvent references AnalysisEvent) via stable IDs. No embedded copies that go stale.
+
+8. **AI never produces the `dealQuality` score.** DecisionEvents are written by `tool:score_deal`, which wraps the deterministic engine. AI agents (Q&A, adversarial critic) write their own event types (ConversationEvent, CritiqueEvent) but never write DecisionEvents and never modify dealQuality. See [PRODUCT_2.0_ARCHITECTURE.md §1.5](PRODUCT_2.0_ARCHITECTURE.md) for the full rationale (auditability, calibration moat, user protection, compliance). This makes the score reproducible from inputs — a critical property for B2B audit trails and regulatory defensibility.
 
 ---
 
@@ -127,6 +131,19 @@ interface ProfilePayload {
 
 **Reader pattern:** Most recent ProfileEvent per `userId` = current profile state. Composite over all ProfileEvents = full history (useful for "how did this user's stated risk tolerance evolve").
 
+**Lift vs. net-new (current code vs. 2.0):**
+
+| Field | In current engine? | Status |
+|---|---|---|
+| `riskTolerance` | Yes — drives `getStrategyAwareWeights()` in [investmentDecisionEngine.ts:207](../backend/src/services/investment/investmentDecisionEngine.ts) | Clean lift |
+| `investmentStrategy` (cashflow / appreciation / balanced) | Yes — extracted by `extractInvestmentStrategy()` (line 454) | Clean lift |
+| `experienceLevel` (novice / intermediate / experienced / expert) | Yes — feeds `assessExecutionDifficulty()` | Clean lift |
+| `investorType` (retail / pro / lender / consultancy) | No | **2.0 extension** — drives institutional-threshold variations |
+| `primaryGoal` | Partial — present in GoalContext but not threaded through weight selection | **2.0 extension** — drives weight refinement |
+| `institutionContext` (B2B) | No | **2.0 extension** — drives compliance defaults |
+
+The persona dimensions are not invented in 2.0 — three of the five primary fields already drive deterministic adjustments in the current production engine. 2.0 extends the persona model with B2B-specific dimensions (investorType, institutionContext) and threads persona context more completely through the scoring weight and threshold selection. **At no point does AI produce or modify the score.** Persona context selects from a finite set of deterministic configurations.
+
 ---
 
 ### 3.2 AnalysisEvent
@@ -171,36 +188,97 @@ interface AnalysisPayload {
 
 ### 3.3 DecisionEvent
 
-**Purpose:** The verdict + scoring breakdown produced by the deal-scoring agent. One per analysis run.
+**Purpose:** The Deal Quality score and structured breakdown produced by the deal-scoring agent. One per analysis run.
 
 **When written:** Deal-scoring agent calls `score_deal` tool after `compute_analysis`. Always paired with an AnalysisEvent.
+
+**Engine migration context:** The current production engine ([investmentDecisionEngine.ts](../backend/src/services/investment/investmentDecisionEngine.ts)) is mid-migration from V2.1 verdict-based output toward V3.0 Deal Quality scoring as the single source of truth. Code comments confirm this (line 2946: `V2.1 walk-away price calculation removed - V3.0 uses Deal Quality scoring`; line 3024: `V3.0 CHANGE: Walk-away price override DISABLED - Professional weighted scoring is the single source of truth`). The legacy `score` and `confidence` fields on the engine's `InvestmentDecision` interface are already marked `// LEGACY - deprecated` (lines 90-91). The 2.0 architecture **aligns with and completes** this migration: only `dealQuality` is persisted to substrate. Legacy verdict logic may continue to run internally during the lift but is not exposed downstream.
 
 **Payload:**
 ```ts
 interface DecisionPayload {
   analysisEventId: ObjectId;                 // Reference to corresponding AnalysisEvent
   dealId?: ObjectId;                         // Reference to Deal (if saved)
-  verdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION';
-  dealQuality: number;                       // 0-100 weighted score
-  professionalAssessment: ProfessionalAssessment;  // Existing type from BaseDecisionEngine.ts
+
+  // PRIMARY OUTPUT — V3.0 Deal Quality score, deterministic from formula
+  dealQuality: number;                       // 0-100; from calculateProfessionalAssessment()
+
+  // Derived presentation labels (for UI / B2B PDF / audit-trail consistency)
+  qualityLabel: string;                      // "Above professional standards" |
+                                             // "Meets professional standards" |
+                                             // "Requires optimization" |
+                                             // "Below professional standards"
+  qualityColor: 'green' | 'yellow' | 'orange' | 'red';
+
+  // Full breakdown — lifts existing ProfessionalAssessment structure verbatim
+  professionalAssessment: ProfessionalAssessment;  // 7 factor scores + insights +
+                                                   // debtAnalysis + taxOptimization
   marketPosition: MarketPosition;            // Walk-away + pricing context
+
   reasoningTrail: {
-    primaryReason: string;
-    secondaryReasons: string[];
+    primaryInsight: string;
+    strategicRecommendations: string[];
+    riskMitigation: string[];
+    opportunityMaximization: string[];
     keyRisks: string[];
   };
+
   confidence: number;                        // 0-100
-  scoringWeightsUsed: ScoringWeights;        // Snapshot — engine weights can evolve over time
-  engineVersion: string;
+  scoringWeightsUsed: ScoringWeights;        // Snapshot of weights at time of decision
+                                             // (conservative / moderate / aggressive)
+  engineVersion: string;                     // e.g., 'v3.0', 'v3.1'
+
+  // Critical-failure flags — SCORE-AFFECTING, not verdict-overriding.
+  // When any of these trigger, dealQuality is capped per §3.3.1 below.
+  criticalFlags?: {
+    rentToPriceTooLow?:        { ratio: number; threshold: number };
+    capRateFarBelowMarket?:    { capRate: number; marketMedian: number; tier: 1 | 2 | 3 };
+    noPositiveCashFlowNoLeverage?: boolean;
+    cashFlowBufferCritical?:   { actualBuffer: number; minimumRequired: number };
+    dscrBelowOne?:             { dscrValue: number };  // MF / commercial-financing relevant
+  };
+
+  // Persona / strategy context at time of decision — drives deterministic
+  // weight selection (see PRODUCT_2.0_ARCHITECTURE.md §1.5)
+  userContext?: {
+    riskTolerance?:      'conservative' | 'moderate' | 'aggressive';
+    investmentStrategy?: 'cashflow' | 'appreciation' | 'balanced';
+    experienceLevel?:    'novice' | 'intermediate' | 'experienced' | 'expert';
+    investorType?:       'retail' | 'pro' | 'lender' | 'consultancy';  // 2.0 extension
+    primaryGoal?:        'cash_flow' | 'wealth_building' | 'diversification' | 'tax_optimization';
+  };
+
+  // NOTE: 'verdict' field is intentionally NOT persisted.
+  // The V3.0 dealQuality score is the single source of truth per the engine's
+  // own migration direction. Categorical verdict output (BUY/PASS/NEGOTIATE/CAUTION)
+  // is treated as a legacy artifact and is not exposed via substrate.
+  // See PRODUCT_2.0_ARCHITECTURE.md §1.5 for the deterministic-scoring non-negotiable.
 }
 ```
 
 **Writer:** `tool:score_deal`, called by `agent:deal_scoring`.
 
 **Reader pattern:**
-- Most recent DecisionEvent per `dealId` = current verdict
-- All DecisionEvents per `dealId` = decision history (useful for "this user's deals all dropped in score this quarter")
-- By `userId` + verdict (e.g., "all this user's BUY decisions in last 90 days")
+- Most recent DecisionEvent per `dealId` = current score state
+- All DecisionEvents per `dealId` = score evolution (useful for "this user's deals all dropped in score this quarter")
+- By `userId` + `dealQuality` range (e.g., "all this user's high-quality decisions in last 90 days")
+- By `userContext.riskTolerance` aggregated — calibration analysis ("conservative investors' decisions cluster at dealQuality 50-65, is the engine correctly conservative for them?")
+
+#### 3.3.1 Critical-flag score capping
+
+When a `criticalFlag` is present, the engine caps `dealQuality` so the score reflects the structural failure rather than only the weighted factor sum. This replaces the legacy "force PASS verdict" override pattern in the existing engine — the score itself becomes honest standalone, no matter who reads it (chat agent, MCP-exposed tool, audit-trail PDF, regulator).
+
+| Critical flag | Cap | Rationale |
+|---|---|---|
+| `dscrBelowOne` (DSCR < 1.0) | 25 | Property cannot cover debt service. Auto-failure regardless of other metrics. |
+| `cashFlowBufferCritical` (buffer < required minimum) | 35 | High risk of financial stress under expected expense variability. |
+| `noPositiveCashFlowNoLeverage` (no path to positive cash flow with any reasonable leverage) | 30 | Property requires ongoing capital injection. Not a viable investment. |
+| `rentToPriceTooLow` (ratio < 0.35%) | 30 | Income relative to price is insufficient for sustainable returns. |
+| `capRateFarBelowMarket` (capRate < tier passThreshold) | 35 | Significantly underperforming market returns. |
+
+Caps are floors on the affected dimension — the score takes `min(weightedScore, cap)`. Multiple flags triggering = take the strictest cap.
+
+The cap thresholds are starting values that match the spirit of the existing engine's `generateVerdict` auto-PASS scenarios. They are tunable and should be validated against the calibration regression set during the lift.
 
 ---
 
@@ -834,3 +912,10 @@ These aren't blocking the substrate ship — they need answers before specific d
 ## 13. Changelog
 
 - **2026-05-10 (v1):** Initial draft. 9 event types specified with full schemas. Repository pattern, Mongoose discriminators, DB-role enforcement, indexing, query recipes, schema evolution rules, storage projections.
+- **2026-05-10 (v1.1):** Corrections after architect review of [investmentDecisionEngine.ts](../backend/src/services/investment/investmentDecisionEngine.ts):
+  - DecisionEvent payload corrected to drop legacy `verdict` field; `dealQuality` (0-100) is now the single source of truth, aligned with the engine's own V3.0 migration direction
+  - Added §3.3.1 critical-flag score-capping rules (replaces legacy "force-PASS verdict" override pattern)
+  - Added `userContext` to DecisionEvent (riskTolerance, investmentStrategy, experienceLevel, investorType, primaryGoal) — captures persona context driving deterministic weight selection
+  - ProfileEvent (§3.1) — added lift-vs-net-new clarification table (3 of 5 primary persona fields already in current engine; investorType + institutionContext are 2.0 extensions)
+  - Engine migration context note added to §0
+  - Added §1 design principle 8: AI never produces dealQuality. Cross-links to [PRODUCT_2.0_ARCHITECTURE.md §1.5](PRODUCT_2.0_ARCHITECTURE.md) for the full rationale.

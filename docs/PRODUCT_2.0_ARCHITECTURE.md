@@ -42,6 +42,36 @@ This doc uses **events store** as the technical name for the primitive; **substr
 
 ---
 
+## 1.5 Non-negotiable: AI never produces the scoring decision
+
+**The `dealQuality` score (0-100) is produced by a deterministic, calibrated formula in the engine. AI never produces the score.**
+
+AI agents (Q&A, adversarial critic, profile extraction) explain, critique, personalize, and extract — but they do not compute the score. This is a project-wide rule, not a wave-1 limitation. Future agent waves (market-data, pipeline, portfolio) inherit this constraint.
+
+**Personas flow into the algorithmic core as deterministic configuration**, not as AI calls:
+
+- `riskTolerance` → selects from a finite set of pre-defined scoring weight tables (conservative / moderate / aggressive). See `getStrategyAwareWeights()` in [investmentDecisionEngine.ts:207](../backend/src/services/investment/investmentDecisionEngine.ts) — this pattern is already in current code and lifts cleanly.
+- `investorType` (lender / consultancy / pro / retail) → enforces deterministic threshold variations (e.g., `lender` triggers stricter DSCR critical-flag thresholds; `consultancy` enables audit-trail output by default).
+- `investmentStrategy`, `experienceLevel`, `primaryGoal` → adjust deterministic weights and thresholds.
+
+AI is allowed to *recommend* persona-aware adjustments to deterministic configuration (e.g., "based on your stated goals, conservative weights apply") and to *surface* persona context to the engine — but the engine itself runs the same calibrated formula and produces the same score for the same inputs every time. **The score is reproducible from inputs.**
+
+**Why this is load-bearing:**
+
+1. **Auditability.** A regulator, B2B underwriting committee, or CPA reviewing this platform must be able to trace any score back through the formula and its inputs. "Why 67?" answers with weighted factors and thresholds. "The AI thought so" is not a defensible answer in regulated lending contexts.
+
+2. **Calibration moat.** Conservative-by-design calibration is an engineered property of the scoring formula. AI in the decision path would dilute this over time as the AI is trained, fine-tuned, or nudged toward outputs the user prefers. The thesis non-negotiable ("honest analysis over deal rationalization") depends on this layer staying deterministic.
+
+3. **User protection.** Users cannot socially-engineer the engine into a higher score. AI is excellent at producing what users want to hear. A deterministic core prevents wishful-thinking investors, aggressive sellers feeding context to the platform, or affiliate-driven traffic from talking the engine into optimism. If a user is going to get a wrong answer, it won't be because they reframed the conversation cleverly enough — it'll be because the input data was wrong, which is a different and traceable failure mode.
+
+4. **Compliance.** B2B regulated buyers (small lenders, credit unions, underwriting consultancies) need explainable underwriting. Deterministic scoring is the only defensible answer when "show me the assumptions" is a regulatory requirement, not a UX nicety.
+
+**Where AI's surface area DOES expand in 2.0:** explanation (Q&A agent uses personas to personalize how scores are explained), critique (adversarial agents stress-test decisions and surface counter-arguments as parallel signal — they do NOT modify the score), profile extraction (AI reads unstructured chat input and writes typed ProfileEvent), and long-term calibration loops (persona-tagged override events accumulate in substrate; analytics on those patterns inform future deterministic-config adjustments). All of these are intentional. None of them put AI in the scoring path.
+
+The 80/20 algorithmic/AI split from the thesis holds: ~80% of the value-bearing decision logic stays in calibrated code. AI is the layer that makes that calibrated logic more usable, more communicable, and more defensible — never the layer that produces the answer.
+
+---
+
 ## 2. Target architecture — the two-layer stack
 
 ```
@@ -583,3 +613,4 @@ These are NOT decisions to revisit during decomposition. Either explicitly defer
 ## 17. Changelog
 
 - **2026-05-10 (v1):** Initial draft. Backend decisions locked from architect-design conversation: MongoDB events store, custom orchestrator, enrichment as tool not agent, MCP first, hybrid conversation memory, open-input cold-start surface. Companion docs deferred to follow-up PRs.
+- **2026-05-10 (v1.1):** Added §1.5 — Non-negotiable: AI never produces the scoring decision. Captures the deterministic-engine principle (auditability + calibration moat + user protection + compliance) and makes explicit that personas flow into the algorithmic core as deterministic configuration, not AI input. Paired with [PRODUCT_2.0_EVENTS_STORE.md](PRODUCT_2.0_EVENTS_STORE.md) DecisionEvent shape correction.
