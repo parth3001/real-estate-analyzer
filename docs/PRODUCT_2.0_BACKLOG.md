@@ -697,7 +697,7 @@ Items needing decisions before specific stories can be sized firm.
 
 4. ✅ **RESOLVED 2026-05-11: W10 founder-historical backfill volume — 50-75 personal analyses.** Founder confirmed lower end of Range 2. W10 stays at 5-8 story-days as originally sized. W8-S4 calibration set = ~60 personal + ~100-150 synthetic edge cases = ~200 fixtures total — strong enough for zero-tolerance gating + meaningful early substrate weight. **Strategic addition:** community substrate seeding via multi-channel invitations introduced as W24 (see §3 extension below). LinkedIn voice refined (architect-first, Reanalyzr-as-substrate-example, not founder pitch) — see R-O3 in risk register.
 
-5. **W22 dashboards — engineering vs. low-code.** Build dashboards as React pages (W22 stories above) vs. wire substrate data into a low-code tool (Metabase, Retool). Bias: low-code for wave 1 minimum (faster); React when wave 2 needs designed-for-Track 3 polish.
+5. ✅ **RESOLVED 2026-05-11: W22 dashboards — Option A (full React in-house).** Founder confirmed. Rationale: brand-consistent screenshots for LinkedIn modernization-series content (substrate observability dashboards become Track 3 content surfaces); in-app aesthetic uniform across all admin views; no external service dependency. W22 stays at 5-7 story-days as originally scoped. Consistent with W24a-S4 (override-pattern dashboard already React per Q4 decision). No critical-path impact.
 
 6. **Wave 1 exit criteria.** What signals "wave 1 is done"? Bias: (a) all 12 wave 1 workstreams ship; (b) ≥80% calibration check pass rate; (c) ≥85% prompt cache hit rate; (d) substrate has ≥1000 real-or-backfilled events; (e) chat handles end-to-end flow on `/app` for a representative deal. Confirm with founder before locking.
 
