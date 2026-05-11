@@ -43,6 +43,9 @@ logs/
 *.swp
 *.swo
 
+# Claude Code worktrees + local config
+.claude/worktrees/
+
 # Backup files
 *.bak
 *.backup
