@@ -291,6 +291,9 @@ The cap thresholds are starting values that match the spirit of the existing eng
 - User overrides via structured override modal (B2B audit-trail flow)
 
 **Payload:**
+
+> **Shape corrected 2026-05-12** (consistent with §1 design principle 8 and architecture §1.5 — deterministic-scoring non-negotiable, no verdict in substrate). Original spec referenced `priorVerdict` / `newVerdict` fields; replaced with `priorDealQuality` / `newDealQuality` / `dealQualityDelta` to align with the no-verdict architecture.
+
 ```ts
 interface OverridePayload {
   originalDecisionId: ObjectId;              // The DecisionEvent being overridden
@@ -301,9 +304,9 @@ interface OverridePayload {
   inputMethod: 'inline_chat' | 'structured_modal';
   resultingAnalysisEventId?: ObjectId;       // The re-analysis triggered by this override (if any)
   resultingDecisionEventId?: ObjectId;       // The new decision after override (if any)
-  priorVerdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION';
-  newVerdict?: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION';
-  dealQualityDelta?: number;                 // newDealQuality - originalDealQuality
+  priorDealQuality: number;                  // 0-100 — score BEFORE override
+  newDealQuality?: number;                   // 0-100 — score AFTER re-analysis (optional; in flight)
+  dealQualityDelta?: number;                 // newDealQuality - priorDealQuality (convenience for aggregation)
 }
 ```
 
@@ -328,12 +331,14 @@ interface OverridePayload {
 - Batched: periodic offline pass over recent decisions for substrate seeding
 
 **Payload:**
+
+> **Shape corrected 2026-05-12** (consistent with §1 design principle 8 and architecture §1.5 — deterministic-scoring non-negotiable, no verdict in substrate). Original spec referenced `criticVerdict` field; the critic produces STRUCTURED disagreement (`agreementWithOriginal` + `severityScore` + `divergenceReasons` + `alternativeAssumptions`) — not a categorical verdict. Aligns with agent mesh §4.3 CritiqueOutput spec.
+
 ```ts
 interface CritiquePayload {
   originalDecisionId: ObjectId;
   criticPersona: 'optimistic_flipper' | 'skeptical_cpa';
-  criticVerdict: 'BUY' | 'PASS' | 'NEGOTIATE' | 'CAUTION';
-  agreementWithOriginal: boolean;            // Does critic agree on verdict?
+  agreementWithOriginal: boolean;            // Critic agrees on the high-level outcome?
   divergenceReasons: string[];               // Why critic disagrees (if applicable)
   severityScore: number;                     // 0-100; how strongly the critic disagrees
   alternativeAssumptions: {                  // What the critic would have used instead
@@ -977,6 +982,7 @@ These aren't blocking the substrate ship — they need answers before specific d
 
 - **2026-05-10 (v1):** Initial draft. 9 event types specified with full schemas. Repository pattern, Mongoose discriminators, DB-role enforcement, indexing, query recipes, schema evolution rules, storage projections.
 - **2026-05-10 (v1.2):** Added §3.10 PortfolioEvent and §3.11 PipelineEvent — schema-ready, capture in wave 1.5 via instrumentation pass on existing portfolio/pipeline services. PipelineEvent.pipeline_deal_closed is intentional schema-alignment with OutcomeEvent for future backfill. See [PRODUCT_2.0_ARCHITECTURE.md §11.5](PRODUCT_2.0_ARCHITECTURE.md) for full strangler-fig coverage strategy.
+- **2026-05-12 (v1.3):** Corrected §3.4 OverrideEvent and §3.5 CritiqueEvent payload specs to match implementation (no verdict fields anywhere in substrate per §1 principle 8 + architecture §1.5). OverrideEvent: `priorVerdict`/`newVerdict` replaced with `priorDealQuality`/`newDealQuality`/`dealQualityDelta`. CritiqueEvent: `criticVerdict` removed — critic produces structured disagreement (agreementWithOriginal + severityScore + divergenceReasons + alternativeAssumptions), not a categorical verdict. This brings the doc into alignment with the schema-layer enforcement that lives in the OverrideEvent.ts and CritiqueEvent.ts tests.
 - **2026-05-10 (v1.1):** Corrections after architect review of [investmentDecisionEngine.ts](../backend/src/services/investment/investmentDecisionEngine.ts):
   - DecisionEvent payload corrected to drop legacy `verdict` field; `dealQuality` (0-100) is now the single source of truth, aligned with the engine's own V3.0 migration direction
   - Added §3.3.1 critical-flag score-capping rules (replaces legacy "force-PASS verdict" override pattern)
