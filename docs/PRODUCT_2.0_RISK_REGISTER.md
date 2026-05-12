@@ -258,6 +258,28 @@ Per [thesis §3](REANALYZR_2.0_THESIS_AND_DECOMPOSITION_v3.md):
 
 ---
 
+### R-S1a 🔴 — Shared production/dev MongoDB cluster pollutes substrate (mitigated by Phase 0)
+
+**Risk framing:** Current production uses one Atlas cluster for both dev and production. For the existing Deal/Portfolio/User collections (mutable, cleanable), this is manageable. **For the events store (append-only, moat-critical), this is dangerous** — once polluted, you cannot delete events without breaking the architectural invariant the moat depends on.
+
+**Status:** **Mitigated by [PRODUCT_2.0_PROD_MIGRATION.md](PRODUCT_2.0_PROD_MIGRATION.md) Phase 0.** Atlas cluster separation (M0 free dev cluster + existing production cluster) is a prerequisite for any application code that writes events. Phase 0 must complete before W1-S3 (repository write methods) is exercised against any non-test cluster.
+
+**Observable signals if mitigation fails:**
+- Dev cluster connection string accidentally used in production deploy (`MONGODB_URI` env-var misconfiguration)
+- Production code somehow points at dev cluster (or vice versa) — caught by W1-S5a's production-safety guard at app startup
+- Backfill events appear in production substrate that weren't migrated through the controlled Phase 5 script
+
+**Severity:** 🔴 High until Phase 0 is complete; downgrades to 🟢 Low once env-aware connection (W1-S5a) is shipped and verified.
+
+**Kill-switch criteria:** Any event in production substrate that originated outside expected paths (i.e., not from production wizard backend or, post-Phase-4, the production chat surface) → halt new feature work; investigate.
+
+**Mitigation playbook:**
+- Phase 0 (immediate): Atlas M0 dev cluster + env-aware connection helper (W1-S5a)
+- Phase 2 (production deploy): events-writer DB role on production cluster; cluster hostname logged on app startup as sanity check
+- Backfill migration (Phase 5): explicit script with dry-run + idempotency check; founder-approval-required execution
+
+---
+
 ### R-S2 🟡 — Substrate growth outpaces operational budget
 
 **Risk framing:** At 50K active users (projection), substrate is ~320GB. Operational cost (queries, indexing, backup) outpaces what wave 1 architecture supports.

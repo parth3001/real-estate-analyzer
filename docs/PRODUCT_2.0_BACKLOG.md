@@ -93,6 +93,7 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | ID | Story | Size | Exit criterion |
 |---|---|---|---|
 | W1-S1 | Mongoose discriminator + base schema for events collection | S | `EventEnvelope` shape stable; base schema + pre-hooks rejecting update/delete |
+| W1-S5a | **Environment-aware DB connection** — `backend/src/config/db.ts` reads MONGODB_URI; routes to mongodb-memory-server for tests vs Atlas for dev/prod; refuses to start if NODE_ENV=development but URI matches prod cluster pattern (belt-and-suspenders against accidental misconfiguration); logs cluster hostname on connect (sanity check). Critical prerequisite for any Atlas-touching work. See [PRODUCT_2.0_PROD_MIGRATION.md §2.3](PRODUCT_2.0_PROD_MIGRATION.md). | S | App refuses to start in dev mode against prod cluster; logs confirm dev vs prod on connect |
 | W1-S2 | Wave 1 event payload schemas (Zod + Mongoose discriminators) — Profile, Analysis, Decision, Override, Critique, Conversation, AuditTrail, Watchlist, Outcome, Portfolio, Pipeline | M | All 11 event payload Zod schemas + Mongoose discriminators; per-type Zod parse-on-write |
 | W1-S3 | `EventsRepository` write API (insert-only methods per event type) | S | Repository tested; no update/delete methods exist; correlation ID propagation |
 | W1-S4 | `EventsRepository` read API (named query methods per common pattern) | M | Recipes from events-store doc §8 implemented + tested |
@@ -101,9 +102,9 @@ Mapping from thesis §8 candidate epics to wave assignment:
 | W1-S7 | In-memory MongoDB test harness + unit tests | S | Repository tests run in CI; append-only enforcement test passes |
 | W1-S8 | Integration test against real Atlas cluster — DB role enforcement, index utilization | S | Integration suite runs against test cluster nightly |
 
-**Total: ~16-22 story-days. 6-9 founder review hours.**
+**Total: ~17-24 story-days (added W1-S5a). 6-9 founder review hours.**
 
-**Dependencies:** None. Foundational.
+**Dependencies:** None. Foundational. W1-S5a (env-aware connection) is a prerequisite for any production-cluster work — see [PRODUCT_2.0_PROD_MIGRATION.md](PRODUCT_2.0_PROD_MIGRATION.md) Phase 0.
 
 **Risks:** Schema versioning discipline drift — engineer adds `Schema.Types.Mixed` field as a shortcut; needs architect/QE review on every PR touching event schemas.
 
@@ -522,6 +523,8 @@ Mapping from thesis §8 candidate epics to wave assignment:
 ---
 
 ## 5. Wave 1.5 — full decomposition
+
+**Note on Wave 1.5 priority (updated 2026-05-11):** Per [PRODUCT_2.0_PROD_MIGRATION.md](PRODUCT_2.0_PROD_MIGRATION.md), Wave 1.5 instrumentation work (W12, W13, W14) is the package shipped in the **Phase 2 production deploy at ~week 8-10** — earlier than the original "weeks 10-14" framing. Reason: ships substrate-emitting code without UI change; substrate begins accumulating real production data 6 weeks before the full chat-surface deploy. **W12-W14 should be ready by week 8** to support this phased deploy plan.
 
 ### W12 — Portfolio + Pipeline substrate instrumentation
 

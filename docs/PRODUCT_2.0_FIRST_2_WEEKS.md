@@ -113,14 +113,16 @@ Per the operating policy (`main` frozen at production; all work on `reanalyzr-2.
 
 **Owner:** Founder + Engineer
 
-| Task | Action |
-|---|---|
-| Decide fate of uncommitted edits in main checkout | App.tsx + AppleNavigation.tsx route cleanup work — commit to `chore/remove-market-data-routes` branch on reanalyzr-2.0 OR document as deferred |
-| Decide fate of untracked admin script | `backend/src/scripts/resetAdminPassword.ts` — commit as needed for development, or .gitignore if local-only |
-| Verify clean working tree for new sprint | `git status` shows clean before W1-S1 starts |
-| Verify dev dependencies | Confirm Anthropic SDK present, Zod installed, mongodb-memory-server in devDependencies |
+| Task | Action | Status |
+|---|---|---|
+| Decide fate of uncommitted edits in main checkout | App.tsx + AppleNavigation.tsx route cleanup work — commit to `chore/remove-market-data-routes` branch on reanalyzr-2.0 OR document as deferred | ✅ Done 2026-05-11 (commits 2baa0cb + 3372e33 + 5c08299) |
+| Decide fate of untracked admin script | `backend/src/scripts/resetAdminPassword.ts` — commit as needed for development, or .gitignore if local-only | ✅ Done 2026-05-11 (committed with security tightening: env-var-required, no hardcoded password fallback) |
+| Verify clean working tree for new sprint | `git status` shows clean before W1-S1 starts | ✅ Done 2026-05-11 |
+| Verify dev dependencies | Confirm Anthropic SDK present, Zod installed, mongodb-memory-server in devDependencies | ✅ Done 2026-05-11 (Mongoose, mongodb-memory-server, Jest already present; Zod 3.25.76 installed before W1-S2; Anthropic SDK installs with W2) |
+| **Atlas M0 dev cluster setup** | Create dev Atlas cluster (M0 free tier), update `.env` MONGODB_URI to point at it. **CRITICAL before any application code writes events.** See [PRODUCT_2.0_PROD_MIGRATION.md §2.1-2.2](PRODUCT_2.0_PROD_MIGRATION.md). | ⚠️ Founder action — 30 min Atlas dashboard work |
+| **W1-S5a — env-aware DB connection** | `backend/src/config/db.ts` with production-safety guard. Engineer ships once dev cluster URI is available. | ⏳ Engineer action — after Atlas dev cluster is live |
 
-**Exit criterion:** main checkout has clean git status; ready for new sprint work.
+**Exit criterion:** main checkout has clean git status; **Atlas dev cluster live and env-aware connection helper deployed**; ready for any Atlas-touching W1 story (W1-S5, W1-S3 repository, W1-S7 integration tests, etc.).
 
 ### W1 — Substrate foundation (Days 1-4)
 

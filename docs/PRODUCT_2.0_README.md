@@ -60,7 +60,8 @@ For full thesis: read [REANALYZR_2.0_THESIS_AND_DECOMPOSITION_v3.md](REANALYZR_2
 |---|---|---|
 | [PRODUCT_2.0_BACKLOG.md](PRODUCT_2.0_BACKLOG.md) | Workstreams → epics → stories, sizing, dependencies, critical path | ~620 |
 | [PRODUCT_2.0_FIRST_2_WEEKS.md](PRODUCT_2.0_FIRST_2_WEEKS.md) | Concrete weeks 1-2 execution plan, branches, exit criteria | ~400 |
-| [PRODUCT_2.0_RISK_REGISTER.md](PRODUCT_2.0_RISK_REGISTER.md) | 25 risks, falsification criteria, kill-switches, mitigations | ~720 |
+| [PRODUCT_2.0_RISK_REGISTER.md](PRODUCT_2.0_RISK_REGISTER.md) | 25 risks (+1 added 2026-05-11), falsification criteria, kill-switches, mitigations | ~740 |
+| [PRODUCT_2.0_PROD_MIGRATION.md](PRODUCT_2.0_PROD_MIGRATION.md) | Phased deploy plan: dev-cluster separation, substrate-seeding deploy, chat-surface deploy, backfill migration | ~620 |
 
 ### Navigation (you are here)
 
