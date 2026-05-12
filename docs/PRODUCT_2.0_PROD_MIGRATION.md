@@ -64,35 +64,35 @@ PHASE 6 — Wave 2 development continues
 
 ## 2. Phase 0 — Atlas separation setup (NOW)
 
-### 2.1 Founder action — Atlas dashboard
+**Decision (revised 2026-05-11):** Use **separate database on existing cluster**, not a separate cluster. Founder is on M0 free tier; Atlas free tier allows only one M0 per organization. Creating a second cluster would cost money (cheapest is M2 ~$9/month). Database-level separation addresses the substrate-pollution threat model fully — different DB users + different connection strings make accidental cross-contamination impossible. Cluster-level separation is a future concern (storage/CPU triggers documented in §11).
+
+### 2.1 Founder action — Atlas dashboard (5 minutes)
 
 1. Sign into MongoDB Atlas
-2. Create new cluster:
-   - **Tier:** M0 Free (512MB, sufficient for early wave 1 dev volume)
-   - **Region:** Same as existing prod cluster (lower replication latency if ever needed)
-   - **Name:** `reanalyzr-dev` (or similar — anything that's unambiguously not the prod cluster name)
-3. Create database user:
-   - **User:** `reanalyzr_dev_user` (or similar)
+2. Existing cluster (`cluster0.djv91js.mongodb.net`) stays as-is — no new cluster needed
+3. Create new database user:
+   - **User:** `reanalyzr_dev_user` (or similar — must be unambiguously different from prod user)
    - **Password:** strong, store in 1Password / equivalent
-   - **Roles:** `readWrite` on the new dev database
-4. Network access:
-   - **For dev simplicity:** allow `0.0.0.0/0` (your laptop's IP, Render preview deploys, CI runners)
-   - **For better security:** add only the specific IPs needed
-5. Copy the connection string. Replace `<password>` with the actual password. Result looks like:
+   - **Roles:** `readWrite` ONLY on database `real-estate-analyzer-dev` (NOT on production `real-estate-analyzer` database). This is the load-bearing isolation — the dev user literally cannot write to the production database.
+4. Network access: existing rules apply
+5. Construct connection string. Use existing cluster URL, change the database name in the path from `real-estate-analyzer` to `real-estate-analyzer-dev`:
    ```
-   mongodb+srv://reanalyzr_dev_user:<pwd>@reanalyzr-dev.xxxxx.mongodb.net/reanalyzr?retryWrites=true&w=majority
+   mongodb+srv://reanalyzr_dev_user:<pwd>@cluster0.djv91js.mongodb.net/real-estate-analyzer-dev?retryWrites=true&w=majority
    ```
+
+**Note:** MongoDB auto-creates the database on first write. No explicit "create database" step required in Atlas dashboard.
 
 ### 2.2 Founder action — local environment
 
 In `backend/.env` (or whatever `.env*` your local dev reads):
-- Update or add `MONGODB_URI=<dev cluster connection string from step 5>`
+- Update or add `MONGODB_URI=<dev connection string from step 5>` (note `-dev` suffix on database path)
 
 **Verify:**
 ```bash
 cd backend && npm run dev
-# Backend should log which cluster it connected to (cluster hostname only)
-# Confirm it's the dev cluster, NOT the prod cluster
+# Backend should log which DATABASE it connected to
+# Confirm it ends in '-dev' (e.g., 'real-estate-analyzer-dev')
+# NOT the production database name
 ```
 
 ### 2.3 Engineer action — env-aware connection logic
@@ -102,16 +102,17 @@ cd backend && npm run dev
 Add `backend/src/config/db.ts`:
 - Reads `MONGODB_URI` env var
 - Detects `NODE_ENV` (`test` → mongodb-memory-server; `development` / `production` → Atlas)
-- **Production-safety guard:** if `NODE_ENV=development` but `MONGODB_URI` matches the known production cluster hostname pattern, refuse to start and log an error. Belt-and-suspenders.
-- Logs cluster hostname (never password) on successful connection — visible sanity check
+- **Production-safety guard (database-name check, not cluster):** if `NODE_ENV=development` but `MONGODB_URI` connects to the production database (`real-estate-analyzer` without `-dev` suffix), refuse to start and log an error. Belt-and-suspenders against connection-string misconfiguration.
+- Logs database name (never password) on successful connection — visible sanity check. Example log: `Connected to MongoDB: cluster0.djv91js.mongodb.net / real-estate-analyzer-dev (NODE_ENV=development)`
 
 ### 2.4 Phase 0 exit criteria
 
-- [ ] Atlas M0 dev cluster live
-- [ ] Local `.env` points at dev cluster
+- [ ] Dev DB user `reanalyzr_dev_user` provisioned in Atlas with `readWrite` on `real-estate-analyzer-dev` only (NOT on `real-estate-analyzer` prod database)
+- [ ] Local `.env` MONGODB_URI points at `real-estate-analyzer-dev` database
 - [ ] `backend/src/config/db.ts` shipped on reanalyzr-2.0
-- [ ] `npm run dev` connects to dev cluster (verified via log message)
-- [ ] Production cluster verified untouched (no schema or role changes)
+- [ ] `npm run dev` connects to dev database (verified via log message showing `-dev` suffix)
+- [ ] Production database (`real-estate-analyzer`) verified untouched (no schema or role changes)
+- [ ] Dev DB user verified unable to write to production database (attempted write returns auth error)
 
 ---
 
@@ -424,8 +425,12 @@ After Phase 4 (and optional Phase 5):
 
 ## 11. Open questions
 
-1. **Atlas M0 free tier sufficient?** 512MB is enough for early dev volume but caps eventually. Upgrade trigger: dev cluster reaches 80% storage (~410MB).
-2. **Snapshot prod → dev for realistic test data?** Currently dev cluster starts empty + accumulates from local testing. If wave 1.5 testing of strangler-fig integration needs realistic Deal data, one-time anonymized snapshot is the pattern.
+1. **Cluster-level separation triggers (future).** Current plan uses same-cluster-different-database for cost reasons (M0 free tier; Atlas only allows one M0 per organization). Triggers to revisit and split to a separate cluster:
+   - Production substrate reaches ~400MB (80% of M0's 512MB shared limit) — upgrade production cluster to paid tier, optionally create separate M0 in new Atlas project for dev
+   - Production CPU/IOPS contention affects dev development (symptoms: slow `npm run dev` queries during prod traffic spikes)
+   - Wave 2 B2B pilot requires HA on production (paid tier justified) — separation cost amortizes
+   - These triggers are 6-12 months out at earliest; not blocking wave 1
+2. **Snapshot prod → dev for realistic test data?** Currently dev database starts empty + accumulates from local testing. If wave 1.5 testing of strangler-fig integration needs realistic Deal data, one-time anonymized snapshot is the pattern.
 3. **A/B split mechanism for Phase 4 soft launch.** Cookie-based or server-side fingerprint? Defer to implementation.
 4. **Feature flag implementation.** Simple env-var (`ENABLE_EVENT_WRITES=true|false`) or use a feature-flag service (LaunchDarkly etc.)? Bias: env var — minimal infra.
 5. **Backfill migration script needs Founder review** before running. Confirm review path.
@@ -435,3 +440,4 @@ After Phase 4 (and optional Phase 5):
 ## 12. Changelog
 
 - **2026-05-11 (v1):** Initial migration plan. Surfaced when architect identified shared production/dev DB as a critical risk for the events store (append-only / substrate moat). Six phases mapped (0 — separation setup; 1 — wave 1 dev; 2 — substrate-seeding deploy; 3 — continued dev; 4 — chat-surface deploy; 5 — backfill migration; 6 — ongoing). Pre/post checklists per phase. 3 phase-specific risks (R-M1/M2/M3) with mitigations. 5 open questions flagged.
+- **2026-05-11 (v1.1):** Revised Phase 0 from "separate Atlas cluster" to "separate database on existing cluster" after founder noted cost concern (M0 free tier allows only one cluster per org; second cluster would cost ~$9+/mo). Database-level separation (`real-estate-analyzer` vs `real-estate-analyzer-dev` databases on same cluster) fully addresses the substrate-pollution threat model via DB-user isolation. Atlas dashboard work shrinks from ~30 min (new cluster) to ~5 min (new DB user). Cluster-level separation triggers documented in §11 question 1 — revisit when storage/CPU/B2B-pilot signals warrant. Production-safety guard updated to check database name rather than cluster hostname.
