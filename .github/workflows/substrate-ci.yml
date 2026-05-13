@@ -1,0 +1,147 @@
+# Substrate + Agent-Mesh CI for reanalyzr 2.0
+#
+# Gates merges into reanalyzr-2.0 on:
+#   1. TypeScript compiles cleanly
+#   2. Substrate + agent-mesh unit tests pass (W1 + W4)
+#   3. End-to-end smoke test passes (PRODUCT_2.0_FIRST_2_WEEKS.md §6
+#      exit gate — substrate roundtrip matches direct engine call)
+#
+# WHY SCOPED, NOT FULL-SUITE
+# --------------------------
+#
+# The full backend test suite has 137 pre-existing failures in legacy
+# code (services we haven't refactored, fixtures that drifted from
+# implementation, etc.). Running the full suite in CI would make this
+# workflow permanently red and useless.
+#
+# Instead we scope to the surface we OWN and have invariants on:
+#   - src/config           (W1-S5 startup verification)
+#   - src/models/events    (W1-S1, S2, S6 — base + 11 event types + indexes)
+#   - src/repositories     (W1-S3, S4 — write + read API)
+#   - src/agents           (W4-S0..S6 — Tool contract + 7 tools)
+#
+# This is the "wave 1 substrate moat" surface. Regressions here MUST
+# block merges. Cleanup of the legacy test failures is a separate
+# backlog item (see TECHNICAL_ARCHITECTURE_BACKLOG.md).
+#
+# The smoke test additionally runs the real legacy analyzers + engine
+# wired through the tool chain — so the parts of the legacy code that
+# the wave-1 substrate DEPENDS on are still exercised.
+
+name: substrate-ci
+
+on:
+  push:
+    branches: [reanalyzr-2.0]
+    paths:
+      - 'backend/src/config/**'
+      - 'backend/src/models/events/**'
+      - 'backend/src/repositories/**'
+      - 'backend/src/agents/**'
+      - 'backend/scripts/smoke-test-weeks-1-2.ts'
+      - 'backend/package.json'
+      - 'backend/tsconfig.json'
+      - '.github/workflows/substrate-ci.yml'
+  pull_request:
+    branches: [reanalyzr-2.0]
+    paths:
+      - 'backend/src/config/**'
+      - 'backend/src/models/events/**'
+      - 'backend/src/repositories/**'
+      - 'backend/src/agents/**'
+      - 'backend/scripts/smoke-test-weeks-1-2.ts'
+      - 'backend/package.json'
+      - 'backend/tsconfig.json'
+      - '.github/workflows/substrate-ci.yml'
+
+# Cancel in-progress runs for the same ref when a new commit lands.
+# Saves GH Actions minutes without hiding genuine regressions.
+concurrency:
+  group: substrate-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: TypeScript compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Type-check (no emit)
+        run: npx tsc --noEmit
+
+  substrate-tests:
+    name: Substrate + agent-mesh unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run W1 + W4 test slice
+        # Scoped to the substrate surface — see workflow header comment.
+        # mongodb-memory-server downloads its binary on first run; cache
+        # it across jobs to keep subsequent runs fast.
+        env:
+          # Skip the binary download check on CI (we accept the warm-cache fetch)
+          MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-memory-server
+          # Don't try to read .env in CI — explicitly set checks needed by tests.
+          EVENTS_ROLE_CHECK_MODE: skip
+        run: |
+          npx jest \
+            src/config \
+            src/models/events \
+            src/repositories \
+            src/agents \
+            --no-coverage \
+            --ci \
+            --detectOpenHandles=false \
+            --forceExit
+
+  smoke-test:
+    name: Weeks 1-2 exit-gate smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [typecheck, substrate-tests]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run end-to-end smoke test
+        # Verifies:
+        #   enrich → compute → score → substrate roundtrip matches
+        #   direct engine call. 11 checks; all must pass.
+        # See PRODUCT_2.0_FIRST_2_WEEKS.md §6 for the exit-gate spec.
+        env:
+          EVENTS_ROLE_CHECK_MODE: skip
+          # CI doesn't have backend/.env; the smoke script doesn't need
+          # MONGODB_URI (uses mongodb-memory-server) but it does read
+          # other envs at module load. Provide harmless defaults.
+          NODE_ENV: test
+        run: npm run smoke-test:weeks-1-2
