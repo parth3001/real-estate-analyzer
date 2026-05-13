@@ -28,13 +28,14 @@
  *   render_audit_trail     — wraps EventsRepositoryReads.getAuditTrail
  *   export_audit_pdf       — emits AuditTrailEvent on export
  *
- * Currently registered: recall_user_context (W4-S0), score_deal (W4-S1).
- * Remaining tools land as they ship per the W4 backlog.
+ * Currently registered: recall_user_context (W4-S0), score_deal (W4-S1),
+ * apply_override (W4-S2). Remaining tools land per the W4 backlog.
  */
 
 import type { Tool } from './types';
 import { recallUserContext } from './recall_user_context';
 import { scoreDeal } from './score_deal';
+import { applyOverride } from './apply_override';
 
 /**
  * The wave-1 tool registry. Keys are the global tool names (stable
@@ -49,6 +50,7 @@ import { scoreDeal } from './score_deal';
 export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   recall_user_context: recallUserContext as unknown as Tool<unknown, unknown>,
   score_deal: scoreDeal as unknown as Tool<unknown, unknown>,
+  apply_override: applyOverride as unknown as Tool<unknown, unknown>,
 };
 
 /**
