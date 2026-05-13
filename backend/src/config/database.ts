@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
+import { verifyEventsRoleOnStartup } from './eventsRoleVerification';
 
 /**
  * MongoDB connection setup with W1-S5a production-safety guard.
@@ -141,6 +142,11 @@ export const connectToDatabase = async (): Promise<void> => {
     logger.info(
       `✅ Connected to MongoDB: ${clusterHostname} / ${databaseName} (NODE_ENV=${process.env.NODE_ENV ?? 'unset'})`
     );
+
+    // W1-S5b: verify the events-writer role on startup (layer-3 of the
+    // 3-layer append-only enforcement; see events store §6.3). Behavior
+    // is mode-driven via EVENTS_ROLE_CHECK_MODE — defaults to 'warn'.
+    await verifyEventsRoleOnStartup();
 
     mongoose.connection.on('error', (error) => {
       logger.error('MongoDB connection error:', error);
