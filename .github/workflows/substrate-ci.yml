@@ -15,10 +15,13 @@
 # workflow permanently red and useless.
 #
 # Instead we scope to the surface we OWN and have invariants on:
-#   - src/config           (W1-S5 startup verification)
-#   - src/models/events    (W1-S1, S2, S6 — base + 11 event types + indexes)
-#   - src/repositories     (W1-S3, S4 — write + read API)
-#   - src/agents           (W4-S0..S6 — Tool contract + 7 tools)
+#   - src/config              (W1-S5 startup verification)
+#   - src/models/events       (W1-S1, S2, S6 — base + 11 event types + indexes)
+#   - src/models/cost         (W9-S1 — CostEvent operational collection)
+#   - src/repositories        (W1-S3, S4 — write + read API;
+#                              W9-S1 — CostEventRepository)
+#   - src/agents              (W4-S0..S6 — Tool contract + 7 tools)
+#   - src/utils/anthropicPricing.ts  (W9-S1 — cost computation)
 #
 # This is the "wave 1 substrate moat" surface. Regressions here MUST
 # block merges. Cleanup of the legacy test failures is a separate
@@ -36,8 +39,11 @@ on:
     paths:
       - 'backend/src/config/**'
       - 'backend/src/models/events/**'
+      - 'backend/src/models/cost/**'
       - 'backend/src/repositories/**'
       - 'backend/src/agents/**'
+      - 'backend/src/utils/anthropicPricing.ts'
+      - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
       - 'backend/package.json'
       - 'backend/tsconfig.json'
@@ -47,8 +53,11 @@ on:
     paths:
       - 'backend/src/config/**'
       - 'backend/src/models/events/**'
+      - 'backend/src/models/cost/**'
       - 'backend/src/repositories/**'
       - 'backend/src/agents/**'
+      - 'backend/src/utils/anthropicPricing.ts'
+      - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
       - 'backend/package.json'
       - 'backend/tsconfig.json'
@@ -96,21 +105,20 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Run W1 + W4 test slice
-        # Scoped to the substrate surface — see workflow header comment.
-        # mongodb-memory-server downloads its binary on first run; cache
-        # it across jobs to keep subsequent runs fast.
+      - name: Run W1 + W4 + W9 test slice
+        # Scoped to the substrate + cost-events + agent surface — see
+        # workflow header comment.
         env:
-          # Skip the binary download check on CI (we accept the warm-cache fetch)
           MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-memory-server
-          # Don't try to read .env in CI — explicitly set checks needed by tests.
           EVENTS_ROLE_CHECK_MODE: skip
         run: |
           npx jest \
             src/config \
             src/models/events \
+            src/models/cost \
             src/repositories \
             src/agents \
+            src/utils/__tests__/anthropicPricing.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \
