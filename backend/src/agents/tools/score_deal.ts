@@ -179,12 +179,39 @@ export const ScoreDealInputSchema = z.object({
   /** Property under analysis (SFR or MF). */
   propertyData: ObjectShape,
 
-  /** Already-computed analysis (from compute_analysis tool or legacy analyzer). */
-  analysisResult: z.object({
-    metrics: ObjectShape,
-    monthlyAnalysis: ObjectShape,
-    longTermAnalysis: ObjectShape,
-  }),
+  /**
+   * Already-computed analysis (from compute_analysis tool or legacy
+   * analyzer).
+   *
+   * SHAPE NORMALIZATION
+   * -------------------
+   *
+   * Two valid input shapes are accepted because the codebase has two
+   * conflicting "AnalysisResult" definitions:
+   *
+   *   1. Tool/agent shape (substrate-aligned):
+   *        { metrics, monthlyAnalysis, longTermAnalysis }
+   *   2. Legacy analyzer shape (BasePropertyAnalyzer.analyze()):
+   *        { keyMetrics, monthlyAnalysis, longTermAnalysis, annualAnalysis, ... }
+   *
+   * Zod accepts EITHER `metrics` OR `keyMetrics` (one is required).
+   * `.passthrough()` preserves all extra fields (annualAnalysis,
+   * projections, etc.) so the engine adapter sees the full picture.
+   * Internal normalization (in execute()) maps keyMetrics → metrics for
+   * the substrate projection.
+   */
+  analysisResult: z
+    .object({
+      monthlyAnalysis: ObjectShape,
+      longTermAnalysis: ObjectShape,
+      metrics: ObjectShape.optional(),
+      keyMetrics: ObjectShape.optional(),
+    })
+    .passthrough()
+    .refine(
+      (v) => !!v.metrics || !!v.keyMetrics,
+      { message: 'analysisResult must include either `metrics` or `keyMetrics`' }
+    ),
 
   /**
    * Snapshot of market data used (from enrich_property). Optional in v1
@@ -321,6 +348,24 @@ function resolveWalkAwayPrice(
   return 0;
 }
 
+/**
+ * Normalize the two valid analysisResult shapes into a consistent
+ * form: ensure `metrics` is set (using `keyMetrics` as fallback) so
+ * the projector and the substrate AnalysisPayload always see the same
+ * field name. All other fields pass through unchanged so the engine
+ * adapter can still read e.g. `keyMetrics` if it expects to.
+ */
+function normalizeAnalysisResult(
+  analysisResult: Record<string, unknown>
+): Record<string, unknown> {
+  if (analysisResult.metrics) return analysisResult;
+  if (analysisResult.keyMetrics) {
+    // Keep keyMetrics for the engine; also expose as metrics for the projector.
+    return { ...analysisResult, metrics: analysisResult.keyMetrics };
+  }
+  return analysisResult;
+}
+
 function resolveUserContextForEngine(
   uc: ScoreDealInput['userContext']
 ): Parameters<ScoringEngineAdapter['generateDecision']>[0]['userContext'] {
@@ -363,11 +408,17 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
     // Trust boundary
     const validated = ScoreDealInputSchema.parse(input);
 
+    // Normalize analysisResult — handles both shapes (keyMetrics vs metrics)
+    // so the engine and the projector see consistent data.
+    const normalizedAnalysisResult = normalizeAnalysisResult(
+      validated.analysisResult as unknown as Record<string, unknown>
+    );
+
     // Call the engine via the adapter (engine itself is unchanged)
     const startTime = Date.now();
     const engineOutput = await currentAdapter.generateDecision({
       propertyData: validated.propertyData as unknown as SFRData,
-      analysisResult: validated.analysisResult as unknown as Parameters<
+      analysisResult: normalizedAnalysisResult as unknown as Parameters<
         ScoringEngineAdapter['generateDecision']
       >[0]['analysisResult'],
       userContext: resolveUserContextForEngine(validated.userContext),
@@ -391,13 +442,23 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
           dataSource: ['fallback'],
         }) as unknown as MarketDataResponse,
         assumptions: validated.assumptions ?? {},
-        analysisResult: validated.analysisResult as unknown as {
+        analysisResult: normalizedAnalysisResult as unknown as {
           metrics: SFRMetrics;
           monthlyAnalysis: Record<string, unknown>;
           longTermAnalysis: Record<string, unknown>;
         },
         engineOutput,
-        userContext: validated.userContext,
+        // DecisionPayload's userContext is strict — drop availableCash
+        // (it's an engine-call concern, not substrate signal).
+        userContext: validated.userContext
+          ? {
+              riskTolerance: validated.userContext.riskTolerance,
+              investmentStrategy: validated.userContext.investmentStrategy,
+              experienceLevel: validated.userContext.experienceLevel,
+              investorType: validated.userContext.investorType,
+              primaryGoal: validated.userContext.primaryGoal,
+            }
+          : undefined,
         scoringWeightsUsed:
           DEFAULT_SCORING_WEIGHTS as unknown as DecisionPayload['scoringWeightsUsed'],
         dealId: resolveDealId(validated.dealId),

@@ -40,7 +40,6 @@ import { SFRAnalyzer } from '../../analysis/SFRAnalyzer';
 import { MultiFamilyAnalyzer } from '../../analysis/MultiFamilyAnalyzer';
 import type {
   AnalysisResult,
-  CommonMetrics,
   SFRData,
   MultiFamilyData,
   SFRMetrics,
@@ -162,16 +161,54 @@ export type ComputeAnalysisOutput = {
 // ===== Helpers =====
 
 /**
- * Bundle the analyzer's three long-term outputs (annualAnalysis,
- * projections, exitAnalysis) into a single object matching the
- * AnalysisPayload's `longTermAnalysis` field. Substrate stores this
- * as a single nested object; agents read it as a unit.
+ * Extract the substrate-shaped fields from the analyzer's return value.
+ *
+ * REALITY CHECK
+ * -------------
+ *
+ * The legacy analyzer's actual return shape (per
+ * BasePropertyAnalyzer.analyze() line 424) is:
+ *
+ *   { monthlyAnalysis, annualAnalysis, keyMetrics, longTermAnalysis }
+ *
+ * where `longTermAnalysis` is ALREADY a bundled object with
+ * { projections, exitAnalysis, returns, projectionYears }.
+ *
+ * The TypeScript interface `AnalysisResult<T>` in
+ * /backend/src/types/propertyTypes.ts disagrees (it has `metrics` and
+ * lays out projections + exitAnalysis as separate top-level fields).
+ *
+ * The implementation wins (it's what production runs). This helper
+ * reads from the REAL shape with a fallback to the interface shape, so
+ * stubbed tests that use the interface shape still pass.
  */
-function bundleLongTermAnalysis(result: AnyAnalysisResult): {
-  annualAnalysis: AnyAnalysisResult['annualAnalysis'];
-  projections: AnyAnalysisResult['projections'];
-  exitAnalysis: AnyAnalysisResult['exitAnalysis'];
-} {
+function extractMetrics(
+  result: Record<string, unknown>
+): Record<string, unknown> {
+  const metrics =
+    (result.keyMetrics as Record<string, unknown> | undefined) ??
+    (result.metrics as Record<string, unknown> | undefined);
+  if (!metrics || typeof metrics !== 'object') {
+    throw new Error(
+      'compute_analysis: analyzer return value has neither keyMetrics nor metrics field'
+    );
+  }
+  return metrics;
+}
+
+function extractLongTermAnalysis(
+  result: Record<string, unknown>
+): Record<string, unknown> {
+  // Real shape: legacy analyzer bundles it.
+  if (
+    result.longTermAnalysis &&
+    typeof result.longTermAnalysis === 'object'
+  ) {
+    return result.longTermAnalysis as Record<string, unknown>;
+  }
+  // Interface shape: top-level projections + exitAnalysis + annualAnalysis.
+  // Bundle them here so the substrate AnalysisPayload always sees a
+  // unified longTermAnalysis object.
   return {
     annualAnalysis: result.annualAnalysis,
     projections: result.projections,
@@ -210,10 +247,17 @@ export const computeAnalysis: Tool<ComputeAnalysisInput, ComputeAnalysisOutput> 
       propertyType: validated.propertyType,
     });
 
+    // Read from the REAL analyzer shape (keyMetrics, bundled
+    // longTermAnalysis) with fallback to the typed-interface shape.
+    const resultAsObject = result as unknown as Record<string, unknown>;
     return {
-      metrics: result.metrics as CommonMetrics as SFRMetrics | MultiFamilyMetrics,
+      metrics: extractMetrics(resultAsObject) as unknown as
+        | SFRMetrics
+        | MultiFamilyMetrics,
       monthlyAnalysis: result.monthlyAnalysis,
-      longTermAnalysis: bundleLongTermAnalysis(result),
+      longTermAnalysis: extractLongTermAnalysis(
+        resultAsObject
+      ) as unknown as ComputeAnalysisOutput['longTermAnalysis'],
       fullResult: result,
     };
   },

@@ -31,7 +31,8 @@
     "test:coverage": "jest --coverage",
     "collect-assessment-ratios": "npx ts-node src/scripts/collectAssessmentRatios.ts",
     "validate-tax-data": "npx ts-node src/scripts/validateTaxData.ts",
-    "load-all-states-data": "npx ts-node src/scripts/loadAllStatesData.ts"
+    "load-all-states-data": "npx ts-node src/scripts/loadAllStatesData.ts",
+    "smoke-test:weeks-1-2": "ts-node scripts/smoke-test-weeks-1-2.ts"
   },
   "keywords": [
     "real-estate",
