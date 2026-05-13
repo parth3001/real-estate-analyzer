@@ -30,7 +30,8 @@
  *
  * Currently registered: recall_user_context (W4-S0), score_deal (W4-S1),
  * apply_override (W4-S2), save_to_watchlist (W4-S3), render_audit_trail
- * (W4-S4). Remaining tools land per the W4 backlog.
+ * (W4-S4), enrich_property (W4-S5), compute_analysis (W4-S6).
+ * Remaining tools land per the W4 backlog.
  */
 
 import type { Tool } from './types';
@@ -39,6 +40,8 @@ import { scoreDeal } from './score_deal';
 import { applyOverride } from './apply_override';
 import { saveToWatchlist } from './save_to_watchlist';
 import { renderAuditTrail } from './render_audit_trail';
+import { enrichProperty } from './enrich_property';
+import { computeAnalysis } from './compute_analysis';
 
 /**
  * The wave-1 tool registry. Keys are the global tool names (stable
@@ -56,6 +59,8 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   apply_override: applyOverride as unknown as Tool<unknown, unknown>,
   save_to_watchlist: saveToWatchlist as unknown as Tool<unknown, unknown>,
   render_audit_trail: renderAuditTrail as unknown as Tool<unknown, unknown>,
+  enrich_property: enrichProperty as unknown as Tool<unknown, unknown>,
+  compute_analysis: computeAnalysis as unknown as Tool<unknown, unknown>,
 };
 
 /**
