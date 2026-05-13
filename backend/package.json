@@ -42,6 +42,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.2",
     "@react-pdf/renderer": "^4.3.2",
     "@types/axios": "^0.9.36",
     "@types/bcryptjs": "^2.4.6",
