@@ -68,6 +68,9 @@ export const baseEventSchema = new Schema(
       type: Schema.Types.ObjectId,
       required: true,
       ref: 'User',
+      // Compound `{ userId, timestamp }` index defined below subsumes this
+      // single-field index; we keep it for direct userId equality queries
+      // that don't need the sort key.
       index: true,
     },
     institutionId: {
@@ -82,6 +85,66 @@ export const baseEventSchema = new Schema(
     },
   },
   baseEventOptions
+);
+
+// ===== W1-S6 — Index strategy per events store §7 =====
+//
+// Indexes are declared at the base schema so they apply to the unified
+// `events` collection regardless of discriminator. Per-event-type sparse
+// indexes use payload-paths (e.g., 'payload.sessionId') and are sparse so
+// they only index documents that actually have the field.
+
+// Compound: "Show recent events for this user" — most common read.
+// Backs getRecentEventsForUser, getRecentDecisionsForUser, etc.
+baseEventSchema.index({ userId: 1, timestamp: -1 });
+
+// Compound: "Show this user's analyses / overrides / etc."
+// Backs calibration and history queries that filter by event type.
+baseEventSchema.index({ userId: 1, eventType: 1, timestamp: -1 });
+
+// Sparse compound: "All events for a property over time."
+// Backs getDecisionHistoryForDeal and any future per-deal feeds.
+// Sparse so non-deal events (ProfileEvent, ConversationEvent without dealId)
+// don't bloat the index.
+baseEventSchema.index(
+  { 'payload.dealId': 1, timestamp: -1 },
+  { sparse: true, name: 'payload_dealId_timestamp' }
+);
+
+// Sparse compound: "Conversation event reload by session." ConversationEvent only.
+// Backs getConversationHistory.
+baseEventSchema.index(
+  { 'payload.sessionId': 1, eventType: 1 },
+  { sparse: true, name: 'payload_sessionId_eventType' }
+);
+
+// Sparse compound: "B2B compliance reports." Only events with institutionId.
+// Backs the audit-trail surface for credit-union / community-bank tenants.
+baseEventSchema.index(
+  { institutionId: 1, eventType: 1, timestamp: -1 },
+  { sparse: true, name: 'institutionId_eventType_timestamp' }
+);
+
+// Sparse compound: "Per-persona critic output." CritiqueEvent only.
+// Backs the 4-week kill-criterion eval for adversarial personas.
+baseEventSchema.index(
+  { 'payload.criticPersona': 1, timestamp: -1 },
+  { sparse: true, name: 'payload_criticPersona_timestamp' }
+);
+
+// Sparse: "All events related to a specific decision." OverrideEvent +
+// CritiqueEvent (both have payload.originalDecisionId). Backs
+// getCritiquesForDecision and the override list inside getAuditTrail.
+baseEventSchema.index(
+  { 'payload.originalDecisionId': 1, timestamp: 1 },
+  { sparse: true, name: 'payload_originalDecisionId_timestamp' }
+);
+
+// Sparse: "Override frequency by field." OverrideEvent only.
+// Backs getOverrideFrequencyByField — the calibration-drift signal.
+baseEventSchema.index(
+  { 'payload.fieldPath': 1, timestamp: -1 },
+  { sparse: true, name: 'payload_fieldPath_timestamp' }
 );
 
 // ===== Append-only enforcement at the schema layer =====
