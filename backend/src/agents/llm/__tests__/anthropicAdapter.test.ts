@@ -14,6 +14,7 @@ import {
   getAnthropicAdapter,
   setAnthropicAdapter,
   resetAnthropicAdapter,
+  makeTestAdapter,
   type AnthropicAdapter,
 } from '../anthropicAdapter';
 
@@ -69,7 +70,7 @@ describe('anthropicAdapter (W4-S7)', () => {
     });
 
     it('setAnthropicAdapter swaps the active adapter', () => {
-      const fake: AnthropicAdapter = {
+      const fake = makeTestAdapter({
         async call() {
           return {
             text: 'stub',
@@ -78,13 +79,13 @@ describe('anthropicAdapter (W4-S7)', () => {
             stopReason: 'end_turn',
           };
         },
-      };
+      });
       setAnthropicAdapter(fake);
       expect(getAnthropicAdapter()).toBe(fake);
     });
 
     it('resetAnthropicAdapter restores the default', () => {
-      const fake: AnthropicAdapter = {
+      const fake = makeTestAdapter({
         async call() {
           return {
             text: '',
@@ -93,14 +94,14 @@ describe('anthropicAdapter (W4-S7)', () => {
             stopReason: null,
           };
         },
-      };
+      });
       setAnthropicAdapter(fake);
       resetAnthropicAdapter();
       expect(getAnthropicAdapter()).toBe(defaultAnthropicAdapter);
     });
 
     it('a stub adapter satisfies the AnthropicAdapter contract', async () => {
-      const fake: AnthropicAdapter = {
+      const fake = makeTestAdapter({
         async call(input) {
           return {
             text: `echo: ${input.userPrompt}`,
@@ -113,7 +114,7 @@ describe('anthropicAdapter (W4-S7)', () => {
             stopReason: 'end_turn',
           };
         },
-      };
+      });
       setAnthropicAdapter(fake);
       const result = await getAnthropicAdapter().call({
         tier: 'haiku',

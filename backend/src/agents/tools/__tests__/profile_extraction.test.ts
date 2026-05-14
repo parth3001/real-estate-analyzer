@@ -21,6 +21,7 @@ import { profileExtraction } from '../profile_extraction';
 import {
   setAnthropicAdapter,
   resetAnthropicAdapter,
+  makeTestAdapter,
   type AnthropicAdapter,
 } from '../../llm/anthropicAdapter';
 import type { ToolContext } from '../types';
@@ -50,7 +51,7 @@ describe('tool:profile_extraction (W4-S7)', () => {
     text: string,
     usage = { inputTokens: 800, outputTokens: 120, cachedTokens: 0 }
   ): AnthropicAdapter {
-    return {
+    return makeTestAdapter({
       async call() {
         return {
           text,
@@ -59,7 +60,7 @@ describe('tool:profile_extraction (W4-S7)', () => {
           stopReason: 'end_turn',
         };
       },
-    };
+    });
   }
 
   function makeJsonResponse(payload: Record<string, unknown>): string {
@@ -450,11 +451,13 @@ describe('tool:profile_extraction (W4-S7)', () => {
     });
 
     it('propagates adapter failures with NO substrate writes', async () => {
-      setAnthropicAdapter({
-        async call() {
-          throw new Error('Anthropic API timeout');
-        },
-      });
+      setAnthropicAdapter(
+        makeTestAdapter({
+          async call() {
+            throw new Error('Anthropic API timeout');
+          },
+        })
+      );
       await expect(
         profileExtraction.execute(
           { userInput: 'hi' },

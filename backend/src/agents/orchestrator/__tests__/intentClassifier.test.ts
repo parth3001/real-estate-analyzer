@@ -17,6 +17,7 @@ import { classifyIntent, type ChatIntent } from '../intentClassifier';
 import {
   setAnthropicAdapter,
   resetAnthropicAdapter,
+  makeTestAdapter,
   type AnthropicAdapter,
 } from '../../llm/anthropicAdapter';
 
@@ -29,7 +30,7 @@ describe('classifyIntent (W2-S0)', () => {
     text: string,
     usage = { inputTokens: 800, outputTokens: 80, cachedTokens: 600 }
   ): AnthropicAdapter {
-    return {
+    return makeTestAdapter({
       async call() {
         return {
           text,
@@ -38,7 +39,7 @@ describe('classifyIntent (W2-S0)', () => {
           stopReason: 'end_turn',
         };
       },
-    };
+    });
   }
 
   function makeJson(payload: Record<string, unknown>): string {
@@ -181,17 +182,19 @@ describe('classifyIntent (W2-S0)', () => {
   describe('error handling', () => {
     it('rejects empty userInput before calling LLM (no CostEvent written)', async () => {
       const calls: number[] = [];
-      setAnthropicAdapter({
-        async call() {
-          calls.push(1);
-          return {
-            text: '',
-            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0 },
-            model: '',
-            stopReason: null,
-          };
-        },
-      });
+      setAnthropicAdapter(
+        makeTestAdapter({
+          async call() {
+            calls.push(1);
+            return {
+              text: '',
+              usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0 },
+              model: '',
+              stopReason: null,
+            };
+          },
+        })
+      );
       await expect(
         classifyIntent({
           userInput: '',
@@ -274,11 +277,13 @@ describe('classifyIntent (W2-S0)', () => {
     });
 
     it('propagates adapter failures (no CostEvent — we did not pay)', async () => {
-      setAnthropicAdapter({
-        async call() {
-          throw new Error('Anthropic API down');
-        },
-      });
+      setAnthropicAdapter(
+        makeTestAdapter({
+          async call() {
+            throw new Error('Anthropic API down');
+          },
+        })
+      );
       await expect(
         classifyIntent({
           userInput: 'sample',

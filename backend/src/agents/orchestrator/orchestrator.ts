@@ -47,6 +47,9 @@ import type { ToolContext, Tool } from '../tools/types';
 import { toolRegistry } from '../tools/registry';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
 import { logger } from '../../utils/logger';
+import { runDealScoringAgent } from '../dealScoring/dealScoringAgent';
+import { runQaAgent } from '../qa/qaAgent';
+import { runAdversarialCritic } from '../adversarialCritic/adversarialCriticAgent';
 
 // ===== Input / output =====
 
@@ -229,24 +232,8 @@ function extractRelatedEventIds(
   return ids;
 }
 
-/**
- * Wave-1 stub for agent-target routes. The orchestrator's contract
- * doesn't change — same return shape as a real agent — but the
- * response is a deterministic placeholder. W5 swaps these for real
- * Sonnet/Opus calls without touching the orchestrator's API.
- */
-function stubAgentResponse(target: RoutingTarget): string {
-  switch (target) {
-    case 'agent:deal_scoring':
-      return "I'd run a deal-scoring analysis here (enrichment + analysis + scoring tools). Agent execution lands in wave 1.5 — you can call the underlying tools (enrich_property, compute_analysis, score_deal) directly today.";
-    case 'agent:qa':
-      return "I'd answer your question here (Q&A agent, Sonnet 4.6). Agent execution lands in wave 1.5.";
-    case 'agent:adversarial_critic':
-      return "I'd run two critic personas against this decision (Opus 4.7). Agent execution lands in wave 1.5.";
-    default:
-      return 'Agent execution lands in wave 1.5.';
-  }
-}
+// Stub agent responses removed in W5 — real agent execution now
+// happens via executeAgentRoute() below.
 
 /**
  * The orchestrator's main entrypoint. ONE call per user turn.
@@ -305,6 +292,18 @@ export async function handleTurn(
   let responseText: string;
   let relatedEventIds: Types.ObjectId[] = [];
   let agentStubbed = false;
+  // Aggregate cost + token usage across classifier + (optional) agent run
+  let totalCostCents = classification.costCents;
+  let totalInputTokens = classification.tokenUsage.inputTokens;
+  let totalOutputTokens = classification.tokenUsage.outputTokens;
+  let totalCachedTokens = classification.tokenUsage.cachedTokens;
+  let modelUsed = classification.modelUsed;
+  let toolCalls: Array<{
+    toolName: string;
+    inputHash: string;
+    success: boolean;
+    durationMs: number;
+  }> = [];
 
   if (routing.target.startsWith('tool:')) {
     // Real tool execution
@@ -316,9 +315,20 @@ export async function handleTurn(
     responseText = toolResult.responseText;
     relatedEventIds = toolResult.relatedEventIds;
   } else {
-    // Agent route — stub until W5
-    responseText = stubAgentResponse(routing.target);
-    agentStubbed = true;
+    // Real agent execution (W5)
+    const agentResult = await executeAgentRoute(
+      routing.target,
+      input,
+      ctx
+    );
+    responseText = agentResult.responseText;
+    relatedEventIds = agentResult.relatedEventIds;
+    toolCalls = agentResult.toolCalls;
+    totalCostCents += agentResult.costCents;
+    totalInputTokens += agentResult.tokenUsage.inputTokens;
+    totalOutputTokens += agentResult.tokenUsage.outputTokens;
+    totalCachedTokens += agentResult.tokenUsage.cachedTokens;
+    modelUsed = agentResult.modelUsed;
   }
 
   // ===== 4. Emit ConversationEvent =====
@@ -342,22 +352,19 @@ export async function handleTurn(
         classifierModel: classification.modelUsed,
       },
       routedTo: routing.routedTo,
-      toolCalls: [], // Wave-1: we don't yet record per-call tool metadata here;
-                    // tools emit their own events which join via traceId.
-                    // Populated when the orchestrator records actual agent
-                    // tool-use sequences (W5).
+      toolCalls,
       agentResponse: {
         text: responseText,
         structuredOutputs: [],
         relatedEventIds,
       },
       tokenUsage: {
-        inputTokens: classification.tokenUsage.inputTokens,
-        outputTokens: classification.tokenUsage.outputTokens,
-        cachedTokens: classification.tokenUsage.cachedTokens,
-        estimatedCostCents: classification.costCents,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        cachedTokens: totalCachedTokens,
+        estimatedCostCents: totalCostCents,
       },
-      modelUsed: classification.modelUsed,
+      modelUsed,
       totalDurationMs,
     },
   });
@@ -370,7 +377,123 @@ export async function handleTurn(
       conversationEventId,
       related: relatedEventIds,
     },
-    totalCostCents: classification.costCents,
+    totalCostCents,
     agentStubbed,
   };
+}
+
+// ===== Agent execution =====
+
+/**
+ * Dispatch to the right agent based on the routing target. Returns
+ * the agent's text + structured outputs to surface in
+ * ConversationEvent.
+ *
+ * For agent:adversarial_critic, the orchestrator requires a
+ * `decisionId` in toolPayload (the critic needs to know what to
+ * critique). For agent:deal_scoring + agent:qa, the user input
+ * carries all the context.
+ */
+async function executeAgentRoute(
+  target: RoutingTarget,
+  turnInput: OrchestratorTurnInput,
+  ctx: ToolContext
+): Promise<{
+  responseText: string;
+  relatedEventIds: Types.ObjectId[];
+  toolCalls: Array<{
+    toolName: string;
+    inputHash: string;
+    success: boolean;
+    durationMs: number;
+  }>;
+  costCents: number;
+  tokenUsage: { inputTokens: number; outputTokens: number; cachedTokens: number };
+  modelUsed: string;
+}> {
+  if (target === 'agent:deal_scoring') {
+    const result = await runDealScoringAgent(
+      { userInput: turnInput.userInput },
+      ctx
+    );
+    return {
+      responseText: result.text,
+      relatedEventIds: result.relatedEventIds,
+      toolCalls: result.toolCallsExecuted,
+      costCents: result.totalCostCents,
+      tokenUsage: result.tokenUsage,
+      modelUsed: result.modelUsed,
+    };
+  }
+
+  if (target === 'agent:qa') {
+    const result = await runQaAgent(
+      { userInput: turnInput.userInput },
+      ctx
+    );
+    return {
+      responseText: result.text,
+      relatedEventIds: result.relatedEventIds,
+      toolCalls: result.toolCallsExecuted,
+      costCents: result.totalCostCents,
+      tokenUsage: result.tokenUsage,
+      modelUsed: result.modelUsed,
+    };
+  }
+
+  if (target === 'agent:adversarial_critic') {
+    const decisionIdRaw = (turnInput.toolPayload ?? {}) as {
+      decisionId?: Types.ObjectId | string;
+      triggerType?: 'auto_buy_band' | 'manual_request' | 'batch_seeding';
+    };
+    if (!decisionIdRaw.decisionId) {
+      throw new Error(
+        'orchestrator: agent:adversarial_critic route requires toolPayload.decisionId. ' +
+          'The critic needs to know which decision to critique.'
+      );
+    }
+    const result = await runAdversarialCritic(
+      {
+        decisionId: decisionIdRaw.decisionId,
+        triggerType: decisionIdRaw.triggerType ?? 'manual_request',
+      },
+      ctx
+    );
+    // Compose a brief summary of both personas for the chat response.
+    const summary = result.critiques
+      .map((c) => {
+        const severity = c.structured.severityScore;
+        const agreed = c.structured.agreementWithOriginal;
+        const reasonCount = c.structured.divergenceReasons.length;
+        return `${c.persona}: ${agreed ? 'agrees' : 'disagrees'} (severity ${severity}, ${reasonCount} divergence(s))`;
+      })
+      .join('\n');
+    const responseText =
+      `Critique complete. Two personas ran in parallel:\n${summary}\n\n` +
+      `Full critique details persisted to substrate (CritiqueEvents).`;
+    // Combine related event IDs from both personas
+    const relatedEventIds = result.critiques.flatMap((c) => [
+      c.critiqueEventId,
+      ...c.runResult.relatedEventIds,
+    ]);
+    const toolCalls = result.critiques.flatMap((c) => c.runResult.toolCallsExecuted);
+    const tokenUsage = result.critiques.reduce(
+      (acc, c) => ({
+        inputTokens: acc.inputTokens + c.runResult.tokenUsage.inputTokens,
+        outputTokens: acc.outputTokens + c.runResult.tokenUsage.outputTokens,
+        cachedTokens: acc.cachedTokens + c.runResult.tokenUsage.cachedTokens,
+      }),
+      { inputTokens: 0, outputTokens: 0, cachedTokens: 0 }
+    );
+    return {
+      responseText,
+      relatedEventIds,
+      toolCalls,
+      costCents: result.totalCostCents,
+      tokenUsage,
+      modelUsed: result.critiques[0]?.runResult.modelUsed ?? 'claude-opus-4-7',
+    };
+  }
+
+  throw new Error(`orchestrator: unknown agent target '${target}'`);
 }
