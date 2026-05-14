@@ -151,6 +151,72 @@ describe('classifyIntent (W2-S0)', () => {
     });
   });
 
+  // ===== Conversation context threading (W5-S2) =====
+
+  describe('recentTurns context threading', () => {
+    it('includes the conversation context block in the prompt when recentTurns provided', async () => {
+      let observedPrompt: string | undefined;
+      setAnthropicAdapter(
+        makeTestAdapter({
+          async call(input) {
+            observedPrompt = input.userPrompt;
+            return {
+              text: makeJson({ intent: 'analyze_property', confidence: 90 }),
+              usage: { inputTokens: 900, outputTokens: 40, cachedTokens: 700 },
+              model: 'claude-haiku-4-5',
+              stopReason: 'end_turn',
+            };
+          },
+        })
+      );
+
+      await classifyIntent({
+        userInput: 'BRRRR',
+        traceId: 'trace-ctx',
+        userId: new Types.ObjectId(),
+        recentTurns: [
+          {
+            turnNumber: 1,
+            userText: 'analyze 123 Main St',
+            agentText: 'Quick question — BRRRR or buy-and-hold?',
+            intent: 'analyze_property',
+            routedTo: 'agent:deal_scoring',
+          },
+        ],
+      });
+
+      expect(observedPrompt).toContain('Conversation so far:');
+      expect(observedPrompt).toContain('BRRRR or buy-and-hold?');
+      expect(observedPrompt).toContain('Current input: BRRRR');
+    });
+
+    it('omits the context block when recentTurns is empty or absent', async () => {
+      let observedPrompt: string | undefined;
+      setAnthropicAdapter(
+        makeTestAdapter({
+          async call(input) {
+            observedPrompt = input.userPrompt;
+            return {
+              text: makeJson({ intent: 'qa_general', confidence: 80 }),
+              usage: { inputTokens: 800, outputTokens: 40, cachedTokens: 600 },
+              model: 'claude-haiku-4-5',
+              stopReason: 'end_turn',
+            };
+          },
+        })
+      );
+
+      await classifyIntent({
+        userInput: 'what is cap rate',
+        traceId: 'trace-no-ctx',
+        userId: new Types.ObjectId(),
+      });
+
+      expect(observedPrompt).toBe('what is cap rate');
+      expect(observedPrompt).not.toContain('Conversation so far');
+    });
+  });
+
   // ===== Markdown fence handling =====
 
   describe('LLM output cleaning', () => {

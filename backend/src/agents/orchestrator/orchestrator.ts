@@ -50,6 +50,10 @@ import { logger } from '../../utils/logger';
 import { runDealScoringAgent } from '../dealScoring/dealScoringAgent';
 import { runQaAgent } from '../qa/qaAgent';
 import { runAdversarialCritic } from '../adversarialCritic/adversarialCriticAgent';
+import {
+  loadRecentTurns,
+  type RecentTurn,
+} from './conversationContext';
 
 // ===== Input / output =====
 
@@ -263,6 +267,17 @@ export async function handleTurn(
     tools: toolRegistry,
   };
 
+  // ===== 0. Load conversation context (Option A — orchestrator threads it) =====
+  //
+  // The current turn's ConversationEvent isn't written until step 4, so
+  // this returns turns 1..N-1 — exactly the history a classifier /
+  // agent needs to recognize "the assistant asked a question last turn,
+  // and this input answers it."
+  const recentTurns: RecentTurn[] = await loadRecentTurns(
+    eventsRepositoryReads,
+    input.sessionId
+  );
+
   // ===== 1. Classify intent =====
 
   const classification = await classifyIntent({
@@ -270,6 +285,7 @@ export async function handleTurn(
     traceId,
     userId: input.userId,
     institutionId: input.institutionId,
+    recentTurns,
   });
 
   // ===== 2. Route =====
@@ -315,10 +331,12 @@ export async function handleTurn(
     responseText = toolResult.responseText;
     relatedEventIds = toolResult.relatedEventIds;
   } else {
-    // Real agent execution (W5)
+    // Real agent execution (W5). recentTurns threaded in so the agent
+    // can see clarifying-question exchanges (Option A context).
     const agentResult = await executeAgentRoute(
       routing.target,
       input,
+      recentTurns,
       ctx
     );
     responseText = agentResult.responseText;
@@ -397,6 +415,7 @@ export async function handleTurn(
 async function executeAgentRoute(
   target: RoutingTarget,
   turnInput: OrchestratorTurnInput,
+  recentTurns: RecentTurn[],
   ctx: ToolContext
 ): Promise<{
   responseText: string;
@@ -411,9 +430,15 @@ async function executeAgentRoute(
   tokenUsage: { inputTokens: number; outputTokens: number; cachedTokens: number };
   modelUsed: string;
 }> {
+  // Shared agent context — recentTurns lets the agent see
+  // clarifying-question exchanges (e.g., "I asked about strategy last
+  // turn; this input answers it").
+  const agentContext =
+    recentTurns.length > 0 ? { recentTurns } : undefined;
+
   if (target === 'agent:deal_scoring') {
     const result = await runDealScoringAgent(
-      { userInput: turnInput.userInput },
+      { userInput: turnInput.userInput, context: agentContext },
       ctx
     );
     return {
@@ -428,7 +453,7 @@ async function executeAgentRoute(
 
   if (target === 'agent:qa') {
     const result = await runQaAgent(
-      { userInput: turnInput.userInput },
+      { userInput: turnInput.userInput, context: agentContext },
       ctx
     );
     return {

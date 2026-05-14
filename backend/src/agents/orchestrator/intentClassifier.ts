@@ -42,6 +42,7 @@ import {
 import { costEventRepository } from '../../repositories/CostEventRepository';
 import { computeAnthropicCostCents } from '../../utils/anthropicPricing';
 import { logger } from '../../utils/logger';
+import { renderRecentTurns, type RecentTurn } from './conversationContext';
 
 // ===== Intent enum (mirrors ChatIntentSchema in ConversationEvent.ts) =====
 
@@ -168,6 +169,27 @@ CONFIDENCE GUIDELINES
 - 70-89: Strong signal, minor ambiguity
 - 50-69: Plausible but not certain; routing layer may treat as fallback
 - 0-49: Use only for "fallback" intent
+
+CONVERSATION CONTINUATIONS — IMPORTANT
+──────────────────────────────────────
+
+If a "Conversation so far" block is provided AND the most recent
+assistant message asked the user a clarifying question, the user's
+current input is almost certainly ANSWERING that question — it is a
+CONTINUATION of the original intent, not a new intent.
+
+Example:
+  Turn 3 [analyze_property → agent:deal_scoring]
+    User: analyze 123 Main St Austin TX
+    Assistant: Quick question — are you running this as BRRRR or buy-and-hold?
+  Current input: "buy and hold"
+
+  → Classify as analyze_property (confidence 90+), NOT share_profile.
+    The user is continuing the property analysis, not sharing a profile.
+
+A terse reply ("BRRRR", "buy and hold", "the first one", "yeah") right
+after a clarifying question = continuation. Inherit the intent from the
+turn that asked the question.
 `;
 
 // ===== Helpers =====
@@ -200,6 +222,13 @@ export interface ClassifyInput {
   traceId: string;
   userId: Types.ObjectId;
   institutionId?: Types.ObjectId;
+  /**
+   * Recent conversation turns (oldest-first). When the previous turn's
+   * assistant message asked a clarifying question, the classifier uses
+   * this to recognize the current input as a CONTINUATION rather than
+   * a fresh intent. Empty / omitted for the first turn of a session.
+   */
+  recentTurns?: RecentTurn[];
 }
 
 /**
@@ -222,11 +251,18 @@ export async function classifyIntent(input: ClassifyInput): Promise<ClassifyResu
     throw new Error('intentClassifier: userInput must not be empty');
   }
 
+  // Prepend recent-conversation context to the user prompt when present.
+  // The classifier uses it to recognize clarifying-question continuations.
+  const contextBlock = renderRecentTurns(input.recentTurns ?? []);
+  const userPrompt = contextBlock
+    ? `${contextBlock}\n\nCurrent input: ${input.userInput}`
+    : input.userInput;
+
   const adapter: AnthropicAdapter = getAnthropicAdapter();
   const llmResponse = await adapter.call({
     tier: 'haiku',
     systemPrompt: SYSTEM_PROMPT,
-    userPrompt: input.userInput,
+    userPrompt,
     // Intent classification is a finite-output task; keep tokens cheap.
     maxTokens: 256,
     temperature: 0,
