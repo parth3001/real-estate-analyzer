@@ -31,9 +31,10 @@
  * Currently registered: recall_user_context (W4-S0), score_deal (W4-S1),
  * apply_override (W4-S2), save_to_watchlist (W4-S3), render_audit_trail
  * (W4-S4), enrich_property (W4-S5), compute_analysis (W4-S6),
- * profile_extraction (W4-S7), export_audit_pdf (W4-S8).
+ * profile_extraction (W4-S7), export_audit_pdf (W4-S8),
+ * resolve_property_inputs (W5-Phase1 — chat-flow input gathering).
  *
- * All 9 wave-1 tools shipped.
+ * All 9 wave-1 tools + the chat-flow input resolver.
  */
 
 import type { Tool } from './types';
@@ -46,6 +47,7 @@ import { enrichProperty } from './enrich_property';
 import { computeAnalysis } from './compute_analysis';
 import { profileExtraction } from './profile_extraction';
 import { exportAuditPdf } from './export_audit_pdf';
+import { resolvePropertyInputs } from './resolve_property_inputs';
 
 /**
  * The wave-1 tool registry. Keys are the global tool names (stable
@@ -67,6 +69,7 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   compute_analysis: computeAnalysis as unknown as Tool<unknown, unknown>,
   profile_extraction: profileExtraction as unknown as Tool<unknown, unknown>,
   export_audit_pdf: exportAuditPdf as unknown as Tool<unknown, unknown>,
+  resolve_property_inputs: resolvePropertyInputs as unknown as Tool<unknown, unknown>,
 };
 
 /**
