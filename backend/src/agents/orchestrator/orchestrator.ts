@@ -1,0 +1,376 @@
+/**
+ * Orchestrator — W2-S2.
+ *
+ * Top-level entrypoint that turns a user chat message into:
+ *   1. An intent classification (Haiku call)
+ *   2. A routing decision
+ *   3. (For tool-only routes) actual tool execution
+ *   4. (For agent routes) a "wave 1.5 stub" response — agent
+ *      execution lands in W5
+ *   5. A ConversationEvent emitted to substrate capturing the full turn
+ *
+ * Per /docs/PRODUCT_2.0_AGENT_MESH.md §2.
+ *
+ * WAVE-1 SCOPE
+ * ------------
+ *
+ * The orchestrator's CONTROL FLOW is fully implemented:
+ *   - Intent classification works (real Haiku call)
+ *   - Routing works (pure function, exhaustive)
+ *   - Tool-only paths EXECUTE end-to-end (substrate writes happen)
+ *   - ConversationEvent emitted on every turn
+ *   - CostEvent emitted on every Haiku call (via the classifier)
+ *
+ * What's STUBBED until W5:
+ *   - Agent execution (deal_scoring, qa, adversarial_critic).
+ *     Agent routes return a deterministic placeholder text. The
+ *     ConversationEvent still gets written; the placeholder is honest
+ *     about what's not yet implemented.
+ *
+ * This split is deliberate: the orchestrator's API surface is the
+ * contract the chat overlay (W6) depends on. Shipping the control
+ * flow + tool execution today means W6 can start without waiting for
+ * W5. When agents land, the orchestrator's "execute" branch swaps
+ * stubs for real agent calls — same return shape, no API change.
+ */
+
+import { randomUUID } from 'crypto';
+import { Types } from 'mongoose';
+import { eventsRepository } from '../../repositories/EventsRepository';
+import { classifyIntent } from './intentClassifier';
+import {
+  routeIntent,
+  type RoutingDecision,
+  type RoutingTarget,
+} from './router';
+import type { ToolContext, Tool } from '../tools/types';
+import { toolRegistry } from '../tools/registry';
+import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
+import { logger } from '../../utils/logger';
+
+// ===== Input / output =====
+
+export interface OrchestratorTurnInput {
+  /** Free-form text from the user. */
+  userInput: string;
+
+  /** Who's chatting. Substrate ProvenAnce. */
+  userId: Types.ObjectId;
+  institutionId?: Types.ObjectId;
+
+  /** Stable session identifier — survives across turns. UUID v4. */
+  sessionId: string;
+
+  /** 1-indexed turn number within the session. Orchestrator does NOT
+   *  generate this — the chat surface (or the caller) tracks turn
+   *  ordering so the orchestrator stays stateless. */
+  turnNumber: number;
+
+  /**
+   * Optional input payload for tool-only routes that need structured
+   * data the classifier can't extract from text (e.g.,
+   * apply_override needs originalDecisionId + fieldPath + newValue).
+   * The chat surface attaches these when the user manipulates UI
+   * widgets (override sliders, export buttons, etc.). For pure-text
+   * turns, this is undefined.
+   */
+  toolPayload?: Record<string, unknown>;
+
+  /** Optional input method override. Defaults to 'text'. */
+  inputMethod?: 'text' | 'voice' | 'paste';
+}
+
+export interface OrchestratorTurnOutput {
+  /** UUID v4. Generated per turn unless reused for retries. */
+  traceId: string;
+
+  /** Agent / tool's textual response surfaced to the user. */
+  responseText: string;
+
+  /** Routing decision audit. */
+  routing: RoutingDecision;
+
+  /** Cross-event references — IDs of substrate events written this turn. */
+  events: {
+    conversationEventId: Types.ObjectId;
+    /** IDs of any other events written by tool execution. */
+    related: Types.ObjectId[];
+  };
+
+  /** Per-turn cost summary (sums classifier + any agent LLM calls). */
+  totalCostCents: number;
+
+  /** Was an agent execution stubbed (W5 not yet shipped)? */
+  agentStubbed: boolean;
+}
+
+// ===== Orchestrator =====
+
+/**
+ * Generate a UUID v4 traceId. Stable across the whole turn so every
+ * event written by this turn (CostEvent from classifier, possible
+ * tool events, the final ConversationEvent) joins on traceId.
+ */
+function newTraceId(): string {
+  return randomUUID();
+}
+
+/**
+ * Execute a tool-only route. Returns the tool's output plus IDs of
+ * any substrate events the tool emitted. Throws on tool failure;
+ * caller (orchestrator) translates to user-facing error.
+ */
+async function executeToolRoute(
+  target: RoutingTarget,
+  toolPayload: Record<string, unknown> | undefined,
+  ctx: ToolContext
+): Promise<{ responseText: string; relatedEventIds: Types.ObjectId[] }> {
+  // Strip the 'tool:' prefix to get the registry key
+  const toolName = target.replace(/^tool:/, '');
+  const tool = toolRegistry[toolName] as Tool<unknown, unknown> | undefined;
+  if (!tool) {
+    throw new Error(
+      `orchestrator: tool '${toolName}' not found in registry`
+    );
+  }
+
+  // Tool inputs vary per tool; the caller supplies via toolPayload.
+  // We can't validate at the orchestrator layer because each tool's
+  // schema is different — the tool's own Zod validation handles it.
+  if (!toolPayload) {
+    throw new Error(
+      `orchestrator: tool '${toolName}' route requires toolPayload, but none was provided. ` +
+        `The chat surface must include the structured payload (e.g., decisionId, fieldPath, newValue) ` +
+        `for tool-only routes.`
+    );
+  }
+
+  const result = (await tool.execute(toolPayload, ctx)) as Record<string, unknown>;
+
+  // Surface a brief response text that varies per tool. Wave-1 stubs:
+  // - profile_extraction: confirmation if hadNewFields
+  // - apply_override: "score moved from X to Y"
+  // - render_audit_trail: "Audit trail loaded"
+  // - export_audit_pdf: "Export ready"
+  // - save_to_watchlist: "Saved"
+  const responseText = describeToolResult(toolName, result);
+  const relatedEventIds = extractRelatedEventIds(toolName, result);
+
+  return { responseText, relatedEventIds };
+}
+
+/**
+ * Map each tool's output shape to a short user-facing message.
+ * Centralized here so the orchestrator's response style is consistent
+ * across tools, and so adding a new tool requires updating one place.
+ */
+function describeToolResult(
+  toolName: string,
+  result: Record<string, unknown>
+): string {
+  switch (toolName) {
+    case 'profile_extraction': {
+      const r = result as { hadNewFields?: boolean; confidence?: number };
+      return r.hadNewFields
+        ? `Got it — I'll remember that. (confidence ${r.confidence})`
+        : "Got it. Nothing new to add to your profile yet.";
+    }
+    case 'apply_override': {
+      const r = result as {
+        priorDealQuality?: number;
+        newDealQuality?: number;
+        dealQualityDelta?: number;
+      };
+      const direction =
+        (r.dealQualityDelta ?? 0) > 0
+          ? 'improved'
+          : (r.dealQualityDelta ?? 0) < 0
+          ? 'dropped'
+          : 'held';
+      return `Override applied. Deal quality ${direction} from ${r.priorDealQuality} to ${r.newDealQuality} (Δ${r.dealQualityDelta}).`;
+    }
+    case 'render_audit_trail': {
+      const r = result as { overrides?: unknown[]; critiques?: unknown[] };
+      return `Audit trail loaded. ${(r.overrides ?? []).length} override(s), ${(r.critiques ?? []).length} critique(s) on record.`;
+    }
+    case 'export_audit_pdf': {
+      const r = result as { format?: string; pdfSizeBytes?: number };
+      return `Export ready (${r.format}, ${r.pdfSizeBytes} bytes). Download link in the response payload.`;
+    }
+    case 'save_to_watchlist':
+      return 'Saved to your watchlist.';
+    default:
+      return `Tool '${toolName}' completed.`;
+  }
+}
+
+/**
+ * Pull event IDs from a tool's output for ConversationEvent.relatedEventIds.
+ */
+function extractRelatedEventIds(
+  toolName: string,
+  result: Record<string, unknown>
+): Types.ObjectId[] {
+  const ids: Types.ObjectId[] = [];
+  const candidates = [
+    'analysisEventId',
+    'decisionEventId',
+    'overrideEventId',
+    'profileEventId',
+    'watchlistEventId',
+    'auditTrailEventId',
+    'newAnalysisEventId',
+    'newDecisionEventId',
+  ];
+  for (const key of candidates) {
+    const v = (result as Record<string, unknown>)[key];
+    if (v instanceof Types.ObjectId) ids.push(v);
+  }
+  return ids;
+}
+
+/**
+ * Wave-1 stub for agent-target routes. The orchestrator's contract
+ * doesn't change — same return shape as a real agent — but the
+ * response is a deterministic placeholder. W5 swaps these for real
+ * Sonnet/Opus calls without touching the orchestrator's API.
+ */
+function stubAgentResponse(target: RoutingTarget): string {
+  switch (target) {
+    case 'agent:deal_scoring':
+      return "I'd run a deal-scoring analysis here (enrichment + analysis + scoring tools). Agent execution lands in wave 1.5 — you can call the underlying tools (enrich_property, compute_analysis, score_deal) directly today.";
+    case 'agent:qa':
+      return "I'd answer your question here (Q&A agent, Sonnet 4.6). Agent execution lands in wave 1.5.";
+    case 'agent:adversarial_critic':
+      return "I'd run two critic personas against this decision (Opus 4.7). Agent execution lands in wave 1.5.";
+    default:
+      return 'Agent execution lands in wave 1.5.';
+  }
+}
+
+/**
+ * The orchestrator's main entrypoint. ONE call per user turn.
+ *
+ * Substrate writes happen in this exact order:
+ *   1. CostEvent (classifier Haiku call)              — via intentClassifier
+ *   2. (tool-only routes) substrate events the tool emits
+ *   3. ConversationEvent (this function)              — at the end
+ *
+ * The ConversationEvent's relatedEventIds field captures everything
+ * emitted earlier in the turn, so the chat surface (or eval harness)
+ * can join the full turn via traceId or via the ConversationEvent's
+ * own references.
+ */
+export async function handleTurn(
+  input: OrchestratorTurnInput
+): Promise<OrchestratorTurnOutput> {
+  const traceId = newTraceId();
+  const turnStart = Date.now();
+
+  const ctx: ToolContext = {
+    traceId,
+    userId: input.userId,
+    institutionId: input.institutionId,
+    eventsRepo: eventsRepository,
+    eventsReads: eventsRepositoryReads,
+    tools: toolRegistry,
+  };
+
+  // ===== 1. Classify intent =====
+
+  const classification = await classifyIntent({
+    userInput: input.userInput,
+    traceId,
+    userId: input.userId,
+    institutionId: input.institutionId,
+  });
+
+  // ===== 2. Route =====
+
+  const routing = routeIntent(
+    classification.intent,
+    classification.confidence
+  );
+
+  logger.debug('orchestrator: routed turn', {
+    traceId,
+    intent: classification.intent,
+    confidence: classification.confidence,
+    target: routing.target,
+    fallbackReason: routing.fallbackReason,
+  });
+
+  // ===== 3. Execute =====
+
+  let responseText: string;
+  let relatedEventIds: Types.ObjectId[] = [];
+  let agentStubbed = false;
+
+  if (routing.target.startsWith('tool:')) {
+    // Real tool execution
+    const toolResult = await executeToolRoute(
+      routing.target,
+      input.toolPayload,
+      ctx
+    );
+    responseText = toolResult.responseText;
+    relatedEventIds = toolResult.relatedEventIds;
+  } else {
+    // Agent route — stub until W5
+    responseText = stubAgentResponse(routing.target);
+    agentStubbed = true;
+  }
+
+  // ===== 4. Emit ConversationEvent =====
+
+  const totalDurationMs = Date.now() - turnStart;
+  const conversationEventId = await eventsRepository.writeConversationEvent({
+    traceId,
+    actorType: 'user',
+    userId: input.userId,
+    institutionId: input.institutionId,
+    payload: {
+      sessionId: input.sessionId,
+      turnNumber: input.turnNumber,
+      userInput: {
+        text: input.userInput,
+        inputMethod: input.inputMethod ?? 'text',
+      },
+      intentClassification: {
+        intent: classification.intent,
+        confidence: classification.confidence,
+        classifierModel: classification.modelUsed,
+      },
+      routedTo: routing.routedTo,
+      toolCalls: [], // Wave-1: we don't yet record per-call tool metadata here;
+                    // tools emit their own events which join via traceId.
+                    // Populated when the orchestrator records actual agent
+                    // tool-use sequences (W5).
+      agentResponse: {
+        text: responseText,
+        structuredOutputs: [],
+        relatedEventIds,
+      },
+      tokenUsage: {
+        inputTokens: classification.tokenUsage.inputTokens,
+        outputTokens: classification.tokenUsage.outputTokens,
+        cachedTokens: classification.tokenUsage.cachedTokens,
+        estimatedCostCents: classification.costCents,
+      },
+      modelUsed: classification.modelUsed,
+      totalDurationMs,
+    },
+  });
+
+  return {
+    traceId,
+    responseText,
+    routing,
+    events: {
+      conversationEventId,
+      related: relatedEventIds,
+    },
+    totalCostCents: classification.costCents,
+    agentStubbed,
+  };
+}
