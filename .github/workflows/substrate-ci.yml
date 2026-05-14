@@ -45,6 +45,8 @@ on:
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
+      - 'backend/scripts/evals/**'
+      - 'backend/src/evals/**'
       - 'backend/package.json'
       - 'backend/tsconfig.json'
       - '.github/workflows/substrate-ci.yml'
@@ -59,6 +61,8 @@ on:
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
+      - 'backend/scripts/evals/**'
+      - 'backend/src/evals/**'
       - 'backend/package.json'
       - 'backend/tsconfig.json'
       - '.github/workflows/substrate-ci.yml'
@@ -153,3 +157,37 @@ jobs:
           # other envs at module load. Provide harmless defaults.
           NODE_ENV: test
         run: npm run smoke-test:weeks-1-2
+
+  evals:
+    name: Eval scaffolding (schema + substrate calibration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [typecheck, substrate-tests]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run schema eval
+        # Verifies Zod schema invariants across all 11 substrate event
+        # types + cost_events. Tripwire for accidental schema regressions.
+        env:
+          EVENTS_ROLE_CHECK_MODE: skip
+          NODE_ENV: test
+        run: npm run eval:schema
+      - name: Run substrate calibration eval
+        # Calibration drift tripwire — zero-tolerance comparison of
+        # substrate-persisted dealQuality against pinned fixture values.
+        # Per PRODUCT_2.0_EVALS.md §3 (the deterministic-scoring
+        # non-negotiable's regression gate).
+        env:
+          EVENTS_ROLE_CHECK_MODE: skip
+          NODE_ENV: test
+        run: npm run eval:substrate
