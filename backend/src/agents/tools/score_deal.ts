@@ -63,6 +63,7 @@ import type {
 } from '../../models/events/DecisionEvent';
 import type { EnrichmentSource } from '../../models/events/AnalysisEvent';
 import { InvestmentDecisionEngine } from '../../services/investment/investmentDecisionEngine';
+import { MFDecisionEngine } from '../../services/investment/MFDecisionEngine';
 
 // ===== Engine adapter =====
 
@@ -98,16 +99,58 @@ export interface ScoringEngineAdapter {
 }
 
 /**
- * Default adapter — thin shim over the legacy engine. The engine itself
- * is untouched per the user directive 2026-05-12.
+ * Default adapter — thin shim over the legacy engines. Both engines are
+ * untouched per the user directive 2026-05-12.
+ *
+ * PROPERTY-TYPE ROUTING
+ * ---------------------
+ *
+ * SFR  → InvestmentDecisionEngine.generateInvestmentDecision()
+ *        (which itself routes BRRRR vs buy-hold on investmentStrategy)
+ * MF   → MFDecisionEngine.generateDecisionWithAI()
+ *        (a separate engine with a different constructor — mirrors how
+ *         the legacy controller routes MF, see deals.ts ~line 1106)
+ *
+ * Both engines return the same decision shape (verdict,
+ * professionalAssessment, marketPosition, ...), so the projector
+ * downstream doesn't care which produced it.
  */
 export const defaultEngineAdapter: ScoringEngineAdapter = {
   async generateDecision(args) {
+    const isMF =
+      (args.propertyData as { propertyType?: string }).propertyType === 'MF';
+
+    if (isMF) {
+      // MF path — mirrors the legacy controller's MF branch. The MF
+      // engine wants `metrics` on the analysis; the MF analyzer emits
+      // `keyMetrics`, so normalize (same as deals.ts does).
+      const ar = args.analysisResult as Record<string, unknown>;
+      const normalizedAnalysis = {
+        ...ar,
+        metrics: ar.metrics ?? ar.keyMetrics,
+      };
+      const mfEngine = new MFDecisionEngine(
+        normalizedAnalysis as unknown as ConstructorParameters<
+          typeof MFDecisionEngine
+        >[0],
+        args.propertyData as MultiFamilyData,
+        args.marketIntelligence as
+          | ConstructorParameters<typeof MFDecisionEngine>[2]
+          | undefined,
+        args.predictions,
+        args.userContext,
+        undefined // enhancedGoals — not exposed at this layer
+      );
+      const decision = await mfEngine.generateDecisionWithAI();
+      return decision as unknown as EngineOutputForProjection &
+        Record<string, unknown>;
+    }
+
+    // SFR path — the legacy engine's signature is positional + has more
+    // knobs we don't expose at this layer (enhancedGoals,
+    // skipEnhancements). We pass through the documented inputs and let
+    // internal defaults handle the rest — strangler-fig respect.
     const engine = new InvestmentDecisionEngine();
-    // The legacy engine's signature is positional + has more knobs we
-    // don't expose at this layer (enhancedGoals, skipEnhancements). We
-    // pass through the documented inputs and let internal defaults
-    // handle the rest — strangler-fig respect.
     const decision = await engine.generateInvestmentDecision(
       args.propertyData as SFRData,
       args.analysisResult,

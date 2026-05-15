@@ -285,6 +285,49 @@ describe('tool:score_deal (W4-S1)', () => {
       const events = await reads.getEventsByTraceId('trace-malformed');
       expect(events).toHaveLength(0);
     });
+
+    // ===== MF engine routing (W5-S3) =====
+
+    it('routes MF propertyData to the adapter (engine adapter receives propertyType: MF)', async () => {
+      // The default adapter routes on propertyType internally (SFR →
+      // InvestmentDecisionEngine, MF → MFDecisionEngine). Tests
+      // substitute the whole adapter, so we verify here that the
+      // tool faithfully forwards the propertyType the agent supplied —
+      // the routing branch is the default adapter's responsibility.
+      const adapter = makeStubAdapter();
+      setEngineAdapter(adapter);
+
+      const userId = new Types.ObjectId();
+      const mfInput = {
+        ...makeInput(),
+        propertyData: {
+          propertyType: 'MF' as const,
+          purchasePrice: 850000,
+          totalUnits: 4,
+          totalSqft: 5200,
+        } as unknown as ScoreDealInput['propertyData'],
+        analysisResult: {
+          ...makeInput().analysisResult,
+          // MF analyzer emits keyMetrics — verify it survives the
+          // passthrough into the adapter (the adapter normalizes
+          // keyMetrics → metrics for the MF engine internally).
+          keyMetrics: { capRate: 6.5, dscr: 1.18 },
+        } as unknown as ScoreDealInput['analysisResult'],
+      };
+      await scoreDeal.execute(mfInput, makeCtx(userId));
+
+      expect(adapter.calls).toHaveLength(1);
+      const args = adapter.calls[0] as Record<string, unknown>;
+      expect((args.propertyData as Record<string, unknown>).propertyType).toBe(
+        'MF'
+      );
+      expect((args.propertyData as Record<string, unknown>).totalUnits).toBe(4);
+      // keyMetrics survives the passthrough (the MF engine adapter
+      // normalizes downstream)
+      expect(
+        (args.analysisResult as Record<string, unknown>).keyMetrics
+      ).toBeDefined();
+    });
   });
 
   // ===== Walk-away price fallback =====
