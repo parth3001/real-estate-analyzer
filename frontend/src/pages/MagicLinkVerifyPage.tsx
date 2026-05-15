@@ -29,6 +29,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { authApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { claimChatSession } from '../services/chatApi';
+import {
+  readPendingChatClaim,
+  clearPendingChatClaim,
+} from '../services/pendingChatClaim';
 import analyzrLogo from '../assets/analyzr-logo.png';
 
 type ErrorReason = 'expired' | 'used' | 'invalid' | 'network';
@@ -67,6 +72,25 @@ const MagicLinkVerifyPage: React.FC = () => {
         // before we navigate; otherwise /dashboard bounces back to /login.
         setAuthenticatedUser(res.data.user);
         setPhase('success');
+
+        // W6-S5 — if a chat session was stashed before the user clicked
+        // the portfolio CTA, claim it now (server-side ghost-user merge).
+        // Idempotent: if the ghost doesn't exist, the call no-ops and we
+        // still route the user to their intended destination.
+        const pending = readPendingChatClaim();
+        if (pending) {
+          try {
+            await claimChatSession(pending.sessionId);
+          } catch (claimErr) {
+            // Non-fatal — user is authenticated, just couldn't merge.
+            // Log + continue; the deals stay queryable under the ghost
+            // until a future claim or cleanup job.
+            console.warn('[MagicLinkVerify] chat session claim failed', claimErr);
+          }
+          clearPendingChatClaim();
+          setTimeout(() => navigate(pending.returnTo), 300);
+          return;
+        }
         setTimeout(() => navigate('/dashboard'), 300);
         return;
       }

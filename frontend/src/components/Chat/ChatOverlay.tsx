@@ -38,6 +38,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
+import { writePendingChatClaim } from '../../services/pendingChatClaim';
 import { DealScoreCard, type DealScoreCardProps } from './DealScoreCard';
 import { EmailCtaModal } from './EmailCtaModal';
 
@@ -311,15 +312,26 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   };
 
   /**
-   * Portfolio-CTA handler — routes anonymous users to the login flow
-   * carrying `returnTo=/app` so they land back here after signup. The
-   * server-side ghost-user merge (W6-S5) will then claim every prior
-   * chat-generated deal under the now-authenticated user.
+   * Portfolio-CTA handler — W6-S5.
    *
-   * For already-authenticated users, the same redirect lands on the
-   * portfolio surface directly via auth bypass — wired in W6-S5.
+   * Stashes a "pendingClaim" record in localStorage so the magic-link
+   * verify page (which may open in a different tab) can:
+   *   1. Verify the token
+   *   2. Read pendingClaim → call POST /api/chat/claim-session with the
+   *      sessionId → server merges every event under the ghost user
+   *      into the now-authenticated real user
+   *   3. Navigate to `returnTo` (back to /app, deal claimed)
+   *
+   * Then navigates to /login. The login flow is unchanged otherwise —
+   * existing users get magic-linked the same way. The claim handler is
+   * additive at the magic-link consume step.
    */
   const handlePortfolioCta = (msg: AssistantMessage): void => {
+    writePendingChatClaim({
+      sessionId,
+      returnTo: '/app',
+      conversationEventId: msg.conversationEventId,
+    });
     const params = new URLSearchParams({
       returnTo: '/app',
       ...(msg.conversationEventId

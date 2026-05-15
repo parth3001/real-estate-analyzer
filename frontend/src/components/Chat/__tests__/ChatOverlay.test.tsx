@@ -49,6 +49,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 import { streamChatTurn, sendChatEmailSummary } from '../../../services/chatApi';
+import { PENDING_CHAT_CLAIM_KEY } from '../../../services/pendingChatClaim';
 const mockStreamChatTurn = streamChatTurn as ReturnType<typeof vi.fn>;
 const mockSendChatEmailSummary = sendChatEmailSummary as ReturnType<typeof vi.fn>;
 
@@ -126,6 +127,7 @@ describe('ChatOverlay (W6-S3 streaming)', () => {
     mockSendChatEmailSummary.mockReset();
     mockNavigate.mockReset();
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(PENDING_CHAT_CLAIM_KEY);
   });
 
   it('renders empty-state suggestion when thread is empty', () => {
@@ -508,6 +510,34 @@ describe('ChatOverlay (W6-S3 streaming)', () => {
       expect(target).toContain('/login?');
       expect(target).toContain('returnTo=%2Fapp');
       expect(target).toContain('pendingConversationId=');
+    });
+
+    it('portfolio CTA stashes a pendingChatClaim in localStorage (W6-S5)', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+      await user.click(await screen.findByTestId('chat-cta-portfolio'));
+
+      const raw = localStorage.getItem(PENDING_CHAT_CLAIM_KEY);
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.returnTo).toBe('/app');
+      expect(parsed.sessionId).toBe(
+        sessionStorage.getItem(SESSION_STORAGE_KEY)
+      );
+      expect(typeof parsed.stashedAt).toBe('number');
+      // conversationEventId comes from the `done` event; threaded through
+      // the assistant message and into the stashed claim.
+      expect(parsed.conversationEventId).toBeTruthy();
     });
   });
 });

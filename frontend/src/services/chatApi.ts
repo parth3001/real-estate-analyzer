@@ -251,6 +251,52 @@ export async function sendChatEmailSummary(
   }
 }
 
+// ===== Claim-session endpoint (W6-S5) =====
+
+/**
+ * Result returned by POST /api/chat/claim-session.
+ * Mirrors backend MergeResult shape (services/chatSessionMergeService.ts).
+ */
+export interface ChatClaimSessionResult {
+  /** True if a ghost user was found + its events reassigned. */
+  merged: boolean;
+  /** Number of substrate events reassigned (0 when merged=false). */
+  eventsMerged: number;
+  /** Number of CostEvents reassigned (0 when merged=false). */
+  costEventsMerged: number;
+  /** Reassigned ghost's _id (hex) — null when merged=false. */
+  ghostUserId: string | null;
+}
+
+/**
+ * "Claim my anonymous chat session" — W6-S5.
+ *
+ * Auth-required (the shared axios interceptor attaches the Bearer JWT).
+ * Idempotent: if there's no ghost user for the sessionId (already
+ * claimed, never existed), the server returns merged=false and the
+ * caller proceeds normally.
+ *
+ * Wire moment: called immediately after magic-link verify succeeds,
+ * before navigating to the post-auth destination.
+ */
+export async function claimChatSession(
+  sessionId: string
+): Promise<ChatClaimSessionResult> {
+  try {
+    const { data } = await api.post<ChatClaimSessionResult>(
+      '/chat/claim-session',
+      { sessionId }
+    );
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const body = err.response?.data as { error?: string } | undefined;
+      throw new Error(body?.error ?? 'Could not claim chat session.');
+    }
+    throw err;
+  }
+}
+
 export async function* streamChatTurn(
   request: ChatTurnRequest,
   opts: { signal?: AbortSignal } = {}

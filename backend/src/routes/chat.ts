@@ -31,9 +31,10 @@
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { Types } from 'mongoose';
-import { type AuthenticatedRequest } from '../middleware/auth';
+import { authMiddleware, type AuthenticatedRequest } from '../middleware/auth';
 import { chatIdentityMiddleware } from '../middleware/chatIdentity';
 import { chatSessionRateLimit } from '../middleware/chatSessionRateLimit';
+import { mergeAnonymousSessionIntoUser } from '../services/chatSessionMergeService';
 import { handleTurn, streamTurn } from '../agents/orchestrator/orchestrator';
 import { projectDealScoreCard } from '../agents/orchestrator/dealScoreCardProjection';
 import {
@@ -461,6 +462,84 @@ router.post(
         error: err instanceof Error ? err.stack ?? err.message : String(err),
       });
       res.status(500).json({ error: 'Could not send email. Please try again.' });
+    }
+  }
+);
+
+// ===== Claim-session endpoint — W6-S5 =====
+
+/**
+ * Request body for POST /api/chat/claim-session.
+ *
+ * The frontend calls this AFTER magic-link signup completes. It carries
+ * the anonymous sessionId the user had been chatting under so the
+ * server can reassign every substrate row from the ghost user to the
+ * now-authenticated real user.
+ */
+const ChatClaimSessionBodySchema = z
+  .object({
+    sessionId: z.string().uuid(),
+  })
+  .strict();
+
+/**
+ * POST /api/chat/claim-session
+ *
+ * Auth-required (real user — NOT the chat's anonymous identity
+ * middleware). The mergeAnonymousSessionIntoUser service is idempotent:
+ * if the ghost doesn't exist (already claimed, never existed), we return
+ * { merged: false } and the caller proceeds normally.
+ */
+router.post(
+  '/claim-session',
+  authMiddleware,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Access token required' });
+      return;
+    }
+    if (!Types.ObjectId.isValid(req.user.id)) {
+      res.status(401).json({ error: 'Invalid user id in auth token' });
+      return;
+    }
+
+    let body: z.infer<typeof ChatClaimSessionBodySchema>;
+    try {
+      body = ChatClaimSessionBodySchema.parse(req.body);
+    } catch (err) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        detail: err instanceof Error ? err.message : 'Unknown validation error',
+      });
+      return;
+    }
+
+    try {
+      const result = await mergeAnonymousSessionIntoUser(
+        body.sessionId,
+        new Types.ObjectId(req.user.id)
+      );
+
+      // Activation-funnel telemetry — claim is the conversion completion
+      // signal. Queryable: how many anonymous → authenticated transitions
+      // brought meaningful prior activity (eventsMerged > 0).
+      logger.info('chat.session.claimed', {
+        event: 'chat.session.claimed',
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        merged: result.merged,
+        eventsMerged: result.eventsMerged,
+        costEventsMerged: result.costEventsMerged,
+      });
+
+      res.status(200).json(result);
+    } catch (err) {
+      logger.error('chat/claim-session: merge failed', {
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      res.status(500).json({ error: 'Could not claim chat session.' });
     }
   }
 );

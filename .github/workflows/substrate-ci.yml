@@ -59,7 +59,10 @@ on:
       - 'backend/src/agents/orchestrator/dealScoreCardProjection.ts'
       - 'backend/src/agents/orchestrator/__tests__/dealScoreCardProjection.test.ts'
       - 'backend/src/routes/__tests__/chat.email-summary.test.ts'
+      - 'backend/src/routes/__tests__/chat.claim-session.test.ts'
       - 'backend/src/services/emailService.ts'
+      - 'backend/src/services/chatSessionMergeService.ts'
+      - 'backend/src/services/__tests__/chatSessionMergeService.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -93,7 +96,10 @@ on:
       - 'backend/src/agents/orchestrator/dealScoreCardProjection.ts'
       - 'backend/src/agents/orchestrator/__tests__/dealScoreCardProjection.test.ts'
       - 'backend/src/routes/__tests__/chat.email-summary.test.ts'
+      - 'backend/src/routes/__tests__/chat.claim-session.test.ts'
       - 'backend/src/services/emailService.ts'
+      - 'backend/src/services/chatSessionMergeService.ts'
+      - 'backend/src/services/__tests__/chatSessionMergeService.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -161,10 +167,12 @@ jobs:
             src/utils/__tests__/anthropicPricing.test.ts \
             src/routes/__tests__/chat.test.ts \
             src/routes/__tests__/chat.email-summary.test.ts \
+            src/routes/__tests__/chat.claim-session.test.ts \
             src/middleware/__tests__/chatIdentity.test.ts \
             src/middleware/__tests__/chatSessionRateLimit.test.ts \
             src/agents/orchestrator/__tests__/orchestrator.stream.test.ts \
             src/agents/orchestrator/__tests__/dealScoreCardProjection.test.ts \
+            src/services/__tests__/chatSessionMergeService.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \
