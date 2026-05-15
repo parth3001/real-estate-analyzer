@@ -35,6 +35,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { ModelTier } from '../tools/types';
+import { logger } from '../../utils/logger';
 
 // ===== Resolved model names =====
 
@@ -161,16 +162,73 @@ function getClient(): Anthropic {
   return lazyClient;
 }
 
+// ===== Transient-error retry =====
+//
+// Per /docs/PRODUCT_2.0_AGENT_MESH.md §2.6: transient errors retry
+// with exponential backoff. The TOOLS carry retrySemantics, but the
+// agent-level LLM calls didn't — a gap the W5 live test surfaced when
+// a 529 overloaded_error killed an entire run.
+//
+// Retry on: 429 (rate limit), 500/502/503/529 (server / overloaded),
+// and network-level errors (no .status). Do NOT retry on 400 (our
+// malformed request — a bug to fix, not paper over), 401 (auth), 413.
+
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 529]);
+const MAX_LLM_ATTEMPTS = 3;
+const RETRY_BASE_MS = 1000;
+
+function isRetryableLlmError(err: unknown): boolean {
+  const status = (err as { status?: number } | undefined)?.status;
+  if (typeof status === 'number') return RETRYABLE_STATUS.has(status);
+  // No status — network/timeout error. Retryable.
+  if (err instanceof Error) return true;
+  return false;
+}
+
+/**
+ * Run an Anthropic SDK call with exponential-backoff retry on transient
+ * errors. Wraps both `call` and `callWithTools`.
+ */
+async function withLlmRetry<T>(
+  label: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= MAX_LLM_ATTEMPTS; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt === MAX_LLM_ATTEMPTS || !isRetryableLlmError(err)) {
+        throw err;
+      }
+      const status = (err as { status?: number } | undefined)?.status;
+      const backoffMs = RETRY_BASE_MS * 2 ** (attempt - 1);
+      logger.warn('anthropicAdapter: transient LLM error — retrying', {
+        label,
+        attempt,
+        nextAttemptIn: `${backoffMs}ms`,
+        status: status ?? 'network',
+        error: err instanceof Error ? err.message.slice(0, 200) : String(err),
+      });
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 export const defaultAnthropicAdapter: AnthropicAdapter = {
   async call(input: AnthropicCallInput): Promise<AnthropicCallOutput> {
     const model = resolveModelName(input.tier);
-    const response = await getClient().messages.create({
-      model,
-      max_tokens: input.maxTokens ?? 1024,
-      temperature: input.temperature ?? 0,
-      system: input.systemPrompt,
-      messages: [{ role: 'user', content: input.userPrompt }],
-    });
+    const response = await withLlmRetry(`call:${model}`, () =>
+      getClient().messages.create({
+        model,
+        max_tokens: input.maxTokens ?? 1024,
+        temperature: input.temperature ?? 0,
+        system: input.systemPrompt,
+        messages: [{ role: 'user', content: input.userPrompt }],
+      })
+    );
 
     // Concatenate text blocks. Multi-block responses are unusual for
     // single-shot extraction but defensive merging is cheap.
@@ -225,7 +283,9 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
 
     // Force the non-streaming return type. params has no `stream: true`,
     // so the SDK returns Message — but the overload union confuses TS.
-    const response = (await getClient().messages.create(params)) as Anthropic.Message;
+    const response = (await withLlmRetry(`callWithTools:${model}`, () =>
+      getClient().messages.create(params)
+    )) as Anthropic.Message;
 
     const blocks: AnthropicResponseBlock[] = response.content
       .filter(

@@ -339,6 +339,65 @@ describe('tool:score_deal (W4-S1)', () => {
       };
       await expect(scoreDeal.execute(malformed, ctx)).rejects.toThrow();
     });
+
+    // ===== W5 live-test fix: userContext is forgiving of LLM-extra fields =====
+
+    it('ACCEPTS a userContext with extra fields the LLM copied from recall_user_context', async () => {
+      // The deal-scoring agent has the full recall_user_context output
+      // in its context window and routinely copies extra profile fields
+      // (portfolioSize, primaryMarkets, role, institutionContext, ...)
+      // into the userContext it assembles for score_deal. The old
+      // .strict() schema THREW on any unknown key — the W5 live test
+      // showed score_deal failing ~50% of first calls. The fix: drop
+      // .strict() so Zod strips unknowns instead of rejecting.
+      setEngineAdapter(makeStubAdapter());
+      const userId = new Types.ObjectId();
+      const messyInput = {
+        ...makeInput(),
+        userContext: {
+          // The 5 known fields...
+          riskTolerance: 'moderate' as const,
+          experienceLevel: 'intermediate' as const,
+          // ...plus a pile of extra fields the LLM copied from the
+          // recall_user_context profile output. .strict() would have
+          // thrown on every one of these.
+          portfolioSize: '4-10',
+          primaryMarkets: ['Austin', 'Dallas'],
+          role: 'principal',
+          institutionContext: { institutionType: 'hard_money' },
+          extractedFromInput: 'I run a lending fund',
+        },
+      } as unknown as ScoreDealInput;
+
+      // Must NOT throw — the extra fields are stripped, not rejected.
+      await expect(
+        scoreDeal.execute(messyInput, makeCtx(userId))
+      ).resolves.toBeDefined();
+    });
+
+    it('strips extra userContext fields — substrate DecisionEvent only gets the 5 known persona fields', async () => {
+      setEngineAdapter(makeStubAdapter());
+      const userId = new Types.ObjectId();
+      const messyInput = {
+        ...makeInput(),
+        userContext: {
+          riskTolerance: 'aggressive' as const,
+          portfolioSize: '30+', // extra — must not reach substrate
+          role: 'analyst', // extra — must not reach substrate
+        },
+      } as unknown as ScoreDealInput;
+
+      const out = await scoreDeal.execute(messyInput, makeCtx(userId, 'trace-messy'));
+      const events = await reads.getEventsByTraceId('trace-messy');
+      const decision = events.find((e) => e.eventType === 'decision')!;
+      const persisted = (decision.payload as { userContext?: Record<string, unknown> })
+        .userContext;
+      // The known field survives...
+      expect(persisted?.riskTolerance).toBe('aggressive');
+      // ...the LLM-extra fields do NOT reach substrate
+      expect(persisted?.portfolioSize).toBeUndefined();
+      expect(persisted?.role).toBeUndefined();
+    });
   });
 
   // ===== Correlation =====

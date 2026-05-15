@@ -9,10 +9,13 @@
  *   "Analyze 123 Main St, Austin TX. List price $425K."
  *
  * Orchestrates the score-producing tool chain:
- *   1. recall_user_context  → load profile + recent decisions
- *   2. enrich_property      → comps + economic + demographics
- *   3. compute_analysis     → metrics + monthly + projection
- *   4. score_deal           → dealQuality + breakdown + substrate writes
+ *   1. recall_user_context     → load profile + recent decisions
+ *   2. resolve_property_inputs → address + price → complete SFRData
+ *                                 (RentCast facts + rent, FRED rate,
+ *                                  tax service, standard defaults) +
+ *                                  the confirm-before / disclose-after split
+ *   3. compute_analysis        → metrics + monthly + projection
+ *   4. score_deal              → dealQuality + breakdown + substrate writes
  *
  * Emits text response describing the deal, with the substrate-written
  * AnalysisEvent + DecisionEvent IDs surfaced via the runner's
@@ -32,7 +35,6 @@ import type { Types } from 'mongoose';
 import { runAgent, type AgentConfig, type AgentRunOutput } from '../runner/agentRunner';
 import type { ToolContext } from '../tools/types';
 import { recallUserContext } from '../tools/recall_user_context';
-import { enrichProperty } from '../tools/enrich_property';
 import { resolvePropertyInputs } from '../tools/resolve_property_inputs';
 import { computeAnalysis } from '../tools/compute_analysis';
 import { scoreDeal } from '../tools/score_deal';
@@ -102,68 +104,73 @@ The ONE irreducible user input is **purchase price**. If the user's
 message doesn't include it, ask for it (you can ask for price and
 confirm strategy in the same message — see STEP 0).
 
-ORCHESTRATION (only once strategy AND purchase price are known)
-───────────────────────────────────────────────────────────────
+ORCHESTRATION — the EXACT tool sequence
+────────────────────────────────────────
 
-Work through these tools in this order:
+Once strategy AND purchase price are known, work the tools in this
+EXACT order. Do not skip steps. Do not substitute tools.
 
-  1. recall_user_context — load the user's current profile + recent
-     decisions. Their riskTolerance / investorType / primaryGoal
-     drives the engine's scoring weights.
+  STEP 1 — recall_user_context
+    Load the user's profile + recent decisions. Their riskTolerance /
+    investorType / primaryGoal drives the engine's scoring weights.
+    Call it with NO arguments — it reads the current user from context.
 
-  2. enrich_property — pull market data + the property facts. Use this
-     to SHOW the user the RentCast rent estimate (see TRANSPARENCY
-     below — you confirm rent BEFORE scoring).
+  STEP 2 — resolve_property_inputs
+    THIS is the data step. Do NOT use any other tool to gather
+    property data. Call it with:
+      { address: { street, city, state, zipCode },
+        purchasePrice: <number>,
+        propertyType: "SFR",
+        userOverrides?: { ...any fields the user has corrected } }
+    It internally fetches RentCast property facts + rent estimate,
+    the FRED mortgage rate, and the property tax rate, then fills the
+    rest with standard defaults. It returns:
+      - propertyData         (complete SFRData — feed to compute_analysis)
+      - assumptions          (standard projection assumptions)
+      - provenance           (per-field: where each value came from)
+      - confirmBeforeScoring (fields to CONFIRM with the user FIRST)
+      - discloseAfterScoring (defaults to MENTION after scoring)
 
-  3. resolve_property_inputs — turn { address, purchasePrice,
-     propertyType: "SFR", userOverrides? } into the complete property
-     data the engine needs. It auto-populates property facts (RentCast),
-     the mortgage rate (FRED), and the property tax rate (tax service),
-     and fills the rest with standard defaults. It returns:
-       - propertyData (complete, ready for compute_analysis)
-       - assumptions (standard projection assumptions)
-       - provenance (per-field: where each value came from)
-       - confirmBeforeScoring (fields to confirm with the user FIRST)
-       - discloseAfterScoring (defaults to mention AFTER scoring)
-     If the user has corrected any field in conversation (e.g. "rent
-     is actually $2,650"), pass it in userOverrides — keys are field
-     names (monthlyRent, downPayment, interestRate, etc.).
+  *** CHECKPOINT after STEP 2 ***
+    If confirmBeforeScoring is NON-EMPTY, you MUST stop here.
+    Surface those items to the user using each item's 'prompt' text,
+    then end your turn. Do NOT call compute_analysis or score_deal yet.
+    On the user's next message:
+      - if they confirm → re-call resolve_property_inputs (the values
+        are stable) and continue to STEP 3
+      - if they correct a value → re-call resolve_property_inputs with
+        the correction in userOverrides, then continue to STEP 3
+    If confirmBeforeScoring is EMPTY (e.g. the user already supplied
+    rent), continue straight to STEP 3.
 
-  4. compute_analysis — compute the 60+ metrics from the resolved
-     propertyData + assumptions. propertyType: "SFR".
+  STEP 3 — compute_analysis
+    Compute the 60+ metrics from the resolved propertyData +
+    assumptions. propertyType: "SFR".
 
-  5. score_deal — pass the analysis + property data + user context
-     to the deterministic scoring engine. CRITICAL: include the
-     investment strategy in the propertyData you pass to score_deal,
-     as propertyData.investmentStrategy = "buy_hold" | "brrrr". This
-     is what routes the engine to the correct code path. This tool
-     emits AnalysisEvent + DecisionEvent to substrate and returns the
-     dealQuality (0-100).
+  STEP 4 — score_deal
+    Pass the analysis + property data + user context to the
+    deterministic scoring engine. CRITICAL: include the investment
+    strategy in the propertyData you pass —
+    propertyData.investmentStrategy = "buy_hold" | "brrrr" — this is
+    what routes the engine to the correct code path. score_deal emits
+    AnalysisEvent + DecisionEvent and returns the dealQuality (0-100).
 
-TRANSPARENCY — two buckets (confirm before, disclose after)
-────────────────────────────────────────────────────────────
+TRANSPARENCY — the two buckets resolve_property_inputs gives you
+─────────────────────────────────────────────────────────────────
 
-resolve_property_inputs splits its inferred values into two buckets.
-Handle them differently:
+  confirmBeforeScoring — score-critical AND likely-wrong, chiefly the
+    RentCast rent estimate. Handled by the CHECKPOINT above: surface,
+    stop, wait. NEVER score on an unconfirmed rent estimate.
 
-  CONFIRM BEFORE SCORING (the confirmBeforeScoring list):
-    These are score-critical AND likely-wrong — chiefly the RentCast
-    rent estimate. Before you call compute_analysis + score_deal,
-    surface these to the user using the 'prompt' text provided, e.g.:
-      "RentCast estimates rent around $2,800/mo — does that match
-       what you're seeing? And I'll need your offer price."
-    If the user corrects a value, re-call resolve_property_inputs
-    with it in userOverrides. Do NOT score on an unconfirmed rent
-    estimate.
-
-  DISCLOSE AFTER SCORING (the discloseAfterScoring list):
-    These are defaults that are usually fine — down payment %, loan
-    term, tax rate, insurance, etc. Do NOT interrogate the user about
-    these up front. After you present the score, add ONE collapsed
-    line listing them, e.g.:
+  discloseAfterScoring — defaults that are usually fine: down payment %,
+    loan term, mortgage rate, tax rate, insurance, etc. Do NOT
+    interrogate the user about these up front. AFTER you present the
+    score, add ONE collapsed line listing them, e.g.:
       "Ran this on standard assumptions: 25% down, 30yr @ 7.1%,
-       1.8% property tax (TX avg), 5% vacancy. Want to change any?"
-    The user can override any of them — that re-runs the score.
+       1.8% property tax, plus standard vacancy/maintenance. Want to
+       change any?"
+    The user can override any of them — that re-runs the score
+    (re-call resolve_property_inputs with the override, then STEP 3+4).
 
 NEVER silently default a value the user would care about without
 disclosing it. Transparency is the trust mechanism. A score the user
@@ -217,9 +224,15 @@ offer changes the picture."
 
 // ===== Allowed tools =====
 
+// The deal-scoring agent's tool set is deliberately tight: 4 tools,
+// one clean sequence. enrich_property is intentionally NOT here —
+// resolve_property_inputs is the purpose-built composite that does
+// everything enrich_property does (RentCast facts + rent + FRED rate)
+// PLUS the tax service PLUS the defaults PLUS the two-bucket split.
+// The W5 live test (2026-05-14) showed that including enrich_property
+// led the agent to gather data via enrich and skip resolve entirely.
 const ALLOWED_TOOLS = {
   recall_user_context: recallUserContext,
-  enrich_property: enrichProperty,
   resolve_property_inputs: resolvePropertyInputs,
   compute_analysis: computeAnalysis,
   score_deal: scoreDeal,

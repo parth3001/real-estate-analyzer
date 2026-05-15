@@ -308,16 +308,32 @@ export async function runAgent(
         });
       } catch (err) {
         const durationMs = Date.now() - toolStart;
+        const errMsg = err instanceof Error ? err.message : String(err);
         toolCallsExecuted.push({
           toolName: block.name,
           inputHash,
           success: false,
           durationMs,
         });
+        // Surface the failure at warn level. Inside the tool-use loop a
+        // tool error is fed back to the LLM (which often recovers by
+        // retrying with corrected input) — but the failure is otherwise
+        // invisible. Logging it makes "tool X fails on first call every
+        // time" debuggable. The input is logged to diagnose WHY the
+        // LLM's first attempt was malformed.
+        logger.warn('agentRunner: tool call failed', {
+          agent: config.name,
+          traceId: ctx.traceId,
+          toolName: block.name,
+          iteration: i + 1,
+          error: errMsg,
+          // Truncate the input — LLM tool inputs can be large
+          toolInput: JSON.stringify(block.input).slice(0, 800),
+        });
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
-          content: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          content: `Error: ${errMsg}`,
           is_error: true,
         });
       }

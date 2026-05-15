@@ -160,20 +160,39 @@ const EnrichmentSourceSchema = z.enum([
   'composite',
 ]);
 
-const UserContextZodSchema = z
-  .object({
-    riskTolerance: z.enum(['conservative', 'moderate', 'aggressive']).optional(),
-    investmentStrategy: z.enum(['cashflow', 'appreciation', 'balanced']).optional(),
-    experienceLevel: z
-      .enum(['novice', 'intermediate', 'experienced', 'expert'])
-      .optional(),
-    investorType: z.enum(['retail', 'pro', 'lender', 'consultancy']).optional(),
-    primaryGoal: z
-      .enum(['cash_flow', 'wealth_building', 'diversification', 'tax_optimization'])
-      .optional(),
-    availableCash: z.number().nonnegative().optional(),
-  })
-  .strict();
+/**
+ * userContext schema — INTENTIONALLY NOT .strict().
+ *
+ * This input comes from an LLM (the deal-scoring agent), which has the
+ * full recall_user_context output in its context window — profile,
+ * recent decisions, overrides. When it assembles `userContext` for
+ * score_deal it routinely copies extra profile fields (portfolioSize,
+ * primaryMarkets, role, institutionContext, ...). A .strict() schema
+ * rejects ANY unknown key, so score_deal would throw on the first
+ * attempt and the agent would burn a round-trip recovering.
+ *
+ * The W5 live test (2026-05-14) showed exactly this: score_deal failed
+ * ~50% of the time on first call. Zod's default .strip() behavior
+ * (drop unknown keys) is the right posture for LLM-facing tool input —
+ * be forgiving of what the model assembles. The downstream projector
+ * (projectEngineOutputToEventPayloads) explicitly picks only the 5
+ * known persona fields anyway, so extra keys never reach substrate.
+ *
+ * .strict() stays where it belongs: substrate-WRITE schemas
+ * (DecisionPayloadSchema etc.) — there, an unexpected field IS a bug.
+ */
+const UserContextZodSchema = z.object({
+  riskTolerance: z.enum(['conservative', 'moderate', 'aggressive']).optional(),
+  investmentStrategy: z.enum(['cashflow', 'appreciation', 'balanced']).optional(),
+  experienceLevel: z
+    .enum(['novice', 'intermediate', 'experienced', 'expert'])
+    .optional(),
+  investorType: z.enum(['retail', 'pro', 'lender', 'consultancy']).optional(),
+  primaryGoal: z
+    .enum(['cash_flow', 'wealth_building', 'diversification', 'tax_optimization'])
+    .optional(),
+  availableCash: z.number().nonnegative().optional(),
+});
 
 export const ScoreDealInputSchema = z.object({
   /** Property under analysis (SFR or MF). */

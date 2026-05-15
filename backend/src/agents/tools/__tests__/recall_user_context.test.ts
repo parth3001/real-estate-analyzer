@@ -205,6 +205,52 @@ describe('tool:recall_user_context (W4-S0)', () => {
       const resultA = await recallUserContext.execute({ userId: userA }, makeCtx(userA));
       expect(resultA.profile).toMatchObject({ investorType: 'retail' });
     });
+
+    // ===== W5 live-test bug fix: userId defaults to ctx.userId =====
+
+    it('defaults userId to ctx.userId when omitted from input (the normal agent path)', async () => {
+      const userId = new Types.ObjectId();
+      await writes.writeProfileEvent({
+        traceId: 'ctx-default',
+        actorType: 'user',
+        userId,
+        payload: { investorType: 'lender', riskTolerance: 'conservative' },
+      });
+
+      // Agent calls with NO userId — the LLM doesn't know it. The tool
+      // must fall back to ctx.userId. (This is the bug the live test
+      // surfaced: the old schema required userId, so the agent's call
+      // failed.)
+      const result = await recallUserContext.execute({}, makeCtx(userId));
+      expect(result.profile).toMatchObject({
+        investorType: 'lender',
+        riskTolerance: 'conservative',
+      });
+    });
+
+    it('input userId (when supplied) overrides ctx.userId — B2B path', async () => {
+      const ctxUser = new Types.ObjectId();
+      const targetUser = new Types.ObjectId();
+      await writes.writeProfileEvent({
+        traceId: 'ctx-u',
+        actorType: 'user',
+        userId: ctxUser,
+        payload: { investorType: 'retail' },
+      });
+      await writes.writeProfileEvent({
+        traceId: 'target-u',
+        actorType: 'user',
+        userId: targetUser,
+        payload: { investorType: 'pro' },
+      });
+
+      // Explicit userId in input wins over ctx.userId
+      const result = await recallUserContext.execute(
+        { userId: targetUser },
+        makeCtx(ctxUser)
+      );
+      expect(result.profile).toMatchObject({ investorType: 'pro' });
+    });
   });
 
   // ===== Trust boundary =====

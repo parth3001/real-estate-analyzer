@@ -29,17 +29,34 @@ import {
 // ===== Input schema =====
 
 /**
- * Input — just the userId. The orchestrator passes it from the session
- * context. Accepts ObjectId or 24-char hex string (mirrors the repository
- * read API ergonomics).
+ * Input.
+ *
+ * `userId` is OPTIONAL and rarely supplied. This tool fundamentally
+ * means "recall context for THE CURRENT USER" — the userId belongs to
+ * the ToolContext (the orchestrator owns session identity), NOT to the
+ * LLM. An agent calling this tool does NOT know the real userId; if
+ * the schema required it, the LLM would either omit it (Zod rejects)
+ * or hallucinate an ObjectId (wrong data / failure).
+ *
+ * Bug found by the W5 live test (2026-05-14): the agent's
+ * `recall_user_context` call failed because the old schema required
+ * `userId`. Fix: read it from `ctx` by default; keep an optional
+ * override only for the rare B2B case (a loan officer recalling a
+ * specific client's context — a future authorized path).
  */
 export const RecallUserContextInputSchema = z.object({
-  userId: z.union([
-    z.instanceof(Types.ObjectId),
-    z.string().refine((s) => Types.ObjectId.isValid(s), {
-      message: 'Expected 24-char hex ObjectId string',
-    }),
-  ]),
+  /**
+   * Optional override. When omitted (the normal case), the tool uses
+   * `ctx.userId`. Accepts ObjectId or 24-char hex string.
+   */
+  userId: z
+    .union([
+      z.instanceof(Types.ObjectId),
+      z.string().refine((s) => Types.ObjectId.isValid(s), {
+        message: 'Expected 24-char hex ObjectId string',
+      }),
+    ])
+    .optional(),
   /** Optional override for how many decisions to pull (default 10 per §8.2). */
   decisionsLimit: z.number().int().positive().max(100).optional(),
   /** Optional override for how many overrides to pull (default 20 per §8.2). */
@@ -97,11 +114,16 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
     const decisionsLimit = validated.decisionsLimit ?? 10;
     const overridesLimit = validated.overridesLimit ?? 20;
 
+    // userId comes from the ToolContext by default — the orchestrator
+    // owns session identity. The LLM-supplied override is honored only
+    // when explicitly present (rare B2B path).
+    const userId = validated.userId ?? ctx.userId;
+
     // Three parallel reads — see events store §8.2 for the recipe.
     const [profile, recentDecisions, recentOverrides] = await Promise.all([
-      ctx.eventsReads.getCurrentProfile(validated.userId),
-      ctx.eventsReads.getRecentDecisionsForUser(validated.userId, decisionsLimit),
-      ctx.eventsReads.getRecentOverridesForUser(validated.userId, overridesLimit),
+      ctx.eventsReads.getCurrentProfile(userId),
+      ctx.eventsReads.getRecentDecisionsForUser(userId, decisionsLimit),
+      ctx.eventsReads.getRecentOverridesForUser(userId, overridesLimit),
     ]);
 
     // Output validation — same trust boundary, return side.
