@@ -36,6 +36,7 @@ const mockChatIdentityState = {
 
 jest.mock('../../agents/orchestrator/orchestrator', () => ({
   handleTurn: jest.fn(),
+  streamTurn: jest.fn(),
 }));
 
 jest.mock('../../middleware/chatIdentity', () => ({
@@ -59,11 +60,14 @@ jest.mock('../../middleware/chatIdentity', () => ({
 // eslint-disable-next-line import/first
 import chatRouter from '../chat';
 // eslint-disable-next-line import/first
-import { handleTurn } from '../../agents/orchestrator/orchestrator';
+import { handleTurn, streamTurn } from '../../agents/orchestrator/orchestrator';
 // eslint-disable-next-line import/first
 import { __resetChatSessionRateLimitForTests } from '../../middleware/chatSessionRateLimit';
+// eslint-disable-next-line import/first
+import type { OrchestratorStreamEvent } from '../../agents/orchestrator/streamEvents';
 
 const mockHandleTurn = handleTurn as jest.MockedFunction<typeof handleTurn>;
+const mockStreamTurn = streamTurn as jest.MockedFunction<typeof streamTurn>;
 
 // ===== Test app =====
 
@@ -375,5 +379,147 @@ describe('POST /api/chat/turn', () => {
       expect(JSON.stringify(res.body)).not.toContain('DB connection');
       expect(JSON.stringify(res.body)).not.toContain('mongo://');
     });
+  });
+});
+
+// ===== W6-S3 — streaming endpoint =====
+
+/**
+ * Parse an SSE response body into a list of orchestrator stream events.
+ * Mirrors the frontend's parseSseStream logic; sufficient for tests.
+ */
+function parseSseFrames(body: string): OrchestratorStreamEvent[] {
+  const events: OrchestratorStreamEvent[] = [];
+  for (const frame of body.split('\n\n')) {
+    const dataLines: string[] = [];
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
+    }
+    if (dataLines.length === 0) continue;
+    try {
+      events.push(JSON.parse(dataLines.join('\n')) as OrchestratorStreamEvent);
+    } catch {
+      // skip malformed
+    }
+  }
+  return events;
+}
+
+function stubStreamEvents(): OrchestratorStreamEvent[] {
+  return [
+    {
+      type: 'routing',
+      target: 'agent:qa',
+      routedTo: 'agent:qa',
+      classifierIntent: 'qa_general',
+      classifierConfidence: 90,
+    },
+    { type: 'text_delta', text: 'Cap rate' },
+    { type: 'text_delta', text: ' is the' },
+    { type: 'text_delta', text: ' yield.' },
+    {
+      type: 'done',
+      traceId: 'tr-stream-1',
+      conversationEventId: new Types.ObjectId().toHexString(),
+      relatedEventIds: [],
+      totalCostCents: 1.23,
+      agentStubbed: false,
+    },
+  ];
+}
+
+describe('POST /api/chat/turn/stream (W6-S3)', () => {
+  beforeEach(() => {
+    mockStreamTurn.mockReset();
+    __resetChatSessionRateLimitForTests();
+    mockChatIdentityState.userId = new Types.ObjectId().toHexString();
+    mockChatIdentityState.anonymous = true;
+  });
+
+  it('responds with text/event-stream and emits the scripted events as SSE frames', async () => {
+    const events = stubStreamEvents();
+    mockStreamTurn.mockImplementation(async function* () {
+      for (const ev of events) yield ev;
+    });
+
+    const res = await request(buildApp())
+      .post('/api/chat/turn/stream')
+      .send(validBody())
+      .buffer(true)
+      .parse((response, callback) => {
+        let data = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => {
+          data += chunk;
+        });
+        response.on('end', () => callback(null, data));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.header['content-type']).toMatch(/text\/event-stream/);
+    expect(res.header['cache-control']).toMatch(/no-cache/);
+
+    const parsed = parseSseFrames(res.body as string);
+    expect(parsed.length).toBe(events.length);
+    expect(parsed[0]).toMatchObject({ type: 'routing', target: 'agent:qa' });
+    expect(parsed.filter((e) => e.type === 'text_delta')).toHaveLength(3);
+    expect(parsed[parsed.length - 1].type).toBe('done');
+  });
+
+  it('emits an error frame and ends cleanly when streamTurn throws synchronously', async () => {
+    mockStreamTurn.mockImplementation(() => {
+      throw new Error('Sensitive: db at mongo://prod refused');
+    });
+
+    const res = await request(buildApp())
+      .post('/api/chat/turn/stream')
+      .send(validBody())
+      .buffer(true)
+      .parse((response, callback) => {
+        let data = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => {
+          data += chunk;
+        });
+        response.on('end', () => callback(null, data));
+      });
+
+    expect(res.status).toBe(200); // SSE keeps 200 — the error is in the body
+    const parsed = parseSseFrames(res.body as string);
+    expect(parsed[parsed.length - 1]).toEqual({
+      type: 'error',
+      message: 'Chat turn failed. Please try again.',
+    });
+    // No internal leak
+    expect(res.body as string).not.toContain('mongo://');
+    expect(res.body as string).not.toContain('Sensitive:');
+  });
+
+  it('validates the body before opening the stream (400 on malformed)', async () => {
+    const res = await request(buildApp())
+      .post('/api/chat/turn/stream')
+      .send({ userInput: '', sessionId: freshSessionId(), turnNumber: 1 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid request body');
+    expect(mockStreamTurn).not.toHaveBeenCalled();
+  });
+
+  it('honors the session rate limit (anon 11th stream → 429)', async () => {
+    const events = stubStreamEvents();
+    mockStreamTurn.mockImplementation(async function* () {
+      for (const ev of events) yield ev;
+    });
+    const sessionId = freshSessionId();
+    for (let i = 1; i <= 10; i++) {
+      await request(buildApp())
+        .post('/api/chat/turn/stream')
+        .send({ ...validBody(), sessionId, turnNumber: i });
+    }
+    const res = await request(buildApp())
+      .post('/api/chat/turn/stream')
+      .send({ ...validBody(), sessionId, turnNumber: 11 });
+
+    expect(res.status).toBe(429);
+    expect(res.body.error).toMatch(/free analysis limit/i);
   });
 });

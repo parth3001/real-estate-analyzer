@@ -44,7 +44,7 @@ describe('agentRunner (W5)', () => {
    *  scripted responses one per call. */
   function scriptedAdapter(
     responses: AnthropicMultiTurnOutput[]
-  ): AnthropicAdapter {
+  ): Partial<AnthropicAdapter> {
     let i = 0;
     return {
       async call() {
@@ -221,6 +221,9 @@ describe('agentRunner (W5)', () => {
             userId: new Types.ObjectId().toHexString(),
           });
         },
+        streamWithTools() {
+          throw new Error('streamWithTools not used in this test');
+        },
       });
       const result = await runAgent(
         {
@@ -306,6 +309,9 @@ describe('agentRunner (W5)', () => {
         async callWithTools(input) {
           observedUserMessage = input.messages[0].content as string;
           return textBlock('ack');
+        },
+        streamWithTools() {
+          throw new Error('streamWithTools not used in this test');
         },
       });
       await runAgent(

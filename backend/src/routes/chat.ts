@@ -34,7 +34,7 @@ import { Types } from 'mongoose';
 import { type AuthenticatedRequest } from '../middleware/auth';
 import { chatIdentityMiddleware } from '../middleware/chatIdentity';
 import { chatSessionRateLimit } from '../middleware/chatSessionRateLimit';
-import { handleTurn } from '../agents/orchestrator/orchestrator';
+import { handleTurn, streamTurn } from '../agents/orchestrator/orchestrator';
 import { logger } from '../utils/logger';
 
 // ===== Request validation =====
@@ -176,6 +176,139 @@ router.post(
       res.status(500).json({
         error: 'Chat turn failed. Please try again.',
       });
+    }
+  }
+);
+
+// ===== Streaming endpoint — W6-S3 =====
+
+/**
+ * POST /api/chat/turn/stream — Server-Sent Events.
+ *
+ * Same identity + rate-limit + body contract as /turn (JSON). Difference
+ * is the response transport: this endpoint yields the orchestrator's
+ * event stream as SSE frames so the chat overlay can render text
+ * progressively (first-byte time ~500ms on agent routes vs 3-5s
+ * blocking).
+ *
+ * SSE frame format:
+ *   data: <json-event>\n\n
+ *
+ * Each <json-event> is one OrchestratorStreamEvent (see
+ * agents/orchestrator/streamEvents.ts). The terminal event is one of
+ * `done` / `error` / `cancelled`.
+ *
+ * CANCELLATION
+ * ────────────
+ * If the client closes the HTTP connection mid-stream, we abort the
+ * in-flight LLM call via an AbortController forwarded into streamTurn.
+ * The orchestrator yields a `cancelled` event (which never reaches the
+ * disconnected client, but completes substrate accounting). The route
+ * then ends cleanly.
+ */
+router.post(
+  '/turn/stream',
+  chatIdentityMiddleware,
+  chatSessionRateLimit,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Identity resolution failed' });
+      return;
+    }
+    if (!Types.ObjectId.isValid(req.user.id)) {
+      res.status(401).json({ error: 'Invalid user id' });
+      return;
+    }
+
+    // Body validation — same schema as /turn.
+    let body: ChatTurnBody;
+    try {
+      body = ChatTurnBodySchema.parse(req.body);
+    } catch (err) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        detail: err instanceof Error ? err.message : 'Unknown validation error',
+      });
+      return;
+    }
+
+    // SSE headers — set BEFORE any data is written. Once the body starts,
+    // we can't change them.
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    // Disable Nginx proxy buffering so events flush immediately. Render
+    // and most CDNs respect this header.
+    res.setHeader('X-Accel-Buffering', 'no');
+    // Express flushes headers on first `res.write` by default; explicitly
+    // flushing here gets the connection established before the first
+    // (potentially slow) classifier call.
+    res.flushHeaders?.();
+
+    const controller = new AbortController();
+    // If the client (or a proxy) drops the connection mid-stream, fire
+    // the AbortSignal so the orchestrator halts the LLM call.
+    req.on('close', () => {
+      if (!res.writableEnded) {
+        controller.abort();
+      }
+    });
+
+    const writeEvent = (event: unknown): boolean => {
+      // Returns false if the connection has closed (writable === false).
+      // Callers should stop iterating in that case.
+      if (res.writableEnded) return false;
+      try {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    try {
+      const stream = streamTurn(
+        {
+          userInput: body.userInput,
+          userId: new Types.ObjectId(req.user.id),
+          sessionId: body.sessionId,
+          turnNumber: body.turnNumber,
+          inputMethod: body.inputMethod,
+          toolPayload: body.toolPayload,
+        },
+        { signal: controller.signal }
+      );
+
+      for await (const ev of stream) {
+        const ok = writeEvent(ev);
+        if (!ok) break;
+      }
+
+      // Activation-funnel telemetry — emitted ONCE per stream attempt.
+      // Mirrors the /turn endpoint's chat.turn.completed log so the
+      // funnel query unions both transports.
+      logger.info('chat.turn.completed', {
+        event: 'chat.turn.completed',
+        transport: 'sse',
+        anonymous: req.user.anonymous === true,
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        turnNumber: body.turnNumber,
+      });
+
+      res.end();
+    } catch (err) {
+      logger.error('chat/turn/stream: orchestrator threw', {
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        turnNumber: body.turnNumber,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      // Best-effort error frame. If the connection is already closed
+      // this is a no-op.
+      writeEvent({ type: 'error', message: 'Chat turn failed. Please try again.' });
+      res.end();
     }
   }
 );

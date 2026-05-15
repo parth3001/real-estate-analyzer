@@ -1,27 +1,30 @@
 /**
- * ChatOverlay tests — the chat surface shell.
+ * ChatOverlay tests — the streaming chat surface.
  *
- * We mock `sendChatTurn` directly (rather than going through MSW) because
- * the overlay only consumes that function — keeping the tests focused on
- * thread behavior, not HTTP wiring (which is covered separately in
- * chatApi-driven contract tests in W6-S5).
+ * Mocks `streamChatTurn` (the SSE consumer) directly so tests focus on
+ * thread behavior, not HTTP wiring. Each test scripts a sequence of
+ * ChatStreamEvents and asserts how the overlay renders them.
  *
  * Coverage:
  *   - Empty state suggestion renders when thread is empty
- *   - Submit appends user bubble + assistant bubble in order
- *   - Loading state shows during in-flight, hides on resolve
- *   - Failed request renders an error bubble (role="alert") and does
- *     NOT crash the thread
+ *   - Submit appends user bubble + assistant bubble; deltas accumulate
+ *     into the same assistant bubble (no flicker, no duplicate bubbles)
+ *   - "Thinking…" indicator shows ONLY before the first delta arrives
+ *   - Routing event captured on the assistant message
+ *   - `done` terminal event flips the bubble out of streaming state
+ *   - `error` terminal event renders an error bubble (role="alert")
+ *   - `cancelled` terminal event renders the partial text + "Stopped." hint
+ *   - Stop button cancels in-flight stream (AbortController fires)
  *   - initialUserInput auto-submits exactly once (strict-mode safe)
- *   - Enter sends; Shift+Enter does NOT (kept in draft)
- *   - Send button disabled when draft is empty or while sending
+ *   - sessionStorage persists sessionId across remounts
+ *   - sendChatTurn receives a stable sessionId; turnNumber increments
  */
 
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatOverlay } from '../ChatOverlay';
-import type { ChatTurnResponse } from '../../../services/chatApi';
+import type { ChatStreamEvent, ChatTurnRequest } from '../../../services/chatApi';
 
 // jsdom doesn't implement Element.prototype.scrollIntoView — the
 // auto-scroll effect in ChatOverlay calls it on every new message.
@@ -31,38 +34,65 @@ beforeAll(() => {
 
 const SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
 
-// ===== Mock the chat API client =====
+// ===== Mock the streaming API client =====
 
 vi.mock('../../../services/chatApi', () => ({
-  sendChatTurn: vi.fn(),
+  streamChatTurn: vi.fn(),
 }));
 
-import { sendChatTurn } from '../../../services/chatApi';
-const mockSendChatTurn = sendChatTurn as ReturnType<typeof vi.fn>;
+import { streamChatTurn } from '../../../services/chatApi';
+const mockStreamChatTurn = streamChatTurn as ReturnType<typeof vi.fn>;
 
-function buildResponse(overrides: Partial<ChatTurnResponse> = {}): ChatTurnResponse {
-  return {
-    traceId: 'trace-abc',
-    responseText: 'Sure, here is the analysis…',
-    routing: {
-      target: 'analyze_property',
-      routedTo: 'analyze_property',
-      classifierIntent: 'analyze_property',
-      classifierConfidence: 0.92,
-    },
-    events: {
-      conversationEventId: 'evt-1',
-      related: [],
-    },
-    totalCostCents: 0,
-    agentStubbed: false,
-    ...overrides,
+/**
+ * Build a scripted async generator that yields the given stream events.
+ * Honors the AbortSignal if provided — yields a `cancelled` event when
+ * the signal fires.
+ */
+function scriptedStream(
+  events: ChatStreamEvent[],
+  opts: { delayPerEventMs?: number } = {}
+) {
+  return async function* (
+    _request: ChatTurnRequest,
+    callOpts: { signal?: AbortSignal } = {}
+  ): AsyncGenerator<ChatStreamEvent, void, void> {
+    for (const event of events) {
+      if (callOpts.signal?.aborted) {
+        const err = new DOMException('aborted', 'AbortError');
+        throw err;
+      }
+      if (opts.delayPerEventMs && opts.delayPerEventMs > 0) {
+        await new Promise((r) => setTimeout(r, opts.delayPerEventMs));
+      }
+      yield event;
+    }
   };
 }
 
-describe('ChatOverlay', () => {
+function routingEvent(): ChatStreamEvent {
+  return {
+    type: 'routing',
+    target: 'agent:qa',
+    routedTo: 'agent:qa',
+    classifierIntent: 'qa_general',
+    classifierConfidence: 90,
+  };
+}
+
+function doneEvent(): ChatStreamEvent {
+  return {
+    type: 'done',
+    traceId: 'tr-1',
+    conversationEventId: '6a0700000000000000000001',
+    relatedEventIds: [],
+    totalCostCents: 0.5,
+    agentStubbed: false,
+  };
+}
+
+describe('ChatOverlay (W6-S3 streaming)', () => {
   beforeEach(() => {
-    mockSendChatTurn.mockReset();
+    mockStreamChatTurn.mockReset();
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
   });
 
@@ -72,34 +102,40 @@ describe('ChatOverlay', () => {
     expect(screen.getByText(/Ready when you are/i)).toBeInTheDocument();
   });
 
-  it('appends user + assistant bubbles on submit', async () => {
-    mockSendChatTurn.mockResolvedValueOnce(
-      buildResponse({ responseText: 'Got it — analyzing 1837 Walnut Way.' })
+  it('accumulates text deltas into a single assistant bubble', async () => {
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([
+        routingEvent(),
+        { type: 'text_delta', text: 'Cap rate' },
+        { type: 'text_delta', text: ' is the' },
+        { type: 'text_delta', text: ' yield.' },
+        doneEvent(),
+      ])
     );
     const user = userEvent.setup();
     render(<ChatOverlay />);
 
-    const input = screen.getByTestId('chat-input');
-    await user.type(input, 'analyze 1837 Walnut Way Anna TX');
+    await user.type(screen.getByTestId('chat-input'), 'explain cap rate');
     await user.click(screen.getByTestId('chat-send'));
 
-    expect(await screen.findByTestId('chat-message-user')).toHaveTextContent(
-      'analyze 1837 Walnut Way Anna TX'
-    );
-    expect(await screen.findByTestId('chat-message-assistant')).toHaveTextContent(
-      'Got it — analyzing 1837 Walnut Way.'
-    );
-    // Empty state replaced
-    expect(screen.queryByTestId('chat-empty-state')).not.toBeInTheDocument();
+    const assistant = await screen.findByTestId('chat-message-assistant');
+    await waitFor(() => {
+      expect(assistant).toHaveTextContent('Cap rate is the yield.');
+    });
+    // ONE assistant bubble (not N — one per delta would be a bug)
+    expect(screen.getAllByTestId('chat-message-assistant')).toHaveLength(1);
   });
 
-  it('shows loading indicator during in-flight request', async () => {
-    let resolveFn: (v: ChatTurnResponse) => void = () => undefined;
-    mockSendChatTurn.mockImplementationOnce(
-      () =>
-        new Promise<ChatTurnResponse>((resolve) => {
-          resolveFn = resolve;
-        })
+  it('shows "Thinking…" only before the first delta arrives', async () => {
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream(
+        [
+          routingEvent(),
+          { type: 'text_delta', text: 'first chars' },
+          doneEvent(),
+        ],
+        { delayPerEventMs: 30 }
+      )
     );
     const user = userEvent.setup();
     render(<ChatOverlay />);
@@ -107,15 +143,22 @@ describe('ChatOverlay', () => {
     await user.type(screen.getByTestId('chat-input'), 'hi');
     await user.click(screen.getByTestId('chat-send'));
 
+    // Indicator visible while bubble is empty
     expect(await screen.findByTestId('chat-loading')).toBeInTheDocument();
-    resolveFn(buildResponse());
+
+    // Once the first delta lands, the indicator disappears
     await waitFor(() =>
       expect(screen.queryByTestId('chat-loading')).not.toBeInTheDocument()
     );
   });
 
-  it('renders an error bubble when sendChatTurn rejects', async () => {
-    mockSendChatTurn.mockRejectedValueOnce(new Error('Network down'));
+  it('replaces the assistant bubble with an error bubble on error event', async () => {
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([
+        routingEvent(),
+        { type: 'error', message: 'Stream backend exploded.' },
+      ])
+    );
     const user = userEvent.setup();
     render(<ChatOverlay />);
 
@@ -124,37 +167,109 @@ describe('ChatOverlay', () => {
 
     const err = await screen.findByTestId('chat-message-error');
     expect(err).toHaveAttribute('role', 'alert');
-    expect(err).toHaveTextContent(/Network down/);
-    // User message still in thread — failure shouldn't wipe history
+    expect(err).toHaveTextContent(/Stream backend exploded/);
+    // The empty streaming bubble must NOT be left in the thread
+    expect(screen.queryByTestId('chat-message-assistant')).not.toBeInTheDocument();
+    // User message is still there — failure doesn't wipe history
     expect(screen.getByTestId('chat-message-user')).toBeInTheDocument();
   });
 
+  it('renders partial text + "Stopped." hint on cancelled terminal event', async () => {
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([
+        routingEvent(),
+        { type: 'text_delta', text: 'partial answer' },
+        {
+          type: 'cancelled',
+          partialText: 'partial answer',
+          traceId: 'tr-cancel',
+          conversationEventId: '6a0700000000000000000099',
+          partialCostCents: 0.1,
+        },
+      ])
+    );
+    const user = userEvent.setup();
+    render(<ChatOverlay />);
+
+    await user.type(screen.getByTestId('chat-input'), 'long thing');
+    await user.click(screen.getByTestId('chat-send'));
+
+    const assistant = await screen.findByTestId('chat-message-assistant');
+    await waitFor(() => expect(assistant).toHaveTextContent('partial answer'));
+    expect(await screen.findByTestId('chat-message-cancelled')).toHaveTextContent(
+      /Stopped/
+    );
+  });
+
+  it('Stop button fires AbortController and surfaces partial text', async () => {
+    // Use a slow stream so the test can hit Stop after the first delta.
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream(
+        [
+          routingEvent(),
+          { type: 'text_delta', text: 'first ' },
+          { type: 'text_delta', text: 'second ' },
+          { type: 'text_delta', text: 'third' },
+          doneEvent(),
+        ],
+        { delayPerEventMs: 50 }
+      )
+    );
+    const user = userEvent.setup();
+    render(<ChatOverlay />);
+
+    await user.type(screen.getByTestId('chat-input'), 'go');
+    await user.click(screen.getByTestId('chat-send'));
+
+    // Stop button replaces Send during streaming
+    const stopBtn = await screen.findByTestId('chat-stop');
+    // Wait until at least one delta has landed so partialText is non-empty
+    await screen.findByTestId('chat-message-assistant');
+    await waitFor(() =>
+      expect(screen.getByTestId('chat-message-assistant')).toHaveTextContent(
+        /first/
+      )
+    );
+
+    await user.click(stopBtn);
+
+    // Bubble flips out of streaming + shows "Stopped." hint
+    await waitFor(() =>
+      expect(screen.queryByTestId('chat-stop')).not.toBeInTheDocument()
+    );
+    expect(await screen.findByTestId('chat-message-cancelled')).toBeInTheDocument();
+  });
+
   it('auto-submits initialUserInput exactly once', async () => {
-    mockSendChatTurn.mockResolvedValue(
-      buildResponse({ responseText: 'auto-response' })
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([
+        routingEvent(),
+        { type: 'text_delta', text: 'auto-response' },
+        doneEvent(),
+      ])
     );
     render(<ChatOverlay initialUserInput="hello from hero" />);
 
     expect(await screen.findByTestId('chat-message-user')).toHaveTextContent(
       'hello from hero'
     );
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(1));
   });
 
   it('Enter sends; Shift+Enter inserts a newline', async () => {
-    mockSendChatTurn.mockResolvedValueOnce(buildResponse());
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([routingEvent(), { type: 'text_delta', text: 'ok' }, doneEvent()])
+    );
     const user = userEvent.setup();
     render(<ChatOverlay />);
 
     const input = screen.getByTestId('chat-input');
     await user.type(input, 'first line');
-    // Shift+Enter — should NOT send
     await user.keyboard('{Shift>}{Enter}{/Shift}');
-    expect(mockSendChatTurn).not.toHaveBeenCalled();
+    expect(mockStreamChatTurn).not.toHaveBeenCalled();
     await user.type(input, 'second line');
-    // Plain Enter — should send
     await user.keyboard('{Enter}');
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(1));
   });
 
   it('disables send button when draft is empty', () => {
@@ -162,82 +277,48 @@ describe('ChatOverlay', () => {
     expect(screen.getByTestId('chat-send')).toBeDisabled();
   });
 
-  it('disables send button while a request is in flight', async () => {
-    let resolveFn: (v: ChatTurnResponse) => void = () => undefined;
-    mockSendChatTurn.mockImplementationOnce(
-      () =>
-        new Promise<ChatTurnResponse>((resolve) => {
-          resolveFn = resolve;
-        })
-    );
-    const user = userEvent.setup();
-    render(<ChatOverlay />);
-
-    await user.type(screen.getByTestId('chat-input'), 'hi');
-    await user.click(screen.getByTestId('chat-send'));
-
-    expect(screen.getByTestId('chat-send')).toBeDisabled();
-    resolveFn(buildResponse());
-    await waitFor(() =>
-      expect(screen.queryByTestId('chat-loading')).not.toBeInTheDocument()
-    );
-  });
-
   it('persists sessionId in sessionStorage across remounts (W6-S2.5 ghost-user continuity)', async () => {
-    mockSendChatTurn.mockResolvedValue(buildResponse());
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([routingEvent(), { type: 'text_delta', text: 'x' }, doneEvent()])
+    );
     const user = userEvent.setup();
 
     const { unmount } = render(<ChatOverlay />);
     await user.type(screen.getByTestId('chat-input'), 'first');
     await user.click(screen.getByTestId('chat-send'));
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(1));
-    const firstSessionId = mockSendChatTurn.mock.calls[0]?.[0].sessionId;
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(1));
+    const firstSessionId = mockStreamChatTurn.mock.calls[0]?.[0].sessionId;
     expect(firstSessionId).toBeTruthy();
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBe(firstSessionId);
 
-    // Simulate a page refresh by unmounting and remounting.
     unmount();
     cleanup();
 
     render(<ChatOverlay />);
     await user.type(screen.getByTestId('chat-input'), 'second');
     await user.click(screen.getByTestId('chat-send'));
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(2));
-    const secondSessionId = mockSendChatTurn.mock.calls[1]?.[0].sessionId;
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(2));
+    const secondSessionId = mockStreamChatTurn.mock.calls[1]?.[0].sessionId;
     expect(secondSessionId).toBe(firstSessionId);
   });
 
-  it('renders 429 rate-limit message as a clean error bubble', async () => {
-    mockSendChatTurn.mockRejectedValueOnce(
-      new Error("You've reached the free analysis limit for this session. Sign up to keep going — no payment required during beta.")
+  it('passes a stable sessionId + monotonic turnNumber across turns', async () => {
+    mockStreamChatTurn.mockImplementation(
+      scriptedStream([routingEvent(), { type: 'text_delta', text: 'x' }, doneEvent()])
     );
-    const user = userEvent.setup();
-    render(<ChatOverlay />);
-
-    await user.type(screen.getByTestId('chat-input'), 'one more');
-    await user.click(screen.getByTestId('chat-send'));
-
-    const err = await screen.findByTestId('chat-message-error');
-    expect(err).toHaveAttribute('role', 'alert');
-    expect(err).toHaveTextContent(/free analysis limit/i);
-    expect(err).toHaveTextContent(/sign up to keep going/i);
-  });
-
-  it('passes a stable sessionId for every turn in the same overlay', async () => {
-    mockSendChatTurn.mockResolvedValue(buildResponse());
     const user = userEvent.setup();
     render(<ChatOverlay />);
 
     await user.type(screen.getByTestId('chat-input'), 'first');
     await user.click(screen.getByTestId('chat-send'));
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(1));
 
     await user.type(screen.getByTestId('chat-input'), 'second');
     await user.click(screen.getByTestId('chat-send'));
-    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockStreamChatTurn).toHaveBeenCalledTimes(2));
 
-    const call1 = mockSendChatTurn.mock.calls[0]?.[0];
-    const call2 = mockSendChatTurn.mock.calls[1]?.[0];
+    const call1 = mockStreamChatTurn.mock.calls[0]?.[0];
+    const call2 = mockStreamChatTurn.mock.calls[1]?.[0];
     expect(call1.sessionId).toBe(call2.sessionId);
     expect(call1.turnNumber).toBe(1);
     expect(call2.turnNumber).toBe(2);

@@ -32,7 +32,13 @@
  */
 
 import type { Types } from 'mongoose';
-import { runAgent, type AgentConfig, type AgentRunOutput } from '../runner/agentRunner';
+import {
+  runAgent,
+  runAgentStream,
+  type AgentConfig,
+  type AgentRunOutput,
+  type AgentStreamEvent,
+} from '../runner/agentRunner';
 import type { ToolContext } from '../tools/types';
 import { recallUserContext } from '../tools/recall_user_context';
 import { resolvePropertyInputs } from '../tools/resolve_property_inputs';
@@ -350,4 +356,19 @@ export async function runDealScoringAgent(
     analysisEventId,
     decisionEventId,
   };
+}
+
+/**
+ * Streaming variant — W6-S3. The chat surface uses this for live token
+ * streaming on the deal-scoring path. The structured-output extraction
+ * (analysisEventId / decisionEventId) happens in the orchestrator AFTER
+ * the `final` event arrives — same logic as runDealScoringAgent above,
+ * just on the AgentStreamEvent shape.
+ */
+export function runDealScoringAgentStream(
+  input: DealScoringRunInput,
+  ctx: ToolContext,
+  opts: { signal?: AbortSignal } = {}
+): AsyncGenerator<AgentStreamEvent, void, void> {
+  return runAgentStream(AGENT_CONFIG, input, ctx, opts);
 }

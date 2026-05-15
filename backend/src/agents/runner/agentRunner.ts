@@ -39,6 +39,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   getAnthropicAdapter,
   type AnthropicMultiTurnInput,
+  type AnthropicResponseBlock,
 } from '../llm/anthropicAdapter';
 import { costEventRepository } from '../../repositories/CostEventRepository';
 import { computeAnthropicCostCents } from '../../utils/anthropicPricing';
@@ -366,5 +367,320 @@ export async function runAgent(
     modelUsed,
     hadMaxTurnsHit,
     iterations,
+  };
+}
+
+// ===== Streaming variant (W6-S3) =====
+
+/**
+ * Per-iteration runner event emitted by `runAgentStream`. The orchestrator
+ * converts these into the higher-level OrchestratorStreamEvent protocol
+ * the SSE surface emits to the browser.
+ *
+ *   text_delta — incremental tokens (passed through from adapter)
+ *   tool_call_completed — emitted AFTER each tool finishes inside the
+ *     tool-use loop. Carries success/duration for the UX hint.
+ *   final — emitted ONCE at the end of the agent run with the full
+ *     accumulator (mirrors AgentRunOutput).
+ *   cancelled — emitted if the AbortSignal fires mid-stream. Carries
+ *     whatever was accumulated up to the abort point so the orchestrator
+ *     can still write a partial CostEvent + ConversationEvent.
+ */
+export type AgentStreamEvent =
+  | { type: 'text_delta'; text: string }
+  | {
+      type: 'tool_call_completed';
+      toolName: string;
+      success: boolean;
+      durationMs: number;
+    }
+  | { type: 'final'; output: AgentRunOutput }
+  | {
+      type: 'cancelled';
+      partial: {
+        text: string;
+        toolCallsExecuted: AgentToolCallTrace[];
+        relatedEventIds: Types.ObjectId[];
+        tokenUsage: { inputTokens: number; outputTokens: number; cachedTokens: number };
+        costEventIds: Types.ObjectId[];
+        totalCostCents: number;
+        modelUsed: string;
+        iterations: number;
+      };
+    };
+
+/**
+ * Streaming variant of runAgent. Yields text deltas as the LLM pipes
+ * them, plus tool_call_completed hints after each tool finishes. Emits
+ * a single `final` event at the end with the same AgentRunOutput shape
+ * the non-streaming runner returns.
+ *
+ * Cancellation: pass an AbortSignal in `opts.signal`. When fired, the
+ * in-flight SDK call is aborted, no more iterations are started, and a
+ * `cancelled` event is yielded with the partial accumulator.
+ */
+export async function* runAgentStream(
+  config: AgentConfig,
+  input: AgentRunInput,
+  ctx: ToolContext,
+  opts: { signal?: AbortSignal } = {}
+): AsyncGenerator<AgentStreamEvent, void, void> {
+  const adapter = getAnthropicAdapter();
+  const maxTurns = config.maxTurns ?? 10;
+  const maxTokensPerCall = config.maxTokensPerCall ?? 2048;
+  const signal = opts.signal;
+
+  const toolDefinitions = Object.entries(config.allowedTools).map(([name, t]) =>
+    toolToDefinition(name, t)
+  );
+  const initialUserMessage = input.context
+    ? `Context:\n${JSON.stringify(input.context, null, 2)}\n\nUser: ${input.userInput}`
+    : input.userInput;
+  const messages: AnthropicMultiTurnInput['messages'] = [
+    { role: 'user', content: initialUserMessage },
+  ];
+
+  // Accumulators — same shape as runAgent so the orchestrator can use
+  // either path interchangeably.
+  let finalText = '';
+  const toolCallsExecuted: AgentToolCallTrace[] = [];
+  const relatedEventIds: Types.ObjectId[] = [];
+  const costEventIds: Types.ObjectId[] = [];
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalCachedTokens = 0;
+  let totalCostCents = 0;
+  let modelUsed = '';
+  let hadMaxTurnsHit = false;
+  let iterations = 0;
+
+  function snapshotPartial() {
+    return {
+      text: finalText,
+      toolCallsExecuted: [...toolCallsExecuted],
+      relatedEventIds: [...relatedEventIds],
+      tokenUsage: {
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        cachedTokens: totalCachedTokens,
+      },
+      costEventIds: [...costEventIds],
+      totalCostCents,
+      modelUsed,
+      iterations,
+    };
+  }
+
+  for (let i = 0; i < maxTurns; i++) {
+    iterations++;
+    if (signal?.aborted) {
+      yield { type: 'cancelled', partial: snapshotPartial() };
+      return;
+    }
+
+    const handle = adapter.streamWithTools(
+      {
+        tier: config.modelTier,
+        systemPrompt: config.systemPrompt,
+        messages,
+        tools: toolDefinitions,
+        maxTokens: maxTokensPerCall,
+      },
+      signal
+    );
+
+    let iterationBlocks: AnthropicResponseBlock[] = [];
+    let iterationUsage = { inputTokens: 0, outputTokens: 0, cachedTokens: 0 };
+    let iterationModel = '';
+    try {
+      for await (const ev of handle.events) {
+        if (ev.type === 'text_delta') {
+          yield { type: 'text_delta', text: ev.text };
+        } else if (ev.type === 'iteration_end') {
+          iterationBlocks = ev.blocks;
+          iterationUsage = ev.usage;
+          iterationModel = ev.model;
+        }
+      }
+    } catch (err) {
+      // Abort vs genuine error: AbortError surfaces as `name: 'AbortError'`
+      // or an APIUserAbortError-like shape from the SDK. Either way, if
+      // the caller signaled abort, treat it as cancellation. Otherwise
+      // rethrow.
+      const name = (err as { name?: string } | undefined)?.name;
+      const isAbort =
+        signal?.aborted === true ||
+        name === 'AbortError' ||
+        name === 'APIUserAbortError';
+      if (isAbort) {
+        yield { type: 'cancelled', partial: snapshotPartial() };
+        return;
+      }
+      throw err;
+    }
+
+    // Update accumulators with this iteration's usage
+    modelUsed = iterationModel || modelUsed;
+    totalInputTokens += iterationUsage.inputTokens;
+    totalOutputTokens += iterationUsage.outputTokens;
+    totalCachedTokens += iterationUsage.cachedTokens;
+    const callCost = computeAnthropicCostCents({
+      tier: config.modelTier,
+      inputTokens: iterationUsage.inputTokens,
+      outputTokens: iterationUsage.outputTokens,
+      cachedTokens: iterationUsage.cachedTokens,
+    });
+    totalCostCents += callCost;
+    const costEventId = await costEventRepository.writeCostEvent({
+      traceId: ctx.traceId,
+      userId: ctx.userId,
+      institutionId: ctx.institutionId,
+      costType: 'llm',
+      provider: 'anthropic',
+      model: iterationModel,
+      inputTokens: iterationUsage.inputTokens,
+      outputTokens: iterationUsage.outputTokens,
+      cachedTokens: iterationUsage.cachedTokens,
+      costCents: callCost,
+    });
+    costEventIds.push(costEventId);
+
+    // Append this iteration's assistant blocks for the next loop
+    messages.push({ role: 'assistant', content: iterationBlocks });
+
+    const textBlocks = iterationBlocks.filter(
+      (b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text'
+    );
+    const toolUseBlocks = iterationBlocks.filter(
+      (b): b is Extract<typeof b, { type: 'tool_use' }> => b.type === 'tool_use'
+    );
+    if (textBlocks.length > 0) {
+      finalText = textBlocks.map((b) => b.text).join('\n');
+    }
+
+    if (toolUseBlocks.length === 0) {
+      // No tool_use → final text-only response. Loop done.
+      break;
+    }
+
+    // Execute each tool_use block and emit a tool_call_completed event
+    // for each. Sequential — same as runAgent for parity.
+    const toolResults: Array<{
+      type: 'tool_result';
+      tool_use_id: string;
+      content: string;
+      is_error?: boolean;
+    }> = [];
+    for (const block of toolUseBlocks) {
+      const tool = config.allowedTools[block.name];
+      const inputHash = sha256(JSON.stringify(block.input));
+      const toolStart = Date.now();
+      if (!tool) {
+        const durationMs = Date.now() - toolStart;
+        toolCallsExecuted.push({
+          toolName: block.name,
+          inputHash,
+          success: false,
+          durationMs,
+        });
+        yield {
+          type: 'tool_call_completed',
+          toolName: block.name,
+          success: false,
+          durationMs,
+        };
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: `Error: tool '${block.name}' is not in this agent's allowed-tools set.`,
+          is_error: true,
+        });
+        continue;
+      }
+      try {
+        const result = (await tool.execute(block.input, ctx)) as Record<
+          string,
+          unknown
+        >;
+        const durationMs = Date.now() - toolStart;
+        toolCallsExecuted.push({
+          toolName: block.name,
+          inputHash,
+          success: true,
+          durationMs,
+        });
+        yield {
+          type: 'tool_call_completed',
+          toolName: block.name,
+          success: true,
+          durationMs,
+        };
+        relatedEventIds.push(...extractToolEventIds(block.name, result));
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: JSON.stringify(result),
+        });
+      } catch (err) {
+        const durationMs = Date.now() - toolStart;
+        const errMsg = err instanceof Error ? err.message : String(err);
+        toolCallsExecuted.push({
+          toolName: block.name,
+          inputHash,
+          success: false,
+          durationMs,
+        });
+        yield {
+          type: 'tool_call_completed',
+          toolName: block.name,
+          success: false,
+          durationMs,
+        };
+        logger.warn('agentRunner.runAgentStream: tool call failed', {
+          agent: config.name,
+          traceId: ctx.traceId,
+          toolName: block.name,
+          iteration: i + 1,
+          error: errMsg,
+          toolInput: JSON.stringify(block.input).slice(0, 800),
+        });
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: `Error: ${errMsg}`,
+          is_error: true,
+        });
+      }
+    }
+
+    messages.push({ role: 'user', content: toolResults });
+  }
+
+  if (iterations === maxTurns) {
+    hadMaxTurnsHit = true;
+    logger.warn('agentRunner.runAgentStream: maxTurns cap hit', {
+      agent: config.name,
+      traceId: ctx.traceId,
+      iterations,
+    });
+  }
+
+  yield {
+    type: 'final',
+    output: {
+      text: finalText,
+      toolCallsExecuted,
+      relatedEventIds,
+      tokenUsage: {
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        cachedTokens: totalCachedTokens,
+      },
+      costEventIds,
+      totalCostCents,
+      modelUsed,
+      hadMaxTurnsHit,
+      iterations,
+    },
   };
 }

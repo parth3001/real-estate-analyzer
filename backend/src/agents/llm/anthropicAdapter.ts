@@ -138,11 +138,64 @@ export interface AnthropicCallOutput {
   stopReason: string | null;
 }
 
+/**
+ * Per-iteration stream event from `streamWithTools()`. The agent runner
+ * converts these to the higher-level OrchestratorStreamEvent protocol
+ * the SSE route emits to the browser.
+ *
+ *   text_delta — incremental tokens. Concatenate to build the running
+ *                text snapshot. Emitted as the SDK pipes tokens through.
+ *   iteration_end — sent once when the SDK reports `message_stop`. Carries
+ *                   the final `blocks` (text + tool_use), usage counters,
+ *                   and the stop reason. The runner uses this to (a) decide
+ *                   whether to loop (any tool_use? → execute, loop again),
+ *                   (b) write the per-iteration CostEvent.
+ */
+export type AnthropicStreamEvent =
+  | { type: 'text_delta'; text: string }
+  | {
+      type: 'iteration_end';
+      blocks: AnthropicResponseBlock[];
+      usage: {
+        inputTokens: number;
+        outputTokens: number;
+        cachedTokens: number;
+      };
+      model: string;
+      stopReason: string | null;
+    };
+
+/**
+ * Streaming variant of `callWithTools`. Yields normalized per-iteration
+ * events as the SDK pipes them in. Honors the caller's AbortSignal:
+ * cancelling the signal aborts the in-flight SDK request (Anthropic's
+ * MessageStream exposes `controller.abort()`).
+ *
+ * NOTE: this is a SINGLE iteration — the agent runner's tool-use loop
+ * calls this MULTIPLE times (once per iteration). The runner orchestrates
+ * tool execution + message-append between iterations.
+ */
+export interface AnthropicStreamHandle {
+  /** AsyncIterable of stream events for this iteration. */
+  events: AsyncIterable<AnthropicStreamEvent>;
+  /** Abort the underlying SDK request. Safe to call after iteration ends (no-op). */
+  abort(): void;
+}
+
 export interface AnthropicAdapter {
   /** Single-shot call. Used by extraction-style tools (profile_extraction, intent classifier). */
   call(input: AnthropicCallInput): Promise<AnthropicCallOutput>;
-  /** Multi-turn tool-use call. Used by the agent runner. */
+  /** Multi-turn tool-use call. Used by the agent runner (non-streaming path). */
   callWithTools(input: AnthropicMultiTurnInput): Promise<AnthropicMultiTurnOutput>;
+  /**
+   * Streaming variant — W6-S3. Used by agentRunner.runAgentStream for the
+   * chat overlay's SSE surface. ONE iteration per call; the runner loops
+   * across iterations for tool-use.
+   */
+  streamWithTools(
+    input: AnthropicMultiTurnInput,
+    signal?: AbortSignal
+  ): AnthropicStreamHandle;
 }
 
 // ===== Default adapter (wraps the real SDK) =====
@@ -317,15 +370,136 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
       stopReason: response.stop_reason ?? null,
     };
   },
+
+  streamWithTools(
+    input: AnthropicMultiTurnInput,
+    signal?: AbortSignal
+  ): AnthropicStreamHandle {
+    const model = resolveModelName(input.tier);
+
+    // Lazy-construct the SDK stream when iteration begins so a caller
+    // that never iterates doesn't burn an API request.
+    type SdkMessageCreate = Parameters<
+      Anthropic['messages']['stream']
+    >[0];
+    const params = {
+      model,
+      max_tokens: input.maxTokens ?? 4096,
+      temperature: input.temperature ?? 0,
+      system: input.systemPrompt,
+      messages: input.messages,
+      tools: input.tools,
+    } as unknown as SdkMessageCreate;
+
+    // The SDK's stream() returns synchronously and runs in the background.
+    // We attach our own AbortSignal so callers (the SSE route on client
+    // disconnect, the orchestrator on cancellation) can halt mid-stream.
+    const sdkStream = getClient().messages.stream(params);
+    if (signal) {
+      if (signal.aborted) {
+        sdkStream.abort();
+      } else {
+        signal.addEventListener('abort', () => sdkStream.abort(), {
+          once: true,
+        });
+      }
+    }
+
+    async function* iterate(): AsyncGenerator<AnthropicStreamEvent> {
+      let accumulatedBlocks: AnthropicResponseBlock[] = [];
+      let usage = { inputTokens: 0, outputTokens: 0, cachedTokens: 0 };
+      let stopReason: string | null = null;
+
+      try {
+        for await (const event of sdkStream) {
+          // Stream the visible text as it arrives — first-byte time win.
+          if (
+            event.type === 'content_block_delta' &&
+            event.delta?.type === 'text_delta'
+          ) {
+            const textDelta = (event.delta as { text?: string }).text;
+            if (typeof textDelta === 'string' && textDelta.length > 0) {
+              yield { type: 'text_delta', text: textDelta };
+            }
+          }
+          if (event.type === 'message_delta') {
+            stopReason = event.delta?.stop_reason ?? stopReason;
+            // The SDK emits updated `usage` (output_tokens grows
+            // monotonically) on message_delta. We capture the final value
+            // when message_stop fires.
+            const u = (event as { usage?: { output_tokens?: number } }).usage;
+            if (u?.output_tokens != null) {
+              usage.outputTokens = u.output_tokens;
+            }
+          }
+        }
+
+        // After iteration completes, the SDK has the assembled final
+        // Message. finalMessage() resolves synchronously at this point.
+        const finalMessage = await sdkStream.finalMessage();
+        accumulatedBlocks = finalMessage.content
+          .filter(
+            (b): b is Extract<typeof b, { type: 'text' } | { type: 'tool_use' }> =>
+              b.type === 'text' || b.type === 'tool_use'
+          )
+          .map((b) => {
+            if (b.type === 'text') return { type: 'text', text: b.text };
+            return {
+              type: 'tool_use',
+              id: b.id,
+              name: b.name,
+              input: b.input,
+            };
+          });
+        type UsageWithCache = typeof finalMessage.usage & {
+          cache_read_input_tokens?: number;
+        };
+        const finalUsage = finalMessage.usage as UsageWithCache;
+        usage = {
+          inputTokens: finalMessage.usage.input_tokens,
+          outputTokens: finalMessage.usage.output_tokens,
+          cachedTokens: finalUsage.cache_read_input_tokens ?? 0,
+        };
+        stopReason = finalMessage.stop_reason ?? stopReason;
+      } catch (err) {
+        // If the caller aborted, the SDK throws APIUserAbortError. We
+        // surface that as a thrown error so the runner can clean up; the
+        // outer try/catch in agentRunner.runAgentStream catches and emits
+        // a `cancelled` orchestrator event.
+        throw err;
+      }
+
+      yield {
+        type: 'iteration_end',
+        blocks: accumulatedBlocks,
+        usage,
+        model,
+        stopReason,
+      };
+    }
+
+    return {
+      events: iterate(),
+      abort(): void {
+        sdkStream.abort();
+      },
+    };
+  },
 };
 
 // ===== Module-level adapter slot (testability) =====
 
 let currentAdapter: AnthropicAdapter = defaultAnthropicAdapter;
 
-/** Override the adapter at module level. Tests use this; production never should. */
-export function setAnthropicAdapter(adapter: AnthropicAdapter): void {
-  currentAdapter = adapter;
+/**
+ * Override the adapter at module level. Tests use this; production never
+ * should. Accepts `Partial<AnthropicAdapter>` and auto-completes missing
+ * methods with throwing stubs — that way a test that exercises a path
+ * it didn't stub fails loudly with a clear message, but tests that only
+ * use one method don't have to provide all three.
+ */
+export function setAnthropicAdapter(adapter: Partial<AnthropicAdapter>): void {
+  currentAdapter = makeTestAdapter(adapter);
 }
 
 /** Reset to the default (real-SDK) adapter. */
@@ -362,6 +536,76 @@ export function makeTestAdapter(
       throw new Error(
         'makeTestAdapter: `callWithTools` was invoked but no implementation was provided in the test stub'
       );
+    },
+    streamWithTools(input, signal) {
+      if (partial.streamWithTools) return partial.streamWithTools(input, signal);
+      throw new Error(
+        'makeTestAdapter: `streamWithTools` was invoked but no implementation was provided in the test stub'
+      );
+    },
+  };
+}
+
+/**
+ * Test helper: build an AnthropicStreamHandle that yields a scripted
+ * sequence of text deltas followed by an iteration_end. Saves boilerplate
+ * in stream-related tests. Honors the AbortSignal so cancellation tests
+ * can fire the signal mid-stream and expect the right cleanup behavior.
+ */
+export function makeScriptedStreamHandle(opts: {
+  deltas: string[];
+  blocks: AnthropicResponseBlock[];
+  usage?: { inputTokens: number; outputTokens: number; cachedTokens: number };
+  model?: string;
+  stopReason?: string | null;
+  /** Optional ms to wait between deltas — defaults to 0 (synchronous). */
+  perDeltaDelayMs?: number;
+  signal?: AbortSignal;
+}): AnthropicStreamHandle {
+  const usage = opts.usage ?? {
+    inputTokens: 100,
+    outputTokens: 50,
+    cachedTokens: 0,
+  };
+  const model = opts.model ?? 'claude-sonnet-4-6';
+  const stopReason = opts.stopReason ?? 'end_turn';
+  let aborted = false;
+
+  if (opts.signal) {
+    opts.signal.addEventListener(
+      'abort',
+      () => {
+        aborted = true;
+      },
+      { once: true }
+    );
+  }
+
+  async function* iterate(): AsyncGenerator<AnthropicStreamEvent> {
+    for (const text of opts.deltas) {
+      if (aborted) {
+        const err = new Error('aborted');
+        (err as Error & { name: string }).name = 'AbortError';
+        throw err;
+      }
+      if (opts.perDeltaDelayMs && opts.perDeltaDelayMs > 0) {
+        await new Promise((r) => setTimeout(r, opts.perDeltaDelayMs));
+      }
+      yield { type: 'text_delta', text };
+    }
+    yield {
+      type: 'iteration_end',
+      blocks: opts.blocks,
+      usage,
+      model,
+      stopReason,
+    };
+  }
+
+  return {
+    events: iterate(),
+    abort(): void {
+      aborted = true;
     },
   };
 }

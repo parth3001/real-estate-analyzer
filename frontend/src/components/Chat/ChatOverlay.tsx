@@ -31,8 +31,9 @@ import {
   CircularProgress,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import StopIcon from '@mui/icons-material/Stop';
 import { chatTheme } from '../../theme/chatTheme';
-import { sendChatTurn, type ChatTurnResponse } from '../../services/chatApi';
+import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
 
 // ===== Message thread types =====
 
@@ -48,8 +49,32 @@ interface AssistantMessage {
   role: 'assistant';
   text: string;
   turnNumber: number;
-  /** Full server response — kept for future use (structured outputs in W6-S4). */
-  raw: ChatTurnResponse;
+  /**
+   * True while tokens are still streaming in for this message. Drives
+   * the typing-indicator UX and disables the Send button. Flips false
+   * on the terminal `done` / `cancelled` / `error` stream event.
+   */
+  streaming: boolean;
+  /**
+   * Set when the stream ended via the `cancelled` terminal event
+   * (user hit Stop, or the connection dropped). Surface a "cancelled"
+   * hint in the bubble so the user knows what they're looking at.
+   */
+  cancelled?: boolean;
+  /**
+   * Routing snapshot captured at the start of the stream. Used by
+   * W6-S4 to choose which structured-output renderer to mount when the
+   * `structured_output` event arrives (e.g., DealScoreCard on
+   * `agent:deal_scoring`).
+   */
+  routing?: {
+    target: string;
+    routedTo: string;
+    classifierIntent: string;
+  };
+  /** Stream-level identifiers for downstream save / share actions. */
+  traceId?: string;
+  conversationEventId?: string;
 }
 
 interface ErrorMessage {
@@ -108,6 +133,94 @@ function resolveSessionId(): string {
   return fresh;
 }
 
+/**
+ * Apply a single stream event to the running thread state. Factored out
+ * so the `send()` flow stays readable and tests can target the reducer
+ * directly. Returns nothing — mutates via the setter.
+ */
+function applyStreamEvent(
+  event: ChatStreamEvent,
+  assistantId: string,
+  setMessages: React.Dispatch<React.SetStateAction<ThreadMessage[]>>
+): void {
+  if (event.type === 'routing') {
+    setMessages((m) =>
+      m.map((msg) =>
+        msg.id === assistantId && msg.role === 'assistant'
+          ? {
+              ...msg,
+              routing: {
+                target: event.target,
+                routedTo: event.routedTo,
+                classifierIntent: event.classifierIntent,
+              },
+            }
+          : msg
+      )
+    );
+    return;
+  }
+  if (event.type === 'text_delta') {
+    setMessages((m) =>
+      m.map((msg) =>
+        msg.id === assistantId && msg.role === 'assistant'
+          ? { ...msg, text: msg.text + event.text }
+          : msg
+      )
+    );
+    return;
+  }
+  if (event.type === 'done') {
+    setMessages((m) =>
+      m.map((msg) =>
+        msg.id === assistantId && msg.role === 'assistant'
+          ? {
+              ...msg,
+              streaming: false,
+              traceId: event.traceId,
+              conversationEventId: event.conversationEventId,
+            }
+          : msg
+      )
+    );
+    return;
+  }
+  if (event.type === 'cancelled') {
+    setMessages((m) =>
+      m.map((msg) =>
+        msg.id === assistantId && msg.role === 'assistant'
+          ? {
+              ...msg,
+              text: msg.text || event.partialText,
+              streaming: false,
+              cancelled: true,
+              traceId: event.traceId,
+              conversationEventId: event.conversationEventId,
+            }
+          : msg
+      )
+    );
+    return;
+  }
+  // tool_call + structured_output: noop in W6-S3. W6-S4 will mount
+  // path-specific renderers on structured_output.
+}
+
+/**
+ * True when the last message in the thread is a streaming assistant
+ * bubble with no text yet — used to gate the "Thinking…" indicator so
+ * it shows ONLY before the first token arrives.
+ */
+function lastMessageIsEmptyStreamingBubble(messages: ThreadMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  return Boolean(
+    last &&
+      last.role === 'assistant' &&
+      last.streaming === true &&
+      last.text.length === 0
+  );
+}
+
 // ===== Component =====
 
 export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
@@ -126,12 +239,21 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   // double-mount doesn't double-send it.
   const initialSentRef = useRef(false);
 
+  // AbortController for the in-flight stream. The Stop button calls
+  // `.abort()` which closes the fetch, the backend detects via
+  // `req.on('close')` and halts the LLM call (W6-S3).
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const threadEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new message
+  // Auto-scroll to bottom on new message OR new delta during streaming.
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const cancelInFlight = (): void => {
+    abortControllerRef.current?.abort();
+  };
 
   async function send(text: string): Promise<void> {
     const trimmed = text.trim();
@@ -144,36 +266,98 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
       text: trimmed,
       turnNumber: userTurn,
     };
-    setMessages((m) => [...m, userMsg]);
+    // Seed the assistant message empty + streaming so the UI shows a
+    // bubble immediately. Tokens append into this same message object
+    // as the stream events arrive — no flicker, no late-mount.
+    const assistantId = newId();
+    const initialAssistant: AssistantMessage = {
+      id: assistantId,
+      role: 'assistant',
+      text: '',
+      turnNumber: userTurn,
+      streaming: true,
+    };
+    setMessages((m) => [...m, userMsg, initialAssistant]);
     setDraft('');
     setIsSending(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    let sawDoneOrCancelled = false;
+
     try {
-      const response = await sendChatTurn({
-        userInput: trimmed,
-        sessionId,
-        turnNumber: userTurn,
-      });
-      const assistantMsg: AssistantMessage = {
-        id: newId(),
-        role: 'assistant',
-        text: response.responseText,
-        turnNumber: userTurn,
-        raw: response,
-      };
-      setMessages((m) => [...m, assistantMsg]);
+      const stream = streamChatTurn(
+        { userInput: trimmed, sessionId, turnNumber: userTurn },
+        { signal: controller.signal }
+      );
+      for await (const event of stream) {
+        applyStreamEvent(event, assistantId, setMessages);
+        if (event.type === 'done' || event.type === 'cancelled') {
+          sawDoneOrCancelled = true;
+        }
+        if (event.type === 'error') {
+          // Convert the assistant bubble into an error bubble — keeps
+          // the message-order in the thread and surfaces the failure
+          // clearly.
+          setMessages((m) => {
+            const errorMsg: ErrorMessage = {
+              id: newId(),
+              role: 'error',
+              text: event.message,
+            };
+            return m
+              .filter((msg) => msg.id !== assistantId)
+              .concat(errorMsg);
+          });
+          sawDoneOrCancelled = true;
+        }
+      }
+      if (!sawDoneOrCancelled) {
+        // Stream ended without a terminal event — flip the bubble out
+        // of streaming state so the user doesn't see a permanent
+        // typing indicator.
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === assistantId && msg.role === 'assistant'
+              ? { ...msg, streaming: false }
+              : msg
+          )
+        );
+      }
       setTurnNumber((n) => n + 1);
     } catch (err) {
-      const errorMsg: ErrorMessage = {
-        id: newId(),
-        role: 'error',
-        text:
+      // AbortError fires when the user hits Stop. Mark the bubble
+      // cancelled but keep its partial text.
+      const isAbort =
+        err instanceof DOMException && err.name === 'AbortError';
+      if (isAbort) {
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === assistantId && msg.role === 'assistant'
+              ? { ...msg, streaming: false, cancelled: true }
+              : msg
+          )
+        );
+      } else {
+        const errorText =
           err instanceof Error && err.message
             ? `Couldn't reach the assistant: ${err.message}`
-            : "Couldn't reach the assistant. Please try again.",
-      };
-      setMessages((m) => [...m, errorMsg]);
+            : "Couldn't reach the assistant. Please try again.";
+        setMessages((m) => {
+          const errorMsg: ErrorMessage = {
+            id: newId(),
+            role: 'error',
+            text: errorText,
+          };
+          // Replace the empty streaming bubble with the error bubble.
+          return m
+            .filter((msg) => msg.id !== assistantId)
+            .concat(errorMsg);
+        });
+      }
     } finally {
+      abortControllerRef.current = null;
       setIsSending(false);
     }
   }
@@ -244,7 +428,12 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
             <MessageBubble key={msg.id} message={msg} />
           ))}
 
-          {isSending && (
+          {/* Thinking indicator — only shown BEFORE the first token of
+              the streaming assistant message arrives. Once tokens start
+              flowing, the live assistant bubble is its own progress
+              indicator (Apple Messages pattern: the bubble appears
+              empty, then fills). */}
+          {isSending && lastMessageIsEmptyStreamingBubble(messages) && (
             <Box
               sx={{ display: 'flex', gap: 1, alignItems: 'center', pl: 1 }}
               data-testid="chat-loading"
@@ -299,25 +488,47 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
               },
             }}
           />
-          <IconButton
-            type="submit"
-            disabled={isSending || draft.trim().length === 0}
-            aria-label="Send"
-            data-testid="chat-send"
-            sx={{
-              width: 44,
-              height: 44,
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.dark' },
-              '&.Mui-disabled': {
-                bgcolor: 'action.disabledBackground',
-                color: 'action.disabled',
-              },
-            }}
-          >
-            <SendIcon fontSize="small" />
-          </IconButton>
+          {/* Send → Stop swap pattern (Apple Messages). During streaming
+              the button morphs into a Stop control that aborts the
+              in-flight LLM call. The button keeps its position so
+              focus + muscle memory stay consistent. */}
+          {isSending ? (
+            <IconButton
+              type="button"
+              onClick={cancelInFlight}
+              aria-label="Stop generating"
+              data-testid="chat-stop"
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: 'text.primary',
+                color: 'background.paper',
+                '&:hover': { bgcolor: 'text.secondary' },
+              }}
+            >
+              <StopIcon fontSize="small" />
+            </IconButton>
+          ) : (
+            <IconButton
+              type="submit"
+              disabled={draft.trim().length === 0}
+              aria-label="Send"
+              data-testid="chat-send"
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': { bgcolor: 'primary.dark' },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'action.disabled',
+                },
+              }}
+            >
+              <SendIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </Box>
     </ThemeProvider>
@@ -349,6 +560,8 @@ function MessageBubble({ message }: { message: ThreadMessage }): React.JSX.Eleme
   }
 
   const isUser = message.role === 'user';
+  const isCancelled =
+    message.role === 'assistant' && message.cancelled === true;
   return (
     <Box
       sx={{
@@ -368,6 +581,21 @@ function MessageBubble({ message }: { message: ThreadMessage }): React.JSX.Eleme
       data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
     >
       {message.text}
+      {isCancelled && (
+        <Box
+          component="span"
+          sx={{
+            display: 'block',
+            mt: 1,
+            fontSize: 12,
+            color: 'text.secondary',
+            fontStyle: 'italic',
+          }}
+          data-testid="chat-message-cancelled"
+        >
+          Stopped.
+        </Box>
+      )}
     </Box>
   );
 }

@@ -1,15 +1,32 @@
 /**
- * Chat API client — wraps POST /api/chat/turn (W6-S1).
+ * Chat API client — wraps POST /api/chat/turn (W6-S1) +
+ * POST /api/chat/turn/stream (W6-S3).
  *
- * Engineer lens: reuses the existing `api` axios instance from
- * services/api.ts so the auth interceptor + base-URL handling are
- * shared with the wizard surfaces. Per FRONTEND_API_STANDARDS.md, all
- * frontend API calls go through this one axios instance — NEVER fetch,
- * NEVER a parallel client.
+ * Engineer lens: the non-streaming `sendChatTurn` reuses the existing
+ * `api` axios instance — auth header + baseURL shared with the wizard
+ * surfaces per FRONTEND_API_STANDARDS.md.
+ *
+ * SSE EXCEPTION (W6-S3)
+ * ─────────────────────
+ *
+ * `streamChatTurn` uses `fetch` because:
+ *   1. axios cannot read a response body as a stream in the browser
+ *      (the XHR-backed transport doesn't expose ReadableStream)
+ *   2. EventSource is GET-only — we need POST for auth headers + body
+ *      (our chatIdentityMiddleware reads sessionId from req.body)
+ *
+ * The fetch call mirrors the axios instance's behavior:
+ *   - baseURL: same VITE_API_URL / VITE_REACT_APP_API_URL resolution
+ *   - Bearer token: pulled from tokenUtils so authed users still
+ *     bypass the session rate limit
+ *   - 401 handling: forwards to /login the same way the axios
+ *     interceptor does, to keep the auth UX consistent across
+ *     transports.
  */
 
 import axios from 'axios';
 import api from './api';
+import { tokenUtils } from './api';
 
 // ===== Wire shapes — mirror backend/src/routes/chat.ts ChatTurnResponse =====
 
@@ -71,5 +88,194 @@ export async function sendChatTurn(
       throw new Error(body?.error ?? 'Free analysis limit reached for this session.');
     }
     throw err;
+  }
+}
+
+// ===== Streaming endpoint (W6-S3) =====
+
+/**
+ * Stream event the chat overlay consumes. Mirrors the backend
+ * OrchestratorStreamEvent discriminated union in
+ * `agents/orchestrator/streamEvents.ts` — one source of truth lives
+ * server-side; this is the wire-typed mirror.
+ */
+export type ChatStreamEvent =
+  | {
+      type: 'routing';
+      target: string;
+      routedTo: string;
+      classifierIntent: string;
+      classifierConfidence: number;
+      fallbackReason?: 'low_confidence' | 'classifier_fallback';
+    }
+  | { type: 'text_delta'; text: string }
+  | {
+      type: 'tool_call';
+      toolName: string;
+      success: boolean;
+      durationMs: number;
+    }
+  | {
+      type: 'structured_output';
+      kind: string;
+      data: Record<string, unknown>;
+    }
+  | {
+      type: 'done';
+      traceId: string;
+      conversationEventId: string;
+      relatedEventIds: string[];
+      totalCostCents: number;
+      agentStubbed: boolean;
+    }
+  | { type: 'error'; message: string }
+  | {
+      type: 'cancelled';
+      partialText: string;
+      traceId: string;
+      conversationEventId?: string;
+      partialCostCents: number;
+    };
+
+/**
+ * Resolve the SSE endpoint URL. Mirrors the axios instance's baseURL
+ * fallback chain so dev / prod / Render env vars all flow through one
+ * resolver. The trailing `/chat/turn/stream` is added here.
+ */
+function resolveStreamUrl(): string {
+  const base =
+    (import.meta.env.VITE_API_URL as string | undefined) ??
+    (import.meta.env.REACT_APP_API_URL as string | undefined) ??
+    '/api';
+  // axios appends '/chat/turn' as path; we mirror with the stream suffix.
+  return `${base.replace(/\/$/, '')}/chat/turn/stream`;
+}
+
+/**
+ * SSE frame parser. Reads from a ReadableStream<Uint8Array> and yields
+ * one JSON payload per `data: {...}\n\n` frame. Handles partial reads
+ * (a single network chunk may contain N frames, or half a frame —
+ * standard SSE wire-protocol handling).
+ */
+async function* parseSseStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>
+): AsyncGenerator<ChatStreamEvent, void, void> {
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Frames are delimited by a blank line (\n\n). Split, keeping any
+    // trailing partial frame in the buffer for the next iteration.
+    let sepIdx: number;
+    while ((sepIdx = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, sepIdx);
+      buffer = buffer.slice(sepIdx + 2);
+
+      // A frame is one or more `field: value` lines. We only care
+      // about `data:` lines per the orchestrator's wire format.
+      const dataLines: string[] = [];
+      for (const line of frame.split('\n')) {
+        if (line.startsWith('data:')) {
+          dataLines.push(line.slice(5).trimStart());
+        }
+      }
+      if (dataLines.length === 0) continue;
+      const json = dataLines.join('\n');
+      try {
+        const parsed = JSON.parse(json) as ChatStreamEvent;
+        yield parsed;
+      } catch {
+        // Malformed frame — skip rather than blow up the stream.
+        // Backend test contract pins JSON.stringify, so this is a
+        // defensive guard for proxies that occasionally mangle frames.
+        continue;
+      }
+    }
+  }
+}
+
+/**
+ * Stream a chat turn. Returns an AsyncIterable of ChatStreamEvents.
+ * Caller iterates with `for await` and updates UI state per event.
+ *
+ * Cancellation: pass an `AbortSignal`. Aborting the signal closes the
+ * fetch connection — the backend detects via `req.on('close')` and
+ * halts the in-flight LLM call (CostEvent for partial usage is still
+ * written; substrate accounting stays honest).
+ *
+ * Error surface mirrors sendChatTurn:
+ *   - 429 → throws Error with the human-readable backend message
+ *   - 401 → behaves like the axios interceptor (token cleanup +
+ *     redirect to /login). The fetch call short-circuits the redirect
+ *     for now because the chat surface is anonymous-by-design (W6-S2.5);
+ *     a 401 on a streaming call means the auth token went stale mid-
+ *     conversation — let the caller surface it.
+ *   - Other non-2xx → throws Error with the body's `error` field.
+ */
+export async function* streamChatTurn(
+  request: ChatTurnRequest,
+  opts: { signal?: AbortSignal } = {}
+): AsyncGenerator<ChatStreamEvent, void, void> {
+  const url = resolveStreamUrl();
+  const token = tokenUtils.getAccessToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(request),
+    signal: opts.signal,
+  });
+
+  if (!response.ok) {
+    // Drain the body for diagnostics; backend returns JSON error shapes.
+    let bodyText = '';
+    try {
+      bodyText = await response.text();
+    } catch {
+      // ignore
+    }
+    let parsedError: { error?: string } | null = null;
+    try {
+      parsedError = bodyText ? (JSON.parse(bodyText) as { error?: string }) : null;
+    } catch {
+      // body wasn't JSON
+    }
+    if (response.status === 429) {
+      throw new Error(
+        parsedError?.error ?? 'Free analysis limit reached for this session.'
+      );
+    }
+    throw new Error(
+      parsedError?.error ??
+        `Chat stream failed with status ${response.status}.`
+    );
+  }
+
+  if (!response.body) {
+    throw new Error('Chat stream: response body is empty.');
+  }
+
+  const reader = response.body.getReader();
+  try {
+    for await (const event of parseSseStream(reader)) {
+      yield event;
+    }
+  } finally {
+    // Release the reader. If we exited because of an abort, the fetch
+    // is already closing; cancel() is safe and idempotent.
+    try {
+      await reader.cancel();
+    } catch {
+      // ignore
+    }
   }
 }

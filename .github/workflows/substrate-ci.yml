@@ -49,6 +49,13 @@ on:
       - 'backend/src/middleware/__tests__/chatIdentity.test.ts'
       - 'backend/src/middleware/__tests__/chatSessionRateLimit.test.ts'
       - 'backend/src/models/User.ts'
+      - 'backend/src/agents/llm/anthropicAdapter.ts'
+      - 'backend/src/agents/runner/agentRunner.ts'
+      - 'backend/src/agents/runner/__tests__/agentRunner.test.ts'
+      - 'backend/src/agents/qa/qaAgent.ts'
+      - 'backend/src/agents/dealScoring/dealScoringAgent.ts'
+      - 'backend/src/agents/orchestrator/streamEvents.ts'
+      - 'backend/src/agents/orchestrator/__tests__/orchestrator.stream.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -72,6 +79,13 @@ on:
       - 'backend/src/middleware/__tests__/chatIdentity.test.ts'
       - 'backend/src/middleware/__tests__/chatSessionRateLimit.test.ts'
       - 'backend/src/models/User.ts'
+      - 'backend/src/agents/llm/anthropicAdapter.ts'
+      - 'backend/src/agents/runner/agentRunner.ts'
+      - 'backend/src/agents/runner/__tests__/agentRunner.test.ts'
+      - 'backend/src/agents/qa/qaAgent.ts'
+      - 'backend/src/agents/dealScoring/dealScoringAgent.ts'
+      - 'backend/src/agents/orchestrator/streamEvents.ts'
+      - 'backend/src/agents/orchestrator/__tests__/orchestrator.stream.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -140,6 +154,7 @@ jobs:
             src/routes/__tests__/chat.test.ts \
             src/middleware/__tests__/chatIdentity.test.ts \
             src/middleware/__tests__/chatSessionRateLimit.test.ts \
+            src/agents/orchestrator/__tests__/orchestrator.stream.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \

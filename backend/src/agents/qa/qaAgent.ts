@@ -26,7 +26,13 @@
  * engine said; the agent's job is making it understandable.
  */
 
-import { runAgent, type AgentConfig, type AgentRunOutput } from '../runner/agentRunner';
+import {
+  runAgent,
+  runAgentStream,
+  type AgentConfig,
+  type AgentRunOutput,
+  type AgentStreamEvent,
+} from '../runner/agentRunner';
 import type { ToolContext } from '../tools/types';
 import { recallUserContext } from '../tools/recall_user_context';
 import { renderAuditTrail } from '../tools/render_audit_trail';
@@ -152,4 +158,17 @@ export async function runQaAgent(
   ctx: ToolContext
 ): Promise<QaRunOutput> {
   return runAgent(AGENT_CONFIG, input, ctx);
+}
+
+/**
+ * Streaming variant — W6-S3. Yields AgentStreamEvents (text_delta,
+ * tool_call_completed, final, cancelled) as the LLM pipes tokens.
+ * Used by orchestrator.streamTurn for the SSE chat surface.
+ */
+export function runQaAgentStream(
+  input: QaRunInput,
+  ctx: ToolContext,
+  opts: { signal?: AbortSignal } = {}
+): AsyncGenerator<AgentStreamEvent, void, void> {
+  return runAgentStream(AGENT_CONFIG, input, ctx, opts);
 }

@@ -48,13 +48,15 @@ import type { ToolContext, Tool } from '../tools/types';
 import { toolRegistry } from '../tools/registry';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
 import { logger } from '../../utils/logger';
-import { runDealScoringAgent } from '../dealScoring/dealScoringAgent';
-import { runQaAgent } from '../qa/qaAgent';
+import { runDealScoringAgent, runDealScoringAgentStream } from '../dealScoring/dealScoringAgent';
+import { runQaAgent, runQaAgentStream } from '../qa/qaAgent';
 import { runAdversarialCritic } from '../adversarialCritic/adversarialCriticAgent';
 import {
   loadRecentTurns,
   type RecentTurn,
 } from './conversationContext';
+import type { OrchestratorStreamEvent } from './streamEvents';
+import type { AgentStreamEvent } from '../runner/agentRunner';
 
 // ===== Input / output =====
 
@@ -535,4 +537,325 @@ async function executeAgentRoute(
   }
 
   throw new Error(`orchestrator: unknown agent target '${target}'`);
+}
+
+// ===== Streaming variant (W6-S3) =====
+
+/**
+ * Mirror of handleTurn that yields OrchestratorStreamEvents instead of
+ * returning a single OrchestratorTurnOutput. Used by the SSE route at
+ * POST /api/chat/turn/stream.
+ *
+ * Event sequence:
+ *   1. routing — emitted ONCE after the classifier resolves the route.
+ *      Tells the UI which path was taken (deal-scoring vs qa vs
+ *      deflection vs tool-only) so it can show a path-specific hint.
+ *   2. text_delta — emitted ZERO OR MORE TIMES as the agent's text
+ *      streams from the LLM. For deflection / tool-only paths a single
+ *      text_delta carries the entire response.
+ *   3. tool_call — emitted ZERO OR MORE TIMES, AFTER each tool a
+ *      streaming agent invokes finishes (UX hint: "Just called
+ *      score_deal — analyzing...").
+ *   4. done — emitted ONCE at the end of a successful turn with
+ *      trace + conversation-event IDs the UI needs.
+ *   5. error — emitted ONCE in place of `done` on fatal failure.
+ *   6. cancelled — emitted ONCE in place of `done` when the caller's
+ *      AbortSignal fires mid-stream.
+ *
+ * Cancellation contract:
+ *   - opts.signal is forwarded into the agent runner. Mid-stream abort
+ *     halts the SDK call and yields an AgentStreamEvent.cancelled with
+ *     the partial accumulator.
+ *   - We still write a ConversationEvent (with the partial text and
+ *     `cancelled` annotation in the agent response) so substrate
+ *     accounting stays accurate.
+ *   - The terminal event is `cancelled` (not `done`).
+ */
+export async function* streamTurn(
+  input: OrchestratorTurnInput,
+  opts: { signal?: AbortSignal } = {}
+): AsyncGenerator<OrchestratorStreamEvent, void, void> {
+  const traceId = newTraceId();
+  const turnStart = Date.now();
+  const signal = opts.signal;
+
+  const ctx: ToolContext = {
+    traceId,
+    userId: input.userId,
+    institutionId: input.institutionId,
+    eventsRepo: eventsRepository,
+    eventsReads: eventsRepositoryReads,
+    tools: toolRegistry,
+  };
+
+  try {
+    // ===== 0. Load conversation context =====
+    const recentTurns: RecentTurn[] = await loadRecentTurns(
+      eventsRepositoryReads,
+      input.sessionId
+    );
+
+    // ===== 1. Classify intent =====
+    const classification = await classifyIntent({
+      userInput: input.userInput,
+      traceId,
+      userId: input.userId,
+      institutionId: input.institutionId,
+      recentTurns,
+    });
+
+    if (signal?.aborted) {
+      yield {
+        type: 'cancelled',
+        partialText: '',
+        traceId,
+        partialCostCents: classification.costCents,
+      };
+      return;
+    }
+
+    // ===== 2. Route =====
+    const routing = routeIntent(classification.intent, classification.confidence);
+
+    yield {
+      type: 'routing',
+      target: routing.target,
+      routedTo: routing.routedTo,
+      classifierIntent: classification.intent,
+      classifierConfidence: classification.confidence,
+      fallbackReason: routing.fallbackReason,
+    };
+
+    logger.debug('orchestrator.streamTurn: routed turn', {
+      traceId,
+      intent: classification.intent,
+      confidence: classification.confidence,
+      target: routing.target,
+    });
+
+    // ===== 3. Execute =====
+    let responseText = '';
+    let relatedEventIds: Types.ObjectId[] = [];
+    let totalCostCents = classification.costCents;
+    let totalInputTokens = classification.tokenUsage.inputTokens;
+    let totalOutputTokens = classification.tokenUsage.outputTokens;
+    let totalCachedTokens = classification.tokenUsage.cachedTokens;
+    let modelUsed = classification.modelUsed;
+    let toolCallsRecord: Array<{
+      toolName: string;
+      inputHash: string;
+      success: boolean;
+      durationMs: number;
+    }> = [];
+    let wasCancelled = false;
+
+    if (routing.target === 'deflection:off_topic') {
+      // No LLM call, no streaming — just emit the locked text in one delta.
+      responseText = OFF_TOPIC_DEFLECTION_RESPONSE;
+      yield { type: 'text_delta', text: responseText };
+      logger.info('orchestrator.streamTurn: off_topic deflection', {
+        traceId,
+        sessionId: input.sessionId,
+        turnNumber: input.turnNumber,
+      });
+    } else if (routing.target.startsWith('tool:')) {
+      // Tool routes — execute, emit single text_delta with the result.
+      const toolResult = await executeToolRoute(
+        routing.target,
+        input.toolPayload,
+        ctx
+      );
+      responseText = toolResult.responseText;
+      relatedEventIds = toolResult.relatedEventIds;
+      yield { type: 'text_delta', text: responseText };
+    } else {
+      // Agent routes — real token streaming via runAgentStream.
+      const agentContext =
+        recentTurns.length > 0 ? { recentTurns } : undefined;
+
+      let agentStream: AsyncGenerator<AgentStreamEvent, void, void>;
+      if (routing.target === 'agent:qa') {
+        agentStream = runQaAgentStream(
+          { userInput: input.userInput, context: agentContext },
+          ctx,
+          { signal }
+        );
+      } else if (routing.target === 'agent:deal_scoring') {
+        agentStream = runDealScoringAgentStream(
+          { userInput: input.userInput, context: agentContext },
+          ctx,
+          { signal }
+        );
+      } else if (routing.target === 'agent:adversarial_critic') {
+        // adversarial_critic stays non-streaming for now (complex 2-persona
+        // logic; structured output not text). Emit the result as a single
+        // text_delta — protocol stays uniform.
+        const decisionIdRaw = (input.toolPayload ?? {}) as {
+          decisionId?: Types.ObjectId | string;
+          triggerType?: 'auto_buy_band' | 'manual_request' | 'batch_seeding';
+        };
+        if (!decisionIdRaw.decisionId) {
+          throw new Error(
+            'orchestrator.streamTurn: agent:adversarial_critic requires toolPayload.decisionId.'
+          );
+        }
+        const result = await runAdversarialCritic(
+          {
+            decisionId: decisionIdRaw.decisionId,
+            triggerType: decisionIdRaw.triggerType ?? 'manual_request',
+          },
+          ctx
+        );
+        const summary = result.critiques
+          .map((c) => {
+            const severity = c.structured.severityScore;
+            const agreed = c.structured.agreementWithOriginal;
+            const reasonCount = c.structured.divergenceReasons.length;
+            return `${c.persona}: ${agreed ? 'agrees' : 'disagrees'} (severity ${severity}, ${reasonCount} divergence(s))`;
+          })
+          .join('\n');
+        responseText =
+          `Critique complete. Two personas ran in parallel:\n${summary}\n\n` +
+          `Full critique details persisted to substrate (CritiqueEvents).`;
+        relatedEventIds = result.critiques.flatMap((c) => [
+          c.critiqueEventId,
+          ...c.runResult.relatedEventIds,
+        ]);
+        toolCallsRecord = result.critiques.flatMap(
+          (c) => c.runResult.toolCallsExecuted
+        );
+        totalCostCents += result.totalCostCents;
+        const aggUsage = result.critiques.reduce(
+          (acc, c) => ({
+            inputTokens: acc.inputTokens + c.runResult.tokenUsage.inputTokens,
+            outputTokens: acc.outputTokens + c.runResult.tokenUsage.outputTokens,
+            cachedTokens: acc.cachedTokens + c.runResult.tokenUsage.cachedTokens,
+          }),
+          { inputTokens: 0, outputTokens: 0, cachedTokens: 0 }
+        );
+        totalInputTokens += aggUsage.inputTokens;
+        totalOutputTokens += aggUsage.outputTokens;
+        totalCachedTokens += aggUsage.cachedTokens;
+        modelUsed = result.critiques[0]?.runResult.modelUsed ?? modelUsed;
+        yield { type: 'text_delta', text: responseText };
+      } else {
+        throw new Error(
+          `orchestrator.streamTurn: unknown route '${routing.target}'`
+        );
+      }
+
+      // Consume the streaming agent (only set when qa or deal_scoring).
+      if (
+        routing.target === 'agent:qa' ||
+        routing.target === 'agent:deal_scoring'
+      ) {
+        for await (const ev of agentStream!) {
+          if (ev.type === 'text_delta') {
+            responseText += ev.text;
+            yield { type: 'text_delta', text: ev.text };
+          } else if (ev.type === 'tool_call_completed') {
+            yield {
+              type: 'tool_call',
+              toolName: ev.toolName,
+              success: ev.success,
+              durationMs: ev.durationMs,
+            };
+          } else if (ev.type === 'final') {
+            // Mirror runAgent's return shape into orchestrator-level
+            // accumulators. Final text from the agent overrides the
+            // accumulated deltas only if the agent emitted a final text
+            // block at all — otherwise stick with the delta accumulation.
+            if (ev.output.text.length > 0) {
+              responseText = ev.output.text;
+            }
+            relatedEventIds = ev.output.relatedEventIds;
+            toolCallsRecord = ev.output.toolCallsExecuted;
+            totalCostCents += ev.output.totalCostCents;
+            totalInputTokens += ev.output.tokenUsage.inputTokens;
+            totalOutputTokens += ev.output.tokenUsage.outputTokens;
+            totalCachedTokens += ev.output.tokenUsage.cachedTokens;
+            modelUsed = ev.output.modelUsed;
+          } else if (ev.type === 'cancelled') {
+            wasCancelled = true;
+            responseText = ev.partial.text || responseText;
+            relatedEventIds = ev.partial.relatedEventIds;
+            toolCallsRecord = ev.partial.toolCallsExecuted;
+            totalCostCents += ev.partial.totalCostCents;
+            totalInputTokens += ev.partial.tokenUsage.inputTokens;
+            totalOutputTokens += ev.partial.tokenUsage.outputTokens;
+            totalCachedTokens += ev.partial.tokenUsage.cachedTokens;
+            modelUsed = ev.partial.modelUsed || modelUsed;
+            break;
+          }
+        }
+      }
+    }
+
+    // ===== 4. Emit ConversationEvent =====
+    const totalDurationMs = Date.now() - turnStart;
+    const conversationEventId = await eventsRepository.writeConversationEvent({
+      traceId,
+      actorType: 'user',
+      userId: input.userId,
+      institutionId: input.institutionId,
+      payload: {
+        sessionId: input.sessionId,
+        turnNumber: input.turnNumber,
+        userInput: {
+          text: input.userInput,
+          inputMethod: input.inputMethod ?? 'text',
+        },
+        intentClassification: {
+          intent: classification.intent,
+          confidence: classification.confidence,
+          classifierModel: classification.modelUsed,
+        },
+        routedTo: routing.routedTo,
+        toolCalls: toolCallsRecord,
+        agentResponse: {
+          text: responseText,
+          structuredOutputs: [],
+          relatedEventIds,
+        },
+        tokenUsage: {
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          cachedTokens: totalCachedTokens,
+          estimatedCostCents: totalCostCents,
+        },
+        modelUsed,
+        totalDurationMs,
+      },
+    });
+
+    if (wasCancelled) {
+      yield {
+        type: 'cancelled',
+        partialText: responseText,
+        traceId,
+        conversationEventId: conversationEventId.toHexString(),
+        partialCostCents: totalCostCents,
+      };
+      return;
+    }
+
+    // ===== 5. Done =====
+    yield {
+      type: 'done',
+      traceId,
+      conversationEventId: conversationEventId.toHexString(),
+      relatedEventIds: relatedEventIds.map((id) => id.toHexString()),
+      totalCostCents,
+      agentStubbed: false,
+    };
+  } catch (err) {
+    logger.error('orchestrator.streamTurn: failed', {
+      traceId,
+      sessionId: input.sessionId,
+      turnNumber: input.turnNumber,
+      error: err instanceof Error ? err.stack ?? err.message : String(err),
+    });
+    // Generic message; internal detail stays in logs.
+    yield { type: 'error', message: 'Chat turn failed. Please try again.' };
+  }
 }

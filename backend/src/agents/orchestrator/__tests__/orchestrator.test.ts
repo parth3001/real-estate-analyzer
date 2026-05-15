@@ -45,7 +45,7 @@ describe('orchestrator.handleTurn (W2-S2)', () => {
    *     and qa, the text is plain. For adversarial_critic, the text must
    *     be valid critique JSON (the critic parses it).
    */
-  function classifierStub(intent: ChatIntent, confidence: number): AnthropicAdapter {
+  function classifierStub(intent: ChatIntent, confidence: number): Partial<AnthropicAdapter> {
     return {
       async call() {
         return {
@@ -70,7 +70,7 @@ describe('orchestrator.handleTurn (W2-S2)', () => {
 
   /** Critic adapter: classifier returns request_critique; callWithTools
    *  returns valid critique JSON in a text block. */
-  function criticStub(): AnthropicAdapter {
+  function criticStub(): Partial<AnthropicAdapter> {
     const critiqueJson = JSON.stringify({
       agreementWithOriginal: false,
       divergenceReasons: ['Vacancy too aggressive for this submarket'],
