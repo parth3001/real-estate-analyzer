@@ -51,6 +51,7 @@ import BlogPostPage from './pages/BlogPostPage';
 import BRRRRCalculatorPage from './pages/BRRRRCalculatorPage';
 import CapRateCalculatorPage from './pages/CapRateCalculatorPage';
 import RentalPropertyCalculatorPage from './pages/RentalPropertyCalculatorPage';
+import AppPage from './pages/AppPage';
 
 // Portfolio Components
 import PortfolioDashboard from './pages/PortfolioDashboard';
@@ -198,6 +199,9 @@ function App() {
               <Route path="/brrrr-calculator" element={<BRRRRCalculatorPage />} />
               <Route path="/cap-rate-calculator" element={<CapRateCalculatorPage />} />
               <Route path="/rental-property-calculator" element={<RentalPropertyCalculatorPage />} />
+
+              {/* W6-S2 — Standalone chat surface (public; auth gating in W6-S5) */}
+              <Route path="/app" element={<AppPage />} />
 
               {/* Blog Routes - Public, No Auth Required */}
               <Route path="/blog" element={<BlogListPage />} />
