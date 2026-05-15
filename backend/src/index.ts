@@ -1,10 +1,15 @@
-import dotenv from 'dotenv';
+// CRITICAL: loadEnv MUST be the very first import so dotenv.config()
+// runs BEFORE any service module (RentcastService, FredService, etc.)
+// reads process.env at module-load time. See loadEnv.ts header for
+// the bug class this prevents.
+// eslint-disable-next-line import/order
+import './loadEnv';
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import path from 'path';
 import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
@@ -28,22 +33,19 @@ import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
 
-// Load .env file only in development (production uses Render environment variables)
+// .env was already loaded by `./loadEnv` at the top of this file.
+// We just log the resolved state here so startup output stays informative.
 if (process.env.NODE_ENV !== 'production') {
-  const envPath = path.resolve(__dirname, '../.env');
-  const result = dotenv.config({ path: envPath });
-
-  if (result.error) {
-    logger.warn('⚠️  No .env file found (this is normal in production)');
-  } else {
-    logger.info('✅ .env file loaded successfully');
-    logger.info('Environment:', {
-      NODE_ENV: process.env.NODE_ENV,
-      PORT: process.env.PORT,
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-      MONGODB_URI: process.env.MONGODB_URI ? 'configured' : 'missing'
-    });
-  }
+  logger.info('✅ .env loaded (via loadEnv)');
+  logger.info('Environment:', {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ? 'configured' : 'missing',
+    RENTCAST_API_KEY: process.env.RENTCAST_API_KEY ? 'configured' : 'missing',
+    FRED_API_KEY: process.env.FRED_API_KEY ? 'configured' : 'missing',
+    MONGODB_URI: process.env.MONGODB_URI ? 'configured' : 'missing',
+  });
 }
 
 const app = express();
