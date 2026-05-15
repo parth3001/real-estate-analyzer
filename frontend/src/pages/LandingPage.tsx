@@ -11,7 +11,8 @@
  * feedback_no_verdict_in_public_copy.md.)
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Box,
@@ -20,8 +21,11 @@ import {
   Grid,
   Paper,
   Button,
+  TextField,
+  IconButton,
   Link as MuiLink
 } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 import PublicHeader from '../components/common/PublicHeader';
 import { UniversalCalculator } from '../components/Calculator';
 import { analytics } from '../utils/analytics';
@@ -108,6 +112,21 @@ const ctaButtonSx = {
 };
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  // W6-S2b — hero-embed chat input. Submitting forwards the prompt to
+  // /app, where ChatOverlay auto-runs turn 1 via its initialUserInput
+  // prop. Activation handoff feels continuous because the input shape
+  // and placeholder match the chat surface 1:1.
+  const [heroDraft, setHeroDraft] = useState('');
+
+  const submitHeroPrompt = (): void => {
+    const trimmed = heroDraft.trim();
+    if (!trimmed) return;
+    // Activation event is logged server-side from chat.turn.completed
+    // (W6-S2.5) — no frontend SDK call needed yet.
+    navigate('/app', { state: { initialUserInput: trimmed } });
+  };
+
   useEffect(() => {
     analytics.trackPageView('landing');
   }, []);
@@ -160,11 +179,90 @@ const LandingPage: React.FC = () => {
               >
                 BRRRR, Buy &amp; Hold, Multi-Family, and commercial — one platform that connects every deal to the portfolio you've already built. Built to flag the deals that don't work, not just the ones that do.
               </Typography>
-              <Button variant="contained" size="large" href={PRIMARY_CTA_HREF} sx={ctaButtonSx}>
-                Run a Deal Now →
-              </Button>
+              {/* W6-S2b — hero-embed chat input.
+                  Shape matches the /app input 1:1 so the handoff feels
+                  like the same surface, not a navigation. */}
+              <Box
+                component="form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitHeroPrompt();
+                }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  maxWidth: 560,
+                  bgcolor: '#FFFFFF',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: 999,
+                  px: 1.5,
+                  py: 0.75,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  transition: 'border-color 150ms, box-shadow 150ms',
+                  '&:focus-within': {
+                    borderColor: ACCENT,
+                    boxShadow: `0 0 0 3px ${ACCENT}22`,
+                  },
+                }}
+              >
+                <TextField
+                  fullWidth
+                  variant="standard"
+                  placeholder="Try: analyze 1837 Walnut Way Anna TX 75409"
+                  value={heroDraft}
+                  onChange={(e) => setHeroDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Enter sends; Shift+Enter inserts newline.
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitHeroPrompt();
+                    }
+                  }}
+                  InputProps={{
+                    disableUnderline: true,
+                    sx: {
+                      fontSize: '1rem',
+                      px: 1,
+                      py: 0.5,
+                    },
+                  }}
+                  inputProps={{
+                    'aria-label': 'Ask about a property to analyze',
+                    'data-testid': 'landing-hero-chat-input',
+                  }}
+                />
+                <IconButton
+                  type="submit"
+                  disabled={heroDraft.trim().length === 0}
+                  aria-label="Send"
+                  data-testid="landing-hero-chat-send"
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: ACCENT,
+                    color: '#FFFFFF',
+                    '&:hover': { bgcolor: '#0058B3' },
+                    '&.Mui-disabled': {
+                      bgcolor: '#E5E7EB',
+                      color: '#9CA3AF',
+                    },
+                  }}
+                >
+                  <SendIcon fontSize="small" />
+                </IconButton>
+              </Box>
               <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#6B7280' }}>
-                Five minutes from address to score. Free during beta.
+                Type an address or paste a listing — get a Deal Quality Score in seconds. Free during beta.
+              </Typography>
+              <Typography sx={{ mt: 1.5, fontSize: '0.8125rem', color: '#6B7280' }}>
+                Prefer the full form?{' '}
+                <MuiLink
+                  href={PRIMARY_CTA_HREF}
+                  sx={{ color: ACCENT, fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                >
+                  Use the analyzer →
+                </MuiLink>
               </Typography>
             </Grid>
 

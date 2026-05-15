@@ -1,5 +1,5 @@
 /**
- * Chat API — W6-S1.
+ * Chat API — W6-S1 + W6-S2.5 (anonymous chat).
  *
  * The HTTP surface the chat overlay (W6-S2+) calls. Single endpoint:
  *
@@ -9,25 +9,31 @@
  * — substrate IS the state — so the client manages sessionId +
  * turnNumber. Backend just validates, dispatches, persists.
  *
- * STRANGLER-FIG PARITY
- * --------------------
+ * IDENTITY (W6-S2.5)
+ * ------------------
  *
- * Auth, rate-limit, and error-shape mirror the existing
- * /api/deals/analyze surface so the chat overlay slots alongside the
- * wizards without introducing a divergent client contract:
+ * Anonymous access is allowed via the ghost-user pattern (see
+ * middleware/chatIdentity.ts). Either a Bearer JWT or a valid sessionId
+ * is required:
  *
- *   - authMiddleware (JWT Bearer, req.user from auth.ts)
- *   - calculationRateLimit (applied at mount in index.ts —
- *     chat turns hit LLMs, even more expensive than calc)
- *   - Errors as { error: string }
+ *   - chatIdentityMiddleware resolves req.user from Bearer (real user)
+ *     OR creates/loads a ghost User keyed by sessionId. Sets
+ *     req.user.anonymous accordingly.
+ *   - chatSessionRateLimit caps anonymous sessions at 10 turns / 24h
+ *     (cost containment for LLM-backed turns). Authed users skip.
+ *   - calculationRateLimit (IP-scoped, 50/15min, applied at mount in
+ *     index.ts) is the abuse-level ceiling — independent of session.
  *
- * Per /docs/PRODUCT_2.0_FRONTEND.md §1.
+ * Errors as { error: string } (strangler-fig parity with
+ * /api/deals/analyze). Per /docs/PRODUCT_2.0_FRONTEND.md §1.
  */
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { Types } from 'mongoose';
-import { authMiddleware, type AuthenticatedRequest } from '../middleware/auth';
+import { type AuthenticatedRequest } from '../middleware/auth';
+import { chatIdentityMiddleware } from '../middleware/chatIdentity';
+import { chatSessionRateLimit } from '../middleware/chatSessionRateLimit';
 import { handleTurn } from '../agents/orchestrator/orchestrator';
 import { logger } from '../utils/logger';
 
@@ -88,15 +94,17 @@ const router = Router();
 
 router.post(
   '/turn',
-  authMiddleware,
+  chatIdentityMiddleware,
+  chatSessionRateLimit,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    // Auth middleware guarantees req.user; defensive guard for the type system.
+    // Identity middleware guarantees req.user (auth OR ghost); defensive
+    // guard for the type system.
     if (!req.user?.id) {
-      res.status(401).json({ error: 'Access token required' });
+      res.status(401).json({ error: 'Identity resolution failed' });
       return;
     }
     if (!Types.ObjectId.isValid(req.user.id)) {
-      res.status(401).json({ error: 'Invalid user id in auth token' });
+      res.status(401).json({ error: 'Invalid user id' });
       return;
     }
 
@@ -139,6 +147,20 @@ router.post(
         totalCostCents: out.totalCostCents,
         agentStubbed: out.agentStubbed,
       };
+
+      // Activation-funnel telemetry (W6-S2.5). One structured log per
+      // successful turn — queryable to answer "are anonymous visitors
+      // completing first analyses?" without needing a frontend SDK yet.
+      logger.info('chat.turn.completed', {
+        event: 'chat.turn.completed',
+        anonymous: req.user.anonymous === true,
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        turnNumber: body.turnNumber,
+        intent: out.routing.classifierIntent,
+        routedTo: out.routing.routedTo,
+        totalCostCents: out.totalCostCents,
+      });
 
       res.status(200).json(response);
     } catch (err) {

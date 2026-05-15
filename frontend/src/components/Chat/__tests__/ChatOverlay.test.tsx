@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatOverlay } from '../ChatOverlay';
 import type { ChatTurnResponse } from '../../../services/chatApi';
@@ -28,6 +28,8 @@ import type { ChatTurnResponse } from '../../../services/chatApi';
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
+
+const SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
 
 // ===== Mock the chat API client =====
 
@@ -61,6 +63,7 @@ function buildResponse(overrides: Partial<ChatTurnResponse> = {}): ChatTurnRespo
 describe('ChatOverlay', () => {
   beforeEach(() => {
     mockSendChatTurn.mockReset();
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
   });
 
   it('renders empty-state suggestion when thread is empty', () => {
@@ -178,6 +181,46 @@ describe('ChatOverlay', () => {
     await waitFor(() =>
       expect(screen.queryByTestId('chat-loading')).not.toBeInTheDocument()
     );
+  });
+
+  it('persists sessionId in sessionStorage across remounts (W6-S2.5 ghost-user continuity)', async () => {
+    mockSendChatTurn.mockResolvedValue(buildResponse());
+    const user = userEvent.setup();
+
+    const { unmount } = render(<ChatOverlay />);
+    await user.type(screen.getByTestId('chat-input'), 'first');
+    await user.click(screen.getByTestId('chat-send'));
+    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(1));
+    const firstSessionId = mockSendChatTurn.mock.calls[0]?.[0].sessionId;
+    expect(firstSessionId).toBeTruthy();
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBe(firstSessionId);
+
+    // Simulate a page refresh by unmounting and remounting.
+    unmount();
+    cleanup();
+
+    render(<ChatOverlay />);
+    await user.type(screen.getByTestId('chat-input'), 'second');
+    await user.click(screen.getByTestId('chat-send'));
+    await waitFor(() => expect(mockSendChatTurn).toHaveBeenCalledTimes(2));
+    const secondSessionId = mockSendChatTurn.mock.calls[1]?.[0].sessionId;
+    expect(secondSessionId).toBe(firstSessionId);
+  });
+
+  it('renders 429 rate-limit message as a clean error bubble', async () => {
+    mockSendChatTurn.mockRejectedValueOnce(
+      new Error("You've reached the free analysis limit for this session. Sign up to keep going — no payment required during beta.")
+    );
+    const user = userEvent.setup();
+    render(<ChatOverlay />);
+
+    await user.type(screen.getByTestId('chat-input'), 'one more');
+    await user.click(screen.getByTestId('chat-send'));
+
+    const err = await screen.findByTestId('chat-message-error');
+    expect(err).toHaveAttribute('role', 'alert');
+    expect(err).toHaveTextContent(/free analysis limit/i);
+    expect(err).toHaveTextContent(/sign up to keep going/i);
   });
 
   it('passes a stable sessionId for every turn in the same overlay', async () => {

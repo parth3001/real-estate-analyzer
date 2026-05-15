@@ -1,16 +1,23 @@
 /**
- * W6-S1 acceptance test — POST /api/chat/turn route.
+ * POST /api/chat/turn — W6-S1 + W6-S2.5 acceptance test.
  *
  * Tests the HTTP contract:
  *   - 200 happy path: handleTurn output flows into the wire shape
  *     (ObjectIds stringified)
  *   - 400 malformed body: missing/invalid fields rejected by Zod
- *   - 500 orchestrator threw: generic error, internal detail logged
- *   - req.user.id from auth flows to handleTurn's userId
+ *   - 500 orchestrator threw: generic error, internal detail not leaked
+ *   - Identity resolution: authed user.id OR ghost-user user.id reaches
+ *     handleTurn (W6-S2.5)
+ *   - Session rate limit: anonymous sessions cap at 10 turns/24h;
+ *     authenticated sessions skip; different sessionIds are independent
+ *     (W6-S2.5)
+ *   - Activation telemetry: `chat.turn.completed` logged with
+ *     `anonymous: boolean` flag (W6-S2.5)
  *
- * Mocks handleTurn (so no real LLM/Mongo) and authMiddleware (so the
- * route is testable in isolation; the real authMiddleware is covered
- * by its own tests).
+ * Mocks handleTurn (so no LLM/Mongo) and chatIdentityMiddleware (so we
+ * don't need a real User collection to test route logic). The real
+ * chatSessionRateLimit middleware runs unmocked — its in-memory state
+ * is reset between tests via the exported test-only helper.
  */
 
 import express from 'express';
@@ -19,23 +26,32 @@ import { Types } from 'mongoose';
 
 // ===== Mocks =====
 //
-// jest.mock calls are hoisted to the top of the file, so these run
-// BEFORE the chat route module is imported.
+// jest.mock factories are hoisted; `mockState` is hoisted too because it
+// starts with the literal "mock" prefix (jest documented escape hatch).
+
+const mockChatIdentityState = {
+  userId: new Types.ObjectId().toHexString(),
+  anonymous: true,
+};
 
 jest.mock('../../agents/orchestrator/orchestrator', () => ({
   handleTurn: jest.fn(),
 }));
 
-// Mock authMiddleware to inject a known user. The real middleware is
-// JWT-based and tested elsewhere; this test isolates the route logic.
-const TEST_USER_ID = new Types.ObjectId().toHexString();
-jest.mock('../../middleware/auth', () => ({
-  authMiddleware: (
-    req: { user?: { id: string; email: string; role: string } },
+jest.mock('../../middleware/chatIdentity', () => ({
+  chatIdentityMiddleware: (
+    req: { user?: { id: string; email: string; role: string; anonymous?: boolean } },
     _res: unknown,
     next: () => void
   ): void => {
-    req.user = { id: TEST_USER_ID, email: 'test@test.com', role: 'user' };
+    req.user = {
+      id: mockChatIdentityState.userId,
+      email: mockChatIdentityState.anonymous
+        ? `anon-test@anon.app`
+        : 'test@test.com',
+      role: 'user',
+      anonymous: mockChatIdentityState.anonymous,
+    };
     next();
   },
 }));
@@ -44,6 +60,8 @@ jest.mock('../../middleware/auth', () => ({
 import chatRouter from '../chat';
 // eslint-disable-next-line import/first
 import { handleTurn } from '../../agents/orchestrator/orchestrator';
+// eslint-disable-next-line import/first
+import { __resetChatSessionRateLimitForTests } from '../../middleware/chatSessionRateLimit';
 
 const mockHandleTurn = handleTurn as jest.MockedFunction<typeof handleTurn>;
 
@@ -56,11 +74,21 @@ function buildApp(): express.Express {
   return app;
 }
 
-function validBody(): Record<string, unknown> {
+let nextSessionIdSeq = 0;
+function freshSessionId(): string {
+  // Deterministic UUID v4 per call — matches the route's z.string().uuid()
+  // validator without depending on crypto.randomUUID() in test env.
+  nextSessionIdSeq += 1;
+  const seq = nextSessionIdSeq.toString(16).padStart(12, '0');
+  return `11111111-2222-4333-8444-${seq}`;
+}
+
+function validBody(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     userInput: 'analyze 123 Main St',
-    sessionId: '11111111-2222-4333-8444-555555555555',
+    sessionId: freshSessionId(),
     turnNumber: 1,
+    ...overrides,
   };
 }
 
@@ -88,17 +116,20 @@ function stubOrchestratorOutput(
 
 // ===== Tests =====
 
-describe('POST /api/chat/turn (W6-S1)', () => {
-  afterEach(() => {
+describe('POST /api/chat/turn', () => {
+  beforeEach(() => {
     mockHandleTurn.mockReset();
+    __resetChatSessionRateLimitForTests();
+    // Default: anonymous user. Tests that need an authed user flip this.
+    mockChatIdentityState.userId = new Types.ObjectId().toHexString();
+    mockChatIdentityState.anonymous = true;
   });
 
   // ===== Happy path =====
 
   describe('200 happy path', () => {
     it('returns the orchestrator output as the wire shape', async () => {
-      const out = stubOrchestratorOutput();
-      mockHandleTurn.mockResolvedValueOnce(out);
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
 
       const res = await request(buildApp())
         .post('/api/chat/turn')
@@ -137,11 +168,12 @@ describe('POST /api/chat/turn (W6-S1)', () => {
         relA.toHexString(),
         relB.toHexString(),
       ]);
-      // Hex ObjectIds are 24 chars
       expect(res.body.events.conversationEventId).toMatch(/^[0-9a-f]{24}$/);
     });
 
-    it('passes the authenticated user.id to handleTurn as a Types.ObjectId', async () => {
+    it('passes the resolved user.id to handleTurn as a Types.ObjectId', async () => {
+      const expectedUserId = new Types.ObjectId().toHexString();
+      mockChatIdentityState.userId = expectedUserId;
       mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
 
       await request(buildApp()).post('/api/chat/turn').send(validBody());
@@ -149,7 +181,7 @@ describe('POST /api/chat/turn (W6-S1)', () => {
       expect(mockHandleTurn).toHaveBeenCalledTimes(1);
       const args = mockHandleTurn.mock.calls[0][0];
       expect(args.userId).toBeInstanceOf(Types.ObjectId);
-      expect(args.userId.toHexString()).toBe(TEST_USER_ID);
+      expect(args.userId.toHexString()).toBe(expectedUserId);
     });
 
     it('forwards inputMethod + toolPayload through to handleTurn', async () => {
@@ -189,32 +221,139 @@ describe('POST /api/chat/turn (W6-S1)', () => {
     });
   });
 
+  // ===== W6-S2.5 — anonymous identity flow =====
+
+  describe('anonymous identity (W6-S2.5)', () => {
+    it('accepts an anonymous turn (no Bearer required)', async () => {
+      mockChatIdentityState.anonymous = true;
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      const res = await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody());
+
+      expect(res.status).toBe(200);
+      expect(mockHandleTurn).toHaveBeenCalledTimes(1);
+    });
+
+    it('flows the ghost user.id through to handleTurn', async () => {
+      const ghostUserId = new Types.ObjectId().toHexString();
+      mockChatIdentityState.userId = ghostUserId;
+      mockChatIdentityState.anonymous = true;
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      await request(buildApp()).post('/api/chat/turn').send(validBody());
+
+      const args = mockHandleTurn.mock.calls[0][0];
+      expect(args.userId.toHexString()).toBe(ghostUserId);
+    });
+
+    it('also works for authenticated users (anonymous flag false)', async () => {
+      mockChatIdentityState.anonymous = false;
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      const res = await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody());
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  // ===== W6-S2.5 — session rate limit =====
+
+  describe('chatSessionRateLimit (W6-S2.5)', () => {
+    it('allows 10 anonymous turns on the same session', async () => {
+      mockChatIdentityState.anonymous = true;
+      mockHandleTurn.mockResolvedValue(stubOrchestratorOutput());
+
+      const sessionId = freshSessionId();
+      for (let i = 1; i <= 10; i++) {
+        const res = await request(buildApp())
+          .post('/api/chat/turn')
+          .send({ ...validBody(), sessionId, turnNumber: i });
+        expect(res.status).toBe(200);
+      }
+    });
+
+    it('rejects the 11th anonymous turn on the same session with 429', async () => {
+      mockChatIdentityState.anonymous = true;
+      mockHandleTurn.mockResolvedValue(stubOrchestratorOutput());
+
+      const sessionId = freshSessionId();
+      for (let i = 1; i <= 10; i++) {
+        await request(buildApp())
+          .post('/api/chat/turn')
+          .send({ ...validBody(), sessionId, turnNumber: i });
+      }
+      const res = await request(buildApp())
+        .post('/api/chat/turn')
+        .send({ ...validBody(), sessionId, turnNumber: 11 });
+
+      expect(res.status).toBe(429);
+      expect(res.body.error).toMatch(/free analysis limit/i);
+      expect(res.body.retryAfterSeconds).toBeGreaterThan(0);
+    });
+
+    it('gives different sessionIds independent quotas', async () => {
+      mockChatIdentityState.anonymous = true;
+      mockHandleTurn.mockResolvedValue(stubOrchestratorOutput());
+
+      const sessionA = freshSessionId();
+      const sessionB = freshSessionId();
+
+      // Burn session A to the cap
+      for (let i = 1; i <= 10; i++) {
+        await request(buildApp())
+          .post('/api/chat/turn')
+          .send({ ...validBody(), sessionId: sessionA, turnNumber: i });
+      }
+      const aOver = await request(buildApp())
+        .post('/api/chat/turn')
+        .send({ ...validBody(), sessionId: sessionA, turnNumber: 11 });
+      expect(aOver.status).toBe(429);
+
+      // Session B should still be wide open
+      const bFirst = await request(buildApp())
+        .post('/api/chat/turn')
+        .send({ ...validBody(), sessionId: sessionB, turnNumber: 1 });
+      expect(bFirst.status).toBe(200);
+    });
+
+    it('authenticated users bypass the session limit (can exceed 10)', async () => {
+      mockChatIdentityState.anonymous = false;
+      mockHandleTurn.mockResolvedValue(stubOrchestratorOutput());
+
+      const sessionId = freshSessionId();
+      // 11 turns as an authed user — should all succeed
+      for (let i = 1; i <= 11; i++) {
+        const res = await request(buildApp())
+          .post('/api/chat/turn')
+          .send({ ...validBody(), sessionId, turnNumber: i });
+        expect(res.status).toBe(200);
+      }
+    });
+  });
+
   // ===== 400 — body validation =====
 
   describe('400 malformed body', () => {
     it.each<[string, Record<string, unknown>]>([
       ['empty userInput', { ...validBody(), userInput: '' }],
       ['userInput too long (>8000)', { ...validBody(), userInput: 'a'.repeat(8001) }],
-      [
-        'sessionId not a UUID',
-        { ...validBody(), sessionId: 'not-a-uuid' },
-      ],
+      ['sessionId not a UUID', { ...validBody(), sessionId: 'not-a-uuid' }],
       ['turnNumber zero', { ...validBody(), turnNumber: 0 }],
       ['turnNumber negative', { ...validBody(), turnNumber: -1 }],
       ['turnNumber not int', { ...validBody(), turnNumber: 1.5 }],
-      [
-        'inputMethod outside enum',
-        { ...validBody(), inputMethod: 'morse' },
-      ],
+      ['inputMethod outside enum', { ...validBody(), inputMethod: 'morse' }],
       ['unknown top-level field (strict mode)', { ...validBody(), extraJunk: 1 }],
-      ['missing userInput', { sessionId: validBody().sessionId, turnNumber: 1 }],
+      ['missing userInput', { sessionId: freshSessionId(), turnNumber: 1 }],
       ['missing sessionId', { userInput: 'x', turnNumber: 1 }],
-      ['missing turnNumber', { userInput: 'x', sessionId: validBody().sessionId }],
+      ['missing turnNumber', { userInput: 'x', sessionId: freshSessionId() }],
     ])('rejects: %s', async (_label, body) => {
       const res = await request(buildApp()).post('/api/chat/turn').send(body);
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid request body');
-      // handleTurn must NOT be called on validation failure
       expect(mockHandleTurn).not.toHaveBeenCalled();
     });
   });
@@ -222,7 +361,7 @@ describe('POST /api/chat/turn (W6-S1)', () => {
   // ===== 500 — orchestrator throws =====
 
   describe('500 orchestrator failure', () => {
-    it('returns a generic error message (internal detail logged, not leaked)', async () => {
+    it('returns a generic error message (internal detail not leaked)', async () => {
       mockHandleTurn.mockRejectedValueOnce(
         new Error('Sensitive internal: DB connection refused at mongo://prod-host')
       );
@@ -233,7 +372,6 @@ describe('POST /api/chat/turn (W6-S1)', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Chat turn failed. Please try again.');
-      // The internal error message MUST NOT leak to the client
       expect(JSON.stringify(res.body)).not.toContain('DB connection');
       expect(JSON.stringify(res.body)).not.toContain('mongo://');
     });

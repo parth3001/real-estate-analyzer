@@ -81,14 +81,42 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
+/**
+ * Session identity. Persisted in `sessionStorage` (W6-S2.5) so a page
+ * refresh on /app keeps the same session — important because:
+ *
+ *   1. The backend's ghost-user record is keyed by sessionId. Losing the
+ *      sessionId on refresh would orphan the ghost (and the deals
+ *      already persisted under it).
+ *   2. The session-scoped rate limit (10 turns / 24h) is keyed on
+ *      sessionId too. Regenerating per mount would let anon users dodge
+ *      the cap with a refresh.
+ *
+ * `sessionStorage` (not `localStorage`) so closing the tab does end the
+ * session — a fresh tab gets a fresh session, which matches user
+ * intuition about chat threads.
+ */
+const SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
+
+function resolveSessionId(): string {
+  // SSR safety — in browser, sessionStorage exists.
+  if (typeof sessionStorage === 'undefined') return newId();
+  const existing = sessionStorage.getItem(SESSION_STORAGE_KEY);
+  if (existing) return existing;
+  const fresh = newId();
+  sessionStorage.setItem(SESSION_STORAGE_KEY, fresh);
+  return fresh;
+}
+
 // ===== Component =====
 
 export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const placeholder =
     props.placeholder ?? 'Ask about a property, a metric, or paste a listing...';
 
-  // Session identity — one UUID per overlay instance, generated lazily
-  const [sessionId] = useState(() => newId());
+  // Session identity — persisted in sessionStorage so refresh keeps the
+  // same ghost-user identity + rate-limit quota on the backend.
+  const [sessionId] = useState(() => resolveSessionId());
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);

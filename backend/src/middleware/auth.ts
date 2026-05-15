@@ -8,6 +8,13 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     email: string;
     role: string;
+    /**
+     * Set by chatIdentityMiddleware when the request was resolved via the
+     * ghost-user pattern (no Bearer token, sessionId-keyed User record).
+     * Downstream code can check this flag to gate logged-in-only features
+     * (saved deals, portfolio writes, etc.).
+     */
+    anonymous?: boolean;
   };
 }
 

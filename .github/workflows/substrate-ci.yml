@@ -44,6 +44,11 @@ on:
       - 'backend/src/agents/**'
       - 'backend/src/routes/chat.ts'
       - 'backend/src/routes/__tests__/chat.test.ts'
+      - 'backend/src/middleware/chatIdentity.ts'
+      - 'backend/src/middleware/chatSessionRateLimit.ts'
+      - 'backend/src/middleware/__tests__/chatIdentity.test.ts'
+      - 'backend/src/middleware/__tests__/chatSessionRateLimit.test.ts'
+      - 'backend/src/models/User.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -62,6 +67,11 @@ on:
       - 'backend/src/agents/**'
       - 'backend/src/routes/chat.ts'
       - 'backend/src/routes/__tests__/chat.test.ts'
+      - 'backend/src/middleware/chatIdentity.ts'
+      - 'backend/src/middleware/chatSessionRateLimit.ts'
+      - 'backend/src/middleware/__tests__/chatIdentity.test.ts'
+      - 'backend/src/middleware/__tests__/chatSessionRateLimit.test.ts'
+      - 'backend/src/models/User.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -128,6 +138,8 @@ jobs:
             src/agents \
             src/utils/__tests__/anthropicPricing.test.ts \
             src/routes/__tests__/chat.test.ts \
+            src/middleware/__tests__/chatIdentity.test.ts \
+            src/middleware/__tests__/chatSessionRateLimit.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \

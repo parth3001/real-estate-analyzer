@@ -57,6 +57,20 @@ export interface IUser extends Document {
   affiliateCode?: string;
   affiliateCodeSetAt?: Date;
 
+  /**
+   * Ghost-user pattern (W6-S2.5). Anonymous visitors who use the chat
+   * surface get a User document keyed by their `sessionId` so substrate
+   * events (which require userId) can be persisted under a stable
+   * identity. On magic-link signup we set the real email and flip
+   * `anonymous: false` — every prior chat-generated deal is then "claimed"
+   * by the now-authenticated user without data migration.
+   *
+   * Synthetic email format: `anon-{uuid}@anon.app` (passes the schema's
+   * email regex; the `.app` TLD keeps the validator happy).
+   */
+  anonymous?: boolean;
+  anonymousSessionId?: string;
+
   // Dual-mode preferences (optional for backward compatibility)
   dualModePreferences?: DualModePreferences;
   
@@ -149,6 +163,28 @@ const UserSchema = new Schema<IUser>({
   affiliateCodeSetAt: {
     type: Date,
     required: false
+  },
+  // Ghost-user pattern (W6-S2.5). See IUser doc above.
+  //
+  // anonymous: true marks a ghost record so we can:
+  //   1. Distinguish anonymous chat sessions from real signups in queries
+  //   2. Run TTL cleanup jobs to garbage-collect ghosts that never convert
+  //   3. Skip welcome emails / onboarding flows for ghosts
+  //
+  // anonymousSessionId is the chat session UUID. Sparse + unique so real
+  // users (who don't carry a sessionId) don't collide on null.
+  anonymous: {
+    type: Boolean,
+    required: false,
+    default: false,
+    index: true
+  },
+  anonymousSessionId: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true,
+    index: true
   },
   dualModePreferences: {
     currentMode: {
