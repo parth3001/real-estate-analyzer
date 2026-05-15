@@ -8,6 +8,7 @@ import path from 'path';
 import { logger } from './utils/logger';
 import dealsRouter from './routes/deals';
 import analyzeRouter from './routes/analyzeRoutes';
+import chatRouter from './routes/chat';
 import censusRouter from './routes/censusRoutes';
 import marketDataRouter from './routes/marketDataRoutes';
 import wizardRouter from './routes/wizardRoutes';
@@ -137,6 +138,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/deals', calculationRateLimit, dealsRouter);
+// W6-S1: chat overlay surface. Same rate-limit class as deals/analyze
+// (chat turns invoke LLMs — even more expensive than calc).
+app.use('/api/chat', calculationRateLimit, chatRouter);
 app.use('/api/analyze', calculationRateLimit, analyzeRouter);
 app.use('/api/census', censusRouter);
 app.use('/api/market-data', marketDataRouter);

@@ -42,6 +42,8 @@ on:
       - 'backend/src/models/cost/**'
       - 'backend/src/repositories/**'
       - 'backend/src/agents/**'
+      - 'backend/src/routes/chat.ts'
+      - 'backend/src/routes/__tests__/chat.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -58,6 +60,8 @@ on:
       - 'backend/src/models/cost/**'
       - 'backend/src/repositories/**'
       - 'backend/src/agents/**'
+      - 'backend/src/routes/chat.ts'
+      - 'backend/src/routes/__tests__/chat.test.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -123,6 +127,7 @@ jobs:
             src/repositories \
             src/agents \
             src/utils/__tests__/anthropicPricing.test.ts \
+            src/routes/__tests__/chat.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \
