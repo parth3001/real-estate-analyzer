@@ -57,6 +57,10 @@ import {
 } from './conversationContext';
 import type { OrchestratorStreamEvent } from './streamEvents';
 import type { AgentStreamEvent } from '../runner/agentRunner';
+import {
+  projectDealScoreCard,
+  type DealScoreCardWireShape,
+} from './dealScoreCardProjection';
 
 // ===== Input / output =====
 
@@ -539,6 +543,37 @@ async function executeAgentRoute(
   throw new Error(`orchestrator: unknown agent target '${target}'`);
 }
 
+// ===== Structured output helper (W6-S4) =====
+
+/**
+ * Load a DecisionEvent + its AnalysisEvent via getAuditTrail and project
+ * to the DealScoreCard wire shape. Returns null if the audit-trail load
+ * fails — the orchestrator continues without the structured event.
+ *
+ * Strategy ('buy_hold' | 'brrrr') is read defensively off the property
+ * data — score_deal's input shape allows an optional `investmentStrategy`
+ * field that the BRRRR routing path uses. When absent, we default to
+ * 'buy_hold'.
+ */
+async function buildDealScoreCardEvent(
+  decisionEventId: Types.ObjectId,
+  ctx: ToolContext
+): Promise<DealScoreCardWireShape | null> {
+  const bundle = await ctx.eventsReads.getAuditTrail(decisionEventId);
+  if (!bundle.analysis) return null;
+  const analysisPayload = bundle.analysis.payload;
+  const decisionPayload = bundle.decision.payload;
+  // investmentStrategy is an optional extension carried on score_deal's
+  // inputs (W5-S2 BRRRR routing). It's preserved on AnalysisEvent.propertyData
+  // but not declared on SFRData/MultiFamilyData; defensive read.
+  const propertyDataAny = analysisPayload.propertyData as unknown as {
+    investmentStrategy?: 'buy_hold' | 'brrrr';
+  };
+  const strategy: 'buy_hold' | 'brrrr' =
+    propertyDataAny.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+  return projectDealScoreCard(analysisPayload, decisionPayload, strategy);
+}
+
 // ===== Streaming variant (W6-S3) =====
 
 /**
@@ -749,6 +784,10 @@ export async function* streamTurn(
         routing.target === 'agent:qa' ||
         routing.target === 'agent:deal_scoring'
       ) {
+        // Capture this for the structured-output emission below (typed
+        // boolean lets the post-loop block use it without re-checking
+        // routing.target, which TS has narrowed away by that point).
+        const isDealScoring = routing.target === 'agent:deal_scoring';
         for await (const ev of agentStream!) {
           if (ev.type === 'text_delta') {
             responseText += ev.text;
@@ -775,6 +814,49 @@ export async function* streamTurn(
             totalOutputTokens += ev.output.tokenUsage.outputTokens;
             totalCachedTokens += ev.output.tokenUsage.cachedTokens;
             modelUsed = ev.output.modelUsed;
+
+            // ===== Structured output (W6-S4) =====
+            //
+            // For agent:deal_scoring we project the DecisionEvent +
+            // AnalysisEvent into a DealScoreCard wire shape and emit
+            // a structured_output event the frontend mounts as an
+            // inline card. The projection lives in dealScoreCardProjection.ts
+            // — orchestrator stays the source of truth for the
+            // structured-output contract while substrate event schemas
+            // evolve independently.
+            //
+            // The decisionEventId is the LAST relatedEventId per
+            // dealScoringAgent's score_deal extraction logic. If the
+            // agent didn't actually call score_deal (rare — the agent
+            // may have refused or asked a clarifying question), there's
+            // nothing to render; we silently skip.
+            if (isDealScoring && relatedEventIds.length > 0) {
+              const decisionEventId =
+                relatedEventIds[relatedEventIds.length - 1];
+              try {
+                const card = await buildDealScoreCardEvent(
+                  decisionEventId,
+                  ctx
+                );
+                if (card) {
+                  yield {
+                    type: 'structured_output',
+                    kind: 'deal_score_card',
+                    data: card as unknown as Record<string, unknown>,
+                  };
+                }
+              } catch (err) {
+                logger.warn(
+                  'orchestrator.streamTurn: DealScoreCard projection failed',
+                  {
+                    traceId,
+                    decisionEventId: decisionEventId.toHexString(),
+                    error: err instanceof Error ? err.message : String(err),
+                  }
+                );
+                // No structured event — text response still streams.
+              }
+            }
           } else if (ev.type === 'cancelled') {
             wasCancelled = true;
             responseText = ev.partial.text || responseText;

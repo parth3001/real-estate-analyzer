@@ -35,6 +35,13 @@ import { type AuthenticatedRequest } from '../middleware/auth';
 import { chatIdentityMiddleware } from '../middleware/chatIdentity';
 import { chatSessionRateLimit } from '../middleware/chatSessionRateLimit';
 import { handleTurn, streamTurn } from '../agents/orchestrator/orchestrator';
+import { projectDealScoreCard } from '../agents/orchestrator/dealScoreCardProjection';
+import {
+  eventsRepositoryReads,
+  type ConversationEventDocument,
+} from '../repositories/EventsRepositoryReads';
+import { ConversationEventModel } from '../models/events/ConversationEvent';
+import { emailService } from '../services/emailService';
 import { logger } from '../utils/logger';
 
 // ===== Request validation =====
@@ -309,6 +316,151 @@ router.post(
       // this is a no-op.
       writeEvent({ type: 'error', message: 'Chat turn failed. Please try again.' });
       res.end();
+    }
+  }
+);
+
+// ===== Email-summary endpoint — W6-S4 =====
+
+/**
+ * Request body for POST /api/chat/email-summary.
+ *
+ * The user provides their email + the conversationEventId of the chat
+ * turn whose Deal Score they want emailed. sessionId scopes the request
+ * to the anonymous ghost user that owns the conversation (defense in
+ * depth — prevents a malicious caller from emailing someone else's
+ * analysis by guessing the conversationEventId).
+ */
+const ChatEmailSummaryBodySchema = z
+  .object({
+    email: z.string().email().max(254),
+    sessionId: z.string().uuid(),
+    conversationEventId: z.string().regex(/^[0-9a-f]{24}$/, {
+      message: 'conversationEventId must be a 24-char hex ObjectId',
+    }),
+  })
+  .strict();
+
+/**
+ * POST /api/chat/email-summary
+ *
+ * Anonymous-friendly (no auth required — chat surface is anon-by-design
+ * per W6-S2.5). Identity resolution via chatIdentityMiddleware so the
+ * ghost user keyed by sessionId owns the request. The session rate
+ * limit (10 / 24h) applies — capturing emails costs us cents per Resend
+ * call so the cap stays sensible.
+ *
+ * Validates that the ConversationEvent.payload.sessionId matches the
+ * request's sessionId — prevents one ghost session from exfiltrating
+ * another's analysis.
+ */
+router.post(
+  '/email-summary',
+  chatIdentityMiddleware,
+  chatSessionRateLimit,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Identity resolution failed' });
+      return;
+    }
+
+    let body: z.infer<typeof ChatEmailSummaryBodySchema>;
+    try {
+      body = ChatEmailSummaryBodySchema.parse(req.body);
+    } catch (err) {
+      res.status(400).json({
+        error: 'Invalid request body',
+        detail: err instanceof Error ? err.message : 'Unknown validation error',
+      });
+      return;
+    }
+
+    try {
+      // 1. Load the ConversationEvent → verify it belongs to this session.
+      const conversation = await ConversationEventModel.findById(
+        new Types.ObjectId(body.conversationEventId)
+      )
+        .lean<ConversationEventDocument | null>()
+        .exec();
+      if (!conversation) {
+        res.status(404).json({ error: 'Conversation not found.' });
+        return;
+      }
+      const convPayload = conversation.payload;
+      if (convPayload.sessionId !== body.sessionId) {
+        // Mismatch — refuse to leak another session's analysis.
+        logger.warn(
+          '[chat/email-summary] sessionId mismatch on conversation lookup',
+          {
+            conversationEventId: body.conversationEventId,
+            requestSessionId: body.sessionId,
+          }
+        );
+        res.status(403).json({ error: 'Session mismatch.' });
+        return;
+      }
+
+      // 2. Find the DecisionEvent — last related event per
+      //    dealScoringAgent's score_deal extraction convention.
+      const related = convPayload.agentResponse.relatedEventIds ?? [];
+      if (related.length === 0) {
+        res.status(422).json({
+          error: 'This conversation has no analysis to email yet.',
+        });
+        return;
+      }
+      const decisionEventId = related[related.length - 1];
+
+      // 3. Load the audit trail (decision + analysis) and project.
+      const bundle = await eventsRepositoryReads.getAuditTrail(decisionEventId);
+      if (!bundle.analysis) {
+        res.status(422).json({
+          error: 'Analysis data missing for this conversation.',
+        });
+        return;
+      }
+      const propertyData = bundle.analysis.payload.propertyData as unknown as {
+        investmentStrategy?: 'buy_hold' | 'brrrr';
+      };
+      const strategy: 'buy_hold' | 'brrrr' =
+        propertyData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+      const card = projectDealScoreCard(
+        bundle.analysis.payload,
+        bundle.decision.payload,
+        strategy
+      );
+
+      // 4. Send the email.
+      const addressLine = `${card.address.street}, ${card.address.city} ${card.address.state}`;
+      await emailService.sendDealScoreSummary({
+        recipientEmail: body.email,
+        strategy,
+        dealQuality: card.dealQuality,
+        addressLine,
+        topFactors: card.topFactors,
+        walkAwayPrice: card.walkAwayPrice,
+        purchasePrice: card.purchasePrice,
+        nextStep: card.nextStep,
+      });
+
+      // Activation-funnel telemetry — email capture is a conversion
+      // signal we want queryable per session.
+      logger.info('chat.cta.email_sent', {
+        event: 'chat.cta.email_sent',
+        anonymous: req.user.anonymous === true,
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        conversationEventId: body.conversationEventId,
+      });
+
+      res.status(200).json({ sent: true });
+    } catch (err) {
+      logger.error('chat/email-summary failed', {
+        sessionId: body.sessionId,
+        conversationEventId: body.conversationEventId,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      res.status(500).json({ error: 'Could not send email. Please try again.' });
     }
   }
 );

@@ -22,8 +22,10 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
+  Button,
   TextField,
   IconButton,
   Typography,
@@ -32,8 +34,12 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
+import { DealScoreCard, type DealScoreCardProps } from './DealScoreCard';
+import { EmailCtaModal } from './EmailCtaModal';
 
 // ===== Message thread types =====
 
@@ -75,6 +81,19 @@ interface AssistantMessage {
   /** Stream-level identifiers for downstream save / share actions. */
   traceId?: string;
   conversationEventId?: string;
+  /**
+   * Structured-output payloads emitted by the orchestrator (W6-S4).
+   * Currently only `deal_score_card` is implemented; the array supports
+   * future kinds (audit_trail, comparison_card, etc.) emitted on the
+   * same turn.
+   */
+  structuredOutputs?: Array<
+    | {
+        kind: 'deal_score_card';
+        data: Omit<DealScoreCardProps, 'onChangeAssumptions'>;
+      }
+    | { kind: string; data: Record<string, unknown> }
+  >;
 }
 
 interface ErrorMessage {
@@ -202,8 +221,27 @@ function applyStreamEvent(
     );
     return;
   }
-  // tool_call + structured_output: noop in W6-S3. W6-S4 will mount
-  // path-specific renderers on structured_output.
+  if (event.type === 'structured_output') {
+    // W6-S4 — attach the structured payload to the live assistant
+    // message. The renderer (DealScoreCard for kind='deal_score_card')
+    // mounts inline below the streamed text.
+    setMessages((m) =>
+      m.map((msg) => {
+        if (msg.id !== assistantId || msg.role !== 'assistant') return msg;
+        const existing = msg.structuredOutputs ?? [];
+        return {
+          ...msg,
+          structuredOutputs: [
+            ...existing,
+            { kind: event.kind, data: event.data },
+          ],
+        };
+      })
+    );
+    return;
+  }
+  // tool_call: noop for now (W6-S4 reserves the channel; UX hint pill
+  // can mount on it later without protocol changes).
 }
 
 /**
@@ -227,6 +265,8 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const placeholder =
     props.placeholder ?? 'Ask about a property, a metric, or paste a listing...';
 
+  const navigate = useNavigate();
+
   // Session identity — persisted in sessionStorage so refresh keeps the
   // same ghost-user identity + rate-limit quota on the backend.
   const [sessionId] = useState(() => resolveSessionId());
@@ -234,6 +274,12 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [turnNumber, setTurnNumber] = useState(1);
+
+  // W6-S4 — email-CTA modal state. The clicked assistant message
+  // travels with the modal so we know which DealScoreCard to email.
+  const [emailModalMessage, setEmailModalMessage] = useState<
+    AssistantMessage | null
+  >(null);
 
   // Track if we've already sent the initialUserInput so React strict-mode
   // double-mount doesn't double-send it.
@@ -253,6 +299,34 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
 
   const cancelInFlight = (): void => {
     abortControllerRef.current?.abort();
+  };
+
+  /**
+   * Email-CTA handler — opens the modal scoped to the clicked card's
+   * message. The modal POSTs to the backend with the conversationEventId
+   * + sessionId so the server can resolve the underlying analysis.
+   */
+  const handleEmailCta = (msg: AssistantMessage): void => {
+    setEmailModalMessage(msg);
+  };
+
+  /**
+   * Portfolio-CTA handler — routes anonymous users to the login flow
+   * carrying `returnTo=/app` so they land back here after signup. The
+   * server-side ghost-user merge (W6-S5) will then claim every prior
+   * chat-generated deal under the now-authenticated user.
+   *
+   * For already-authenticated users, the same redirect lands on the
+   * portfolio surface directly via auth bypass — wired in W6-S5.
+   */
+  const handlePortfolioCta = (msg: AssistantMessage): void => {
+    const params = new URLSearchParams({
+      returnTo: '/app',
+      ...(msg.conversationEventId
+        ? { pendingConversationId: msg.conversationEventId }
+        : {}),
+    });
+    navigate(`/login?${params.toString()}`);
   };
 
   async function send(text: string): Promise<void> {
@@ -425,7 +499,12 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           )}
 
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              onEmailCta={handleEmailCta}
+              onPortfolioCta={handlePortfolioCta}
+            />
           ))}
 
           {/* Thinking indicator — only shown BEFORE the first token of
@@ -531,13 +610,39 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           )}
         </Box>
       </Box>
+
+      {/* W6-S4 — Email CTA modal. Renders inside the chat theme so its
+          inputs / buttons inherit the same styling as the rest of /app. */}
+      <EmailCtaModal
+        open={emailModalMessage !== null}
+        onClose={() => setEmailModalMessage(null)}
+        sessionId={sessionId}
+        conversationEventId={emailModalMessage?.conversationEventId}
+        dealScoreCard={
+          (emailModalMessage?.structuredOutputs?.find(
+            (so) => so.kind === 'deal_score_card'
+          )?.data as Omit<DealScoreCardProps, 'onChangeAssumptions'>) ?? null
+        }
+      />
     </ThemeProvider>
   );
 }
 
 // ===== Internal: MessageBubble =====
 
-function MessageBubble({ message }: { message: ThreadMessage }): React.JSX.Element {
+interface MessageBubbleProps {
+  message: ThreadMessage;
+  /** W6-S4 — fires when the user clicks the email CTA on a structured card. */
+  onEmailCta?: (assistantMsg: AssistantMessage) => void;
+  /** W6-S4 — fires when the user clicks the portfolio CTA on a structured card. */
+  onPortfolioCta?: (assistantMsg: AssistantMessage) => void;
+}
+
+function MessageBubble({
+  message,
+  onEmailCta,
+  onPortfolioCta,
+}: MessageBubbleProps): React.JSX.Element {
   if (message.role === 'error') {
     return (
       <Box
@@ -562,40 +667,131 @@ function MessageBubble({ message }: { message: ThreadMessage }): React.JSX.Eleme
   const isUser = message.role === 'user';
   const isCancelled =
     message.role === 'assistant' && message.cancelled === true;
+  const structuredOutputs =
+    message.role === 'assistant' ? message.structuredOutputs ?? [] : [];
+
   return (
     <Box
       sx={{
-        alignSelf: isUser ? 'flex-end' : 'flex-start',
-        maxWidth: '85%',
-        bgcolor: isUser ? 'primary.main' : 'background.paper',
-        color: isUser ? 'primary.contrastText' : 'text.primary',
-        border: isUser ? 'none' : 1,
-        borderColor: 'divider',
-        px: 2,
-        py: 1.5,
-        borderRadius: 3,
-        fontSize: 15,
-        lineHeight: 1.5,
-        whiteSpace: 'pre-wrap',
+        alignSelf: isUser ? 'flex-end' : 'stretch',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        maxWidth: isUser ? '85%' : '100%',
       }}
-      data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
     >
-      {message.text}
-      {isCancelled && (
+      {/* Text bubble — always rendered (may be empty during pre-token state) */}
+      {(message.text.length > 0 || isCancelled) && (
         <Box
-          component="span"
           sx={{
-            display: 'block',
-            mt: 1,
-            fontSize: 12,
-            color: 'text.secondary',
-            fontStyle: 'italic',
+            alignSelf: isUser ? 'flex-end' : 'flex-start',
+            maxWidth: isUser ? '100%' : '85%',
+            bgcolor: isUser ? 'primary.main' : 'background.paper',
+            color: isUser ? 'primary.contrastText' : 'text.primary',
+            border: isUser ? 'none' : 1,
+            borderColor: 'divider',
+            px: 2,
+            py: 1.5,
+            borderRadius: 3,
+            fontSize: 15,
+            lineHeight: 1.5,
+            whiteSpace: 'pre-wrap',
           }}
-          data-testid="chat-message-cancelled"
+          data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
         >
-          Stopped.
+          {message.text}
+          {isCancelled && (
+            <Box
+              component="span"
+              sx={{
+                display: 'block',
+                mt: 1,
+                fontSize: 12,
+                color: 'text.secondary',
+                fontStyle: 'italic',
+              }}
+              data-testid="chat-message-cancelled"
+            >
+              Stopped.
+            </Box>
+          )}
         </Box>
       )}
+
+      {/* Structured outputs render BELOW the text bubble, full-width-ish */}
+      {message.role === 'assistant' &&
+        structuredOutputs.map((so, idx) => {
+          if (so.kind === 'deal_score_card') {
+            const card = so.data as Omit<
+              DealScoreCardProps,
+              'onChangeAssumptions'
+            >;
+            return (
+              <Box
+                key={`${message.id}-card-${idx}`}
+                sx={{ alignSelf: 'flex-start' }}
+                data-testid="chat-message-structured-output"
+              >
+                <DealScoreCard {...card} />
+                <ChatCardCtas
+                  message={message}
+                  onEmailCta={onEmailCta}
+                  onPortfolioCta={onPortfolioCta}
+                />
+              </Box>
+            );
+          }
+          return null;
+        })}
+    </Box>
+  );
+}
+
+/**
+ * CTA row rendered below a DealScoreCard. Two buttons:
+ *   📧 Email me this — opens a modal to capture email + send PDF summary
+ *   📊 Add to my portfolio — routes to signup flow (W6-S5 finishes merge)
+ *
+ * Apple HIG: secondary actions on the card, tinted style, comfortable
+ * 44pt touch targets.
+ */
+function ChatCardCtas({
+  message,
+  onEmailCta,
+  onPortfolioCta,
+}: {
+  message: AssistantMessage;
+  onEmailCta?: (m: AssistantMessage) => void;
+  onPortfolioCta?: (m: AssistantMessage) => void;
+}): React.JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1,
+        mt: 1.5,
+        flexWrap: 'wrap',
+      }}
+      data-testid="chat-card-ctas"
+    >
+      <Button
+        variant="outlined"
+        startIcon={<EmailOutlinedIcon />}
+        onClick={() => onEmailCta?.(message)}
+        sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+        data-testid="chat-cta-email"
+      >
+        Email me this
+      </Button>
+      <Button
+        variant="contained"
+        startIcon={<TrendingUpIcon />}
+        onClick={() => onPortfolioCta?.(message)}
+        sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+        data-testid="chat-cta-portfolio"
+      >
+        Add to my portfolio
+      </Button>
     </Box>
   );
 }

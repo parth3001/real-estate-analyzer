@@ -216,6 +216,41 @@ async function* parseSseStream(
  *     conversation — let the caller surface it.
  *   - Other non-2xx → throws Error with the body's `error` field.
  */
+// ===== Email-summary endpoint (W6-S4) =====
+
+/**
+ * "Email me this analysis" — POST /api/chat/email-summary.
+ *
+ * Captures the user's email + the conversationEventId of the chat turn
+ * that produced the analysis. Backend resolves the underlying Decision /
+ * Analysis substrate events and sends a lightweight summary via the
+ * existing Resend-backed emailService. Anonymous-friendly: no auth
+ * required, sessionId scopes the request to a ghost user.
+ */
+export interface ChatEmailSummaryRequest {
+  email: string;
+  sessionId: string;
+  conversationEventId: string;
+}
+
+export async function sendChatEmailSummary(
+  request: ChatEmailSummaryRequest
+): Promise<{ sent: true }> {
+  try {
+    const { data } = await api.post<{ sent: true }>(
+      '/chat/email-summary',
+      request
+    );
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const body = err.response?.data as { error?: string } | undefined;
+      throw new Error(body?.error ?? 'Email send failed.');
+    }
+    throw err;
+  }
+}
+
 export async function* streamChatTurn(
   request: ChatTurnRequest,
   opts: { signal?: AbortSignal } = {}

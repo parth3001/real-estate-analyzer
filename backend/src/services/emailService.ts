@@ -1125,6 +1125,126 @@ export class EmailService {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
+
+  /**
+   * Lightweight Deal Score summary email (W6-S4 — chat surface email CTA).
+   *
+   * Sends an HTML + text email with the Deal Quality score, the property
+   * address, top factors, walk-away price, and a brief next-step prompt.
+   * NO PDF attachment — the wizard's `sendAnonymousPdfEmail` covers the
+   * heavy path; this one is intentionally minimal because the chat
+   * surface's analysis lives in substrate events, not in the legacy
+   * wizard's analysis object.
+   *
+   * Strategic role: capture an email at the activation moment without
+   * forcing the user to sign up. The address goes to Resend, the
+   * conversationEventId stays in our logs — together they're the
+   * starting state for a magic-link signup flow (W6-S5).
+   */
+  async sendDealScoreSummary(opts: {
+    recipientEmail: string;
+    strategy: 'buy_hold' | 'brrrr';
+    dealQuality: number;
+    addressLine: string;
+    topFactors: Array<{ label: string; score: number }>;
+    walkAwayPrice: number;
+    purchasePrice: number;
+    nextStep: string;
+  }): Promise<void> {
+    const {
+      recipientEmail,
+      strategy,
+      dealQuality,
+      addressLine,
+      topFactors,
+      walkAwayPrice,
+      purchasePrice,
+      nextStep,
+    } = opts;
+    const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
+    const scoreLabel =
+      dealQuality >= 80
+        ? 'Above professional standards'
+        : dealQuality >= 65
+          ? 'Meets professional standards'
+          : dealQuality >= 50
+            ? 'Requires optimization'
+            : 'Below professional standards';
+    const scoreColor =
+      dealQuality >= 80
+        ? '#1B8B3A'
+        : dealQuality >= 65
+          ? '#A66700'
+          : dealQuality >= 50
+            ? '#C04A00'
+            : '#C7261C';
+    const fmt = (n: number): string =>
+      `$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    const factorsHtml = topFactors
+      .map(
+        (f) =>
+          `<tr><td style="padding:6px 0;color:#374151;">${this.escapeHtml(
+            f.label
+          )}</td><td style="padding:6px 0;text-align:right;font-weight:600;color:#111827;font-variant-numeric:tabular-nums;">${f.score}/100</td></tr>`
+      )
+      .join('');
+
+    const html = `
+<!DOCTYPE html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F9FAFB;margin:0;padding:24px;">
+  <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border-radius:12px;padding:32px;border:1px solid #E5E7EB;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">${strategyLabel.toUpperCase()} ANALYSIS</div>
+    <div style="font-size:14px;color:#374151;margin-bottom:24px;">${this.escapeHtml(addressLine)}</div>
+    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:24px;">
+      <div style="font-size:72px;font-weight:700;line-height:1;color:${scoreColor};font-variant-numeric:tabular-nums;">${dealQuality}<span style="font-size:28px;color:#9CA3AF;font-weight:500;">/100</span></div>
+      <div style="font-size:14px;font-weight:600;color:${scoreColor};">${scoreLabel}</div>
+    </div>
+    <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">TOP FACTORS</div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">${factorsHtml}</table>
+    <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tr><td style="padding:6px 0;color:#374151;">Walk-away price</td><td style="padding:6px 0;text-align:right;font-weight:600;color:#111827;font-variant-numeric:tabular-nums;">${fmt(walkAwayPrice)}</td></tr>
+      <tr><td style="padding:6px 0;color:#6B7280;">Your offer</td><td style="padding:6px 0;text-align:right;color:#374151;font-variant-numeric:tabular-nums;">${fmt(purchasePrice)}</td></tr>
+    </table>
+    <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">NEXT STEP</div>
+    <div style="font-size:14px;color:#374151;line-height:1.5;">${this.escapeHtml(nextStep)}</div>
+    <div style="margin-top:32px;font-size:12px;color:#9CA3AF;text-align:center;">REanalyzr · Institutional-grade analysis. Individual investor access.</div>
+  </div>
+</body></html>`;
+
+    const text = [
+      `${strategyLabel.toUpperCase()} ANALYSIS`,
+      addressLine,
+      '',
+      `Deal Quality Score: ${dealQuality}/100 — ${scoreLabel}`,
+      '',
+      'Top factors:',
+      ...topFactors.map((f) => `  ${f.label}: ${f.score}/100`),
+      '',
+      `Walk-away price: ${fmt(walkAwayPrice)}`,
+      `Your offer:      ${fmt(purchasePrice)}`,
+      '',
+      `Next step: ${nextStep}`,
+      '',
+      'REanalyzr · Institutional-grade analysis. Individual investor access.',
+    ].join('\n');
+
+    const subject = `Deal Score ${dealQuality}/100 — ${addressLine}`;
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+      text,
+    });
+
+    logger.info('[EmailService] Deal Score summary sent', {
+      to: recipientEmail.split('@')[0].substring(0, 5) + '...',
+      dealQuality,
+    });
+  }
 }
 
 // Export singleton instance

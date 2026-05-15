@@ -38,10 +38,19 @@ const SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
 
 vi.mock('../../../services/chatApi', () => ({
   streamChatTurn: vi.fn(),
+  sendChatEmailSummary: vi.fn(),
 }));
 
-import { streamChatTurn } from '../../../services/chatApi';
+// Mock react-router so ChatOverlay's useNavigate() works without
+// wrapping every test render in a MemoryRouter.
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
+import { streamChatTurn, sendChatEmailSummary } from '../../../services/chatApi';
 const mockStreamChatTurn = streamChatTurn as ReturnType<typeof vi.fn>;
+const mockSendChatEmailSummary = sendChatEmailSummary as ReturnType<typeof vi.fn>;
 
 /**
  * Build a scripted async generator that yields the given stream events.
@@ -90,9 +99,32 @@ function doneEvent(): ChatStreamEvent {
   };
 }
 
+function dealScoreStructuredEvent(): ChatStreamEvent {
+  return {
+    type: 'structured_output',
+    kind: 'deal_score_card',
+    data: {
+      strategy: 'buy_hold',
+      address: { street: '1837 Walnut Way', city: 'Anna', state: 'TX' },
+      dealQuality: 87,
+      topFactors: [
+        { label: 'Cash flow', score: 92 },
+        { label: 'Property risk', score: 30 },
+        { label: 'Market strength', score: 70 },
+      ],
+      walkAwayPrice: 385000,
+      purchasePrice: 425000,
+      nextStep: 'Make an offer at $385,000 with a 14-day inspection.',
+      assumptions: [{ label: '25% down', value: '$106,250' }],
+    },
+  };
+}
+
 describe('ChatOverlay (W6-S3 streaming)', () => {
   beforeEach(() => {
     mockStreamChatTurn.mockReset();
+    mockSendChatEmailSummary.mockReset();
+    mockNavigate.mockReset();
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
   });
 
@@ -322,5 +354,160 @@ describe('ChatOverlay (W6-S3 streaming)', () => {
     expect(call1.sessionId).toBe(call2.sessionId);
     expect(call1.turnNumber).toBe(1);
     expect(call2.turnNumber).toBe(2);
+  });
+
+  // ===== W6-S4 — structured outputs + CTAs =====
+
+  describe('structured outputs (W6-S4)', () => {
+    it('renders DealScoreCard inline when a deal_score_card event arrives', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          { type: 'text_delta', text: "Here's the analysis." },
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'analyze it');
+      await user.click(screen.getByTestId('chat-send'));
+
+      // The card mounts; we identify it by its data-testid from DealScoreCard.
+      const card = await screen.findByTestId('deal-score-card');
+      expect(card).toBeInTheDocument();
+      // Score should be rendered
+      expect(screen.getByTestId('deal-score-card-score')).toHaveTextContent('87');
+    });
+
+    it('shows both CTAs (Email + Portfolio) on the inline card', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+
+      expect(await screen.findByTestId('chat-cta-email')).toBeInTheDocument();
+      expect(screen.getByTestId('chat-cta-portfolio')).toBeInTheDocument();
+    });
+
+    it('email CTA opens the modal with the deal context', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+
+      await user.click(await screen.findByTestId('chat-cta-email'));
+
+      const modal = await screen.findByTestId('email-cta-modal');
+      expect(modal).toBeInTheDocument();
+      // Address snippet should appear in the modal (scoped, since the
+      // address also renders in the card caption above).
+      const within = await import('@testing-library/react');
+      expect(
+        within.within(modal).getByText(/1837 Walnut Way/)
+      ).toBeInTheDocument();
+    });
+
+    it('email modal Send fires sendChatEmailSummary with sessionId + conversationEventId', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      mockSendChatEmailSummary.mockResolvedValueOnce({ sent: true });
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+
+      await user.click(await screen.findByTestId('chat-cta-email'));
+      await user.type(
+        screen.getByTestId('email-cta-input'),
+        'investor@example.com'
+      );
+      await user.click(screen.getByTestId('email-cta-send'));
+
+      await waitFor(() =>
+        expect(mockSendChatEmailSummary).toHaveBeenCalledTimes(1)
+      );
+      const payload = mockSendChatEmailSummary.mock.calls[0]?.[0];
+      expect(payload.email).toBe('investor@example.com');
+      expect(payload.sessionId).toBe(sessionStorage.getItem(SESSION_STORAGE_KEY));
+      expect(payload.conversationEventId).toBeTruthy();
+
+      // Success state replaces the form
+      expect(await screen.findByTestId('email-cta-success')).toHaveTextContent(
+        /investor@example.com/
+      );
+    });
+
+    it('email modal Send button is disabled until a valid-looking email is entered', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+      await user.click(await screen.findByTestId('chat-cta-email'));
+
+      const sendBtn = screen.getByTestId('email-cta-send');
+      expect(sendBtn).toBeDisabled();
+
+      await user.type(screen.getByTestId('email-cta-input'), 'not-an-email');
+      expect(sendBtn).toBeDisabled();
+
+      await user.clear(screen.getByTestId('email-cta-input'));
+      await user.type(screen.getByTestId('email-cta-input'), 'a@b.co');
+      expect(sendBtn).not.toBeDisabled();
+    });
+
+    it('portfolio CTA navigates to /login?returnTo=/app with pendingConversationId', async () => {
+      mockStreamChatTurn.mockImplementation(
+        scriptedStream([
+          routingEvent(),
+          dealScoreStructuredEvent(),
+          doneEvent(),
+        ])
+      );
+      const user = userEvent.setup();
+      render(<ChatOverlay />);
+
+      await user.type(screen.getByTestId('chat-input'), 'go');
+      await user.click(screen.getByTestId('chat-send'));
+
+      await user.click(await screen.findByTestId('chat-cta-portfolio'));
+
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
+      const target = mockNavigate.mock.calls[0]?.[0] as string;
+      expect(target).toContain('/login?');
+      expect(target).toContain('returnTo=%2Fapp');
+      expect(target).toContain('pendingConversationId=');
+    });
   });
 });
