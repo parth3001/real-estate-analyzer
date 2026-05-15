@@ -26,8 +26,27 @@
  * the update procedure.
  */
 
-import type { SFRData } from '../../../types/propertyTypes';
+import type { SFRData, BRRRRStrategyData } from '../../../types/propertyTypes';
 import type { AnalysisAssumptions } from '../../../analysis/BasePropertyAnalyzer';
+
+/**
+ * Calibration fixture property data.
+ *
+ * Base shape is SFRData. The two engine-routing fields the
+ * InvestmentDecisionEngine reads via `(propertyData as any)` —
+ * `investmentStrategy` and the BRRRR-specific `brrrr` block — are
+ * declared here explicitly so BRRRR fixtures are typed, not casted.
+ *
+ *   - investmentStrategy: 'brrrr' routes to generateBRRRRDecision
+ *     (which recomputes its own analysis via BRRRRAnalyzer).
+ *   - 'buy_hold' (or absent) routes to the standard engine path.
+ *   - `brrrr` carries rehabBudget / afterRepairValue / refinanceLTV /
+ *     etc. — required when investmentStrategy is 'brrrr'.
+ */
+export type FixturePropertyData = SFRData & {
+  investmentStrategy?: 'buy_hold' | 'brrrr';
+  brrrr?: BRRRRStrategyData;
+};
 
 export interface CalibrationFixture {
   /** Human-readable name. Surfaces in PASS/FAIL output. */
@@ -38,7 +57,7 @@ export interface CalibrationFixture {
   lastValidated: string;
   /** Inputs to the tool chain. */
   inputs: {
-    propertyData: SFRData;
+    propertyData: FixturePropertyData;
     assumptions: AnalysisAssumptions;
     userContext: {
       riskTolerance: 'conservative' | 'moderate' | 'aggressive';
@@ -202,6 +221,69 @@ export const CALIBRATION_FIXTURES: CalibrationFixture[] = [
       // property, different score by design.
       dealQuality: 34,
       qualityLabel: 'Below professional standards',
+    },
+  },
+
+  // ===== Fixture 4: BRRRR engine path =====
+  //
+  // The deferred fixture from W5-S2. investmentStrategy: 'brrrr' routes
+  // the engine to generateBRRRRDecision, which recomputes its own
+  // analysis via BRRRRAnalyzer from the `brrrr` block (rehabBudget,
+  // afterRepairValue, refinanceLTV, seasoningPeriod). This fixture is
+  // the calibration anchor for the BRRRR code path — drift here means
+  // the BRRRR engine or the strategy-routing changed.
+  //
+  // Property: a distressed buy at $310K, $55K rehab, $430K ARV — a
+  // classic BRRRR setup (the spread before rehab is the deal).
+  {
+    name: 'anna-tx-1837-walnut-way-BRRRR (engine BRRRR path)',
+    engineVersion: 'v3.0',
+    lastValidated: '2026-05-14',
+    inputs: {
+      propertyData: {
+        propertyType: 'SFR',
+        investmentStrategy: 'brrrr',
+        purchasePrice: 310000,
+        downPayment: 62000, // 20% down on the distressed purchase
+        interestRate: 7.0,
+        loanTerm: 30,
+        monthlyRent: 2800,
+        propertyTaxRate: 1.8,
+        insuranceRate: 0.6,
+        propertyManagementRate: 8,
+        maintenanceCost: 1800,
+        squareFootage: 1850,
+        bedrooms: 3,
+        bathrooms: 2,
+        yearBuilt: 2018,
+        closingCosts: 5000,
+        propertyAddress: {
+          street: '1837 Walnut Way',
+          city: 'Anna',
+          state: 'TX',
+          zipCode: '75409',
+        },
+        // The BRRRR-specific block the engine's generateBRRRRDecision reads.
+        brrrr: {
+          rehabBudget: 55000,
+          afterRepairValue: 430000,
+          refinanceLTV: 75, // 75% cash-out refi
+          seasoningPeriod: 12, // 12-month seasoning
+          arvAppraisalConfidence: 'moderate',
+        },
+      },
+      assumptions: standardAssumptions,
+      userContext: { riskTolerance: 'aggressive', availableCash: 130000 },
+    },
+    expected: {
+      // Calibrated 2026-05-14 via the first substrate-eval run that
+      // included this fixture. The BRRRR engine (generateBRRRRDecision)
+      // produced 66 — "Meets professional standards" — for this setup:
+      // $310K distressed buy + $55K rehab against a $430K ARV is a
+      // ~$65K equity-capture spread, which the BRRRR scoring rewards.
+      // This is the calibration anchor for the BRRRR code path.
+      dealQuality: 66,
+      qualityLabel: 'Meets professional standards',
     },
   },
 ];
