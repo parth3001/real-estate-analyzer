@@ -33,7 +33,21 @@ import { BaseEventModel } from './BaseEvent';
 const InputMethodSchema = z.enum(['text', 'voice', 'paste']);
 export type ConversationInputMethod = z.infer<typeof InputMethodSchema>;
 
-/** Chat intents per agent mesh §2.2 routing table. */
+/**
+ * Chat intents per agent mesh §2.2 routing table.
+ *
+ * `off_topic` (W6-S2.6) is distinct from `fallback`:
+ *   - fallback   = "I'm not sure WHICH real-estate intent this is"
+ *                  → route to QA agent for graceful disambiguation
+ *   - off_topic  = "This is clearly NOT a real-estate question"
+ *                  → router short-circuits with a templated deflection,
+ *                    no LLM call (cost + brand + abuse containment).
+ *
+ * Off-topic examples: politics, recipes, code, stocks-by-ticker.
+ * In-scope-adjacent education (1031 exchanges, Fed rates → cap rates,
+ * stocks-vs-real-estate strategy) stays `qa_general`. Bias toward
+ * engagement; off_topic is reserved for clearly unrelated input.
+ */
 const ChatIntentSchema = z.enum([
   'analyze_property',
   'share_profile',
@@ -46,6 +60,7 @@ const ChatIntentSchema = z.enum([
   'request_critique',
   'save_action',
   'fallback',
+  'off_topic',
 ]);
 export type ChatIntent = z.infer<typeof ChatIntentSchema>;
 
@@ -55,6 +70,10 @@ const RoutedToSchema = z.enum([
   'agent:adversarial_critic',
   'tool_only',
   'fallback',
+  // W6-S2.6 — router short-circuits off-topic turns to a templated
+  // deflection response. No agent invoked; substrate records the routed-to
+  // value for activation-funnel queries ("how often are we deflecting?").
+  'deflection:off_topic',
 ]);
 export type RoutedTo = z.infer<typeof RoutedToSchema>;
 

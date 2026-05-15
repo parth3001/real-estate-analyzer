@@ -94,6 +94,44 @@ describe('routeIntent (W2-S1)', () => {
     });
   });
 
+  // ===== W6-S2.6 — off_topic short-circuit =====
+
+  describe('off_topic deflection (W6-S2.6)', () => {
+    it('routes off_topic to the templated deflection target — NOT an agent', () => {
+      const decision = routeIntent('off_topic', 95);
+      expect(decision.target).toBe('deflection:off_topic');
+      expect(decision.routedTo).toBe('deflection:off_topic');
+      // Crucially: no agent invoked. orchestrator short-circuits.
+      expect(decision.target).not.toMatch(/^agent:/);
+      expect(decision.target).not.toMatch(/^tool:/);
+    });
+
+    it('short-circuits even when classifier confidence is low (off_topic beats threshold check)', () => {
+      // off_topic is checked BEFORE the low-confidence fallback. A
+      // classifier with mild confidence in "this is off-topic" should
+      // still short-circuit, NOT route to QA.
+      const decision = routeIntent('off_topic', 55);
+      expect(decision.target).toBe('deflection:off_topic');
+      expect(decision.fallbackReason).toBeUndefined();
+    });
+
+    it('preserves classifierIntent + confidence for audit even on deflection', () => {
+      const decision = routeIntent('off_topic', 88);
+      expect(decision.classifierIntent).toBe('off_topic');
+      expect(decision.classifierConfidence).toBe(88);
+    });
+
+    it('does NOT deflect adjacent education — qa_general routes to agent:qa', () => {
+      // Sanity check: the adjacency examples we want to PRESERVE
+      // (1031 exchanges, Fed rates → cap rates, stocks-vs-RE) all
+      // come through as qa_general and must keep their agent route.
+      const decision = routeIntent('qa_general', 90);
+      expect(decision.target).toBe('agent:qa');
+      expect(decision.routedTo).toBe('agent:qa');
+      expect(decision.target).not.toBe('deflection:off_topic');
+    });
+  });
+
   // ===== Substrate enum mapping =====
 
   describe('routedTo substrate-enum mapping', () => {

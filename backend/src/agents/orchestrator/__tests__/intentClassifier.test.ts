@@ -118,6 +118,7 @@ describe('classifyIntent (W2-S0)', () => {
       'request_critique',
       'save_action',
       'fallback',
+      'off_topic',
     ])('accepts intent: %s', async (intent) => {
       setAnthropicAdapter(
         makeStub(makeJson({ intent, confidence: 80 }))

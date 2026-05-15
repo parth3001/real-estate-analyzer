@@ -34,7 +34,7 @@ export type ToolTarget =
   | 'tool:export_audit_pdf'
   | 'tool:save_to_watchlist';
 
-export type RoutingTarget = AgentTarget | ToolTarget | 'fallback';
+export type RoutingTarget = AgentTarget | ToolTarget | 'fallback' | 'deflection:off_topic';
 
 /**
  * The routed-to enum that gets persisted on the ConversationEvent
@@ -47,7 +47,8 @@ export type RoutedTo =
   | 'agent:qa'
   | 'agent:adversarial_critic'
   | 'tool_only'
-  | 'fallback';
+  | 'fallback'
+  | 'deflection:off_topic';
 
 export interface RoutingDecision {
   /** Specific target — agent or tool — the orchestrator should execute. */
@@ -60,6 +61,21 @@ export interface RoutingDecision {
   classifierIntent: ChatIntent;
   classifierConfidence: number;
 }
+
+/**
+ * Templated deflection response for off_topic input (W6-S2.6).
+ *
+ * Returned by the orchestrator WITHOUT invoking any agent — saves
+ * ~$0.05-0.15 per off-topic turn (Sonnet QA cost) and eliminates the
+ * brand/legal risk of Claude answering a political/medical/legal
+ * question with REanalyzr's voice.
+ *
+ * Copy locked in 2026-05-15 with the user: tight, on-brand, redirects
+ * to a concrete action.
+ */
+export const OFF_TOPIC_DEFLECTION_RESPONSE =
+  "I'm REanalyzr — I focus on real estate deal analysis. " +
+  'Ask me about a property, a metric, or paste a listing.';
 
 // ===== Constants =====
 
@@ -89,13 +105,29 @@ export const CONFIDENCE_THRESHOLD = 70;
  *   request_critique      → agent:adversarial_critic
  *   save_action           → tool:save_to_watchlist
  *   fallback              → agent:qa
+ *   off_topic             → deflection:off_topic (templated, NO agent call)
  *
- * Confidence < threshold → agent:qa (low_confidence fallback)
+ * Confidence < threshold → agent:qa (low_confidence fallback),
+ * EXCEPT off_topic which short-circuits regardless of confidence.
  */
 export function routeIntent(
   intent: ChatIntent,
   confidence: number
 ): RoutingDecision {
+  // W6-S2.6 — off_topic is a deterministic short-circuit. The
+  // orchestrator returns OFF_TOPIC_DEFLECTION_RESPONSE without invoking
+  // any agent. We check this BEFORE the low-confidence branch so a
+  // confidently-classified off_topic skips the QA agent (cost + brand
+  // safety) even if its confidence happens to be below threshold.
+  if (intent === 'off_topic') {
+    return {
+      target: 'deflection:off_topic',
+      routedTo: 'deflection:off_topic',
+      classifierIntent: intent,
+      classifierConfidence: confidence,
+    };
+  }
+
   // Low-confidence fallback — Q&A agent disambiguates
   if (intent !== 'fallback' && confidence < CONFIDENCE_THRESHOLD) {
     return {
@@ -200,4 +232,13 @@ export function isAgentTarget(t: RoutingTarget): t is AgentTarget {
 
 export function isToolTarget(t: RoutingTarget): t is ToolTarget {
   return t.startsWith('tool:');
+}
+
+/**
+ * True when the router short-circuited the request as off-topic
+ * (W6-S2.6). The orchestrator returns OFF_TOPIC_DEFLECTION_RESPONSE
+ * without invoking any agent.
+ */
+export function isOffTopicDeflection(t: RoutingTarget): t is 'deflection:off_topic' {
+  return t === 'deflection:off_topic';
 }

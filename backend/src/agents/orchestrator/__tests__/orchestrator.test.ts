@@ -379,6 +379,73 @@ describe('orchestrator.handleTurn (W2-S2)', () => {
     });
   });
 
+  // ===== W6-S2.6 — off_topic short-circuit =====
+
+  describe('off_topic deflection (W6-S2.6)', () => {
+    it('returns the templated deflection text without invoking any agent', async () => {
+      setAnthropicAdapter(classifierStub('off_topic', 95));
+      const userId = new Types.ObjectId();
+      const out = await handleTurn({
+        userInput: 'who should I vote for in the next election',
+        userId,
+        sessionId: SESSION_ID,
+        turnNumber: 1,
+      });
+
+      expect(out.routing.target).toBe('deflection:off_topic');
+      expect(out.routing.routedTo).toBe('deflection:off_topic');
+      // The exact response string is the source of truth for brand /
+      // legal safety. If this changes, it MUST be reviewed.
+      expect(out.responseText).toBe(
+        "I'm REanalyzr — I focus on real estate deal analysis. " +
+          'Ask me about a property, a metric, or paste a listing.'
+      );
+      expect(out.agentStubbed).toBe(false);
+    });
+
+    it('cost includes ONLY the classifier — no agent call billed', async () => {
+      setAnthropicAdapter(classifierStub('off_topic', 92));
+      const userId = new Types.ObjectId();
+      const out = await handleTurn({
+        userInput: 'help me debug this python script',
+        userId,
+        sessionId: SESSION_ID,
+        turnNumber: 1,
+      });
+
+      // Only ONE CostEvent (classifier). No agent invocation = no
+      // second CostEvent.
+      const costDocs = await mongoose.connection.db
+        .collection('cost_events')
+        .find({ traceId: out.traceId })
+        .toArray();
+      expect(costDocs).toHaveLength(1);
+      // The single cost event must be from the classifier (haiku
+      // tier), not Sonnet or Opus.
+      expect(costDocs[0]).toMatchObject({
+        costType: 'llm',
+        provider: 'anthropic',
+      });
+    });
+
+    it('still writes a ConversationEvent with routedTo=deflection:off_topic', async () => {
+      setAnthropicAdapter(classifierStub('off_topic', 90));
+      const userId = new Types.ObjectId();
+      const out = await handleTurn({
+        userInput: 'tell me a joke',
+        userId,
+        sessionId: SESSION_ID,
+        turnNumber: 1,
+      });
+
+      const events = await eventsRepositoryReads.getEventsByTraceId(out.traceId);
+      const conv = events.find((e) => e.eventType === 'conversation');
+      expect(conv).toBeDefined();
+      const payload = conv!.payload as { routedTo: string };
+      expect(payload.routedTo).toBe('deflection:off_topic');
+    });
+  });
+
   // ===== traceId correlation =====
 
   describe('traceId joins all turn writes', () => {

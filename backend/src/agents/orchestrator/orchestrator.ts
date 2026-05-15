@@ -40,6 +40,7 @@ import { eventsRepository } from '../../repositories/EventsRepository';
 import { classifyIntent } from './intentClassifier';
 import {
   routeIntent,
+  OFF_TOPIC_DEFLECTION_RESPONSE,
   type RoutingDecision,
   type RoutingTarget,
 } from './router';
@@ -321,7 +322,20 @@ export async function handleTurn(
     durationMs: number;
   }> = [];
 
-  if (routing.target.startsWith('tool:')) {
+  if (routing.target === 'deflection:off_topic') {
+    // W6-S2.6 — off-topic short-circuit. No agent invoked: the classifier
+    // already paid ~$0.002 to identify this; we don't pay another
+    // ~$0.05-$0.15 for Sonnet to refuse on our behalf. Brand + legal
+    // safety: the response copy is controlled here, not improvised by
+    // an LLM.
+    responseText = OFF_TOPIC_DEFLECTION_RESPONSE;
+    logger.info('orchestrator: off_topic deflection', {
+      traceId,
+      sessionId: input.sessionId,
+      turnNumber: input.turnNumber,
+      classifierConfidence: classification.confidence,
+    });
+  } else if (routing.target.startsWith('tool:')) {
     // Real tool execution
     const toolResult = await executeToolRoute(
       routing.target,
