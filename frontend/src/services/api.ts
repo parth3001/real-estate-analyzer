@@ -1089,9 +1089,21 @@ export const authApi = {
 
   // Request a magic-link sign-in email. Backend always returns 200
   // (regardless of whether the email is registered) to prevent enumeration.
-  requestMagicLink: async (email: string): Promise<ApiResponse<{ ok: boolean }>> => {
+  //
+  // W6-S5b — `opts.pendingChatSessionId` binds an anonymous chat
+  // sessionId to the magic-link token row. On verify, the server-side
+  // merge runs automatically — works across browser/device because the
+  // binding lives on the token, not in client storage.
+  requestMagicLink: async (
+    email: string,
+    opts: { pendingChatSessionId?: string } = {}
+  ): Promise<ApiResponse<{ ok: boolean }>> => {
     try {
-      const response = await api.post('/auth/magic-link', { email });
+      const body: Record<string, unknown> = { email };
+      if (opts.pendingChatSessionId) {
+        body.pendingChatSessionId = opts.pendingChatSessionId;
+      }
+      const response = await api.post('/auth/magic-link', body);
       return { data: response.data, status: response.status };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -1107,6 +1119,11 @@ export const authApi = {
 
   // Consume a magic-link token and — on success — store the returned
   // JWT pair + user data so subsequent requests authenticate normally.
+  //
+  // W6-S5b — response now optionally carries `claimedChat: { returnTo,
+  // merged, eventsMerged }` when the token had a pendingChatSessionId.
+  // MagicLinkVerifyPage navigates to `claimedChat.returnTo` instead of
+  // /dashboard in that case.
   verifyMagicLink: async (
     token: string
   ): Promise<
@@ -1117,6 +1134,11 @@ export const authApi = {
       user?: any;
       reason?: 'expired' | 'used' | 'invalid';
       email?: string;
+      claimedChat?: {
+        merged: boolean;
+        eventsMerged: number;
+        returnTo: string;
+      };
     }>
   > => {
     try {

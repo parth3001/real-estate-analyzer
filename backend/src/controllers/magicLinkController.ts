@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { body, validationResult } from 'express-validator';
 import { MagicLinkToken } from '../models/MagicLinkToken';
 import { User } from '../models/User';
 import { emailService } from '../services/emailService';
 import { authService } from '../services/authService';
+import { mergeAnonymousSessionIntoUser } from '../services/chatSessionMergeService';
 import {
   generateMagicLinkToken,
   hashMagicLinkToken,
@@ -54,6 +56,15 @@ export const requestMagicLink = async (req: Request, res: Response): Promise<voi
   const email = normalizeEmail(req.body.email);
   const requestIp = getClientIp(req);
   const requestUserAgent = getUserAgent(req);
+  // W6-S5b — optional chat sessionId to bind to the token row.
+  // Validated by the route's `validateMagicLinkRequest` chain
+  // (isUUID + isLength). Stored on the token so the verify handler
+  // can claim it server-side regardless of which device opens the link.
+  const pendingChatSessionId =
+    typeof req.body.pendingChatSessionId === 'string' &&
+    req.body.pendingChatSessionId.length > 0
+      ? req.body.pendingChatSessionId
+      : null;
 
   try {
     // Invalidate any prior unused tokens for this email — prevents stacking.
@@ -72,6 +83,7 @@ export const requestMagicLink = async (req: Request, res: Response): Promise<voi
       usedAt: null,
       requestIp,
       requestUserAgent,
+      pendingChatSessionId,
     });
 
     const existingUser = await User.findOne({ email }).lean();
@@ -196,6 +208,48 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
 
     const tokens = authService.generateTokens(user);
 
+    // W6-S5b — server-side ghost-user merge.
+    //
+    // If the request that created this token carried a pendingChatSessionId,
+    // claim it now. The merge is idempotent: a stale sessionId (no ghost
+    // exists for it) returns merged: false. Failures are logged but do
+    // NOT fail the login — the user is authenticated regardless.
+    let claimedChat:
+      | {
+          merged: boolean;
+          eventsMerged: number;
+          returnTo: string;
+        }
+      | undefined;
+    if (tokenDoc.pendingChatSessionId) {
+      try {
+        const result = await mergeAnonymousSessionIntoUser(
+          tokenDoc.pendingChatSessionId,
+          user._id as Types.ObjectId
+        );
+        claimedChat = {
+          merged: result.merged,
+          eventsMerged: result.eventsMerged,
+          returnTo: '/app',
+        };
+        logger.info('[MagicLink] chat session claim completed', {
+          email,
+          sessionId: tokenDoc.pendingChatSessionId,
+          merged: result.merged,
+          eventsMerged: result.eventsMerged,
+        });
+      } catch (claimErr) {
+        // Non-fatal — user is authenticated, we just couldn't merge.
+        // Deal events stay queryable under the ghost user; a future
+        // claim or cleanup job picks them up.
+        logger.warn('[MagicLink] chat session claim failed', {
+          email,
+          sessionId: tokenDoc.pendingChatSessionId,
+          err: claimErr instanceof Error ? claimErr.message : String(claimErr),
+        });
+      }
+    }
+
     res.status(200).json({
       ok: true,
       accessToken: tokens.accessToken,
@@ -208,6 +262,7 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
         role: user.role,
         isVerified: user.isVerified,
       },
+      ...(claimedChat ? { claimedChat } : {}),
     });
   } catch (err) {
     logger.error('[MagicLink] verify failed', {
@@ -224,6 +279,14 @@ export const validateMagicLinkRequest = [
     .normalizeEmail({ gmail_remove_dots: false })
     .isLength({ max: 254 })
     .withMessage('Email is too long'),
+  // W6-S5b — optional chat sessionId. Must be a UUID v4 when present;
+  // any other shape is rejected to keep this clean of injection
+  // vectors (the value is stored on the token row + used as a
+  // server-side lookup key in the merge service).
+  body('pendingChatSessionId')
+    .optional()
+    .isUUID()
+    .withMessage('pendingChatSessionId must be a valid UUID'),
 ];
 
 export const validateMagicLinkVerify = [

@@ -45,7 +45,18 @@ const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const res = await authApi.requestMagicLink(trimmed);
+      // W6-S5b — if the user came from /app's "Add to my portfolio" CTA,
+      // their anonymous chat sessionId is in sessionStorage. Pass it
+      // through so the server can bind a chat-claim to this magic-link
+      // token row — merge happens automatically on verify, regardless
+      // of which device opens the email.
+      const pendingChatSessionId =
+        typeof sessionStorage !== 'undefined'
+          ? sessionStorage.getItem('reanalyzr.chat.sessionId') ?? undefined
+          : undefined;
+      const res = await authApi.requestMagicLink(trimmed, {
+        pendingChatSessionId,
+      });
 
       if (res.status === 429) {
         setError('Too many sign-in attempts. Try again in 15 minutes.');

@@ -73,10 +73,24 @@ const MagicLinkVerifyPage: React.FC = () => {
         setAuthenticatedUser(res.data.user);
         setPhase('success');
 
-        // W6-S5 — if a chat session was stashed before the user clicked
-        // the portfolio CTA, claim it now (server-side ghost-user merge).
-        // Idempotent: if the ghost doesn't exist, the call no-ops and we
-        // still route the user to their intended destination.
+        // W6-S5b — server-bound claim (preferred path).
+        // The token row carried pendingChatSessionId; the verify
+        // handler already ran mergeAnonymousSessionIntoUser and
+        // returned `claimedChat.returnTo` in the response. This path
+        // works ACROSS browsers/devices because the binding lives on
+        // the token, not in client storage.
+        if (res.data.claimedChat?.returnTo) {
+          // Best-effort cleanup of the legacy localStorage fallback
+          // so it can't conflict with a future flow.
+          clearPendingChatClaim();
+          setTimeout(() => navigate(res.data.claimedChat!.returnTo), 300);
+          return;
+        }
+
+        // W6-S5 legacy fallback — same-browser localStorage path.
+        // Still useful when the user requested the magic link before
+        // the server-binding deploy reached their backend, or when
+        // some intermediate change drops the pendingChatSessionId.
         const pending = readPendingChatClaim();
         if (pending) {
           try {

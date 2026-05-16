@@ -11,6 +11,21 @@ export interface IMagicLinkToken extends Document {
   requestIp: string;
   requestUserAgent: string;
   createdAt: Date;
+  /**
+   * Anonymous chat sessionId to merge into the user on verify (W6-S5b).
+   *
+   * When set, the verify handler runs mergeAnonymousSessionIntoUser
+   * SERVER-SIDE after the user is authenticated, then includes a
+   * `claimedChat` block in the verify response so the frontend can
+   * navigate to /app (instead of /dashboard).
+   *
+   * Why on the TOKEN row (not localStorage on the client)?
+   *   Magic-link auth is cross-device by design — the user types email
+   *   on desktop, clicks the link on phone. localStorage is origin- AND
+   *   device-scoped. Binding the claim to the token row means the merge
+   *   works no matter where the email opens.
+   */
+  pendingChatSessionId?: string;
 }
 
 const MagicLinkTokenSchema = new Schema<IMagicLinkToken>(
@@ -48,6 +63,13 @@ const MagicLinkTokenSchema = new Schema<IMagicLinkToken>(
     requestUserAgent: {
       type: String,
       default: '',
+    },
+    // W6-S5b — see IMagicLinkToken doc above. Optional; only set when
+    // a chat sessionId was supplied at link-request time.
+    pendingChatSessionId: {
+      type: String,
+      required: false,
+      default: null,
     },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
