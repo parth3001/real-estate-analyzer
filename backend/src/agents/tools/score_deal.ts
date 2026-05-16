@@ -64,6 +64,8 @@ import type {
 import type { EnrichmentSource } from '../../models/events/AnalysisEvent';
 import { InvestmentDecisionEngine } from '../../services/investment/investmentDecisionEngine';
 import { MFDecisionEngine } from '../../services/investment/MFDecisionEngine';
+import { materializeDealFromDecision } from '../../services/dealMaterializationService';
+import { logger } from '../../utils/logger';
 
 // ===== Engine adapter =====
 
@@ -549,6 +551,40 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
       institutionId: ctx.institutionId,
       payload: { ...decisionPayloadDraft, analysisEventId },
     });
+
+    // ===== Phase 2 (chat-first strategy, 2026-05-15) =====
+    //
+    // Materialize a Deal row from the just-written substrate events so
+    // /saved-properties (legacy Deal-model UI) shows chat-analyzed deals
+    // alongside wizard-analyzed ones.
+    //
+    // The materialization service short-circuits for anonymous ghost
+    // users — they get materialization at claim-time via
+    // chatSessionMergeService, not here. For authenticated users it
+    // creates (or upserts) a Deal row keyed on (userId, propertyAddress).
+    //
+    // Best-effort: a materialization failure is logged but never blocks
+    // the tool's return. The substrate event IS the source of truth;
+    // Deal is a denormalized read model.
+    try {
+      const result = await materializeDealFromDecision(decisionEventId, ctx.userId);
+      if (!result.skipped) {
+        logger.info('[score_deal] Deal materialized', {
+          traceId: ctx.traceId,
+          dealId: result.deal?._id?.toString(),
+          created: result.created,
+        });
+      }
+    } catch (materializeErr) {
+      logger.warn('[score_deal] Deal materialization failed (non-fatal)', {
+        traceId: ctx.traceId,
+        decisionEventId: decisionEventId.toHexString(),
+        error:
+          materializeErr instanceof Error
+            ? materializeErr.message
+            : String(materializeErr),
+      });
+    }
 
     return {
       dealQuality: decisionPayloadDraft.dealQuality,

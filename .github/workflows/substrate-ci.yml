@@ -63,6 +63,9 @@ on:
       - 'backend/src/services/emailService.ts'
       - 'backend/src/services/chatSessionMergeService.ts'
       - 'backend/src/services/__tests__/chatSessionMergeService.test.ts'
+      - 'backend/src/services/dealMaterializationService.ts'
+      - 'backend/src/services/__tests__/dealMaterializationService.test.ts'
+      - 'backend/src/models/Deal.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -100,6 +103,9 @@ on:
       - 'backend/src/services/emailService.ts'
       - 'backend/src/services/chatSessionMergeService.ts'
       - 'backend/src/services/__tests__/chatSessionMergeService.test.ts'
+      - 'backend/src/services/dealMaterializationService.ts'
+      - 'backend/src/services/__tests__/dealMaterializationService.test.ts'
+      - 'backend/src/models/Deal.ts'
       - 'backend/src/utils/anthropicPricing.ts'
       - 'backend/src/utils/__tests__/anthropicPricing.test.ts'
       - 'backend/scripts/smoke-test-weeks-1-2.ts'
@@ -173,6 +179,7 @@ jobs:
             src/agents/orchestrator/__tests__/orchestrator.stream.test.ts \
             src/agents/orchestrator/__tests__/dealScoreCardProjection.test.ts \
             src/services/__tests__/chatSessionMergeService.test.ts \
+            src/services/__tests__/dealMaterializationService.test.ts \
             --no-coverage \
             --ci \
             --detectOpenHandles=false \

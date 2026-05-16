@@ -69,8 +69,12 @@ describe('anthropicAdapter (W4-S7)', () => {
       expect(getAnthropicAdapter()).toBe(defaultAnthropicAdapter);
     });
 
-    it('setAnthropicAdapter swaps the active adapter', () => {
-      const fake = makeTestAdapter({
+    it('setAnthropicAdapter swaps the active adapter', async () => {
+      // setAnthropicAdapter accepts Partial<AnthropicAdapter> (per W6-S3
+      // relaxation) and internally wraps with makeTestAdapter to fill in
+      // missing methods. The stored reference is therefore the WRAPPED
+      // adapter, not the input — so we assert behavior, not identity.
+      setAnthropicAdapter({
         async call() {
           return {
             text: 'stub',
@@ -80,8 +84,15 @@ describe('anthropicAdapter (W4-S7)', () => {
           };
         },
       });
-      setAnthropicAdapter(fake);
-      expect(getAnthropicAdapter()).toBe(fake);
+      const active = getAnthropicAdapter();
+      expect(active).not.toBe(defaultAnthropicAdapter);
+      const out = await active.call({
+        tier: 'haiku',
+        systemPrompt: '',
+        userPrompt: '',
+      });
+      expect(out.text).toBe('stub');
+      expect(out.model).toBe('stub-model');
     });
 
     it('resetAnthropicAdapter restores the default', () => {

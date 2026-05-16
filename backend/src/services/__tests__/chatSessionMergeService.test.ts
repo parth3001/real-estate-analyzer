@@ -133,6 +133,7 @@ describe('mergeAnonymousSessionIntoUser', () => {
         eventsMerged: 0,
         costEventsMerged: 0,
         ghostUserId: null,
+        dealsMaterialized: 0,
       });
     });
 
@@ -220,6 +221,163 @@ describe('mergeAnonymousSessionIntoUser', () => {
         userId: bystanderId,
       });
       expect(bystanderEvents).toBe(1);
+    });
+  });
+
+  describe('Phase 2 — Deal materialization on claim', () => {
+    it('materializes a Deal for each claimed DecisionEvent (visible in /saved-properties)', async () => {
+      // Setup: ghost user runs a chat → conversation event with
+      // analysis + decision in relatedEventIds. Real user signs up.
+      // Claim merges events to the real user AND materializes a Deal.
+      const ghostId = await createGhost(SESSION_ID);
+      const targetId = await createRealUser('claimer-with-deals@example.com');
+
+      // Seed an analysis + decision under the ghost
+      const property = {
+        propertyType: 'SFR' as const,
+        propertyAddress: {
+          street: '336 Highland Ridge Drive',
+          city: 'Anna',
+          state: 'TX',
+          zipCode: '75409',
+        },
+        purchasePrice: 295000,
+        downPayment: 73750,
+        interestRate: 6.95,
+        loanTerm: 30,
+        propertyTaxRate: 1.8,
+        insuranceRate: 0.5,
+        maintenanceCost: 100,
+        propertyManagementRate: 8,
+        monthlyRent: 2500,
+        squareFootage: 2110,
+        bedrooms: 3,
+        bathrooms: 2,
+        yearBuilt: 2008,
+      };
+
+      const analysisEventId = await eventsRepository.writeAnalysisEvent({
+        traceId: 'trace-merge-mat',
+        actorType: 'tool:score_deal',
+        userId: ghostId,
+        payload: {
+          propertyData: property,
+          marketData: {} as never,
+          assumptions: { vacancyRate: 5 },
+          metrics: {
+            noi: 18000,
+            capRate: 6.1,
+            cashOnCashReturn: 8.2,
+            irr: 11,
+            dscr: 1.4,
+            operatingExpenseRatio: 0.4,
+            totalInvestment: 80000,
+          } as never,
+          monthlyAnalysis: { cashFlow: 250 },
+          longTermAnalysis: {},
+          walkAwayPrice: 270000,
+          enrichmentSource: 'fallback' as never,
+          enrichmentCacheHit: false,
+          engineVersion: 'v3.0',
+          computeTimeMs: 100,
+        },
+      });
+
+      const decisionEventId = await eventsRepository.writeDecisionEvent({
+        traceId: 'trace-merge-mat',
+        actorType: 'tool:score_deal',
+        userId: ghostId,
+        payload: {
+          analysisEventId,
+          dealQuality: 78,
+          qualityLabel: 'Meets professional standards' as never,
+          qualityColor: 'yellow' as never,
+          professionalAssessment: {
+            dealQuality: 78,
+            executionDifficulty: 40,
+            dataReliability: 80,
+            cashFlowScore: 88,
+            irrScore: 70,
+            marketStrengthScore: 65,
+            debtStructureScore: 72,
+            exitStrategyScore: 55,
+            capRateScore: 60,
+            propertyRiskScore: 45,
+            primaryInsight: 'Strong cash flow.',
+            strategicRecommendations: ['Offer at $270k.'],
+            riskMitigation: [],
+            opportunityMaximization: [],
+            confidenceLevel: 80,
+            keyStrengths: [],
+            keyRisks: [],
+          },
+          marketPosition: {
+            walkAwayPrice: 270000,
+            pricingContext: 'fair',
+            marketStage: 'mid',
+            competitiveIntensity: 'moderate',
+          },
+          reasoningTrail: {
+            primaryInsight: 'Strong cash flow.',
+            strategicRecommendations: ['Offer at $270k.'],
+            riskMitigation: [],
+            opportunityMaximization: [],
+            keyRisks: [],
+          },
+          confidence: 80,
+          scoringWeightsUsed: {} as never,
+          engineVersion: 'v3.0',
+        },
+      });
+
+      // Conversation event ties the two together + carries the session
+      await eventsRepository.writeConversationEvent({
+        traceId: 'trace-merge-mat',
+        actorType: 'user',
+        userId: ghostId,
+        payload: {
+          sessionId: SESSION_ID,
+          turnNumber: 1,
+          userInput: { text: 'analyze it', inputMethod: 'text' },
+          intentClassification: {
+            intent: 'analyze_property',
+            confidence: 90,
+            classifierModel: 'claude-haiku-4-5',
+          },
+          routedTo: 'agent:deal_scoring',
+          toolCalls: [],
+          agentResponse: {
+            text: 'Here is the score.',
+            structuredOutputs: [],
+            relatedEventIds: [analysisEventId, decisionEventId],
+          },
+          tokenUsage: {
+            inputTokens: 100,
+            outputTokens: 50,
+            cachedTokens: 0,
+            estimatedCostCents: 0.5,
+          },
+          modelUsed: 'claude-sonnet-4-6',
+          totalDurationMs: 1000,
+        },
+      });
+
+      // Act: merge the ghost session into the real user
+      const result = await mergeAnonymousSessionIntoUser(SESSION_ID, targetId);
+
+      // Assert: merge fired + Deal materialized + visible under targetId
+      expect(result.merged).toBe(true);
+      expect(result.dealsMaterialized).toBe(1);
+
+      const { DealModel } = await import('../../models/Deal');
+      const deals = await DealModel.find({ userId: targetId }).lean();
+      expect(deals).toHaveLength(1);
+      expect(deals[0].propertyAddress).toMatchObject({
+        street: '336 Highland Ridge Drive',
+        city: 'Anna',
+      });
+      expect(deals[0].investmentDecision?.score).toBe(78);
+      expect(deals[0].investmentDecision?.verdict).toBe('NEGOTIATE'); // 65 ≤ 78 < 80
     });
   });
 

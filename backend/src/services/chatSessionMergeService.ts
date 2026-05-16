@@ -58,6 +58,7 @@
 
 import mongoose, { Types } from 'mongoose';
 import { User } from '../models/User';
+import { materializeDealsForUser } from './dealMaterializationService';
 import { logger } from '../utils/logger';
 
 export interface MergeResult {
@@ -69,6 +70,14 @@ export interface MergeResult {
   costEventsMerged: number;
   /** The reassigned ghost's _id (hex) — null when merged=false. */
   ghostUserId: string | null;
+  /**
+   * Number of legacy Deal rows materialized from the just-claimed
+   * DecisionEvents (Phase 2 of chat-first strategy).
+   * Each materialized Deal makes the analysis visible in /saved-properties.
+   * 0 when merged=false; can be 0 when merged=true if no DecisionEvents
+   * existed in this session (e.g., Q&A-only conversation).
+   */
+  dealsMaterialized: number;
 }
 
 /**
@@ -98,6 +107,7 @@ export async function mergeAnonymousSessionIntoUser(
       eventsMerged: 0,
       costEventsMerged: 0,
       ghostUserId: null,
+      dealsMaterialized: 0,
     };
   }
 
@@ -114,6 +124,7 @@ export async function mergeAnonymousSessionIntoUser(
       eventsMerged: 0,
       costEventsMerged: 0,
       ghostUserId: ghostId.toHexString(),
+      dealsMaterialized: 0,
     };
   }
 
@@ -142,12 +153,82 @@ export async function mergeAnonymousSessionIntoUser(
   //    up so the unique index stays free of stale anon-* synthetic rows.
   await User.deleteOne({ _id: ghostId }).exec();
 
+  // 6. Phase 2 — materialize Deal rows for each DecisionEvent in this
+  //    session so /saved-properties (legacy Deal-model UI) shows the
+  //    user's chat-analyzed deals immediately after signup.
+  //
+  //    Discovery: walk ConversationEvents for this session (now owned by
+  //    targetUserId after step 3), collect their relatedEventIds, filter
+  //    to events that are decisions, materialize each.
+  //
+  //    Best-effort: materialization failures are logged but don't fail
+  //    the merge. The substrate events ARE the source of truth.
+  let dealsMaterialized = 0;
+  try {
+    const convs = await mongoose.connection.db
+      .collection('events')
+      .find({
+        eventType: 'conversation',
+        userId: targetUserId,
+        'payload.sessionId': sessionId,
+      })
+      .toArray();
+
+    const candidateIds = convs.flatMap((c) => {
+      const payload = c.payload as
+        | { agentResponse?: { relatedEventIds?: Types.ObjectId[] } }
+        | undefined;
+      return payload?.agentResponse?.relatedEventIds ?? [];
+    });
+
+    if (candidateIds.length > 0) {
+      const decisions = await mongoose.connection.db
+        .collection('events')
+        .find({
+          _id: { $in: candidateIds.map((id) => new Types.ObjectId(id)) },
+          eventType: 'decision',
+        })
+        .project({ _id: 1 })
+        .toArray();
+
+      const decisionIds = decisions.map((d) => d._id as Types.ObjectId);
+      if (decisionIds.length > 0) {
+        const result = await materializeDealsForUser(decisionIds, targetUserId);
+        dealsMaterialized = result.successCount;
+        if (result.failureCount > 0) {
+          logger.warn(
+            '[chatSessionMerge] some Deal materializations failed during claim',
+            {
+              sessionId,
+              targetUserId: targetUserId.toHexString(),
+              successCount: result.successCount,
+              failureCount: result.failureCount,
+            }
+          );
+        }
+      }
+    }
+  } catch (materializeErr) {
+    logger.warn(
+      '[chatSessionMerge] Deal materialization step failed (non-fatal — merge already complete)',
+      {
+        sessionId,
+        targetUserId: targetUserId.toHexString(),
+        error:
+          materializeErr instanceof Error
+            ? materializeErr.message
+            : String(materializeErr),
+      }
+    );
+  }
+
   logger.info('[chatSessionMerge] merge completed', {
     sessionId,
     ghostUserId: ghostId.toHexString(),
     targetUserId: targetUserId.toHexString(),
     eventsMerged: eventsRes.modifiedCount ?? 0,
     costEventsMerged: costRes.modifiedCount ?? 0,
+    dealsMaterialized,
   });
 
   return {
@@ -155,5 +236,6 @@ export async function mergeAnonymousSessionIntoUser(
     eventsMerged: eventsRes.modifiedCount ?? 0,
     costEventsMerged: costRes.modifiedCount ?? 0,
     ghostUserId: ghostId.toHexString(),
+    dealsMaterialized,
   };
 }

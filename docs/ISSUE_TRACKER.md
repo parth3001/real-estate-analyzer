@@ -388,8 +388,23 @@ architecture §1.5 (deterministic-scoring non-negotiable).
 ---
 
 ### Issue #89: Claimed chat deals don't appear in /saved-properties (post-signup visibility gap)
-**Status**: 🔴 OPEN (highest-priority new gap)
-**Priority**: P0 - CRITICAL (conversion-killing)
+**Status**: ✅ RESOLVED 2026-05-15 (Phase 2 of chat-first strategy)
+**Priority**: P0 - CRITICAL (conversion-killing) — closed
+
+**Resolution**:
+Path 1 (substrate→Deal materialization) shipped in Phase 2. New
+`dealMaterializationService` invoked from:
+  - `score_deal` tool after every successful chat analysis for authed users
+  - `chatSessionMergeService` after a ghost-user claim — bulk
+    materializes all DecisionEvents reassigned to the now-authenticated
+    real user
+
+Result: chat-created Deals now appear in `/saved-properties` alongside
+wizard-created Deals. Upsert keyed on (userId, propertyAddress) keeps
+the list de-duplicated when a user re-runs the same property with
+different assumptions.
+
+10 new unit tests + 1 integration test added for the merge-claim flow.
 **Reported**: 2026-05-15 (user feedback after W6-S5b end-to-end test)
 **Component**: Backend - Data model bridge + Frontend /saved-properties
 **Category**: Architectural Gap / Data Model Duality
