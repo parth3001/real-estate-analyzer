@@ -5,7 +5,73 @@
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-05-15)
+## 🟡 **ACTIVE ISSUES** (2026-05-16)
+
+### Issue #101: Strategy comparison via agent multi-tool-use (chat-native compare card)
+**Status**: 🟢 BACKLOG (architectural validation done; awaiting demand signal)
+**Priority**: P2 - MEDIUM (engagement feature, not conversion feature)
+**Reported**: 2026-05-16 (architect + Marcus design conversation)
+**Component**: Backend orchestrator + frontend ChatOverlay
+**Category**: Feature Enhancement / Differentiator
+
+**Description**:
+The chat surface today scores one property under one strategy at a time
+(buy-and-hold OR BRRRR). A natural follow-up the user would want — and
+that competitors do NOT offer cleanly — is side-by-side comparison:
+
+  "Compare 336 Highland Ridge as BRRRR vs buy-and-hold"
+
+**Architectural verdict (Architect, 2026-05-16)**:
+The substrate-event + multi-tool-use agent architecture supports
+comparison FOR FREE. No new infrastructure needed. The agent's existing
+tool-use loop can call score_deal twice (once per strategy) in the same
+session; substrate records both AnalysisEvent + DecisionEvent pairs;
+orchestrator emits a new `strategy_comparison_card` structured_output;
+frontend renders a side-by-side card.
+
+Effort: ~half-day backend + half-day frontend.
+
+**Strategic verdict (Marcus, 2026-05-16) — DEFERRED**:
+At zero conversions, the bottleneck is acquisition + activation, not
+analysis-depth. Strategy comparison is an ENGAGEMENT feature — valuable
+AFTER users are engaged, not before. Real-estate-investor research
+suggests most retail investors have a strategy preference (BRRRR vs
+buy-and-hold) early in their journey and execute on that — they rarely
+agonize over comparison. The "amazing feature" framing is build-from-
+imagination, not build-from-evidence.
+
+**Decision**: Ship Option A (chat workspace + agent-driven chips)
+FIRST. After 30 days of real usage, audit chat logs for explicit
+comparison asks. If ≥20% of first-session conversations include
+phrases like "should I do BRRRR or buy and hold," prioritize. If <5%,
+defer indefinitely.
+
+**Generalizes to**:
+- N-strategy comparison (house hacking added later — same pattern)
+- Multi-property comparison ("compare A vs B")
+- Multi-assumption comparison ("$295k vs $385k offer")
+
+The same `strategy_comparison_card` projection works for all of these
+with minor extensions — the wire shape becomes a 2-N column structure
+rather than strictly 2-column.
+
+**Specs (for when it ships)**:
+- New `structured_output.kind = 'strategy_comparison_card'`
+- New projection: `projectStrategyComparison(decisionIdA, decisionIdB)`
+- Frontend `<StrategyComparisonCard />` component
+- Agent prompt addition in dealScoringAgent: "if user asks for
+  strategy comparison, call score_deal once per strategy"
+- Optional new intent `compare_strategies` in the classifier (or let
+  `analyze_property` cover it)
+
+**Files (anticipated)**:
+- backend/src/agents/orchestrator/strategyComparisonProjection.ts (NEW)
+- backend/src/agents/dealScoring/dealScoringAgent.ts (prompt update)
+- backend/src/agents/orchestrator/orchestrator.ts (emission)
+- frontend/src/components/Chat/StrategyComparisonCard.tsx (NEW)
+- frontend/src/components/Chat/ChatOverlay.tsx (renderer wiring)
+
+---
 
 ### Issue #100: Strategic UX direction — wizard vs. chat coexistence
 **Status**: 🔴 OPEN (discussion pending)
