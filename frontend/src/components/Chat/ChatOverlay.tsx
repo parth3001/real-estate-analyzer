@@ -122,8 +122,61 @@ export interface ChatOverlayProps {
 // ===== Helpers =====
 
 function newId(): string {
-  // Browser-side UUID v4 — same generator as crypto.randomUUID
-  return crypto.randomUUID();
+  // Browser-side UUID v4.
+  //
+  // `crypto.randomUUID()` is the obvious choice BUT it's a
+  // SECURE-CONTEXT-ONLY API. Browsers expose it only on:
+  //   - https://*
+  //   - http://localhost / http://127.0.0.1 (privileged origins)
+  //
+  // On plain-HTTP LAN dev (http://192.168.x.x:3000, common when
+  // testing from a phone on the same Wi-Fi), `crypto.randomUUID` is
+  // undefined and a call throws — silently breaking ChatOverlay mount.
+  //
+  // Defense: use crypto.randomUUID when available, otherwise build a
+  // v4 from crypto.getRandomValues (which IS exposed everywhere modern
+  // and works in insecure contexts). Math.random would be a third
+  // fallback but every browser shipped getRandomValues by 2015 — no
+  // realistic env reaches that path.
+  const c =
+    typeof crypto !== 'undefined'
+      ? (crypto as Crypto & { randomUUID?: () => string })
+      : undefined;
+  if (c?.randomUUID) {
+    return c.randomUUID();
+  }
+  if (c?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    // RFC 4122 v4 bit-twiddling: byte 6 high nibble = 4 (version),
+    // byte 8 high two bits = 10 (variant).
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) =>
+      b.toString(16).padStart(2, '0')
+    ).join('');
+    return (
+      hex.slice(0, 8) +
+      '-' +
+      hex.slice(8, 12) +
+      '-' +
+      hex.slice(12, 16) +
+      '-' +
+      hex.slice(16, 20) +
+      '-' +
+      hex.slice(20, 32)
+    );
+  }
+  // Hard-fallback — Math.random is NOT cryptographically secure but
+  // for a chat sessionId on a dev box without crypto.* it's good enough
+  // to keep the surface functional.
+  const rnd = (): string =>
+    Math.floor(Math.random() * 0x10000)
+      .toString(16)
+      .padStart(4, '0');
+  return `${rnd()}${rnd()}-${rnd()}-4${rnd().slice(1)}-${(
+    (Math.floor(Math.random() * 4) + 8).toString(16) + rnd().slice(1)
+  )}-${rnd()}${rnd()}${rnd()}`;
 }
 
 /**
