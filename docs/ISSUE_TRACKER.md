@@ -1,11 +1,440 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-03-03
+**Last Updated**: 2026-05-15
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-03-03)
+## 🟡 **ACTIVE ISSUES** (2026-05-15)
+
+### Issue #100: Strategic UX direction — wizard vs. chat coexistence
+**Status**: 🔴 OPEN (discussion pending)
+**Priority**: P0 - STRATEGIC (blocks W7 planning)
+**Reported**: 2026-05-15 (post-W6 saga, end-to-end magic-link claim flow validated)
+**Component**: Product Strategy / UX Architecture
+**Category**: Strategic Discussion (not a bug — open architectural question)
+**Affects**: All authenticated UX surfaces
+
+**Description**:
+W6 shipped a chat surface (`/app`) that analyzes a property end-to-end:
+anonymous user types address → DealScoreCard renders → click "Add to my
+portfolio" → magic-link signup → events claimed under authenticated
+user. The chat works.
+
+Two product paradigms now exist side-by-side doing the SAME job:
+
+| | Wizard (`/sfr-analysis`)              | Chat (`/app`)              |
+|---|----------------------------------|----------------------------|
+|Input| 60+ field form                   | Free text                  |
+|Data| `Deal` collection                  | Substrate events           |
+|Visible via| `/saved-properties`         | (nothing — see Issue #89)  |
+|Anonymous?| No                            | Yes (ghost-user pattern)   |
+|Time to result| 5-10 min                | 30 seconds                 |
+
+**Strategic Questions**:
+1. Does the wizard get deprecated, coexist, or become an "advanced/tune
+   assumptions" mode inside the chat?
+2. What happens to `/dashboard` as the post-login landing — does it
+   stay as the multi-property overview, or does `/app` (chat) become
+   the post-login landing with portfolio/pipeline as sidebar tabs?
+3. Where do the 60+ engine metrics live in a chat-first world? Pattern A
+   (chat-native follow-up cards via render_audit_trail) is the leading
+   candidate but needs decision.
+4. How do the legacy `Deal` model and the substrate-event model
+   reconcile (see Issue #89 for the immediate gap)?
+
+**Business Impact**:
+- Until decided, every new feature has TWO surfaces to ship into
+- Marketing has to explain two paths
+- Confusion risk for users between wizard and chat
+- Zero conversions today — strategic alignment is a prerequisite for
+  conversion optimization
+
+**Recommended Discussion Sequence** (next session):
+1. Marcus lens: chat-first vs coexist vs absorb
+2. Architect lens: substrate→Deal materialization (Path 1) vs
+   substrate-native rewrite (Path 3)
+3. UX Designer lens: authenticated `/app` layout sketch
+4. Pick first concrete slice and execute
+
+**Files Affected** (when decisions land):
+- All of `/frontend/src/pages/*Analysis.tsx`
+- `/frontend/src/components/layout/AppleNavigation.tsx`
+- `/backend/src/models/Deal.ts`
+- The chat's structured_output protocol (extensible already)
+
+---
+
+### Issue #99: Named prompt-injection detection rule in classifier
+**Status**: 🟢 OPEN (deferred from W6-S2.6)
+**Priority**: P3 - LOW (defense-in-depth)
+**Reported**: 2026-05-14 (W6-S2.6 commit)
+**Component**: Backend - Intent Classifier
+**Category**: Security / Prompt Hardening
+
+**Description**:
+The off_topic intent (W6-S2.6) catches obvious prompt injection
+attempts ("ignore previous instructions...") via the off_topic example
+list. But there's no NAMED rule that explicitly recognizes injection
+patterns and treats them with higher priority/lower latency.
+
+**Proposed Solution**:
+- Add `prompt_injection` intent (or upgrade off_topic with a dedicated
+  detection block)
+- Lower confidence threshold for routing — even mid-confidence injection
+  hits should short-circuit
+- Log explicitly: `chat.security.injection_attempt` for funnel monitoring
+
+**When**: After we have real anon traffic and see actual injection
+attempts in logs. Until then, off_topic deflection covers it.
+
+---
+
+### Issue #98: Real-LLM adjacency eval for off_topic classifier
+**Status**: 🟢 OPEN (deferred from W6-S2.6)
+**Priority**: P2 - MEDIUM (regression risk)
+**Reported**: 2026-05-14 (W6-S2.6 commit)
+**Component**: Backend - Evals
+**Category**: Test Coverage / Regression Prevention
+
+**Description**:
+W6-S2.6 added off_topic intent that distinguishes "not real estate"
+(deflect via templated text, no agent call) from "ambiguous within real
+estate" (route to QA agent — preserves adjacent education like 1031
+exchanges, Fed rate impact, etc.).
+
+The schema accepts off_topic. The CLASSIFIER's behavior on real prompts
+isn't pinned with an eval. A prompt regression could silently start
+classifying "what's a 1031 exchange?" as off_topic → user-facing
+deflection instead of education.
+
+**Proposed Solution**:
+- Curated 50+ adjacency-boundary prompts file:
+  - 25 clearly OFF: politics, recipes, code, weather, sports, tickers
+  - 25 IN-scope adjacent: 1031, cost seg, LLC vs S-corp, Fed→cap rates,
+    stocks-vs-RE, market analysis, property management
+- Run against real Anthropic API
+- Assert each is classified to the EXPECTED intent
+- Fail CI on regression (zero tolerance)
+
+**When**: When Anthropic API quota allows + W8 evals slice.
+
+---
+
+### Issue #97: adversarial_critic structured output rendering
+**Status**: 🟢 OPEN (deferred from W6-S3/S4)
+**Priority**: P3 - LOW (low-traffic agent)
+**Reported**: 2026-05-15 (W6-S3 commit, reinforced W6-S4)
+**Component**: Backend Orchestrator + Frontend ChatOverlay
+**Category**: Feature Gap
+
+**Description**:
+W6-S3 streamlined agent:qa and agent:deal_scoring to stream tokens.
+adversarial_critic stays non-streaming (complex 2-persona logic; result
+is structured rather than narrative). Its output is wrapped as a single
+text_delta event for protocol uniformity.
+
+The critic produces RICH structured data (severity scores per persona,
+divergence reasons, alternative assumptions) that deserves its own
+rendered card.
+
+**Proposed Solution**:
+- New `structured_output.kind = 'critique_card'`
+- Wire orchestrator's adversarial_critic branch to emit structured event
+- Frontend CritiqueCard component renders the 2-persona comparison
+
+**When**: When critic gets meaningful traffic. Currently rarely
+invoked via chat (low intent priority on `request_critique`).
+
+---
+
+### Issue #96: PDF attachment on email-summary CTA
+**Status**: 🟢 OPEN (deferred from W6-S4)
+**Priority**: P2 - MEDIUM (depth of "email me this" experience)
+**Reported**: 2026-05-15 (W6-S4 commit)
+**Component**: Backend - Email Service
+**Category**: Feature Enhancement
+
+**Description**:
+W6-S4's `POST /api/chat/email-summary` sends an HTML + plain text
+summary with the Deal Quality score, address, top factors, walk-away,
+and next step. No PDF attached — distinct from the wizard's
+`sendAnonymousPdfEmail` which generates a multi-page PDF.
+
+Chat surface persists substrate events (not the wizard's analysis
+shape), so the existing PDF generator can't be reused directly.
+
+**Proposed Solution**:
+- Project AnalysisPayload + DecisionPayload → the wizard's analysis
+  shape (similar to dealScoreCardProjection but more complete)
+- Reuse `pdfService.generateAnalysisPdf(analysis, formData, strategy)`
+- Attach result to the email
+
+**When**: After conversion data shows email-CTA is driving signups.
+If users aren't clicking it, PDF effort is wasted.
+
+---
+
+### Issue #95: tool_call UX pills during chat streaming
+**Status**: 🟢 OPEN (deferred from W6-S3)
+**Priority**: P3 - LOW (polish)
+**Reported**: 2026-05-15 (W6-S3 commit)
+**Component**: Frontend ChatOverlay
+**Category**: UX Polish
+
+**Description**:
+W6-S3 orchestrator emits `tool_call` stream events when an agent
+finishes invoking a tool. Frontend currently no-ops them (channel is
+reserved). A transient UX pill ("Calling score_deal..." → "Done")
+would give the user visibility into the agent's work during long
+deal_scoring runs.
+
+**Proposed Solution**:
+- Render transient pill below the assistant bubble
+- Auto-dismiss after 1.5s OR when next text_delta arrives
+- Use existing tool_call event payload (`{ toolName, success, durationMs }`)
+
+**When**: After user feedback indicates the streaming wait feels long.
+
+---
+
+### Issue #94: "Change any of these" CTA wiring on DealScoreCard
+**Status**: 🟢 OPEN (deferred from W6-S4)
+**Priority**: P2 - MEDIUM (transparency completeness)
+**Reported**: 2026-05-15 (W6-S4 commit)
+**Component**: Frontend DealScoreCard + Backend apply_override flow
+**Category**: Feature Gap
+
+**Description**:
+DealScoreCard's disclose-after assumptions section has the prop
+`onChangeAssumptions` (designed in W6-S2). The "Change any of these →"
+tinted button is rendered when the callback is wired, but the callback
+itself is not currently passed by ChatOverlay.
+
+**Proposed Solution**:
+- ChatOverlay implements onChangeAssumptions handler
+- Opens an inline edit surface (modal or inline form) showing each
+  assumption with the current value
+- On submit, sends a chat turn with an override toolPayload — agent
+  re-runs score_deal with the new assumption
+- New DealScoreCard streams in with updated score (the existing
+  structured_output protocol handles this naturally)
+
+**When**: After the basic chat flow has real usage and we see users
+asking "what if I change vacancy to 7%?" — Pattern A from the deep-data
+strategy discussion.
+
+---
+
+### Issue #93: Drop W6-S5 localStorage fallback after stabilization
+**Status**: 🟢 OPEN (technical debt)
+**Priority**: P3 - LOW (cleanup)
+**Reported**: 2026-05-15 (W6-S5b commit)
+**Component**: Frontend services/pendingChatClaim.ts + MagicLinkVerifyPage
+**Category**: Technical Debt / Cleanup
+
+**Description**:
+W6-S5 first wired the chat-claim handoff via localStorage. W6-S5b
+replaced that with server-side token-row binding (the canonical path
+— works cross-device). The localStorage fallback was kept for backward
+compat during the deploy window (handles version-skew if frontend
+deploys before backend, or vice versa).
+
+After production has run for 2+ weeks on the server-bound path with
+no incidents, the localStorage fallback can be removed:
+- `pendingChatClaim.ts` helpers — delete
+- `ChatOverlay.handlePortfolioCta` — drop the `writePendingChatClaim`
+  call
+- `MagicLinkVerifyPage` — drop the fallback branch reading
+  pendingChatClaim
+- `claimChatSession` from chatApi.ts — keep (still useful as a manual
+  fallback API)
+
+**When**: After 2 weeks of stable production traffic.
+
+---
+
+### Issue #92: Ghost-user TTL cleanup job
+**Status**: 🟢 OPEN (deferred from W6-S5)
+**Priority**: P3 - LOW (housekeeping)
+**Reported**: 2026-05-15 (W6-S5 commit)
+**Component**: Backend - Scheduled Job (doesn't exist yet)
+**Category**: Operations / Housekeeping
+
+**Description**:
+W6-S2.5's ghost-user pattern creates a User document for every
+anonymous chat session (`anonymous: true`, `anonymousSessionId: <uuid>`).
+A user who chats but never signs up leaves the ghost behind. Each
+ghost is ~50 bytes + index slot.
+
+Currently unbounded growth. At scale, eats:
+- MongoDB User collection size
+- Unique email index slots (synthetic `anon-{uuid}@anon.app`)
+
+**Proposed Solution**:
+- Scheduled job (cron-like): once daily, find ghosts where
+  `anonymous: true` AND `createdAt < now - 30 days` AND no related
+  events in last 30 days → delete
+- Cascade-delete their substrate events too? Or keep events orphaned
+  for substrate-integrity reasons? (Decision needed.)
+- Add a "ghost user count" gauge to dashboard for monitoring
+
+**When**: Before any real anonymous traffic > 100/day.
+
+---
+
+### Issue #91: ChatOverlay doesn't restore prior chat thread on authenticated mount
+**Status**: 🔴 OPEN (UX gap)
+**Priority**: P1 - HIGH (post-signup empty-state confusion)
+**Reported**: 2026-05-15 (user feedback after W6-S5b end-to-end test)
+**Component**: Frontend ChatOverlay + Backend chat history API
+**Category**: User Experience
+
+**Description**:
+After signing up via the portfolio CTA, the user lands back on `/app`.
+ChatOverlay mounts fresh — empty thread, "Ready when you are…" empty
+state. Their prior chat (which prompted the signup) is invisible
+despite being persisted in substrate under their authenticated user.
+
+User reaction: "did anything happen?" The 9 events claimed (eventsMerged
+from the W6-S5b verify response) live in substrate but the UI doesn't
+surface them.
+
+**Proposed Solution**:
+- Backend: `GET /api/chat/sessions/:sessionId/history` — returns
+  ConversationEvent + structured_output for that sessionId
+  (anonymous OR authed; sessionId is the key)
+- Frontend: ChatOverlay on mount with existing sessionId in
+  sessionStorage → fetch history → hydrate `messages` state with
+  the prior thread + cards
+- The DealScoreCard the user saw appears, the input is at the bottom
+  ready for the next turn, the user sees that NOTHING was lost.
+
+**Business Impact**:
+- Without this, the signup CTA feels like it accomplished nothing
+- "Add to my portfolio" promise broken — user signed up to save the
+  deal, but doesn't see the deal afterward
+- High priority because it's directly in the activation-conversion
+  critical path
+
+**Files Affected**:
+- `backend/src/routes/chat.ts` — new GET endpoint
+- `backend/src/repositories/EventsRepositoryReads.ts` — already has
+  `getConversationHistory(sessionId)` — wire it
+- `frontend/src/components/Chat/ChatOverlay.tsx` — fetch on mount
+- `frontend/src/services/chatApi.ts` — new client function
+
+---
+
+### Issue #90: DecisionEvent persists dealQuality 65 while engine produced 91 (discrepancy)
+**Status**: 🟡 OPEN (calibration bug)
+**Priority**: P1 - HIGH (data integrity)
+**Reported**: 2026-05-15 (observed in backend log during W6-S5b test)
+**Component**: Backend - Investment Decision Engine + score_deal tool
+**Category**: Data Integrity / Calibration
+
+**Description**:
+Backend log from W6-S5b end-to-end test:
+
+```
+Investment Decision Engine: Decision generated (V3.0 Professional Calibration) {
+  verdict: 'BUY',
+  legacyScore: 91,
+  professionalAssessment: { dealQuality: '91/100', ... },
+}
+DecisionEvent written {
+  traceId: '234c82c5-...',
+  eventId: '6a07ddf8...',
+  dealQuality: 65               ← discrepancy
+}
+```
+
+Engine emitted 91. DecisionEvent persisted 65. The two should ALWAYS
+agree — DecisionEvent.dealQuality IS the single source of truth per
+architecture §1.5 (deterministic-scoring non-negotiable).
+
+**Investigation Hypothesis**:
+- `score_deal` tool may be transforming or overriding the engine's
+  dealQuality before writing the event
+- Critical-flag suppression: if a `criticalFlags` rule (rentToPriceTooLow,
+  cashFlowBufferCritical, etc.) kicked in, the score could legitimately
+  cap below the raw weighted result — but the legacy log should reflect
+  that too
+- A second engine pass (e.g., for the substrate write specifically) may
+  be computing a different score than the legacy result
+
+**Business Impact**:
+- Calibration trust: if engine says 91 BUY and the persisted event says
+  65 (Requires Optimization), the substrate's audit trail can't be
+  trusted as the source of truth.
+- Display: DealScoreCard reads from DecisionEvent (substrate) and would
+  show 65 to the user, contradicting any cached/legacy display showing 91.
+
+**Proposed Solution**:
+- Reproduce with the test fixtures (336 Highland Ridge Drive, $295,000)
+- Add a hard assertion in score_deal: log + alert if
+  `engineOutput.dealQuality !== decisionPayload.dealQuality`
+- Trace which transformation produced 65 from 91
+- Either:
+  (a) Fix the projection to preserve the engine's number, OR
+  (b) Document why score_deal legitimately caps/transforms, AND
+      update the engine log to show the final substrate value
+
+**Files to Investigate**:
+- `backend/src/agents/tools/score_deal.ts` — projection logic
+- `backend/src/services/investment/investmentDecisionEngine.ts` — engine output shape
+- Critical-flag handling paths
+
+---
+
+### Issue #89: Claimed chat deals don't appear in /saved-properties (post-signup visibility gap)
+**Status**: 🔴 OPEN (highest-priority new gap)
+**Priority**: P0 - CRITICAL (conversion-killing)
+**Reported**: 2026-05-15 (user feedback after W6-S5b end-to-end test)
+**Component**: Backend - Data model bridge + Frontend /saved-properties
+**Category**: Architectural Gap / Data Model Duality
+
+**Description**:
+After magic-link signup, the ghost-user merge (W6-S5b) successfully
+reassigns 9 substrate events to the authenticated user. But:
+- `/saved-properties` page reads from the legacy `Deal` model
+- The chat's analysis lives in substrate (AnalysisEvent + DecisionEvent)
+- These data models don't see each other
+- Result: user signs up to "save the deal" → deal exists server-side
+  → /saved-properties shows nothing
+
+**Business Impact**:
+- The portfolio CTA's promise ("Add to my portfolio") is broken
+- User signs up, gets no visible confirmation, doesn't return
+- Direct hit to W6's whole conversion premise
+
+**Two Architectural Paths** (also tracked in Issue #100):
+
+**Path 1 — Substrate→Deal materialization (recommended quick ship)**
+- New helper: `materializeDealFromAnalysis(analysisEventId, decisionEventId, userId): Promise<Deal>`
+- Reads AnalysisEvent.propertyData + DecisionEvent.dealQuality + etc.
+- Writes a Deal row matching the legacy schema
+- Call it from `mergeAnonymousSessionIntoUser` after events are
+  reassigned — one Deal per claimed DecisionEvent
+- `/saved-properties` lights up immediately
+- Effort: ~3 hours (helper + integration + tests)
+
+**Path 2 — Substrate-native /saved-properties**
+- Rewrite /saved-properties to read substrate events directly
+- Build a substrate-aware deal card component
+- Drop legacy Deal model dependency (eventually)
+- Effort: 1-2 days
+
+**Recommendation**: Path 1 first (unblocks the conversion gap),
+Path 2 as longer-term unification work. Path 1 doesn't preclude Path 2.
+
+**Files Affected (Path 1)**:
+- New: `backend/src/services/dealMaterializationService.ts`
+- M: `backend/src/services/chatSessionMergeService.ts` (call materialization)
+- M: `backend/src/agents/tools/score_deal.ts` (also call on each new chat analysis for AUTHED users — anon users get materialization on claim)
+- Tests: deal-materialization + integration with merge service
+
+---
 
 ### Issue #88: Public Calculator Real-Time Results Update Causes User Distraction & Premature Abandonment
 **Status**: 🔴 OPEN
