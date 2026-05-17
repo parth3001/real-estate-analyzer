@@ -99,7 +99,15 @@ export const CONFIDENCE_THRESHOLD = 70;
  *   analyze_property      → agent:deal_scoring
  *   share_profile         → tool:profile_extraction
  *   qa_metric / qa_decision / qa_general → agent:qa
- *   override_assumption   → tool:apply_override (orchestrator chains to qa for explanation)
+ *   override_assumption   → agent:deal_scoring (chat-flow path — the agent
+ *                            recalls recent decision context + re-runs
+ *                            resolve_property_inputs with userOverrides;
+ *                            updated 2026-05-16 from the old direct
+ *                            tool:apply_override route, which required a
+ *                            structured payload chat can't construct.
+ *                            For a future structured slider UI on the
+ *                            score card, the tool route is still
+ *                            invocable directly from the frontend.)
  *   request_audit_trail   → tool:render_audit_trail
  *   request_export        → tool:export_audit_pdf
  *   request_critique      → agent:adversarial_critic
@@ -179,13 +187,20 @@ export function routeIntent(
       };
 
     case 'override_assumption':
-      // The override itself is deterministic (apply_override tool); the
-      // orchestrator then chains to qa for a natural-language explanation
-      // of the new score. For W2 scaffolding we route to the tool; the
-      // chained Q&A explanation lands when the Q&A agent ships (W5).
+      // Chat-flow overrides go through the deal-scoring agent — it
+      // recalls the recent decision context (via recall_user_context)
+      // and re-runs resolve_property_inputs with userOverrides set,
+      // then re-scores. apply_override (the deterministic tool) is
+      // still in the registry and callable directly from the
+      // frontend (e.g., a future drag-the-slider UI on DealScoreCard)
+      // when the caller has a structured `{ decisionId, fieldPath,
+      // newValue }` payload. Updated 2026-05-16 (Issue #104) — the
+      // old direct tool:apply_override route fails for chat input
+      // because the chat surface has no way to construct the
+      // structured payload.
       return {
-        target: 'tool:apply_override',
-        routedTo: 'tool_only',
+        target: 'agent:deal_scoring',
+        routedTo: 'agent:deal_scoring',
         classifierIntent: intent,
         classifierConfidence: confidence,
       };

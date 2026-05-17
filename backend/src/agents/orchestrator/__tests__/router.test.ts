@@ -21,7 +21,11 @@ describe('routeIntent (W2-S1)', () => {
       ['qa_metric', 'agent:qa', 'agent:qa'],
       ['qa_decision', 'agent:qa', 'agent:qa'],
       ['qa_general', 'agent:qa', 'agent:qa'],
-      ['override_assumption', 'tool:apply_override', 'tool_only'],
+      // override_assumption routes through agent:deal_scoring (chat-flow path).
+      // Issue #104 — direct tool:apply_override was a W2 scaffolding choice
+      // that failed for chat input because the chat surface can't construct
+      // the structured `{ decisionId, fieldPath, newValue }` payload.
+      ['override_assumption', 'agent:deal_scoring', 'agent:deal_scoring'],
       ['request_audit_trail', 'tool:render_audit_trail', 'tool_only'],
       ['request_export', 'tool:export_audit_pdf', 'tool_only'],
       ['request_critique', 'agent:adversarial_critic', 'agent:adversarial_critic'],
@@ -142,9 +146,11 @@ describe('routeIntent (W2-S1)', () => {
     });
 
     it('tool routes collapse to "tool_only" in routedTo (specific tool is in toolCalls)', () => {
+      // override_assumption is NOT in this list — Issue #104 moved it
+      // from tool:apply_override (which needs a structured payload) to
+      // agent:deal_scoring so chat-flow overrides actually work.
       const toolIntents: ChatIntent[] = [
         'share_profile',
-        'override_assumption',
         'request_audit_trail',
         'request_export',
         'save_action',
