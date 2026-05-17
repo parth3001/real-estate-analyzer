@@ -36,6 +36,7 @@ import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ReactMarkdown from 'react-markdown';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
@@ -926,7 +927,10 @@ function MessageBubble({
         maxWidth: isUser ? '85%' : '100%',
       }}
     >
-      {/* Text bubble — always rendered (may be empty during pre-token state) */}
+      {/* Text bubble — always rendered (may be empty during pre-token state).
+          User messages render plain (preserves any literal `**` they typed);
+          assistant messages render through MarkdownBubbleText so the
+          agent's **bold** / *italic* / `---` formatting is honored. */}
       {(message.text.length > 0 || isCancelled) && (
         <Box
           sx={{
@@ -941,11 +945,13 @@ function MessageBubble({
             borderRadius: 3,
             fontSize: 15,
             lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
+            // Preserve newlines for user messages; assistant uses
+            // markdown which has its own block structure.
+            whiteSpace: isUser ? 'pre-wrap' : 'normal',
           }}
           data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
         >
-          {message.text}
+          {isUser ? message.text : <MarkdownBubbleText text={message.text} />}
           {isCancelled && (
             <Box
               component="span"
@@ -1003,6 +1009,93 @@ function MessageBubble({
           />
         )}
     </Box>
+  );
+}
+
+/**
+ * MarkdownBubbleText — render assistant text with safe inline markdown.
+ *
+ * The deal-scoring + qa agents emit `**bold**`, `*italic*`, bulleted
+ * lists, and the occasional triple-dash divider. Rendering as raw
+ * text leaks the asterisks into the UI. ReactMarkdown handles it.
+ *
+ * We constrain the renderer to a safe subset — no images, no tables,
+ * no raw HTML — and we override the default block element styles so
+ * Markdown output sits flush inside the bubble (no double padding,
+ * no MUI Typography injection that fights the bubble's font-size).
+ */
+function MarkdownBubbleText({ text }: { text: string }): React.JSX.Element {
+  return (
+    <ReactMarkdown
+      // No allowed-elements list = the default safe set. We just
+      // override how each block element is rendered so styles play
+      // nicely with the bubble's own padding + font-size.
+      components={{
+        p: ({ children }) => (
+          <Box component="p" sx={{ m: 0, mb: 1, '&:last-child': { mb: 0 } }}>
+            {children}
+          </Box>
+        ),
+        strong: ({ children }) => (
+          <Box component="strong" sx={{ fontWeight: 600 }}>
+            {children}
+          </Box>
+        ),
+        em: ({ children }) => (
+          <Box component="em" sx={{ fontStyle: 'italic' }}>
+            {children}
+          </Box>
+        ),
+        ul: ({ children }) => (
+          <Box component="ul" sx={{ m: 0, mb: 1, pl: 2.5 }}>
+            {children}
+          </Box>
+        ),
+        ol: ({ children }) => (
+          <Box component="ol" sx={{ m: 0, mb: 1, pl: 2.5 }}>
+            {children}
+          </Box>
+        ),
+        li: ({ children }) => (
+          <Box component="li" sx={{ mb: 0.25 }}>
+            {children}
+          </Box>
+        ),
+        // Triple-dash → hairline divider matching the bubble divider
+        // style; the agent uses this to separate the score commentary
+        // from the assumptions footnote.
+        hr: () => (
+          <Box
+            component="hr"
+            sx={{
+              border: 0,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              my: 1.25,
+            }}
+          />
+        ),
+        // Inline code — rare from the agent, but keep it readable
+        // when it appears (e.g., metric names in monospace).
+        code: ({ children }) => (
+          <Box
+            component="code"
+            sx={{
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: '0.9em',
+              bgcolor: 'action.hover',
+              px: 0.5,
+              py: 0.125,
+              borderRadius: 1,
+            }}
+          >
+            {children}
+          </Box>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
   );
 }
 
