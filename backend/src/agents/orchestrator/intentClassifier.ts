@@ -119,9 +119,13 @@ INTENT LABELS
 ─────────────
 
 - analyze_property: User wants to analyze a property. They share an address,
-  listing link, price, or describe a property they're looking at.
+  listing link (Zillow / Redfin / Realtor.com / Homes.com / Trulia URL),
+  price, or describe a property they're looking at. A bare listing URL with
+  no other text is still analyze_property — the agent parses the address
+  from the URL slug.
   Examples: "look at 123 Main St Austin TX", "what about a 4-unit at $450K?",
-            "I'm considering a duplex in Cleveland"
+            "I'm considering a duplex in Cleveland",
+            "https://www.zillow.com/homedetails/3609-Rand-Creek-Trl-McKinney-TX-75070/83726193_zpid/"
 
 - share_profile: User shares context about themselves (investor type, goals,
   risk tolerance, experience) without asking for property analysis.
