@@ -34,6 +34,19 @@ const BEGINNER_BLACKLIST = [
   'beginner',
 ];
 
+// Mirror of the backend chip-pool guard — chips MUST NOT reference
+// features we haven't shipped. Strategy comparison (Issue #101) +
+// property-to-property comparison (Issue #102) are out until they
+// ship. See backend/src/agents/orchestrator/__tests__/followupChips.test.ts
+// for the same guard on the in-thread chip pools.
+const UNSHIPPED_FEATURE_BLACKLIST = [
+  'buy-and-hold vs brrrr',
+  'brrrr vs buy-and-hold',
+  'compare two properties',
+  'compare against my saved',
+  'side-by-side',
+];
+
 function isUsableChip(chip: string): boolean {
   return typeof chip === 'string' && chip.trim().length > 0;
 }
@@ -43,15 +56,22 @@ function hasBeginnerCopy(chip: string): boolean {
   return BEGINNER_BLACKLIST.some((bad) => lower.includes(bad));
 }
 
+function hasUnshippedFeatureCopy(chip: string): boolean {
+  const lower = chip.toLowerCase();
+  return UNSHIPPED_FEATURE_BLACKLIST.some((bad) => lower.includes(bad));
+}
+
 describe('generateEmptyStateChips — brand-new state', () => {
   it('returns generic depth chips + platform headline when no threads', () => {
     const result = generateEmptyStateChips({ isAuthed: false, threads: [] });
     expect(result.headline.toLowerCase()).toContain('institutional');
     expect(result.chips.length).toBe(4);
-    // Every chip should be usable and pro-depth.
+    // Every chip should be usable, pro-depth, and reference a feature
+    // we actually ship.
     for (const c of result.chips) {
       expect(isUsableChip(c)).toBe(true);
       expect(hasBeginnerCopy(c)).toBe(false);
+      expect(hasUnshippedFeatureCopy(c)).toBe(false);
     }
   });
 
@@ -90,7 +110,7 @@ describe('generateEmptyStateChips — returning user (1 thread)', () => {
 });
 
 describe('generateEmptyStateChips — returning user (2+ threads)', () => {
-  it('includes a "Compare A vs B" chip referencing the top two titles', () => {
+  it('does NOT emit a "Compare A vs B" chip — property comparison is Issue #102, not yet shipped', () => {
     const threads = [
       makeThread({ id: 't1', title: '411 Oak Boulevard' }),
       makeThread({ id: 't2', title: '336 Highland Drive' }),
@@ -101,10 +121,15 @@ describe('generateEmptyStateChips — returning user (2+ threads)', () => {
       threads,
       firstName: 'Parth',
     });
+    // Regression guard: until Phase 4b ships CompareCard, no chip
+    // should propose property-to-property comparison.
     const compareChip = result.chips.find((c) => c.startsWith('Compare '));
-    expect(compareChip).toBeDefined();
-    expect(compareChip).toContain('411 Oak');
-    expect(compareChip).toContain('336 Highland');
+    expect(compareChip).toBeUndefined();
+    // And we should still surface the secondary thread somehow —
+    // currently as a "Review my ..." chip.
+    const reviewChip = result.chips.find((c) => c.startsWith('Review my'));
+    expect(reviewChip).toBeDefined();
+    expect(reviewChip).toContain('336 Highland');
   });
 
   it('caps chip count at 4 even with many threads', () => {

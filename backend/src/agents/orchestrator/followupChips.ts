@@ -86,27 +86,31 @@ const CHIPS_AFTER_DEAL_SCORE: string[] = [
  * Deal-scoring route taken but no card emitted — agent asked a
  * clarifying question or there wasn't enough info. Push the user back
  * into a productive next step rather than leaving them stuck.
+ *
+ * Strategy-comparison chip ("Compare buy-and-hold vs BRRRR") removed
+ * 2026-05-16 — Issue #101 (strategy comparison) is backlogged. Chips
+ * must only reference features we can actually deliver today.
  */
 const CHIPS_DEAL_SCORING_NO_CARD: string[] = [
   'Use a typical 25% down 30-yr fixed setup',
+  'Analyze this as buy-and-hold',
+  'Analyze this as BRRRR',
   'Walk me through what numbers you need',
-  'Compare buy-and-hold vs BRRRR for this',
-  'Show me a worked example first',
 ];
 
 /**
  * QA agent route — the user asked a methodology / how-the-platform-
- * works question. Push them toward putting the platform to work:
- *   - "Analyze a property" (the activation moment)
- *   - "How does this apply to MY portfolio?" (personalization,
- *     reveals portfolio surface exists)
- *   - "Run a sensitivity analysis" (reveals depth)
- *   - "Compare deals" (reveals comparison surface)
+ * works question. Push them toward putting the platform to work.
+ *
+ * The "Compare two properties side-by-side" chip from the original
+ * pool was REMOVED 2026-05-16 — property-to-property comparison is
+ * Phase 4b (Issue #102), not yet shipped. Restored when CompareCard
+ * lands.
  */
 const CHIPS_AFTER_QA: string[] = [
   'Analyze a property',
   'Run a sensitivity analysis on a deal',
-  'Compare two properties side-by-side',
+  'Show me a sample analysis',
   'How would this apply to my portfolio?',
 ];
 
@@ -114,11 +118,14 @@ const CHIPS_AFTER_QA: string[] = [
  * Adversarial critic ran — user got a bear-case / counter-perspective
  * review. Natural follow-ups are "respond to the critique" or
  * "explore alternatives".
+ *
+ * "Compare this to alternative strategies" removed 2026-05-16 —
+ * strategy comparison is Issue #101, backlogged.
  */
 const CHIPS_AFTER_CRITIC: string[] = [
   'What changes if rates spike 2 points?',
   'Refine my assumptions and re-score',
-  'Compare this to alternative strategies',
+  "What's the biggest risk in this deal?",
   'Show me the bull-case version',
 ];
 
@@ -126,12 +133,15 @@ const CHIPS_AFTER_CRITIC: string[] = [
  * Tool-only route (resolve_property_inputs, profile_extraction, etc.).
  * These are usually setup turns — the agent did something behind the
  * scenes. Push toward the analysis moment.
+ *
+ * "Compare against my saved properties" removed 2026-05-16 — property
+ * comparison is Issue #102, Phase 4b (not yet shipped).
  */
 const CHIPS_AFTER_TOOL: string[] = [
   'Score this deal',
   'Show me what data you found',
-  'What other properties match this profile?',
-  'Compare against my saved properties',
+  'Adjust the assumptions before scoring',
+  'What rent estimate did you use?',
 ];
 
 /**

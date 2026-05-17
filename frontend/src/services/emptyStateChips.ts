@@ -68,10 +68,14 @@ const PERSONALIZED_PEEK = 3;
 // investor depth, reveals a different platform capability, and is
 // phrased as a productive starting prompt (NOT a question to the
 // platform — the user is the one asking).
+//
+// "Compare buy-and-hold vs BRRRR for the same property" removed
+// 2026-05-16 — strategy comparison (Issue #101) is backlogged.
+// Chips must only reference features we can deliver today.
 const GENERIC_DEPTH_CHIPS: string[] = [
   'Analyze a rental property',
+  'Paste a Zillow / Redfin listing URL',
   'Stress-test a deal at 7% mortgage rates',
-  'Compare buy-and-hold vs BRRRR for the same property',
   "Show me what institutional underwriting looks like",
 ];
 
@@ -123,11 +127,13 @@ export function generateEmptyStateChips(
   // 1. Continue the most recent thread.
   chips.push(`Continue: ${compressTitleForChip(latest.title)}`);
 
-  // 2. Compare the top two threads if we have them.
+  // 2. Mention there are more if 2+ threads exist — but DO NOT offer
+  //    the "Compare A vs B" chip yet. Property-to-property comparison
+  //    is Phase 4b (Issue #102), not yet shipped. Surfacing the chip
+  //    here would lead users to a dead-end answer from the agent.
+  //    Replaced with a "review prior" prompt that the chat CAN handle.
   if (second) {
-    chips.push(
-      `Compare ${compressTitleForChip(latest.title, 22)} vs ${compressTitleForChip(second.title, 22)}`
-    );
+    chips.push(`Review my ${compressTitleForChip(second.title, 30)}`);
   }
 
   // 3. Platform-level depth chip. For users without a portfolio /

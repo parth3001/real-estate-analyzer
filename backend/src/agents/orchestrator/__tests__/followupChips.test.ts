@@ -32,6 +32,28 @@ const BEGINNER_BLACKLIST = [
   "i'm new",
 ];
 
+// Features we have not shipped yet — chips MUST NOT reference them or
+// the user taps into a dead-end agent response.
+//   - Strategy comparison: backlogged (Issue #101)
+//   - Property-to-property comparison: Phase 4b (Issue #102)
+// Restore these phrasings to the allowlist when the features ship.
+const UNSHIPPED_FEATURE_BLACKLIST: Array<{ phrase: string; reason: string }> = [
+  { phrase: 'buy-and-hold vs brrrr', reason: 'strategy comparison (Issue #101) backlogged' },
+  { phrase: 'brrrr vs buy-and-hold', reason: 'strategy comparison (Issue #101) backlogged' },
+  { phrase: 'compare two properties', reason: 'property comparison (Issue #102) not yet shipped' },
+  { phrase: 'compare against my saved', reason: 'property comparison (Issue #102) not yet shipped' },
+  { phrase: 'side-by-side', reason: 'property comparison (Issue #102) not yet shipped' },
+  { phrase: 'alternative strategies', reason: 'strategy comparison (Issue #101) backlogged' },
+];
+
+function hasUnshippedFeatureCopy(chip: string): string | null {
+  const lower = chip.toLowerCase();
+  for (const { phrase, reason } of UNSHIPPED_FEATURE_BLACKLIST) {
+    if (lower.includes(phrase)) return reason;
+  }
+  return null;
+}
+
 function isUsableChip(chip: string): boolean {
   return typeof chip === 'string' && chip.trim().length > 0;
 }
@@ -99,7 +121,7 @@ describe('generateFollowupChips', () => {
     ];
 
     branches.forEach(({ label, input }) => {
-      it(`${label}: returns 3-4 usable chips, none beginner-grade`, () => {
+      it(`${label}: returns 3-4 usable chips, none beginner-grade, none unshipped`, () => {
         const { chips } = generateFollowupChips(input);
         expect(Array.isArray(chips)).toBe(true);
         expect(chips.length).toBeGreaterThanOrEqual(3);
@@ -107,6 +129,13 @@ describe('generateFollowupChips', () => {
         for (const c of chips) {
           expect(isUsableChip(c)).toBe(true);
           expect(hasBeginnerCopy(c)).toBe(false);
+          // Unshipped-feature guard — see UNSHIPPED_FEATURE_BLACKLIST.
+          const unshipped = hasUnshippedFeatureCopy(c);
+          if (unshipped !== null) {
+            throw new Error(
+              `Chip "${c}" references unshipped feature: ${unshipped}`
+            );
+          }
         }
       });
     });
