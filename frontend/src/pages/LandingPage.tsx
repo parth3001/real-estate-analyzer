@@ -22,12 +22,12 @@ import {
   Paper,
   Button,
   TextField,
-  IconButton,
   Link as MuiLink
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import PublicHeader from '../components/common/PublicHeader';
-import { UniversalCalculator } from '../components/Calculator';
+// UniversalCalculator import removed 2026-05-16 (Phase 5) — landing page
+// no longer embeds the form widget. See Issue #100 decision #3.
 import { analytics } from '../utils/analytics';
 import { getScoreColor } from '../utils/scoreColors';
 
@@ -95,7 +95,10 @@ const FAQ_ITEMS = [
   }
 ];
 
-const PRIMARY_CTA_HREF = '/sfr-analysis';
+// Phase 5 (chat-first IA) — landing-page CTAs route to the chat surface,
+// not the wizard. Per Issue #100 decision #7 the wizard route stays
+// reachable but no nav links point to it from anywhere visible.
+const PRIMARY_CTA_HREF = '/app';
 const ACCENT = '#0071E3';
 
 const ctaButtonSx = {
@@ -150,123 +153,185 @@ const LandingPage: React.FC = () => {
 
       <PublicHeader />
 
-      {/* ============== HERO ============== */}
-      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#FFFFFF' }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={{ xs: 5, md: 6 }} alignItems="center">
-            <Grid size={{ xs: 12, md: 7 }}>
-              <Typography
-                component="h1"
-                sx={{
-                  fontSize: { xs: '2.125rem', sm: '2.75rem', md: '3.25rem' },
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.1,
-                  color: '#111827',
-                  mb: 3
+      {/* ============== HERO ==============
+
+          UX Designer call 2026-05-16 — single-column centered. Two-column
+          (chat | sample-card) layout was creating an 8:1 visual area
+          mismatch that pulled the eye to the sample card instead of the
+          chat. Sample card moved to its own proof section below the
+          hero. The chat is unambiguously THE hero now — full-width
+          (max 760px content area), generous multi-line composer,
+          labeled CTA button with "Analyze →" instead of icon-only. */}
+      <Box component="section" sx={{ py: { xs: 7, md: 11 }, bgcolor: '#FFFFFF' }}>
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: { xs: '2.25rem', sm: '2.875rem', md: '3.5rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                color: '#111827',
+                mb: 3,
+                maxWidth: 820,
+                mx: 'auto',
+              }}
+            >
+              Analyze Any Deal. Track Every Property. See Your Full Portfolio — All In One Place.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                lineHeight: 1.6,
+                color: '#4B5563',
+                mb: { xs: 5, md: 6 },
+                maxWidth: 680,
+                mx: 'auto',
+              }}
+            >
+              BRRRR, Buy &amp; Hold, Multi-Family, and commercial — one platform that connects every deal to the portfolio you've already built. Built to flag the deals that don't work, not just the ones that do.
+            </Typography>
+
+            {/* THE chat input — full-width centered, generously sized so
+                it reads as the primary action on the page without
+                competing for visual weight with anything beside it. */}
+            <Box
+              component="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitHeroPrompt();
+              }}
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'flex-end' },
+                gap: 1.5,
+                maxWidth: 760,
+                mx: 'auto',
+                bgcolor: '#FFFFFF',
+                border: '2px solid #E5E7EB',
+                borderRadius: '20px',
+                px: { xs: 2, sm: 2.5 },
+                py: 2,
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+                transition:
+                  'border-color 150ms, box-shadow 150ms, transform 150ms',
+                '&:hover': {
+                  borderColor: '#CBD5E1',
+                  boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
+                },
+                '&:focus-within': {
+                  borderColor: ACCENT,
+                  boxShadow: `0 0 0 4px ${ACCENT}22, 0 12px 32px rgba(15, 23, 42, 0.08)`,
+                },
+              }}
+              data-testid="landing-hero-chat"
+            >
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                maxRows={8}
+                variant="standard"
+                placeholder="Try: analyze 1837 Walnut Way Anna TX 75409 — or paste a Zillow link"
+                value={heroDraft}
+                onChange={(e) => setHeroDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends; Shift+Enter inserts newline.
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submitHeroPrompt();
+                  }
                 }}
-              >
-                Analyze Any Deal. Track Every Property. See Your Full Portfolio — All In One Place.
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: '1.0625rem', md: '1.125rem' },
-                  lineHeight: 1.6,
-                  color: '#4B5563',
-                  mb: 4,
-                  maxWidth: '620px'
+                InputProps={{
+                  disableUnderline: true,
+                  sx: {
+                    fontSize: { xs: '1.0625rem', md: '1.125rem' },
+                    lineHeight: 1.55,
+                    px: 0.5,
+                    py: 0.5,
+                    textAlign: 'left',
+                  },
                 }}
-              >
-                BRRRR, Buy &amp; Hold, Multi-Family, and commercial — one platform that connects every deal to the portfolio you've already built. Built to flag the deals that don't work, not just the ones that do.
-              </Typography>
-              {/* W6-S2b — hero-embed chat input.
-                  Shape matches the /app input 1:1 so the handoff feels
-                  like the same surface, not a navigation. */}
-              <Box
-                component="form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitHeroPrompt();
+                inputProps={{
+                  'aria-label': 'Ask about a property to analyze',
+                  'data-testid': 'landing-hero-chat-input',
+                  style: { textAlign: 'left' },
                 }}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={heroDraft.trim().length === 0}
+                endIcon={<SendIcon sx={{ fontSize: 18 }} />}
+                data-testid="landing-hero-chat-send"
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  maxWidth: 560,
-                  bgcolor: '#FFFFFF',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: 999,
-                  px: 1.5,
-                  py: 0.75,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                  transition: 'border-color 150ms, box-shadow 150ms',
-                  '&:focus-within': {
-                    borderColor: ACCENT,
-                    boxShadow: `0 0 0 3px ${ACCENT}22`,
+                  flexShrink: 0,
+                  alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                  height: 52,
+                  px: 3,
+                  borderRadius: '14px',
+                  bgcolor: ACCENT,
+                  color: '#FFFFFF',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: 'none',
+                  '&:hover': { bgcolor: '#0058B3', boxShadow: 'none' },
+                  '&.Mui-disabled': {
+                    bgcolor: '#E5E7EB',
+                    color: '#9CA3AF',
                   },
                 }}
               >
-                <TextField
-                  fullWidth
-                  variant="standard"
-                  placeholder="Try: analyze 1837 Walnut Way Anna TX 75409"
-                  value={heroDraft}
-                  onChange={(e) => setHeroDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    // Enter sends; Shift+Enter inserts newline.
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submitHeroPrompt();
-                    }
-                  }}
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      fontSize: '1rem',
-                      px: 1,
-                      py: 0.5,
-                    },
-                  }}
-                  inputProps={{
-                    'aria-label': 'Ask about a property to analyze',
-                    'data-testid': 'landing-hero-chat-input',
-                  }}
-                />
-                <IconButton
-                  type="submit"
-                  disabled={heroDraft.trim().length === 0}
-                  aria-label="Send"
-                  data-testid="landing-hero-chat-send"
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    bgcolor: ACCENT,
-                    color: '#FFFFFF',
-                    '&:hover': { bgcolor: '#0058B3' },
-                    '&.Mui-disabled': {
-                      bgcolor: '#E5E7EB',
-                      color: '#9CA3AF',
-                    },
-                  }}
-                >
-                  <SendIcon fontSize="small" />
-                </IconButton>
-              </Box>
-              <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#6B7280' }}>
-                Type an address or paste a listing — get a Deal Quality Score in seconds. Free during beta.
-              </Typography>
-              <Typography sx={{ mt: 1.5, fontSize: '0.8125rem', color: '#6B7280' }}>
-                Prefer the full form?{' '}
-                <MuiLink
-                  href={PRIMARY_CTA_HREF}
-                  sx={{ color: ACCENT, fontWeight: 500, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
-                >
-                  Use the analyzer →
-                </MuiLink>
-              </Typography>
-            </Grid>
+                Analyze
+              </Button>
+            </Box>
+            <Typography sx={{ mt: 2.5, fontSize: '0.9375rem', color: '#6B7280' }}>
+              Type an address or paste a listing — get a Deal Quality Score in seconds. Free during beta.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
 
-            <Grid size={{ xs: 12, md: 5 }}>
+      {/* ============== SAMPLE-ANALYSIS PROOF =============
+
+          Moved out of the hero 2026-05-16 (UX Designer call). The card
+          earns its place as social proof — "this is the deal report
+          most calculators won't show you" — but on its own row so it
+          doesn't compete with the chat for first-glance attention. */}
+      <Box
+        component="section"
+        sx={{ py: { xs: 6, md: 9 }, bgcolor: '#F9FAFB' }}
+      >
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: '1.5rem', md: '1.875rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
+                color: '#111827',
+                mb: 1.5,
+              }}
+            >
+              Honest analysis. Even when it's bad news.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '1.0625rem',
+                color: '#4B5563',
+                maxWidth: 560,
+                mx: 'auto',
+                lineHeight: 1.6,
+              }}
+            >
+              Here's a real deal that didn't pencil out. Most calculators won't tell you.
+            </Typography>
+          </Box>
+          <Box sx={{ maxWidth: 520, mx: 'auto' }}>
               <Box
                 sx={{
                   bgcolor: '#FFFFFF',
@@ -414,8 +479,7 @@ const LandingPage: React.FC = () => {
               >
                 This is the deal report most calculators won't show you.
               </Typography>
-            </Grid>
-          </Grid>
+          </Box>
         </Container>
       </Box>
 
@@ -521,33 +585,12 @@ const LandingPage: React.FC = () => {
         </Container>
       </Box>
 
-      {/* ============== CALCULATOR EMBED ============== */}
-      <Box
-        component="section"
-        id="calculator"
-        sx={{ py: { xs: 6, md: 10 }, bgcolor: '#FFFFFF', scrollMarginTop: '80px' }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
-            <Typography
-              component="h2"
-              sx={{
-                fontSize: { xs: '1.75rem', md: '2.25rem' },
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: '#111827',
-                mb: 2
-              }}
-            >
-              Run your own numbers. Get a Deal Quality Score in 60 seconds.
-            </Typography>
-            <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563', maxWidth: '640px', mx: 'auto' }}>
-              Try it free. Save the deal to track it in your pipeline and see how it fits your portfolio.
-            </Typography>
-          </Box>
-          <UniversalCalculator />
-        </Container>
-      </Box>
+      {/* CALCULATOR EMBED — removed 2026-05-16 (Phase 5, chat-first IA).
+          Per Issue #100 decision #3, the form widget was retired from
+          the landing page; the hero-embed chat above is the canonical
+          entry point. The wizard route (/sfr-analysis) remains
+          accessible but unlinked. UniversalCalculator still ships for
+          the public /calculator route during the migration window. */}
 
       {/* ============== SOCIAL PROOF ============== */}
       <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#F9FAFB' }}>
