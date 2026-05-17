@@ -1,11 +1,377 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-05-16
+**Last Updated**: 2026-05-17
 
 ---
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
+
+### Issue #112: 10-year projection not rendered in chat-flow DealScoreCard
+**Status**: 🟡 OPEN
+**Priority**: P2 - MEDIUM (data exists, just unrendered)
+**Reported**: 2026-05-17 (user e2e testing — "long term analysis is not available")
+**Component**: Frontend DealScoreCard
+**Category**: Feature parity with legacy wizard analysis
+
+**Description**:
+Engine produces year-by-year projections (cash flow, equity, total
+return over 10 years). The legacy wizard analysis page renders these
+as a chart/table. The chat-flow DealScoreCard surfaces headline metrics
++ score breakdown but does NOT surface the 10-year projection — the
+data is already in the structured_output payload, just not rendered.
+
+**Fix path**:
+- Add a collapsed "10-year projection" section to DealScoreCard
+- Pull projection array from structured_output.data.projection (or
+  wherever the projection lives in the payload — verify shape)
+- Render as a small chart + scrollable table
+
+**Files affected**:
+- `frontend/src/components/Chat/DealScoreCard.tsx`
+- Possibly `backend/src/agents/orchestrator/dealScoreCardProjection.ts`
+  if the projection isn't already in the wire shape
+
+**Estimate**: 4-6 hours including chart styling
+
+---
+
+### Issue #111: Chat email summary is shallow vs legacy calculator/wizard email
+**Status**: 🟡 OPEN
+**Priority**: P1 - HIGH (email IS the takeaway artifact for many users)
+**Reported**: 2026-05-17 (user e2e testing — "emails of the deal analysis
+                          are very shallow, earlier free calculator email
+                          was very nice detailed")
+**Component**: Backend email service + chat email-CTA flow
+**Category**: Feature regression
+
+**Description**:
+Old flows (public calculator + post-signup wizard's "Email me my deal")
+sent a detailed PDF-style report — full assumptions, breakdown,
+projections, recommendations. The new chat email-CTA emits a basic
+text summary. Email is a high-value takeaway artifact: many users
+forward it to a lender, spouse, partner, CPA. A shallow email reduces
+shareability + perceived quality.
+
+**Fix path**:
+- The detailed PDF generator exists in the wizard flow's email service
+- Wire the chat email-CTA to use the same PDF renderer
+- Source the data from the chat's `conversationEventId` → DecisionEvent
+  → engine output
+- Verify HTML email template formatting
+
+**Files affected**:
+- `backend/src/services/emailService.ts`
+- `backend/src/routes/chat.ts` (email CTA handler)
+- Wizard's PDF renderer (existing — needs decoupling from wizard
+  request shape if currently tightly coupled)
+
+**Estimate**: 4-6 hours depending on coupling
+
+---
+
+### Issue #110: Anon /app lacks PublicHeader (no branding, no acquisition nav)
+**Status**: 🟡 OPEN
+**Priority**: P1 - HIGH (anon user has no context, no exit, no access to Pricing/Blog)
+**Reported**: 2026-05-17 (user e2e testing — "once someone starts chat
+                          there is no branding etc")
+**Component**: Frontend AppPage
+**Category**: UX / Activation
+
+**Description**:
+When an anon user lands at `/app` via hero-embed (paste URL on landing),
+the current AppPage renders a full-bleed ChatOverlay with no branding,
+no navigation, no exit affordance. The user is in a context-less chat
+surface. Three problems:
+- No REanalyzr branding (user disorientation, "where am I")
+- No way to navigate to Pricing / Blog / Sample Analysis / What's New
+  (acquisition surfaces preserved on the landing page are trapped
+  behind the chat)
+- No "Log in / Sign up" CTA visible (the portfolio CTA on the
+  DealScoreCard exists but is buried)
+
+**Fix path**:
+- Render the existing `<PublicHeader />` component above the
+  ChatOverlay in the anon branch of AppPage
+- Layout becomes: PublicHeader (~64px) + ChatOverlay (rest of viewport)
+- For AUTHED users, AppLayout's sidebar provides branding/nav —
+  PublicHeader is anon-only injection
+
+**Files affected**:
+- `frontend/src/pages/AppPage.tsx` — anon branch
+
+**Estimate**: 1 hour
+
+---
+
+### Issue #109: Deal Quality Score shows NaN in materialized Deal record
+**Status**: 🚨 OPEN — LAUNCH BLOCKER
+**Priority**: P0 - CRITICAL (visible bug; "empty score = no product")
+**Reported**: 2026-05-17 (user e2e testing — "deal quality score is NaN"
+                          on saved deal view in legacy dashboard)
+**Component**: Substrate → Deal materialization OR frontend display
+**Category**: Data integrity / Display bug
+
+**Description**:
+After saving a chat-analyzed deal to portfolio, viewing the saved deal
+in the legacy dashboard view shows Deal Quality Score = NaN. Most
+other metrics render correctly. This is either:
+- (a) `dealMaterializationService` writes a malformed score field to
+       the Deal record (likely — field mapping or undefined default)
+- (b) Frontend display reads the wrong field, defaults to NaN
+- (c) Engine produced NaN under specific input (unlikely; Issue #90
+       territory but Issue #90 was a different mismatch)
+
+Given Issue #90 already established that substrate persistence
+deviates from engine output, prior is (a) — materialization is
+dropping or mis-mapping the dealQualityScore field when projecting
+substrate → Deal.
+
+**Fix path**:
+1. Reproduce — analyze a deal in chat, save to portfolio, view in dashboard
+2. Inspect the Deal document in Mongo — is `dealQualityScore` present?
+   If absent or NaN, it's materialization. If present, it's display.
+3. If materialization: fix `dealMaterializationService.ts` field mapping
+4. If display: fix the dashboard component reading the wrong field
+
+**Files affected**:
+- `backend/src/services/dealMaterializationService.ts` (likely)
+- `frontend/src/pages/Dashboard.tsx` or wherever the saved-deal view
+  reads dealQualityScore from (possibly)
+
+**Estimate**: 1-2 hours diagnose + fix. Hotfix-worthy.
+
+---
+
+### Issue #108: Legacy AppleNavigation still wraps protected routes (nav inconsistency)
+**Status**: 🚨 OPEN — LAUNCH BLOCKER
+**Priority**: P0 - CRITICAL (user sees "two different apps" on first nav click)
+**Reported**: 2026-05-17 (user e2e testing — "/app shows new sidebar, but
+                          clicking Portfolio goes back to old dashboard
+                          experience")
+**Component**: Frontend routing + layout
+**Category**: Phase 4-completion gap
+
+**Description**:
+Phase 3+4 migrated `/app` to use the new `AppLayout` (chat-first IA
+sidebar). But the protected sidebar nav routes — `/portfolio`,
+`/pipeline`, `/saved-properties`, `/settings` — still wrap in the
+legacy `AppleNavigation` via the protected-route Outlet pattern in
+`App.tsx`. Clicking "Portfolio" in the /app sidebar JARRINGLY drops
+the user into the OLD navigation experience with the OLD IA
+(Dashboard / Property Analysis / Single-Family Rental / etc.).
+
+This is the single worst inconsistency in the product right now —
+users see "two different apps glued together." Kills credibility on
+the first nav click.
+
+**Fix path**:
+- Option A (clean migration, preferred): create a `NewProtectedShell`
+  wrapping the four sidebar-nav routes with `AppLayout`. Legacy
+  `AppleNavigation` stays for admin/help/contact routes only.
+- Option B (replace): rewrite `AppleNavigation` to BE the new AppLayout.
+  More disruptive but eliminates the dual-shell.
+
+**Side effect**: existing links in AppleNavigation that don't fit the
+new IA (Help & Documentation, What's New, Contact Us, admin routes)
+need a home. Suggest: small "..." menu in the user block at bottom of
+new AppLayout sidebar, OR move to Settings page.
+
+**Files affected**:
+- `frontend/src/App.tsx` (route wiring)
+- `frontend/src/components/layout/AppLayout.tsx` (may need to host new
+  routes)
+- `frontend/src/components/layout/AppSidebar.tsx` (verify nav highlights
+  for each route)
+- `frontend/src/components/layout/AppleNavigation.tsx` (scope reduce
+  or deprecate)
+- All four pages (Portfolio, Pipeline, SavedProperties, Settings) —
+  just verify they still render inside the new shell
+
+**Estimate**: 4-6 hours
+
+---
+
+### Issue #107: Pricing page rewrite to match new per-deal model
+**Status**: 🟡 OPEN
+**Priority**: P1 - HIGH (current page shows old $19.99/mo positioning)
+**Reported**: 2026-05-17 (strategic pricing-model lock conversation —
+                          see Issue #105)
+**Component**: Frontend /pricing page
+**Category**: Pricing model migration
+
+**Description**:
+Current `/pricing` page reflects the old $19.99/mo subscription model.
+Per the locked strategic decisions in Issue #105, retail pricing is
+now per-deal ($4.99) + bundles (5-pack $19.99, 10-pack $34.99) with
+NO monthly subscription. Page needs full rewrite, not just price swap.
+
+**Fix path** (see Issue #105 for full positioning):
+- Hero: "Honest analysis. Pay only when you go deep."
+- Free tier card: Deal Quality Score on any property + portfolio +
+  pipeline + 1 free full analysis
+- Single: $4.99 / deal — 30-day license + 15-outcome unlock list
+- 5-pack: $19.99 ($4/deal effective) — 12-month credit expiry
+- 10-pack: $34.99 ($3.50/deal effective)
+- B2B section: "For lenders, agents, syndicators: contact us →"
+- Refund posture: "7 days no-questions-asked"
+- FAQ: what counts as a deal, why no monthly, 30-day window behavior
+
+**Files affected**:
+- `frontend/src/pages/PricingPage.tsx`
+- Possibly new component for bundle SKU cards
+
+**Estimate**: 4-6 hours including copy
+
+---
+
+### Issue #106: Cost-cap layered protection (engineering workstream)
+**Status**: 🟡 OPEN — blocks Stripe go-live
+**Priority**: P0 - CRITICAL (runaway-spend protection before any user payment)
+**Reported**: 2026-05-17 (Marcus Chen cost-control conversation — see
+                          Issue #105)
+**Component**: Backend orchestrator + middleware + CostEvent
+**Category**: Cost discipline / Defense in depth
+
+**Description**:
+Per the cost-control conversation, six layers of cost ceilings have
+to ship BEFORE any pricing goes live. Each fails closed. The data
+layer (CostEvent) already exists; the enforcement layer doesn't.
+
+**Layers (in priority order)**:
+
+| # | Layer | Threshold | Phase |
+|---|---|---|---|
+| 1 | Per-turn cap | max_tokens 2000, tool loop ≤ 8 | A (ship first) |
+| 2 | Per-session cap | $1.00 total across sessionId | A |
+| 5 | Global daily cap | $20/day platform total during beta | A |
+| 3 | Per-license cap | $2.00 COGS per $4.99 license | B (with billing) |
+| 4 | Per-IP cap (anon Layer 1) | 5 free scores per IP / 24h | C |
+| 6 | Anomaly alert | Email/Slack if today's spend > 2× yesterday | C |
+
+**Anthropic prompt caching** ships in Phase A as well — pure free
+money (30-50% input-token discount on cached system prompts, zero
+quality impact).
+
+**Model-tier swaps** (Sonnet → Haiku for qa, Opus×2 → Sonnet×1 for
+adversarial_critic) are DEFERRED. Per the cost-discipline conversation
+(2026-05-17), preemptive quality degradation without usage data is
+the wrong move. Revisit after 30 days of post-launch data shows which
+routes actually need optimization.
+
+**Phase schedule**:
+- Phase A (~1.5 days): max_tokens, tool-loop, global cap, session cap,
+  prompt caching headers. Ships BEFORE Stripe.
+- Phase B (~1 day): per-license cap (requires licenseId on CostEvent
+  + DealLicense model from Issue #105's substrate spec). Ships WITH
+  Stripe.
+- Phase C (~1 day): per-IP cap, anomaly alert. Ships WITH launch.
+
+**Files affected**:
+- `backend/src/agents/llm/anthropicAdapter.ts` (max_tokens + caching)
+- `backend/src/agents/runner/agentRunner.ts` (tool-loop bound)
+- New middleware: `backend/src/middleware/chatCostBudget.ts`
+- `backend/src/models/cost/CostEvent.ts` (+licenseId field)
+- `backend/src/repositories/CostEventRepository.ts` (aggregation reads)
+
+**Estimate**: ~3.5 days total across Phases A/B/C
+
+---
+
+### Issue #105: Pricing & packaging strategy — LOCKED
+**Status**: ✅ DECIDED 2026-05-17 (implementation tracked in #106 and #107)
+**Priority**: P0 - STRATEGIC
+**Reported**: 2026-05-17 (extended strategic conversation across
+                          Marcus Chen + Architect personas)
+**Component**: Product strategy / Pricing
+**Category**: Strategic decision
+
+**LOCKED DECISIONS**:
+
+**Retail pricing:**
+- Free Layer 1: Deal Quality Score on any property, IP-rate-limited 5/day
+- Free Layer 2: One full unlock per signed-up user, ever
+- Single deal: **$4.99**
+- 5-pack: **$19.99** ($4/deal effective)
+- 10-pack: **$34.99** ($3.50/deal effective)
+- **No monthly subscription** (revisit at 90-120 days)
+- 30-day license OR $2 COGS budget, whichever first
+- 7-day no-questions refund posture
+- Multi-strategy (BRRRR ↔ buy-hold) covered by same license
+- Re-analyze same property after 30 days = new $4.99 deal
+
+**What $4.99 buys** (15-outcome unlock list — see retail packaging
+discussion):
+- Full 28+ professional underwriting metrics
+- Walk-away price calculation
+- 10-year projection (cash flow + equity)
+- Stress tests + sensitivity analysis
+- AI commentary on the deal
+- Adversarial critique
+- Tax + exit modeling
+- Override-and-re-score
+- Full audit trail
+- Save to portfolio + pipeline
+- PDF/email export
+- Compare with other licensed properties (when #102 ships)
+
+**Boundary definition**:
+- A "deal" = a `DealLicense` keyed on (userId, canonicalPropertyAddressKey)
+- License covers ALL analytical actions on that property for 30 days
+- Stress-tests / overrides / strategy switches do NOT create new
+  billable deals — they consume the license's $2 COGS budget
+
+**B2B**:
+- TBD per contract — separate workstream
+- 20 lender/agent customer-development conversations target for June
+
+**MF**:
+- Pricing deferred until MF chat flow ships (likely $9.99-$14.99
+  reflecting heavier engine + unit-level data)
+
+**Strategic posture**:
+- Retail = activation + data + marketing funnel for B2B
+- Retail unit economics: 30-100× margin per deal after cost optimization
+- B2B = revenue engine
+- Cost discipline via per-license $2 budget + global daily cap
+
+**Metrics to watch (60 days post-launch)**:
+- Signup → first-paid-deal % (healthy 3-8%, red flag <1% or >10%)
+- First-paid → second-paid retention (healthy 30-50%, red flag <20%)
+- Avg deals/month per paying user (informs bundle sizing)
+- Free Layer 1 → signup % (SEO funnel)
+- Refund rate (<5% healthy, >10% red flag)
+- COGS / price ratio (15-25% healthy, >40% engineering problem)
+
+**Decisions explicitly DEFERRED**:
+- Adversarial critic Opus×2 → Sonnet×1 (preemptive degradation —
+  defer to usage data + eval)
+- agent:qa Sonnet → Haiku (same reasoning)
+- Monthly subscription tier (90-120 day review)
+- Layer 1 abuse mitigation specifics beyond IP rate-limit
+
+**Substrate model** (for Issue #106 Phase B + Stripe):
+```
+DealLicense {
+  userId, canonicalPropertyAddressKey, propertyAddress,
+  purchasedAt, expiresAt (=purchasedAt + 30d),
+  costBudgetCentsStart (200 = $2),
+  pricePaidCents (499 paid, 0 first-free),
+  stripePaymentIntentId, status, refundedAt
+}
+
+DealCredit {  // for bundles — pre-paid not-yet-redeemed
+  userId, sourceType (bundle_5/10/single/promo),
+  stripePaymentIntentId, issuedAt, expiresAt (+365d),
+  redeemedAt, redeemedAsLicenseId, status
+}
+```
+
+**This issue is the source-of-truth for the locked pricing strategy.**
+Future strategic-pricing debates should reference + amend this issue
+rather than relitigating from scratch.
+
+---
 
 ### Issue #104: Tool-only routes fail for chat-flow input (no structured payload)
 **Status**: 🟡 PARTIAL FIX 2026-05-17 (override_assumption rerouted; broader audit pending)
