@@ -14,7 +14,7 @@ interface RegisterFormProps {
 
 const RegisterForm: React.FC<RegisterFormProps> = ({
   onSuccess,
-  redirectTo = '/dashboard'
+  redirectTo = '/app'
 }) => {
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();

@@ -131,12 +131,13 @@ export const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children 
 );
 
 /**
- * Component for guest routes (redirect to dashboard if already authenticated)
+ * Component for guest routes (redirect to /app if already authenticated).
+ * Phase 3+4 — /app replaced /dashboard as the post-login home.
  */
-export const GuestRoute: React.FC<{ 
+export const GuestRoute: React.FC<{
   children: React.ReactNode;
   redirectTo?: string;
-}> = ({ children, redirectTo = '/dashboard' }) => {
+}> = ({ children, redirectTo = '/app' }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Show loading state

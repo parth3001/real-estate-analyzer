@@ -1,46 +1,135 @@
 /**
- * AppPage — the standalone chat surface route (W6-S2).
+ * AppPage — the chat surface route (W6-S2 → Phase 3+4 chat-first IA).
  *
- * UX Designer lens (Apple HIG):
- *   - Full-viewport chat surface, no extraneous chrome competing with content
- *     (matches the Apple Notes / Messages full-screen pattern).
- *   - The ChatOverlay handles its own ThemeProvider + max-width centering,
- *     so this page is intentionally minimal — it's the page-level mount
- *     point and nothing more.
+ * Phase 3+4 evolution (2026-05-16):
+ *   For AUTHENTICATED users, /app is the post-login home. We wrap
+ *   ChatOverlay in an AppLayout (left sidebar with thread history +
+ *   platform nav). Picking a thread from the sidebar resets the active
+ *   sessionId so ChatOverlay remounts against that thread.
  *
- * Hero-embed entry path (W6-S2b — next commit):
- *   - LandingPage will navigate here with `state: { initialUserInput }`.
- *   - We read it off useLocation() and forward it to the overlay, which
- *     auto-submits as turn 1.
+ *   For ANONYMOUS users (hero-embed entry from LandingPage), /app stays
+ *   full-bleed — no sidebar, no chrome. Same surface, same overlay.
+ *   They get the sidebar after magic-link claim (W6-S5).
  *
- * NOTE: this route is intentionally public (mounted outside ProtectedRoute)
- * for W6 — we want hero-embed users to land in the chat *before* signup
- * (W6-S5 will gate paid features behind auth, free turns stay open).
+ * Hero-embed entry path (preserved from W6-S2b):
+ *   LandingPage navigates here with `state: { initialUserInput }`. We
+ *   forward it to ChatOverlay which auto-submits as turn 1.
+ *
+ * Thread-switching mechanics:
+ *   - The "active thread" is the sessionId stored in sessionStorage
+ *     (SESSION_STORAGE_KEY in ChatOverlay).
+ *   - To switch threads OR start fresh, we rewrite sessionStorage and
+ *     bump a React key on ChatOverlay so it remounts cleanly.
+ *   - This is a Phase 3+4 stopgap — Phase 7+ moves thread state to a
+ *     proper server-side list endpoint.
  */
 
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { ChatOverlay } from '../components/Chat/ChatOverlay';
+import { AppLayout } from '../components/layout/AppLayout';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AppPageLocationState {
   initialUserInput?: string;
 }
 
+// Must match ChatOverlay's SESSION_STORAGE_KEY (intentionally duplicated
+// — keeping that constant private to the chat surface). If you rename
+// in one place rename in both; covered by the smoke test in Day 7.
+const SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
+
+function readActiveSessionId(): string | undefined {
+  if (typeof sessionStorage === 'undefined') return undefined;
+  return sessionStorage.getItem(SESSION_STORAGE_KEY) ?? undefined;
+}
+
+function writeActiveSessionId(id: string | undefined): void {
+  if (typeof sessionStorage === 'undefined') return;
+  if (id) sessionStorage.setItem(SESSION_STORAGE_KEY, id);
+  else sessionStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
 export default function AppPage(): React.JSX.Element {
   const location = useLocation();
   const state = (location.state ?? {}) as AppPageLocationState;
+  const { user } = useAuth();
 
+  // ChatOverlay key — bumping this forces a remount with the
+  // newly-active sessionId. Initial value tracks whatever's already in
+  // sessionStorage so a page refresh preserves the thread.
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
+    () => readActiveSessionId()
+  );
+
+  // Keep our local active-id in sync with sessionStorage when the
+  // overlay creates a fresh sessionId on first mount.
+  useEffect(() => {
+    if (!activeSessionId) {
+      // Defer one frame so ChatOverlay's resolveSessionId() has run.
+      const id = setTimeout(() => {
+        const fromStorage = readActiveSessionId();
+        if (fromStorage) setActiveSessionId(fromStorage);
+      }, 0);
+      return () => clearTimeout(id);
+    }
+    return undefined;
+  }, [activeSessionId]);
+
+  const handleSelectThread = (id: string): void => {
+    if (id === activeSessionId) return;
+    writeActiveSessionId(id);
+    setActiveSessionId(id);
+  };
+
+  const handleNewChat = (): void => {
+    // Clear the session — ChatOverlay's resolveSessionId() will mint a
+    // fresh UUID on next mount. Bumping activeSessionId to undefined
+    // triggers a remount via the key prop below.
+    writeActiveSessionId(undefined);
+    setActiveSessionId(undefined);
+    // Tick to a unique sentinel so React sees a key change even when
+    // the prior value was already undefined.
+    setActiveSessionId(`__pending-${Date.now()}`);
+  };
+
+  // Anonymous users: full-bleed chat (no sidebar). Preserves the W6-S2b
+  // hero-embed entry shape — landing-page users go from form input
+  // straight into a clean chat surface without seeing platform nav.
+  if (!user) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          bgcolor: 'background.default',
+        }}
+        data-testid="app-page"
+      >
+        <ChatOverlay initialUserInput={state.initialUserInput} />
+      </Box>
+    );
+  }
+
+  // Authenticated: sidebar + chat. ChatOverlay is keyed on
+  // activeSessionId so thread switches and new-chat actions remount
+  // cleanly, picking up the new sessionStorage value. We thread the
+  // user's first name + auth flag into the overlay so the Day-5
+  // empty-state chip generator can personalize the greeting + chips.
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        inset: 0,
-        display: 'flex',
-        bgcolor: 'background.default',
-      }}
-      data-testid="app-page"
+    <AppLayout
+      activeThreadId={activeSessionId}
+      onSelectThread={handleSelectThread}
+      onNewChat={handleNewChat}
     >
-      <ChatOverlay initialUserInput={state.initialUserInput} />
-    </Box>
+      <ChatOverlay
+        key={activeSessionId ?? 'initial'}
+        initialUserInput={state.initialUserInput}
+        currentUserFirstName={user.firstName}
+        currentUserIsAuthed={true}
+      />
+    </AppLayout>
   );
 }

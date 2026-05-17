@@ -225,11 +225,43 @@ duality, marketing complexity, and surface dilution.
 ### 5. Phased roadmap (chat-first execution)
 - ✅ Phase 1: Chat surface working (W6 saga)
 - ✅ Phase 2: substrate→Deal materialization (closes Issue #89)
-- ⏳ Phase 3+4: Option A workspace + agent-driven chips (~7 days)
-  - /app becomes post-login landing
-  - Sidebar with recent threads + portfolio/pipeline/saved nav
-  - Agent-driven chips ship WITH the layout (NOT as polish later)
-  - /dashboard 301-redirects to /app
+- ✅ Phase 3+4: Option A workspace + agent-driven chips — SHIPPED 2026-05-16
+  - **Day 1-2** (shipped): AppLayout shell + AppSidebar (chat-first IA,
+    time-grouped RECENT threads, platform-nav block, user block);
+    threadStore (localStorage thread index w/ pub-sub + time-bucketing);
+    AppPage refactor (anon → full-bleed; authed → AppLayout-wrapped);
+    post-login redirect /dashboard → /app + 301-style Navigate redirect
+    on `/dashboard` route; LoginForm/RegisterForm/ProtectedRoute/
+    MagicLinkVerifyPage defaults flipped. Tests: threadStore (13),
+    AppSidebar (6), ChatOverlay regression (18) — all green.
+  - **Day 3** (shipped): backend `suggested_followups` stream event
+    emitted right before `done` on every successful path (skipped on
+    cancel/error). Deterministic curated chip pools per RoutingTarget
+    in `followupChips.ts` — experienced-investor depth, no beginner
+    copy. Tests: followupChips (11), orchestrator.stream chip-emission
+    + non-emission-on-cancel (3 new, 6 pre-existing) — all green.
+  - **Day 4** (shipped): frontend renders chips below the LATEST
+    assistant message only, tap-to-prefill (NOT auto-send) — caret
+    placed at end so user can append context. Chips disappear under
+    historical turns. Tests: 3 new in ChatOverlay (renders chips, tap
+    prefills, only-latest invariant) — all green.
+  - **Day 5** (shipped): empty-state chip set via `emptyStateChips.ts`.
+    Brand-new users get "Institutional-grade analysis, in plain English"
+    headline + generic depth chips. Returning users get personalized
+    greeting ("Welcome back, Parth") + "Continue: <latest>" +
+    "Compare <a> vs <b>" chips referencing their actual thread titles.
+    Tests: emptyStateChips (8) — all green.
+  - **Day 6** (shipped): mobile pass — chips switch from flex-wrap to
+    horizontal-scroll on xs viewports (Apple-style: hidden scrollbar,
+    momentum scroll, no chip-shrink); chip-row fades in via CSS keyframe;
+    input bar respects `env(safe-area-inset-bottom)` so it doesn't sit
+    under the iOS home indicator.
+  - **Day 7** (shipped): edge cases, tests, tracker housekeeping
+    (this commit). Full touched-suite test runs: backend 139/139 in the
+    orchestrator + chat slice; frontend 55/55 in the touched suites
+    (threadStore, AppSidebar, ChatOverlay, emptyStateChips,
+    followupChips). Pre-existing SFR/MF unit-test failures noted as
+    out-of-scope.
 - ⏳ Phase 4b: Property comparison chip + CompareCard (~1-2 days)
   - Issue #102, ships right after Phases 3+4
 - ⏳ Phase 5: SEO calc pages → chat hero (~2-3 days)
@@ -502,7 +534,7 @@ Currently unbounded growth. At scale, eats:
 ---
 
 ### Issue #91: ChatOverlay doesn't restore prior chat thread on authenticated mount
-**Status**: 🔴 OPEN (UX gap)
+**Status**: 🟡 PARTIAL — explicit thread picker shipped 2026-05-16 (Phase 3+4 Day 1-2); auto-restore still pending
 **Priority**: P1 - HIGH (post-signup empty-state confusion)
 **Reported**: 2026-05-15 (user feedback after W6-S5b end-to-end test)
 **Component**: Frontend ChatOverlay + Backend chat history API
@@ -541,6 +573,15 @@ surface them.
   `getConversationHistory(sessionId)` — wire it
 - `frontend/src/components/Chat/ChatOverlay.tsx` — fetch on mount
 - `frontend/src/services/chatApi.ts` — new client function
+
+**Update 2026-05-16 (Phase 3+4 Day 1-2)**:
+Sidebar now ships an explicit thread picker — every prior thread shows
+up under TODAY / YESTERDAY / THIS WEEK / EARLIER with a score-color
+dot. The post-signup user CAN reach their claimed chat in two clicks
+(sidebar row → thread). This addresses the "did anything happen?"
+empty-feel without server-side hydration. Auto-restore on mount (the
+original ticket) is the remaining work — desirable but no longer
+blocking activation.
 
 ---
 

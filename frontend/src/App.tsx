@@ -25,7 +25,9 @@ import { useAuth } from './contexts/AuthContext';
 const AffiliateLandingPage = React.lazy(() => import('./pages/AffiliateLandingPage'));
 
 // Pages
-import Dashboard from './pages/Dashboard';
+// Dashboard.tsx is no longer routed (Phase 3+4 — /dashboard Navigate-redirects
+// to /app). File kept on disk for one migration cycle in case we need to
+// resurrect any sub-component; safe to delete once Phase 6 ships.
 import SFRAnalysis from './pages/SFRAnalysis';
 import MFAnalysis from './pages/MFAnalysis';
 import SavedProperties from './pages/SavedProperties';
@@ -111,10 +113,12 @@ const HomeRouteSelector: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect logged-in users to dashboard
+  // Phase 3+4 (2026-05-16) — post-login lands at /app (chat-first), not
+  // /dashboard. Old /dashboard route Navigate-redirects to /app for any
+  // bookmarked links during the migration window.
   React.useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/app');
     }
   }, [user, navigate]);
 
@@ -215,8 +219,10 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* Main Dashboard */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* Phase 3+4 — /dashboard 301-redirects to /app for the
+                    migration window. Old bookmarks keep working; the
+                    sidebar in /app replaces the dashboard's IA. */}
+                <Route path="/dashboard" element={<Navigate to="/app" replace />} />
                 
                 {/* Property Analysis Routes */}
                 <Route path="/sfr-analysis" element={<SFRAnalysis />} />

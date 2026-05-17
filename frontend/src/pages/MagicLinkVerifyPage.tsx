@@ -105,7 +105,7 @@ const MagicLinkVerifyPage: React.FC = () => {
           setTimeout(() => navigate(pending.returnTo), 300);
           return;
         }
-        setTimeout(() => navigate('/dashboard'), 300);
+        setTimeout(() => navigate('/app'), 300);
         return;
       }
 

@@ -61,6 +61,7 @@ import {
   projectDealScoreCard,
   type DealScoreCardWireShape,
 } from './dealScoreCardProjection';
+import { generateFollowupChips } from './followupChips';
 
 // ===== Input / output =====
 
@@ -683,6 +684,10 @@ export async function* streamTurn(
       durationMs: number;
     }> = [];
     let wasCancelled = false;
+    // Tracked so the followup-chip generator (Phase 3+4, Day 3) can
+    // pick the right chip set — different next-steps make sense when
+    // a card landed vs when the agent asked a clarifying question.
+    let dealScoreCardEmitted = false;
 
     if (routing.target === 'deflection:off_topic') {
       // No LLM call, no streaming — just emit the locked text in one delta.
@@ -844,6 +849,7 @@ export async function* streamTurn(
                     kind: 'deal_score_card',
                     data: card as unknown as Record<string, unknown>,
                   };
+                  dealScoreCardEmitted = true;
                 }
               } catch (err) {
                 logger.warn(
@@ -921,7 +927,25 @@ export async function* streamTurn(
       return;
     }
 
-    // ===== 5. Done =====
+    // ===== 5. Suggested follow-up chips (Phase 3+4, Day 3) =====
+    //
+    // Emit BEFORE done so the frontend has the chip list available the
+    // moment streaming ends — no extra round-trip, chips animate in as
+    // the typing indicator clears. Deterministic generator (no extra
+    // LLM call) — see followupChips.ts for the curated chip pools per
+    // routing target. Cancellation path skips this on purpose: a user
+    // who hit Stop doesn't want a fresh nudge.
+    const { chips } = generateFollowupChips({
+      routingTarget: routing.target,
+      dealScoreCardEmitted,
+    });
+    yield {
+      type: 'structured_output',
+      kind: 'suggested_followups',
+      data: { chips },
+    };
+
+    // ===== 6. Done =====
     yield {
       type: 'done',
       traceId,

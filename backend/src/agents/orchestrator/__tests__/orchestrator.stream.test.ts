@@ -209,8 +209,15 @@ describe('orchestrator.streamTurn (W6-S3)', () => {
         })
       );
 
-      // Should be: routing → text_delta → done
-      expect(events.map((e) => e.type)).toEqual(['routing', 'text_delta', 'done']);
+      // Should be: routing → text_delta → suggested_followups → done
+      // (suggested_followups is the Phase 3+4 Day 3 chip stream event;
+      // emitted on every successful path before `done`.)
+      expect(events.map((e) => e.type)).toEqual([
+        'routing',
+        'text_delta',
+        'structured_output',
+        'done',
+      ]);
       const delta = events[1] as { type: 'text_delta'; text: string };
       expect(delta.text).toContain('real estate');
       expect(delta.text).toContain('property, a metric, or paste a listing');
@@ -286,6 +293,117 @@ describe('orchestrator.streamTurn (W6-S3)', () => {
 
       const last = events[events.length - 1];
       expect(last.type).toBe('cancelled');
+    });
+  });
+
+  // ===== Suggested follow-up chips (Phase 3+4, Day 3) =====
+
+  describe('suggested_followups stream event', () => {
+    it('emits a chips structured_output right before `done` on the qa happy path', async () => {
+      setAnthropicAdapter(
+        streamingStub({
+          intent: 'qa_general',
+          confidence: 90,
+          deltas: ['Hi.'],
+        })
+      );
+
+      const userId = new Types.ObjectId();
+      const events = await collect(
+        streamTurn({
+          userInput: 'hi',
+          userId,
+          sessionId: SESSION_ID,
+          turnNumber: 1,
+        })
+      );
+
+      // The event immediately before `done` should be the chips event.
+      const done = events[events.length - 1];
+      const beforeDone = events[events.length - 2];
+      expect(done.type).toBe('done');
+      expect(beforeDone.type).toBe('structured_output');
+      if (beforeDone.type === 'structured_output') {
+        expect(beforeDone.kind).toBe('suggested_followups');
+        const data = beforeDone.data as { chips?: unknown };
+        expect(Array.isArray(data.chips)).toBe(true);
+        const chips = data.chips as string[];
+        expect(chips.length).toBeGreaterThanOrEqual(3);
+        expect(chips.length).toBeLessThanOrEqual(4);
+        // Sanity — qa chips should reference real-estate / property actions.
+        const joined = chips.join(' ').toLowerCase();
+        expect(joined).toMatch(/property|portfolio|deal|sensitivity/);
+      }
+    });
+
+    it('emits deflection chips on off_topic route', async () => {
+      setAnthropicAdapter({
+        async call() {
+          return {
+            text: JSON.stringify({ intent: 'off_topic', confidence: 95 }),
+            usage: { inputTokens: 100, outputTokens: 10, cachedTokens: 0 },
+            model: 'claude-haiku-4-5',
+            stopReason: 'end_turn',
+          };
+        },
+      });
+
+      const userId = new Types.ObjectId();
+      const events = await collect(
+        streamTurn({
+          userInput: 'who should I vote for?',
+          userId,
+          sessionId: SESSION_ID,
+          turnNumber: 1,
+        })
+      );
+
+      const chipsEvent = events.find(
+        (e) => e.type === 'structured_output' && e.kind === 'suggested_followups'
+      );
+      expect(chipsEvent).toBeDefined();
+      const chips = (chipsEvent as unknown as { data: { chips: string[] } })
+        .data.chips;
+      // Off-topic chips should redirect users back to a productive
+      // on-topic next step (per the followupChips on-topic-cue test).
+      const joined = chips.join(' ').toLowerCase();
+      expect(joined).toMatch(/property|rental|deal|underwriting|platform/);
+    });
+
+    it('does NOT emit chips when the turn is cancelled mid-stream', async () => {
+      setAnthropicAdapter(
+        streamingStub({
+          intent: 'qa_general',
+          confidence: 90,
+          deltas: ['part1 ', 'part2 ', 'part3'],
+          perDeltaDelayMs: 50,
+        })
+      );
+
+      const controller = new AbortController();
+      const userId = new Types.ObjectId();
+      const gen = streamTurn(
+        {
+          userInput: 'tell me',
+          userId,
+          sessionId: SESSION_ID,
+          turnNumber: 1,
+        },
+        { signal: controller.signal }
+      );
+      setTimeout(() => controller.abort(), 75);
+
+      const events: OrchestratorStreamEvent[] = [];
+      for await (const ev of gen) events.push(ev);
+
+      const last = events[events.length - 1];
+      expect(last.type).toBe('cancelled');
+      // No chips event should appear — surfacing a "what next" nudge
+      // after a user explicitly stopped feels presumptuous.
+      const chipsEvent = events.find(
+        (e) => e.type === 'structured_output' && e.kind === 'suggested_followups'
+      );
+      expect(chipsEvent).toBeUndefined();
     });
   });
 

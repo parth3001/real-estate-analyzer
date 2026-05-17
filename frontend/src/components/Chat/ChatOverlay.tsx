@@ -39,6 +39,16 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
+import {
+  upsertThread,
+  deriveTitle,
+  getThreads,
+  subscribe as subscribeThreads,
+  type ThreadRecord,
+} from '../../services/threadStore';
+import {
+  generateEmptyStateChips,
+} from '../../services/emptyStateChips';
 import { DealScoreCard, type DealScoreCardProps } from './DealScoreCard';
 import { EmailCtaModal } from './EmailCtaModal';
 
@@ -95,6 +105,14 @@ interface AssistantMessage {
       }
     | { kind: string; data: Record<string, unknown> }
   >;
+  /**
+   * Tap-to-prefill follow-up chips for this turn (Phase 3+4, Day 3-4).
+   * Sourced from the `suggested_followups` structured_output event the
+   * orchestrator emits right before `done`. Stored as a sibling to
+   * structuredOutputs because chips are NOT cards — they're affordances,
+   * rendered as pill buttons below the bubble.
+   */
+  suggestedFollowups?: string[];
 }
 
 interface ErrorMessage {
@@ -117,6 +135,14 @@ export interface ChatOverlayProps {
   initialUserInput?: string;
   /** Optional override for the empty-state placeholder. */
   placeholder?: string;
+  /**
+   * Phase 3+4, Day 5 — optional user context for the empty-state chip
+   * generator. Driven from AppPage (which has useAuth in scope).
+   * Test-friendly: when omitted, the empty state falls back to the
+   * generic-anon chip set + headline.
+   */
+  currentUserFirstName?: string;
+  currentUserIsAuthed?: boolean;
 }
 
 // ===== Helpers =====
@@ -279,6 +305,24 @@ function applyStreamEvent(
     // W6-S4 — attach the structured payload to the live assistant
     // message. The renderer (DealScoreCard for kind='deal_score_card')
     // mounts inline below the streamed text.
+    //
+    // Phase 3+4 Day 4 split: `suggested_followups` is rendered as
+    // tap-to-prefill chips below the bubble (pill buttons, not a card),
+    // so it lives on a dedicated field rather than the cards array.
+    if (event.kind === 'suggested_followups') {
+      const rawChips = (event.data as { chips?: unknown }).chips;
+      const chips = Array.isArray(rawChips)
+        ? rawChips.filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
+        : [];
+      setMessages((m) =>
+        m.map((msg) =>
+          msg.id === assistantId && msg.role === 'assistant'
+            ? { ...msg, suggestedFollowups: chips }
+            : msg
+        )
+      );
+      return;
+    }
     setMessages((m) =>
       m.map((msg) => {
         if (msg.id !== assistantId || msg.role !== 'assistant') return msg;
@@ -329,6 +373,18 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const [isSending, setIsSending] = useState(false);
   const [turnNumber, setTurnNumber] = useState(1);
 
+  // Phase 3+4, Day 5 — read threadStore for the empty-state chip
+  // personalization. Subscribe so chips re-derive if a new thread
+  // lands while the user is sitting on the empty state (rare but
+  // cheap to wire).
+  const [threadIndex, setThreadIndex] = useState<ThreadRecord[]>(() =>
+    getThreads()
+  );
+  useEffect(() => {
+    const unsub = subscribeThreads(() => setThreadIndex(getThreads()));
+    return unsub;
+  }, []);
+
   // W6-S4 — email-CTA modal state. The clicked assistant message
   // travels with the modal so we know which DealScoreCard to email.
   const [emailModalMessage, setEmailModalMessage] = useState<
@@ -345,6 +401,31 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const threadEndRef = useRef<HTMLDivElement>(null);
+  // Ref to the chat input — used by the chip tap-to-prefill handler so
+  // we can focus + place the caret at the end of the prefilled text
+  // (Phase 3+4, Day 4).
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /**
+   * Chip tap handler — fills the input with the chip text and focuses
+   * it. Per the design rendering, chips DO NOT auto-send; the user
+   * reads, optionally edits, then sends. This gives the user agency
+   * over what gets sent (and avoids accidental fires from a misclick
+   * on a phone).
+   */
+  const handleChipTap = (text: string): void => {
+    setDraft(text);
+    // Defer focus to next frame so React has flushed the state update
+    // and the input is enabled (Send → Stop swap clears between turns).
+    setTimeout(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      // Place caret at end of prefilled text so the user can append.
+      const end = text.length;
+      el.setSelectionRange(end, end);
+    }, 0);
+  };
 
   // Auto-scroll to bottom on new message OR new delta during streaming.
   useEffect(() => {
@@ -420,6 +501,16 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
     setDraft('');
     setIsSending(true);
 
+    // Sidebar thread-index hook (Phase 3+4). On the first turn we seed
+    // the row title from the user's prompt; later turns just bump
+    // lastActivityAt. The preview/score are filled in by the stream
+    // event handlers below.
+    if (userTurn === 1) {
+      upsertThread({ id: sessionId, title: deriveTitle(trimmed) });
+    } else {
+      upsertThread({ id: sessionId });
+    }
+
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -430,10 +521,30 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
         { userInput: trimmed, sessionId, turnNumber: userTurn },
         { signal: controller.signal }
       );
+      let accumulatedText = '';
       for await (const event of stream) {
         applyStreamEvent(event, assistantId, setMessages);
+        // Sidebar thread-index — surface deal-quality score the moment
+        // the DealScoreCard structured output arrives, so the sidebar
+        // dot recolors live (not waiting for `done`).
+        if (event.type === 'structured_output' && event.kind === 'deal_score_card') {
+          const data = event.data as { dealQualityScore?: number };
+          if (typeof data.dealQualityScore === 'number') {
+            upsertThread({ id: sessionId, dealQualityScore: data.dealQualityScore });
+          }
+        }
+        if (event.type === 'text_delta') {
+          accumulatedText += event.text;
+        }
         if (event.type === 'done' || event.type === 'cancelled') {
           sawDoneOrCancelled = true;
+          // Bump lastActivityAt + preview snippet for sidebar recency
+          // sort. Preview is best-effort — first 80 chars of the final
+          // assistant text.
+          upsertThread({
+            id: sessionId,
+            preview: accumulatedText.trim().slice(0, 80) || undefined,
+          });
         }
         if (event.type === 'error') {
           // Convert the assistant bubble into an error bubble — keeps
@@ -541,36 +652,89 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           }}
           data-testid="chat-thread"
         >
-          {messages.length === 0 && (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                gap: 1,
-                color: 'text.secondary',
-              }}
-              data-testid="chat-empty-state"
-            >
-              <Typography sx={{ fontSize: 17, fontWeight: 500 }}>
-                Ready when you are.
-              </Typography>
-              <Typography sx={{ fontSize: 14 }}>
-                Try: <em>analyze 1837 Walnut Way Anna TX 75409</em>
-              </Typography>
-            </Box>
-          )}
+          {messages.length === 0 && (() => {
+            // Day 5 — empty-state surface. The chip generator returns
+            // a different (headline, subhead, chips) tuple for brand-
+            // new vs returning users. Tap-to-prefill semantics match
+            // the in-thread chip row.
+            const emptyState = generateEmptyStateChips({
+              isAuthed: props.currentUserIsAuthed === true,
+              threads: threadIndex,
+              firstName: props.currentUserFirstName,
+            });
+            return (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  gap: 2,
+                  px: { xs: 2, sm: 4 },
+                  textAlign: 'center',
+                }}
+                data-testid="chat-empty-state"
+              >
+                <Box sx={{ maxWidth: 520 }}>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: 22, sm: 26 },
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      letterSpacing: '-0.01em',
+                      mb: 1,
+                    }}
+                    data-testid="chat-empty-state-headline"
+                  >
+                    {emptyState.headline}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 15,
+                      color: 'text.secondary',
+                      lineHeight: 1.5,
+                    }}
+                    data-testid="chat-empty-state-subhead"
+                  >
+                    {emptyState.subhead}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: '100%',
+                    maxWidth: 640,
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <FollowupChips
+                    chips={emptyState.chips}
+                    onTap={handleChipTap}
+                  />
+                </Box>
+              </Box>
+            );
+          })()}
 
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              onEmailCta={handleEmailCta}
-              onPortfolioCta={handlePortfolioCta}
-            />
-          ))}
+          {messages.map((msg, idx) => {
+            // The "is last assistant" flag drives whether follow-up chips
+            // render below the bubble. We only want chips under the
+            // most-recent assistant message — historical chips would
+            // crowd the thread and become stale on each new turn.
+            const isLastAssistant =
+              msg.role === 'assistant' && idx === messages.length - 1;
+            return (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                isLastAssistant={isLastAssistant}
+                onEmailCta={handleEmailCta}
+                onPortfolioCta={handlePortfolioCta}
+                onChipTap={handleChipTap}
+              />
+            );
+          })}
 
           {/* Thinking indicator — only shown BEFORE the first token of
               the streaming assistant message arrives. Once tokens start
@@ -592,7 +756,11 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           <div ref={threadEndRef} />
         </Box>
 
-        {/* Input */}
+        {/* Input — Day 6 mobile pass: respect iOS home-indicator
+            safe-area so the input doesn't sit under the bottom bezel
+            when the keyboard is dismissed. `env(safe-area-inset-bottom)`
+            is 0 on devices without a home indicator, so this is a
+            no-op on desktop / older phones. */}
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -600,6 +768,7 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
             borderTop: 1,
             borderColor: 'divider',
             p: { xs: 1.5, sm: 2 },
+            pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 2 },
             bgcolor: 'background.paper',
             display: 'flex',
             alignItems: 'flex-end',
@@ -626,6 +795,7 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
               'aria-label': 'Chat input',
               'data-testid': 'chat-input',
             }}
+            inputRef={inputRef}
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 3,
@@ -697,16 +867,27 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
 
 interface MessageBubbleProps {
   message: ThreadMessage;
+  /**
+   * Phase 3+4, Day 4 — true only for the most-recent assistant message
+   * in the thread. Drives whether `suggestedFollowups` chips render
+   * below the bubble. Historical chips would clutter older turns and
+   * become stale, so we only ever show one chip row at a time.
+   */
+  isLastAssistant?: boolean;
   /** W6-S4 — fires when the user clicks the email CTA on a structured card. */
   onEmailCta?: (assistantMsg: AssistantMessage) => void;
   /** W6-S4 — fires when the user clicks the portfolio CTA on a structured card. */
   onPortfolioCta?: (assistantMsg: AssistantMessage) => void;
+  /** Phase 3+4, Day 4 — chip tap-to-prefill (does NOT auto-send). */
+  onChipTap?: (text: string) => void;
 }
 
 function MessageBubble({
   message,
+  isLastAssistant,
   onEmailCta,
   onPortfolioCta,
+  onChipTap,
 }: MessageBubbleProps): React.JSX.Element {
   if (message.role === 'error') {
     return (
@@ -808,6 +989,131 @@ function MessageBubble({
           }
           return null;
         })}
+
+      {/* Follow-up chips — render only under the LATEST assistant
+          message, only once streaming is done, and only when the agent
+          actually emitted any. Tap fills the input (does NOT submit). */}
+      {message.role === 'assistant' &&
+        isLastAssistant === true &&
+        message.streaming === false &&
+        (message.suggestedFollowups?.length ?? 0) > 0 && (
+          <FollowupChips
+            chips={message.suggestedFollowups!}
+            onTap={onChipTap}
+          />
+        )}
+    </Box>
+  );
+}
+
+/**
+ * FollowupChips — pill-button row rendered below the latest assistant
+ * message and in the empty state.
+ *
+ * Layout (Day 6 mobile pass):
+ *   - Mobile (xs):  horizontal scroll, single line, momentum scroll,
+ *                   chips don't wrap. Native iOS/Android pattern —
+ *                   feels like a "drawer of chips" the user swipes.
+ *                   Hides the scrollbar (Apple) but keeps the gesture.
+ *   - Desktop (sm+): wrap to multi-line so chips don't run off-screen
+ *                   on a narrow window pinned next to other apps.
+ *
+ * Animation: fades in on mount via CSS keyframes — chips appearing
+ * abruptly after a stream ends would feel jarring (Apple HIG: motion
+ * should be purposeful, brief).
+ *
+ * Tap fires onTap(text) — host prefills the input + focuses. We do NOT
+ * auto-send: chip text often needs context the user wants to add
+ * ("Stress-test at 7%" → user might append "and 30% down").
+ */
+function FollowupChips({
+  chips,
+  onTap,
+}: {
+  chips: string[];
+  onTap?: (text: string) => void;
+}): React.JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        // xs (<600): nowrap + horizontal scroll. sm+ (>=600): wrap.
+        flexWrap: { xs: 'nowrap', sm: 'wrap' },
+        overflowX: { xs: 'auto', sm: 'visible' },
+        // Allow chips to overflow the parent's horizontal bounds on
+        // mobile so the scroll actually has somewhere to go (the
+        // parent .chat-thread has px padding; we negate it on mobile).
+        mx: { xs: -2, sm: 0 },
+        px: { xs: 2, sm: 0 },
+        gap: 1,
+        mt: 0.5,
+        alignSelf: { xs: 'stretch', sm: 'flex-start' },
+        maxWidth: '100%',
+        // Hide the scrollbar but keep the gesture (Apple pattern).
+        '&::-webkit-scrollbar': { display: 'none' },
+        scrollbarWidth: 'none',
+        // Smooth iOS momentum scroll on overflow.
+        WebkitOverflowScrolling: 'touch',
+        // Fade in on mount.
+        '@keyframes chipsFadeIn': {
+          from: { opacity: 0, transform: 'translateY(4px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
+        },
+        animation: 'chipsFadeIn 180ms ease-out',
+      }}
+      data-testid="chat-followup-chips"
+    >
+      {chips.map((chip, idx) => (
+        <Box
+          key={`chip-${idx}`}
+          role="button"
+          tabIndex={0}
+          onClick={() => onTap?.(chip)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onTap?.(chip);
+            }
+          }}
+          sx={{
+            px: 1.75,
+            py: 1,
+            borderRadius: '999px',
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            fontSize: 13,
+            lineHeight: 1.3,
+            cursor: 'pointer',
+            userSelect: 'none',
+            minHeight: 36,
+            display: 'flex',
+            alignItems: 'center',
+            // Prevent chips from shrinking below their content width
+            // on mobile horizontal scroll — otherwise long chip text
+            // collapses awkwardly.
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            transition: 'background-color 120ms ease, border-color 120ms ease',
+            '&:hover': {
+              bgcolor: 'action.hover',
+              borderColor: 'text.secondary',
+            },
+            '&:active': {
+              bgcolor: 'action.selected',
+            },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 2,
+            },
+          }}
+          data-testid={`chat-followup-chip-${idx}`}
+        >
+          {chip}
+        </Box>
+      ))}
     </Box>
   );
 }

@@ -18,9 +18,22 @@
  *   tool_call         — best-effort UX hint when an agent invokes a
  *                       tool ("Calling score_deal..."). Sent AFTER the
  *                       tool completes so we know the name + outcome.
- *   structured_output — reserved for W6-S4: a JSON payload the UI
- *                       should render as a structured card (DealScoreCard,
- *                       AuditTrail, etc.). Not emitted in S3.
+ *   structured_output — A typed JSON payload the UI mounts as something
+ *                       other than plain text. Known kinds:
+ *                         - 'deal_score_card'      (W6-S4) — DealScoreCard
+ *                                                    rendered inline.
+ *                         - 'suggested_followups'  (Phase 3+4, Day 3) —
+ *                                                    `data.chips: string[]`,
+ *                                                    3-4 tap-to-prefill
+ *                                                    follow-up chips at
+ *                                                    experienced-investor
+ *                                                    depth. Emitted on
+ *                                                    every successful
+ *                                                    turn, RIGHT before
+ *                                                    `done`. Skipped on
+ *                                                    cancelled / error.
+ *                       The `kind` field stays open — frontend renderers
+ *                       narrow via per-kind type guards.
  *   done              — sent ONCE at the end of a successful turn,
  *                       carries the trace + persistence IDs the UI
  *                       needs for follow-up actions (save, share).

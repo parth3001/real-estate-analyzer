@@ -13,7 +13,7 @@ interface LoginFormProps {
 
 const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
-  redirectTo = '/dashboard'
+  redirectTo = '/app'
 }) => {
   const navigate = useNavigate();
   const { login, isLoading, error } = useAuth();
