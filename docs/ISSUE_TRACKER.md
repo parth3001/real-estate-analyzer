@@ -7,6 +7,105 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-16)
 
+### Issue #102: Property comparison chip + CompareCard (deal-to-deal side-by-side)
+**Status**: 🟡 PLANNED (Phase 4b — ships right after Option A)
+**Priority**: P1 - HIGH (core flow for target user, not engagement polish)
+**Reported**: 2026-05-16 (Marcus + Architect direction conversation)
+**Component**: Backend orchestrator + frontend ChatOverlay/CompareCard
+**Category**: Core Feature (activation→retention bridge)
+
+**Description**:
+Active real estate investors (PRODUCT_CONTEXT.md target user: 3-30 deals
+/ year) constantly compare properties: "should I pursue 336 Highland
+Ridge or 1837 Walnut?" This is analysis paralysis in concrete form —
+the EXACT pain the platform claims to solve.
+
+A chip on each DealScoreCard auto-pre-filled with the user's most-
+recent OTHER analyzed property, one tap to launch a side-by-side
+comparison.
+
+**Distinction from Issue #101 (strategy comparison)**:
+
+| | Strategy comparison (#101) | Property comparison (#102) |
+|---|---|---|
+| Answers | "BRRRR vs buy-and-hold for THIS property?" | "Property A vs Property B?" |
+| Frequency for retail | Low (settled once) | **High forever (every new deal)** |
+| Target user fit | Mostly novices | **Core: active investor** |
+| Pain it solves | Strategy education | **Analysis paralysis** |
+| Ship timing | Backlog (await demand) | **P1, right after Option A** |
+
+Property comparison serves the CORE user pain. Strategy comparison
+serves a hypothetical user.
+
+**Strategic role (Marcus, 2026-05-16)**:
+Property comparison is the **activation→retention bridge**:
+  User analyzes deal #1 → signs up to save it
+  User analyzes deal #2 → natural next thought: "how do these compare?"
+                          → comparison IS the retention hook
+A user who has 2 deals compared is meaningfully more "hooked" than a
+user with 2 isolated analyses. The "three-layer platform" promise
+(Deal Analysis + Pipeline + **Portfolio Impact**) requires this feature
+to be real.
+
+**Architectural pattern (Architect, 2026-05-16)**:
+Same multi-tool-use pattern as Issue #101. Substrate + agent runner
+support it natively:
+  1. User taps chip "Compare 336 Highland to 1837 Walnut"
+  2. Input pre-fills, user sends
+  3. Agent calls score_deal twice (once per property, same strategy)
+  4. Substrate captures both AnalysisEvent + DecisionEvent pairs
+  5. Orchestrator emits `property_comparison_card` structured_output
+  6. Frontend renders `<PropertyComparisonCard />` side-by-side
+
+**Wire shape**:
+```typescript
+{
+  kind: 'property_comparison_card',
+  data: {
+    properties: [
+      { address, dealQuality, topFactors[], walkAwayPrice, ... },
+      { address, dealQuality, topFactors[], walkAwayPrice, ... },
+    ],
+    headlineDelta: {
+      betterDeal: address,
+      scoreDelta: number,
+      reason: string,
+    },
+  },
+}
+```
+
+**Chip generation logic**:
+- ChatOverlay (or agent prompt) knows the user's recent OTHER deals via
+  substrate query
+- Chip text: `"Compare 336 Highland to <most-recent-other-property>"`
+- For users with 3+ deals: variant chip "Compare to top in pipeline"
+- For users with 0-1 other deals: chip is hidden (no comparison
+  available)
+
+**Effort**: ~1-2 days backend (mirrors Issue #101 architecture)
+  + ~1 day frontend (PropertyComparisonCard component)
+  Ships right after Phases 3+4 (Option A workspace).
+
+**Files (anticipated)**:
+- backend/src/agents/orchestrator/propertyComparisonProjection.ts (NEW)
+- backend/src/agents/orchestrator/orchestrator.ts (emission branch)
+- backend/src/agents/dealScoring/dealScoringAgent.ts (prompt: "if user
+  asks to compare two properties, call score_deal once per propertyData")
+- frontend/src/components/Chat/PropertyComparisonCard.tsx (NEW)
+- frontend/src/components/Chat/ChatOverlay.tsx (renderer wiring +
+  chip generation for "Compare to..." entries)
+
+**Validation question** (defer until 30 days of real usage):
+- Of the first 100 users who analyze 2+ properties, what % tap
+  the "Compare to" chip?
+- If ≥40%, comparison is core — invest further (UI polish,
+  multi-property comparison)
+- If <15%, the chip is unused — investigate why (positioning,
+  visibility, etc.)
+
+---
+
 ### Issue #101: Strategy comparison via agent multi-tool-use (chat-native compare card)
 **Status**: 🟢 BACKLOG (architectural validation done; awaiting demand signal)
 **Priority**: P2 - MEDIUM (engagement feature, not conversion feature)
@@ -74,56 +173,109 @@ rather than strictly 2-column.
 ---
 
 ### Issue #100: Strategic UX direction — wizard vs. chat coexistence
-**Status**: 🔴 OPEN (discussion pending)
-**Priority**: P0 - STRATEGIC (blocks W7 planning)
+**Status**: ✅ DECIDED 2026-05-16 (direction locked; execution in progress)
+**Priority**: P0 - STRATEGIC (blocks W7 planning) — direction now set
 **Reported**: 2026-05-15 (post-W6 saga, end-to-end magic-link claim flow validated)
 **Component**: Product Strategy / UX Architecture
-**Category**: Strategic Discussion (not a bug — open architectural question)
+**Category**: Strategic Discussion (resolved)
 **Affects**: All authenticated UX surfaces
 
-**Description**:
-W6 shipped a chat surface (`/app`) that analyzes a property end-to-end:
-anonymous user types address → DealScoreCard renders → click "Add to my
-portfolio" → magic-link signup → events claimed under authenticated
-user. The chat works.
+**Original Problem**:
+W6 shipped a chat surface (`/app`) that analyzes a property end-to-end.
+Two product paradigms (wizard + chat) doing the same job led to data
+duality, marketing complexity, and surface dilution.
 
-Two product paradigms now exist side-by-side doing the SAME job:
+---
 
-| | Wizard (`/sfr-analysis`)              | Chat (`/app`)              |
-|---|----------------------------------|----------------------------|
-|Input| 60+ field form                   | Free text                  |
-|Data| `Deal` collection                  | Substrate events           |
-|Visible via| `/saved-properties`         | (nothing — see Issue #89)  |
-|Anonymous?| No                            | Yes (ghost-user pattern)   |
-|Time to result| 5-10 min                | 30 seconds                 |
+## DECISIONS (locked, 2026-05-16)
 
-**Strategic Questions**:
-1. Does the wizard get deprecated, coexist, or become an "advanced/tune
-   assumptions" mode inside the chat?
-2. What happens to `/dashboard` as the post-login landing — does it
-   stay as the multi-property overview, or does `/app` (chat) become
-   the post-login landing with portfolio/pipeline as sidebar tabs?
-3. Where do the 60+ engine metrics live in a chat-first world? Pattern A
-   (chat-native follow-up cards via render_audit_trail) is the leading
-   candidate but needs decision.
-4. How do the legacy `Deal` model and the substrate-event model
-   reconcile (see Issue #89 for the immediate gap)?
+### 1. Strategic direction: chat-first, wizard absorbed over time
+- **Strategy A** picked (chat-first now, wizard deprecated/secondary)
+- **Strategy C** is the long-term north star (wizard absorbed into
+  chat as inline override flow — Issue #94)
+- **Strategy B** (two doors, coexist forever) explicitly rejected
 
-**Business Impact**:
-- Until decided, every new feature has TWO surfaces to ship into
-- Marketing has to explain two paths
-- Confusion risk for users between wizard and chat
-- Zero conversions today — strategic alignment is a prerequisite for
-  conversion optimization
+### 2. Chat is INLINE everywhere, NOT a separate destination
+- `/app` was proof-of-concept, not the end state
+- Chat lives WITHIN existing surfaces (landing hero, SEO calc pages,
+  dashboard panel, anywhere the user is)
+- The chat ChatOverlay component is the primitive; pages embed it
 
-**Recommended Discussion Sequence** (next session):
-1. Marcus lens: chat-first vs coexist vs absorb
-2. Architect lens: substrate→Deal materialization (Path 1) vs
-   substrate-native rewrite (Path 3)
-3. UX Designer lens: authenticated `/app` layout sketch
-4. Pick first concrete slice and execute
+### 3. SEO calculator pages get chat as HERO (replacing form widgets)
+- /brrrr-calculator, /cap-rate-calculator,
+  /rental-property-calculator: form widget REMOVED
+- Chat input replaces it, pre-locked to the page's strategy context
+- SEO content (long-form copy) stays for indexing
 
-**Files Affected** (when decisions land):
+### 4. Chip system: agent-driven, EXPERIENCED-INVESTOR depth
+- Chip generation lives in the agent prompt (`suggested_followups`
+  stream event after each response)
+- Empty state: 4-6 chips revealing platform breadth — but at
+  professional-investor depth (NOT educational basics)
+  - GOOD: "Stress-test at 7% rates", "IRR sensitivity to rent growth",
+    "Compare to my pipeline", "Tax-optimal hold period"
+  - BAD: "What's a cap rate?", "What's a 1031 exchange?" (insults
+    target user per PRODUCT_CONTEXT.md "NOT beginners")
+- Post-analysis state: deep-drill chips (sensitivity, scenarios,
+  comparisons)
+- Novice on-ramp: lives in nav chrome ("New to investing? Start
+  here"), NOT in chips. The QA agent + input handle long-tail
+  basics gracefully.
+
+### 5. Phased roadmap (chat-first execution)
+- ✅ Phase 1: Chat surface working (W6 saga)
+- ✅ Phase 2: substrate→Deal materialization (closes Issue #89)
+- ⏳ Phase 3+4: Option A workspace + agent-driven chips (~7 days)
+  - /app becomes post-login landing
+  - Sidebar with recent threads + portfolio/pipeline/saved nav
+  - Agent-driven chips ship WITH the layout (NOT as polish later)
+  - /dashboard 301-redirects to /app
+- ⏳ Phase 4b: Property comparison chip + CompareCard (~1-2 days)
+  - Issue #102, ships right after Phases 3+4
+- ⏳ Phase 5: SEO calc pages → chat hero (~2-3 days)
+- ⏳ Phase 6: Wizard absorption via "Change any of these" CTA (Issue #94)
+- ⏳ Phase 7: Deep substrate unification (W8+)
+
+### 6. Post-login landing: /app, not /dashboard
+- /dashboard route deprecates / 301s to /app
+- Portfolio/Pipeline/Saved-properties remain as DESTINATIONS, reached
+  via sidebar nav from /app
+
+### 7. Wizard fate: graceful keep-alive (NOT hard cut)
+- /sfr-analysis route stays accessible
+- No nav links to it from anywhere visible
+- Power users reach it via "Change any of these →" CTA (Issue #94)
+  which deep-links to wizard pre-filled with chat's analysis data
+- Eventually absorbed entirely (Phase 6/7)
+
+---
+
+## REJECTED OPTIONS (recorded for posterity)
+
+- **Strategy B (coexist as equal-promoted paths)**: rejected — Marcus
+  lens, dilutes the product story; Apple HIG principle of "one
+  canonical way to do each thing"
+- **Option C 3-column productivity layout (Mail/Linear pattern)**:
+  rejected — UX Designer call, wrong fit for activation problem;
+  cluttered for first-time users; poor mobile
+- **Option E pure conversation list (iMessage pattern)**: viable but
+  too aggressive; demotes Portfolio/Pipeline too much for power users
+- **Option D Stripe Dashboard with embedded asks**: not rejected —
+  parked as longer-term aspiration after Option A proves out
+
+---
+
+## OPEN SUB-ITEMS (tracked separately)
+
+- Issue #89: substrate→Deal materialization ✅ shipped (Phase 2)
+- Issue #91: ChatOverlay thread restoration on auth mount (P1) —
+  re-solved by Phase 4 sidebar (explicit thread picker > auto-restore)
+- Issue #94: "Change any of these" CTA wiring — Phase 6 work
+- Issue #102: Property comparison chip + CompareCard — Phase 4b work
+- Issue #101: Strategy comparison feature — backlog, awaiting demand
+  signal
+
+**Files Affected** (when phases ship):
 - All of `/frontend/src/pages/*Analysis.tsx`
 - `/frontend/src/components/layout/AppleNavigation.tsx`
 - `/backend/src/models/Deal.ts`
