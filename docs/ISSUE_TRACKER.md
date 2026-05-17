@@ -1,11 +1,153 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-05-15
+**Last Updated**: 2026-05-16
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-05-16)
+## 🟡 **ACTIVE ISSUES** (2026-05-17)
+
+### Issue #104: Tool-only routes fail for chat-flow input (no structured payload)
+**Status**: 🟡 PARTIAL FIX 2026-05-17 (override_assumption rerouted; broader audit pending)
+**Priority**: P1 - HIGH (silent chat failure path for any tool-only intent)
+**Reported**: 2026-05-17 (user testing — tapped "Stress-test at 7% mortgage rates"
+                          chip, saw "Chat turn failed. Please try again.")
+**Component**: Backend orchestrator routing
+**Category**: Architectural cleanup (W2 scaffolding leftover)
+
+**Description**:
+Several router cases (W2-S1 era) map intents directly to `tool:<name>`
+with `routedTo: 'tool_only'`. The orchestrator's `executeToolRoute()`
+then expects a structured `toolPayload` (e.g.,
+`{ originalDecisionId, fieldPath, newValue }` for `apply_override`).
+The chat surface has no way to construct that payload — it ships only
+the free-form user text. Result: `executeToolRoute` throws, the
+orchestrator catches and emits a generic `Chat turn failed` error.
+
+Routes affected:
+  - `override_assumption` → `tool:apply_override`   ← FIXED 2026-05-17
+  - `request_audit_trail` → `tool:render_audit_trail` ← still broken from chat
+  - `request_export` → `tool:export_audit_pdf` ← still broken from chat
+  - `save_action` → `tool:save_to_watchlist` ← still broken from chat
+  - `share_profile` → `tool:profile_extraction` ← partial (works for some shapes)
+
+**Why this is a chat-first IA problem, not a W2 bug**:
+The original design assumed a structured frontend (slider, button, form)
+would construct payloads + invoke tools directly. The chat-first IA
+moved every interaction to natural language. Natural-language → tool
+needs an LLM in the middle to extract structure. The cleanest place
+for that LLM is an agent.
+
+**Fix shipped 2026-05-17 (override_assumption only)**:
+  - Router: `override_assumption` → `agent:deal_scoring` (was
+    `tool:apply_override`). The deal-scoring agent already documents
+    the override flow in its system prompt: "re-call resolve_property_inputs
+    with the correction in userOverrides, then continue to STEP 3+4."
+  - `apply_override` tool stays in the registry — still callable
+    directly for a future structured frontend UI (slider drag on
+    DealScoreCard) when the caller has the structured payload.
+
+**Remaining work (this ticket stays open until)**:
+  - `request_audit_trail` chat path — route through `agent:qa` which
+    can call `render_audit_trail` with the right decisionId from
+    `recall_user_context`
+  - `request_export` chat path — same pattern: route through an agent
+    that knows the recent decision and constructs the export payload
+  - `save_action` chat path — same pattern, route through an agent
+    that resolves "save THIS deal" to a specific decisionId
+  - Audit: any new tool-only route added MUST be reviewed for
+    chat-invocability before merge
+
+**Test coverage shipped**:
+  - `router.test.ts` updated — override_assumption now expected at
+    `agent:deal_scoring`, removed from the "tool_only" group test
+  - 111/111 orchestrator tests green after the change
+
+**Files affected**:
+- `backend/src/agents/orchestrator/router.ts` — case 'override_assumption' updated
+- `backend/src/agents/orchestrator/__tests__/router.test.ts` — table updated
+
+---
+
+### Issue #103: Full listing-URL → RentCast auto-analysis pipeline
+**Status**: 🟡 PLANNED (Phase 4b adjacent — pairs well with Issue #102)
+**Priority**: P1 - HIGH (high-leverage activation step — user feedback 2026-05-16)
+**Reported**: 2026-05-16 (user testing Phase 3+4 chat hero — flagged that
+                          pasting a Zillow URL didn't auto-analyze)
+**Component**: Backend agent prompt + new `parse_listing_url` tool +
+              integration with `resolve_property_inputs`
+**Category**: Activation Surface (core conversion moment)
+
+**Description**:
+Today (after the 2026-05-16 prompt update), pasting a Zillow URL gets:
+  "Got it — 3609 Rand Creek Trl, McKinney TX 75070. What price are you
+   working with?"
+The address comes from the URL slug — good. But the user still has to
+provide the purchase price manually. Zillow shows the list price right
+there in the listing; ideally the agent fetches it and runs the full
+analysis without asking.
+
+**Why this matters**:
+The user's words: "i liked the feature where someone can just copy the
+zillow listing and we extract that out". Pasting a URL → seeing a
+Deal Quality Score in 10 seconds is the IDEAL activation moment for
+the target user (3-30 deals/year, browses listings constantly). Asking
+for the price re-introduces the friction the chat-first IA was
+supposed to remove.
+
+**Two-tier scope**:
+
+Tier 1 (2026-05-16, SHIPPED — prompt-only):
+  - Agent extracts address from listing slug (Zillow / Redfin /
+    Realtor.com / Homes.com / Trulia formats documented in prompt)
+  - Stops apologizing about "can't browse URLs" — confidently parses
+    the slug + asks only for the price + strategy
+  - Intent classifier example updated to include a bare URL paste
+
+Tier 2 (THIS ticket — full auto-analysis):
+  - Backend `parse_listing_url` tool — takes a URL, returns
+    `{ address, listPrice?, beds?, baths?, sqft? }`. Uses
+    URL-slug parsing + (where possible) a server-side fetch of the
+    listing's public OG metadata + RentCast property-record lookup.
+  - Server-side, NOT browser — uses node-fetch with a user-agent
+    that doesn't trip Zillow's bot defense. Cache aggressively (the
+    same URL gets pasted by many users in market research).
+  - Agent prompt update: when the tool returns a `listPrice`, use it
+    as the purchase price default and proceed straight to scoring
+    (skip the "what price?" question). Show it as a confirmable
+    field in `confirmBeforeScoring` so user can override on the fly.
+  - Failure modes:
+    - URL unparseable → fall back to Tier 1 behavior (ask for address)
+    - Listing found but no price → fall back to asking for price
+    - RentCast doesn't know the property → still proceed with the
+      parsed address; RentCast will return what it can
+  - Per-URL rate-limit on the backend (no thundering herd from one
+    session pasting many URLs)
+
+**Test plan**:
+- Unit tests for each URL format parser (Zillow, Redfin, Realtor.com,
+  Homes.com, Trulia) including edge cases (city has spaces, condo
+  unit numbers, no zip in slug)
+- Integration test: end-to-end paste → score
+- Manual: paste 10 real listings across major markets, eyeball results
+
+**Business impact**:
+- Activation: cuts time-to-first-score from ~60s (today: type address +
+  price) to ~10s (just paste URL)
+- Differentiates from BiggerPockets' calculator (no URL handling there)
+- Pairs nicely with Issue #102 (compare chip) — "paste 2 URLs, compare"
+  becomes a one-tap flow
+
+**Files affected (when shipped)**:
+- `backend/src/agents/tools/parse_listing_url.ts` — NEW
+- `backend/src/agents/tools/registry.ts` — register tool
+- `backend/src/agents/dealScoring/dealScoringAgent.ts` — prompt update
+- `backend/src/agents/tools/resolve_property_inputs.ts` — accept
+  parsed-listing data as another adapter input
+
+**Estimate**: 2-3 days (Tier 2 only; Tier 1 already shipped)
+
+---
 
 ### Issue #102: Property comparison chip + CompareCard (deal-to-deal side-by-side)
 **Status**: 🟡 PLANNED (Phase 4b — ships right after Option A)
