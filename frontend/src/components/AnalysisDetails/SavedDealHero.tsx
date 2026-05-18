@@ -182,7 +182,17 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
     const enriched = propertyContext
       ? `${chipText} — for ${propertyContext}`
       : chipText;
-    navigate('/app', { state: { initialUserInput: enriched } });
+    // Day 9b (2026-05-18) — forward the Deal id alongside the user
+    // input. AppPage threads it into ChatOverlay, which includes it
+    // in every chat-turn request so the backend can apply the
+    // per-license cost cap. Pre-T1 deals (no _id) fall through with
+    // no licenseId — session + daily caps still apply.
+    navigate('/app', {
+      state: {
+        initialUserInput: enriched,
+        initialDealId: deal._id,
+      },
+    });
   };
 
   return (

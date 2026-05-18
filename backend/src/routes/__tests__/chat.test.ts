@@ -39,6 +39,24 @@ jest.mock('../../agents/orchestrator/orchestrator', () => ({
   streamTurn: jest.fn(),
 }));
 
+// Day 9b: Deal model + LicenseRepository need stubbing for the
+// dealId → licenseId resolver. Each test sets the stub's return value
+// to model the scenario under test.
+const mockDealFindOne = jest.fn();
+jest.mock('../../models/Deal', () => ({
+  DealModel: {
+    findOne: (...args: unknown[]) => mockDealFindOne(...args),
+  },
+}));
+
+const mockFindActiveForProperty = jest.fn();
+jest.mock('../../repositories/LicenseRepository', () => ({
+  licenseRepository: {
+    findActiveForProperty: (...args: unknown[]) =>
+      mockFindActiveForProperty(...args),
+  },
+}));
+
 jest.mock('../../middleware/chatIdentity', () => ({
   chatIdentityMiddleware: (
     req: { user?: { id: string; email: string; role: string; anonymous?: boolean } },
@@ -120,9 +138,25 @@ function stubOrchestratorOutput(
 
 // ===== Tests =====
 
+/**
+ * Helper to wire the Mongoose-chain mock for `DealModel.findOne(...).select(...).lean()`.
+ * Pass null to simulate "deal not found / not owned by user."
+ */
+function setMockDealLookup(
+  result: { propertyAddress?: Record<string, string> } | null
+): void {
+  mockDealFindOne.mockReturnValue({
+    select: () => ({
+      lean: () => Promise.resolve(result),
+    }),
+  });
+}
+
 describe('POST /api/chat/turn', () => {
   beforeEach(() => {
     mockHandleTurn.mockReset();
+    mockDealFindOne.mockReset();
+    mockFindActiveForProperty.mockReset();
     __resetChatSessionRateLimitForTests();
     // Default: anonymous user. Tests that need an authed user flip this.
     mockChatIdentityState.userId = new Types.ObjectId().toHexString();
@@ -354,11 +388,124 @@ describe('POST /api/chat/turn', () => {
       ['missing userInput', { sessionId: freshSessionId(), turnNumber: 1 }],
       ['missing sessionId', { userInput: 'x', turnNumber: 1 }],
       ['missing turnNumber', { userInput: 'x', sessionId: freshSessionId() }],
+      // Day 9b — dealId validation
+      [
+        'dealId not 24-char hex',
+        { ...validBody(), dealId: 'not-an-objectid' },
+      ],
+      [
+        'dealId too short',
+        { ...validBody(), dealId: 'abc123' },
+      ],
     ])('rejects: %s', async (_label, body) => {
       const res = await request(buildApp()).post('/api/chat/turn').send(body);
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid request body');
       expect(mockHandleTurn).not.toHaveBeenCalled();
+    });
+  });
+
+  // ===== Day 9b — dealId → licenseId resolution =====
+
+  describe('dealId → licenseId resolution (Day 9b — activates Phase B caps)', () => {
+    it('passes resolved licenseId to handleTurn when dealId + active license both exist', async () => {
+      const dealId = new Types.ObjectId().toHexString();
+      const licenseId = new Types.ObjectId();
+      setMockDealLookup({
+        propertyAddress: {
+          street: '123 Main St',
+          city: 'Austin',
+          state: 'TX',
+        },
+      });
+      mockFindActiveForProperty.mockResolvedValueOnce({
+        _id: licenseId,
+        userId: new Types.ObjectId(),
+        canonicalPropertyAddressKey: '123 main st|austin|TX|',
+      });
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody({ dealId }))
+        .expect(200);
+
+      expect(mockHandleTurn).toHaveBeenCalledTimes(1);
+      const callArg = mockHandleTurn.mock.calls[0][0];
+      expect(callArg.licenseId).toEqual(licenseId);
+    });
+
+    it('passes undefined licenseId when dealId is omitted', async () => {
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody())
+        .expect(200);
+
+      const callArg = mockHandleTurn.mock.calls[0][0];
+      expect(callArg.licenseId).toBeUndefined();
+      // Should not have attempted any lookup.
+      expect(mockDealFindOne).not.toHaveBeenCalled();
+      expect(mockFindActiveForProperty).not.toHaveBeenCalled();
+    });
+
+    it('passes undefined licenseId when dealId is present but Deal is not found / not owned', async () => {
+      // Most common case: user pasted someone else's dealId, or a stale
+      // dealId that no longer exists. Ownership filter in the lookup
+      // returns null. License resolution short-circuits to undefined.
+      const dealId = new Types.ObjectId().toHexString();
+      setMockDealLookup(null);
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody({ dealId }))
+        .expect(200);
+
+      const callArg = mockHandleTurn.mock.calls[0][0];
+      expect(callArg.licenseId).toBeUndefined();
+      expect(mockFindActiveForProperty).not.toHaveBeenCalled();
+    });
+
+    it('passes undefined licenseId when Deal exists but no active license for the property', async () => {
+      // Saved deal but never licensed — free-tier flow. Per-license
+      // cap MUST NOT fire; session + daily caps still cover this turn.
+      const dealId = new Types.ObjectId().toHexString();
+      setMockDealLookup({
+        propertyAddress: { street: '9 Free St', city: 'Anywhere', state: 'TX' },
+      });
+      mockFindActiveForProperty.mockResolvedValueOnce(null);
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody({ dealId }))
+        .expect(200);
+
+      const callArg = mockHandleTurn.mock.calls[0][0];
+      expect(callArg.licenseId).toBeUndefined();
+    });
+
+    it('degrades gracefully when license lookup throws (lookup failure must NEVER block a chat turn)', async () => {
+      const dealId = new Types.ObjectId().toHexString();
+      setMockDealLookup({
+        propertyAddress: { street: '5 Crash Ln', city: 'X', state: 'TX' },
+      });
+      mockFindActiveForProperty.mockRejectedValueOnce(
+        new Error('Mongo unreachable')
+      );
+      mockHandleTurn.mockResolvedValueOnce(stubOrchestratorOutput());
+
+      // The chat turn should still succeed (cost discipline degrades to
+      // session + daily only). The user must NEVER see a failure because
+      // the optional license-cap layer broke.
+      const res = await request(buildApp())
+        .post('/api/chat/turn')
+        .send(validBody({ dealId }));
+      expect(res.status).toBe(200);
+      const callArg = mockHandleTurn.mock.calls[0][0];
+      expect(callArg.licenseId).toBeUndefined();
     });
   });
 

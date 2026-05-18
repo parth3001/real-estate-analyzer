@@ -34,6 +34,14 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface AppPageLocationState {
   initialUserInput?: string;
+  /**
+   * Day 9b (2026-05-18) — optional Deal id forwarded by deal-scoped
+   * entry points (SavedDealHero chips, /analysis/:id Continue-in-chat
+   * actions). Passed straight to ChatOverlay, which threads it into
+   * every chat-turn request so the backend can resolve the user's
+   * active DealLicense and apply the per-license cost cap.
+   */
+  initialDealId?: string;
 }
 
 // Must match ChatOverlay's SESSION_STORAGE_KEY (intentionally duplicated
@@ -115,7 +123,10 @@ export default function AppPage(): React.JSX.Element {
       >
         <PublicHeader />
         <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
-          <ChatOverlay initialUserInput={state.initialUserInput} />
+          <ChatOverlay
+            initialUserInput={state.initialUserInput}
+            dealId={state.initialDealId}
+          />
         </Box>
       </Box>
     );
@@ -135,6 +146,7 @@ export default function AppPage(): React.JSX.Element {
       <ChatOverlay
         key={activeSessionId ?? 'initial'}
         initialUserInput={state.initialUserInput}
+        dealId={state.initialDealId}
         currentUserFirstName={user.firstName}
         currentUserIsAuthed={true}
       />

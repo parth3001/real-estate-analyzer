@@ -36,6 +36,19 @@ export interface ChatTurnRequest {
   turnNumber: number;
   inputMethod?: 'text' | 'voice' | 'paste';
   toolPayload?: Record<string, unknown>;
+  /**
+   * Optional Deal id the chat turn is operating against (Day 9b, 2026-05-18).
+   * When the user is in a specific deal's context (chat opened from
+   * /analysis/:id, from a SavedDealHero chip, or from any other
+   * deal-scoped surface), include the Deal's _id here so the backend
+   * can resolve the user's active DealLicense and apply the per-license
+   * cost cap to this turn.
+   *
+   * Free-tier turns and turns initiated from /app top-level should
+   * omit this. The backend treats absence gracefully — session +
+   * daily caps still apply.
+   */
+  dealId?: string;
 }
 
 export interface ChatTurnRouting {

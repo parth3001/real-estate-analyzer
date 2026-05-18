@@ -44,6 +44,8 @@ import {
 import { ConversationEventModel } from '../models/events/ConversationEvent';
 import { emailService } from '../services/emailService';
 import { logger } from '../utils/logger';
+import { DealModel } from '../models/Deal';
+import { licenseRepository } from '../repositories/LicenseRepository';
 
 // ===== Request validation =====
 
@@ -67,6 +69,23 @@ const ChatTurnBodySchema = z
     turnNumber: z.number().int().positive(),
     inputMethod: z.enum(['text', 'voice', 'paste']).optional(),
     toolPayload: z.record(z.string(), z.unknown()).optional(),
+    /**
+     * Optional Deal id the turn is operating against (Day 9b, 2026-05-18).
+     * When set, the chat route looks up the user's active DealLicense
+     * for that property and passes its id into the orchestrator so the
+     * per-license cap (Issue #106 Phase B) aggregates this turn's spend.
+     * Free-tier turns and turns initiated from /app top-level (no
+     * property in scope) omit this field — session + daily caps still
+     * apply.
+     *
+     * Validation: 24-char hex Mongo ObjectId. We don't fail-closed if
+     * the deal can't be resolved at runtime; we just proceed without
+     * a licenseId (cost-discipline degrades to session+daily-only).
+     */
+    dealId: z
+      .string()
+      .regex(/^[a-fA-F0-9]{24}$/, 'dealId must be a 24-char hex ObjectId')
+      .optional(),
   })
   .strict();
 
@@ -94,6 +113,51 @@ export interface ChatTurnResponse {
   };
   totalCostCents: number;
   agentStubbed: boolean;
+}
+
+// ===== License resolver (Day 9b — activates Issue #106 Phase B) =====
+//
+// Resolves the optional `dealId` body field to an active DealLicense
+// id, which the orchestrator uses to enforce the per-license cost cap.
+// Failure modes are intentionally SILENT — a missed lookup degrades
+// gracefully to "no per-license cap on this turn" rather than blocking
+// the user. Session + daily caps still apply on every turn regardless.
+//
+// Why ownership is enforced in the Deal query: the dealId comes from
+// the frontend body and is therefore untrusted. The `{ _id, userId }`
+// filter prevents a malicious / buggy client from probing other users'
+// deals by guessing ids. License lookup then runs against the SAME
+// userId so the partial-index on (userId, canonicalKey, status='active')
+// is the only path it can hit.
+
+async function resolveLicenseIdForChatTurn(opts: {
+  dealId: string | undefined;
+  userId: Types.ObjectId;
+}): Promise<Types.ObjectId | undefined> {
+  if (!opts.dealId) return undefined;
+  try {
+    const deal = await DealModel.findOne({
+      _id: opts.dealId,
+      userId: opts.userId,
+    })
+      .select('propertyAddress')
+      .lean();
+    if (!deal?.propertyAddress) return undefined;
+    const license = await licenseRepository.findActiveForProperty(
+      opts.userId,
+      deal.propertyAddress
+    );
+    return license?._id;
+  } catch (err) {
+    // License lookup must NEVER block a chat turn. Log + return
+    // undefined so we fall back to session/daily-cap-only protection.
+    logger.warn('chat: license lookup failed, proceeding without licenseId', {
+      dealId: opts.dealId,
+      userId: opts.userId.toHexString(),
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
 }
 
 // ===== Router =====
@@ -128,14 +192,23 @@ router.post(
       return;
     }
 
+    // Day 9b — resolve dealId → active license (if any). Failure is
+    // a no-op; the orchestrator still runs with session + daily caps.
+    const turnUserId = new Types.ObjectId(req.user.id);
+    const licenseId = await resolveLicenseIdForChatTurn({
+      dealId: body.dealId,
+      userId: turnUserId,
+    });
+
     try {
       const out = await handleTurn({
         userInput: body.userInput,
-        userId: new Types.ObjectId(req.user.id),
+        userId: turnUserId,
         sessionId: body.sessionId,
         turnNumber: body.turnNumber,
         inputMethod: body.inputMethod,
         toolPayload: body.toolPayload,
+        licenseId,
       });
 
       const response: ChatTurnResponse = {
@@ -275,15 +348,23 @@ router.post(
       }
     };
 
+    // Day 9b — resolve dealId → active license (same logic as /turn).
+    const streamUserId = new Types.ObjectId(req.user.id);
+    const streamLicenseId = await resolveLicenseIdForChatTurn({
+      dealId: body.dealId,
+      userId: streamUserId,
+    });
+
     try {
       const stream = streamTurn(
         {
           userInput: body.userInput,
-          userId: new Types.ObjectId(req.user.id),
+          userId: streamUserId,
           sessionId: body.sessionId,
           turnNumber: body.turnNumber,
           inputMethod: body.inputMethod,
           toolPayload: body.toolPayload,
+          licenseId: streamLicenseId,
         },
         { signal: controller.signal }
       );

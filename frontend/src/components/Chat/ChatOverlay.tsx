@@ -145,6 +145,18 @@ export interface ChatOverlayProps {
    */
   currentUserFirstName?: string;
   currentUserIsAuthed?: boolean;
+  /**
+   * Day 9b (2026-05-18) — optional Deal id the chat is operating against.
+   * When set, every turn request includes it so the backend can resolve
+   * the user's active license and apply the per-license cost cap
+   * (Issue #106 Phase B). Threaded down from AppPage location state,
+   * which is in turn populated by deal-scoped entry points (SavedDealHero
+   * chips, /analysis/:id "Continue in chat" actions).
+   *
+   * Omit when the chat isn't tied to a specific property — session +
+   * daily caps still apply.
+   */
+  dealId?: string;
 }
 
 // ===== Helpers =====
@@ -520,7 +532,15 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
 
     try {
       const stream = streamChatTurn(
-        { userInput: trimmed, sessionId, turnNumber: userTurn },
+        {
+          userInput: trimmed,
+          sessionId,
+          turnNumber: userTurn,
+          // Day 9b: include dealId when the chat is operating against a
+          // specific deal so the backend can apply the per-license cap.
+          // Omitted when undefined — backend treats absence gracefully.
+          ...(props.dealId ? { dealId: props.dealId } : {}),
+        },
         { signal: controller.signal }
       );
       let accumulatedText = '';

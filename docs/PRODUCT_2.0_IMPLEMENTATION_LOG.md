@@ -36,7 +36,7 @@ If you're new to the project, read it AFTER `PRODUCT_2.0_README.md`. If you're b
 | Cost discipline — data layer | `PRODUCT_2.0_COSTS.md` §7 | ✅ Complete | `CostEvent` collection with provider/model/token/cost fields; per-call emission from classifier + runner |
 | Cost discipline — Phase A caps | Issue #106 Phase A | ✅ Shipped 2026-05-18 | Per-turn (2000 tokens / 8 turns), per-session ($1.00), global daily ($20), prompt caching |
 | DealLicense + DealCredit substrate | Issue #105 substrate | ✅ Shipped 2026-05-18 | Models, repo, address canonicalization, Stripe-idempotent purchase, FIFO credit redemption, race-safe credit-redeem flow |
-| Cost discipline — Phase B caps | Issue #106 Phase B | ✅ Shipped 2026-05-18 (enforcement live) | Per-license $2 COGS cap; threading licenseId through orchestrator → classifier → runner → CostEvent; auto-expire license on cap hit. Chat-route license lookup pending |
+| Cost discipline — Phase B caps | Issue #106 Phase B | ✅ Shipped 2026-05-18 (fully active in production) | Per-license $2 COGS cap; orchestrator → classifier → runner → CostEvent threading; auto-expire license on cap hit; **chat route now resolves dealId → licenseId so Phase B fires end-to-end in production** |
 | Cost discipline — Phase C caps | Issue #106 Phase C | ⏳ Open | Per-IP cap, anomaly alerts |
 | Pricing & packaging | Issue #105 | ✅ Locked, ⏳ Stripe unwired | $4.99/deal + bundles model decided; `/pricing` page rewritten; payments integration not started |
 | Evals / golden sets | `PRODUCT_2.0_EVALS.md` | ⏳ Partial | Some calibration tests exist; CI-gating not enforced yet |
@@ -339,9 +339,9 @@ After 2026-05-18 the email includes assumptions + 10-yr projection sections when
 
 ## 8. What's next (priority-ordered)
 
-1. **Chat-route license-lookup wiring** — the orchestrator now accepts `licenseId` end-to-end; the chat route needs to RESOLVE it (look up the user's active license for the property in scope, or have the frontend pass it from `/analysis/:id`). Without this, the per-license cap is dormant in production.
-2. **Stripe integration** (Issue #105) — payment-intent-succeeded webhook → `licenseRepository.purchaseLicense` / `issueCredits`; charge.refunded → `markLicenseRefunded`. Frontend `/pricing` buy-buttons → Stripe Checkout.
-3. **Phase C cost caps** (Issue #106 Phase C) — per-IP cap, anomaly alerts. Ships with public launch.
+1. **Stripe webhook integration** (Issue #105) — payment-intent-succeeded webhook → `licenseRepository.purchaseLicense` / `issueCredits`; charge.refunded → `markLicenseRefunded`. Frontend `/pricing` buy-buttons → Stripe Checkout. The substrate + cap enforcement are both ready; Stripe is the last gate before revenue is live.
+2. **T2 + T3 trust pillars** — "Show the reasoning" panel on score < 65 + conservative-defaults flagged at input time. Sharpens the upcoming product sessions.
+3. **Phase C cost caps** (Issue #106 Phase C) — per-IP cap (anon Layer-1 abuse), anomaly alerts. Ships with public launch.
 4. **Daily expiry sweeper cron** — call `markLicenseExpired` on rows where `expiresAt < now`; `markCreditExpired` similarly.
 5. **CI-gated eval suite** (`PRODUCT_2.0_EVALS.md`) — calibration tests need to block merges on drift.
 6. **PDF attachment on email CTA** (Issue #96) — revisit after Stripe; legacy wizard PDF infra exists but coupled to wizard request shape.
@@ -362,4 +362,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (T1 frontend — CritiqueCard renders the 2-persona second-opinion in SavedDealHero; Issue #97 fully closed)
+**Last updated:** 2026-05-18 (Day 9b — chat-route dealId → licenseId resolver; Phase B caps now active end-to-end in production)
