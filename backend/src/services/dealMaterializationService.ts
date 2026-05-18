@@ -115,6 +115,59 @@ function deriveVerdict(dealQuality: number): InvestmentVerdict {
 }
 
 /**
+ * Build the `investmentDecision` block shared by both the Deal model's
+ * top-level `investmentDecision` AND the nested `analysis.investmentDecision`.
+ *
+ * Both shapes are identical per /backend/src/models/Deal.ts (Analysis
+ * interface line 319, IDeal line 464). The legacy SFRAnalysis components
+ * (InvestmentDecisionHero, DealQualityHeader, ProgressiveMetricsSystem,
+ * DynamicSliders) read from `analysis.investmentDecision.professionalAssessment.dealQuality`
+ * via prop drilling — if it's missing there, every legacy view shows the
+ * Deal Quality Score as NaN (Issue #109). Earlier versions of this
+ * service wrote the top-level field only and left the nested one empty,
+ * which is what produced the NaN bug observed during e2e testing 2026-05-17.
+ *
+ * Centralizing the constructor here ensures the two locations stay in
+ * sync. ANY future field added to the substrate→Deal projection lands
+ * in both places automatically.
+ */
+function buildInvestmentDecision(
+  dp: DecisionPayload,
+  verdict: InvestmentVerdict,
+  pa: ProfessionalAssessment
+): NonNullable<Analysis['investmentDecision']> {
+  return {
+    verdict,
+    confidence: dp.confidence,
+    score: dp.dealQuality,
+    primaryReason: dp.reasoningTrail.primaryInsight,
+    secondaryReasons: dp.reasoningTrail.strategicRecommendations,
+    keyRisks: dp.reasoningTrail.keyRisks,
+    professionalAssessment: {
+      dealQuality: pa.dealQuality,
+      executionDifficulty: pa.executionDifficulty,
+      dataReliability: pa.dataReliability,
+      cashFlowScore: pa.cashFlowScore,
+      irrScore: pa.irrScore,
+      marketStrengthScore: pa.marketStrengthScore,
+      debtStructureScore: pa.debtStructureScore,
+      exitStrategyScore: pa.exitStrategyScore,
+      capRateScore: pa.capRateScore,
+      propertyRiskScore: pa.propertyRiskScore,
+      primaryInsight: pa.primaryInsight,
+      strategicRecommendations: pa.strategicRecommendations,
+      riskMitigation: pa.riskMitigation,
+      opportunityMaximization: pa.opportunityMaximization,
+    },
+    // `actionPlan` is required by the Analysis interface (not optional)
+    // but the chat flow doesn't produce one yet — default to an empty
+    // array so schema validation passes and the legacy view doesn't
+    // crash on a missing field.
+    actionPlan: [],
+  } as NonNullable<Analysis['investmentDecision']>;
+}
+
+/**
  * Project substrate AnalysisPayload.monthlyAnalysis + .longTermAnalysis
  * + .metrics into the Deal model's Analysis shape. The substrate stores
  * everything as Record<string, unknown> at the schema level; we cast
@@ -122,7 +175,8 @@ function deriveVerdict(dealQuality: number): InvestmentVerdict {
  */
 function projectAnalysis(
   ap: AnalysisPayload,
-  dp: DecisionPayload
+  dp: DecisionPayload,
+  investmentDecision: NonNullable<Analysis['investmentDecision']>
 ): Analysis {
   // Substrate's nested analysis structures are Record<string, unknown>
   // at the schema level — Mongoose / Zod read paths may surface them as
@@ -200,6 +254,12 @@ function projectAnalysis(
     investmentDecisionMeta: {
       primaryInsight: dp.reasoningTrail.primaryInsight,
     } as unknown as Analysis['aiInsights'],
+    // Embed the full investmentDecision INSIDE the analysis as well —
+    // the legacy SFRAnalysis components read the Deal Quality Score
+    // via `analysis.investmentDecision.professionalAssessment.dealQuality`
+    // (prop-drilled from AnalysisDetails → AnalysisResults → ...).
+    // Without this, those views show NaN (Issue #109).
+    investmentDecision,
   } as Analysis;
 }
 
@@ -276,9 +336,14 @@ export async function materializeDealFromDecision(
 
   // 3. Build the Partial<IDeal> from substrate
   const propertyName = `${property.propertyAddress.street}, ${property.propertyAddress.city}, ${property.propertyAddress.state}`;
-  const projectedAnalysis = projectAnalysis(analysisPayload, decisionPayload);
   const verdict = deriveVerdict(decisionPayload.dealQuality);
   const pa = decisionPayload.professionalAssessment as ProfessionalAssessment;
+  // Build the investmentDecision block ONCE and embed it in BOTH the
+  // Deal's top-level `investmentDecision` AND the nested
+  // `analysis.investmentDecision`. Legacy views read from the nested
+  // path (Issue #109); chat-first views read the top level.
+  const investmentDecision = buildInvestmentDecision(decisionPayload, verdict, pa);
+  const projectedAnalysis = projectAnalysis(analysisPayload, decisionPayload, investmentDecision);
 
   // Typed as a loose record because SFR-specific fields (monthlyRent,
   // bedrooms, etc.) live on ISFRDeal not IDeal. Mongoose validates the
@@ -341,30 +406,10 @@ export async function materializeDealFromDecision(
         }
       : {}),
     analysis: projectedAnalysis,
-    investmentDecision: {
-      verdict,
-      confidence: decisionPayload.confidence,
-      score: decisionPayload.dealQuality,
-      primaryReason: decisionPayload.reasoningTrail.primaryInsight,
-      secondaryReasons: decisionPayload.reasoningTrail.strategicRecommendations,
-      keyRisks: decisionPayload.reasoningTrail.keyRisks,
-      professionalAssessment: {
-        dealQuality: pa.dealQuality,
-        executionDifficulty: pa.executionDifficulty,
-        dataReliability: pa.dataReliability,
-        cashFlowScore: pa.cashFlowScore,
-        irrScore: pa.irrScore,
-        marketStrengthScore: pa.marketStrengthScore,
-        debtStructureScore: pa.debtStructureScore,
-        exitStrategyScore: pa.exitStrategyScore,
-        capRateScore: pa.capRateScore,
-        propertyRiskScore: pa.propertyRiskScore,
-        primaryInsight: pa.primaryInsight,
-        strategicRecommendations: pa.strategicRecommendations,
-        riskMitigation: pa.riskMitigation,
-        opportunityMaximization: pa.opportunityMaximization,
-      },
-    },
+    // Top-level investmentDecision (read by chat-first views); same
+    // object as analysis.investmentDecision (read by legacy SFR views)
+    // — built once via buildInvestmentDecision().
+    investmentDecision,
   };
 
   // 4. Upsert by (userId, normalized address)

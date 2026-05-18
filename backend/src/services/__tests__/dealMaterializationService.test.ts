@@ -228,6 +228,46 @@ describe('dealMaterializationService', () => {
       expect(result.deal?.userId.toString()).toBe(userId.toString());
     });
 
+    it('also embeds investmentDecision INSIDE deal.analysis (Issue #109 — NaN regression guard)', async () => {
+      // The legacy SFRAnalysis components (InvestmentDecisionHero,
+      // DealQualityHeader, ProgressiveMetricsSystem, DynamicSliders) read
+      // the Deal Quality Score via:
+      //   analysis.investmentDecision.professionalAssessment.dealQuality
+      // NOT via the top-level deal.investmentDecision.* path. Earlier
+      // materialization wrote only the top-level field and left the
+      // nested path undefined, which produced the NaN score observed
+      // during e2e testing 2026-05-17.
+      //
+      // This test asserts BOTH paths carry the score. If a future change
+      // drops the nested embedding, the bug returns silently.
+      const userId = await createRealUser('nested-decision@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 250000,
+        strategy: 'buy_hold',
+        dealQuality: 75,
+      });
+      const result = await materializeDealFromDecision(decisionEventId, userId);
+
+      // Top-level (chat-first views read here)
+      expect(result.deal?.investmentDecision?.professionalAssessment?.dealQuality).toBe(75);
+
+      // Nested under analysis (legacy SFRAnalysis views read here — the
+      // path that was returning undefined and rendering NaN)
+      const analysis = result.deal?.analysis as
+        | { investmentDecision?: { professionalAssessment?: { dealQuality?: number } } }
+        | undefined;
+      expect(analysis?.investmentDecision).toBeDefined();
+      expect(analysis?.investmentDecision?.professionalAssessment).toBeDefined();
+      expect(analysis?.investmentDecision?.professionalAssessment?.dealQuality).toBe(75);
+
+      // Both locations must be the SAME object reference shape (same
+      // score, same verdict) so legacy and new views never disagree.
+      expect(analysis?.investmentDecision?.professionalAssessment?.dealQuality).toBe(
+        result.deal?.investmentDecision?.professionalAssessment?.dealQuality
+      );
+    });
+
     it('normalizes BRRRR strategy correctly', async () => {
       const userId = await createRealUser('brrrr@example.com');
       const { decisionEventId } = await seedAnalysisAndDecision({
