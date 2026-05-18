@@ -7,6 +7,67 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #113: Agent has no mechanism to resolve "my latest deal" references
+**Status**: 🟡 OPEN (workaround shipped: dead-end chips removed; agent capability still missing)
+**Priority**: P2 - MEDIUM (engagement feature; not a launch blocker but unlocks personalized chips)
+**Reported**: 2026-05-17 (user testing — tapped "Stress-test my latest deal at 7% rates"
+                          empty-state chip, got "Chat turn failed")
+**Component**: Backend deal-scoring agent + recall_user_context
+**Category**: Agent capability gap
+
+**Description**:
+When a chat turn references "my latest deal" / "my latest analysis" /
+"my recent property", the deal-scoring agent has no mechanism to:
+  1. Resolve the natural-language reference to a specific DecisionEvent
+  2. Load that property's prior inputs + outputs
+  3. Re-run with overrides on top of the resolved property
+
+Today the agent receives e.g. "Stress-test my latest deal at 7%
+mortgage rates" and:
+  - Classifier routes to override_assumption → agent:deal_scoring
+    (correct per Issue #104 fix)
+  - Agent has no property context in the current message
+  - Agent's "STEP 0" requires strategy in the message OR conversation
+    context. Neither is present (this is a fresh chat).
+  - Agent either asks a clarifying question (best case) OR tries to
+    call tools without the right inputs (failure case → "Chat turn
+    failed")
+
+**Workaround shipped 2026-05-17 (commit 0071ed9)**:
+- Removed dead-end empty-state chips that referenced "my latest deal"
+- emptyStateChips test blocklist updated to prevent reintroduction
+- Returning users get the SAME safe generic chip set as brand-new
+  users until this capability ships. Personalization for returning
+  users lives in the SIDEBAR (recent threads time-grouped) and the
+  GREETING ("Welcome back, Parth"), NOT in chips.
+
+**Full fix (this ticket)**:
+- Agent prompt: add a "RECALL FLOW" section that handles
+  "my latest deal" / "my latest analysis" by:
+  1. Call recall_user_context to get recent decisionIds
+  2. If 1 recent decision → use it; if 2+ → ask user which property
+  3. Load via getAuditTrail → propertyData + assumptions
+  4. Apply the user's override (e.g., interestRate = 7%)
+  5. Re-call resolve_property_inputs with userOverrides → re-score
+  6. Surface a "Re-scored 336 Highland Ridge at 7%: 65/100 → 58/100"
+     diff result
+- Restore the personalized chips when the capability lands:
+  - "Continue: <latest title>"
+  - "Stress-test my latest deal at 7% rates"
+  - "What's the bear case on my latest analysis?"
+  - Plus a new chip: "Compare to my last analysis" (when Issue #102
+    Phase 4b also lands)
+
+**Files affected (when shipped)**:
+- `backend/src/agents/dealScoring/dealScoringAgent.ts` — prompt addition
+- `frontend/src/services/emptyStateChips.ts` — restore personalized chips
+- `frontend/src/services/__tests__/emptyStateChips.test.ts` — remove
+  blocklist entries
+
+**Estimate**: 1-1.5 days (mostly prompt engineering + eval)
+
+---
+
 ### Issue #112: 10-year projection not rendered in chat-flow DealScoreCard
 **Status**: 🟡 OPEN
 **Priority**: P2 - MEDIUM (data exists, just unrendered)

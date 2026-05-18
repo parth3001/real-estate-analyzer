@@ -114,6 +114,41 @@ describe('AppSidebar', () => {
     expect(screen.getByTestId('sidebar-nav-settings')).toBeInTheDocument();
   });
 
+  it('user-block overflow menu surfaces Profile / Help / What\'s New / Contact / Sign out', async () => {
+    // Phase 4 nav consolidation removed Help / What's New / Contact /
+    // Admin from the primary sidebar. The user-block "..." menu is
+    // where they live now. This test asserts the menu mounts the
+    // expected items so future redesigns don't silently orphan them.
+    renderSidebar();
+    const userEv = userEvent.setup();
+    await userEv.click(screen.getByTestId('sidebar-overflow'));
+
+    // Items that should always be present (regardless of role)
+    expect(
+      screen.getByTestId('sidebar-overflow-profile')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('sidebar-overflow-help')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('sidebar-overflow-whatsnew')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('sidebar-overflow-contact')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('sidebar-overflow-logout')
+    ).toBeInTheDocument();
+    // The mock user has no role='admin' set, so admin items must NOT
+    // appear. Conditional rendering is the whole point of the role
+    // gate; locking it here prevents regressions that would leak the
+    // admin surface to non-admins.
+    expect(
+      screen.queryByTestId('sidebar-overflow-admin-users')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('sidebar-overflow-admin-analytics')
+    ).not.toBeInTheDocument();
+  });
+
   it('platform-nav active state uses prefix-match so nested routes still highlight parent (Issue #108 regression guard)', () => {
     // /portfolio/create + /portfolio/abc/edit should still highlight
     // the "Portfolio" sidebar item. The bug we fixed in Day 2 was that

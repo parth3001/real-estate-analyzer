@@ -39,7 +39,10 @@ import {
   Typography,
   IconButton,
   Divider,
-  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -47,6 +50,12 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import PersonIcon from '@mui/icons-material/Person';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import ContactSupportIcon from '@mui/icons-material/ContactSupport';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import {
   getThreads,
   groupByTime,
@@ -104,6 +113,22 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
     const unsub = subscribe(() => setThreads(getThreads()));
     return unsub;
   }, []);
+
+  // Overflow-menu state — anchors the user-block "..." dropdown that
+  // hosts orphaned legacy nav items (Profile, Help, What's New, Contact,
+  // Admin, Sign out). Phase 4 nav-consolidation kept these routes
+  // accessible but moved them out of the main sidebar so the chat-first
+  // IA stays focused.
+  const [overflowAnchor, setOverflowAnchor] = useState<HTMLElement | null>(
+    null
+  );
+  const overflowOpen = Boolean(overflowAnchor);
+  const closeOverflow = (): void => setOverflowAnchor(null);
+  const navAndClose = (path: string): void => {
+    closeOverflow();
+    navigate(path);
+  };
+  const isAdmin = (user as { role?: string } | null | undefined)?.role === 'admin';
 
   const groups = groupByTime(threads);
 
@@ -367,20 +392,106 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
             {user?.firstName ?? user?.email ?? 'Signed in'}
           </Typography>
         </Box>
-        <Tooltip title="Sign out">
-          <IconButton
-            size="small"
-            onClick={() => {
-              void logout();
-              navigate('/');
-            }}
-            aria-label="Sign out"
-            data-testid="sidebar-logout"
-          >
-            <LogoutIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <IconButton
+          size="small"
+          onClick={(e) => setOverflowAnchor(e.currentTarget)}
+          aria-label="More account options"
+          aria-haspopup="menu"
+          aria-expanded={overflowOpen}
+          data-testid="sidebar-overflow"
+        >
+          <MoreHorizIcon fontSize="small" />
+        </IconButton>
       </Box>
+
+      {/* Overflow menu — surfaces routes that aren't in the primary
+          sidebar nav. Without this, Help / What's New / Contact /
+          Admin were orphaned after the Phase 4 nav consolidation
+          (Issue #108). User flagged on 2026-05-17 testing. */}
+      <Menu
+        anchorEl={overflowAnchor}
+        open={overflowOpen}
+        onClose={closeOverflow}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        slotProps={{
+          paper: { sx: { minWidth: 200, borderRadius: 2 } },
+        }}
+      >
+        <MenuItem
+          onClick={() => navAndClose('/profile')}
+          data-testid="sidebar-overflow-profile"
+        >
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Profile" />
+        </MenuItem>
+        <MenuItem
+          onClick={() => navAndClose('/help')}
+          data-testid="sidebar-overflow-help"
+        >
+          <ListItemIcon>
+            <HelpOutlineIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Help & docs" />
+        </MenuItem>
+        <MenuItem
+          onClick={() => navAndClose('/whats-new')}
+          data-testid="sidebar-overflow-whatsnew"
+        >
+          <ListItemIcon>
+            <CampaignIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="What's new" />
+        </MenuItem>
+        <MenuItem
+          onClick={() => navAndClose('/contact')}
+          data-testid="sidebar-overflow-contact"
+        >
+          <ListItemIcon>
+            <ContactSupportIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Contact us" />
+        </MenuItem>
+        {isAdmin && [
+          <Divider key="admin-divider" />,
+          <MenuItem
+            key="admin-users"
+            onClick={() => navAndClose('/admin/users')}
+            data-testid="sidebar-overflow-admin-users"
+          >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Admin · users" />
+          </MenuItem>,
+          <MenuItem
+            key="admin-analytics"
+            onClick={() => navAndClose('/admin/analytics')}
+            data-testid="sidebar-overflow-admin-analytics"
+          >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Admin · analytics" />
+          </MenuItem>,
+        ]}
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            closeOverflow();
+            void logout();
+            navigate('/');
+          }}
+          data-testid="sidebar-overflow-logout"
+        >
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Sign out" />
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }
