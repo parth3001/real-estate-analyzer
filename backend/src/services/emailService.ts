@@ -1127,19 +1127,31 @@ export class EmailService {
   }
 
   /**
-   * Lightweight Deal Score summary email (W6-S4 — chat surface email CTA).
+   * Deal Score summary email — chat surface email CTA.
    *
-   * Sends an HTML + text email with the Deal Quality score, the property
-   * address, top factors, walk-away price, and a brief next-step prompt.
-   * NO PDF attachment — the wizard's `sendAnonymousPdfEmail` covers the
-   * heavy path; this one is intentionally minimal because the chat
-   * surface's analysis lives in substrate events, not in the legacy
-   * wizard's analysis object.
+   * Sends an HTML + text email that mirrors the chat-flow DealScoreCard:
+   * score + qualityLabel, top factors, walk-away vs offer, next step,
+   * standard assumptions, and (when present) a 10-year projection
+   * milestone table. NO PDF attachment — the wizard's
+   * `sendAnonymousPdfEmail` covers the heavy PDF path; this surface
+   * intentionally lives in inline HTML so the user gets the value
+   * without an attachment dance.
+   *
+   * Issue #111 (2026-05-18) — previously this email surfaced only the
+   * score + top factors + walk-away + next step. The wizard email was
+   * meaningfully richer. Now this email forwards the full card payload
+   * (assumptions + projection) and renders three more sections:
+   *   - Standard assumptions used (down %, mortgage rate, vacancy, etc.)
+   *   - 10-year projection table (milestone years sampled by the
+   *     orchestrator's dealScoreCardProjection)
+   * Both sections render only when data is present; legacy emails
+   * without the new fields still render correctly via the optional
+   * params.
    *
    * Strategic role: capture an email at the activation moment without
    * forcing the user to sign up. The address goes to Resend, the
    * conversationEventId stays in our logs — together they're the
-   * starting state for a magic-link signup flow (W6-S5).
+   * starting state for a magic-link signup flow.
    */
   async sendDealScoreSummary(opts: {
     recipientEmail: string;
@@ -1150,6 +1162,15 @@ export class EmailService {
     walkAwayPrice: number;
     purchasePrice: number;
     nextStep: string;
+    /** Standard assumptions used in the analysis (Issue #111). */
+    assumptions?: Array<{ label: string; value?: string; source?: string }>;
+    /** 10-year projection milestones (Issue #111 / #112). Years 1/3/5/7/10. */
+    projection?: Array<{
+      year: number;
+      cashFlow: number;
+      propertyValue: number;
+      equity: number;
+    }>;
   }): Promise<void> {
     const {
       recipientEmail,
@@ -1160,6 +1181,8 @@ export class EmailService {
       walkAwayPrice,
       purchasePrice,
       nextStep,
+      assumptions,
+      projection,
     } = opts;
     const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
     const scoreLabel =
@@ -1189,6 +1212,55 @@ export class EmailService {
       )
       .join('');
 
+    // ===== Standard assumptions (Issue #111) =====
+    // Optional — only rendered when the caller provides them.
+    const assumptionsRowsHtml = (assumptions ?? [])
+      .map((a) => {
+        const valueCell = a.value
+          ? `<td style="padding:6px 0;text-align:right;font-weight:500;color:#111827;font-variant-numeric:tabular-nums;">${this.escapeHtml(
+              a.value
+            )}${a.source ? `<span style="color:#9CA3AF;font-weight:400;"> · ${this.escapeHtml(a.source)}</span>` : ''}</td>`
+          : '<td></td>';
+        return `<tr><td style="padding:6px 0;color:#374151;">${this.escapeHtml(
+          a.label
+        )}</td>${valueCell}</tr>`;
+      })
+      .join('');
+    const assumptionsHtml = assumptionsRowsHtml
+      ? `<hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+         <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">STANDARD ASSUMPTIONS USED</div>
+         <table style="width:100%;border-collapse:collapse;font-size:14px;">${assumptionsRowsHtml}</table>`
+      : '';
+
+    // ===== 10-year projection table (Issue #111 / #112) =====
+    // Optional — only rendered when projection rows are present.
+    const projectionRowsHtml = (projection ?? [])
+      .map(
+        (row) =>
+          `<tr style="border-bottom:1px solid #F3F4F6;">
+            <td style="padding:8px 6px;color:#111827;font-weight:500;">${row.year}</td>
+            <td style="padding:8px 6px;text-align:right;color:#374151;font-variant-numeric:tabular-nums;">${fmt(row.cashFlow)}</td>
+            <td style="padding:8px 6px;text-align:right;color:#374151;font-variant-numeric:tabular-nums;">${fmt(row.propertyValue)}</td>
+            <td style="padding:8px 6px;text-align:right;color:#374151;font-variant-numeric:tabular-nums;">${fmt(row.equity)}</td>
+          </tr>`
+      )
+      .join('');
+    const projectionHtml = projectionRowsHtml
+      ? `<hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+         <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">10-YEAR PROJECTION</div>
+         <table style="width:100%;border-collapse:collapse;font-size:13px;">
+           <thead>
+             <tr style="border-bottom:1px solid #E5E7EB;">
+               <th style="padding:6px;text-align:left;font-weight:600;color:#6B7280;font-size:11px;letter-spacing:0.02em;text-transform:uppercase;">Year</th>
+               <th style="padding:6px;text-align:right;font-weight:600;color:#6B7280;font-size:11px;letter-spacing:0.02em;text-transform:uppercase;">Cash flow</th>
+               <th style="padding:6px;text-align:right;font-weight:600;color:#6B7280;font-size:11px;letter-spacing:0.02em;text-transform:uppercase;">Property value</th>
+               <th style="padding:6px;text-align:right;font-weight:600;color:#6B7280;font-size:11px;letter-spacing:0.02em;text-transform:uppercase;">Equity</th>
+             </tr>
+           </thead>
+           <tbody>${projectionRowsHtml}</tbody>
+         </table>`
+      : '';
+
     const html = `
 <!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F9FAFB;margin:0;padding:24px;">
@@ -1207,6 +1279,8 @@ export class EmailService {
       <tr><td style="padding:6px 0;color:#374151;">Walk-away price</td><td style="padding:6px 0;text-align:right;font-weight:600;color:#111827;font-variant-numeric:tabular-nums;">${fmt(walkAwayPrice)}</td></tr>
       <tr><td style="padding:6px 0;color:#6B7280;">Your offer</td><td style="padding:6px 0;text-align:right;color:#374151;font-variant-numeric:tabular-nums;">${fmt(purchasePrice)}</td></tr>
     </table>
+    ${projectionHtml}
+    ${assumptionsHtml}
     <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
     <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">NEXT STEP</div>
     <div style="font-size:14px;color:#374151;line-height:1.5;">${this.escapeHtml(nextStep)}</div>
@@ -1214,7 +1288,11 @@ export class EmailService {
   </div>
 </body></html>`;
 
-    const text = [
+    // ===== Plain-text version (Issue #111) =====
+    // Mirrors the HTML structure: score → factors → price → projection →
+    // assumptions → next step. Email clients that strip HTML still see
+    // the full picture. Sections only appear when data is present.
+    const textLines: string[] = [
       `${strategyLabel.toUpperCase()} ANALYSIS`,
       addressLine,
       '',
@@ -1225,11 +1303,39 @@ export class EmailService {
       '',
       `Walk-away price: ${fmt(walkAwayPrice)}`,
       `Your offer:      ${fmt(purchasePrice)}`,
+    ];
+
+    if (projection && projection.length > 0) {
+      textLines.push('', '10-year projection:');
+      textLines.push('  Year  Cash flow      Property value   Equity');
+      for (const row of projection) {
+        // Pad each column so the table reads cleanly in a monospace
+        // mail client. Year fits in 4 cols; currency cols pad to 14.
+        const yearCol = String(row.year).padEnd(4);
+        const cashCol = fmt(row.cashFlow).padStart(13);
+        const valueCol = fmt(row.propertyValue).padStart(15);
+        const equityCol = fmt(row.equity).padStart(13);
+        textLines.push(`  ${yearCol}  ${cashCol}  ${valueCol}  ${equityCol}`);
+      }
+    }
+
+    if (assumptions && assumptions.length > 0) {
+      textLines.push('', 'Standard assumptions used:');
+      for (const a of assumptions) {
+        const valueSuffix = a.value
+          ? `: ${a.value}${a.source ? ` (${a.source})` : ''}`
+          : '';
+        textLines.push(`  ${a.label}${valueSuffix}`);
+      }
+    }
+
+    textLines.push(
       '',
       `Next step: ${nextStep}`,
       '',
-      'REanalyzr · Institutional-grade analysis. Individual investor access.',
-    ].join('\n');
+      'REanalyzr · Institutional-grade analysis. Individual investor access.'
+    );
+    const text = textLines.join('\n');
 
     const subject = `Deal Score ${dealQuality}/100 — ${addressLine}`;
 

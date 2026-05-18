@@ -307,9 +307,24 @@ data is already in the structured_output payload, just not rendered.
 
 ---
 
-### Issue #111: Chat email summary is shallow vs legacy calculator/wizard email
-**Status**: 🟡 OPEN
+### Issue #111: Chat email summary is shallow vs legacy calculator/wizard email — FIXED
+**Status**: ✅ RESOLVED (2026-05-18)
 **Priority**: P1 - HIGH (email IS the takeaway artifact for many users)
+**Resolution**: Extended `sendDealScoreSummary()` to accept and render
+the same `assumptions` + 10-year `projection` blocks the chat
+DealScoreCard surfaces. The chat email-CTA handler (`chat.ts`) now
+forwards `card.assumptions` and `card.projection` through. HTML email
+gets a styled projection table (Year / Cash flow / Property value /
+Equity) + assumptions list with value · source pairs. The plain-text
+version mirrors the same structure with monospace-aligned columns so
+forwarding-to-CPA-via-plain-text still reads cleanly. Sections are
+optional — they only render when the card carries the data, so older
+flows that don't pass them are unaffected.
+
+**Out of scope (deferred)**: A full PDF attachment that mirrors the
+legacy wizard PDF. Tracked as Issue #96 (PDF attachment on email
+CTA). The inline-HTML approach delivered here covers the "shallow"
+complaint without requiring PDF generation infrastructure.
 **Reported**: 2026-05-17 (user e2e testing — "emails of the deal analysis
                           are very shallow, earlier free calculator email
                           was very nice detailed")

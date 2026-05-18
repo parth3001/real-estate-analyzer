@@ -431,7 +431,10 @@ router.post(
         strategy
       );
 
-      // 4. Send the email.
+      // 4. Send the email. Forward the full card payload (assumptions
+      //    + projection) so the email surfaces the same depth the user
+      //    saw in chat — addresses Issue #111 (email was "shallow"
+      //    relative to the legacy wizard email).
       const addressLine = `${card.address.street}, ${card.address.city} ${card.address.state}`;
       await emailService.sendDealScoreSummary({
         recipientEmail: body.email,
@@ -442,6 +445,8 @@ router.post(
         walkAwayPrice: card.walkAwayPrice,
         purchasePrice: card.purchasePrice,
         nextStep: card.nextStep,
+        assumptions: card.assumptions,
+        projection: card.projection,
       });
 
       // Activation-funnel telemetry — email capture is a conversion
