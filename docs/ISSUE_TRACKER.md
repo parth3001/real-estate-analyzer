@@ -464,7 +464,7 @@ new AppLayout sidebar, OR move to Settings page.
 ---
 
 ### Issue #107: Pricing page rewrite to match new per-deal model
-**Status**: 🟡 OPEN
+**Status**: ✅ FIXED 2026-05-18 (full rewrite shipped with locked per-deal model)
 **Priority**: P1 - HIGH (current page shows old $19.99/mo positioning)
 **Reported**: 2026-05-17 (strategic pricing-model lock conversation —
                           see Issue #105)

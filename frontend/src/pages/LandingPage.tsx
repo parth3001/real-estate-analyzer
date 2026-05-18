@@ -193,27 +193,22 @@ const LandingPage: React.FC = () => {
               BRRRR, Buy &amp; Hold, Multi-Family, and commercial — one platform that connects every deal to the portfolio you've already built. Built to flag the deals that don't work, not just the ones that do.
             </Typography>
 
-            {/* THE chat input — full-width centered, generously sized so
-                it reads as the primary action on the page without
-                competing for visual weight with anything beside it. */}
+            {/* THE chat surface — Phase 5 Day 4a (UX Designer's third pass).
+                The two prior attempts (bare-input pill, then card-style
+                multi-line) didn't pop because an EMPTY input has no
+                content competing for the eye. The fix: show a STATIC
+                DEMO CONVERSATION above the live composer. The card
+                becomes content-rich; the user sees the magic before
+                they have to do anything. Same visual language the
+                actual chat uses (bubbles + score card preview), so
+                the handoff to /app feels continuous, not a switch. */}
             <Box
-              component="form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitHeroPrompt();
-              }}
               sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'flex-end' },
-                gap: 1.5,
                 maxWidth: 760,
                 mx: 'auto',
                 bgcolor: '#FFFFFF',
                 border: '2px solid #E5E7EB',
                 borderRadius: '20px',
-                px: { xs: 2, sm: 2.5 },
-                py: 2,
                 boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
                 transition:
                   'border-color 150ms, box-shadow 150ms, transform 150ms',
@@ -228,68 +223,159 @@ const LandingPage: React.FC = () => {
               }}
               data-testid="landing-hero-chat"
             >
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                maxRows={8}
-                variant="standard"
-                placeholder="Try: analyze 1837 Walnut Way Anna TX 75409 — or paste a Zillow link"
-                value={heroDraft}
-                onChange={(e) => setHeroDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  // Enter sends; Shift+Enter inserts newline.
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    submitHeroPrompt();
-                  }
+              {/* ===== Demo conversation (read-only, illustrative) ===== */}
+              <Box sx={{ px: { xs: 2.5, sm: 3 }, py: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Demo user bubble — right-aligned, accent fill */}
+                <Box sx={{ alignSelf: 'flex-end', maxWidth: '85%' }}>
+                  <Box
+                    sx={{
+                      bgcolor: ACCENT,
+                      color: '#FFFFFF',
+                      px: 2,
+                      py: 1.25,
+                      borderRadius: '18px',
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      display: 'inline-block',
+                    }}
+                  >
+                    analyze 1837 Walnut Way Anna TX 75409
+                  </Box>
+                </Box>
+                {/* Demo assistant bubble — left-aligned, neutral surface */}
+                <Box sx={{ alignSelf: 'flex-start', maxWidth: '90%' }}>
+                  <Box
+                    sx={{
+                      bgcolor: '#F8FAFC',
+                      border: '1px solid #E5E7EB',
+                      px: 2.5,
+                      py: 2,
+                      borderRadius: '14px',
+                      fontSize: 14.5,
+                      lineHeight: 1.55,
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: 32,
+                          fontWeight: 700,
+                          color: '#16A34A',
+                          fontVariantNumeric: 'tabular-nums',
+                          lineHeight: 1,
+                        }}
+                      >
+                        82
+                      </Box>
+                      <Box component="span" sx={{ fontSize: 16, color: '#6B7280' }}>
+                        / 100
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{
+                          ml: 'auto',
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: '#16A34A',
+                        }}
+                      >
+                        Above professional standards
+                      </Box>
+                    </Box>
+                    <Box sx={{ color: '#374151' }}>
+                      <Box component="strong" sx={{ fontWeight: 600 }}>Buy-and-hold for 1837 Walnut Way</Box> — cash flow{' '}
+                      <Box component="strong" sx={{ fontWeight: 600 }}>$295/mo</Box>, 10-year IRR{' '}
+                      <Box component="strong" sx={{ fontWeight: 600 }}>16.8%</Box>, market strength 85/100.
+                      Walk-away price{' '}
+                      <Box component="strong" sx={{ fontWeight: 600 }}>$211,500</Box>.
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Hairline divider between demo + live input */}
+              <Box sx={{ borderTop: '1px solid #E5E7EB' }} />
+
+              {/* ===== Live input — the actual chat composer ===== */}
+              <Box
+                component="form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitHeroPrompt();
                 }}
-                InputProps={{
-                  disableUnderline: true,
-                  sx: {
-                    fontSize: { xs: '1.0625rem', md: '1.125rem' },
-                    lineHeight: 1.55,
-                    px: 0.5,
-                    py: 0.5,
-                    textAlign: 'left',
-                  },
-                }}
-                inputProps={{
-                  'aria-label': 'Ask about a property to analyze',
-                  'data-testid': 'landing-hero-chat-input',
-                  style: { textAlign: 'left' },
-                }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={heroDraft.trim().length === 0}
-                endIcon={<SendIcon sx={{ fontSize: 18 }} />}
-                data-testid="landing-hero-chat-send"
                 sx={{
-                  flexShrink: 0,
-                  alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                  height: 52,
-                  px: 3,
-                  borderRadius: '14px',
-                  bgcolor: ACCENT,
-                  color: '#FFFFFF',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  boxShadow: 'none',
-                  '&:hover': { bgcolor: '#0058B3', boxShadow: 'none' },
-                  '&.Mui-disabled': {
-                    bgcolor: '#E5E7EB',
-                    color: '#9CA3AF',
-                  },
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'stretch', sm: 'flex-end' },
+                  gap: 1.5,
+                  px: { xs: 2, sm: 2.5 },
+                  py: 2,
                 }}
               >
-                Analyze
-              </Button>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  maxRows={8}
+                  variant="standard"
+                  placeholder="Try yours — paste a Zillow link, type an address, or describe a property"
+                  value={heroDraft}
+                  onChange={(e) => setHeroDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitHeroPrompt();
+                    }
+                  }}
+                  InputProps={{
+                    disableUnderline: true,
+                    sx: {
+                      fontSize: { xs: '1.0625rem', md: '1.125rem' },
+                      lineHeight: 1.55,
+                      px: 0.5,
+                      py: 0.5,
+                      textAlign: 'left',
+                    },
+                  }}
+                  inputProps={{
+                    'aria-label': 'Ask about a property to analyze',
+                    'data-testid': 'landing-hero-chat-input',
+                    style: { textAlign: 'left' },
+                  }}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={heroDraft.trim().length === 0}
+                  endIcon={<SendIcon sx={{ fontSize: 18 }} />}
+                  data-testid="landing-hero-chat-send"
+                  sx={{
+                    flexShrink: 0,
+                    alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                    height: 52,
+                    px: 3,
+                    borderRadius: '14px',
+                    bgcolor: ACCENT,
+                    color: '#FFFFFF',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: '#0058B3', boxShadow: 'none' },
+                    '&.Mui-disabled': {
+                      bgcolor: '#E5E7EB',
+                      color: '#9CA3AF',
+                    },
+                  }}
+                >
+                  Analyze
+                </Button>
+              </Box>
             </Box>
             <Typography sx={{ mt: 2.5, fontSize: '0.9375rem', color: '#6B7280' }}>
-              Type an address or paste a listing — get a Deal Quality Score in seconds. Free during beta.
+              First analysis free, no credit card. Get a Deal Quality Score in seconds.
             </Typography>
           </Box>
         </Container>
@@ -592,64 +678,68 @@ const LandingPage: React.FC = () => {
           accessible but unlinked. UniversalCalculator still ships for
           the public /calculator route during the migration window. */}
 
-      {/* ============== SOCIAL PROOF ============== */}
-      <Box component="section" sx={{ py: { xs: 6, md: 10 }, bgcolor: '#F9FAFB' }}>
+      {/* ============== MANIFESTO ==============
+
+          Day 4b (UX Designer call 2026-05-17) — the old "Social Proof"
+          section was the company quoting itself with three vanity stats
+          ("100+ beta deals", "3 strategies", "0 spreadsheets"). Quoting
+          yourself isn't social proof. Re-framed as a MANIFESTO: a
+          point-of-view statement that reinforces the "honest analysis"
+          trust hook, without pretending to have social proof we don't
+          yet have. When real testimonials + customer logos accumulate,
+          they replace this section. */}
+      <Box component="section" sx={{ py: { xs: 7, md: 10 }, bgcolor: '#F9FAFB' }}>
         <Container maxWidth="md">
-          <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+          <Box sx={{ textAlign: 'center', maxWidth: 720, mx: 'auto' }}>
             <Typography
               component="h2"
               sx={{
-                fontSize: { xs: '1.75rem', md: '2.25rem' },
+                fontSize: { xs: '1.625rem', md: '2rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
-                color: '#111827'
+                color: '#111827',
+                mb: 4,
               }}
             >
-              Join investors analyzing deals the honest way.
+              Why we built this.
             </Typography>
-          </Box>
-
-          <Grid container spacing={3} sx={{ mb: { xs: 5, md: 6 } }}>
-            {[
-              { stat: '100+', label: 'deals analyzed by beta investors' },
-              { stat: '3', label: 'strategies supported — BRRRR, Buy & Hold, Multi-Family' },
-              { stat: '0', label: 'spreadsheets required' }
-            ].map((s) => (
-              <Grid size={{ xs: 12, sm: 4 }} key={s.label}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: '2.5rem', md: '3rem' },
-                      fontWeight: 800,
-                      color: '#111827',
-                      lineHeight: 1,
-                      mb: 1
-                    }}
-                  >
-                    {s.stat}
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280' }}>
-                    {s.label}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Box sx={{ borderTop: '1px solid #E5E7EB', pt: 5, textAlign: 'center', maxWidth: '720px', mx: 'auto' }}>
             <Typography
               sx={{
-                fontSize: { xs: '1.125rem', md: '1.25rem' },
-                lineHeight: 1.6,
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                lineHeight: 1.7,
                 color: '#374151',
-                fontStyle: 'italic',
-                mb: 2
+                mb: 3,
               }}
             >
-              "We built REanalyzr to surface the deals that don't pencil — not just the ones that do. In honest underwriting, most deals come back red. If we're not showing you that math clearly, we're just another calculator. And the world has enough calculators."
+              Most real estate calculators tell you what you want to hear.
+              Plug in numbers, get a green check, feel good, make an offer.
             </Typography>
-            <Typography sx={{ fontSize: '0.875rem', color: '#6B7280' }}>
-              — REanalyzr team
+            <Typography
+              sx={{
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                lineHeight: 1.7,
+                color: '#374151',
+                mb: 3,
+              }}
+            >
+              REanalyzr is the opposite: run institutional-grade math
+              against your assumptions and tell you the truth — even
+              when it&apos;s bad news.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: { xs: '1.0625rem', md: '1.1875rem' },
+                lineHeight: 1.7,
+                color: '#374151',
+                mb: 4,
+              }}
+            >
+              Most deals don&apos;t pencil. If we&apos;re not surfacing that
+              math clearly, we&apos;re just another calculator. The world has
+              enough calculators.
+            </Typography>
+            <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280' }}>
+              — The REanalyzr team
             </Typography>
           </Box>
         </Container>
@@ -731,6 +821,181 @@ const LandingPage: React.FC = () => {
             <Button variant="contained" size="large" href={PRIMARY_CTA_HREF} sx={ctaButtonSx}>
               Run a Deal Now →
             </Button>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* ============== PRICING CALLOUT ==============
+
+          Day 4c (UX Designer call 2026-05-17) — visitors hate hidden
+          pricing. The pricing-strategy conversation locked in: free
+          score + free first analysis + $4.99/deal + bundles. Surface
+          that on the landing page so prospects know what they're
+          looking at before they sign up. Three-column band with a B2B
+          inbound CTA below (Marcus Chen's note — captures rare-but-
+          valuable lender/agent/syndicator inbound at zero cost).
+          Full /pricing page (Issue #107) goes deeper. */}
+      <Box component="section" sx={{ py: { xs: 7, md: 10 }, bgcolor: '#FFFFFF', borderTop: '1px solid #F3F4F6' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 6 } }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.25rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: '#111827',
+                mb: 2,
+              }}
+            >
+              Pricing built around your actual usage.
+            </Typography>
+            <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563', maxWidth: 640, mx: 'auto' }}>
+              The platform is free. You pay when you go deep. No subscription, no auto-renew, no surprise charges.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={3}>
+            {[
+              {
+                eyebrow: 'FREE',
+                price: '$0',
+                priceTail: '',
+                title: 'Get the score',
+                lines: [
+                  'Deal Quality Score on any property',
+                  'Portfolio + Pipeline workspace',
+                  '1 free full analysis on signup',
+                ],
+                accent: false,
+              },
+              {
+                eyebrow: 'PER DEAL',
+                price: '$4.99',
+                priceTail: '/ deal',
+                title: 'Go deep on one property',
+                lines: [
+                  '28+ professional metrics',
+                  '10-year projection + walk-away price',
+                  '30-day editing window · PDF export',
+                ],
+                accent: true,
+              },
+              {
+                eyebrow: 'BUNDLES',
+                price: '$3.50',
+                priceTail: '/ deal (10-pack)',
+                title: 'Building a pipeline',
+                lines: [
+                  '5-pack — $19.99 ($4.00/deal)',
+                  '10-pack — $34.99 ($3.50/deal)',
+                  '12-month credit expiry',
+                ],
+                accent: false,
+              },
+            ].map((tier) => (
+              <Grid size={{ xs: 12, md: 4 }} key={tier.eyebrow}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    bgcolor: '#FFFFFF',
+                    border: tier.accent ? `2px solid ${ACCENT}` : '1px solid #E5E7EB',
+                    borderRadius: '16px',
+                    p: { xs: 3, md: 3.5 },
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: tier.accent ? ACCENT : '#6B7280',
+                      mb: 2,
+                    }}
+                  >
+                    {tier.eyebrow}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 1 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '2.5rem',
+                        fontWeight: 700,
+                        color: '#111827',
+                        lineHeight: 1,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {tier.price}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280' }}>
+                      {tier.priceTail}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    component="h3"
+                    sx={{
+                      fontSize: '1.125rem',
+                      fontWeight: 600,
+                      color: '#111827',
+                      mb: 2,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {tier.title}
+                  </Typography>
+                  <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', flexGrow: 1 }}>
+                    {tier.lines.map((line) => (
+                      <Box
+                        component="li"
+                        key={line}
+                        sx={{
+                          fontSize: '0.9375rem',
+                          color: '#4B5563',
+                          lineHeight: 1.6,
+                          mb: 1,
+                          pl: 2,
+                          position: 'relative',
+                          '&::before': {
+                            content: '"·"',
+                            position: 'absolute',
+                            left: 0,
+                            color: tier.accent ? ACCENT : '#9CA3AF',
+                            fontWeight: 700,
+                          },
+                        }}
+                      >
+                        {line}
+                      </Box>
+                    ))}
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280', mb: 1.5 }}>
+              7-day no-questions refund · Cancel any pack within 60 days
+            </Typography>
+            <Typography sx={{ fontSize: '0.9375rem', color: '#374151' }}>
+              For lenders, agents, syndicators —{' '}
+              <MuiLink
+                href="mailto:contact@reanalyzr.com?subject=B2B%20inquiry"
+                sx={{
+                  color: ACCENT,
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                contact us about volume pricing →
+              </MuiLink>
+            </Typography>
           </Box>
         </Container>
       </Box>
