@@ -1,20 +1,28 @@
 /**
- * costGuards — runtime cost ceilings for the agent mesh (Issue #106, Phase A).
+ * costGuards — runtime cost ceilings for the agent mesh (Issue #106).
  *
- * Three layers ship in Phase A, ordered by call frequency:
+ * Layers shipped:
  *
- *   1. Per-turn cap        — enforced INSIDE the agent runner via
- *                            maxTokensPerCall (≤ 2000) + maxTurns (≤ 8).
- *                            Lives in agentRunner.ts, not here.
- *   2. Per-session cap     — sum of CostEvents.costCents for a sessionId
- *                            must stay below COST_CAP_SESSION_CENTS
- *                            (default $1.00 = 100¢). Checked here.
- *   3. Global daily cap    — sum of CostEvents.costCents for the current
- *                            UTC day must stay below COST_CAP_DAILY_CENTS
- *                            (default $20.00 = 2000¢). Checked here.
+ *   1. Per-turn cap (Phase A)       — enforced INSIDE the agent runner via
+ *                                     maxTokensPerCall (≤ 2000) + maxTurns
+ *                                     (≤ 8). Lives in agentRunner.ts.
+ *   2. Per-session cap (Phase A)    — sum of CostEvents.costCents for a
+ *                                     sessionId must stay below
+ *                                     COST_CAP_SESSION_CENTS (default
+ *                                     $1.00 = 100¢). Checked here.
+ *   3. Per-license cap (Phase B)    — sum of CostEvents.costCents tagged
+ *                                     with a DealLicense.licenseId must
+ *                                     stay below COST_CAP_LICENSE_CENTS
+ *                                     (default $2.00 = 200¢ — the COGS
+ *                                     budget on a $4.99 license per
+ *                                     Issue #105). Checked here when a
+ *                                     licenseId is present on the input.
+ *   4. Global daily cap (Phase A)   — sum of CostEvents.costCents for
+ *                                     the current UTC day must stay
+ *                                     below COST_CAP_DAILY_CENTS
+ *                                     (default $20.00 = 2000¢).
  *
- * Phase B will add: per-license cap (requires DealLicense linkage),
- * per-IP cap (anon Layer-1 abuse), and the anomaly alert pipeline.
+ * Phase C will add: per-IP cap (anon Layer-1 abuse) and anomaly alert.
  *
  * DESIGN NOTE — fail-closed, but with a friendly user-facing message
  * --------------------------------------------------------------------
@@ -64,6 +72,14 @@ function readNumberEnv(name: string, fallback: number): number {
 /** Per-session cap. Default $1.00 (100 cents). */
 export const SESSION_CAP_CENTS = readNumberEnv('COST_CAP_SESSION_CENTS', 100);
 
+/**
+ * Per-license cap (Phase B). Default $2.00 = 200¢ — the COGS budget on
+ * a $4.99 license. When this fires, the license is also auto-expired
+ * by the orchestrator (status: active → expired) so subsequent turns
+ * don't keep paying the classifier.
+ */
+export const LICENSE_CAP_CENTS = readNumberEnv('COST_CAP_LICENSE_CENTS', 200);
+
 /** Global daily cap. Default $20.00 (2000 cents). */
 export const DAILY_CAP_CENTS = readNumberEnv('COST_CAP_DAILY_CENTS', 2000);
 
@@ -77,7 +93,7 @@ export const COST_GUARDS_ENABLED =
 
 // ===== Error type =====
 
-export type CostCapKind = 'session' | 'daily';
+export type CostCapKind = 'session' | 'license' | 'daily';
 
 /**
  * Thrown by `assertWithinCaps`. The orchestrator catches this and
@@ -127,6 +143,29 @@ export async function getSessionSpendCents(sessionId: string): Promise<number> {
 }
 
 /**
+ * Sum of cost (cents) across all CostEvents for a given DealLicense.
+ * Returns 0 if no events. Indexed: `{ licenseId: 1, timestamp: 1 }`.
+ *
+ * Used by Phase B's per-license cap — the $2 COGS budget on a $4.99
+ * license. When this aggregate crosses LICENSE_CAP_CENTS, the
+ * orchestrator surfaces the cap message AND auto-expires the license
+ * so subsequent turns don't keep paying for retries on a dead license.
+ */
+export async function getLicenseSpendCents(
+  licenseId: Types.ObjectId | string
+): Promise<number> {
+  if (!licenseId) return 0;
+  // Aggregate matches the licenseId as an ObjectId — cast strings.
+  const idAsObject =
+    typeof licenseId === 'string' ? new Types.ObjectId(licenseId) : licenseId;
+  const result = await CostEventModel.aggregate<{ total: number }>([
+    { $match: { licenseId: idAsObject } },
+    { $group: { _id: null, total: { $sum: '$costCents' } } },
+  ]);
+  return result[0]?.total ?? 0;
+}
+
+/**
  * Sum of cost (cents) across all CostEvents emitted since UTC midnight
  * today. Uses the `{ timestamp: -1 }` index.
  *
@@ -150,17 +189,26 @@ export async function getDailySpendCents(): Promise<number> {
 export interface AssertWithinCapsInput {
   sessionId: string;
   userId: Types.ObjectId;
+  /**
+   * License the current turn is being applied against. Present when
+   * the chat surface (or orchestrator) has resolved an active
+   * DealLicense for the property in scope. Absent for free-tier turns;
+   * the per-license cap is skipped in that case (session + daily caps
+   * still apply).
+   */
+  licenseId?: Types.ObjectId | string;
   /** For correlated logging. Optional. */
   traceId?: string;
 }
 
 /**
- * Throws CostCapExceededError if either cap is over budget. Order
- * matters: the daily cap is global ops protection (one user can't
- * trigger it alone in normal flow), so it's checked AFTER the session
- * cap. If a session cap fires, we never even pay to query the daily.
+ * Throws CostCapExceededError if any cap is over budget. Order:
+ *   1. Per-session cap   — cheapest, fires first
+ *   2. Per-license cap   — only when a licenseId is provided
+ *   3. Global daily cap  — checked last (ops protection)
  *
- * Both reads run in parallel for latency.
+ * All three reads run in parallel for latency; the order above is
+ * the THROW order (which kind we surface when multiple are over).
  *
  * The orchestrator should call this BEFORE the Haiku classifier —
  * otherwise a runaway user racks up ~$0.002/turn × thousands of
@@ -169,8 +217,9 @@ export interface AssertWithinCapsInput {
 export async function assertWithinCaps(input: AssertWithinCapsInput): Promise<void> {
   if (!COST_GUARDS_ENABLED) return;
 
-  const [sessionSpend, dailySpend] = await Promise.all([
+  const [sessionSpend, licenseSpend, dailySpend] = await Promise.all([
     getSessionSpendCents(input.sessionId),
+    input.licenseId ? getLicenseSpendCents(input.licenseId) : Promise.resolve(0),
     getDailySpendCents(),
   ]);
 
@@ -190,6 +239,25 @@ export async function assertWithinCaps(input: AssertWithinCapsInput): Promise<vo
         "You've reached the chat usage limit for this session. " +
         'Start a new conversation, or pick up a Deal License at /pricing ' +
         'for unlimited deep-dive analysis.',
+    });
+  }
+
+  if (input.licenseId && licenseSpend >= LICENSE_CAP_CENTS) {
+    logger.warn('costGuards: license cap exceeded', {
+      licenseId: input.licenseId.toString(),
+      userId: input.userId.toString(),
+      traceId: input.traceId,
+      spentCents: licenseSpend,
+      capCents: LICENSE_CAP_CENTS,
+    });
+    throw new CostCapExceededError({
+      kind: 'license',
+      spentCents: licenseSpend,
+      capCents: LICENSE_CAP_CENTS,
+      userFacingMessage:
+        "You've used the full analytical budget for this property. " +
+        'License a new property at /pricing, or open one of your other ' +
+        'saved deals to keep going.',
     });
   }
 
@@ -220,23 +288,30 @@ export async function assertWithinCaps(input: AssertWithinCapsInput): Promise<vo
 
 export interface CostSnapshot {
   sessionSpendCents: number;
+  /** Present only when a licenseId was passed to getCostSnapshot. */
+  licenseSpendCents?: number;
   dailySpendCents: number;
   sessionCapCents: number;
+  licenseCapCents: number;
   dailyCapCents: number;
   guardsEnabled: boolean;
 }
 
 export async function getCostSnapshot(
-  sessionId: string
+  sessionId: string,
+  licenseId?: Types.ObjectId | string
 ): Promise<CostSnapshot> {
-  const [sessionSpend, dailySpend] = await Promise.all([
+  const [sessionSpend, licenseSpend, dailySpend] = await Promise.all([
     getSessionSpendCents(sessionId),
+    licenseId ? getLicenseSpendCents(licenseId) : Promise.resolve(undefined),
     getDailySpendCents(),
   ]);
   return {
     sessionSpendCents: sessionSpend,
+    licenseSpendCents: licenseSpend,
     dailySpendCents: dailySpend,
     sessionCapCents: SESSION_CAP_CENTS,
+    licenseCapCents: LICENSE_CAP_CENTS,
     dailyCapCents: DAILY_CAP_CENTS,
     guardsEnabled: COST_GUARDS_ENABLED,
   };

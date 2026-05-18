@@ -406,6 +406,11 @@ export interface DealScoringRunInput {
    * agent spend, not just the classifier.
    */
   sessionId?: string;
+  /**
+   * Active DealLicense for this turn — propagated to CostEvents so
+   * per-license cap aggregation (Issue #106 Phase B) sees agent spend.
+   */
+  licenseId?: Types.ObjectId | string;
 }
 
 export interface DealScoringRunOutput extends AgentRunOutput {

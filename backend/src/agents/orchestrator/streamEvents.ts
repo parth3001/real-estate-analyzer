@@ -56,6 +56,7 @@ export type OrchestratorStreamEvent =
         | 'low_confidence'
         | 'classifier_fallback'
         | 'cost_cap_session'
+        | 'cost_cap_license'
         | 'cost_cap_daily';
     }
   | {

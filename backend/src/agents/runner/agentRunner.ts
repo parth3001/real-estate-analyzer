@@ -89,6 +89,13 @@ export interface AgentRunInput {
    * session, not just the current trace.
    */
   sessionId?: string;
+  /**
+   * Active DealLicense covering this turn. Tagged into every
+   * CostEvent so per-license aggregation (Issue #106 Phase B) sees
+   * agent spend too, not just the classifier's. Optional — free-tier
+   * turns have no license.
+   */
+  licenseId?: Types.ObjectId | string;
 }
 
 export interface AgentToolCallTrace {
@@ -248,6 +255,7 @@ export async function runAgent(
     const costEventId = await costEventRepository.writeCostEvent({
       traceId: ctx.traceId,
       sessionId: input.sessionId,
+      licenseId: input.licenseId,
       userId: ctx.userId,
       institutionId: ctx.institutionId,
       costType: 'llm',
@@ -553,6 +561,7 @@ export async function* runAgentStream(
     const costEventId = await costEventRepository.writeCostEvent({
       traceId: ctx.traceId,
       sessionId: input.sessionId,
+      licenseId: input.licenseId,
       userId: ctx.userId,
       institutionId: ctx.institutionId,
       costType: 'llm',

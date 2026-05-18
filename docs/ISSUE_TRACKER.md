@@ -567,8 +567,15 @@ field addition + defaults tightening were both backward-compatible.
 - `backend/src/agents/dealScoring/dealScoringAgent.ts` — sessionId pass-through
 - `backend/src/agents/qa/qaAgent.ts` — sessionId pass-through
 
-**Phase A status**: ✅ SHIPPED. Phase B (per-license cap) + Phase C
-(per-IP cap, anomaly alert) remain open.
+**Phase A status**: ✅ SHIPPED.
+**Phase B status**: ✅ SHIPPED 2026-05-18 — per-license $2 COGS cap
+live; auto-expires license on cap hit; licenseId threaded through
+orchestrator → classifier → runner → CostEvent. Chat-route license
+lookup is the remaining wiring step (the orchestrator consumes the
+field; the chat route still needs to populate it from the user's
+active license or from the frontend context). 16/16 cost-guards
+tests pass including 5 new Phase B assertions.
+**Phase C status**: ⏳ Open (per-IP cap, anomaly alert).
 
 ---
 

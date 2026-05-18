@@ -33,6 +33,7 @@ import {
   type AgentRunOutput,
   type AgentStreamEvent,
 } from '../runner/agentRunner';
+import type { Types } from 'mongoose';
 import type { ToolContext } from '../tools/types';
 import { recallUserContext } from '../tools/recall_user_context';
 import { renderAuditTrail } from '../tools/render_audit_trail';
@@ -167,6 +168,11 @@ export interface QaRunInput {
    * per-session cap (Issue #106 Phase A).
    */
   sessionId?: string;
+  /**
+   * Active DealLicense for this turn — propagated to CostEvents so
+   * per-license cap aggregation (Issue #106 Phase B) sees agent spend.
+   */
+  licenseId?: Types.ObjectId | string;
 }
 
 export type QaRunOutput = AgentRunOutput;

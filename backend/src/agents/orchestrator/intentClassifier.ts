@@ -329,6 +329,12 @@ export interface ClassifyInput {
    * orchestrator always supplies it.
    */
   sessionId?: string;
+  /**
+   * License identifier — tags the CostEvent so the per-license cap
+   * aggregate (Issue #106 Phase B) covers the classifier's spend too.
+   * Optional: free-tier turns have no license.
+   */
+  licenseId?: Types.ObjectId | string;
   userId: Types.ObjectId;
   institutionId?: Types.ObjectId;
   /**
@@ -387,6 +393,7 @@ export async function classifyIntent(input: ClassifyInput): Promise<ClassifyResu
   const costEventId = await costEventRepository.writeCostEvent({
     traceId: input.traceId,
     sessionId: input.sessionId,
+    licenseId: input.licenseId,
     userId: input.userId,
     institutionId: input.institutionId,
     costType: 'llm',

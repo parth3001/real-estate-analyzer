@@ -65,7 +65,30 @@ import { generateFollowupChips } from './followupChips';
 import {
   assertWithinCaps,
   CostCapExceededError,
+  type CostCapKind,
 } from '../runtime/costGuards';
+import { licenseRepository } from '../../repositories/LicenseRepository';
+
+/**
+ * Map a CostCapKind to its routing.fallbackReason value. Centralized
+ * so both the blocking + streaming cap-handlers stay in sync as new
+ * kinds get added (Phase C will add 'ip' for the per-IP cap).
+ */
+function fallbackReasonForCapKind(
+  kind: CostCapKind
+):
+  | 'cost_cap_session'
+  | 'cost_cap_license'
+  | 'cost_cap_daily' {
+  switch (kind) {
+    case 'session':
+      return 'cost_cap_session';
+    case 'license':
+      return 'cost_cap_license';
+    case 'daily':
+      return 'cost_cap_daily';
+  }
+}
 
 // ===== Input / output =====
 
@@ -94,6 +117,19 @@ export interface OrchestratorTurnInput {
    * turns, this is undefined.
    */
   toolPayload?: Record<string, unknown>;
+
+  /**
+   * Active DealLicense ID covering the property being analyzed this
+   * turn (Issue #105 / #106 Phase B). Set by the chat route when the
+   * user is operating in the context of a licensed property
+   * (`/analysis/:id`) OR by the orchestrator after it resolves the
+   * property address mid-turn. When set, the per-license cap fires;
+   * when absent, only session + daily caps apply.
+   *
+   * Optional — free-tier turns and not-yet-licensed property analyses
+   * pass nothing.
+   */
+  licenseId?: Types.ObjectId | string;
 
   /** Optional input method override. Defaults to 'text'. */
   inputMethod?: 'text' | 'voice' | 'paste';
@@ -291,6 +327,7 @@ export async function handleTurn(
   try {
     await assertWithinCaps({
       sessionId: input.sessionId,
+      licenseId: input.licenseId,
       userId: input.userId,
       traceId,
     });
@@ -308,11 +345,28 @@ export async function handleTurn(
         spentCents: err.spentCents,
         capCents: err.capCents,
       });
+      // Auto-expire the license when its COGS budget is exhausted —
+      // matches the Issue #105 semantic ("$2 budget OR 30 days,
+      // whichever first"). markLicenseExpired is idempotent so a
+      // race with the daily sweeper is a no-op. Fire-and-forget;
+      // failing to expire shouldn't block surfacing the user message.
+      if (err.kind === 'license' && input.licenseId) {
+        licenseRepository
+          .markLicenseExpired(input.licenseId)
+          .catch((expireErr: unknown) => {
+            logger.warn('orchestrator: license auto-expire failed', {
+              licenseId: input.licenseId?.toString(),
+              error:
+                expireErr instanceof Error
+                  ? expireErr.message
+                  : String(expireErr),
+            });
+          });
+      }
       const capRouting: RoutingDecision = {
         target: 'deflection:off_topic',
         routedTo: 'deflection:off_topic',
-        fallbackReason:
-          err.kind === 'session' ? 'cost_cap_session' : 'cost_cap_daily',
+        fallbackReason: fallbackReasonForCapKind(err.kind),
         // No classifier ran — we surface neutral defaults so downstream
         // audit consumers don't need to special-case the cap-gated path.
         classifierIntent: 'off_topic',
@@ -354,6 +408,7 @@ export async function handleTurn(
     userInput: input.userInput,
     traceId,
     sessionId: input.sessionId,
+    licenseId: input.licenseId,
     userId: input.userId,
     institutionId: input.institutionId,
     recentTurns,
@@ -526,6 +581,7 @@ async function executeAgentRoute(
         userInput: turnInput.userInput,
         context: agentContext,
         sessionId: turnInput.sessionId,
+        licenseId: turnInput.licenseId,
       },
       ctx
     );
@@ -545,6 +601,7 @@ async function executeAgentRoute(
         userInput: turnInput.userInput,
         context: agentContext,
         sessionId: turnInput.sessionId,
+        licenseId: turnInput.licenseId,
       },
       ctx
     );
@@ -706,6 +763,7 @@ export async function* streamTurn(
     try {
       await assertWithinCaps({
         sessionId: input.sessionId,
+        licenseId: input.licenseId,
         userId: input.userId,
         traceId,
       });
@@ -718,11 +776,24 @@ export async function* streamTurn(
           spentCents: err.spentCents,
           capCents: err.capCents,
         });
+        // Auto-expire on license-cap hit (mirrors blocking path).
+        if (err.kind === 'license' && input.licenseId) {
+          licenseRepository
+            .markLicenseExpired(input.licenseId)
+            .catch((expireErr: unknown) => {
+              logger.warn('orchestrator.streamTurn: license auto-expire failed', {
+                licenseId: input.licenseId?.toString(),
+                error:
+                  expireErr instanceof Error
+                    ? expireErr.message
+                    : String(expireErr),
+              });
+            });
+        }
         const capRouting: RoutingDecision = {
           target: 'deflection:off_topic',
           routedTo: 'deflection:off_topic',
-          fallbackReason:
-            err.kind === 'session' ? 'cost_cap_session' : 'cost_cap_daily',
+          fallbackReason: fallbackReasonForCapKind(err.kind),
           classifierIntent: 'off_topic',
           classifierConfidence: 1,
         };
@@ -759,6 +830,7 @@ export async function* streamTurn(
       userInput: input.userInput,
       traceId,
       sessionId: input.sessionId,
+      licenseId: input.licenseId,
       userId: input.userId,
       institutionId: input.institutionId,
       recentTurns,
@@ -844,6 +916,7 @@ export async function* streamTurn(
             userInput: input.userInput,
             context: agentContext,
             sessionId: input.sessionId,
+            licenseId: input.licenseId,
           },
           ctx,
           { signal }
@@ -854,6 +927,7 @@ export async function* streamTurn(
             userInput: input.userInput,
             context: agentContext,
             sessionId: input.sessionId,
+            licenseId: input.licenseId,
           },
           ctx,
           { signal }

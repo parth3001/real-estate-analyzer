@@ -36,7 +36,7 @@ If you're new to the project, read it AFTER `PRODUCT_2.0_README.md`. If you're b
 | Cost discipline — data layer | `PRODUCT_2.0_COSTS.md` §7 | ✅ Complete | `CostEvent` collection with provider/model/token/cost fields; per-call emission from classifier + runner |
 | Cost discipline — Phase A caps | Issue #106 Phase A | ✅ Shipped 2026-05-18 | Per-turn (2000 tokens / 8 turns), per-session ($1.00), global daily ($20), prompt caching |
 | DealLicense + DealCredit substrate | Issue #105 substrate | ✅ Shipped 2026-05-18 | Models, repo, address canonicalization, Stripe-idempotent purchase, FIFO credit redemption, race-safe credit-redeem flow |
-| Cost discipline — Phase B caps | Issue #106 Phase B | ⏳ Open (substrate ready) | `CostEvent.licenseId` + sparse index now in place; enforcement code + chat-route license-lookup wiring is the remaining work |
+| Cost discipline — Phase B caps | Issue #106 Phase B | ✅ Shipped 2026-05-18 (enforcement live) | Per-license $2 COGS cap; threading licenseId through orchestrator → classifier → runner → CostEvent; auto-expire license on cap hit. Chat-route license lookup pending |
 | Cost discipline — Phase C caps | Issue #106 Phase C | ⏳ Open | Per-IP cap, anomaly alerts |
 | Pricing & packaging | Issue #105 | ✅ Locked, ⏳ Stripe unwired | $4.99/deal + bundles model decided; `/pricing` page rewritten; payments integration not started |
 | Evals / golden sets | `PRODUCT_2.0_EVALS.md` | ⏳ Partial | Some calibration tests exist; CI-gating not enforced yet |
@@ -262,12 +262,13 @@ The full tracker is `ISSUE_TRACKER.md`. This is the 2.0-era subset (#88-#117).
 
 Variables introduced or repurposed across the 2.0 build. Defaults shown.
 
-### Cost discipline (Issue #106 Phase A)
+### Cost discipline (Issue #106 Phases A + B)
 
 | Var | Default | Purpose |
 |---|---|---|
-| `COST_CAP_SESSION_CENTS` | `100` ($1.00) | Per-session ceiling |
-| `COST_CAP_DAILY_CENTS` | `2000` ($20.00) | Global daily ceiling |
+| `COST_CAP_SESSION_CENTS` | `100` ($1.00) | Per-session ceiling (Phase A) |
+| `COST_CAP_LICENSE_CENTS` | `200` ($2.00) | Per-license COGS budget (Phase B). On-hit auto-expires the license |
+| `COST_CAP_DAILY_CENTS` | `2000` ($20.00) | Global daily ceiling (Phase A) |
 | `COST_GUARDS_ENABLED` | `true` | Master kill-switch |
 | `ANTHROPIC_PROMPT_CACHE_ENABLED` | `true` | Toggle `cache_control: ephemeral` wrapping |
 
@@ -322,11 +323,12 @@ After 2026-05-18 the email includes assumptions + 10-yr projection sections when
 
 ## 8. What's next (priority-ordered)
 
-1. **Phase B cost caps** (Issue #106 Phase B) — per-license cap. Blocked on DealLicense model (Issue #105 substrate spec).
-2. **Stripe integration** (Issue #105) — $4.99/deal + bundles. Phase B caps gate this.
+1. **Chat-route license-lookup wiring** — the orchestrator now accepts `licenseId` end-to-end; the chat route needs to RESOLVE it (look up the user's active license for the property in scope, or have the frontend pass it from `/analysis/:id`). Without this, the per-license cap is dormant in production.
+2. **Stripe integration** (Issue #105) — payment-intent-succeeded webhook → `licenseRepository.purchaseLicense` / `issueCredits`; charge.refunded → `markLicenseRefunded`. Frontend `/pricing` buy-buttons → Stripe Checkout.
 3. **Phase C cost caps** (Issue #106 Phase C) — per-IP cap, anomaly alerts. Ships with public launch.
-4. **CI-gated eval suite** (`PRODUCT_2.0_EVALS.md`) — calibration tests need to block merges on drift.
-5. **PDF attachment on email CTA** (Issue #96) — revisit after Phase B; legacy wizard PDF infra exists but coupled to wizard request shape.
+4. **Daily expiry sweeper cron** — call `markLicenseExpired` on rows where `expiresAt < now`; `markCreditExpired` similarly.
+5. **CI-gated eval suite** (`PRODUCT_2.0_EVALS.md`) — calibration tests need to block merges on drift.
+6. **PDF attachment on email CTA** (Issue #96) — revisit after Stripe; legacy wizard PDF infra exists but coupled to wizard request shape.
 
 ---
 
@@ -344,4 +346,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (DealLicense substrate + CostEvent.licenseId field)
+**Last updated:** 2026-05-18 (Phase B per-license cap enforcement + license auto-expire on cap hit)
