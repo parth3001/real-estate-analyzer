@@ -69,7 +69,13 @@ For full thesis: read [REANALYZR_2.0_THESIS_AND_DECOMPOSITION_v3.md](REANALYZR_2
 |---|---|
 | [PRODUCT_2.0_README.md](PRODUCT_2.0_README.md) | This doc — entry point, status, reading paths |
 
-**Total planning surface: ~6,500 lines across 11 documents.**
+### Implementation mirror (living)
+
+| Doc | Owns |
+|---|---|
+| [PRODUCT_2.0_IMPLEMENTATION_LOG.md](PRODUCT_2.0_IMPLEMENTATION_LOG.md) | What's actually shipped vs. planned; post-plan architectural decisions; issue index; env-var inventory; file map; runbook. **Read AFTER this doc to get current state.** |
+
+**Total planning surface: ~6,500 lines across 11 documents + the implementation log.**
 
 ---
 
