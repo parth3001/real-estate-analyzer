@@ -29,6 +29,7 @@ import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { ChatOverlay } from '../components/Chat/ChatOverlay';
 import { AppLayout } from '../components/layout/AppLayout';
+import PublicHeader from '../components/common/PublicHeader';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AppPageLocationState {
@@ -94,9 +95,12 @@ export default function AppPage(): React.JSX.Element {
     setActiveSessionId(`__pending-${Date.now()}`);
   };
 
-  // Anonymous users: full-bleed chat (no sidebar). Preserves the W6-S2b
-  // hero-embed entry shape — landing-page users go from form input
-  // straight into a clean chat surface without seeing platform nav.
+  // Anonymous users (hero-embed entry from LandingPage): PublicHeader
+  // on top + ChatOverlay below. The header preserves brand + nav to
+  // Pricing/Blog/Sample Analysis/Log in — so anon users keep the same
+  // acquisition surfaces they had on the landing page (Issue #110).
+  // Authed users get AppLayout's sidebar branding instead — no
+  // PublicHeader needed for them.
   if (!user) {
     return (
       <Box
@@ -104,11 +108,15 @@ export default function AppPage(): React.JSX.Element {
           position: 'fixed',
           inset: 0,
           display: 'flex',
+          flexDirection: 'column',
           bgcolor: 'background.default',
         }}
         data-testid="app-page"
       >
-        <ChatOverlay initialUserInput={state.initialUserInput} />
+        <PublicHeader />
+        <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
+          <ChatOverlay initialUserInput={state.initialUserInput} />
+        </Box>
       </Box>
     );
   }
