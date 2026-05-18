@@ -37,6 +37,50 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { ModelTier } from '../tools/types';
 import { logger } from '../../utils/logger';
 
+// ===== Prompt caching (Issue #106 Phase A) =====
+//
+// Anthropic caches system prompts when wrapped as a content-block array
+// with `cache_control: { type: 'ephemeral' }` on the cached block. Read
+// from cache costs ~10% of normal input tokens — a 30-50% effective
+// discount on the typical agent turn since the system prompt is the
+// bulk of input tokens.
+//
+// The cache MIN size is ~1024 tokens (Anthropic-documented). We use a
+// character-count proxy of 2000 to stay comfortably above the floor
+// (roughly 4 chars per token). Falling below it costs nothing — the
+// SDK silently ignores cache_control on too-small blocks — but adding
+// the wrapper unnecessarily noises the wire payload, hence the gate.
+//
+// We toggle via env var so tests can disable when not relevant.
+
+const PROMPT_CACHE_MIN_CHARS = 2000;
+const PROMPT_CACHE_ENABLED =
+  (process.env.ANTHROPIC_PROMPT_CACHE_ENABLED ?? 'true').toLowerCase() ===
+  'true';
+
+/**
+ * Format a system prompt for the SDK. Returns either:
+ *   - a string (when below the cache threshold or feature off)
+ *   - a content-block array with cache_control on the single block
+ *     (when above the threshold + feature on)
+ *
+ * Both shapes are valid SDK inputs; the array form opts into caching.
+ */
+function formatSystemForCache(
+  systemPrompt: string
+): string | Array<{ type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }> {
+  if (!PROMPT_CACHE_ENABLED || systemPrompt.length < PROMPT_CACHE_MIN_CHARS) {
+    return systemPrompt;
+  }
+  return [
+    {
+      type: 'text',
+      text: systemPrompt,
+      cache_control: { type: 'ephemeral' },
+    },
+  ];
+}
+
 // ===== Resolved model names =====
 
 export function resolveModelName(tier: ModelTier): string {
@@ -273,12 +317,18 @@ async function withLlmRetry<T>(
 export const defaultAnthropicAdapter: AnthropicAdapter = {
   async call(input: AnthropicCallInput): Promise<AnthropicCallOutput> {
     const model = resolveModelName(input.tier);
+    // Wrap the system prompt for prompt-caching when it's large enough
+    // to be worth caching (Issue #106 Phase A). See formatSystemForCache.
+    const systemForApi = formatSystemForCache(input.systemPrompt);
     const response = await withLlmRetry(`call:${model}`, () =>
       getClient().messages.create({
         model,
         max_tokens: input.maxTokens ?? 1024,
         temperature: input.temperature ?? 0,
-        system: input.systemPrompt,
+        // Cast through unknown: the SDK's `system` field accepts both
+        // a string and an array-of-blocks, but the union type is
+        // narrower in the TS bindings than the wire reality.
+        system: systemForApi as unknown as string,
         messages: [{ role: 'user', content: input.userPrompt }],
       })
     );
@@ -329,7 +379,7 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
       model,
       max_tokens: input.maxTokens ?? 4096,
       temperature: input.temperature ?? 0,
-      system: input.systemPrompt,
+      system: formatSystemForCache(input.systemPrompt),
       messages: input.messages,
       tools: input.tools,
     } as unknown as SdkMessageCreate;
@@ -386,7 +436,7 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
       model,
       max_tokens: input.maxTokens ?? 4096,
       temperature: input.temperature ?? 0,
-      system: input.systemPrompt,
+      system: formatSystemForCache(input.systemPrompt),
       messages: input.messages,
       tools: input.tools,
     } as unknown as SdkMessageCreate;

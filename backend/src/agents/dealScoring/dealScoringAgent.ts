@@ -400,6 +400,12 @@ export interface DealScoringRunInput {
   userInput: string;
   /** Optional profile/recent-decisions context for the agent. */
   context?: Record<string, unknown>;
+  /**
+   * Session identifier — propagated to every CostEvent the runner
+   * emits so per-session cap aggregation (Issue #106 Phase A) covers
+   * agent spend, not just the classifier.
+   */
+  sessionId?: string;
 }
 
 export interface DealScoringRunOutput extends AgentRunOutput {

@@ -52,7 +52,11 @@ export type OrchestratorStreamEvent =
       routedTo: string;
       classifierIntent: string;
       classifierConfidence: number;
-      fallbackReason?: 'low_confidence' | 'classifier_fallback';
+      fallbackReason?:
+        | 'low_confidence'
+        | 'classifier_fallback'
+        | 'cost_cap_session'
+        | 'cost_cap_daily';
     }
   | {
       type: 'text_delta';

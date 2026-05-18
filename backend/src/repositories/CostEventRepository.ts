@@ -48,6 +48,7 @@ export class CostEventRepository {
     const validated = CostEventSchema.parse(input);
     const event = await CostEventModel.create({
       traceId: validated.traceId,
+      sessionId: validated.sessionId,
       userId: validated.userId,
       institutionId: validated.institutionId,
       costType: validated.costType,

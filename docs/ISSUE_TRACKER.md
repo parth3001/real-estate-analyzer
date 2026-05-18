@@ -512,6 +512,67 @@ NO monthly subscription. Page needs full rewrite, not just price swap.
 ---
 
 ### Issue #106: Cost-cap layered protection (engineering workstream)
+**Status**: 🟡 IN PROGRESS — Phase A shipped (2026-05-18), Phases B + C pending
+**Priority**: P0 - CRITICAL (runaway-spend protection before any user payment)
+
+**Phase A Resolution (2026-05-18)**:
+Per-turn caps tightened (`maxTokensPerCall: 2048 → 2000`, `maxTurns:
+10 → 8`) in `agentRunner.ts` for both the blocking + streaming runners.
+The defaults flow through every agent (deal_scoring, qa,
+adversarial_critic) since each constructs an `AgentConfig` without
+overriding the caps.
+
+Per-session + global daily caps shipped as `agents/runtime/costGuards.ts`.
+`assertWithinCaps()` is called at the TOP of both `handleTurn` and
+`streamTurn` BEFORE the Haiku classifier — so a session over budget
+doesn't keep paying the classifier per attempted turn. Two aggregate
+queries (session sum, daily sum since UTC midnight) run in parallel,
+each against an indexed field. Throws `CostCapExceededError` with a
+`userFacingMessage` the orchestrator surfaces as the assistant turn.
+Defaults: `COST_CAP_SESSION_CENTS=100` ($1.00), `COST_CAP_DAILY_CENTS=2000`
+($20.00); both env-overridable for ops dial-up/down without redeploy.
+
+Schema changes: `CostEvent.sessionId?: string` (sparse-indexed) so the
+per-session aggregate is sub-ms. Backward compatible — pre-#106 events
+have null sessionId and are excluded from session-cap aggregates.
+
+Anthropic prompt caching enabled in `anthropicAdapter.ts` via
+`cache_control: { type: 'ephemeral' }` on system-prompt blocks above
+2000 chars (well above the SDK's 1024-token minimum). Toggled by
+`ANTHROPIC_PROMPT_CACHE_ENABLED`. Expected 30-50% input-token
+discount on the typical multi-turn agent run.
+
+Routing audit extended: `RoutingDecision.fallbackReason` admits
+`'cost_cap_session'` and `'cost_cap_daily'` so cap-gated turns show up
+distinctly on the routing dashboard rather than masquerading as
+classifier fallbacks.
+
+Tests: 10/10 new `costGuards.test.ts` assertions cover both caps,
+the session-before-daily ordering, the user-facing-message
+sanitization (no dollar figure leak), and the snapshot helper.
+Existing 149 cost/orchestrator/runner tests still pass — the schema
+field addition + defaults tightening were both backward-compatible.
+
+**Files affected** (Phase A):
+- `backend/src/models/cost/CostEvent.ts` — `sessionId` field + sparse index
+- `backend/src/repositories/CostEventRepository.ts` — persist sessionId
+- `backend/src/agents/runtime/costGuards.ts` — NEW
+- `backend/src/agents/runtime/__tests__/costGuards.test.ts` — NEW
+- `backend/src/agents/llm/anthropicAdapter.ts` — prompt caching wrapper
+- `backend/src/agents/runner/agentRunner.ts` — defaults 2000/8, sessionId pass-through
+- `backend/src/agents/orchestrator/orchestrator.ts` — guard at top of both turn paths
+- `backend/src/agents/orchestrator/intentClassifier.ts` — sessionId pass-through
+- `backend/src/agents/orchestrator/router.ts` — extended fallbackReason enum
+- `backend/src/agents/orchestrator/streamEvents.ts` — extended fallbackReason enum
+- `backend/src/agents/dealScoring/dealScoringAgent.ts` — sessionId pass-through
+- `backend/src/agents/qa/qaAgent.ts` — sessionId pass-through
+
+**Phase A status**: ✅ SHIPPED. Phase B (per-license cap) + Phase C
+(per-IP cap, anomaly alert) remain open.
+
+---
+
+### Issue #106 (original spec preserved for Phases B + C):
 **Status**: 🟡 OPEN — blocks Stripe go-live
 **Priority**: P0 - CRITICAL (runaway-spend protection before any user payment)
 **Reported**: 2026-05-17 (Marcus Chen cost-control conversation — see

@@ -73,6 +73,13 @@ const ObjectIdSchema = z.custom<Types.ObjectId | string>(
  */
 export const CostEventSchema = z.object({
   traceId: z.string().min(1),
+  /**
+   * Session identifier (Issue #106 Phase A). One sessionId can span many
+   * traceIds (one per turn). Optional only because pre-#106 events
+   * predate the field; new writes from the orchestrator + agent runner
+   * always supply it. Indexed for the per-session cap query.
+   */
+  sessionId: z.string().min(1).optional(),
   userId: ObjectIdSchema,
   institutionId: ObjectIdSchema.optional(),
 
@@ -103,6 +110,10 @@ const costEventSchema = new Schema(
     traceId: {
       type: String,
       required: true,
+      index: true,
+    },
+    sessionId: {
+      type: String,
       index: true,
     },
     userId: {
@@ -176,6 +187,10 @@ costEventSchema.index({ userId: 1, timestamp: -1 });
 
 // "All cost events for one trace" — debug + per-query cost breakdown.
 costEventSchema.index({ traceId: 1, timestamp: 1 });
+
+// "Per-session cumulative spend" — Issue #106 Phase A session cap.
+// Sparse so we don't index pre-#106 documents (no sessionId).
+costEventSchema.index({ sessionId: 1, timestamp: 1 }, { sparse: true });
 
 // "Per-provider per-day spend" — finance/ops rollup.
 costEventSchema.index({ provider: 1, timestamp: -1 });

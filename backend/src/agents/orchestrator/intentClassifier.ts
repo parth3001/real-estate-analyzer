@@ -322,6 +322,13 @@ export interface ClassifyInput {
   userInput: string;
   /** For substrate correlation. Provided by the orchestrator. */
   traceId: string;
+  /**
+   * Session identifier — passed straight through to the CostEvent so
+   * per-session cap aggregation (Issue #106) can include the
+   * classifier's spend. Optional only for legacy callers; the
+   * orchestrator always supplies it.
+   */
+  sessionId?: string;
   userId: Types.ObjectId;
   institutionId?: Types.ObjectId;
   /**
@@ -379,6 +386,7 @@ export async function classifyIntent(input: ClassifyInput): Promise<ClassifyResu
   });
   const costEventId = await costEventRepository.writeCostEvent({
     traceId: input.traceId,
+    sessionId: input.sessionId,
     userId: input.userId,
     institutionId: input.institutionId,
     costType: 'llm',

@@ -62,6 +62,10 @@ import {
   type DealScoreCardWireShape,
 } from './dealScoreCardProjection';
 import { generateFollowupChips } from './followupChips';
+import {
+  assertWithinCaps,
+  CostCapExceededError,
+} from '../runtime/costGuards';
 
 // ===== Input / output =====
 
@@ -275,7 +279,65 @@ export async function handleTurn(
     tools: toolRegistry,
   };
 
-  // ===== 0. Load conversation context (Option A — orchestrator threads it) =====
+  // ===== 0a. Cost-cap guard (Issue #106 Phase A) =====
+  //
+  // Runs BEFORE the Haiku classifier so a session that's already over
+  // budget doesn't keep racking up classifier calls per attempted turn.
+  // The guard does two cheap aggregate queries (session sum + daily sum)
+  // and throws CostCapExceededError when either ceiling is hit. We
+  // catch it here and return a polite OrchestratorTurnOutput rather
+  // than crashing the request — the chat surface renders the
+  // userFacingMessage as the assistant turn.
+  try {
+    await assertWithinCaps({
+      sessionId: input.sessionId,
+      userId: input.userId,
+      traceId,
+    });
+  } catch (err) {
+    if (err instanceof CostCapExceededError) {
+      // No CostEvent emitted (we never called the LLM). The
+      // ConversationEvent IS still written below the normal path so
+      // the cap-hit turn is auditable — but we skip classification and
+      // routing entirely, with a synthetic routing decision the
+      // dashboard can filter on.
+      logger.info('orchestrator: cap-gated turn', {
+        traceId,
+        sessionId: input.sessionId,
+        kind: err.kind,
+        spentCents: err.spentCents,
+        capCents: err.capCents,
+      });
+      const capRouting: RoutingDecision = {
+        target: 'deflection:off_topic',
+        routedTo: 'deflection:off_topic',
+        fallbackReason:
+          err.kind === 'session' ? 'cost_cap_session' : 'cost_cap_daily',
+        // No classifier ran — we surface neutral defaults so downstream
+        // audit consumers don't need to special-case the cap-gated path.
+        classifierIntent: 'off_topic',
+        classifierConfidence: 1,
+      };
+      // Skip the substrate ConversationEvent: with no classifier output
+      // there's no intent/confidence to record, and writing a half-formed
+      // event noises the dashboard. The cost-guards log line above is
+      // the audit trail.
+      return {
+        traceId,
+        responseText: err.userFacingMessage,
+        routing: capRouting,
+        events: {
+          conversationEventId: new Types.ObjectId(), // placeholder; not persisted
+          related: [],
+        },
+        totalCostCents: 0,
+        agentStubbed: false,
+      };
+    }
+    throw err;
+  }
+
+  // ===== 0b. Load conversation context (Option A — orchestrator threads it) =====
   //
   // The current turn's ConversationEvent isn't written until step 4, so
   // this returns turns 1..N-1 — exactly the history a classifier /
@@ -291,6 +353,7 @@ export async function handleTurn(
   const classification = await classifyIntent({
     userInput: input.userInput,
     traceId,
+    sessionId: input.sessionId,
     userId: input.userId,
     institutionId: input.institutionId,
     recentTurns,
@@ -459,7 +522,11 @@ async function executeAgentRoute(
 
   if (target === 'agent:deal_scoring') {
     const result = await runDealScoringAgent(
-      { userInput: turnInput.userInput, context: agentContext },
+      {
+        userInput: turnInput.userInput,
+        context: agentContext,
+        sessionId: turnInput.sessionId,
+      },
       ctx
     );
     return {
@@ -474,7 +541,11 @@ async function executeAgentRoute(
 
   if (target === 'agent:qa') {
     const result = await runQaAgent(
-      { userInput: turnInput.userInput, context: agentContext },
+      {
+        userInput: turnInput.userInput,
+        context: agentContext,
+        sessionId: turnInput.sessionId,
+      },
       ctx
     );
     return {
@@ -625,7 +696,59 @@ export async function* streamTurn(
   };
 
   try {
-    // ===== 0. Load conversation context =====
+    // ===== 0a. Cost-cap guard (Issue #106 Phase A) =====
+    //
+    // Same guard as the non-streaming path — refuse before the
+    // classifier when the session is over budget. The streaming
+    // surface gets a single text_delta with the user-facing message
+    // and a synthetic `final` event so the SSE handshake completes
+    // cleanly (no half-open stream).
+    try {
+      await assertWithinCaps({
+        sessionId: input.sessionId,
+        userId: input.userId,
+        traceId,
+      });
+    } catch (err) {
+      if (err instanceof CostCapExceededError) {
+        logger.info('orchestrator.streamTurn: cap-gated turn', {
+          traceId,
+          sessionId: input.sessionId,
+          kind: err.kind,
+          spentCents: err.spentCents,
+          capCents: err.capCents,
+        });
+        const capRouting: RoutingDecision = {
+          target: 'deflection:off_topic',
+          routedTo: 'deflection:off_topic',
+          fallbackReason:
+            err.kind === 'session' ? 'cost_cap_session' : 'cost_cap_daily',
+          classifierIntent: 'off_topic',
+          classifierConfidence: 1,
+        };
+        yield {
+          type: 'routing',
+          target: capRouting.target,
+          routedTo: capRouting.routedTo,
+          classifierIntent: capRouting.classifierIntent,
+          classifierConfidence: capRouting.classifierConfidence,
+          fallbackReason: capRouting.fallbackReason,
+        };
+        yield { type: 'text_delta', text: err.userFacingMessage };
+        yield {
+          type: 'done',
+          traceId,
+          conversationEventId: new Types.ObjectId().toHexString(),
+          relatedEventIds: [],
+          totalCostCents: 0,
+          agentStubbed: false,
+        };
+        return;
+      }
+      throw err;
+    }
+
+    // ===== 0b. Load conversation context =====
     const recentTurns: RecentTurn[] = await loadRecentTurns(
       eventsRepositoryReads,
       input.sessionId
@@ -635,6 +758,7 @@ export async function* streamTurn(
     const classification = await classifyIntent({
       userInput: input.userInput,
       traceId,
+      sessionId: input.sessionId,
       userId: input.userId,
       institutionId: input.institutionId,
       recentTurns,
@@ -716,13 +840,21 @@ export async function* streamTurn(
       let agentStream: AsyncGenerator<AgentStreamEvent, void, void>;
       if (routing.target === 'agent:qa') {
         agentStream = runQaAgentStream(
-          { userInput: input.userInput, context: agentContext },
+          {
+            userInput: input.userInput,
+            context: agentContext,
+            sessionId: input.sessionId,
+          },
           ctx,
           { signal }
         );
       } else if (routing.target === 'agent:deal_scoring') {
         agentStream = runDealScoringAgentStream(
-          { userInput: input.userInput, context: agentContext },
+          {
+            userInput: input.userInput,
+            context: agentContext,
+            sessionId: input.sessionId,
+          },
           ctx,
           { signal }
         );

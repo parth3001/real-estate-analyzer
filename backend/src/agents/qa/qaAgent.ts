@@ -162,6 +162,11 @@ const AGENT_CONFIG: AgentConfig = {
 export interface QaRunInput {
   userInput: string;
   context?: Record<string, unknown>;
+  /**
+   * Session identifier — propagated to CostEvent writes for the
+   * per-session cap (Issue #106 Phase A).
+   */
+  sessionId?: string;
 }
 
 export type QaRunOutput = AgentRunOutput;

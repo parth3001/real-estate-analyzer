@@ -27,10 +27,12 @@
  * SAFETY CAP
  * ----------
  *
- * The loop has a maxTurns cap (default 10) to prevent runaway agents.
- * If the cap is hit, the runner returns whatever text has been emitted
- * with a hadMaxTurnsHit flag — the orchestrator decides whether to
- * surface this as a fallback message or retry.
+ * The loop has a maxTurns cap (default 8 per Issue #106 Phase A) to
+ * prevent runaway agents. Each iteration is also capped at 2000
+ * response tokens (down from 2048). If the maxTurns cap is hit, the
+ * runner returns whatever text has been emitted with a hadMaxTurnsHit
+ * flag — the orchestrator decides whether to surface this as a
+ * fallback message or retry.
  */
 
 import * as crypto from 'crypto';
@@ -57,9 +59,18 @@ export interface AgentConfig {
   systemPrompt: string;
   /** Tool registry subset the agent is allowed to call. */
   allowedTools: Record<string, Tool<unknown, unknown>>;
-  /** Hard cap on tool-use loop iterations. Default 10. */
+  /**
+   * Hard cap on tool-use loop iterations. Default 8 (Issue #106 Phase A —
+   * tightened from 10; six 2k-token iterations have never been observed
+   * to need more in practice, and the cap protects against runaway loops
+   * if a tool's response pushes the model into self-correction cycles).
+   */
   maxTurns?: number;
-  /** Cap on response tokens per API call. Default 2048. */
+  /**
+   * Cap on response tokens per API call. Default 2000 (Issue #106 Phase A —
+   * tightened from 2048; gives a clean round budget for ops dashboards
+   * and matches the per-turn ceiling agreed in the cost-discipline call).
+   */
   maxTokensPerCall?: number;
 }
 
@@ -71,6 +82,13 @@ export interface AgentRunInput {
   /** Optional structured context the agent should see (profile, recent
    *  decisions, etc.). Stringified into a "system context" prefix. */
   context?: Record<string, unknown>;
+  /**
+   * Stable session identifier — same one the orchestrator carries.
+   * Propagated to every CostEvent this agent emits so the per-session
+   * cap (Issue #106 Phase A) can aggregate across all turns in the
+   * session, not just the current trace.
+   */
+  sessionId?: string;
 }
 
 export interface AgentToolCallTrace {
@@ -175,8 +193,8 @@ export async function runAgent(
   ctx: ToolContext
 ): Promise<AgentRunOutput> {
   const adapter = getAnthropicAdapter();
-  const maxTurns = config.maxTurns ?? 10;
-  const maxTokensPerCall = config.maxTokensPerCall ?? 2048;
+  const maxTurns = config.maxTurns ?? 8;
+  const maxTokensPerCall = config.maxTokensPerCall ?? 2000;
 
   // Build tool definitions from allowed tools
   const toolDefinitions = Object.entries(config.allowedTools).map(([name, t]) =>
@@ -229,6 +247,7 @@ export async function runAgent(
     totalCostCents += callCost;
     const costEventId = await costEventRepository.writeCostEvent({
       traceId: ctx.traceId,
+      sessionId: input.sessionId,
       userId: ctx.userId,
       institutionId: ctx.institutionId,
       costType: 'llm',
@@ -426,8 +445,8 @@ export async function* runAgentStream(
   opts: { signal?: AbortSignal } = {}
 ): AsyncGenerator<AgentStreamEvent, void, void> {
   const adapter = getAnthropicAdapter();
-  const maxTurns = config.maxTurns ?? 10;
-  const maxTokensPerCall = config.maxTokensPerCall ?? 2048;
+  const maxTurns = config.maxTurns ?? 8;
+  const maxTokensPerCall = config.maxTokensPerCall ?? 2000;
   const signal = opts.signal;
 
   const toolDefinitions = Object.entries(config.allowedTools).map(([name, t]) =>
@@ -533,6 +552,7 @@ export async function* runAgentStream(
     totalCostCents += callCost;
     const costEventId = await costEventRepository.writeCostEvent({
       traceId: ctx.traceId,
+      sessionId: input.sessionId,
       userId: ctx.userId,
       institutionId: ctx.institutionId,
       costType: 'llm',

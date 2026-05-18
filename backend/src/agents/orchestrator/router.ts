@@ -55,8 +55,18 @@ export interface RoutingDecision {
   target: RoutingTarget;
   /** The substrate-shaped enum value for the ConversationEvent.routedTo field. */
   routedTo: RoutedTo;
-  /** Set when the classifier's confidence was below threshold. */
-  fallbackReason?: 'low_confidence' | 'classifier_fallback';
+  /**
+   * Set when the classifier's confidence was below threshold OR when
+   * the orchestrator short-circuited for cost / safety reasons before
+   * even reaching the classifier (Issue #106 Phase A — `cost_cap_*`
+   * variants). Kept as an open enum so future fallback sources don't
+   * need a parallel field.
+   */
+  fallbackReason?:
+    | 'low_confidence'
+    | 'classifier_fallback'
+    | 'cost_cap_session'
+    | 'cost_cap_daily';
   /** Original classifier output (for audit). */
   classifierIntent: ChatIntent;
   classifierConfidence: number;
