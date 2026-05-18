@@ -35,7 +35,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import ReactMarkdown from 'react-markdown';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
@@ -1214,7 +1214,14 @@ function FollowupChips({
 /**
  * CTA row rendered below a DealScoreCard. Two buttons:
  *   📧 Email me this — opens a modal to capture email + send PDF summary
- *   📊 Add to my portfolio — routes to signup flow (W6-S5 finishes merge)
+ *   🔖 Save this deal — adds the analyzed property to the user's Saved
+ *      Properties (visible in the new sidebar's "Saved properties" route).
+ *      For anonymous users, routes through magic-link signup first, then
+ *      claims the deal on verify (W6-S5 + Phase 2 substrate→Deal
+ *      materialization). The actual destination is Saved Properties —
+ *      the CTA copy used to say "Add to my portfolio" but that was
+ *      misleading (Portfolio is for properties the user OWNS; Saved
+ *      Properties is the analysis archive). Renamed 2026-05-17.
  *
  * Apple HIG: secondary actions on the card, tinted style, comfortable
  * 44pt touch targets.
@@ -1249,12 +1256,12 @@ function ChatCardCtas({
       </Button>
       <Button
         variant="contained"
-        startIcon={<TrendingUpIcon />}
+        startIcon={<BookmarkBorderIcon />}
         onClick={() => onPortfolioCta?.(message)}
         sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
         data-testid="chat-cta-portfolio"
       >
-        Add to my portfolio
+        Save this deal
       </Button>
     </Box>
   );

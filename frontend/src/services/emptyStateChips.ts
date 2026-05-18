@@ -59,11 +59,6 @@ export interface EmptyStateChipsResult {
   subhead: string;
 }
 
-// Number of recent threads we consider for personalization. Three is
-// plenty — we surface the latest as "Continue", and the latest two for
-// the comparison chip. Anything past that is sidebar territory.
-const PERSONALIZED_PEEK = 3;
-
 // Chip pool for the brand-new / anon state. Each is at experienced-
 // investor depth, reveals a different platform capability, and is
 // phrased as a productive starting prompt (NOT a question to the
@@ -88,19 +83,14 @@ const RETURNING_PLATFORM_CHIPS: string[] = [
   'Run a sensitivity analysis on my last property',
 ];
 
-/**
- * Compress a thread title into a chip-friendly fragment. Strips the
- * "analyze" verb if present (the chip already has "Continue:" framing,
- * the verb is redundant), and truncates to ~40 chars so the chip stays
- * on one line in the sidebar/empty-state.
+/*
+ * Note: a `compressTitleForChip()` helper used to live here for the
+ * "Continue: <title>" / "Review my <title>" personalized chips. Those
+ * chips were removed 2026-05-17 (Issue #113) because the agent has no
+ * mechanism today to resolve thread-title references back to specific
+ * DecisionEvents. When that capability ships, restore the helper +
+ * the personalized chips together.
  */
-function compressTitleForChip(title: string, maxLen = 40): string {
-  // Strip a leading "analyze" / "analyse" verb to keep the chip terse.
-  const stripped = title.replace(/^analyz[es]e?\s+/i, '');
-  const cleaned = stripped.replace(/\s+/g, ' ').trim();
-  if (cleaned.length <= maxLen) return cleaned;
-  return cleaned.slice(0, maxLen - 1).trimEnd() + '…';
-}
 
 export function generateEmptyStateChips(
   input: EmptyStateChipsInput
@@ -117,48 +107,40 @@ export function generateEmptyStateChips(
     };
   }
 
-  // ===== Returning user — personalize =====
-  const recent = threads.slice(0, PERSONALIZED_PEEK);
-  const latest = recent[0];
-  const second = recent[1];
-
-  const chips: string[] = [];
-
-  // 1. Continue the most recent thread.
-  chips.push(`Continue: ${compressTitleForChip(latest.title)}`);
-
-  // 2. Mention there are more if 2+ threads exist — but DO NOT offer
-  //    the "Compare A vs B" chip yet. Property-to-property comparison
-  //    is Phase 4b (Issue #102), not yet shipped. Surfacing the chip
-  //    here would lead users to a dead-end answer from the agent.
-  //    Replaced with a "review prior" prompt that the chat CAN handle.
-  if (second) {
-    chips.push(`Review my ${compressTitleForChip(second.title, 30)}`);
-  }
-
-  // 3. Platform-level depth chip. For users without a portfolio /
-  //    pipeline yet, the "how's my portfolio doing" chip would be a
-  //    dead end — Phase 3 doesn't know yet. Keep it depth-flavored
-  //    but not data-dependent.
-  chips.push('Stress-test my latest deal at 7% rates');
-
-  // 4. One more cross-cutting capability chip.
-  chips.push("What's the bear case on my latest analysis?");
-
-  // Cap at 4 — keeps the empty state visually calm.
-  const finalChips = chips.slice(0, 4);
-
+  // ===== Returning user =====
+  //
+  // The sidebar already shows their recent threads, time-grouped. The
+  // empty-state chips should NOT duplicate that picker — they should
+  // offer NEW actions the agent can ACTUALLY handle today.
+  //
+  // What we removed 2026-05-17 (and why):
+  //   - "Continue: <title>" — semi-dead-end. The chip text was the
+  //     thread TITLE, which (when sent as a chat message) becomes a
+  //     new user turn the agent has no way to resolve as "open that
+  //     thread." The sidebar is the right way to resume; chips
+  //     shouldn't duplicate it.
+  //   - "Review my <title>" — same problem.
+  //   - "Stress-test my latest deal at 7% rates" — the agent has NO
+  //     mechanism today to resolve "my latest deal" to a specific
+  //     DecisionEvent and re-run with overrides. Tapping the chip
+  //     produced "Chat turn failed." (Issue #113.)
+  //   - "What's the bear case on my latest analysis?" — same root cause.
+  //
+  // Until we ship the "look up my latest deal" agent capability
+  // (Issue #113), returning-user empty-state shows the SAME chip set
+  // as a brand-new user. Personalization lives in the sidebar (thread
+  // history is the personalization). The greeting + subhead address
+  // the user by name; the chips give them safe new actions.
   const greeting =
     firstName && firstName.trim().length > 0
       ? `Welcome back, ${firstName.trim().split(/\s+/)[0]}.`
       : 'Welcome back.';
-  // Subhead nudges toward continuing recent work without prescribing.
   const subhead = isAuthed
-    ? `Your last ${threads.length === 1 ? 'analysis is' : `${recent.length} analyses are`} in the sidebar — or start something new.`
+    ? `Your prior ${threads.length === 1 ? 'analysis is' : 'analyses are'} in the sidebar — or start a new one.`
     : 'Pick up where you left off, or start something new.';
 
   return {
-    chips: finalChips,
+    chips: GENERIC_DEPTH_CHIPS,
     headline: greeting,
     subhead,
   };

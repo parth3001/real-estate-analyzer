@@ -45,6 +45,13 @@ const UNSHIPPED_FEATURE_BLACKLIST = [
   'compare two properties',
   'compare against my saved',
   'side-by-side',
+  // Issue #113 — the agent has no mechanism today to resolve
+  // "my latest deal" or "my latest analysis" to a specific DecisionEvent
+  // and re-run with overrides. Chips making this assumption produce
+  // "Chat turn failed" when tapped. Restore when the recall capability
+  // ships.
+  'my latest deal',
+  'my latest analysis',
 ];
 
 function isUsableChip(chip: string): boolean {
@@ -84,8 +91,19 @@ describe('generateEmptyStateChips — brand-new state', () => {
   });
 });
 
-describe('generateEmptyStateChips — returning user (1 thread)', () => {
-  it('top chip is "Continue: <title>" and greeting includes firstName', () => {
+describe('generateEmptyStateChips — returning user (1+ threads)', () => {
+  it('uses the SAME generic chip set as brand-new users (Issue #113)', () => {
+    // Personalized chips like "Continue: <title>" and "Stress-test my
+    // latest deal at 7% rates" were removed 2026-05-17 — they implied
+    // capabilities (recall + open a prior thread, resolve "my latest
+    // deal" to a DecisionEvent and apply overrides) the agent doesn't
+    // have today. Tapping them produced "Chat turn failed" because the
+    // agent received a chat message it couldn't resolve.
+    //
+    // Until Issue #113 ships the "look up my latest deal" agent
+    // capability, returning users see the same safe generic chips.
+    // The sidebar IS the personalization — recent threads are listed
+    // there.
     const threads = [
       makeThread({ id: 't1', title: 'analyze 1837 Walnut Way Anna TX' }),
     ];
@@ -94,11 +112,20 @@ describe('generateEmptyStateChips — returning user (1 thread)', () => {
       threads,
       firstName: 'Parth',
     });
+
+    // Personalized "Continue:" and "Review my" chips must NOT appear.
+    expect(result.chips.some((c) => c.startsWith('Continue:'))).toBe(false);
+    expect(result.chips.some((c) => c.startsWith('Review my'))).toBe(false);
+    expect(
+      result.chips.some((c) => c.toLowerCase().includes('my latest'))
+    ).toBe(false);
+    expect(
+      result.chips.some((c) => c.toLowerCase().includes('my latest deal'))
+    ).toBe(false);
+
+    // Greeting still personalizes (sidebar + greeting carry the
+    // "we know you" signal, not chips).
     expect(result.headline).toMatch(/Welcome back, Parth/);
-    expect(result.chips[0].startsWith('Continue:')).toBe(true);
-    // The "analyze" verb should be stripped from the chip text.
-    expect(result.chips[0].toLowerCase()).not.toMatch(/continue: analyz/);
-    expect(result.chips[0]).toContain('1837 Walnut Way');
   });
 
   it('falls back to a generic greeting when firstName is missing', () => {
@@ -107,56 +134,27 @@ describe('generateEmptyStateChips — returning user (1 thread)', () => {
     expect(result.headline).toMatch(/Welcome back/);
     expect(result.headline).not.toMatch(/undefined|null/);
   });
-});
 
-describe('generateEmptyStateChips — returning user (2+ threads)', () => {
-  it('does NOT emit a "Compare A vs B" chip — property comparison is Issue #102, not yet shipped', () => {
-    const threads = [
-      makeThread({ id: 't1', title: '411 Oak Boulevard' }),
-      makeThread({ id: 't2', title: '336 Highland Drive' }),
-      makeThread({ id: 't3', title: '12 Pine Street' }),
-    ];
-    const result = generateEmptyStateChips({
-      isAuthed: true,
-      threads,
-      firstName: 'Parth',
-    });
-    // Regression guard: until Phase 4b ships CompareCard, no chip
-    // should propose property-to-property comparison.
-    const compareChip = result.chips.find((c) => c.startsWith('Compare '));
-    expect(compareChip).toBeUndefined();
-    // And we should still surface the secondary thread somehow —
-    // currently as a "Review my ..." chip.
-    const reviewChip = result.chips.find((c) => c.startsWith('Review my'));
-    expect(reviewChip).toBeDefined();
-    expect(reviewChip).toContain('336 Highland');
-  });
-
-  it('caps chip count at 4 even with many threads', () => {
-    const threads: ThreadRecord[] = Array.from({ length: 10 }).map((_, i) =>
-      makeThread({ id: `t${i}`, title: `Property ${i}` })
-    );
-    const result = generateEmptyStateChips({ isAuthed: true, threads });
-    expect(result.chips.length).toBeLessThanOrEqual(4);
-  });
-
-  it('subhead references the user thread count when authed', () => {
+  it('subhead references the sidebar for prior analyses when authed', () => {
     const threads = [
       makeThread({ id: 't1', title: 'Deal A' }),
       makeThread({ id: 't2', title: 'Deal B' }),
     ];
     const result = generateEmptyStateChips({ isAuthed: true, threads });
-    expect(result.subhead.toLowerCase()).toMatch(/analyses|sidebar/);
+    expect(result.subhead.toLowerCase()).toMatch(/sidebar/);
   });
-});
 
-describe('generateEmptyStateChips — title compression', () => {
-  it('truncates a very long thread title with an ellipsis', () => {
-    const longTitle = 'a'.repeat(200);
-    const threads = [makeThread({ id: 't1', title: longTitle })];
-    const result = generateEmptyStateChips({ isAuthed: true, threads });
-    const continueChip = result.chips[0];
-    expect(continueChip.length).toBeLessThan(60);
-    expect(continueChip.endsWith('…')).toBe(true);
+  it('returns the same chip set regardless of thread count (1, 2, or 10)', () => {
+    const oneThread = generateEmptyStateChips({
+      isAuthed: true,
+      threads: [makeThread({ id: 't1', title: 'A' })],
+    }).chips;
+    const tenThreads = generateEmptyStateChips({
+      isAuthed: true,
+      threads: Array.from({ length: 10 }).map((_, i) =>
+        makeThread({ id: `t${i}`, title: `Property ${i}` })
+      ),
+    }).chips;
+    expect(oneThread).toEqual(tenThreads);
   });
 });
