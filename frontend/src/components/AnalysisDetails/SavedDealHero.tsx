@@ -25,6 +25,7 @@
  * flow — no decisionId surfaced to the user (Issue #116 guardrail).
  */
 
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Stack } from '@mui/material';
 import { DealScoreCard, type DealScoreCardFactor } from '../Chat/DealScoreCard';
@@ -39,6 +40,8 @@ import {
   getProjectionMilestones,
   type SavedDealShape,
 } from './savedDealVariants';
+import { CritiqueCard } from './CritiqueCard';
+import { propertyApi, type CritiqueWire } from '../../services/api';
 
 export interface SavedDealHeroProps {
   deal: SavedDealShape;
@@ -53,6 +56,51 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
   const caption = buildVariantCaption(variant, deal);
   const variantFactors = getVariantFactors(variant);
   const variantChips = getVariantChips(variant);
+
+  // ===== Adversarial critique fetch (T1 — Issue #97 frontend) =====
+  //
+  // Auto-fires on every save (backend triggerOnSave.ts). We fetch on
+  // mount and on dealId change. The state shape mirrors the backend
+  // wire shape: critiques[] + pending boolean. Loading is its own
+  // local state — distinct from pending (which is a server-side
+  // signal that the background job is still running).
+  //
+  // We don't poll. Critique typically completes in 5–15s after save;
+  // the user reaching SavedDealHero will land BEFORE the critique
+  // populates if they refresh fast, but the section just shows
+  // "Review in progress" — the next page load picks it up.
+  const dealId = deal._id;
+  const [critiques, setCritiques] = useState<CritiqueWire[]>([]);
+  const [critiquePending, setCritiquePending] = useState(false);
+  const [critiqueLoading, setCritiqueLoading] = useState(false);
+  useEffect(() => {
+    if (!dealId) return;
+    let cancelled = false;
+    setCritiqueLoading(true);
+    propertyApi
+      .getDealCritique(dealId)
+      .then((res) => {
+        if (cancelled) return;
+        setCritiques(res.data.critiques);
+        setCritiquePending(res.data.pending);
+      })
+      .catch(() => {
+        // Silent failure — the section just doesn't render. We don't
+        // want a critique-endpoint outage to mar the saved-deal page
+        // (which is the user's primary surface). Console logs in api.ts
+        // are sufficient for debugging.
+        if (!cancelled) {
+          setCritiques([]);
+          setCritiquePending(false);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCritiqueLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dealId]);
 
   // ===== Data extraction (defensive — older legacy deals may have
   //   different field shapes; missing data renders gracefully) =====
@@ -159,6 +207,19 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
         // Only pass projection when we have rows — the card omits
         // the section cleanly when undefined.
         projection={projection.length > 0 ? projection : undefined}
+      />
+
+      {/* ===== Adversarial critique panel (T1 — Issue #97 frontend) =====
+          Renders below the DealScoreCard but above the action chips,
+          because the critique is "what the engine MAY have gotten
+          wrong" — context the user should read BEFORE they decide what
+          to do next via a chip. Component returns null when nothing
+          to show (pre-T1 deal / critique skipped), so this slot
+          collapses gracefully on older deals. */}
+      <CritiqueCard
+        critiques={critiques}
+        pending={critiquePending}
+        loading={critiqueLoading}
       />
 
       {/* ===== Action chips ===== */}

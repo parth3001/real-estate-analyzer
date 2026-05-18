@@ -31,6 +31,13 @@
 // the API response without forcing a runtime conversion.
 
 export interface SavedDealShape {
+  /**
+   * Deal Mongo _id. Optional in the type because some callers
+   * construct partial SavedDealShape for tests / previews; the real
+   * API-returned shape always has it. Used by T1 CritiqueCard to
+   * fetch `/api/deals/:id/critique`.
+   */
+  _id?: string;
   propertyType?: string;
   investmentStrategy?: string;
   propertyAddress?: {

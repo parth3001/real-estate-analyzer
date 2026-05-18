@@ -112,6 +112,31 @@ export interface ApiResponse<T = any> {
   message?: string;
 }
 
+/**
+ * CritiqueWire — wire shape returned by GET /api/deals/:id/critique
+ * (T1, 2026-05-18). One entry per persona; pre-T1 deals return [].
+ *
+ * Mirrors backend CritiquePayload subset — only fields the frontend
+ * CritiqueCard renders, plus `timestamp` for ordering.
+ */
+export interface CritiqueWire {
+  persona: 'optimistic_flipper' | 'skeptical_cpa';
+  agreementWithOriginal: boolean;
+  severityScore: number;
+  divergenceReasons: string[];
+  alternativeAssumptions: Array<{
+    fieldPath: string;
+    suggestedValue: number | string | boolean;
+    reasoning: string;
+  }>;
+  triggerType:
+    | 'auto_buy_band'
+    | 'auto_on_save'
+    | 'manual_request'
+    | 'batch_seeding';
+  timestamp: string;
+}
+
 // Property-related API calls
 export const propertyApi = {
   // Get all properties
@@ -138,6 +163,32 @@ export const propertyApi = {
       };
     } catch (error) {
       console.error('Error fetching property:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get the adversarial critique tied to this deal's latest decision
+   * (T1, 2026-05-18). Returns { critiques: [...], pending: boolean }.
+   *
+   *   critiques: array of CritiqueWire (0–2 entries, one per persona)
+   *   pending:   true when the Deal has a substrate link but no events
+   *              yet (background job still running, or skipped due to
+   *              cost cap). Frontend treats pending=true as "show
+   *              'Adversarial review in progress…' placeholder."
+   *
+   * Returns { critiques: [], pending: false } gracefully when the Deal
+   * predates T1 (no latestDecisionEventId). Caller-side: render no
+   * section in that case.
+   */
+  getDealCritique: async (
+    dealId: string
+  ): Promise<ApiResponse<{ critiques: CritiqueWire[]; pending: boolean }>> => {
+    try {
+      const response = await api.get(`/deals/${dealId}/critique`);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      console.error('Error fetching deal critique:', error);
       throw error;
     }
   },

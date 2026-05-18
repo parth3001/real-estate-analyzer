@@ -362,4 +362,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (T1 — adversarial critique auto-fires on every saved deal; backend only, frontend CritiqueCard pending)
+**Last updated:** 2026-05-18 (T1 frontend — CritiqueCard renders the 2-persona second-opinion in SavedDealHero; Issue #97 fully closed)

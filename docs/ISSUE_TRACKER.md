@@ -1288,8 +1288,35 @@ deflection instead of education.
 ---
 
 ### Issue #97: adversarial_critic structured output rendering
-**Status**: 🟡 BACKEND SHIPPED 2026-05-18 (T1) — frontend CritiqueCard pending
+**Status**: ✅ RESOLVED 2026-05-18 (T1 — backend + frontend both shipped)
 **Priority**: P3 - LOW (low-traffic agent — but Trust pillar makes it P1 in practice)
+
+**Frontend Resolution (2026-05-18, same day as backend)**:
+- New `CritiqueCard.tsx` component renders the 2-persona output
+  side-by-side on desktop, stacked on mobile. Severity 0-100 mapped
+  to discrete buckets ("Mostly agrees" / "Some concerns" /
+  "Significant concerns" / "Strong disagreement") with color-coded
+  Chip — Apple-design clarity over numeric noise
+- Optimistic Flipper renders LEFT, Skeptical CPA RIGHT (deterministic
+  sort regardless of API order)
+- Divergence reasons as bulleted list; alternative-assumption
+  suggestions in a compact "Suggested adjustments" sub-section with
+  monospace fieldPath + plain-English reasoning
+- Three states handled cleanly:
+  - `unavailable` → renders null, SavedDealHero collapses the slot
+    (pre-T1 deals, no critique persisted, etc.)
+  - `loading` / `pending` → muted placeholder text, no big spinner
+  - `complete` → both personas rendered with full detail
+- Wired into `SavedDealHero` between DealScoreCard and the action
+  chips — content order matches the cognitive flow ("what scored /
+  what the engine may have gotten wrong / what to do next")
+- `useEffect` fetch on `dealId` change with cancellation guard
+  (StrictMode-safe + cleanup on unmount)
+- Silent fetch-failure handling — critique endpoint outage doesn't
+  mar the saved-deal page; console error remains for diagnostics
+- 9 new `CritiqueCard.test.tsx` assertions cover all three states +
+  severity bucketing + persona ordering + alternative-assumption
+  rendering. Full AnalysisDetails frontend suite: 38/38 green
 
 **T1 Resolution (2026-05-18, backend portion)**:
 The adversarial critic now auto-fires on EVERY saved deal (new
