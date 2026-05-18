@@ -35,7 +35,8 @@ If you're new to the project, read it AFTER `PRODUCT_2.0_README.md`. If you're b
 | Polymorphic SavedDealHero | not in original plan | ✅ Shipped (Issue #117) | 4 deal variants (SFR buy-hold, BRRRR, house hack, MF) on a single visual shell, config-driven |
 | Cost discipline — data layer | `PRODUCT_2.0_COSTS.md` §7 | ✅ Complete | `CostEvent` collection with provider/model/token/cost fields; per-call emission from classifier + runner |
 | Cost discipline — Phase A caps | Issue #106 Phase A | ✅ Shipped 2026-05-18 | Per-turn (2000 tokens / 8 turns), per-session ($1.00), global daily ($20), prompt caching |
-| Cost discipline — Phase B caps | Issue #106 Phase B | ⏳ Open | Per-license cap — blocked on DealLicense from Issue #105 |
+| DealLicense + DealCredit substrate | Issue #105 substrate | ✅ Shipped 2026-05-18 | Models, repo, address canonicalization, Stripe-idempotent purchase, FIFO credit redemption, race-safe credit-redeem flow |
+| Cost discipline — Phase B caps | Issue #106 Phase B | ⏳ Open (substrate ready) | `CostEvent.licenseId` + sparse index now in place; enforcement code + chat-route license-lookup wiring is the remaining work |
 | Cost discipline — Phase C caps | Issue #106 Phase C | ⏳ Open | Per-IP cap, anomaly alerts |
 | Pricing & packaging | Issue #105 | ✅ Locked, ⏳ Stripe unwired | $4.99/deal + bundles model decided; `/pricing` page rewritten; payments integration not started |
 | Evals / golden sets | `PRODUCT_2.0_EVALS.md` | ⏳ Partial | Some calibration tests exist; CI-gating not enforced yet |
@@ -187,6 +188,22 @@ Order is session → daily so the cheaper local check fires first and the global
 
 **Decision:** Route all four intents through agents (deal_scoring or qa) instead of direct tool execution. Agents use `recall_user_context` to resolve "my last deal" references and construct the tool payload themselves. Documented routing table in `router.ts` header.
 
+### 4.9 DealLicense identity = (userId, canonicalAddressKey) with unique partial index (Issue #105 substrate)
+
+**Problem:** Same property typed two different ways ("123 Main St" vs "123 main street") could create two separate paid licenses — double-billing the user.
+
+**Decision:** `canonicalAddressKey` helper produces a stable joined string (`123 main st|austin|TX|78701`) by lowercasing, stripping punctuation, expanding `Street→st` / `Avenue→ave` etc., truncating ZIP+4. Unique compound index on `(userId, canonicalPropertyAddressKey)` with `partialFilterExpression: { status: 'active' }` enforces "one active license per property per user" at the DB layer. The partial filter lets expired/refunded licenses sit alongside without blocking a fresh purchase.
+
+**Why it matters:** Pay-per-deal pricing requires bulletproof "same property" detection. Without canonicalization, a confused user types the same address twice with different formatting and gets two Stripe charges — the kind of mistake that triggers chargebacks.
+
+### 4.10 Credit redemption order = "create license, then mark credit" (Issue #105 substrate)
+
+**Problem:** Two writes need to land together: create the `DealLicense`, mark the `DealCredit` redeemed. Either order has a failure mode if step 2 fails.
+
+**Decision:** Create license first, mark credit redeemed second. Reasoning: if step 2 fails (e.g., the credit was already redeemed by a parallel request — a race we detect via the atomic filter `status='issued'`), the worse outcome is an orphaned license. That outcome means the user got what they paid for and we have an ops-fixable inconsistency. The opposite failure (credit consumed, license missing) would silently take a user's credit and deliver nothing — a far worse trust failure.
+
+When the race is detected, we log loudly (`logger.error`) so ops can backfill, and surface a "please retry" to the user.
+
 ### 4.8 Agent guardrail: never ask users for internal IDs (Issue #116)
 
 **Problem:** Agents occasionally asked users for `decisionId` / `sessionId` / `conversationEventId` — internal vocabulary leaking into user-facing text.
@@ -327,4 +344,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (Phase A cost caps + email richness)
+**Last updated:** 2026-05-18 (DealLicense substrate + CostEvent.licenseId field)

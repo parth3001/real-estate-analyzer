@@ -49,6 +49,7 @@ export class CostEventRepository {
     const event = await CostEventModel.create({
       traceId: validated.traceId,
       sessionId: validated.sessionId,
+      licenseId: validated.licenseId,
       userId: validated.userId,
       institutionId: validated.institutionId,
       costType: validated.costType,

@@ -626,6 +626,60 @@ routes actually need optimization.
 ---
 
 ### Issue #105: Pricing & packaging strategy — LOCKED
+**Status**: ✅ DECIDED 2026-05-17 · ✅ SUBSTRATE SHIPPED 2026-05-18 · ⏳ Stripe wiring pending
+**Priority**: P0 - STRATEGIC
+
+**Substrate Resolution (2026-05-18)**:
+DealLicense + DealCredit models, canonical address-key helper, and
+LicenseRepository all shipped. The data layer for Phase B cost caps
+and Stripe is now in place. CostEvent gained an optional `licenseId`
+field with a sparse compound index so the per-license cap aggregation
+can run sub-ms.
+
+What's covered by the substrate:
+- Paid license purchase ($4.99 or bundle-redeemed) with Stripe
+  idempotency on paymentIntentId
+- First-free $0 license (Issue #105 Layer-2 unlock) — no Stripe needed
+- Bundle issuance (5-pack issues 5 credit rows sharing a
+  bundlePurchaseId; 10-pack does 10; promo/single configurable)
+- Race-safe credit redemption: atomic check-and-set on
+  status='issued', surfaces a "please retry" if a parallel redemption
+  raced
+- 30-day license window (configurable per license for ops)
+- 365-day credit TTL (configurable per credit)
+- Status state machines: licenses (active → expired → refunded),
+  credits (issued → redeemed/expired/refunded)
+- Daily-sweeper hooks (`markLicenseExpired`, `markCreditExpired`) —
+  the actual cron job isn't wired yet
+- /account-style reads: `findLicensesForUser`,
+  `findRedeemableCredits` (FIFO), `countRedeemableCredits`
+- The hot read: `findActiveForProperty(userId, address)` — sub-ms
+  via the unique partial index, called on every chat turn that runs
+  an analytical action
+
+Tests: 28 new assertions pass (17 LicenseRepository + 11
+canonicalAddressKey).
+
+Files shipped (Phase A substrate):
+- `backend/src/models/license/DealLicense.ts` — NEW
+- `backend/src/models/license/DealCredit.ts` — NEW
+- `backend/src/repositories/LicenseRepository.ts` — NEW
+- `backend/src/utils/canonicalAddressKey.ts` — NEW
+- `backend/src/utils/__tests__/canonicalAddressKey.test.ts` — NEW
+- `backend/src/repositories/__tests__/LicenseRepository.test.ts` — NEW
+- `backend/src/models/cost/CostEvent.ts` — `licenseId` field + sparse index
+- `backend/src/repositories/CostEventRepository.ts` — persist licenseId
+
+What remains for the FULL Issue #105 close:
+- Stripe webhook integration (payment intent succeeded → purchaseLicense
+  / issueCredits; charge.refunded → mark{License,Credit}Refunded)
+- Frontend /pricing buy-buttons → Stripe Checkout session
+- Phase B cost-cap enforcement using CostEvent.licenseId (Issue #106)
+- Daily expiry sweeper cron
+
+---
+
+### Issue #105 (original spec preserved for Stripe wiring):
 **Status**: ✅ DECIDED 2026-05-17 (implementation tracked in #106 and #107)
 **Priority**: P0 - STRATEGIC
 **Reported**: 2026-05-17 (extended strategic conversation across

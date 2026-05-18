@@ -80,6 +80,15 @@ export const CostEventSchema = z.object({
    * always supply it. Indexed for the per-session cap query.
    */
   sessionId: z.string().min(1).optional(),
+  /**
+   * License identifier (Issue #106 Phase B + Issue #105 substrate).
+   * Set when the chat surface has resolved the user's active
+   * DealLicense for the property being analyzed in this trace. Lets
+   * the per-license $2 COGS cap aggregate spend across all turns
+   * spent on the same property. Optional: free-tier turns (no license
+   * yet purchased) have no licenseId.
+   */
+  licenseId: ObjectIdSchema.optional(),
   userId: ObjectIdSchema,
   institutionId: ObjectIdSchema.optional(),
 
@@ -115,6 +124,10 @@ const costEventSchema = new Schema(
     sessionId: {
       type: String,
       index: true,
+    },
+    licenseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'DealLicense',
     },
     userId: {
       type: Schema.Types.ObjectId,
@@ -191,6 +204,11 @@ costEventSchema.index({ traceId: 1, timestamp: 1 });
 // "Per-session cumulative spend" — Issue #106 Phase A session cap.
 // Sparse so we don't index pre-#106 documents (no sessionId).
 costEventSchema.index({ sessionId: 1, timestamp: 1 }, { sparse: true });
+
+// "Per-license cumulative spend" — Issue #106 Phase B per-license cap.
+// Sparse: only events emitted while the user had an active license
+// are indexed.
+costEventSchema.index({ licenseId: 1, timestamp: 1 }, { sparse: true });
 
 // "Per-provider per-day spend" — finance/ops rollup.
 costEventSchema.index({ provider: 1, timestamp: -1 });
