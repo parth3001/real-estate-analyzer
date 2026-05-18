@@ -37,6 +37,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { chatTheme } from '../../theme/chatTheme';
 import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
@@ -1013,23 +1014,25 @@ function MessageBubble({
 }
 
 /**
- * MarkdownBubbleText — render assistant text with safe inline markdown.
+ * MarkdownBubbleText — render assistant text with safe markdown.
  *
  * The deal-scoring + qa agents emit `**bold**`, `*italic*`, bulleted
- * lists, and the occasional triple-dash divider. Rendering as raw
- * text leaks the asterisks into the UI. ReactMarkdown handles it.
+ * lists, the occasional triple-dash divider, AND GitHub-flavored
+ * markdown tables (e.g., the 10-year projection table from the
+ * deal-scoring response). Rendering as raw text leaks the syntax
+ * into the UI.
  *
- * We constrain the renderer to a safe subset — no images, no tables,
- * no raw HTML — and we override the default block element styles so
- * Markdown output sits flush inside the bubble (no double padding,
- * no MUI Typography injection that fights the bubble's font-size).
+ * Plugins: `remark-gfm` adds tables / strikethrough / autolinks /
+ * task-lists. Added 2026-05-17 (Issue #115) after the 10-year
+ * projection rendered as a pipe-delimited mess instead of a table.
+ *
+ * Restrictions: no images, no raw HTML. Each block element is style-
+ * overridden so the rendered output fits flush in the bubble.
  */
 function MarkdownBubbleText({ text }: { text: string }): React.JSX.Element {
   return (
     <ReactMarkdown
-      // No allowed-elements list = the default safe set. We just
-      // override how each block element is rendered so styles play
-      // nicely with the bubble's own padding + font-size.
+      remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => (
           <Box component="p" sx={{ m: 0, mb: 1, '&:last-child': { mb: 0 } }}>
@@ -1087,6 +1090,87 @@ function MarkdownBubbleText({ text }: { text: string }): React.JSX.Element {
               px: 0.5,
               py: 0.125,
               borderRadius: 1,
+            }}
+          >
+            {children}
+          </Box>
+        ),
+        // ===== GFM table support (Issue #115) =====
+        //
+        // Tabular nums on cells so $-amounts line up vertically. Subtle
+        // borders + header row tint match the rest of the chat bubble
+        // surface (light, content-forward). overflow-x for mobile so
+        // a wide projection table scrolls instead of overflowing the
+        // bubble.
+        table: ({ children }) => (
+          <Box
+            sx={{
+              my: 1,
+              overflowX: 'auto',
+              maxWidth: '100%',
+              '&::-webkit-scrollbar': { height: 6 },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'action.hover',
+                borderRadius: 3,
+              },
+            }}
+          >
+            <Box
+              component="table"
+              sx={{
+                borderCollapse: 'collapse',
+                fontSize: '0.875rem',
+                width: '100%',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {children}
+            </Box>
+          </Box>
+        ),
+        thead: ({ children }) => (
+          <Box component="thead" sx={{ bgcolor: 'action.hover' }}>
+            {children}
+          </Box>
+        ),
+        tbody: ({ children }) => (
+          <Box component="tbody">{children}</Box>
+        ),
+        tr: ({ children }) => (
+          <Box
+            component="tr"
+            sx={{
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              '&:last-child': { borderBottom: 'none' },
+            }}
+          >
+            {children}
+          </Box>
+        ),
+        th: ({ children }) => (
+          <Box
+            component="th"
+            sx={{
+              px: 1.25,
+              py: 0.75,
+              fontWeight: 600,
+              textAlign: 'left',
+              fontSize: '0.8125rem',
+              color: 'text.secondary',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {children}
+          </Box>
+        ),
+        td: ({ children }) => (
+          <Box
+            component="td"
+            sx={{
+              px: 1.25,
+              py: 0.75,
+              verticalAlign: 'top',
             }}
           >
             {children}

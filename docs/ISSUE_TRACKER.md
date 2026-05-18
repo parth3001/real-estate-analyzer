@@ -7,6 +7,149 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #117: /analysis/:id renders legacy SFRAnalysis tabs — doesn't match chat-first IA
+**Status**: 🟡 OPEN (Phase 4-completion gap; design unification needed)
+**Priority**: P2 - MEDIUM (the legacy view works + has Apple-quality design,
+                          just visually disconnects from the chat-first IA)
+**Reported**: 2026-05-17 (user testing — clicked a saved property from
+                          the new sidebar, landed in the legacy multi-tab
+                          analysis view "Overview / Financial Details /
+                          Long-term Analysis / Tax Intelligence /
+                          Interactive Analysis / Deal Optimizer")
+**Component**: Frontend /analysis/:id route + SFRAnalysis components
+**Category**: Design unification / Phase 4-completion
+
+**Description**:
+After Day 2 nav consolidation, /analysis/:id now renders INSIDE the
+new AppLayout sidebar (correct). But the main pane content is the
+LEGACY multi-tab SFRAnalysis page — the carefully Apple-designed
+wizard-output page from the pre-chat era. Visually disconnects from
+the chat surface: different fonts/sizes for headings, different
+data-display style, separate tabs vs the unified chat-flow
+DealScoreCard.
+
+User specifically called out that the legacy page WAS Apple-quality
+design with intentional craft — it's not bad, it just doesn't match
+the chat-first IA.
+
+**Three resolution paths**:
+
+A. **Inline chat-style summary at top, legacy tabs below**: keep
+   the legacy tabs as the "deep dive" surface but add a chat-style
+   DealScoreCard summary at the top of /analysis/:id so the user
+   immediately sees the same score card they had in the chat.
+   Lowest churn, preserves the legacy work.
+
+B. **Replace legacy tabs with chat-driven follow-ups**: convert the
+   tab content (Tax Intelligence, Interactive Analysis, etc.) into
+   chip-driven chat conversations the user starts FROM the deal
+   detail. Aligns with the chat-first vision but is significant
+   work + retires the Apple-designed tabs.
+
+C. **Visual unification only**: keep the tab structure but restyle
+   to match the chat surface (typography, spacing, divider style).
+   Middle ground. Preserves the deep-dive UX but reduces the
+   "two products glued together" feel.
+
+Marcus's read: A is the right answer for Phase 4. Score card on top
+gives chat-flow continuity; tabs below preserve the deep-dive work.
+B is the Phase 7+ direction once chat capabilities can render all
+the tab content.
+
+**Estimate**: 4-6 hours for Option A (single new component + render
+order change). 1.5-2 days for Option B. 6-8 hours for Option C.
+
+**Files affected (Option A)**:
+- `frontend/src/pages/AnalysisDetails.tsx` — add DealScoreCard above AnalysisResults
+- `frontend/src/components/Chat/DealScoreCard.tsx` — verify the card
+  is exportable + accepts data from Deal model (currently shaped for
+  chat structured_output)
+- Possibly a new `frontend/src/components/AnalysisDetails/SavedDealHero.tsx`
+  to wrap the chat-style summary with save state context
+
+---
+
+### Issue #116: Agent must NEVER ask user for internal IDs — FIXED
+**Status**: ✅ FIXED 2026-05-17 (prompt guardrails added to dealScoring + qa agents)
+**Priority**: P1 - HIGH (user-facing confusion; surfaces internal system to non-technical users)
+**Reported**: 2026-05-17 (user testing — "in some scenarios chat is asking
+                          for decision Id, you know the users will not
+                          have decision log or id")
+**Component**: Backend dealScoring + qa agent system prompts
+**Category**: UX guardrail / prompt engineering
+
+**Description**:
+After the broader Issue #104 fix (rerouting tool-only intents through
+agents), the agents sometimes asked the user for system-internal
+identifiers — decisionId, analysisEventId, sessionId, etc. These are
+MongoDB ObjectIds and UUIDs that the substrate uses internally; the
+user has no way to know them and surfacing them is jarring.
+
+The agents were defaulting to "I need a decisionId" because the
+underlying tools (apply_override, render_audit_trail, etc.) DO need
+those IDs as inputs. But the agents have access to recall_user_context
+which resolves "user's recent decisions" autonomously — they just
+weren't being instructed to use it for this purpose.
+
+**Fix shipped**:
+- dealScoringAgent.ts system prompt: new "NEVER ask the user for
+  system-internal identifiers" section in the DO NOT block.
+  Documents the prohibited ID list (decisionId, analysisEventId,
+  dealId, sessionId, traceId, conversationEventId, propertyId,
+  userId). Instructs the agent to call recall_user_context for any
+  reference resolution. Provides the right user-facing response
+  for the "no recent decisions" case ("I don't see a recent
+  analysis...").
+- qaAgent.ts system prompt: parallel guardrail in NEVER DO section.
+  Same prohibited list + same recall_user_context resolution pattern.
+
+**Files affected**:
+- `backend/src/agents/dealScoring/dealScoringAgent.ts` — prompt
+- `backend/src/agents/qa/qaAgent.ts` — prompt
+
+---
+
+### Issue #115: Markdown tables render as pipe-text mess in chat — FIXED
+**Status**: ✅ FIXED 2026-05-17 (remark-gfm + table component overrides shipped)
+**Priority**: P1 - HIGH (10-year projection unreadable as a single-line text blob)
+**Reported**: 2026-05-17 (user testing — agent emitted a markdown
+                          table for the 10-year projection, rendered as
+                          "| Year | Annual Cash Flow | Property Value
+                          | Equity | |------|----------|... | 1 | $3,116
+                          | $230,805 | $65,419 | | 3 | $4,134 ...")
+**Component**: Frontend ChatOverlay MarkdownBubbleText
+**Category**: Markdown rendering
+
+**Description**:
+The deal-scoring agent emits proper GitHub-flavored markdown tables
+for the 10-year projection output. react-markdown by default only
+supports CommonMark — tables require the `remark-gfm` plugin (GitHub
+Flavored Markdown extension). Without it, the table syntax renders
+as literal `|` and `-` characters in one long unreadable line.
+
+**Fix shipped**:
+- Installed `remark-gfm` dependency
+- Wired `remarkPlugins={[remarkGfm]}` on ReactMarkdown in
+  MarkdownBubbleText
+- Added component overrides for `table`, `thead`, `tbody`, `tr`,
+  `th`, `td` — styled to match the chat bubble surface:
+  - tabular-nums for $-amount alignment
+  - subtle header row tint (action.hover)
+  - hairline dividers matching the bubble divider style
+  - overflow-x: auto with hidden scrollbar for mobile (wide
+    projection tables scroll instead of overflowing the bubble)
+- No image or raw-HTML rendering (safety preserved)
+
+**Side effect**: remark-gfm also adds strikethrough (~~text~~),
+autolinks (bare URLs), and task lists ([ ] / [x]) — all safe
+additions, none used today but available if agents need them.
+
+**Files affected**:
+- `frontend/src/components/Chat/ChatOverlay.tsx`
+- `frontend/package.json` — added remark-gfm
+
+---
+
 ### Issue #114: Walk-away price tracks the buyer's offer instead of property fundamentals — FIXED
 **Status**: ✅ FIXED 2026-05-17 (income-approach fallback; engine fairMarketValue read defensively for future)
 **Priority**: P0 - CRITICAL (undermines the "honest analysis" trust position)
