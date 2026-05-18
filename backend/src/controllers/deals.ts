@@ -588,6 +588,170 @@ export const getDealCritique = async (
   }
 };
 
+/**
+ * GET /api/deals/:id/license — Day 10 (2026-05-18).
+ *
+ * Returns the user's license status for the property tied to this Deal.
+ *
+ * Wire shape:
+ *   - `status: 'active'`   — license exists; expires/budget fields populated
+ *   - `status: 'expired'`  — past license existed; read-only state
+ *   - `status: 'refunded'` — past license refunded
+ *   - `status: 'none'`     — no license has ever been created (free tier)
+ *
+ * Active-license response also includes:
+ *   - `expiresAt`              — ISO timestamp of 30-day expiry
+ *   - `costBudgetCentsStart`   — initial $2 COGS budget in cents (200)
+ *   - `costSpentCents`         — sum of CostEvents tagged with licenseId
+ *                                 → lets the UI show "$0.42 of $2.00 used"
+ *   - `pricePaidCents`         — what the user paid (499 single, 0 free)
+ *   - `purchasedAt`            — ISO timestamp of purchase
+ *
+ * Returns 404 if the deal doesn't exist or isn't owned by the user.
+ * Returns 200 + `{status:'none'}` if the user just doesn't have a
+ * license — that's expected for free-tier flow and the frontend
+ * renders a different badge (no error).
+ */
+export const getDealLicense = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+    const deal = await dealService.getDealById(id);
+    if (!deal || deal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+
+    const { licenseRepository } = await import(
+      '../repositories/LicenseRepository'
+    );
+    const { getLicenseSpendCents } = await import(
+      '../agents/runtime/costGuards'
+    );
+    const { Types } = await import('mongoose');
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    // Find ACTIVE license for the property. If none, return status='none'.
+    // Note: this only finds active licenses — expired/refunded are
+    // historical and surface as 'none' for badge purposes (the badge
+    // says "free analysis" either way; the differentiation matters for
+    // the receipts/history view, which is future work).
+    const activeLicense = await licenseRepository.findActiveForProperty(
+      userObjectId,
+      deal.propertyAddress
+    );
+
+    if (!activeLicense) {
+      res.json({ status: 'none' });
+      return;
+    }
+
+    const spentCents = await getLicenseSpendCents(activeLicense._id);
+
+    res.json({
+      status: activeLicense.status, // 'active'
+      licenseId: activeLicense._id.toString(),
+      expiresAt: activeLicense.expiresAt,
+      costBudgetCentsStart: activeLicense.costBudgetCentsStart,
+      costSpentCents: Math.round(spentCents * 100) / 100, // round to 2 decimals for display
+      pricePaidCents: activeLicense.pricePaidCents,
+      purchasedAt: activeLicense.purchasedAt,
+    });
+  } catch (error) {
+    logger.error(`Error getting license for deal ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Failed to load license' });
+  }
+};
+
+/**
+ * POST /api/deals/:id/seed-license — Day 10 (2026-05-18).
+ *
+ * DEV-MODE ONLY: creates an active DealLicense for the current user +
+ * this deal's property. Lets the founder/QE experience the paid-user
+ * flow before Stripe is wired.
+ *
+ * Guard: ENABLE_DEV_LICENSE_SEED env var must be 'true'. Off by
+ * default. NEVER enable in production — would let any authenticated
+ * user mint themselves unlimited licenses for free.
+ *
+ * Returns 200 + { licenseId } on success. 403 when the guard is off.
+ * Idempotent via the unique-active-license partial index: calling
+ * twice on the same deal returns 409 (already licensed) on the second.
+ */
+export const seedDealLicense = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const enabled =
+    (process.env.ENABLE_DEV_LICENSE_SEED ?? 'false').toLowerCase() === 'true';
+  if (!enabled) {
+    res.status(403).json({
+      error:
+        'Dev license-seed is disabled. Set ENABLE_DEV_LICENSE_SEED=true in your env to use this endpoint for testing.',
+    });
+    return;
+  }
+
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+    const deal = await dealService.getDealById(id);
+    if (!deal || deal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+
+    const { licenseRepository } = await import(
+      '../repositories/LicenseRepository'
+    );
+    const { Types } = await import('mongoose');
+
+    try {
+      const licenseId = await licenseRepository.purchaseLicense({
+        userId: new Types.ObjectId(userId),
+        propertyAddress: deal.propertyAddress,
+        pricePaidCents: 0, // dev seed — no charge
+        // No stripePaymentIntentId — this license has no Stripe correlation,
+        // matching the "first-free" Layer-2 unlock semantics from Issue #105.
+      });
+      logger.info('seedDealLicense: dev license created', {
+        userId,
+        dealId: id,
+        licenseId: licenseId.toString(),
+      });
+      res.json({ licenseId: licenseId.toString(), seeded: true });
+    } catch (err) {
+      // Most common: unique-active-index violation when a license already
+      // exists for this property. Surface a friendly conflict.
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('duplicate key') || msg.includes('E11000')) {
+        res.status(409).json({
+          error: 'An active license already exists for this property.',
+        });
+        return;
+      }
+      throw err;
+    }
+  } catch (error) {
+    logger.error(`Error seeding license for deal ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Failed to seed license' });
+  }
+};
+
 // Create a new deal
 export const createDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

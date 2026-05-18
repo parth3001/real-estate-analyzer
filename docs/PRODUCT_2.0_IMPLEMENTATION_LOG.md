@@ -288,6 +288,19 @@ Variables introduced or repurposed across the 2.0 build. Defaults shown.
 | `COST_GUARDS_ENABLED` | `true` | Master kill-switch |
 | `ANTHROPIC_PROMPT_CACHE_ENABLED` | `true` | Toggle `cache_control: ephemeral` wrapping |
 
+### Critique on save (T1)
+
+| Var | Default | Purpose |
+|---|---|---|
+| `CRITIQUE_ON_SAVE_ENABLED` | `true` | Master switch for fire-and-forget critique on every materialized deal |
+
+### Dev license-seed (Day 10 — testing the paid flow without Stripe)
+
+| Var | Default | Purpose |
+|---|---|---|
+| `ENABLE_DEV_LICENSE_SEED` (backend) | `false` | Server gate for `POST /api/deals/:id/seed-license`. **Never enable in production** |
+| `VITE_ENABLE_DEV_LICENSE_SEED` (frontend) | `false` | Shows the "Activate test license" button on SavedDealHero when no license exists |
+
 ### Model selection
 
 | Var | Default | Used for |
@@ -335,6 +348,49 @@ After 2026-05-18 the email includes assumptions + 10-yr projection sections when
 1. Check that `card.assumptions` and `card.projection` are populated in the DealScoreCard wire payload
 2. Empty arrays render no section — that's intentional, not a bug
 
+### Testing the paid-user flow without Stripe (Day 10 dev path)
+
+Stripe webhook integration is still open work, but you can E2E test the licensed-user experience today with two env knobs:
+
+**1. Enable the dev seed (both backend and frontend):**
+
+```bash
+# backend/.env
+ENABLE_DEV_LICENSE_SEED=true
+
+# frontend/.env
+VITE_ENABLE_DEV_LICENSE_SEED=true
+```
+
+Restart both servers. (Per CLAUDE.md, Claude doesn't auto-start servers — restart manually.)
+
+**2. Walk the licensed flow:**
+
+1. Log in, analyze a property, save the deal
+2. Navigate to `/analysis/:id` → SavedDealHero shows "Free analysis" with an "Activate test license" button next to it
+3. Tap the button → POSTs `/api/deals/:id/seed-license` → creates a $0 license tied to (userId, propertyAddress) for 30 days, $2 COGS budget
+4. Badge flips to green "Licensed · 30 days remaining" with a budget-consumption bar
+5. Open chat from a SavedDealHero chip → backend resolves dealId → licenseId → every CostEvent on this turn is tagged with the license
+6. After a few stress-test turns, refresh `/analysis/:id` → bar advances, "Licensed · $0.42 of $2.00 analytical budget used"
+
+**3. Watch the per-license cap fire:**
+
+Lower the threshold for fast testing:
+
+```bash
+# backend/.env
+COST_CAP_LICENSE_CENTS=10   # $0.10 — fires after 1-3 chat turns
+```
+
+Restart backend. Run a couple chat turns from the saved-deal chip. When the aggregate crosses $0.10:
+- Orchestrator surfaces "You've used the full analytical budget for this property…" as the assistant turn
+- License auto-flips from `active` → `expired` (visible on `/analysis/:id` after a refresh; badge turns muted)
+- Subsequent turns referencing the same dealId get no per-license cap (the lookup returns null), only session+daily caps apply
+
+**4. Confirm cost discipline didn't accidentally fire on free tier:**
+
+In a separate browser session, analyze a different property without seeding a license. The badge shows "Free analysis." Run as many chat turns as session cap allows — per-license cap is never invoked.
+
 ---
 
 ## 8. What's next (priority-ordered)
@@ -362,4 +418,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (Day 9b — chat-route dealId → licenseId resolver; Phase B caps now active end-to-end in production)
+**Last updated:** 2026-05-18 (Day 10 — LicenseStatusBadge + dev-seed endpoint make the paid-user flow E2E-testable without Stripe)

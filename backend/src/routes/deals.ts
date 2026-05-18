@@ -3,6 +3,8 @@ import {
   getAllDeals,
   getDealById,
   getDealCritique,
+  getDealLicense,
+  seedDealLicense,
   createDeal,
   updateDeal,
   deleteDeal,
@@ -60,6 +62,13 @@ router.get('/:id', authMiddleware, getDealById);
 // Critique is fired automatically on every save (see triggerOnSave.ts);
 // this surfaces both personas to the SavedDealHero.
 router.get('/:id/critique', authMiddleware, getDealCritique);
+// Day 10 (2026-05-18): license status + dev-mode license seed.
+// `getDealLicense` surfaces the user's active license (if any) for
+// this property's badge UX. `seedDealLicense` is dev-guarded by
+// ENABLE_DEV_LICENSE_SEED env var — lets us test the paid-user
+// experience end-to-end before Stripe is wired.
+router.get('/:id/license', authMiddleware, getDealLicense);
+router.post('/:id/seed-license', authMiddleware, seedDealLicense);
 router.post('/', authMiddleware, createDeal);
 router.put('/:id', authMiddleware, updateDeal);
 router.delete('/:id', authMiddleware, deleteDeal);

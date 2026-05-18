@@ -113,6 +113,30 @@ export interface ApiResponse<T = any> {
 }
 
 /**
+ * LicenseStatusWire — wire shape returned by GET /api/deals/:id/license
+ * (Day 10, 2026-05-18).
+ *
+ * Drives the LicenseStatusBadge UX on SavedDealHero. Four states:
+ *   - 'none'     — no license has been created (free-tier flow)
+ *   - 'active'   — license live; expiresAt + budget fields populated
+ *   - 'expired'  — past license, read-only state (currently treated
+ *                  same as 'none' on the badge surface — future surfaces
+ *                  like /account history will differentiate)
+ *   - 'refunded' — past license refunded (same as expired for badge)
+ */
+export type LicenseStatusWire =
+  | { status: 'none' }
+  | {
+      status: 'active' | 'expired' | 'refunded';
+      licenseId: string;
+      expiresAt: string;
+      costBudgetCentsStart: number;
+      costSpentCents: number;
+      pricePaidCents: number;
+      purchasedAt: string;
+    };
+
+/**
  * CritiqueWire — wire shape returned by GET /api/deals/:id/critique
  * (T1, 2026-05-18). One entry per persona; pre-T1 deals return [].
  *
@@ -191,6 +215,38 @@ export const propertyApi = {
       console.error('Error fetching deal critique:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get the user's license status for this deal's property (Day 10).
+   * Returns a discriminated union — `status` tells the consumer which
+   * fields are populated. Used by LicenseStatusBadge on SavedDealHero.
+   */
+  getDealLicense: async (
+    dealId: string
+  ): Promise<ApiResponse<LicenseStatusWire>> => {
+    try {
+      const response = await api.get(`/deals/${dealId}/license`);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      console.error('Error fetching deal license:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Dev-mode license seed (Day 10). POSTs to seed-license endpoint;
+   * backend rejects with 403 if ENABLE_DEV_LICENSE_SEED is not 'true'.
+   * Returns 409 if a license already exists.
+   *
+   * NOT for production use. Only wired into a hidden "Activate test
+   * license" button in SavedDealHero when the badge shows 'none'.
+   */
+  seedDealLicense: async (
+    dealId: string
+  ): Promise<ApiResponse<{ licenseId: string; seeded: boolean }>> => {
+    const response = await api.post(`/deals/${dealId}/seed-license`);
+    return { data: response.data, status: response.status };
   },
 
   // Create or save a property

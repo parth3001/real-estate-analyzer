@@ -41,7 +41,12 @@ import {
   type SavedDealShape,
 } from './savedDealVariants';
 import { CritiqueCard } from './CritiqueCard';
-import { propertyApi, type CritiqueWire } from '../../services/api';
+import { LicenseStatusBadge } from './LicenseStatusBadge';
+import {
+  propertyApi,
+  type CritiqueWire,
+  type LicenseStatusWire,
+} from '../../services/api';
 
 export interface SavedDealHeroProps {
   deal: SavedDealShape;
@@ -101,6 +106,38 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
       cancelled = true;
     };
   }, [dealId]);
+
+  // ===== License-status fetch (Day 10) =====
+  //
+  // Powers the LicenseStatusBadge above the DealScoreCard. Same fetch
+  // shape as the critique: one-shot on mount + dealId change, silent
+  // failure, refetchable on demand (via `refetchLicense` — used by
+  // the dev-seed button to pick up the new license without a page
+  // reload).
+  const [license, setLicense] = useState<LicenseStatusWire | null>(null);
+  const [licenseLoading, setLicenseLoading] = useState(false);
+  const [licenseRefetchTick, setLicenseRefetchTick] = useState(0);
+  const refetchLicense = (): void => setLicenseRefetchTick((n) => n + 1);
+  useEffect(() => {
+    if (!dealId) return;
+    let cancelled = false;
+    setLicenseLoading(true);
+    propertyApi
+      .getDealLicense(dealId)
+      .then((res) => {
+        if (cancelled) return;
+        setLicense(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setLicense(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLicenseLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dealId, licenseRefetchTick]);
 
   // ===== Data extraction (defensive — older legacy deals may have
   //   different field shapes; missing data renders gracefully) =====
@@ -197,6 +234,18 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+      {/* License status — Day 10. Rendered ABOVE the DealScoreCard so
+          the user immediately knows whether they're operating on a paid
+          deal (with the $2 COGS budget consumption visible) or a
+          free-tier deal. Component returns its own loading skeleton; we
+          don't gate the render on dealId because pre-T1/free-tier deals
+          gracefully show "Free analysis." */}
+      <LicenseStatusBadge
+        dealId={dealId}
+        license={license}
+        loading={licenseLoading}
+        onChange={refetchLicense}
+      />
       <DealScoreCard
         // 'strategy' is kept as the legacy enum (buy_hold | brrrr) for
         // backward compat. The dealTypeLabel override is what makes
