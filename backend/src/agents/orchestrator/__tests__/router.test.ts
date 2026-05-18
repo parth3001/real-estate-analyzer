@@ -17,19 +17,22 @@ describe('routeIntent (W2-S1)', () => {
   describe('main routing table — high confidence', () => {
     it.each<[ChatIntent, string, string]>([
       ['analyze_property', 'agent:deal_scoring', 'agent:deal_scoring'],
+      // share_profile keeps the direct tool route — the tool accepts
+      // free-form natural language as input; chat is fine with it.
       ['share_profile', 'tool:profile_extraction', 'tool_only'],
       ['qa_metric', 'agent:qa', 'agent:qa'],
       ['qa_decision', 'agent:qa', 'agent:qa'],
       ['qa_general', 'agent:qa', 'agent:qa'],
-      // override_assumption routes through agent:deal_scoring (chat-flow path).
-      // Issue #104 — direct tool:apply_override was a W2 scaffolding choice
-      // that failed for chat input because the chat surface can't construct
-      // the structured `{ decisionId, fieldPath, newValue }` payload.
+      // Issue #104 broader audit (2026-05-17): every tool-only route
+      // that requires a structured payload (decisionId, etc.) chat
+      // CAN'T construct now routes through an agent that resolves the
+      // payload via recall_user_context, then calls the tool. Direct
+      // tool routes stay in the registry for structured frontend use.
       ['override_assumption', 'agent:deal_scoring', 'agent:deal_scoring'],
-      ['request_audit_trail', 'tool:render_audit_trail', 'tool_only'],
-      ['request_export', 'tool:export_audit_pdf', 'tool_only'],
+      ['request_audit_trail', 'agent:qa', 'agent:qa'],
+      ['request_export', 'agent:deal_scoring', 'agent:deal_scoring'],
       ['request_critique', 'agent:adversarial_critic', 'agent:adversarial_critic'],
-      ['save_action', 'tool:save_to_watchlist', 'tool_only'],
+      ['save_action', 'agent:deal_scoring', 'agent:deal_scoring'],
     ])(
       'intent %s @ conf 90 → target %s, routedTo %s',
       (intent, expectedTarget, expectedRoutedTo) => {
@@ -145,18 +148,24 @@ describe('routeIntent (W2-S1)', () => {
       expect(routeIntent('request_critique', 90).routedTo).toBe('agent:adversarial_critic');
     });
 
-    it('tool routes collapse to "tool_only" in routedTo (specific tool is in toolCalls)', () => {
-      // override_assumption is NOT in this list — Issue #104 moved it
-      // from tool:apply_override (which needs a structured payload) to
-      // agent:deal_scoring so chat-flow overrides actually work.
-      const toolIntents: ChatIntent[] = [
-        'share_profile',
+    it('only share_profile remains a direct tool route — every other tool intent now goes through an agent (Issue #104 broader audit)', () => {
+      // override_assumption / request_audit_trail / request_export /
+      // save_action all moved to agent routing on 2026-05-17. The only
+      // tool-only intent left is share_profile, which works because
+      // its tool accepts free-form natural-language input directly.
+      const toolIntents: ChatIntent[] = ['share_profile'];
+      for (const intent of toolIntents) {
+        expect(routeIntent(intent, 90).routedTo).toBe('tool_only');
+      }
+      // And the rerouted intents must NO LONGER hit tool_only.
+      const reroutedIntents: ChatIntent[] = [
+        'override_assumption',
         'request_audit_trail',
         'request_export',
         'save_action',
       ];
-      for (const intent of toolIntents) {
-        expect(routeIntent(intent, 90).routedTo).toBe('tool_only');
+      for (const intent of reroutedIntents) {
+        expect(routeIntent(intent, 90).routedTo).not.toBe('tool_only');
       }
     });
   });

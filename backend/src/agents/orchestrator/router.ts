@@ -94,26 +94,39 @@ export const CONFIDENCE_THRESHOLD = 70;
  * side effects. The orchestrator (W2-S2) consumes this output and
  * executes accordingly.
  *
- * Routing table per agent mesh §2.3:
+ * Routing table per agent mesh §2.3 (updated 2026-05-17, Issue #104 broader audit):
  *
  *   analyze_property      → agent:deal_scoring
- *   share_profile         → tool:profile_extraction
+ *   share_profile         → tool:profile_extraction (the tool accepts
+ *                            free-form profile text — safe from chat)
  *   qa_metric / qa_decision / qa_general → agent:qa
- *   override_assumption   → agent:deal_scoring (chat-flow path — the agent
- *                            recalls recent decision context + re-runs
- *                            resolve_property_inputs with userOverrides;
- *                            updated 2026-05-16 from the old direct
- *                            tool:apply_override route, which required a
- *                            structured payload chat can't construct.
- *                            For a future structured slider UI on the
- *                            score card, the tool route is still
- *                            invocable directly from the frontend.)
- *   request_audit_trail   → tool:render_audit_trail
- *   request_export        → tool:export_audit_pdf
+ *   override_assumption   → agent:deal_scoring (chat-flow path —
+ *                            agent recalls decision context + re-runs
+ *                            with overrides. Direct tool:apply_override
+ *                            stays invocable from a future structured
+ *                            frontend.)
+ *   request_audit_trail   → agent:qa (recalls decision + explains
+ *                            assumptions naturally. Direct
+ *                            tool:render_audit_trail still invocable
+ *                            from structured frontend.)
+ *   request_export        → agent:deal_scoring (agent calls
+ *                            export_audit_pdf with the decisionId
+ *                            resolved from context.)
  *   request_critique      → agent:adversarial_critic
- *   save_action           → tool:save_to_watchlist
+ *   save_action           → agent:deal_scoring (agent resolves "save
+ *                            this deal" to a specific decisionId from
+ *                            context + calls save_to_watchlist.)
  *   fallback              → agent:qa
  *   off_topic             → deflection:off_topic (templated, NO agent call)
+ *
+ * Why so many tool intents moved to agents: tool-only routes require a
+ * structured `toolPayload` (decisionId, fieldPath, etc.) that the chat
+ * surface CAN'T construct from free-form text. Routing through an agent
+ * gives us the natural-language → structured-payload bridge: the agent
+ * recalls context via recall_user_context, then calls the tool with
+ * the right payload. The deterministic tools stay in the registry —
+ * any future structured frontend (slider drags, button clicks with
+ * known decisionId) calls them directly.
  *
  * Confidence < threshold → agent:qa (low_confidence fallback),
  * EXCEPT off_topic which short-circuits regardless of confidence.
@@ -206,17 +219,32 @@ export function routeIntent(
       };
 
     case 'request_audit_trail':
+      // Chat-flow path: route to QA agent — it can recall the recent
+      // decision context via recall_user_context and explain the
+      // assumptions / inputs naturally. The deterministic
+      // render_audit_trail tool stays in the registry for any future
+      // structured frontend (slider on DealScoreCard, etc.) that has
+      // the decisionId payload to call it directly. Updated 2026-05-17
+      // (Issue #104 broader audit) — old direct tool:render_audit_trail
+      // route failed for chat input ("Chat turn failed" on chips like
+      // "Show the 10-year projection" / "Show the audit trail").
       return {
-        target: 'tool:render_audit_trail',
-        routedTo: 'tool_only',
+        target: 'agent:qa',
+        routedTo: 'agent:qa',
         classifierIntent: intent,
         classifierConfidence: confidence,
       };
 
     case 'request_export':
+      // Chat-flow path: route to deal-scoring agent — it has tool
+      // access to call export_audit_pdf with the right decisionId
+      // resolved from conversation context. The deterministic tool
+      // stays in the registry for direct frontend invocation (e.g., a
+      // future "Export PDF" button with a known decisionId). Updated
+      // 2026-05-17 (Issue #104 broader audit).
       return {
-        target: 'tool:export_audit_pdf',
-        routedTo: 'tool_only',
+        target: 'agent:deal_scoring',
+        routedTo: 'agent:deal_scoring',
         classifierIntent: intent,
         classifierConfidence: confidence,
       };
@@ -230,9 +258,16 @@ export function routeIntent(
       };
 
     case 'save_action':
+      // Chat-flow path: route to deal-scoring agent — it can resolve
+      // "save this deal" to a specific decisionId from conversation
+      // context and call save_to_watchlist with the proper payload.
+      // The DealScoreCard's "Save this deal" button still calls the
+      // tool directly (with the known decisionId), so the structured
+      // payload path is preserved for the frontend. Updated 2026-05-17
+      // (Issue #104 broader audit).
       return {
-        target: 'tool:save_to_watchlist',
-        routedTo: 'tool_only',
+        target: 'agent:deal_scoring',
+        routedTo: 'agent:deal_scoring',
         classifierIntent: intent,
         classifierConfidence: confidence,
       };

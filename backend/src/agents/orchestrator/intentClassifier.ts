@@ -238,20 +238,78 @@ turn that asked the question.
 
 // ===== Helpers =====
 
+/**
+ * Extract the first balanced JSON object from a string, ignoring any
+ * surrounding markdown / commentary / preamble. The previous regex-
+ * based approach assumed the JSON sat alone with optional ```json
+ * fencing — it broke on real-world model output like:
+ *   ```json
+ *   { "intent": "fallback", ... }
+ *   ```
+ *   (Followed by a trailing explanation the model decided to add.)
+ * The regex's `\s*```$/i` only strips trailing fences at the END of
+ * the WHOLE string — anything between the closing brace and the fence
+ * (commentary, extra newlines + text) survived and broke JSON.parse
+ * with "non-whitespace character after JSON at position N."
+ *
+ * This implementation walks the string character-by-character starting
+ * at the first '{', counts brace depth respecting string content +
+ * escape sequences, and returns the slice for the first balanced
+ * `{...}` block. Anything outside is dropped. Robust to:
+ *   - Leading ```json fences
+ *   - Trailing ``` fences with whitespace OR text after them
+ *   - Model "thinking out loud" text wrapped around the JSON
+ *   - Multiple JSON objects (takes the first; commentary after the
+ *     first close-brace is ignored)
+ */
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+  return null;
+}
+
 function parseClassifierResponse(text: string): IntentClassification {
-  // Strip code fences if present (model sometimes adds them despite the prompt).
-  const cleaned = text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
+  const extracted = extractFirstJsonObject(text);
+  if (extracted === null) {
+    throw new Error(
+      `intentClassifier: LLM returned no parseable JSON object. ` +
+        `First 200 chars: "${text.slice(0, 200)}"`
+    );
+  }
   let parsed: unknown;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = JSON.parse(extracted);
   } catch (err) {
     throw new Error(
-      `intentClassifier: LLM returned non-JSON output. ` +
-        `First 200 chars: "${cleaned.slice(0, 200)}". ` +
+      `intentClassifier: LLM returned malformed JSON. ` +
+        `First 200 chars of extracted slice: "${extracted.slice(0, 200)}". ` +
         `Parse error: ${err instanceof Error ? err.message : String(err)}`
     );
   }

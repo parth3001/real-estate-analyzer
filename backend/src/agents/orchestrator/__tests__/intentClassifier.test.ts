@@ -295,13 +295,46 @@ describe('classifyIntent (W2-S0)', () => {
           traceId: 'trace-badjson',
           userId: new Types.ObjectId(),
         })
-      ).rejects.toThrow(/non-JSON output/);
+      ).rejects.toThrow(/no parseable JSON object/);
 
       const docs = await mongoose.connection.db
         .collection('cost_events')
         .find({ traceId: 'trace-badjson' })
         .toArray();
       expect(docs).toHaveLength(1);
+    });
+
+    it('TOLERATES markdown code fences + trailing commentary (production bug 2026-05-17)', async () => {
+      // Real production failure: the model returned
+      //   ```json\n{...}\n```\n\nAdditional commentary the model decided to add
+      // The OLD regex-based cleaner only stripped trailing fences at the
+      // VERY END of the string. Any text after the fence broke
+      // JSON.parse with "non-whitespace character after JSON at
+      // position N." Caused "Chat turn failed" errors across multiple
+      // chips.
+      //
+      // The new extractor walks brace depth + returns the first
+      // balanced {...} regardless of surrounding text. This test pins
+      // the behavior.
+      const messyOutput =
+        '```json\n' +
+        '{\n' +
+        '  "intent": "analyze_property",\n' +
+        '  "confidence": 90,\n' +
+        '  "reasoning": "User pasted a Zillow URL"\n' +
+        '}\n' +
+        '```\n' +
+        '\n' +
+        'Additional commentary the model decided to add after the JSON.';
+
+      setAnthropicAdapter(makeStub(messyOutput));
+      const result = await classifyIntent({
+        userInput: 'analyze 123 Main',
+        traceId: 'trace-messy-output',
+        userId: new Types.ObjectId(),
+      });
+      expect(result.intent).toBe('analyze_property');
+      expect(result.confidence).toBe(90);
     });
 
     it('throws on unknown intent enum value', async () => {
