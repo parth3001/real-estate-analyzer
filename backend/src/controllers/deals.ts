@@ -505,6 +505,89 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
   }
 };
 
+/**
+ * GET /api/deals/:id/critique — T1 (Day 9a, 2026-05-18).
+ *
+ * Returns the adversarial-critic CritiqueEvents (both personas) tied
+ * to this Deal's latest DecisionEvent. Auto-fired on every save
+ * (see triggerOnSave.ts); this endpoint is how the SavedDealHero
+ * surfaces them in the UI.
+ *
+ * Response shapes:
+ *   - 200 + critiques[] when at least one CritiqueEvent exists
+ *     (pending → empty array, complete → 2 entries — one per persona)
+ *   - 200 + critiques: [] when the Deal predates T1 (no
+ *     latestDecisionEventId) OR the critique is still running OR was
+ *     skipped due to cost cap. Caller treats empty as "no critique
+ *     yet"; the SavedDealHero hides the section gracefully.
+ *   - 404 when the Deal doesn't exist or doesn't belong to the user.
+ *
+ * NOT a 202/polling endpoint — the critique is fire-and-forget, the
+ * frontend just refetches on user action (page reload, manual refresh)
+ * and shows whatever's there. Keeps the API surface flat.
+ */
+export const getDealCritique = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+    const deal = await dealService.getDealById(id);
+    if (!deal || deal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+
+    // Pre-T1 Deals (or Deals never re-materialized) have no link to
+    // a DecisionEvent. Return empty rather than 404 so the frontend
+    // gracefully hides the critique section.
+    const decisionId = (deal as unknown as { latestDecisionEventId?: unknown })
+      .latestDecisionEventId;
+    if (!decisionId) {
+      res.json({ critiques: [], pending: false });
+      return;
+    }
+
+    const { eventsRepositoryReads } = await import(
+      '../repositories/EventsRepositoryReads'
+    );
+    const critiques = await eventsRepositoryReads.getCritiquesForDecision(
+      decisionId as unknown as string
+    );
+
+    // Map to the wire shape the frontend wants — only the payload
+    // fields the CritiqueCard renders, plus a created-at for ordering.
+    const wire = critiques.map((c) => ({
+      persona: c.payload.criticPersona,
+      agreementWithOriginal: c.payload.agreementWithOriginal,
+      severityScore: c.payload.severityScore,
+      divergenceReasons: c.payload.divergenceReasons,
+      alternativeAssumptions: c.payload.alternativeAssumptions,
+      triggerType: c.payload.triggerType,
+      timestamp: c.timestamp,
+    }));
+
+    res.json({
+      critiques: wire,
+      // `pending` = critique was supposed to run but no events yet.
+      // True when the Deal has a DecisionEvent link but zero critiques
+      // are present (background job is still running, OR was skipped
+      // by daily cap). Frontend can show "Adversarial review pending…"
+      // when this is true and critiques is empty.
+      pending: wire.length === 0,
+    });
+  } catch (error) {
+    logger.error(`Error getting critique for deal ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Failed to load critique' });
+  }
+};
+
 // Create a new deal
 export const createDeal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

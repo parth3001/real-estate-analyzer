@@ -40,6 +40,11 @@ export type CriticPersona = z.infer<typeof CriticPersonaSchema>;
 
 const TriggerTypeSchema = z.enum([
   'auto_buy_band', // Auto-invoked because deal-scoring returned BUY-band (≥80)
+  'auto_on_save', // T1 (Day 9a): Auto-invoked on EVERY materialized deal,
+  //  regardless of score. Mike's Trust pillar: the
+  //  discipline layer doesn't only argue with deals the
+  //  user is excited about — it argues with EVERY deal
+  //  the user commits to saving.
   'manual_request', // User explicitly asked for critique
   'batch_seeding', // Periodic offline batch run for substrate seeding
 ]);

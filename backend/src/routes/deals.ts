@@ -2,6 +2,7 @@ import express, { Router, Request, Response, NextFunction } from 'express';
 import {
   getAllDeals,
   getDealById,
+  getDealCritique,
   createDeal,
   updateDeal,
   deleteDeal,
@@ -55,6 +56,10 @@ router.get('/sample-mf', authMiddleware, getSampleMF);
 // Deal routes (require authentication)
 router.get('/', authMiddleware, getAllDeals);
 router.get('/:id', authMiddleware, getDealById);
+// T1 (Day 9a, 2026-05-18): adversarial-critique read endpoint.
+// Critique is fired automatically on every save (see triggerOnSave.ts);
+// this surfaces both personas to the SavedDealHero.
+router.get('/:id/critique', authMiddleware, getDealCritique);
 router.post('/', authMiddleware, createDeal);
 router.put('/:id', authMiddleware, updateDeal);
 router.delete('/:id', authMiddleware, deleteDeal);

@@ -434,6 +434,11 @@ export interface AnalysisConfidence {
 
 export interface IDeal extends Document {
   userId: mongoose.Schema.Types.ObjectId;
+  /**
+   * Latest DecisionEvent id this Deal was materialized from (T1, 2026-05-18).
+   * Used to look up critiques + audit-trail for this Deal in substrate.
+   */
+  latestDecisionEventId?: mongoose.Schema.Types.ObjectId;
   portfolioId?: mongoose.Schema.Types.ObjectId; // Optional portfolio association
   ownershipPercentage?: number; // For fractional investments (syndications, partnerships)
   propertyName: string;
@@ -1108,11 +1113,26 @@ const AnalysisSchema = new Schema({
 
 // Base schema for all deals
 const DealSchema = new Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
     index: true
+  },
+  /**
+   * Latest DecisionEvent id this Deal was materialized from.
+   * Added T1 (Day 9a, 2026-05-18) so:
+   *   - the auto-on-save critique endpoint can find critiques tied
+   *     to the most recent decision
+   *   - audit-trail UIs can drill from a Deal directly into substrate
+   * Optional — pre-T1 Deals have no value, and that's safe:
+   * the critique endpoint returns an empty array, no error.
+   */
+  latestDecisionEventId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DecisionEvent',
+    required: false,
+    index: true,
   },
   portfolioId: {
     type: mongoose.Schema.Types.ObjectId,

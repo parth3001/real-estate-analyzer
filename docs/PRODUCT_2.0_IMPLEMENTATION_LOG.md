@@ -188,6 +188,22 @@ Order is session → daily so the cheaper local check fires first and the global
 
 **Decision:** Route all four intents through agents (deal_scoring or qa) instead of direct tool execution. Agents use `recall_user_context` to resolve "my last deal" references and construct the tool payload themselves. Documented routing table in `router.ts` header.
 
+### 4.11 Auto-fire adversarial critic on every saved deal — fire-and-forget (T1, Day 9a)
+
+**Problem:** Pre-T1, the adversarial critic only ran on `auto_buy_band` (score ≥ 80) or explicit user request. The discipline-layer positioning ("the only tool willing to tell you NO") requires the critic argue with EVERY deal the user commits to saving — including the 65–75 score band where confirmation bias is strongest. Mike Patterson (Business Expert) made this case explicitly: *"Most retail investors don't lose their first deal because of bad math. They lose it because nobody told them no."*
+
+**Decision:** Add new `auto_on_save` TriggerType. Hook `fireCritiqueOnSave()` into `dealMaterializationService.materializeDealFromDecision` AFTER successful save (both create and update paths). Make it **fire-and-forget** — the materialization returns immediately; the critique runs in a detached IIFE so the chat-turn latency is unchanged.
+
+**Operational discipline:**
+- Pre-check the daily cost cap before firing; skip silently if over (better than queuing surprise cost later)
+- Master kill-switch `CRITIQUE_ON_SAVE_ENABLED` env var, default ON
+- Background errors are logged at `error` level + swallowed — the save flow NEVER sees an exception from the critique side
+- `latestDecisionEventId` added to Deal model so the read endpoint (`GET /api/deals/:id/critique`) can join critiques to deals via the substrate link
+
+**Circular-import lesson worth preserving:** `triggerOnSave.ts` MUST NOT import `toolRegistry` directly. The registry transitively pulls in `score_deal` → `dealMaterializationService` → back to `triggerOnSave`, which crashes at module load with an undefined-`shape` Zod error. Fix: import the two critic-needed tools (`render_audit_trail`, `recall_user_context`) directly. Same pattern applies to any future background-job that runs inside materialization.
+
+---
+
 ### 4.9 DealLicense identity = (userId, canonicalAddressKey) with unique partial index (Issue #105 substrate)
 
 **Problem:** Same property typed two different ways ("123 Main St" vs "123 main street") could create two separate paid licenses — double-billing the user.
@@ -346,4 +362,4 @@ Keep it skimmable. If a section grows past ~25 rows, split it.
 
 ---
 
-**Last updated:** 2026-05-18 (Phase B per-license cap enforcement + license auto-expire on cap hit)
+**Last updated:** 2026-05-18 (T1 — adversarial critique auto-fires on every saved deal; backend only, frontend CritiqueCard pending)

@@ -1288,8 +1288,40 @@ deflection instead of education.
 ---
 
 ### Issue #97: adversarial_critic structured output rendering
-**Status**: 🟢 OPEN (deferred from W6-S3/S4)
-**Priority**: P3 - LOW (low-traffic agent)
+**Status**: 🟡 BACKEND SHIPPED 2026-05-18 (T1) — frontend CritiqueCard pending
+**Priority**: P3 - LOW (low-traffic agent — but Trust pillar makes it P1 in practice)
+
+**T1 Resolution (2026-05-18, backend portion)**:
+The adversarial critic now auto-fires on EVERY saved deal (new
+triggerType `auto_on_save`), not just `auto_buy_band` deals. Per
+Mike's Trust pillar from the Business Expert consult: the discipline
+layer doesn't only argue with deals the user is excited about, it
+argues with EVERY deal the user commits to saving.
+
+Implementation:
+- `fireCritiqueOnSave()` helper in `agents/adversarialCritic/triggerOnSave.ts`
+  — fire-and-forget background invocation hooked into materialization
+- Materialization (`dealMaterializationService.materializeDealFromDecision`)
+  now calls it after successful create/update
+- Cost discipline: pre-checks daily cap before firing; skips silently
+  if over budget. Feature-flagged via `CRITIQUE_ON_SAVE_ENABLED`.
+  Never throws into the save path.
+- `latestDecisionEventId` added to Deal model — persists the substrate
+  link so the critique endpoint can look up critiques without a
+  userId+address join
+- `GET /api/deals/:id/critique` endpoint returns the 2-persona output
+  in a wire shape ready for the SavedDealHero
+- 4 new triggerOnSave tests pass; 397/397 full agent+cost+license
+  suite still green
+- Circular-import gotcha caught + documented: `triggerOnSave.ts` must
+  NOT import `toolRegistry` (transitively pulls score_deal → materialization
+  → back to itself); instead imports the two critic-needed tools
+  (render_audit_trail, recall_user_context) directly
+
+Remaining work (frontend):
+- CritiqueCard component renders the 2-persona comparison in
+  SavedDealHero. Wire shape already defined; UI is the follow-up
+  commit.
 **Reported**: 2026-05-15 (W6-S3 commit, reinforced W6-S4)
 **Component**: Backend Orchestrator + Frontend ChatOverlay
 **Category**: Feature Gap

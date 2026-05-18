@@ -59,6 +59,7 @@ import type {
   InvestmentVerdict,
 } from '../services/investment/BaseDecisionEngine';
 import { logger } from '../utils/logger';
+import { fireCritiqueOnSave } from '../agents/adversarialCritic/triggerOnSave';
 
 // ===== Result shape =====
 
@@ -350,6 +351,10 @@ export async function materializeDealFromDecision(
   // shape at save() time per the discriminator's required-when rules.
   const dealFields: Record<string, unknown> = {
     userId: userId as unknown as IDeal['userId'],
+    // T1 (2026-05-18): persist the substrate link so the SavedDealHero
+    // can fetch critiques + audit trail by DecisionEvent without a
+    // userId+address join.
+    latestDecisionEventId: decisionEventId,
     propertyName,
     propertyType: property.propertyType,
     propertyAddress: property.propertyAddress,
@@ -434,6 +439,11 @@ export async function materializeDealFromDecision(
       addressFingerprint: fingerprint,
       dealQuality: decisionPayload.dealQuality,
     });
+    // T1 (2026-05-18): Fire adversarial critique in background even on
+    // updates — re-analysis may have shifted the deal's profile enough
+    // to warrant a fresh second opinion. The function is fire-and-
+    // forget and cost-cap-aware; no impact on this code path's latency.
+    fireCritiqueOnSave({ decisionEventId, userId });
     return { deal: existing, created: false, skipped: false };
   }
 
@@ -446,6 +456,11 @@ export async function materializeDealFromDecision(
     addressFingerprint: fingerprint,
     dealQuality: decisionPayload.dealQuality,
   });
+  // T1 (2026-05-18): Fire adversarial critique in background. New saves
+  // are the primary auto_on_save trigger — every materialized deal gets
+  // a 2-persona second opinion regardless of score. Fire-and-forget,
+  // bounded by the daily cost cap; no impact on this function's latency.
+  fireCritiqueOnSave({ decisionEventId, userId });
   return { deal: created, created: true, skipped: false };
 }
 
