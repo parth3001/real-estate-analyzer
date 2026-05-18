@@ -347,18 +347,90 @@ describe('tool:score_deal (W4-S1)', () => {
       ).toBe(350000);
     });
 
-    it('falls back to purchasePrice * 0.9 when walkAwayPrice is omitted', async () => {
+    it('falls back to income approach (NOI / target cap rate) when walkAwayPrice is omitted (Issue #114)', async () => {
+      // OLD behavior (pre-2026-05-17): walkAway = purchasePrice * 0.9.
+      // This made walk-away a fixed 11% spread below whatever the user
+      // offered — meaningless. User observed it across multiple test
+      // prices for the same property; the walk-away always tracked
+      // their offer instead of the property's fundamentals.
+      //
+      // NEW behavior (Issue #114): walkAway = NOI / target cap rate,
+      // computed from analysisResult.metrics.noi + a target rate
+      // (engine-derived market median if available; otherwise 6.5%
+      // default). Walk-away is now INDEPENDENT of the user's offer —
+      // the same property analyzed at different prices yields the
+      // same walk-away.
       setEngineAdapter(makeStubAdapter());
       const userId = new Types.ObjectId();
-      const input = makeInput();
+      const input = makeInput({
+        analysisResult: {
+          metrics: { capRate: 5.2, noi: 13000 }, // NOI $13K/yr
+          monthlyAnalysis: { cashFlow: -120 },
+          longTermAnalysis: { projectionYears: 10 },
+        },
+      });
       delete input.walkAwayPrice;
       await scoreDeal.execute(input, makeCtx(userId));
       const events = await reads.getEventsByTraceId('trace-score');
       const analysisDoc = events.find((e) => e.eventType === 'analysis')!;
-      // 425000 * 0.9 = 382500
+      // 13000 / 0.065 = 200000 (income approach with 6.5% target cap rate)
       expect(
         (analysisDoc.payload as { walkAwayPrice: number }).walkAwayPrice
-      ).toBeCloseTo(382500);
+      ).toBe(200000);
+    });
+
+    it('walk-away is INDEPENDENT of purchase price (Issue #114 regression guard)', async () => {
+      // The same property, analyzed at three different bids, must
+      // produce the SAME walk-away. The pre-fix `purchasePrice * 0.9`
+      // formula made it scale with the bid — completely undermining
+      // the "are you overpaying?" signal walk-away exists to surface.
+      const noi = 18000; // $18K/yr NOI, same property
+      const walkAways: number[] = [];
+      for (const purchasePrice of [250000, 300000, 400000]) {
+        setEngineAdapter(makeStubAdapter());
+        const input = makeInput({
+          propertyData: { purchasePrice, propertyType: 'SFR' } as unknown as ScoreDealInput['propertyData'],
+          analysisResult: {
+            metrics: { capRate: 5.2, noi },
+            monthlyAnalysis: { cashFlow: -120 },
+            longTermAnalysis: { projectionYears: 10 },
+          },
+        });
+        delete input.walkAwayPrice;
+        const userId = new Types.ObjectId();
+        await scoreDeal.execute(input, makeCtx(userId));
+        const events = await reads.getEventsByTraceId('trace-score');
+        const analysisDoc = events.find((e) => e.eventType === 'analysis')!;
+        walkAways.push(
+          (analysisDoc.payload as { walkAwayPrice: number }).walkAwayPrice
+        );
+        await mongoose.connection.dropDatabase();
+      }
+      // All three should be identical — same NOI, same target cap rate,
+      // so same walk-away regardless of the bid.
+      expect(walkAways[0]).toBe(walkAways[1]);
+      expect(walkAways[1]).toBe(walkAways[2]);
+    });
+
+    it('returns 0 (UI shows "—") when neither explicit walkAway nor NOI is available', async () => {
+      // No more offer-anchored fallback — better to show nothing than
+      // a misleading number tied to the bid.
+      setEngineAdapter(makeStubAdapter());
+      const userId = new Types.ObjectId();
+      const input = makeInput({
+        analysisResult: {
+          metrics: { capRate: 5.2 }, // no NOI
+          monthlyAnalysis: { cashFlow: -120 },
+          longTermAnalysis: { projectionYears: 10 },
+        },
+      });
+      delete input.walkAwayPrice;
+      await scoreDeal.execute(input, makeCtx(userId));
+      const events = await reads.getEventsByTraceId('trace-score');
+      const analysisDoc = events.find((e) => e.eventType === 'analysis')!;
+      expect(
+        (analysisDoc.payload as { walkAwayPrice: number }).walkAwayPrice
+      ).toBe(0);
     });
   });
 

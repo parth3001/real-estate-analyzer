@@ -7,6 +7,73 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #114: Walk-away price tracks the buyer's offer instead of property fundamentals — FIXED
+**Status**: ✅ FIXED 2026-05-17 (income-approach fallback; engine fairMarketValue read defensively for future)
+**Priority**: P0 - CRITICAL (undermines the "honest analysis" trust position)
+**Reported**: 2026-05-17 (user testing — observed walk-away price always ~11%
+                          below offer regardless of what was bid)
+**Component**: Backend score_deal tool (resolveWalkAwayPrice)
+**Category**: Data integrity / Engine correctness
+
+**Description**:
+`resolveWalkAwayPrice()` in score_deal.ts fell back to
+`purchasePrice * 0.9` whenever the caller didn't pass an explicit
+walkAwayPrice. The chat agent NEVER passes one. Result:
+walkAwayPrice = 0.9 × user's offer, EVERY time. Mathematically
+guaranteed an 11% spread:
+  (offer − 0.9·offer) / 0.9·offer ≈ 11.1%
+
+User confirmed: same property, three different offers ($223K, $250K,
+$300K) all produced walk-away exactly 11% below offer. The number
+was meaningless — it tracked the buyer's bid, not the property's
+fundamentals.
+
+Walk-away price is supposed to be the engine's MAX-RECOMMENDED bid
+based on the property's economics (NOI ÷ market cap rate), so the
+user can answer "am I overpaying?" That answer is broken when
+walk-away is just a fixed haircut of whatever the user said.
+
+**Fix shipped (commit pending)**:
+- `resolveWalkAwayPrice` rewritten with a 4-tier resolution order:
+  1. Explicit caller-provided walkAwayPrice (rare in chat; structured
+     frontend + tests can still pass it)
+  2. Engine output's `marketIntelligence.fairMarketValue.fairValue`
+     (defensive read — current InvestmentDecision interface doesn't
+     expose this top-level, but we read it if/when the engine exposes
+     it later)
+  3. Income approach: NOI ÷ target cap rate, where target cap rate
+     comes from engine-derived `marketContext.marketMedianCapRate`
+     if exposed (with percentage-vs-decimal normalization) or a 6.5%
+     default (mid-market residential)
+  4. Last-resort: return 0 (UI renders "—" rather than misleading
+     offer-anchored number). We deliberately do NOT use purchasePrice
+     in the fallback chain — that's the bug we're fixing.
+
+- score_deal call site updated to pass engineOutput + normalizedAnalysisResult
+
+**Regression guards**:
+- score_deal.test.ts now includes:
+  - "falls back to income approach (NOI / target cap rate) when
+    walkAwayPrice is omitted (Issue #114)" — locks income-approach behavior
+  - "walk-away is INDEPENDENT of purchase price" — same property at
+    three different bids must produce the same walk-away
+  - "returns 0 when neither explicit walkAway nor NOI is available"
+    — locks the no-misleading-fallback principle
+
+**Follow-up work**:
+- Expose `fairMarketValue` on the engine's public `InvestmentDecision`
+  interface so resolveWalkAwayPrice can use the engine's tier-aware
+  computation (current path falls through to the local NOI / 6.5%
+  approximation when the engine's value isn't exposed)
+- When MF chat ships, MF engine has its own walk-away derivation;
+  audit that path too
+
+**Files affected**:
+- `backend/src/agents/tools/score_deal.ts` — resolveWalkAwayPrice rewrite
+- `backend/src/agents/tools/__tests__/score_deal.test.ts` — test rewrites + 2 new regression guards
+
+---
+
 ### Issue #113: Agent has no mechanism to resolve "my latest deal" references
 **Status**: 🟡 OPEN (workaround shipped: dead-end chips removed; agent capability still missing)
 **Priority**: P2 - MEDIUM (engagement feature; not a launch blocker but unlocks personalized chips)

@@ -400,15 +400,92 @@ function resolveDealId(
   return undefined;
 }
 
+/**
+ * Compute the walk-away price — the engine's max-recommended purchase
+ * anchored in property economics, NOT the buyer's offer.
+ *
+ * Issue #114 (2026-05-17): the old fallback was `purchasePrice * 0.9`,
+ * which made walk-away a fixed 11% spread below whatever the user
+ * offered — meaningless. User pasted the same property at $223K, $250K,
+ * $300K and walk-away "moved with them," each time landing 11% below.
+ * That undermines the entire "honest analysis" trust position: the
+ * walk-away number is what tells the user whether they're overpaying,
+ * and it MUST be independent of their offer.
+ *
+ * Correct anchor: income approach. Fair value = NOI ÷ target cap rate.
+ * The target cap rate ideally comes from market intelligence (market
+ * median + risk premium); when that's unavailable we fall back to a
+ * conservative 6.5% default (mid-market residential).
+ *
+ * Resolution order:
+ *   1. Caller-provided explicit walkAwayPrice (rare from chat; honored
+ *      when present for tests + structured frontend callers)
+ *   2. Engine output's marketIntelligence.fairMarketValue.fairValue
+ *      if the engine attached it (current engine doesn't expose this
+ *      publicly, but we read defensively in case it lands later)
+ *   3. NOI / target cap rate computed locally
+ *   4. As an absolute last resort, return 0 (let the UI show "—" rather
+ *      than a misleading number tied to the offer)
+ */
 function resolveWalkAwayPrice(
   explicit: number | undefined,
-  propertyData: Record<string, unknown>
+  propertyData: Record<string, unknown>,
+  engineOutput: Record<string, unknown>,
+  analysisResult: Record<string, unknown>
 ): number {
-  if (typeof explicit === 'number' && Number.isFinite(explicit)) return explicit;
-  const purchasePrice = (propertyData as { purchasePrice?: unknown }).purchasePrice;
-  if (typeof purchasePrice === 'number' && Number.isFinite(purchasePrice)) {
-    return purchasePrice * 0.9; // SFR convention: comparables - 10%
+  // 1. Explicit override from caller (structured frontend, tests)
+  if (typeof explicit === 'number' && Number.isFinite(explicit)) {
+    return explicit;
   }
+
+  // 2. Engine-attached fairMarketValue (defensive — current engine
+  //    doesn't expose this top-level, but we read it if/when it does)
+  const marketIntel = (engineOutput as { marketIntelligence?: unknown })
+    .marketIntelligence;
+  if (marketIntel && typeof marketIntel === 'object') {
+    const fmv = (marketIntel as { fairMarketValue?: { fairValue?: unknown } })
+      .fairMarketValue;
+    if (fmv && typeof fmv === 'object') {
+      const fv = (fmv as { fairValue?: unknown }).fairValue;
+      if (typeof fv === 'number' && Number.isFinite(fv) && fv > 0) {
+        return Math.round(fv);
+      }
+    }
+  }
+
+  // 3. Income approach — fair value = NOI / target cap rate
+  const metrics =
+    (analysisResult as { metrics?: Record<string, unknown> }).metrics ??
+    (analysisResult as { keyMetrics?: Record<string, unknown> }).keyMetrics;
+  const noi = metrics
+    ? (metrics as { noi?: unknown; annualNOI?: unknown }).noi ??
+      (metrics as { annualNOI?: unknown }).annualNOI
+    : undefined;
+  if (typeof noi === 'number' && Number.isFinite(noi) && noi > 0) {
+    // Target cap rate: prefer engine-derived market median if exposed;
+    // fall back to 6.5% (mid-market residential, calibrated against
+    // CoStar / Real Capital Analytics SFR benchmarks).
+    const engineMarketCapRate = (engineOutput as {
+      marketContext?: { marketMedianCapRate?: unknown };
+    }).marketContext?.marketMedianCapRate;
+    let targetCapRate = 6.5; // default percentage
+    if (
+      typeof engineMarketCapRate === 'number' &&
+      Number.isFinite(engineMarketCapRate) &&
+      engineMarketCapRate > 0
+    ) {
+      // marketMedianCapRate may be expressed as a percentage (6.5) OR
+      // a decimal (0.065). Detect and normalize to percentage.
+      targetCapRate =
+        engineMarketCapRate <= 1 ? engineMarketCapRate * 100 : engineMarketCapRate;
+    }
+    return Math.round(noi / (targetCapRate / 100));
+  }
+
+  // 4. No NOI available — defensive fallback. We deliberately do NOT
+  //    use purchasePrice here; tying walk-away to the offer is the
+  //    bug we're fixing. Return 0 so the UI can render "—" or hide
+  //    the field; better to show nothing than something misleading.
   return 0;
 }
 
@@ -491,11 +568,16 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
     });
     const computeTimeMs = Date.now() - startTime;
 
-    // Project to lean substrate payloads
+    // Project to lean substrate payloads.
+    // walkAwayPrice now uses the income approach (NOI / target cap rate)
+    // instead of the previous purchasePrice * 0.9 offer-anchored fallback
+    // — see resolveWalkAwayPrice for the full rationale (Issue #114).
     const propertyDataAsObject = validated.propertyData as Record<string, unknown>;
     const walkAwayPrice = resolveWalkAwayPrice(
       validated.walkAwayPrice,
-      propertyDataAsObject
+      propertyDataAsObject,
+      engineOutput as unknown as Record<string, unknown>,
+      normalizedAnalysisResult as unknown as Record<string, unknown>
     );
 
     const { analysisPayload, decisionPayloadDraft } =
