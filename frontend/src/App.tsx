@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { appleTheme } from './theme/appleTheme';
 import AppleNavigation from './components/layout/AppleNavigation';
+import NewAppShell from './components/layout/NewAppShell';
 
 // Import global Apple styles
 import './styles/appleGlobal.css';
@@ -211,28 +212,28 @@ function App() {
               <Route path="/blog" element={<BlogListPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
 
-              {/* Protected Routes (authentication required) */}
+              {/* Protected Routes — NEW SHELL (Phase 4, Issue #108).
+                  Portfolio / Pipeline / Saved properties / Settings /
+                  Profile / Analysis-details all render INSIDE the new
+                  AppLayout sidebar shell, matching the chat-first IA
+                  visible on /app. Clicking sidebar nav swaps the main
+                  pane content without changing chrome — kills the "two
+                  different apps" inconsistency users hit before. */}
               <Route
                 element={
                   <ProtectedRoute>
-                    <AppleNavigation />
+                    <NewAppShell />
                   </ProtectedRoute>
                 }
               >
                 {/* Phase 3+4 — /dashboard 301-redirects to /app for the
-                    migration window. Old bookmarks keep working; the
-                    sidebar in /app replaces the dashboard's IA. */}
+                    migration window. */}
                 <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-                
-                {/* Property Analysis Routes */}
-                <Route path="/sfr-analysis" element={<SFRAnalysis />} />
-                <Route path="/sfr-analysis/:mode" element={<SFRAnalysis />} />
-                <Route path="/mf-analysis" element={<MFAnalysis />} />
-                
-                {/* Property Management */}
+
+                {/* Property Management — saved deals + their detail view */}
                 <Route path="/saved-properties" element={<SavedProperties />} />
                 <Route path="/analysis/:id" element={<AnalysisDetails />} />
-                
+
                 {/* Portfolio Routes */}
                 <Route path="/portfolio" element={<PortfolioDashboard />} />
                 <Route path="/portfolio/create" element={
@@ -247,19 +248,40 @@ function App() {
                     <Typography variant="body1">Portfolio editing will be implemented here</Typography>
                   </Box>
                 } />
-                
+
                 {/* Pipeline Routes */}
                 <Route path="/pipeline" element={<PipelinePage />} />
-                
-                {/* Market & Tools */}
-                <Route path="/contact" element={<ContactPage />} />
-                
-                {/* User Management */}
+
+                {/* User Management — Settings/Profile sit alongside the
+                    chat-first nav (Settings is in the AppLayout sidebar) */}
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+
+              {/* Protected Routes — LEGACY SHELL (AppleNavigation).
+                  Routes that haven't migrated to the new IA yet. Per
+                  Issue #100, the wizard (/sfr-analysis, /mf-analysis)
+                  stays accessible but unlinked from the new sidebar.
+                  Admin pages live here until they get their own
+                  dedicated admin shell. */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppleNavigation />
+                  </ProtectedRoute>
+                }
+              >
+                {/* Property Analysis Routes (legacy wizard) */}
+                <Route path="/sfr-analysis" element={<SFRAnalysis />} />
+                <Route path="/sfr-analysis/:mode" element={<SFRAnalysis />} />
+                <Route path="/mf-analysis" element={<MFAnalysis />} />
+
+                {/* Contact (under auth gate for now) */}
+                <Route path="/contact" element={<ContactPage />} />
+
+                {/* Admin */}
                 <Route path="/admin/users" element={<AdminUserManagement />} />
                 <Route path="/admin/analytics" element={<AdminAnalytics />} />
-
               </Route>
 
               {/* Catch all - 404 Not Found */}

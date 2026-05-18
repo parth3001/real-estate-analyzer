@@ -285,7 +285,13 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
       <Box sx={{ py: 1 }}>
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          // Prefix-match so /portfolio/create + /portfolio/:id still
+          // highlight "Portfolio" in the sidebar — without it, the nested
+          // routes would deselect the parent. Exact equality (===) was
+          // wrong for the route migration in Issue #108.
+          const isActive =
+            location.pathname === item.path ||
+            location.pathname.startsWith(item.path + '/');
           return (
             <Box
               key={item.path}
