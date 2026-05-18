@@ -1,0 +1,270 @@
+/**
+ * savedDealVariants — polymorphic config for the SavedDealHero card.
+ *
+ * One visual shell (the DealScoreCard), four content variants. The
+ * variant is detected from a Deal's `propertyType` + `investmentStrategy`
+ * fields and drives:
+ *   - The card's caption label ("BRRRR ANALYSIS" / "MULTI-FAMILY · 4 units")
+ *   - Which 3 factors render in the "Top factors" section
+ *   - Which 3-4 chips appear in the action row below the card
+ *
+ * Why a config file (not inline JSX):
+ *   - Each variant's design decisions live in ONE place. When BRRRR's
+ *     factor priorities change ("Capital Recovery is now THE factor"),
+ *     it's a 1-line change here, not a search-and-replace across
+ *     components.
+ *   - Unit-testable. Tests assert "BRRRR variant shows Capital Recovery
+ *     first" by reading the config, not by mounting the whole card.
+ *   - New variants (commercial later) slot in by adding a config object.
+ *
+ * Per Issue #117 (UX Designer pass 2026-05-17) — all four variants
+ * ship together. Half-supported polymorphism on a saved-deal page is
+ * worse than no polymorphism: a user with one BRRRR saved deal gets a
+ * broken card on every visit until the variant lands.
+ */
+
+// ===== Deal-shape contract =====
+//
+// The actual Deal type at the model level is huge (60+ optional fields)
+// and tightly Mongoose-coupled. This local shape captures only what
+// the saved-deal hero needs — kept as a structural type so it accepts
+// the API response without forcing a runtime conversion.
+
+export interface SavedDealShape {
+  propertyType?: string;
+  investmentStrategy?: string;
+  propertyAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  purchasePrice?: number;
+  // MF unit count — used in the caption for the MF variant
+  totalUnits?: number;
+  // Embedded analysis (projected by dealMaterializationService)
+  analysis?: {
+    keyMetrics?: {
+      capRate?: number;
+      cashOnCashReturn?: number;
+      dscr?: number;
+      grossRentMultiplier?: number;
+      breakEvenOccupancy?: number;
+    };
+    monthlyAnalysis?: {
+      cashFlow?: number;
+    };
+    annualAnalysis?: {
+      annualNOI?: number;
+    };
+    longTermAnalysis?: {
+      yearlyProjections?: unknown[];
+    };
+    // Materialization embeds investmentDecision here too (Issue #109)
+    investmentDecision?: SavedDealDecision;
+  };
+  // Top-level investmentDecision (chat-first reads here; legacy reads
+  // both paths). Issue #109 ensured both stay in sync.
+  investmentDecision?: SavedDealDecision;
+  // BRRRR-specific block
+  brrrr?: {
+    rehabBudget?: number;
+    afterRepairValue?: number;
+    refinanceLTV?: number;
+    seasoningPeriod?: number;
+  };
+}
+
+interface SavedDealDecision {
+  score?: number;
+  primaryReason?: string;
+  professionalAssessment?: {
+    dealQuality?: number;
+    cashFlowScore?: number;
+    irrScore?: number;
+    marketStrengthScore?: number;
+    debtStructureScore?: number;
+    exitStrategyScore?: number;
+    capRateScore?: number;
+    propertyRiskScore?: number;
+  };
+}
+
+// ===== Variant detection =====
+
+export type SavedDealVariant =
+  | 'sfr_buy_hold'
+  | 'sfr_brrrr'
+  | 'sfr_house_hack'
+  | 'multi_family';
+
+/**
+ * Detect the variant from a Deal's propertyType + investmentStrategy.
+ *
+ * Defaults:
+ *   - Unknown propertyType + buy-hold strategy → sfr_buy_hold (safest)
+ *   - Anything not MF and not BRRRR/house-hack → sfr_buy_hold
+ *   - MF takes precedence (different engine, different metrics)
+ *
+ * Commercial property types (COMMERCIAL_RETAIL etc.) fall through to
+ * sfr_buy_hold until we ship dedicated commercial variants. The
+ * factors still render meaningfully (cash flow / IRR / market still
+ * apply) even if the LABEL says "Buy & Hold."
+ */
+export function detectSavedDealVariant(deal: SavedDealShape): SavedDealVariant {
+  if (deal.propertyType === 'MF') return 'multi_family';
+  if (deal.investmentStrategy === 'brrrr') return 'sfr_brrrr';
+  if (deal.investmentStrategy === 'house-hack') return 'sfr_house_hack';
+  return 'sfr_buy_hold';
+}
+
+// ===== Caption builder =====
+
+export function buildVariantCaption(
+  variant: SavedDealVariant,
+  deal: SavedDealShape
+): string {
+  switch (variant) {
+    case 'multi_family': {
+      const units = deal.totalUnits;
+      return units ? `MULTI-FAMILY ANALYSIS · ${units} units` : 'MULTI-FAMILY ANALYSIS';
+    }
+    case 'sfr_brrrr':
+      return 'BRRRR ANALYSIS';
+    case 'sfr_house_hack':
+      return 'HOUSE HACK ANALYSIS';
+    case 'sfr_buy_hold':
+    default:
+      return 'BUY & HOLD ANALYSIS';
+  }
+}
+
+// ===== Top-factors selection =====
+
+export interface VariantFactor {
+  label: string;
+  /** Field path on `professionalAssessment` to read the 0-100 score. */
+  scoreField: keyof NonNullable<SavedDealDecision['professionalAssessment']>;
+}
+
+/**
+ * The 3 factors most users care about for each variant. The legacy
+ * scoring engine (and MF engine) populate the same `professionalAssessment`
+ * field set today — variant differentiation is purely WHICH THREE we
+ * surface in the card.
+ *
+ * When the engines start emitting strategy-specific factor scores
+ * (e.g., a dedicated capitalRecoveryScore for BRRRR, perUnitNOIScore
+ * for MF), the scoreField can point at the new field. No card
+ * code change.
+ */
+const VARIANT_FACTORS: Record<SavedDealVariant, VariantFactor[]> = {
+  sfr_buy_hold: [
+    { label: 'Cash flow', scoreField: 'cashFlowScore' },
+    { label: 'IRR', scoreField: 'irrScore' },
+    { label: 'Market strength', scoreField: 'marketStrengthScore' },
+  ],
+  sfr_brrrr: [
+    // BRRRR de-emphasizes Cash Flow (pre-refi cash flow is often
+    // negative; that's normal). IRR + market strength + debt structure
+    // are the right at-a-glance signals until we add a dedicated
+    // capitalRecoveryScore field to the engine.
+    { label: 'IRR (post-refi)', scoreField: 'irrScore' },
+    { label: 'Market strength', scoreField: 'marketStrengthScore' },
+    { label: 'Debt structure', scoreField: 'debtStructureScore' },
+  ],
+  sfr_house_hack: [
+    { label: 'Cash flow (offset)', scoreField: 'cashFlowScore' },
+    { label: 'Market strength', scoreField: 'marketStrengthScore' },
+    { label: 'Debt structure', scoreField: 'debtStructureScore' },
+  ],
+  multi_family: [
+    // MF uses the same professionalAssessment shape but the meaning
+    // shifts: cashFlow = aggregate (not per-unit), debtStructure
+    // weighs DSCR + leverage heavily. Show the three signals an MF
+    // underwriter would lead with.
+    { label: 'Cash flow', scoreField: 'cashFlowScore' },
+    { label: 'Debt structure (DSCR)', scoreField: 'debtStructureScore' },
+    { label: 'Market strength', scoreField: 'marketStrengthScore' },
+  ],
+};
+
+export function getVariantFactors(variant: SavedDealVariant): VariantFactor[] {
+  return VARIANT_FACTORS[variant];
+}
+
+// ===== Action chips =====
+
+/**
+ * Chips below the SavedDealHero. Tap routes the user to /app with the
+ * chip text as initialUserInput — the agent picks up the property
+ * context from the current chat session (if continuing) or from the
+ * chip's natural language ("Stress-test 336 Highland Ridge at 7%").
+ *
+ * Each chip MUST be something the agent can handle today. Same
+ * discipline as the chat-flow chip pools — no dead-end chips that
+ * imply unshipped capabilities (see Issues #101, #102, #113).
+ */
+const VARIANT_CHIPS: Record<SavedDealVariant, string[]> = {
+  sfr_buy_hold: [
+    'Stress-test this deal at 7% mortgage rates',
+    'Show me the 10-year projection',
+    'Why this score? Walk me through it',
+    'What hold period optimizes after-tax IRR?',
+  ],
+  sfr_brrrr: [
+    'Stress-test ARV at -10%',
+    'Show me the capital-recovery timeline',
+    'What rehab budget breaks this deal?',
+    'Refinance at 7.5% — what changes?',
+  ],
+  sfr_house_hack: [
+    'Move-out scenario: what happens at 100% rented?',
+    'Stress-test at 80% rent collection',
+    'Tax angle of owner-occupied',
+    'How long until I should refinance out of FHA?',
+  ],
+  multi_family: [
+    'Stress-test at 80% occupancy',
+    'Show me per-unit cash flow',
+    'Loan-sizing at 1.25x DSCR',
+    'Compare to MF cap-rate benchmarks',
+  ],
+};
+
+export function getVariantChips(variant: SavedDealVariant): string[] {
+  return VARIANT_CHIPS[variant];
+}
+
+// ===== Score + decision data extraction =====
+//
+// Reads from BOTH paths since Issue #109 ensured top-level and nested
+// investmentDecision agree. Defensive: a Deal materialized before the
+// fix might have only one populated.
+
+export function getDealQualityScore(deal: SavedDealShape): number {
+  return (
+    deal.investmentDecision?.professionalAssessment?.dealQuality ??
+    deal.analysis?.investmentDecision?.professionalAssessment?.dealQuality ??
+    deal.investmentDecision?.score ??
+    deal.analysis?.investmentDecision?.score ??
+    0
+  );
+}
+
+export function getProfessionalAssessment(
+  deal: SavedDealShape
+): NonNullable<SavedDealDecision['professionalAssessment']> | undefined {
+  return (
+    deal.investmentDecision?.professionalAssessment ??
+    deal.analysis?.investmentDecision?.professionalAssessment
+  );
+}
+
+export function getPrimaryReason(deal: SavedDealShape): string {
+  return (
+    deal.investmentDecision?.primaryReason ??
+    deal.analysis?.investmentDecision?.primaryReason ??
+    ''
+  );
+}

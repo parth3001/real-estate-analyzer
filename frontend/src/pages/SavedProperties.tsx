@@ -175,9 +175,14 @@ const SavedProperties: React.FC = () => {
     setPropertyToDelete(null);
   };
 
-  // Handle row click to navigate to property details
+  // Handle row click to navigate to property details.
+  // Phase 4 / Issue #117 (UX Designer call 2026-05-17): all property
+  // types now route to the unified /analysis/:id page, which dispatches
+  // by propertyType internally. Single URL, single mental model. The
+  // legacy propertyType-suffixed routes (/sfr-analysis?id=, /mf-analysis?id=)
+  // still work for creation flows but saved-deal viewing is unified.
   const handleRowClick = (property: SavedProperty) => {
-    navigate(`/${property.propertyType.toLowerCase()}-analysis?id=${property._id}`);
+    navigate(`/analysis/${property._id}`);
   };
 
   // Handle actions menu

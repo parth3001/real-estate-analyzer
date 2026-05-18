@@ -62,8 +62,17 @@ export interface DealScoreCardAssumption {
 }
 
 export interface DealScoreCardProps {
-  /** Investment strategy — drives the caption. */
+  /** Investment strategy — drives the default caption when dealTypeLabel
+      is not provided. Kept as 'buy_hold' | 'brrrr' for backward compat
+      with chat-flow callers. Use `dealTypeLabel` to override for
+      MF / house-hack / future commercial variants. */
   strategy: 'buy_hold' | 'brrrr';
+  /** Optional explicit caption override. When provided, replaces the
+      strategy-derived caption ("BUY & HOLD ANALYSIS" / "BRRRR ANALYSIS")
+      with whatever string the caller wants. Used by SavedDealHero to
+      surface "MULTI-FAMILY ANALYSIS · 4 units" / "HOUSE HACK ANALYSIS"
+      / future commercial variants. */
+  dealTypeLabel?: string;
   /** Property address — displayed in the caption. */
   address: {
     street: string;
@@ -106,6 +115,7 @@ function formatAddress(addr: DealScoreCardProps['address']): string {
 export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
   const {
     strategy,
+    dealTypeLabel,
     address,
     dealQuality,
     topFactors,
@@ -146,7 +156,7 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
           }}
           data-testid="deal-score-card-caption"
         >
-          {strategyCaption(strategy)} · {formatAddress(address)}
+          {dealTypeLabel ?? strategyCaption(strategy)} · {formatAddress(address)}
         </Typography>
 
         {/* 2 + 3. Score + qualityLabel */}

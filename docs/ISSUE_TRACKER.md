@@ -8,7 +8,7 @@
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
 ### Issue #117: /analysis/:id renders legacy SFRAnalysis tabs — doesn't match chat-first IA
-**Status**: 🟡 OPEN (Phase 4-completion gap; design unification needed)
+**Status**: ✅ FIXED 2026-05-18 (polymorphic SavedDealHero + unified URL dispatch shipped)
 **Priority**: P2 - MEDIUM (the legacy view works + has Apple-quality design,
                           just visually disconnects from the chat-first IA)
 **Reported**: 2026-05-17 (user testing — clicked a saved property from
