@@ -279,7 +279,7 @@ mortgage rates" and:
 ---
 
 ### Issue #112: 10-year projection not rendered in chat-flow DealScoreCard
-**Status**: 🟡 OPEN
+**Status**: ✅ FIXED 2026-05-18 (milestone-sampled projection in DealScoreCard + SavedDealHero)
 **Priority**: P2 - MEDIUM (data exists, just unrendered)
 **Reported**: 2026-05-17 (user e2e testing — "long term analysis is not available")
 **Component**: Frontend DealScoreCard

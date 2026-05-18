@@ -36,6 +36,7 @@ import {
   getDealQualityScore,
   getProfessionalAssessment,
   getPrimaryReason,
+  getProjectionMilestones,
   type SavedDealShape,
 } from './savedDealVariants';
 
@@ -108,6 +109,14 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
   // "Standard assumptions" toggle gracefully.
   const assumptions = [] as React.ComponentProps<typeof DealScoreCard>['assumptions'];
 
+  // ===== 10-year projection (Issue #112) =====
+  //
+  // Read the milestone-sampled projection from the Deal's
+  // analysis.longTermAnalysis.yearlyProjections. The helper mirrors
+  // the backend chat-flow sampler so both surfaces show the same
+  // 1/3/5/7/10-year anchor rows.
+  const projection = getProjectionMilestones(deal);
+
   // ===== Chip tap handler =====
   //
   // Routes to /app with the chip text as initialUserInput. AppPage's
@@ -147,6 +156,9 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
         purchasePrice={purchasePrice}
         nextStep={nextStep}
         assumptions={assumptions}
+        // Only pass projection when we have rows — the card omits
+        // the section cleanly when undefined.
+        projection={projection.length > 0 ? projection : undefined}
       />
 
       {/* ===== Action chips ===== */}

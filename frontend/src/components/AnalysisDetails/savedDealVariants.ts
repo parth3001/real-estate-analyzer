@@ -58,7 +58,12 @@ export interface SavedDealShape {
       annualNOI?: number;
     };
     longTermAnalysis?: {
-      yearlyProjections?: unknown[];
+      yearlyProjections?: Array<{
+        year?: number;
+        cashFlow?: number;
+        propertyValue?: number;
+        equity?: number;
+      }>;
     };
     // Materialization embeds investmentDecision here too (Issue #109)
     investmentDecision?: SavedDealDecision;
@@ -267,4 +272,48 @@ export function getPrimaryReason(deal: SavedDealShape): string {
     deal.analysis?.investmentDecision?.primaryReason ??
     ''
   );
+}
+
+/**
+ * Pick milestone-year projection rows from a saved Deal for the
+ * SavedDealHero card. Mirrors the backend projection-milestone
+ * sampler in dealScoreCardProjection.ts:
+ *   - Targets years 1 / 3 / 5 / 7 / 10
+ *   - Looks up by `year` field for defensiveness against sparse arrays
+ *   - Returns [] when the data is missing / malformed / has NaN values
+ *     — the DealScoreCard hides the section cleanly when projection
+ *     is empty
+ *
+ * Stays in sync with the backend sampler. A future refactor could
+ * have the materialization service write the milestone-sampled
+ * projection directly to the Deal record so both sides read the
+ * same pre-computed array.
+ */
+export function getProjectionMilestones(
+  deal: SavedDealShape
+): Array<{ year: number; cashFlow: number; propertyValue: number; equity: number }> {
+  const rows = deal.analysis?.longTermAnalysis?.yearlyProjections;
+  if (!Array.isArray(rows)) return [];
+  const targetYears = [1, 3, 5, 7, 10];
+  const out: Array<{ year: number; cashFlow: number; propertyValue: number; equity: number }> = [];
+  for (const target of targetYears) {
+    const row = rows.find((r) => Number(r?.year) === target);
+    if (!row) continue;
+    const cashFlow = Number(row.cashFlow);
+    const propertyValue = Number(row.propertyValue);
+    const equity = Number(row.equity);
+    if (
+      Number.isFinite(cashFlow) &&
+      Number.isFinite(propertyValue) &&
+      Number.isFinite(equity)
+    ) {
+      out.push({
+        year: target,
+        cashFlow: Math.round(cashFlow),
+        propertyValue: Math.round(propertyValue),
+        equity: Math.round(equity),
+      });
+    }
+  }
+  return out;
 }

@@ -367,4 +367,86 @@ describe('projectDealScoreCard', () => {
     );
     expect(buyHold.strategy).toBe('buy_hold');
   });
+
+  // ===== Issue #112: 10-year projection milestones =====
+
+  describe('projection milestone sampling (Issue #112)', () => {
+    function makeYearlyProjections() {
+      // Build a 10-row projection. Each year has cashFlow growing 3%,
+      // propertyValue growing 3.5%, equity buildup ~10%/yr from
+      // amortization + appreciation.
+      const rows = [];
+      for (let y = 1; y <= 10; y++) {
+        rows.push({
+          year: y,
+          propertyValue: Math.round(425000 * Math.pow(1.035, y)),
+          grossIncome: 30000 * Math.pow(1.03, y),
+          operatingExpenses: 12000,
+          noi: 30000 * Math.pow(1.03, y) - 12000,
+          debtService: 18000,
+          cashFlow: Math.round(3000 * Math.pow(1.03, y - 1)),
+          equity: Math.round(85000 + (y - 1) * 9500),
+          mortgageBalance: 320000 - (y - 1) * 4000,
+          totalReturn: 0,
+        });
+      }
+      return rows;
+    }
+
+    it('samples the 5 milestone years (1/3/5/7/10) when present', () => {
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        longTermAnalysis: {
+          yearlyProjections: makeYearlyProjections(),
+        } as AnalysisPayload['longTermAnalysis'],
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+
+      expect(card.projection).toBeDefined();
+      expect(card.projection).toHaveLength(5);
+      expect(card.projection!.map((p) => p.year)).toEqual([1, 3, 5, 7, 10]);
+      // Each row should have the three displayed metrics with finite numbers
+      for (const row of card.projection!) {
+        expect(Number.isFinite(row.cashFlow)).toBe(true);
+        expect(Number.isFinite(row.propertyValue)).toBe(true);
+        expect(Number.isFinite(row.equity)).toBe(true);
+      }
+    });
+
+    it('omits the projection key when no yearlyProjections data is present', () => {
+      // longTermAnalysis is {} in default fakeAnalysis — no projection
+      const card = projectDealScoreCard(
+        fakeAnalysis(fakeSFRData()),
+        fakeDecision(),
+        'buy_hold'
+      );
+      // The wire shape should not include a projection field at all so
+      // the frontend hides the section cleanly.
+      expect(card.projection).toBeUndefined();
+    });
+
+    it('omits the projection key when yearlyProjections is malformed (not an array)', () => {
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        longTermAnalysis: {
+          yearlyProjections: 'not an array' as unknown,
+        } as AnalysisPayload['longTermAnalysis'],
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.projection).toBeUndefined();
+    });
+
+    it('skips milestone years that have NaN values (defensive)', () => {
+      const rows = makeYearlyProjections();
+      // Corrupt year 5 with NaN cashFlow — it should be skipped, but
+      // years 1/3/7/10 still render
+      rows[4] = { ...rows[4], cashFlow: NaN };
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        longTermAnalysis: {
+          yearlyProjections: rows,
+        } as AnalysisPayload['longTermAnalysis'],
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.projection).toBeDefined();
+      expect(card.projection!.map((p) => p.year)).toEqual([1, 3, 7, 10]);
+    });
+  });
 });

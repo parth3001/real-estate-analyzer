@@ -93,6 +93,18 @@ export interface DealScoreCardProps {
   assumptions: DealScoreCardAssumption[];
   /** Optional click-handler for the "Change any of these" CTA. */
   onChangeAssumptions?: () => void;
+  /**
+   * Optional 10-year projection milestones (Issue #112). When provided,
+   * renders as a collapsed "10-year projection" section below the
+   * assumptions toggle. Sampled to anchor years (typically 1/3/5/7/10)
+   * by the backend projector so the table stays compact.
+   */
+  projection?: Array<{
+    year: number;
+    cashFlow: number;
+    propertyValue: number;
+    equity: number;
+  }>;
 }
 
 // ===== Helpers =====
@@ -124,10 +136,13 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
     nextStep,
     assumptions,
     onChangeAssumptions,
+    projection,
   } = props;
 
   const band = bandForScore(dealQuality);
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+  const [projectionOpen, setProjectionOpen] = useState(false);
+  const hasProjection = (projection?.length ?? 0) > 0;
 
   // Walk-away delta: positive means purchase is above walk-away (negotiation room)
   const delta = purchasePrice - walkAwayPrice;
@@ -405,6 +420,143 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
             )}
           </Box>
         </Collapse>
+
+        {/* ===== 8. 10-year projection (Issue #112) =====
+            Optional section. Renders only when the backend projector
+            sampled milestone years (typically 1/3/5/7/10). Same
+            collapse pattern as the assumptions toggle — content
+            hidden by default to keep the card compact; users who
+            want the projection numbers click to expand. */}
+        {hasProjection && (
+          <>
+            <Divider sx={{ mb: 1 }} />
+            <Box
+              onClick={() => setProjectionOpen((o) => !o)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                py: 1.5,
+                cursor: 'pointer',
+                minHeight: 44,
+                userSelect: 'none',
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={projectionOpen}
+              aria-controls="deal-score-card-projection"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setProjectionOpen((o) => !o);
+                }
+              }}
+              data-testid="deal-score-card-projection-toggle"
+            >
+              <InfoOutlinedIcon
+                sx={{ fontSize: 18, color: 'text.secondary' }}
+              />
+              <Typography sx={{ fontSize: 14, flex: 1 }}>
+                10-year projection
+              </Typography>
+              <IconButton
+                size="small"
+                aria-label={
+                  projectionOpen ? 'Hide projection' : 'Show projection'
+                }
+                sx={{
+                  transform: projectionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                  transition: 'transform 200ms',
+                }}
+                tabIndex={-1}
+              >
+                <ExpandMoreIcon />
+              </IconButton>
+            </Box>
+            <Collapse in={projectionOpen} timeout={200}>
+              <Box
+                id="deal-score-card-projection"
+                sx={{ pt: 1, pb: 2, overflowX: 'auto' }}
+                data-testid="deal-score-card-projection-table"
+              >
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: 13,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  <Box component="thead">
+                    <Box
+                      component="tr"
+                      sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+                    >
+                      {['Year', 'Cash flow', 'Property value', 'Equity'].map(
+                        (h, idx) => (
+                          <Box
+                            component="th"
+                            key={h}
+                            sx={{
+                              px: 1.25,
+                              py: 0.75,
+                              fontWeight: 600,
+                              fontSize: 12,
+                              color: 'text.secondary',
+                              textAlign: idx === 0 ? 'left' : 'right',
+                              letterSpacing: '0.02em',
+                            }}
+                          >
+                            {h}
+                          </Box>
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                  <Box component="tbody">
+                    {projection!.map((row) => (
+                      <Box
+                        component="tr"
+                        key={row.year}
+                        sx={{
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          '&:last-child': { borderBottom: 'none' },
+                        }}
+                      >
+                        <Box
+                          component="td"
+                          sx={{ px: 1.25, py: 0.875, fontWeight: 500 }}
+                        >
+                          {row.year}
+                        </Box>
+                        <Box
+                          component="td"
+                          sx={{ px: 1.25, py: 0.875, textAlign: 'right' }}
+                        >
+                          {formatCurrency(row.cashFlow)}
+                        </Box>
+                        <Box
+                          component="td"
+                          sx={{ px: 1.25, py: 0.875, textAlign: 'right' }}
+                        >
+                          {formatCurrency(row.propertyValue)}
+                        </Box>
+                        <Box
+                          component="td"
+                          sx={{ px: 1.25, py: 0.875, textAlign: 'right' }}
+                        >
+                          {formatCurrency(row.equity)}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+            </Collapse>
+          </>
+        )}
       </CardContent>
     </Card>
   );

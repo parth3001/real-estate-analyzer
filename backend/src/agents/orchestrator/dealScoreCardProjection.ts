@@ -35,6 +35,21 @@ export interface DealScoreCardWireShape {
   purchasePrice: number;
   nextStep: string;
   assumptions: Array<{ label: string; value?: string; source?: string }>;
+  /**
+   * 10-year projection milestones (Issue #112, shipped 2026-05-18).
+   * Surfaces year-by-year cash flow, property value, and equity buildup
+   * — the chart investors actually want to show their partner / lender
+   * / spouse. We sample 5 milestone years (1 / 3 / 5 / 7 / 10) rather
+   * than all 10 so the inline table stays compact and readable inside
+   * the card. Optional: omitted when the engine didn't compute one
+   * (e.g., a malformed turn) so the section just doesn't render.
+   */
+  projection?: Array<{
+    year: number;
+    cashFlow: number;
+    propertyValue: number;
+    equity: number;
+  }>;
 }
 
 // ===== Helpers =====
@@ -177,6 +192,51 @@ function deriveAssumptions(
 // ===== Public API =====
 
 /**
+ * Sample milestone-year projection rows for the card's projection
+ * section (Issue #112). The full yearlyProjections array can have
+ * 10-30 entries; the card surface only needs anchor points the user
+ * scans at a glance.
+ *
+ * Milestones: years 1, 3, 5, 7, 10 (or the closest available). If
+ * the array is shorter than expected (rare; usually means malformed
+ * engine output), we return whatever entries exist up to year 10 —
+ * empty array signals "no projection" to the frontend.
+ */
+function pickProjectionMilestones(
+  yearlyProjections: unknown
+): NonNullable<DealScoreCardWireShape['projection']> {
+  if (!Array.isArray(yearlyProjections)) return [];
+  const targetYears = [1, 3, 5, 7, 10];
+  const out: NonNullable<DealScoreCardWireShape['projection']> = [];
+  for (const target of targetYears) {
+    // The yearlyProjections array is typically 0-indexed by year-1.
+    // We look up by year field rather than index for defensiveness —
+    // some legacy code paths produce sparse arrays.
+    const row = (yearlyProjections as Array<Record<string, unknown>>).find(
+      (r) => Number(r.year) === target
+    );
+    if (row) {
+      const cashFlow = Number(row.cashFlow);
+      const propertyValue = Number(row.propertyValue);
+      const equity = Number(row.equity);
+      if (
+        Number.isFinite(cashFlow) &&
+        Number.isFinite(propertyValue) &&
+        Number.isFinite(equity)
+      ) {
+        out.push({
+          year: target,
+          cashFlow: Math.round(cashFlow),
+          propertyValue: Math.round(propertyValue),
+          equity: Math.round(equity),
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Project an analysis + decision pair into the DealScoreCard wire shape.
  *
  * Throws if the inputs are obviously malformed (missing propertyData,
@@ -199,6 +259,14 @@ export function projectDealScoreCard(
   const walkAwayPrice =
     decision.marketPosition?.walkAwayPrice ?? analysis.walkAwayPrice ?? 0;
 
+  // Pick milestone projection rows for the card. The full
+  // yearlyProjections array (10-30 entries) gets sampled to
+  // 5 anchor years for compact display.
+  const yearlyProjections =
+    (analysis.longTermAnalysis as { yearlyProjections?: unknown } | undefined)
+      ?.yearlyProjections ?? null;
+  const projection = pickProjectionMilestones(yearlyProjections);
+
   return {
     strategy,
     address: {
@@ -212,5 +280,8 @@ export function projectDealScoreCard(
     purchasePrice: Math.round(property.purchasePrice),
     nextStep: deriveNextStep(decision),
     assumptions: deriveAssumptions(analysis, property),
+    // Only include the projection key when we actually have rows —
+    // omitting cleanly is better than an empty array on the wire.
+    ...(projection.length > 0 ? { projection } : {}),
   };
 }

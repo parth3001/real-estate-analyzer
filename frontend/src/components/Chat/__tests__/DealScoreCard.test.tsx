@@ -223,4 +223,68 @@ describe('DealScoreCard', () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  // ===== Issue #112: 10-year projection =====
+
+  describe('10-year projection section', () => {
+    const sampleProjection: NonNullable<DealScoreCardProps['projection']> = [
+      { year: 1, cashFlow: 3000, propertyValue: 440000, equity: 85000 },
+      { year: 3, cashFlow: 3200, propertyValue: 472000, equity: 105000 },
+      { year: 5, cashFlow: 3400, propertyValue: 506000, equity: 128000 },
+      { year: 7, cashFlow: 3600, propertyValue: 542000, equity: 154000 },
+      { year: 10, cashFlow: 4000, propertyValue: 601000, equity: 195000 },
+    ];
+
+    it('does NOT render the section when projection prop is absent', () => {
+      renderCard();
+      expect(
+        screen.queryByTestId('deal-score-card-projection-toggle')
+      ).not.toBeInTheDocument();
+    });
+
+    it('does NOT render the section when projection is an empty array', () => {
+      renderCard({ projection: [] });
+      expect(
+        screen.queryByTestId('deal-score-card-projection-toggle')
+      ).not.toBeInTheDocument();
+    });
+
+    it('renders the toggle when projection has rows', () => {
+      renderCard({ projection: sampleProjection });
+      expect(
+        screen.getByTestId('deal-score-card-projection-toggle')
+      ).toBeInTheDocument();
+    });
+
+    it('expand reveals the 5 milestone rows with formatted dollar amounts', async () => {
+      const user = userEvent.setup();
+      renderCard({ projection: sampleProjection });
+      await user.click(screen.getByTestId('deal-score-card-projection-toggle'));
+      const table = screen.getByTestId('deal-score-card-projection-table');
+      // All 5 years visible
+      expect(table).toHaveTextContent('1');
+      expect(table).toHaveTextContent('3');
+      expect(table).toHaveTextContent('5');
+      expect(table).toHaveTextContent('7');
+      expect(table).toHaveTextContent('10');
+      // Dollar formatting applied
+      expect(table).toHaveTextContent('$3,000');
+      expect(table).toHaveTextContent('$601,000');
+      expect(table).toHaveTextContent('$195,000');
+    });
+
+    it('toggle is keyboard-accessible (Enter expands)', () => {
+      renderCard({ projection: sampleProjection });
+      const toggle = screen.getByTestId('deal-score-card-projection-toggle');
+      // Toggle starts collapsed
+      expect(
+        screen.queryByTestId('deal-score-card-projection-table')
+      ).not.toBeVisible();
+      fireEvent.keyDown(toggle, { key: 'Enter' });
+      // After Enter, table is in the DOM (Collapse animates open)
+      expect(
+        screen.getByTestId('deal-score-card-projection-table')
+      ).toBeInTheDocument();
+    });
+  });
 });
