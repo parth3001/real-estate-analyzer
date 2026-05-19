@@ -5,6 +5,7 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
+import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
 
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -165,15 +166,43 @@ const AnalysisDetails: React.FC = () => {
           </Box>
         </Box>
       ) : (
-        <AnalysisResults
-          propertyData={deal.propertyData}
-          analysis={deal.analysis}
-          dealId={deal._id}
-          onParameterChange={async () => {
-            // Analysis is already saved, just log
-            console.log('Analysis already saved');
-          }}
-        />
+        // D2 fix (Day 11a, 2026-05-18): wrap legacy AnalysisResults in
+        // an ErrorBoundary so a runtime error in the tabs doesn't nuke
+        // the new SavedDealHero above. Resets when the dealId changes.
+        //
+        // D1 fix (same commit): the materialized chat-flow Deal stores
+        // fields FLAT (deal.propertyType, deal.investmentStrategy, etc.),
+        // NOT nested under `propertyData`. The legacy AnalysisResults
+        // was built for the wizard-flow API response which DID nest.
+        // Construct a propertyData shim from the flat Deal so all the
+        // legacy reads (propertyType, strategy, purchasePrice, etc.)
+        // find what they expect.
+        //
+        // The strategy field is also renamed: chat-flow uses
+        // `investmentStrategy` ('buy-hold' | 'brrrr'), legacy expects
+        // `strategy`. Shim maps it.
+        <AnalysisErrorBoundary resetKey={deal._id}>
+          <AnalysisResults
+            propertyData={{
+              // Spread flat fields from the Deal — propertyType,
+              // monthlyRent, squareFootage, purchasePrice, downPayment,
+              // closingCosts, bedrooms, bathrooms, yearBuilt, etc.
+              ...deal,
+              // Override strategy from the renamed investmentStrategy.
+              // Map 'buy_hold' → 'buy-hold' for legacy compatibility.
+              strategy:
+                deal.investmentStrategy === 'brrrr'
+                  ? 'brrrr'
+                  : 'buy-hold',
+            }}
+            analysis={deal.analysis}
+            dealId={deal._id}
+            onParameterChange={async () => {
+              // Analysis is already saved, just log
+              console.log('Analysis already saved');
+            }}
+          />
+        </AnalysisErrorBoundary>
       )}
     </Box>
   );

@@ -7,6 +7,67 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #118: /analysis/:id renders blank when legacy AnalysisResults throws — FIXED (Day 11a)
+**Status**: ✅ RESOLVED 2026-05-18
+**Priority**: P0 - CRITICAL (blocked all E2E testing of T1 + LicenseStatusBadge)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issue D in running log)
+**Component**: Frontend `/analysis/:id` page
+**Category**: Architectural — error containment / shape mismatch
+
+**Resolution (Day 11a)**:
+
+Two root causes addressed in one push:
+
+**D1 — Shape mismatch.** Materialized chat-flow Deals store fields
+FLAT (`deal.propertyType`, `deal.investmentStrategy`, etc.) — not
+nested under `propertyData`. The legacy `AnalysisResults` component
+was built for wizard-flow API responses where they WERE nested.
+`deal.propertyData` resolved to `undefined`, so the first
+`propertyData.strategy === 'brrrr'` access at line 192 threw.
+
+Two fixes layered:
+- `AnalysisDetails.tsx` now constructs a shim — spreads the flat Deal
+  fields AND renames `investmentStrategy` ('buy_hold' | 'brrrr') →
+  `strategy` ('buy-hold' | 'brrrr') for legacy compatibility
+- Defensive `?.` operator added to ALL `propertyData.strategy` reads
+  in `AnalysisResults.tsx` (lines 192, 197-203) so unrelated future
+  regressions don't crash again
+
+**D2 — No ErrorBoundary; one component crash nuked entire page.**
+React 19's default uncaught-error behavior unmounts the whole tree.
+A bug in AnalysisResults took down SavedDealHero (CritiqueCard,
+LicenseStatusBadge, DealScoreCard) too — all the new Day 9-10 work
+became invisible.
+
+New `AnalysisErrorBoundary` component:
+- Class-based (React's only way to implement error boundaries)
+- Localizes failure to the AnalysisResults slot only
+- Renders a clean fallback ("Deep-dive analysis tabs couldn't load…
+  the summary above is still complete") with Retry button
+- `resetKey` prop (set to dealId) auto-clears when user navigates to
+  a different deal
+- `onError` callback for future telemetry hookup
+- Dev-mode shows error message inline; production redacts
+
+Tests:
+- 6 new AnalysisErrorBoundary assertions (no-error pass-through,
+  fallback on throw, resetKey re-mount, onError invocation, Retry
+  re-mounts when bug is gone)
+- 53/53 across the AnalysisDetails + common frontend suites green
+
+**Files affected**:
+- `frontend/src/components/common/AnalysisErrorBoundary.tsx` — NEW
+- `frontend/src/components/common/__tests__/AnalysisErrorBoundary.test.tsx` — NEW
+- `frontend/src/components/SFRAnalysis/AnalysisResults.tsx` — defensive `?.` on 7 lines
+- `frontend/src/pages/AnalysisDetails.tsx` — boundary wrap + propertyData shim
+
+**Architectural lesson preserved in implementation log**: any
+component that touches legacy data shapes should be wrapped in an
+ErrorBoundary. Future surfaces (e.g., `/portfolio/:id`) should adopt
+the same pattern.
+
+---
+
 ### Issue #117: /analysis/:id renders legacy SFRAnalysis tabs — doesn't match chat-first IA
 **Status**: ✅ FIXED 2026-05-18 (polymorphic SavedDealHero + unified URL dispatch shipped)
 **Priority**: P2 - MEDIUM (the legacy view works + has Apple-quality design,

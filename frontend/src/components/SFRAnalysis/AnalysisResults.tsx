@@ -189,18 +189,18 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       { id: 'unitMix', label: 'Unit Mix Analysis', icon: AssessmentIcon, description: 'Unit-level revenue breakdown and optimization', implemented: true }
     ] : []),
     // Phase 2.4: Inject Capital Recovery tab for BRRRR strategy (after Unit Mix if present, before Long-term Analysis)
-    ...(propertyData.strategy === 'brrrr' ? [
+    ...(propertyData?.strategy === 'brrrr' ? [
       { id: 'capitalRecovery', label: 'Capital Recovery', icon: RefreshIcon, description: 'Capital recovery & refinance analysis', implemented: true }
     ] : []),
     { id: 'projections', label: 'Long-term Analysis', icon: TrendingUpIcon, description: '10-year forecasts and projections', implemented: true },
     { id: 'tax', label: 'Tax Intelligence', icon: SecurityIcon, description: 'Professional tax education and insights', implemented: true },
-    { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'risk', label: 'Risk & Intelligence', icon: ShieldIcon, description: 'Risk analysis and market data', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'stress', label: 'Stress Testing', icon: WarningIcon, description: 'Stress scenarios and risk heat maps', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'market', label: 'Market Analysis', icon: AssessmentIcon, description: 'Market trends and economics', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
-    { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison', implemented: propertyType !== 'MF' && propertyData.strategy !== 'brrrr' } // Not implemented for MF or BRRRR
+    { id: 'interactive', label: 'Interactive Analysis', icon: TuneIcon, description: 'Adjust parameters in real-time', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'optimizer', label: 'Deal Optimizer', icon: FixIcon, description: 'Suggestions to improve returns', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'scenarios', label: 'Scenario Manager', icon: ScenarioIcon, description: 'Save and compare scenarios', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'risk', label: 'Risk & Intelligence', icon: ShieldIcon, description: 'Risk analysis and market data', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'stress', label: 'Stress Testing', icon: WarningIcon, description: 'Stress scenarios and risk heat maps', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'market', label: 'Market Analysis', icon: AssessmentIcon, description: 'Market trends and economics', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' }, // Not implemented for MF or BRRRR
+    { id: 'comparables', label: 'Comparables', icon: CompareIcon, description: 'Similar properties comparison', implemented: propertyType !== 'MF' && propertyData?.strategy !== 'brrrr' } // Not implemented for MF or BRRRR
   ];
 
   // UNIFIED EXPERIENCE: Show all tabs to everyone (no mode-based filtering)
@@ -1005,11 +1005,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             {/* Phase 2.4: Tier 1 - Strategy-Aware Hero Metrics (Issue #35 - UX Designer Approved) */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1.5, flexWrap: 'wrap' }}>
               <Typography variant="h5" fontWeight={600}>
-                {propertyData.strategy === 'brrrr' ? 'BRRRR Performance Metrics' : 'Key Investment Numbers'}
+                {propertyData?.strategy === 'brrrr' ? 'BRRRR Performance Metrics' : 'Key Investment Numbers'}
               </Typography>
 
               {/* UX Designer Fix: Subtle Infinite Return Badge (replaces overpowering alert) */}
-              {propertyData.strategy === 'brrrr' &&
+              {propertyData?.strategy === 'brrrr' &&
                analysis?.strategySpecific?.capitalRecovery?.infiniteReturn && (
                 <Chip
                   icon={<span style={{ fontSize: '16px' }}>🎉</span>}
@@ -1030,14 +1030,14 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
               )}
 
               <EducationalTooltip
-                title={propertyData.strategy === 'brrrr' ? 'BRRRR Metrics' : 'Investment Metrics'}
+                title={propertyData?.strategy === 'brrrr' ? 'BRRRR Metrics' : 'Investment Metrics'}
                 description={
-                  propertyData.strategy === 'brrrr'
+                  propertyData?.strategy === 'brrrr'
                     ? 'These metrics show how well this BRRRR deal performs: capital recovery, post-refinance cash flow, and 70% Rule compliance.'
                     : 'These are the most important numbers to understand if this property is a good investment. Green means good, yellow means okay, red means be careful.'
                 }
                 whyItMatters={
-                  propertyData.strategy === 'brrrr'
+                  propertyData?.strategy === 'brrrr'
                     ? 'BRRRR focuses on recycling capital through refinancing, not just monthly cash flow.'
                     : 'These metrics tell you if you\'ll make money on this property and how much risk you\'re taking.'
                 }
@@ -1047,7 +1047,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             <Grid container spacing={3} sx={{ mb: 4 }}>
               {(() => {
                 // BRRRR Strategy: Override hero metrics with capital recovery focus (Issue #35 - UX Approved)
-                if (propertyData.strategy === 'brrrr' && analysis?.strategySpecific) {
+                if (propertyData?.strategy === 'brrrr' && analysis?.strategySpecific) {
                   const capitalRecoveryRate = analysis.strategySpecific.capitalRecovery?.capitalRecoveryRate || 0;
                   const isInfiniteReturn = capitalRecoveryRate >= 100;
                   const postRefiCashFlow = analysis.strategySpecific.postRefinanceMetrics?.monthlyCashFlow || 0;
@@ -1238,7 +1238,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
       case 'financial':
         // Phase 2.5: BRRRR Financial Comparison (Tab 2)
-        if (propertyData.strategy === 'brrrr') {
+        if (propertyData?.strategy === 'brrrr') {
           return <BRRRRFinancialComparison analysis={analysis} propertyData={propertyData} />;
         }
 
@@ -1588,7 +1588,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             </Typography>
 
             {/* Phase 2.5: BRRRR Tax Advantages Section (Tab 5) */}
-            {propertyData.strategy === 'brrrr' && (
+            {propertyData?.strategy === 'brrrr' && (
               <Box sx={{ mb: 4 }}>
                 <BRRRRTaxAdvantagesSection analysis={analysis} propertyData={propertyData} />
               </Box>
@@ -1655,7 +1655,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
       case 'projections':
         // Phase 2.5: BRRRR Long-Term Projections (Tab 4)
-        if (propertyData.strategy === 'brrrr') {
+        if (propertyData?.strategy === 'brrrr') {
           return <BRRRRLongTermProjections analysis={analysis} propertyData={propertyData} />;
         }
 
@@ -2502,7 +2502,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
       // Phase 2.4: Render Capital Recovery Tab (BRRRR-specific)
       case 'capitalRecovery':
-        if (propertyData.strategy !== 'brrrr') {
+        if (propertyData?.strategy !== 'brrrr') {
           return (
             <Box>
               <Alert severity="warning" sx={{ mb: 3 }}>
