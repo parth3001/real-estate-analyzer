@@ -7,6 +7,62 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #120: Property tax defaults to national 1.2% instead of state average — FIXED (Day 11c, Issue B from test session)
+**Status**: ✅ RESOLVED 2026-05-18
+**Priority**: P1 - HIGH (materially distorts every analysis in high-tax states)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issue B in running log)
+**Component**: Backend `services/propertyTaxEstimationService.ts`
+**Category**: Accuracy / geographic correctness
+
+**The bug observed in testing**:
+- User analyzed property in Anna, TX 75409
+- Chat-flow assumption showed: 1.2% property tax
+- Actual TX state average: 1.80%
+- ~60bp difference = ~$165/month of missing operating expense on a
+  $275K property — enough to flip a deal's cash-flow signal
+
+**Root cause**:
+`PropertyTaxEstimationService.calculateTaxEstimate()` initialized
+`effectiveTaxRate` to `DEFAULT_TAX_RATE` (1.2%) — the national
+fallback. The service does try to find better data through several
+paths (RentCast property-tax records → regional comps → assessment
+ratio + state average). If ALL of those failed for a given address,
+the rate stayed at 1.2% even though a state-specific average exists
+in the codebase (`STATE_AVG_TAX_RATES` table — TX 1.80%, NJ 2.49%,
+IL 2.27%, HI 0.28%, etc.).
+
+`getFallbackEstimate()` (the catch-handler path) had the same bug —
+it returned `DEFAULT_TAX_RATE` regardless of which state the request
+was for.
+
+**Resolution**:
+- `calculateTaxEstimate()` now initializes `effectiveTaxRate` to
+  `STATE_AVG_TAX_RATES[state]` when the state is in the table,
+  falling back to `DEFAULT_TAX_RATE` only when the state is unknown
+  / missing. Better sources (RentCast, regional comps, assessment
+  ratios) still override.
+- `getFallbackEstimate()` same fix.
+- Confidence reasoning now mentions the state name when state-avg
+  is the active source ("State Average (TX)").
+- DEFAULT_TAX_RATE preserved as the absolute last-resort floor for
+  unknown states.
+
+**Impact**:
+- TX users: 1.2% → 1.80% (+60bp, ~$165/mo on a $275K property)
+- NJ users: 1.2% → 2.49% (+129bp, even larger correction)
+- HI users: 1.2% → 0.28% (correction in the other direction)
+- 50 states covered in the table; coverage of effective tax rates
+  ranges from 0.28% to 2.49%
+
+**Files affected**:
+- `backend/src/services/propertyTaxEstimationService.ts` (2 small changes)
+
+Tests: existing 438-test backend regression suite still green.
+Manual verification path: re-analyze the Anna TX 75409 property; the
+assumption should now show 1.80% instead of 1.2%.
+
+---
+
 ### Issue #119: Stress-test score moves wrong direction — FIXED (Day 11b, Issue A from test session)
 **Status**: ✅ RESOLVED 2026-05-18
 **Priority**: P0 - CRITICAL (broke the discipline-layer positioning at its core)

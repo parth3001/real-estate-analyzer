@@ -102,9 +102,39 @@ export class PropertyTaxEstimationService {
 
     // Step 1: Try to get tax data from RentCast for the exact property
     const propertyTaxData = await this.getPropertyTaxData(request.address);
-    
-    let effectiveTaxRate = PropertyTaxEstimationService.DEFAULT_TAX_RATE;
+
+    // Day 11c (2026-05-18) — Issue B fix: when nothing better is found,
+    // FALL BACK TO THE STATE AVERAGE (not the national 1.2%). Texas
+    // is 1.80%, NJ 2.49%, IL 2.27%, etc. — the national default
+    // materially underestimated cash flow for high-tax states.
+    // Detail: a user testing in Anna TX saw 1.2% in their analysis;
+    // actual TX average is 1.80%. Difference = ~$160/month on a
+    // $275K property, which can flip a deal's cash-flow signal.
+    const stateAvgRate =
+      (request.state &&
+        PropertyTaxEstimationService.STATE_AVG_TAX_RATES[
+          request.state.toUpperCase()
+        ]) ||
+      PropertyTaxEstimationService.DEFAULT_TAX_RATE;
+    let effectiveTaxRate = stateAvgRate;
     let sourceData: PropertyTaxEstimate['sourceData'] | undefined;
+
+    // Track that we started with state-avg so downstream confidence
+    // reasoning can reflect the source. If a more-specific data source
+    // (RentCast property tax, regional comps, official assessment
+    // ratio) overrides this, that source's confidence will be set
+    // explicitly below.
+    if (
+      request.state &&
+      PropertyTaxEstimationService.STATE_AVG_TAX_RATES[
+        request.state.toUpperCase()
+      ]
+    ) {
+      confidence.source = `State Average (${request.state.toUpperCase()})`;
+      confidence.factors.push(
+        `State-average tax rate for ${request.state.toUpperCase()}: ${stateAvgRate.toFixed(2)}%`
+      );
+    }
 
     if (propertyTaxData) {
       // We have actual tax data for this property!
@@ -513,21 +543,35 @@ export class PropertyTaxEstimationService {
   private async getFallbackEstimate(request: PropertyTaxRequest): Promise<PropertyTaxEstimate> {
     // Try to get assessment ratio from database even in fallback mode
     const assessmentRatioResult = await this.getAssessmentRatio(request);
-    
+
+    // Day 11c (2026-05-18) — Issue B fix: use STATE-AVERAGE rate as
+    // the fallback floor, not the national 1.2%. See the same fix in
+    // calculateTaxEstimate above for the reasoning. The fallback path
+    // is what fires when something upstream throws — should not
+    // silently regress states with much-higher actual rates.
+    const fallbackRate =
+      (request.state &&
+        PropertyTaxEstimationService.STATE_AVG_TAX_RATES[
+          request.state.toUpperCase()
+        ]) ||
+      PropertyTaxEstimationService.DEFAULT_TAX_RATE;
+
     const estimatedAssessedValue = request.purchasePrice * assessmentRatioResult.ratio;
-    const annualTaxAmount = estimatedAssessedValue * (PropertyTaxEstimationService.DEFAULT_TAX_RATE / 100);
+    const annualTaxAmount = estimatedAssessedValue * (fallbackRate / 100);
 
     return {
       annualTaxAmount: Math.round(annualTaxAmount),
-      effectiveTaxRate: PropertyTaxEstimationService.DEFAULT_TAX_RATE,
+      effectiveTaxRate: fallbackRate,
       confidence: {
         score: 30,
-        source: 'Fallback Regional Average',
+        source: request.state
+          ? `Fallback — ${request.state.toUpperCase()} state average`
+          : 'Fallback Regional Average',
         reliability: 'low',
         factors: [
           'No property-specific tax data available',
           `Using ${assessmentRatioResult.source} assessment ratio: ${Math.round(assessmentRatioResult.ratio * 100)}%`,
-          `Applied default tax rate: ${PropertyTaxEstimationService.DEFAULT_TAX_RATE}%`
+          `Applied tax rate: ${fallbackRate.toFixed(2)}%`
         ]
       },
       breakdown: {
