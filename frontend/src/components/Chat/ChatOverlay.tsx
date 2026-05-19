@@ -39,7 +39,11 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { chatTheme } from '../../theme/chatTheme';
-import { streamChatTurn, type ChatStreamEvent } from '../../services/chatApi';
+import {
+  streamChatTurn,
+  loadChatHistory,
+  type ChatStreamEvent,
+} from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
 import {
   upsertThread,
@@ -642,6 +646,63 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Day 11f (Issue C) — restore prior conversation on mount.
+  //
+  // When the user selects a thread in the sidebar OR returns to /app
+  // after auth, ChatOverlay remounts with a sessionId that already has
+  // turns in substrate. Pre-Day-11f we ignored that history and showed
+  // the empty welcome state — broke the chat-first IA promise.
+  //
+  // Logic:
+  //   - Skip if `initialUserInput` is set — that path auto-sends turn 1,
+  //     no prior history to restore (this is the LandingPage hero entry).
+  //   - Skip if we've already loaded for this sessionId in this
+  //     component lifecycle (initialSentRef doubles as the guard).
+  //   - Otherwise fetch via loadChatHistory, project to ThreadMessage
+  //     shape, replace the empty messages array.
+  //
+  // Fetch is silent-fail by design — failure means empty state, not
+  // an error bubble. The user can still send a new message.
+  const historyLoadedRef = useRef(false);
+  useEffect(() => {
+    if (props.initialUserInput) return; // hero-embed entry; skip history
+    if (historyLoadedRef.current) return;
+    if (!sessionId) return;
+    historyLoadedRef.current = true;
+    let cancelled = false;
+    void (async () => {
+      const history = await loadChatHistory(sessionId);
+      if (cancelled || history.length === 0) return;
+      // Project to ThreadMessage shape. Each history entry becomes
+      // one ThreadMessage. Assistant entries are NOT marked
+      // `streaming: true` — they're already-complete prior turns.
+      const restored: ThreadMessage[] = history.map((h, idx) => {
+        if (h.role === 'user') {
+          return {
+            id: `restored-user-${h.turnNumber}-${idx}`,
+            role: 'user',
+            text: h.text,
+            turnNumber: h.turnNumber,
+          };
+        }
+        return {
+          id: `restored-assistant-${h.turnNumber}-${idx}`,
+          role: 'assistant',
+          text: h.text,
+          turnNumber: h.turnNumber,
+          streaming: false,
+          traceId: h.traceId,
+          conversationEventId: h.conversationEventId,
+        };
+      });
+      setMessages(restored);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();

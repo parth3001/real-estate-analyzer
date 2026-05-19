@@ -30,6 +30,23 @@ import { tokenUtils } from './api';
 
 // ===== Wire shapes — mirror backend/src/routes/chat.ts ChatTurnResponse =====
 
+/**
+ * One message from a prior conversation (Day 11f / Issue C).
+ * Returned by `loadChatHistory` and used by ChatOverlay to restore
+ * a thread on mount when the user navigates back to it via the sidebar.
+ *
+ * Minimal wire shape — text + role + ordering. structuredOutputs
+ * (DealScoreCards from prior turns) are NOT included in v1; deferred
+ * to a follow-up that reconstructs cards from substrate audit trails.
+ */
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  turnNumber: number;
+  traceId?: string;
+  conversationEventId?: string;
+}
+
 export interface ChatTurnRequest {
   userInput: string;
   sessionId: string;
@@ -101,6 +118,36 @@ export async function sendChatTurn(
       throw new Error(body?.error ?? 'Free analysis limit reached for this session.');
     }
     throw err;
+  }
+}
+
+/**
+ * Load the prior conversation for a session (Day 11f / Issue C).
+ *
+ * Used by ChatOverlay on mount when the user navigates back to an
+ * existing thread (via sidebar selection). Returns an empty messages
+ * array when the session has no history (fresh / unknown session).
+ *
+ * Error surface:
+ *   - 403 → the session belongs to a different user; we return empty
+ *     so the UI shows the empty state rather than an error
+ *   - 401 → auth failed; should never happen if the user got this far
+ *   - Other → returns empty + logs; we don't want a history-load
+ *     failure to block the user from typing a new message
+ */
+export async function loadChatHistory(
+  sessionId: string
+): Promise<ChatHistoryMessage[]> {
+  try {
+    const { data } = await api.get<{ messages: ChatHistoryMessage[] }>(
+      `/chat/sessions/${encodeURIComponent(sessionId)}/messages`
+    );
+    return Array.isArray(data?.messages) ? data.messages : [];
+  } catch (err) {
+    // Silent degrade — empty history is the same UX as never-existed.
+    // The user can still start typing. console.error keeps it observable.
+    console.error('loadChatHistory failed', err);
+    return [];
   }
 }
 

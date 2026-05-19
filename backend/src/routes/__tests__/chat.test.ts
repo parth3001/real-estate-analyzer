@@ -57,6 +57,23 @@ jest.mock('../../repositories/LicenseRepository', () => ({
   },
 }));
 
+// Day 11f — getConversationHistory stub for the new GET endpoint.
+const mockGetConversationHistory = jest.fn();
+// We mock the shared singleton AT THE MODULE BOUNDARY so the route
+// code's import resolves to our jest.fn. Note: routes/chat.ts also
+// uses other methods on this repository (e.g., getAuditTrail in the
+// email-summary handler); we leave those untouched by providing
+// the methods that other tests don't exercise as jest.fn() too —
+// they're never called in the GET-endpoint tests so the stubs stay
+// as the auto-returned-undefined.
+jest.mock('../../repositories/EventsRepositoryReads', () => ({
+  eventsRepositoryReads: {
+    getConversationHistory: (...args: unknown[]) =>
+      mockGetConversationHistory(...args),
+    getAuditTrail: jest.fn(),
+  },
+}));
+
 jest.mock('../../middleware/chatIdentity', () => ({
   chatIdentityMiddleware: (
     req: { user?: { id: string; email: string; role: string; anonymous?: boolean } },
@@ -672,5 +689,139 @@ describe('POST /api/chat/turn/stream (W6-S3)', () => {
 
     expect(res.status).toBe(429);
     expect(res.body.error).toMatch(/free analysis limit/i);
+  });
+});
+
+// ===== Day 11f — GET /sessions/:sessionId/messages (Issue C) =====
+
+describe('GET /api/chat/sessions/:sessionId/messages (Day 11f)', () => {
+  beforeEach(() => {
+    mockGetConversationHistory.mockReset();
+    __resetChatSessionRateLimitForTests();
+    __resetChatPerIpRateLimitForTests();
+    mockChatIdentityState.userId = new Types.ObjectId().toHexString();
+    mockChatIdentityState.anonymous = false;
+  });
+
+  it('returns empty messages for an unknown session (200, not 404)', async () => {
+    mockGetConversationHistory.mockResolvedValueOnce([]);
+    const res = await request(buildApp()).get(
+      '/api/chat/sessions/some-session-id/messages'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.messages).toEqual([]);
+  });
+
+  it('returns user + assistant pair per ConversationEvent in turn order', async () => {
+    const requesterId = mockChatIdentityState.userId;
+    mockGetConversationHistory.mockResolvedValueOnce([
+      {
+        _id: new Types.ObjectId(),
+        traceId: 'trace-1',
+        userId: requesterId,
+        payload: {
+          sessionId: 'sess-1',
+          turnNumber: 1,
+          userInput: { text: 'analyze 123 main st', inputMethod: 'text' },
+          agentResponse: { text: 'Score: 72/100…' },
+        },
+      },
+      {
+        _id: new Types.ObjectId(),
+        traceId: 'trace-2',
+        userId: requesterId,
+        payload: {
+          sessionId: 'sess-1',
+          turnNumber: 2,
+          userInput: { text: 'stress-test at 7%', inputMethod: 'text' },
+          agentResponse: { text: 'At 7% the deal scores 45/100…' },
+        },
+      },
+    ]);
+    const res = await request(buildApp()).get(
+      '/api/chat/sessions/sess-1/messages'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.messages).toHaveLength(4); // 2 turns × 2 messages
+    expect(res.body.messages[0].role).toBe('user');
+    expect(res.body.messages[0].text).toBe('analyze 123 main st');
+    expect(res.body.messages[0].turnNumber).toBe(1);
+    expect(res.body.messages[1].role).toBe('assistant');
+    expect(res.body.messages[1].text).toContain('72/100');
+    expect(res.body.messages[2].text).toBe('stress-test at 7%');
+    expect(res.body.messages[3].text).toContain('45/100');
+  });
+
+  it('refuses with 403 when ANY event in the session belongs to a different user', async () => {
+    // Ownership check: even one mismatched event blocks the load.
+    // Defense against pasting someone else's sessionId.
+    const requesterId = mockChatIdentityState.userId;
+    const otherUserId = new Types.ObjectId().toHexString();
+    mockGetConversationHistory.mockResolvedValueOnce([
+      {
+        _id: new Types.ObjectId(),
+        traceId: 'trace-1',
+        userId: requesterId,
+        payload: {
+          sessionId: 'sess-mix',
+          turnNumber: 1,
+          userInput: { text: 'mine', inputMethod: 'text' },
+          agentResponse: { text: 'mine response' },
+        },
+      },
+      {
+        _id: new Types.ObjectId(),
+        traceId: 'trace-2',
+        userId: otherUserId, // ← mismatched
+        payload: {
+          sessionId: 'sess-mix',
+          turnNumber: 2,
+          userInput: { text: 'theirs', inputMethod: 'text' },
+          agentResponse: { text: 'theirs response' },
+        },
+      },
+    ]);
+    const res = await request(buildApp()).get(
+      '/api/chat/sessions/sess-mix/messages'
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/not your session/i);
+  });
+
+  it('handles partial payloads gracefully (skip a message when text is missing)', async () => {
+    const requesterId = mockChatIdentityState.userId;
+    mockGetConversationHistory.mockResolvedValueOnce([
+      {
+        _id: new Types.ObjectId(),
+        traceId: 'trace-1',
+        userId: requesterId,
+        payload: {
+          sessionId: 'sess-partial',
+          turnNumber: 1,
+          userInput: { text: 'asked something', inputMethod: 'text' },
+          // agentResponse.text missing — assistant message should be omitted
+          agentResponse: {},
+        },
+      },
+    ]);
+    const res = await request(buildApp()).get(
+      '/api/chat/sessions/sess-partial/messages'
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.messages).toHaveLength(1);
+    expect(res.body.messages[0].role).toBe('user');
+  });
+
+  it('returns 500 with generic error when getConversationHistory throws', async () => {
+    mockGetConversationHistory.mockRejectedValueOnce(
+      new Error('Mongo unreachable: prod-host:27017')
+    );
+    const res = await request(buildApp()).get(
+      '/api/chat/sessions/sess-err/messages'
+    );
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/could not load/i);
+    // Internal detail not leaked
+    expect(JSON.stringify(res.body)).not.toContain('prod-host');
   });
 });

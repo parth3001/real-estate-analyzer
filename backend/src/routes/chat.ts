@@ -652,4 +652,143 @@ router.post(
   }
 );
 
+/**
+ * GET /api/chat/sessions/:sessionId/messages — Day 11f (Issue C / new Issue #123).
+ *
+ * Returns the conversation history for a session, projected to the
+ * minimal wire shape the ChatOverlay needs to restore a thread on
+ * mount. Without this endpoint, clicking a sidebar thread showed only
+ * the empty welcome state — the underlying ConversationEvents were
+ * in substrate but the frontend had no way to read them.
+ *
+ * AUTH
+ * ────
+ *
+ * chatIdentityMiddleware — accepts authenticated Bearer tokens OR
+ * a valid ghost-user sessionId in the body. For a GET we don't have
+ * a body, so the relevant code path is: authed Bearer → req.user.id
+ * resolves to the real user; we then verify the conversation belongs
+ * to them.
+ *
+ * OWNERSHIP
+ * ─────────
+ *
+ * Every ConversationEvent carries the userId that produced it.
+ * After loading the session's events, we check that every event's
+ * userId matches the requester. If ANY event mismatches (the session
+ * was claimed by a different account, or the requester pasted
+ * someone else's sessionId), we 403 — defense against probing.
+ *
+ * WIRE SHAPE
+ * ──────────
+ *
+ * Returns `{ messages: ChatHistoryMessage[] }` ordered by turnNumber.
+ * Each ConversationEvent produces TWO messages (the user-turn input
+ * + the assistant-turn response), so a session with N turns returns
+ * 2N messages.
+ *
+ * structuredOutputs (DealScoreCards from prior turns) are NOT
+ * reconstructed yet — that's a follow-up (needs to load each
+ * decisionEventId's audit trail and re-project). V1 ships text-only
+ * restoration which is sufficient for the "I see my prior chat"
+ * UX promise.
+ */
+router.get(
+  '/sessions/:sessionId/messages',
+  chatIdentityMiddleware,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Identity resolution failed' });
+      return;
+    }
+
+    const { sessionId } = req.params;
+    // Body-shape validation is tight in /turn; reuse the UUID rule here.
+    if (typeof sessionId !== 'string' || sessionId.length === 0) {
+      res.status(400).json({ error: 'sessionId is required' });
+      return;
+    }
+
+    try {
+      const events =
+        await eventsRepositoryReads.getConversationHistory(sessionId);
+
+      if (events.length === 0) {
+        // Fresh / unknown session — return empty list, NOT 404.
+        // Frontend treats empty as "no history yet" and renders the
+        // empty state. 404 would be a worse UX because users would
+        // get an error when clicking a sidebar thread that turned
+        // out to be empty.
+        res.json({ messages: [] });
+        return;
+      }
+
+      // Ownership check — every event in this session must belong to
+      // the requester. If any mismatches, refuse the whole load (we
+      // can't safely return a partial view because some events might
+      // be from another account post-claim).
+      const requesterId = req.user.id;
+      const ownedByRequester = events.every(
+        (e) => e.userId?.toString() === requesterId
+      );
+      if (!ownedByRequester) {
+        logger.warn(
+          'chat/sessions/:id/messages: ownership mismatch — refusing',
+          {
+            requesterId,
+            sessionId,
+            mismatchCount: events.filter(
+              (e) => e.userId?.toString() !== requesterId
+            ).length,
+          }
+        );
+        res.status(403).json({ error: 'Not your session.' });
+        return;
+      }
+
+      // Project each ConversationEvent → [user message, assistant
+      // message] in turn order. ConversationEvents are already sorted
+      // by turnNumber by the repository read.
+      const messages = events.flatMap((e) => {
+        const payload = e.payload;
+        const turnNumber = payload.turnNumber;
+        const out: Array<{
+          role: 'user' | 'assistant';
+          text: string;
+          turnNumber: number;
+          traceId?: string;
+          conversationEventId?: string;
+        }> = [];
+        if (payload.userInput?.text) {
+          out.push({
+            role: 'user',
+            text: payload.userInput.text,
+            turnNumber,
+            traceId: e.traceId,
+          });
+        }
+        if (payload.agentResponse?.text) {
+          out.push({
+            role: 'assistant',
+            text: payload.agentResponse.text,
+            turnNumber,
+            traceId: e.traceId,
+            conversationEventId: (e._id as Types.ObjectId).toHexString(),
+          });
+        }
+        return out;
+      });
+
+      res.json({ messages });
+    } catch (err) {
+      logger.error('chat/sessions/:id/messages: load failed', {
+        userId: req.user.id,
+        sessionId,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      res.status(500).json({ error: 'Could not load conversation history.' });
+    }
+  }
+);
+
 export default router;

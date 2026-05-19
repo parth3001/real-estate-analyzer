@@ -7,6 +7,62 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #123: Chat thread doesn't restore on sidebar selection — FIXED (Day 11f, Issue C from test session)
+**Status**: ✅ RESOLVED 2026-05-19
+**Priority**: P1 - HIGH (violated "your conversation persists" — core chat-first IA promise)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issue C in running log)
+**Component**: Backend `routes/chat.ts` (new GET endpoint) + Frontend `services/chatApi.ts` + `components/Chat/ChatOverlay.tsx`
+**Category**: Architectural — substrate-to-UI history wiring gap
+
+**The bug observed in testing**:
+After completing chat → signup → magic-link claim, the user clicked the thread in the sidebar (correctly labeled "re run the analysis"). Main panel showed the empty "Welcome back" state instead of the conversation. The thread was in substrate; the frontend had no way to read it.
+
+**Root cause**:
+- `EventsRepositoryReads.getConversationHistory(sessionId)` existed but was never exposed via HTTP
+- `ChatOverlay` initialized `messages: ThreadMessage[]` to empty and only appended as turns streamed in — no history-load on mount
+- Sidebar selection updated `activeSessionId` → remounted ChatOverlay with a new key → ChatOverlay started fresh with empty messages
+
+**Resolution (Day 11f)**:
+
+1. **New backend endpoint** `GET /api/chat/sessions/:sessionId/messages`:
+   - Auth via `chatIdentityMiddleware`
+   - Calls `getConversationHistory` and projects each ConversationEvent to a `{ role, text, turnNumber, traceId, conversationEventId }` wire shape
+   - Ownership check: every event in the session must belong to the requester; mixed-ownership sessions return 403 (defense against pasting someone else's sessionId)
+   - Empty sessions return `{ messages: [] }` with 200 (NOT 404 — fresh sessions are legitimate)
+   - Partial payloads handled gracefully — if `agentResponse.text` is missing, the assistant message is omitted but the user message still renders
+   - 500 with generic error on repository failure; internal detail not leaked
+
+2. **Frontend `loadChatHistory(sessionId)` in `chatApi.ts`**:
+   - Silent-degrade on failure (returns empty array); console.error keeps it observable for debugging
+   - 403 from backend → empty (the UI shows the empty state)
+
+3. **ChatOverlay history-restore on mount**:
+   - New `historyLoadedRef` guard prevents double-load
+   - Skip when `initialUserInput` is set (hero-embed entry path — that auto-sends turn 1, no history to restore)
+   - On mount with sessionId, fetch history → project to ThreadMessage shape → `setMessages(restored)`
+   - Restored assistant messages have `streaming: false` (already complete)
+
+**Wire-shape decision** — text-only restoration in V1:
+DealScoreCards from prior turns are NOT reconstructed yet. Reconstructing them needs to load each decisionEventId's audit trail and re-project — bigger lift, deferred. V1 ships text-only restoration which is sufficient for the "I see my prior chat" UX promise.
+
+**Files affected**:
+- `backend/src/routes/chat.ts` (+93 lines for new GET endpoint)
+- `backend/src/routes/__tests__/chat.test.ts` (+5 tests for the GET endpoint)
+- `frontend/src/services/chatApi.ts` (loadChatHistory function + ChatHistoryMessage type)
+- `frontend/src/components/Chat/ChatOverlay.tsx` (history-restore useEffect + import)
+
+Tests:
+- 5 new GET-endpoint assertions (empty session, populated session, ownership 403, partial payload, 500 with redaction)
+- 40/40 chat.test.ts (was 35)
+- 469/469 backend regression suite green (was 464)
+- 99/99 frontend tests on touched surfaces (Chat, AnalysisDetails, common/AnalysisErrorBoundary)
+
+**Edge cases for follow-up**:
+- Structured outputs (DealScoreCards, follow-up chips, suggested actions) not yet restored
+- Anonymous → just-claimed user: the thread might briefly show empty before the claim merges userId; tested via existing claim flow but worth re-verifying manually
+
+---
+
 ### Issue #122: Freemium gates not enforced for anonymous users — FIXED (Day 11e, Issues E1 + E2 from test session)
 **Status**: ✅ RESOLVED 2026-05-19
 **Priority**: P1 - HIGH (without these, $4.99/deal is paper — anonymous gets unlimited everything)
