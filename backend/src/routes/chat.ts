@@ -512,10 +512,9 @@ router.post(
         strategy
       );
 
-      // 4. Send the email. Forward the full card payload (assumptions
-      //    + projection) so the email surfaces the same depth the user
-      //    saw in chat — addresses Issue #111 (email was "shallow"
-      //    relative to the legacy wizard email).
+      // 4. Send the email. Day 11d adds keyMetrics (real numbers
+      //    behind each factor) + ctaUrl so the email matches the
+      //    in-chat depth AND drives return visits. Issue F resolution.
       const addressLine = `${card.address.street}, ${card.address.city} ${card.address.state}`;
       await emailService.sendDealScoreSummary({
         recipientEmail: body.email,
@@ -528,6 +527,14 @@ router.post(
         nextStep: card.nextStep,
         assumptions: card.assumptions,
         projection: card.projection,
+        keyMetrics: card.keyMetrics,
+        // CTA URL is generic /app for now — email-CTA may fire before
+        // materialization (no dealId yet), so we don't deep-link to
+        // /analysis/:id. The user lands on /app and finds the thread
+        // in the sidebar. A future Day-N push can resolve this to a
+        // deep-link when materialization is guaranteed to have run.
+        // emailService falls back to FRONTEND_URL/app when ctaUrl is
+        // omitted, so passing undefined here is equivalent + cleaner.
       });
 
       // Activation-funnel telemetry — email capture is a conversion

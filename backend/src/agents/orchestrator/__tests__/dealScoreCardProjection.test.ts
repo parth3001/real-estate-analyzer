@@ -449,4 +449,85 @@ describe('projectDealScoreCard', () => {
       expect(card.projection!.map((p) => p.year)).toEqual([1, 3, 7, 10]);
     });
   });
+
+  // ===== Day 11d — Key metrics block (Issue F) =====
+  //
+  // The actual financial numbers behind the score, surfaced into the
+  // wire shape for the email + (eventually) the DealScoreCard UI.
+
+  describe('keyMetrics block (Day 11d / Issue F)', () => {
+    it('extracts numbers from analysis.metrics + analysis.monthlyAnalysis', () => {
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        metrics: {
+          noi: 18500,
+          capRate: 5.2,
+          cashOnCashReturn: -5.89,
+          irr: 7.9,
+          dscr: 0.72,
+          operatingExpenseRatio: 35,
+          totalInvestment: 147500,
+        } as AnalysisPayload['metrics'],
+        monthlyAnalysis: {
+          cashFlow: -358,
+          expenses: { debt: 1820 },
+        },
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.keyMetrics).toBeDefined();
+      expect(card.keyMetrics!.monthlyCashFlow).toBe(-358);
+      expect(card.keyMetrics!.capRate).toBe(5.2);
+      expect(card.keyMetrics!.irr).toBe(7.9);
+      expect(card.keyMetrics!.dscr).toBe(0.72);
+      expect(card.keyMetrics!.cashOnCashReturn).toBe(-5.89);
+      expect(card.keyMetrics!.annualNOI).toBe(18500);
+      expect(card.keyMetrics!.totalInvestment).toBe(147500);
+      expect(card.keyMetrics!.monthlyDebtService).toBe(1820);
+    });
+
+    it('omits the keyMetrics key entirely when all fields are missing', () => {
+      // Pre-Day-11d analyses lack metrics + monthlyAnalysis populated
+      // through. The wire shape should NOT include an empty keyMetrics
+      // object — emails treat the omission as "render the pre-Day-11d
+      // shape, no Key Metrics section."
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        metrics: {} as AnalysisPayload['metrics'],
+        monthlyAnalysis: {},
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.keyMetrics).toBeUndefined();
+    });
+
+    it('includes partial keyMetrics when only some fields exist', () => {
+      // An analysis that produced cap rate + cash flow but no IRR (e.g.,
+      // a quick-pass analysis without long-term projection) should
+      // still surface the two it has.
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        metrics: { capRate: 5.5 } as AnalysisPayload['metrics'],
+        monthlyAnalysis: { cashFlow: 200 },
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.keyMetrics).toBeDefined();
+      expect(card.keyMetrics!.capRate).toBe(5.5);
+      expect(card.keyMetrics!.monthlyCashFlow).toBe(200);
+      expect(card.keyMetrics!.irr).toBeUndefined();
+      expect(card.keyMetrics!.dscr).toBeUndefined();
+    });
+
+    it('filters NaN / non-finite values defensively', () => {
+      // An engine bug or partial computation could leave NaN in some
+      // fields. The projection MUST NOT propagate non-finite numbers
+      // to the email (they'd render as "NaN%" which embarrasses).
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        metrics: {
+          capRate: NaN,
+          irr: 7.9,
+          dscr: Infinity,
+        } as AnalysisPayload['metrics'],
+      });
+      const card = projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+      expect(card.keyMetrics!.capRate).toBeUndefined();
+      expect(card.keyMetrics!.dscr).toBeUndefined();
+      expect(card.keyMetrics!.irr).toBe(7.9);
+    });
+  });
 });

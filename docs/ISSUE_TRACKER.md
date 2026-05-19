@@ -7,6 +7,86 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #121: Email shows scores but not actual values; weak branding; no CTA back — FIXED (Day 11d, Issue F from test session)
+**Status**: ✅ RESOLVED 2026-05-19
+**Priority**: P1 - HIGH (email is the takeaway artifact; affects shareability + repeat-visit conversion)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issue F in running log)
+**Component**: Backend `services/emailService.ts` + `agents/orchestrator/dealScoreCardProjection.ts` + `routes/chat.ts`
+**Category**: User experience / takeaway-artifact richness
+
+**The bug observed in testing**:
+Founder requested "email me this deal" — email arrived with:
+- Score with no underlying numbers (e.g., "IRR 60/100" with no
+  actual IRR percentage)
+- Weak brand presence (small grey footer line, no header)
+- No CTA back to the platform (dead-end email)
+
+User feedback: "we should send everything and do not be shy about
+it" — the email needs to read like an institutional report, not a
+score-only summary.
+
+**Resolution (Day 11d)**:
+
+1. **DealScoreCardWireShape gains `keyMetrics` block** — actual
+   financial values extracted from the AnalysisPayload:
+   - Monthly cash flow ($/month)
+   - Cap rate (%)
+   - 10-year IRR (%)
+   - DSCR
+   - Cash-on-cash return (%)
+   - Annual NOI ($)
+   - Total cash invested ($)
+   - Monthly debt service ($)
+   All optional — older analyses with partial metrics gracefully
+   render the rows they have, skip the rest.
+
+2. **Email template restructured**:
+   - **Brand header** with REanalyzr wordmark + tagline
+     ("Institutional-grade underwriting for individual investors.")
+   - **KEY METRICS section** (new) — labelled table of actual
+     numbers, formatted as dollars/percentages/ratios. DSCR < 1.0
+     gets an inline hint "rent doesn't cover debt"
+   - TOP FACTORS section retained (engine scoring)
+   - Walk-away vs Your offer (existing)
+   - 10-year projection (existing)
+   - Standard assumptions (existing)
+   - NEXT STEP (existing)
+   - **CTA button** (new) — "Continue in REanalyzr →" linking to
+     `FRONTEND_URL/app` (generic for now — deep-link to
+     /analysis/:id deferred until materialization-on-email-CTA is
+     guaranteed)
+   - **Footer** redesigned — link to the platform + tagline
+
+3. **Plain-text version mirrors HTML structure** — monospace-aligned
+   Key Metrics table, CTA URL on its own line for plain-text mail
+   clients
+
+4. **Cognitive flow** of the new email:
+   brand → score (headline) → numbers (what backs it) → engine's
+   argument (factor scores) → price anchor → time series →
+   assumption fine print → next step → CTA → footer.
+   A CPA can stop at any point and form an opinion.
+
+**Files affected**:
+- `backend/src/agents/orchestrator/dealScoreCardProjection.ts`
+  (extract keyMetrics)
+- `backend/src/services/emailService.ts` (render keyMetrics + brand
+  header + CTA + improved footer + plain-text mirroring)
+- `backend/src/routes/chat.ts` (forward keyMetrics to the email
+  service)
+
+Tests:
+- 4 new projection assertions covering keyMetrics extraction
+  (full / partial / empty / NaN-filtering)
+- 442/442 backend regression suite green (was 438)
+
+Backward compatibility: when `keyMetrics` is undefined (older calls,
+analyses without populated metrics), the email renders the
+pre-Day-11d shape gracefully. CTA defaults to a generic /app link
+when no `ctaUrl` is provided.
+
+---
+
 ### Issue #120: Property tax defaults to national 1.2% instead of state average — FIXED (Day 11c, Issue B from test session)
 **Status**: ✅ RESOLVED 2026-05-18
 **Priority**: P1 - HIGH (materially distorts every analysis in high-tax states)

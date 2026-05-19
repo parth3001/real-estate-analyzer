@@ -1171,6 +1171,32 @@ export class EmailService {
       propertyValue: number;
       equity: number;
     }>;
+    /**
+     * Key metrics block (Day 11d / Issue F, 2026-05-18). The actual
+     * financial NUMBERS behind the engine's scoring. Surfaces the
+     * data a CPA / partner / spouse reading a forwarded email needs
+     * to actually FORM AN OPINION on the deal — pre-Day-11d the
+     * email only showed scores (e.g., "IRR 60/100"), which carry no
+     * meaning without the underlying value (e.g., "IRR 7.9%").
+     * Optional — older flows that don't pass it render the
+     * pre-Day-11d shape gracefully.
+     */
+    keyMetrics?: {
+      monthlyCashFlow?: number;
+      capRate?: number;
+      irr?: number;
+      dscr?: number;
+      cashOnCashReturn?: number;
+      annualNOI?: number;
+      totalInvestment?: number;
+      monthlyDebtService?: number;
+    };
+    /**
+     * Optional CTA URL to deep-link the user back into the platform.
+     * Rendered as a prominent button after the analysis sections.
+     * Falls back to a generic /app link if not provided.
+     */
+    ctaUrl?: string;
   }): Promise<void> {
     const {
       recipientEmail,
@@ -1183,6 +1209,8 @@ export class EmailService {
       nextStep,
       assumptions,
       projection,
+      keyMetrics,
+      ctaUrl,
     } = opts;
     const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
     const scoreLabel =
@@ -1261,16 +1289,162 @@ export class EmailService {
          </table>`
       : '';
 
+    // ===== Key metrics block (Day 11d / Issue F) =====
+    //
+    // The actual financial NUMBERS the score is computed from. CPAs,
+    // lenders, and spouses reading a forwarded email need this to form
+    // an opinion. "Cash flow 0/100" alone tells them nothing;
+    // "Cash flow -$358/month (0/100 — Below standards)" tells them
+    // the deal bleeds and the engine flagged it. That's the email's
+    // job — surface the receipt's line items, not just the total.
+    //
+    // Renders a two-column table: metric name + value. Hides
+    // individual rows when their data is missing (older analyses
+    // may lack DSCR or total investment).
+    const fmtPct = (n: number): string => `${n.toFixed(1)}%`;
+    const fmtRatio = (n: number): string => n.toFixed(2);
+    const keyMetricRow = (
+      label: string,
+      value: string | undefined,
+      hint?: string
+    ): string => {
+      if (!value) return '';
+      const hintCell = hint
+        ? `<span style="color:#9CA3AF;font-weight:400;font-size:12px;"> · ${this.escapeHtml(hint)}</span>`
+        : '';
+      return `<tr><td style="padding:8px 0;color:#374151;font-size:14px;">${this.escapeHtml(label)}</td><td style="padding:8px 0;text-align:right;font-weight:600;color:#111827;font-variant-numeric:tabular-nums;font-size:14px;">${value}${hintCell}</td></tr>`;
+    };
+    const keyMetricsRows = !keyMetrics
+      ? ''
+      : [
+          keyMetricRow(
+            'Monthly cash flow',
+            keyMetrics.monthlyCashFlow !== undefined
+              ? fmt(keyMetrics.monthlyCashFlow)
+              : undefined
+          ),
+          keyMetricRow(
+            'Annual NOI',
+            keyMetrics.annualNOI !== undefined
+              ? fmt(keyMetrics.annualNOI)
+              : undefined
+          ),
+          keyMetricRow(
+            'Cap rate',
+            keyMetrics.capRate !== undefined
+              ? fmtPct(keyMetrics.capRate)
+              : undefined
+          ),
+          keyMetricRow(
+            '10-year IRR',
+            keyMetrics.irr !== undefined ? fmtPct(keyMetrics.irr) : undefined
+          ),
+          keyMetricRow(
+            'Cash-on-cash return',
+            keyMetrics.cashOnCashReturn !== undefined
+              ? fmtPct(keyMetrics.cashOnCashReturn)
+              : undefined
+          ),
+          keyMetricRow(
+            'DSCR',
+            keyMetrics.dscr !== undefined
+              ? fmtRatio(keyMetrics.dscr)
+              : undefined,
+            keyMetrics.dscr !== undefined && keyMetrics.dscr < 1.0
+              ? "rent doesn't cover debt"
+              : undefined
+          ),
+          keyMetricRow(
+            'Monthly debt service',
+            keyMetrics.monthlyDebtService !== undefined
+              ? fmt(keyMetrics.monthlyDebtService)
+              : undefined
+          ),
+          keyMetricRow(
+            'Total cash invested',
+            keyMetrics.totalInvestment !== undefined
+              ? fmt(keyMetrics.totalInvestment)
+              : undefined
+          ),
+        ]
+          .filter(Boolean)
+          .join('');
+    const keyMetricsHtml = keyMetricsRows
+      ? `<hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+         <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">KEY METRICS</div>
+         <table style="width:100%;border-collapse:collapse;">${keyMetricsRows}</table>`
+      : '';
+
+    // ===== CTA block (Day 11d) =====
+    //
+    // Drives return-visit conversion. Without a CTA the email is a
+    // dead-end; with one, the email becomes a re-engagement trigger.
+    // Resolves to the user-supplied ctaUrl OR a generic /app link
+    // (FRONTEND_URL env var, defaulted to https://reanalyzr.com).
+    //
+    // Email-client compatibility: button rendered as an <a> styled
+    // like a button (works everywhere; <button> elements get stripped
+    // by some clients).
+    const resolvedCtaUrl =
+      ctaUrl ||
+      `${process.env.FRONTEND_URL || 'https://reanalyzr.com'}/app`;
+    const ctaHtml = `
+      <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
+      <div style="text-align:center;margin:8px 0 16px 0;">
+        <a href="${this.escapeHtml(resolvedCtaUrl)}"
+           style="display:inline-block;background:#111827;color:#FFFFFF;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+          Continue in REanalyzr →
+        </a>
+      </div>
+      <div style="text-align:center;font-size:12px;color:#9CA3AF;margin-bottom:8px;">
+        Stress-test, override assumptions, or analyze another property.
+      </div>`;
+
+    // ===== Brand header (Day 11d / Issue F) =====
+    //
+    // Pre-Day-11d the email had only a small grey footer line. Now
+    // we lead with a wordmark + one-line manifesto so the email
+    // FEELS like a REanalyzr artifact when forwarded — the way a
+    // Bloomberg or Goldman PDF feels institutional just from the
+    // letterhead. The wordmark is bold black sans-serif; the tagline
+    // is muted grey.
+    const brandHeaderHtml = `
+      <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #E5E7EB;">
+        <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#111827;">REanalyzr</div>
+        <div style="font-size:12px;color:#6B7280;margin-top:2px;">Institutional-grade underwriting for individual investors.</div>
+      </div>`;
+
+    // ===== Order of sections in the email =====
+    //
+    // Brand header
+    //   → strategy + address line + Deal Quality Score (headline)
+    //   → KEY METRICS (actual numbers — Day 11d new)
+    //   → TOP FACTORS (engine scoring breakdown)
+    //   → Walk-away vs Your offer
+    //   → 10-year projection
+    //   → Standard assumptions
+    //   → NEXT STEP (action)
+    //   → CTA button (Day 11d new)
+    //   → Footer with links + tagline
+    //
+    // The COGNITIVE flow: brand → score (the headline) → numbers
+    // (what backs it) → engine's argument (factor scores) → price
+    // anchor → time series → assumption fine print → next move.
+    // A CPA reading this should be able to stop at any point and
+    // form an opinion.
+
     const html = `
 <!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F9FAFB;margin:0;padding:24px;">
   <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border-radius:12px;padding:32px;border:1px solid #E5E7EB;">
+    ${brandHeaderHtml}
     <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">${strategyLabel.toUpperCase()} ANALYSIS</div>
     <div style="font-size:14px;color:#374151;margin-bottom:24px;">${this.escapeHtml(addressLine)}</div>
     <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:24px;">
       <div style="font-size:72px;font-weight:700;line-height:1;color:${scoreColor};font-variant-numeric:tabular-nums;">${dealQuality}<span style="font-size:28px;color:#9CA3AF;font-weight:500;">/100</span></div>
       <div style="font-size:14px;font-weight:600;color:${scoreColor};">${scoreLabel}</div>
     </div>
+    ${keyMetricsHtml}
     <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
     <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">TOP FACTORS</div>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">${factorsHtml}</table>
@@ -1284,26 +1458,83 @@ export class EmailService {
     <hr style="border:0;border-top:1px solid #E5E7EB;margin:24px 0;" />
     <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280;margin-bottom:8px;">NEXT STEP</div>
     <div style="font-size:14px;color:#374151;line-height:1.5;">${this.escapeHtml(nextStep)}</div>
-    <div style="margin-top:32px;font-size:12px;color:#9CA3AF;text-align:center;">REanalyzr · Institutional-grade analysis. Individual investor access.</div>
+    ${ctaHtml}
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #F3F4F6;font-size:11px;color:#9CA3AF;text-align:center;line-height:1.5;">
+      Generated by <a href="${this.escapeHtml(process.env.FRONTEND_URL || 'https://reanalyzr.com')}" style="color:#6B7280;text-decoration:none;font-weight:600;">REanalyzr</a> ·
+      The discipline layer for retail real estate investors.
+    </div>
   </div>
 </body></html>`;
 
-    // ===== Plain-text version (Issue #111) =====
-    // Mirrors the HTML structure: score → factors → price → projection →
-    // assumptions → next step. Email clients that strip HTML still see
-    // the full picture. Sections only appear when data is present.
+    // ===== Plain-text version (Day 11d update / Issue F) =====
+    // Mirrors the HTML structure including the new KEY METRICS block
+    // and the CTA URL at the end. Email clients that strip HTML still
+    // see the full picture. Sections only appear when data is present.
     const textLines: string[] = [
+      'REanalyzr — Institutional-grade underwriting for individual investors.',
+      '',
       `${strategyLabel.toUpperCase()} ANALYSIS`,
       addressLine,
       '',
       `Deal Quality Score: ${dealQuality}/100 — ${scoreLabel}`,
+    ];
+
+    // ===== Key metrics block (Day 11d) — actual numbers =====
+    if (keyMetrics) {
+      const km = keyMetrics;
+      const metricLine = (label: string, value: string | undefined): string | null =>
+        value ? `  ${label.padEnd(22)} ${value}` : null;
+      const lines = [
+        metricLine(
+          'Monthly cash flow',
+          km.monthlyCashFlow !== undefined ? fmt(km.monthlyCashFlow) : undefined
+        ),
+        metricLine(
+          'Annual NOI',
+          km.annualNOI !== undefined ? fmt(km.annualNOI) : undefined
+        ),
+        metricLine(
+          'Cap rate',
+          km.capRate !== undefined ? `${km.capRate.toFixed(1)}%` : undefined
+        ),
+        metricLine(
+          '10-year IRR',
+          km.irr !== undefined ? `${km.irr.toFixed(1)}%` : undefined
+        ),
+        metricLine(
+          'Cash-on-cash return',
+          km.cashOnCashReturn !== undefined
+            ? `${km.cashOnCashReturn.toFixed(1)}%`
+            : undefined
+        ),
+        metricLine(
+          'DSCR',
+          km.dscr !== undefined ? km.dscr.toFixed(2) : undefined
+        ),
+        metricLine(
+          'Monthly debt service',
+          km.monthlyDebtService !== undefined
+            ? fmt(km.monthlyDebtService)
+            : undefined
+        ),
+        metricLine(
+          'Total cash invested',
+          km.totalInvestment !== undefined ? fmt(km.totalInvestment) : undefined
+        ),
+      ].filter((l): l is string => l !== null);
+      if (lines.length > 0) {
+        textLines.push('', 'Key metrics:', ...lines);
+      }
+    }
+
+    textLines.push(
       '',
-      'Top factors:',
-      ...topFactors.map((f) => `  ${f.label}: ${f.score}/100`),
+      'Top factors (engine scoring):',
+      ...topFactors.map((f) => `  ${f.label.padEnd(22)} ${f.score}/100`),
       '',
       `Walk-away price: ${fmt(walkAwayPrice)}`,
-      `Your offer:      ${fmt(purchasePrice)}`,
-    ];
+      `Your offer:      ${fmt(purchasePrice)}`
+    );
 
     if (projection && projection.length > 0) {
       textLines.push('', '10-year projection:');
@@ -1329,11 +1560,16 @@ export class EmailService {
       }
     }
 
+    // CTA URL — resolved same way the HTML CTA is.
+    const resolvedCtaUrlText =
+      ctaUrl || `${process.env.FRONTEND_URL || 'https://reanalyzr.com'}/app`;
     textLines.push(
       '',
       `Next step: ${nextStep}`,
       '',
-      'REanalyzr · Institutional-grade analysis. Individual investor access.'
+      `Continue in REanalyzr → ${resolvedCtaUrlText}`,
+      '',
+      'REanalyzr · The discipline layer for retail real estate investors.'
     );
     const text = textLines.join('\n');
 

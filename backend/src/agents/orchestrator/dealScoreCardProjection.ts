@@ -50,6 +50,40 @@ export interface DealScoreCardWireShape {
     propertyValue: number;
     equity: number;
   }>;
+  /**
+   * Key metrics block (Day 11d / Issue F, 2026-05-18). The actual
+   * financial numbers behind the engine's scoring. Rendered in the
+   * email so a CPA / partner / spouse can read the deal AS NUMBERS
+   * (e.g., "cash flow -$358/mo, IRR 7.9%") not just AS SCORES
+   * (e.g., "cash flow 0/100, IRR 60/100"). The audit-trail surface
+   * already shows the actual numbers — this is the same data piped
+   * to the email artifact.
+   *
+   * Percentages are decimal values (e.g., 0.052 for 5.2%) so the
+   * frontend / email template formats consistently. Cents are
+   * dollars (e.g., -358 for -$358/mo).
+   *
+   * Optional — older analyses may lack any of these fields. The
+   * email template hides individual rows gracefully when undefined.
+   */
+  keyMetrics?: {
+    /** Monthly cash flow in dollars. Negative = bleeds. */
+    monthlyCashFlow?: number;
+    /** Cap rate as a percentage (e.g., 5.2 for 5.2%). */
+    capRate?: number;
+    /** 10-year IRR as a percentage (e.g., 7.9 for 7.9%). */
+    irr?: number;
+    /** Debt-service coverage ratio (e.g., 1.25). */
+    dscr?: number;
+    /** Cash-on-cash return as a percentage (e.g., -5.89 for -5.89%). */
+    cashOnCashReturn?: number;
+    /** Annual NOI in dollars. */
+    annualNOI?: number;
+    /** Total cash investment in dollars (down + closing + reserves). */
+    totalInvestment?: number;
+    /** Monthly debt service in dollars. */
+    monthlyDebtService?: number;
+  };
 }
 
 // ===== Helpers =====
@@ -267,6 +301,42 @@ export function projectDealScoreCard(
       ?.yearlyProjections ?? null;
   const projection = pickProjectionMilestones(yearlyProjections);
 
+  // Day 11d — Key metrics block (Issue F). The actual financial
+  // numbers behind each scoring factor. analysis.metrics has the
+  // CommonMetrics shape (noi, capRate, cashOnCashReturn, irr, dscr,
+  // totalInvestment); analysis.monthlyAnalysis carries the per-month
+  // breakdowns. We pull defensively — older analyses may lack some
+  // fields, and the wire shape's `?:` defaults handle absence
+  // gracefully downstream.
+  // AnalysisPayload exposes `metrics` (CommonMetrics shape) and
+  // `monthlyAnalysis` (income/expenses/cashFlow). NOI lives on
+  // `metrics.noi`; annualAnalysis isn't part of the substrate payload
+  // (per AnalysisEvent.ts — only metrics + monthlyAnalysis +
+  // longTermAnalysis are in the schema).
+  const metricsAny = (analysis.metrics ?? {}) as Record<string, unknown>;
+  const monthlyAny = (analysis.monthlyAnalysis ?? {}) as Record<string, unknown>;
+  const numOrUndef = (v: unknown): number | undefined =>
+    typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+  const monthlyDebt =
+    typeof (monthlyAny.expenses as { debt?: number } | undefined)?.debt === 'number'
+      ? (monthlyAny.expenses as { debt: number }).debt
+      : undefined;
+  const keyMetrics = {
+    monthlyCashFlow: numOrUndef(monthlyAny.cashFlow),
+    capRate: numOrUndef(metricsAny.capRate),
+    irr: numOrUndef(metricsAny.irr),
+    dscr: numOrUndef(metricsAny.dscr),
+    cashOnCashReturn: numOrUndef(metricsAny.cashOnCashReturn),
+    annualNOI: numOrUndef(metricsAny.noi),
+    totalInvestment: numOrUndef(metricsAny.totalInvestment),
+    monthlyDebtService: monthlyDebt,
+  };
+  // Only attach if at least one field has data — keeps the wire shape
+  // tight and the email template's "render this block" check simple.
+  const hasAnyKeyMetric = Object.values(keyMetrics).some(
+    (v) => v !== undefined
+  );
+
   return {
     strategy,
     address: {
@@ -283,5 +353,6 @@ export function projectDealScoreCard(
     // Only include the projection key when we actually have rows —
     // omitting cleanly is better than an empty array on the wire.
     ...(projection.length > 0 ? { projection } : {}),
+    ...(hasAnyKeyMetric ? { keyMetrics } : {}),
   };
 }
