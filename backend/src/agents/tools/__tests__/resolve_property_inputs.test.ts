@@ -433,4 +433,258 @@ describe('tool:resolve_property_inputs (W5-Phase1)', () => {
       expect(a.provenance).toEqual(b.provenance);
     });
   });
+
+  // ===== Day 11b — stress-test reproducibility (Issue A fix) =====
+  //
+  // The original Issue A: a stress-test turn ("change rate to 7%")
+  // re-ran resolve_property_inputs fresh, which re-fetched RentCast /
+  // FRED / tax data — those return drifting values across calls.
+  // Result: scores between turns weren't deterministically ordered
+  // (rate 6.4% → score 20, rate 7% → score 45 in one observed run).
+  //
+  // The fix: when `priorDecisionId` is set, load the prior analysis
+  // verbatim and apply only the explicit override. These tests assert
+  // the contract.
+
+  describe('priorDecisionId — reuse prior analysis for stress-tests (Issue A fix)', () => {
+    /**
+     * Seed a prior AnalysisEvent + DecisionEvent pair, return the
+     * decisionId so the test can pass it to resolve_property_inputs.
+     */
+    async function seedPriorAnalysis(opts: {
+      propertyData: Record<string, unknown>;
+      assumptions: Record<string, unknown>;
+    }): Promise<Types.ObjectId> {
+      const userId = new Types.ObjectId();
+      // AnalysisPayloadSchema requires propertyData, marketData,
+      // assumptions, metrics, monthlyAnalysis, longTermAnalysis (all
+      // ObjectShape), plus walkAwayPrice, enrichmentSource,
+      // enrichmentCacheHit, engineVersion, computeTimeMs.
+      const analysisPayload: unknown = {
+        propertyData: opts.propertyData,
+        marketData: {},
+        assumptions: opts.assumptions,
+        metrics: {},
+        monthlyAnalysis: {},
+        longTermAnalysis: {},
+        walkAwayPrice: 200000,
+        enrichmentSource: 'rentcast',
+        enrichmentCacheHit: false,
+        engineVersion: 'test',
+        computeTimeMs: 100,
+      };
+      const analysisEventId = await eventsRepository.writeAnalysisEvent({
+        traceId: 'seed-trace',
+        actorType: 'agent:deal_scoring',
+        userId,
+        payload: analysisPayload as Parameters<
+          typeof eventsRepository.writeAnalysisEvent
+        >[0]['payload'],
+      });
+      // DecisionPayloadSchema requires: analysisEventId, dealQuality,
+      // qualityLabel, qualityColor, professionalAssessment,
+      // marketPosition, reasoningTrail (structured), confidence,
+      // scoringWeightsUsed, engineVersion.
+      const decisionPayload: unknown = {
+        analysisEventId,
+        dealQuality: 50,
+        qualityLabel: 'Requires optimization',
+        qualityColor: 'orange',
+        professionalAssessment: {
+          cashFlowScore: 50,
+          irrScore: 50,
+          capRateScore: 50,
+          marketStrengthScore: 50,
+          debtStructureScore: 50,
+          exitStrategyScore: 50,
+          propertyRiskScore: 50,
+          dealQuality: 50,
+        },
+        marketPosition: {},
+        reasoningTrail: {
+          primaryInsight: 'seed for stress-test reproducibility test',
+          strategicRecommendations: [],
+          riskMitigation: [],
+          opportunityMaximization: [],
+          keyRisks: [],
+        },
+        confidence: 80,
+        scoringWeightsUsed: {},
+        engineVersion: 'test',
+      };
+      const decisionEventId = await eventsRepository.writeDecisionEvent({
+        traceId: 'seed-trace',
+        actorType: 'agent:deal_scoring',
+        userId,
+        payload: decisionPayload as Parameters<
+          typeof eventsRepository.writeDecisionEvent
+        >[0]['payload'],
+      });
+      return decisionEventId;
+    }
+
+    it('loads propertyData + assumptions from prior analysis verbatim when priorDecisionId is set', async () => {
+      const priorPropertyData = {
+        propertyType: 'SFR',
+        purchasePrice: 275000,
+        monthlyRent: 1960,
+        bedrooms: 3,
+        bathrooms: 2,
+        squareFootage: 1800,
+        interestRate: 6.36,
+        propertyTaxRate: 1.2,
+      };
+      const priorAssumptions = {
+        vacancyRate: 5,
+        mortgageRate: 6.36,
+        downPaymentPercent: 25,
+      };
+      const decisionId = await seedPriorAnalysis({
+        propertyData: priorPropertyData,
+        assumptions: priorAssumptions,
+      });
+
+      // CRITICAL: a stub adapter that throws if called. The whole point
+      // of the prior-decision path is to SKIP fresh API calls. If the
+      // adapter is invoked, the test fails — verifies reproducibility.
+      const throwingAdapter: PropertyResolverAdapter = {
+        async fetchExternalData() {
+          throw new Error(
+            'priorDecisionId branch must NOT call the external adapter ' +
+              '— that would re-fetch drifting data and defeat reproducibility'
+          );
+        },
+      };
+      setPropertyResolverAdapter(throwingAdapter);
+
+      const result = await resolvePropertyInputs.execute(
+        {
+          address: ADDRESS,
+          purchasePrice: 275000,
+          propertyType: 'SFR',
+          priorDecisionId: decisionId.toHexString(),
+        },
+        ctxFor('stress-1')
+      );
+
+      // Every prior propertyData field appears verbatim in the result
+      for (const [key, expected] of Object.entries(priorPropertyData)) {
+        expect((result.propertyData as unknown as Record<string, unknown>)[key]).toBe(expected);
+      }
+      // Every prior assumptions field appears verbatim too
+      for (const [key, expected] of Object.entries(priorAssumptions)) {
+        expect((result.assumptions as unknown as Record<string, unknown>)[key]).toBe(expected);
+      }
+      // Provenance for prior fields is tagged 'prior_analysis'
+      expect(result.provenance.monthlyRent).toBe('prior_analysis');
+      expect(result.provenance.interestRate).toBe('prior_analysis');
+      // confirmBeforeScoring is empty — user already saw these values
+      expect(result.confirmBeforeScoring).toEqual([]);
+    });
+
+    it('applies userOverrides on top of prior values (the stress-test scenario)', async () => {
+      const decisionId = await seedPriorAnalysis({
+        propertyData: {
+          propertyType: 'SFR',
+          purchasePrice: 275000,
+          monthlyRent: 1960,
+          interestRate: 6.36,
+        },
+        assumptions: { vacancyRate: 5, mortgageRate: 6.36 },
+      });
+
+      const result = await resolvePropertyInputs.execute(
+        {
+          address: ADDRESS,
+          purchasePrice: 275000,
+          propertyType: 'SFR',
+          priorDecisionId: decisionId.toHexString(),
+          // The user's explicit "stress-test at 7%" change.
+          userOverrides: { interestRate: 7, mortgageRate: 7 },
+        },
+        ctxFor('stress-2')
+      );
+
+      // Override applied to propertyData (key existed there)
+      expect((result.propertyData as unknown as Record<string, unknown>).interestRate).toBe(7);
+      // Override applied to assumptions (key existed there too)
+      expect((result.assumptions as unknown as Record<string, unknown>).mortgageRate).toBe(7);
+      // Non-overridden field stays from prior
+      expect((result.propertyData as unknown as Record<string, unknown>).monthlyRent).toBe(1960);
+      // Overridden field provenance flips to user_provided
+      expect(result.provenance.interestRate).toBe('user_provided');
+      expect(result.provenance.mortgageRate).toBe('user_provided');
+      // Non-overridden stays prior_analysis
+      expect(result.provenance.monthlyRent).toBe('prior_analysis');
+      // discloseAfterScoring lists only the overrides (the only change)
+      expect(result.discloseAfterScoring).toHaveLength(2);
+      expect(result.discloseAfterScoring.map((d) => d.field).sort()).toEqual([
+        'interestRate',
+        'mortgageRate',
+      ]);
+    });
+
+    it('two stress-tests on the SAME priorDecisionId with the SAME override produce IDENTICAL output (deterministic)', async () => {
+      // This is THE assertion that proves Issue A is fixed. Repeated
+      // stress-tests on the same prior decision MUST be deterministic.
+      const decisionId = await seedPriorAnalysis({
+        propertyData: { propertyType: 'SFR', purchasePrice: 275000, monthlyRent: 1960, interestRate: 6.36 },
+        assumptions: { vacancyRate: 5, mortgageRate: 6.36 },
+      });
+
+      const run1 = await resolvePropertyInputs.execute(
+        {
+          address: ADDRESS,
+          purchasePrice: 275000,
+          propertyType: 'SFR',
+          priorDecisionId: decisionId.toHexString(),
+          userOverrides: { interestRate: 7 },
+        },
+        ctxFor('det-1')
+      );
+      const run2 = await resolvePropertyInputs.execute(
+        {
+          address: ADDRESS,
+          purchasePrice: 275000,
+          propertyType: 'SFR',
+          priorDecisionId: decisionId.toHexString(),
+          userOverrides: { interestRate: 7 },
+        },
+        ctxFor('det-2')
+      );
+
+      expect(run1.propertyData).toEqual(run2.propertyData);
+      expect(run1.assumptions).toEqual(run2.assumptions);
+      expect(run1.provenance).toEqual(run2.provenance);
+    });
+
+    it('throws when priorDecisionId points to a missing analysis (defensive)', async () => {
+      const orphanId = new Types.ObjectId();
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            priorDecisionId: orphanId.toHexString(),
+          },
+          ctxFor('orphan')
+        )
+      ).rejects.toThrow();
+    });
+
+    it('rejects malformed priorDecisionId (non-24-char hex) at the validator', async () => {
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            priorDecisionId: 'not-an-objectid',
+          },
+          ctxFor('bad-id')
+        )
+      ).rejects.toThrow();
+    });
+  });
 });

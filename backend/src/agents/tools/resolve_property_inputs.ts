@@ -65,7 +65,9 @@ export type FieldProvenance =
   | 'rentcast_property_record' // RentCast property record (beds/baths/sqft/yearBuilt)
   | 'fred_market' // FRED current mortgage rate
   | 'tax_service' // propertyTaxEstimationService
-  | 'assumption_default'; // our standard default (down %, term, insurance, etc.)
+  | 'assumption_default' // our standard default (down %, term, insurance, etc.)
+  | 'prior_analysis'; // Day 11b: loaded from a prior AnalysisEvent
+//                       (stress-test reproducibility — Issue A fix)
 
 // ===== External-data adapter =====
 
@@ -237,6 +239,27 @@ export const ResolvePropertyInputsInputSchema = z.object({
    * downPayment, interestRate, etc.).
    */
   userOverrides: z.record(z.string(), z.number()).optional(),
+  /**
+   * Day 11b (Issue A — stress-test reproducibility fix, 2026-05-18):
+   *
+   * Optional. When set, the resolver SKIPS all external API calls
+   * (RentCast, FRED, tax service) and instead loads the prior
+   * AnalysisEvent via this decisionId. Uses the prior propertyData +
+   * assumptions verbatim as the base, then applies `userOverrides`
+   * on top.
+   *
+   * This is the "stress-test / change one parameter" path. Without it,
+   * the agent re-ran fresh API calls on every stress-test turn, which
+   * could return different values (FRED rate drift, RentCast cache
+   * misses, tax service variability) — producing inconsistent scores
+   * between turns that should be deterministically ordered.
+   *
+   * 24-char hex Mongo ObjectId.
+   */
+  priorDecisionId: z
+    .string()
+    .regex(/^[a-fA-F0-9]{24}$/, 'priorDecisionId must be a 24-char hex ObjectId')
+    .optional(),
 });
 
 export type ResolvePropertyInputsInput = z.infer<
@@ -316,6 +339,110 @@ function pick<T>(
   return [fallback, 'assumption_default'];
 }
 
+// ===== Day 11b — resolve from a prior AnalysisEvent =====
+//
+// Load the prior AnalysisEvent via the audit-trail read (already used by
+// render_audit_trail + adversarial_critic), take its propertyData +
+// assumptions as the reproducibility BASE, apply only the user's
+// explicit overrides on top, and return.
+//
+// Provenance: fields taken from prior are tagged 'prior_analysis';
+// overridden fields are 'user_provided'. The output matches the same
+// shape the fresh path returns so the agent flow continues unchanged.
+//
+// Transparency lists are minimal here — there's no fresh data to
+// confirm or disclose. The user already saw + accepted these
+// assumptions on the prior turn; the only NEW thing this turn is the
+// override they explicitly made. Empty confirmBeforeScoring +
+// minimal discloseAfterScoring keeps the agent's response focused on
+// "you changed X — here's the new score" rather than re-listing every
+// assumption.
+
+async function resolveFromPriorDecision(
+  input: ResolvePropertyInputsInput,
+  ctx: ToolContext
+): Promise<ResolvePropertyInputsOutput> {
+  if (!input.priorDecisionId) {
+    // Defensive — the caller branched on this; should never happen.
+    throw new Error(
+      'resolve_property_inputs: resolveFromPriorDecision called without priorDecisionId'
+    );
+  }
+  const overrides = input.userOverrides ?? {};
+
+  const bundle = await ctx.eventsReads.getAuditTrail(input.priorDecisionId);
+  if (!bundle.analysis) {
+    throw new Error(
+      `resolve_property_inputs: prior AnalysisEvent missing for decisionId ${input.priorDecisionId} — ` +
+        'cannot reproduce the prior scoring context.'
+    );
+  }
+
+  // Pull propertyData + assumptions from the prior analysis verbatim.
+  // The substrate payload types are intentionally shallow at the tool
+  // boundary; we re-narrow to the resolver's output shape here.
+  const priorPropertyData = bundle.analysis.payload.propertyData as unknown as Record<
+    string,
+    unknown
+  >;
+  const priorAssumptions = (bundle.analysis.payload.assumptions ?? {}) as unknown as Record<
+    string,
+    unknown
+  >;
+
+  // Apply the user's overrides. Each override key is matched against
+  // BOTH propertyData and assumptions — the schemas overlap, and we
+  // want a single override key (e.g., "interestRate") to flow to
+  // wherever the field actually lives. Provenance is tagged per-field.
+  const provenance: Record<string, FieldProvenance> = {};
+  const propertyData: Record<string, unknown> = { ...priorPropertyData };
+  const assumptions: Record<string, unknown> = { ...priorAssumptions };
+
+  // Initial provenance: everything that came from prior is tagged.
+  for (const key of Object.keys(priorPropertyData)) provenance[key] = 'prior_analysis';
+  for (const key of Object.keys(priorAssumptions)) provenance[key] = 'prior_analysis';
+
+  // Apply overrides. If a key exists in propertyData OR assumptions,
+  // write it to the matching block (or both). If it doesn't exist in
+  // either, it goes onto propertyData (caller may be introducing a new
+  // field — rare but supported).
+  for (const [key, value] of Object.entries(overrides)) {
+    const inPropertyData = key in priorPropertyData;
+    const inAssumptions = key in priorAssumptions;
+    if (inPropertyData) propertyData[key] = value;
+    if (inAssumptions) assumptions[key] = value;
+    if (!inPropertyData && !inAssumptions) propertyData[key] = value;
+    provenance[key] = 'user_provided';
+  }
+
+  // Disclose just the OVERRIDES (the only thing that changed this
+  // turn). The agent's TRANSPARENCY prompt rules know what to do
+  // with this list.
+  const discloseAfterScoring = Object.entries(overrides).map(([field, value]) => ({
+    field,
+    value,
+    source: 'user_provided' as FieldProvenance,
+  }));
+
+  logger.info('resolve_property_inputs: resolved from prior decision', {
+    priorDecisionId: input.priorDecisionId,
+    overrideCount: Object.keys(overrides).length,
+    overrideFields: Object.keys(overrides),
+  });
+
+  return {
+    // Cast to the typed shapes — the substrate-side payloads have
+    // looser types than the resolver's output, but the field set
+    // matches by construction (the prior analysis was itself produced
+    // by this same resolver).
+    propertyData: propertyData as unknown as SFRData,
+    assumptions: assumptions as unknown as AnalysisAssumptions,
+    provenance,
+    confirmBeforeScoring: [], // No fresh data to confirm — user already saw these last turn.
+    discloseAfterScoring,
+  };
+}
+
 // ===== Tool implementation =====
 
 export const resolvePropertyInputs: Tool<
@@ -338,10 +465,26 @@ export const resolvePropertyInputs: Tool<
 
   async execute(
     input: ResolvePropertyInputsInput,
-    _ctx: ToolContext
+    ctx: ToolContext
   ): Promise<ResolvePropertyInputsOutput> {
     const validated = ResolvePropertyInputsInputSchema.parse(input);
     const overrides = validated.userOverrides ?? {};
+
+    // ===== Day 11b — stress-test / re-score branch =====
+    //
+    // When `priorDecisionId` is set, the caller is running a "change one
+    // parameter from the prior analysis" flow (e.g., stress-test at 7%
+    // mortgage rate). Reproducibility REQUIRES that we use the EXACT
+    // same propertyData + assumptions as the prior turn, only applying
+    // the user's explicit overrides on top — NOT re-fetching from
+    // RentCast / FRED / tax service (those return drifting values).
+    //
+    // Pre-Day-11b, the agent re-resolved fresh on every stress test,
+    // which caused score-vs-rate inversions (Issue A). This branch
+    // makes single-parameter overrides deterministic.
+    if (validated.priorDecisionId) {
+      return await resolveFromPriorDecision(validated, ctx);
+    }
 
     // ===== Fetch external data =====
     // validated.address is post-Zod-.parse() — all four fields present.

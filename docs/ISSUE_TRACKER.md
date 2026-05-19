@@ -7,6 +7,88 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #119: Stress-test score moves wrong direction — FIXED (Day 11b, Issue A from test session)
+**Status**: ✅ RESOLVED 2026-05-18
+**Priority**: P0 - CRITICAL (broke the discipline-layer positioning at its core)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issue A in running log)
+**Component**: Backend `agents/tools/resolve_property_inputs.ts` + `agents/dealScoring/dealScoringAgent.ts` prompt
+**Category**: Architectural — reproducibility / state leak between turns
+
+**The bug observed in testing**:
+- Turn 1: analyze property at 6.4% mortgage rate → score 20/100
+- Turn 2: "stress-test at 7%" → score 45/100
+- Higher rate = WORSE deal → should produce LOWER score, not higher
+
+The agent itself flagged the inconsistency in its response
+("the prior run's 20 reflected a DSCR of 0.72 vs. today's 0.68,
+suggesting the original scoring run had a different configuration").
+
+**Root cause**:
+The `deal_scoring` agent's allowed tools were
+`recall_user_context, resolve_property_inputs, compute_analysis,
+score_deal` — no `apply_override`, no `render_audit_trail`. So when
+a user asked for a stress-test, the agent re-ran
+`resolve_property_inputs` **fresh** — re-fetching RentCast / FRED /
+tax service data. Those services return drifting values across
+calls (FRED rate moves, RentCast comp-set varies, tax service
+cache state varies). So even with a single explicit override,
+the BASE config differed between the two runs. The composite
+score depended on factors the user couldn't see varying behind
+the scenes.
+
+This broke the discipline-layer positioning: "the only tool willing
+to tell you NO" stops working when "NO is quieter when conditions
+are worse."
+
+**Resolution**:
+- New optional `priorDecisionId` parameter on
+  `ResolvePropertyInputsInputSchema` (24-char hex Mongo ObjectId)
+- When set, `resolve_property_inputs` SKIPS all external API calls
+  and instead loads the prior AnalysisEvent via
+  `eventsReads.getAuditTrail()`. Uses its `propertyData` +
+  `assumptions` verbatim as the reproducibility BASE, applies only
+  the explicit `userOverrides` on top.
+- New provenance tag `'prior_analysis'` on fields loaded from
+  substrate; `'user_provided'` on the override fields
+- `confirmBeforeScoring` is empty in the prior-decision branch
+  (user already accepted these values last turn)
+- `discloseAfterScoring` lists only the overrides — the agent
+  presents the response focused on "what you changed" instead of
+  re-listing every assumption
+
+Agent prompt updated with explicit STRESS-TEST / RE-SCORE PATH
+section that instructs:
+  - On stress-test / single-parameter-change requests, pass
+    `priorDecisionId` from `recentDecisions[0]._id`
+  - The override goes in `userOverrides` as the explicit change
+  - Skip the CHECKPOINT after STEP 2 — proceed straight to STEP 3
+
+Tests:
+- 5 new assertions on the priorDecisionId branch:
+    1. Loads propertyData + assumptions verbatim from prior
+    2. Adapter is NOT called (no fresh API fetch — reproducibility)
+    3. userOverrides apply on top with correct provenance
+    4. **Deterministic re-run: two stress-tests on same priorDecisionId
+       + same override produce IDENTICAL output**
+    5. Defensive: throws on orphan priorDecisionId, rejects
+       malformed (non-24-char hex)
+- 23/23 resolve_property_inputs tests passing (was 18)
+- 438/438 full backend agent + cost + license + routes suite green
+- Backend typecheck clean
+
+**Files affected**:
+- `backend/src/agents/tools/resolve_property_inputs.ts`
+- `backend/src/agents/dealScoring/dealScoringAgent.ts` (prompt update)
+- `backend/src/agents/tools/__tests__/resolve_property_inputs.test.ts`
+
+**Architectural lesson preserved in implementation log**:
+"Don't refetch when you can reuse" — any operation framed as
+"change ONE parameter from a prior run" must reuse the prior
+inputs from substrate, not re-resolve from sources that drift.
+This applies to future override / scenario / sensitivity flows.
+
+---
+
 ### Issue #118: /analysis/:id renders blank when legacy AnalysisResults throws — FIXED (Day 11a)
 **Status**: ✅ RESOLVED 2026-05-18
 **Priority**: P0 - CRITICAL (blocked all E2E testing of T1 + LicenseStatusBadge)

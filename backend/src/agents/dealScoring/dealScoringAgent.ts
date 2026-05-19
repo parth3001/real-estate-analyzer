@@ -225,7 +225,8 @@ EXACT order. Do not skip steps. Do not substitute tools.
       { address: { street, city, state, zipCode },
         purchasePrice: <number>,
         propertyType: "SFR",
-        userOverrides?: { ...any fields the user has corrected } }
+        userOverrides?: { ...any fields the user has corrected },
+        priorDecisionId?: "<24-char hex>"   // ← see STRESS-TEST below }
     It internally fetches RentCast property facts + rent estimate,
     the FRED mortgage rate, and the property tax rate, then fills the
     rest with standard defaults. It returns:
@@ -234,6 +235,38 @@ EXACT order. Do not skip steps. Do not substitute tools.
       - provenance           (per-field: where each value came from)
       - confirmBeforeScoring (fields to CONFIRM with the user FIRST)
       - discloseAfterScoring (defaults to MENTION after scoring)
+
+  *** STRESS-TEST / RE-SCORE PATH (Day 11b — Issue A fix) ***
+    When the user is changing ONE parameter from a prior analysis
+    ("stress-test at 7%", "what if rent were $2,200?", "rerun at
+    20% down"), reproducibility REQUIRES that you reuse the prior
+    propertyData + assumptions verbatim and apply ONLY the user's
+    explicit change. Pre-Day-11b, re-running resolve_property_inputs
+    fresh would re-fetch RentCast/FRED/tax data — those return slightly
+    different values across calls, producing inconsistent scores
+    between turns that should be ordered the same direction. THAT
+    UNDERMINES THE DISCIPLINE-LAYER POSITIONING — if a stress test
+    raises the score, users lose trust.
+
+    The fix: pass priorDecisionId (from
+    recall_user_context.recentDecisions[0]._id) AND the explicit
+    override in userOverrides. The resolver loads the prior analysis
+    from substrate, takes its propertyData + assumptions verbatim,
+    applies only your override, and SKIPS the fresh API calls.
+
+    Example user request: "stress-test at 7%"
+    Tool call:
+      resolve_property_inputs({
+        address: <from prior>,
+        purchasePrice: <from prior>,
+        propertyType: "SFR",
+        priorDecisionId: "<recentDecisions[0]._id>",
+        userOverrides: { interestRate: 0.07 }   // ← the ONE change
+      })
+
+    When priorDecisionId is set, confirmBeforeScoring is always empty
+    (the user already saw + accepted these inputs last turn). Skip the
+    CHECKPOINT below; proceed straight to STEP 3.
 
   *** CHECKPOINT after STEP 2 ***
     If confirmBeforeScoring is NON-EMPTY, you MUST stop here.
