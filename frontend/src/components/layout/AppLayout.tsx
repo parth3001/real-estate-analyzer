@@ -94,13 +94,25 @@ export function AppLayout(props: AppLayoutProps): React.JSX.Element {
         </Box>
       )}
 
-      {/* ===== Mobile: drawer sidebar ===== */}
+      {/* ===== Mobile: drawer sidebar =====
+          Issue #124 (2026-05-19): keepMounted=true was leaving the
+          MuiModal-hidden backdrop in the DOM after close, intercepting
+          scroll events across the entire main pane on /analysis/:id —
+          the saved-deal page couldn't scroll past the top of
+          SavedDealHero. Switching to keepMounted=false fully unmounts
+          the drawer on close, and disableScrollLock=true prevents
+          MUI's body-scroll-lock from sticking past close even if the
+          Modal hits an edge case during transition. The "sidebar isn't
+          huge" perf argument doesn't outweigh a non-scrollable page. */}
       {isMobile && (
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }} // perf — sidebar isn't huge
+          ModalProps={{
+            keepMounted: false,
+            disableScrollLock: true,
+          }}
           sx={{
             '& .MuiDrawer-paper': {
               width: APP_SIDEBAR_WIDTH,
@@ -112,13 +124,20 @@ export function AppLayout(props: AppLayoutProps): React.JSX.Element {
         </Drawer>
       )}
 
-      {/* ===== Main pane ===== */}
+      {/* ===== Main pane =====
+          Issue #124 (2026-05-19) part 2: added `overflow-y: auto`.
+          height: 100% caps the main pane to viewport height; without
+          overflow-y the content below the viewport is CLIPPED, not
+          scrollable. This was the second half of the saved-deal-page-
+          doesn't-scroll bug — combined with the Drawer keepMounted fix
+          above, content longer than 100vh now scrolls cleanly. */}
       <Box
         component="main"
         sx={{
           flex: 1,
           minWidth: 0,
           height: '100%',
+          overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
