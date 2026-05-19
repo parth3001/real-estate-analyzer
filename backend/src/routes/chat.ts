@@ -34,6 +34,7 @@ import { Types } from 'mongoose';
 import { authMiddleware, type AuthenticatedRequest } from '../middleware/auth';
 import { chatIdentityMiddleware } from '../middleware/chatIdentity';
 import { chatSessionRateLimit } from '../middleware/chatSessionRateLimit';
+import { chatPerIpRateLimit } from '../middleware/chatPerIpRateLimit';
 import { mergeAnonymousSessionIntoUser } from '../services/chatSessionMergeService';
 import { handleTurn, streamTurn } from '../agents/orchestrator/orchestrator';
 import { projectDealScoreCard } from '../agents/orchestrator/dealScoreCardProjection';
@@ -167,6 +168,11 @@ const router = Router();
 router.post(
   '/turn',
   chatIdentityMiddleware,
+  // Day 11e: per-IP gate FIRST — catches cookie-cleared bypass of
+  // chatSessionRateLimit. Both run; chatSessionRateLimit handles
+  // the per-conversation cap, chatPerIpRateLimit handles the
+  // per-day-per-IP cap. Authenticated users skip both.
+  chatPerIpRateLimit,
   chatSessionRateLimit,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // Identity middleware guarantees req.user (auth OR ghost); defensive
@@ -209,6 +215,8 @@ router.post(
         inputMethod: body.inputMethod,
         toolPayload: body.toolPayload,
         licenseId,
+        // Day 11e (Issue E1) — Layer-1 anonymous gating signal.
+        isAnonymous: req.user.anonymous === true,
       });
 
       const response: ChatTurnResponse = {
@@ -290,6 +298,8 @@ router.post(
 router.post(
   '/turn/stream',
   chatIdentityMiddleware,
+  // Day 11e — same per-IP gate as /turn, plus per-session cap.
+  chatPerIpRateLimit,
   chatSessionRateLimit,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     if (!req.user?.id) {
@@ -365,6 +375,11 @@ router.post(
           inputMethod: body.inputMethod,
           toolPayload: body.toolPayload,
           licenseId: streamLicenseId,
+          // Day 11e (Issue E1) — Layer-1 gating: strip rich DealScoreCard
+          // fields when the user is anonymous (ghost) so the score is
+          // visible but the breakdown / walk-away / projection / metrics
+          // are gated behind sign-up.
+          isAnonymous: req.user.anonymous === true,
         },
         { signal: controller.signal }
       );

@@ -59,6 +59,7 @@ import type { OrchestratorStreamEvent } from './streamEvents';
 import type { AgentStreamEvent } from '../runner/agentRunner';
 import {
   projectDealScoreCard,
+  gateCardForAnonymous,
   type DealScoreCardWireShape,
 } from './dealScoreCardProjection';
 import { generateFollowupChips } from './followupChips';
@@ -130,6 +131,20 @@ export interface OrchestratorTurnInput {
    * pass nothing.
    */
   licenseId?: Types.ObjectId | string;
+
+  /**
+   * Day 11e (Issue E1, 2026-05-19) — whether the user is anonymous
+   * (ghost). Drives Layer-1 gating on the DealScoreCard structured
+   * output: anonymous users see score + label only; rich fields
+   * (topFactors, projection, walk-away, keyMetrics, assumptions) are
+   * stripped so the user is incentivized to sign up to unlock them.
+   * Authenticated users see the full card.
+   *
+   * Set by the chat route from `req.user.anonymous`. Defaults to
+   * `false` so non-chat callers (tests, future surfaces) don't
+   * accidentally gate the card.
+   */
+  isAnonymous?: boolean;
 
   /** Optional input method override. Defaults to 'text'. */
   inputMethod?: 'text' | 'voice' | 'paste';
@@ -703,6 +718,10 @@ async function buildDealScoreCardEvent(
   return projectDealScoreCard(analysisPayload, decisionPayload, strategy);
 }
 
+// Day 11e (Issue E1) — gateCardForAnonymous now lives in
+// dealScoreCardProjection.ts (alongside the wire-shape type it
+// operates on). Imported above.
+
 // ===== Streaming variant (W6-S3) =====
 
 /**
@@ -1045,11 +1064,19 @@ export async function* streamTurn(
               const decisionEventId =
                 relatedEventIds[relatedEventIds.length - 1];
               try {
-                const card = await buildDealScoreCardEvent(
+                const fullCard = await buildDealScoreCardEvent(
                   decisionEventId,
                   ctx
                 );
-                if (card) {
+                if (fullCard) {
+                  // Day 11e (Issue E1) — Layer-1 anonymous gating.
+                  // Anonymous users see ONLY the headline score; the
+                  // rich fields (topFactors, walk-away, projection,
+                  // keyMetrics, assumptions) are stripped to incentivize
+                  // sign-up. Authenticated users see the full card.
+                  const card = input.isAnonymous
+                    ? gateCardForAnonymous(fullCard)
+                    : fullCard;
                   yield {
                     type: 'structured_output',
                     kind: 'deal_score_card',

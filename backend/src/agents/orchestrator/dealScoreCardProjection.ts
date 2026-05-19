@@ -356,3 +356,49 @@ export function projectDealScoreCard(
     ...(hasAnyKeyMetric ? { keyMetrics } : {}),
   };
 }
+
+/**
+ * Day 11e (Issue E1) — Layer-1 anonymous gating.
+ *
+ * Strip rich fields from the DealScoreCard wire shape for anonymous
+ * users. Per Issue #105's locked pricing model, Layer 1 anonymous
+ * access shows the headline Deal Quality Score only; topFactors,
+ * walk-away price, projection, keyMetrics, and full assumptions are
+ * gated behind sign-up.
+ *
+ * What's KEPT (anon still sees):
+ *   - strategy + address + dealQuality + purchasePrice + nextStep
+ *
+ * What's STRIPPED (gated behind sign-up):
+ *   - topFactors (engine's score-component breakdown)
+ *   - walkAwayPrice (replaced with 0 so DealScoreCard frontend
+ *     suppresses the comparison row cleanly)
+ *   - assumptions (full-disclosure block)
+ *   - projection (10-yr cash flow + equity buildup) — omitted
+ *   - keyMetrics (real financial numbers) — omitted
+ *
+ * The frontend's optional-field handling makes this a clean gate —
+ * stripped fields simply don't render. A future push can add a
+ * "Sign up to see the full breakdown" CTA overlay on the card; for
+ * now, the absence of those sections IS the prompt.
+ *
+ * NOTE on walkAwayPrice: showing "walk away at $215K, you're paying
+ * $250K" IS the discipline-layer moment that motivates sign-up. Per
+ * the locked Layer 1 spec, it's gated. We can A/B this in a future
+ * push if conversion data argues for keeping it visible.
+ */
+export function gateCardForAnonymous(
+  card: DealScoreCardWireShape
+): DealScoreCardWireShape {
+  return {
+    strategy: card.strategy,
+    address: card.address,
+    dealQuality: card.dealQuality,
+    purchasePrice: card.purchasePrice,
+    walkAwayPrice: 0,
+    topFactors: [],
+    nextStep: card.nextStep,
+    assumptions: [],
+    // projection + keyMetrics are optional → omit entirely.
+  };
+}

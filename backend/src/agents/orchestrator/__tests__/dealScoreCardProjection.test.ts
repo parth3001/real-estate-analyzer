@@ -7,7 +7,10 @@
  */
 
 import { Types } from 'mongoose';
-import { projectDealScoreCard } from '../dealScoreCardProjection';
+import {
+  projectDealScoreCard,
+  gateCardForAnonymous,
+} from '../dealScoreCardProjection';
 import type { AnalysisPayload } from '../../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../../models/events/DecisionEvent';
 import type { SFRData } from '../../../types/propertyTypes';
@@ -528,6 +531,79 @@ describe('projectDealScoreCard', () => {
       expect(card.keyMetrics!.capRate).toBeUndefined();
       expect(card.keyMetrics!.dscr).toBeUndefined();
       expect(card.keyMetrics!.irr).toBe(7.9);
+    });
+  });
+
+  // ===== Day 11e — Layer-1 anonymous gating (Issue E1) =====
+  //
+  // gateCardForAnonymous strips the rich fields from a full card for
+  // anonymous (ghost) users. The headline score stays; the breakdown,
+  // walk-away, projection, keyMetrics, and assumptions get gated to
+  // incentivize sign-up.
+
+  describe('gateCardForAnonymous (Day 11e / Issue E1)', () => {
+    function fullCard() {
+      const analysis = fakeAnalysis(fakeSFRData(), {
+        metrics: {
+          capRate: 5.2,
+          irr: 7.9,
+          dscr: 1.25,
+          cashOnCashReturn: 4.5,
+          noi: 18500,
+          totalInvestment: 147500,
+          operatingExpenseRatio: 35,
+        } as AnalysisPayload['metrics'],
+        monthlyAnalysis: {
+          cashFlow: 350,
+          expenses: { debt: 1820 },
+        },
+        longTermAnalysis: {
+          yearlyProjections: [
+            { year: 1, cashFlow: 4200, propertyValue: 440000, equity: 110000 },
+            { year: 3, cashFlow: 4800, propertyValue: 470000, equity: 145000 },
+          ],
+        } as AnalysisPayload['longTermAnalysis'],
+      });
+      return projectDealScoreCard(analysis, fakeDecision(), 'buy_hold');
+    }
+
+    it('keeps the headline fields the user must still see (score + address + strategy)', () => {
+      const full = fullCard();
+      const gated = gateCardForAnonymous(full);
+      expect(gated.strategy).toBe(full.strategy);
+      expect(gated.address).toEqual(full.address);
+      expect(gated.dealQuality).toBe(full.dealQuality);
+      expect(gated.purchasePrice).toBe(full.purchasePrice);
+      expect(gated.nextStep).toBe(full.nextStep);
+    });
+
+    it('strips the engine breakdown (topFactors)', () => {
+      const gated = gateCardForAnonymous(fullCard());
+      expect(gated.topFactors).toEqual([]);
+    });
+
+    it('strips walk-away price (replaces with 0 so the frontend suppresses the row)', () => {
+      const full = fullCard();
+      expect(full.walkAwayPrice).toBeGreaterThan(0); // sanity — was populated
+      const gated = gateCardForAnonymous(full);
+      expect(gated.walkAwayPrice).toBe(0);
+    });
+
+    it('strips assumptions, projection, and keyMetrics (omits them entirely)', () => {
+      const full = fullCard();
+      // sanity — these were populated in the full card
+      expect(full.projection).toBeDefined();
+      expect(full.keyMetrics).toBeDefined();
+      const gated = gateCardForAnonymous(full);
+      expect(gated.assumptions).toEqual([]);
+      expect(gated.projection).toBeUndefined();
+      expect(gated.keyMetrics).toBeUndefined();
+    });
+
+    it('is idempotent — re-gating an already-gated card produces the same shape', () => {
+      const once = gateCardForAnonymous(fullCard());
+      const twice = gateCardForAnonymous(once);
+      expect(twice).toEqual(once);
     });
   });
 });

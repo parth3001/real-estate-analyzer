@@ -7,6 +7,67 @@
 
 ## 🟡 **ACTIVE ISSUES** (2026-05-17)
 
+### Issue #122: Freemium gates not enforced for anonymous users — FIXED (Day 11e, Issues E1 + E2 from test session)
+**Status**: ✅ RESOLVED 2026-05-19
+**Priority**: P1 - HIGH (without these, $4.99/deal is paper — anonymous gets unlimited everything)
+**Reported**: 2026-05-18 (Day 10 founder test session — Issues E1, E2 in running log)
+**Component**: Backend `middleware/chatPerIpRateLimit.ts` (new), `agents/orchestrator/dealScoreCardProjection.ts` (gating helper), `agents/orchestrator/orchestrator.ts` (wire-through), `routes/chat.ts` (mount middleware + pass anon flag)
+**Category**: Freemium model enforcement / abuse prevention
+
+**The two bugs observed in testing**:
+- **E1**: Anonymous users saw the FULL DealScoreCard — score + topFactors + walk-away + projection + key metrics. Per Issue #105's locked pricing model, Layer 1 anonymous access is supposed to show only the headline score; the rest is gated behind sign-up.
+- **E2**: No per-IP rate limit. The session limit (10 turns / 24h) could be bypassed by clearing cookies. The spec calls for 5 free analyses per IP / 24h as the abuse-prevention floor.
+
+**Resolution (Day 11e)**:
+
+**E1 — Anonymous DealScoreCard gating**:
+- New `gateCardForAnonymous()` helper in `dealScoreCardProjection.ts`
+  strips rich fields from the wire shape
+- `OrchestratorTurnInput` gains optional `isAnonymous` flag
+- Streaming orchestrator's `structured_output` emission applies the
+  gate when `isAnonymous: true`
+- Chat route passes `req.user.anonymous === true` to the orchestrator
+- What's KEPT: strategy + address + dealQuality + purchasePrice + nextStep
+- What's STRIPPED: topFactors, walkAwayPrice (replaced with 0 to suppress the row), projection, keyMetrics, assumptions
+- Frontend's optional-field handling makes this a clean gate — stripped fields simply don't render. A future push can add a "Sign up to see the full breakdown" CTA overlay.
+
+**E2 — Per-IP rate limit (5/day)**:
+- New `chatPerIpRateLimit` middleware mirrors the existing `chatSessionRateLimit` pattern
+- Tracks `Map<ip, { sessions: Set<sessionId>; firstAt: number }>` in memory
+- Anonymous users only; authed users bypass
+- Limit: 5 unique sessionIds per IP per 24h (env-overridable via `CHAT_PER_IP_LIMIT`)
+- 429 response with `retryAfterSeconds` and a sign-up conversion prompt
+- Master kill-switch `CHAT_PER_IP_LIMIT_ENABLED` (default ON) for incident response
+- IP detection via Express's trust-proxy config; falls back to socket remoteAddress
+- Mounted in front of both `/chat/turn` and `/chat/turn/stream`, AFTER `chatIdentityMiddleware` and BEFORE `chatSessionRateLimit`
+
+**Architectural choice — gate location**:
+- `gateCardForAnonymous` lives in `dealScoreCardProjection.ts` (next to the wire shape it operates on)
+- Imported by orchestrator at the emission site
+- Test home is therefore `dealScoreCardProjection.test.ts` — clean unit-testable contract
+
+**Files affected**:
+- `backend/src/middleware/chatPerIpRateLimit.ts` — NEW
+- `backend/src/middleware/__tests__/chatPerIpRateLimit.test.ts` — NEW (5 tests)
+- `backend/src/agents/orchestrator/dealScoreCardProjection.ts` (gate helper)
+- `backend/src/agents/orchestrator/__tests__/dealScoreCardProjection.test.ts` (5 new gate tests)
+- `backend/src/agents/orchestrator/orchestrator.ts` (input field + emission gate)
+- `backend/src/routes/chat.ts` (mount middleware + pass anon flag)
+- `backend/src/routes/__tests__/chat.test.ts` (reset hook for new middleware)
+
+**Env vars introduced**:
+- `CHAT_PER_IP_LIMIT` (default `5`) — max unique sessions per IP per 24h
+- `CHAT_PER_IP_LIMIT_ENABLED` (default `true`) — master kill-switch
+
+Tests: 464/464 backend suite green (+22 from Day 11d's 442). Includes 5 new per-IP tests + 5 new gate tests.
+
+**What's NOT in Day 11e (deferred)**:
+- E3 (conversion prompt at 1→2 property transition) — UX design work, separate push
+- Frontend "Sign up to see the full breakdown" overlay on the gated card — the strip is sufficient as MVP; CTA can come later
+- IP detection nuance for IPv6 / CGNAT shared addresses — accepted defense-in-depth limitation
+
+---
+
 ### Issue #121: Email shows scores but not actual values; weak branding; no CTA back — FIXED (Day 11d, Issue F from test session)
 **Status**: ✅ RESOLVED 2026-05-19
 **Priority**: P1 - HIGH (email is the takeaway artifact; affects shareability + repeat-visit conversion)

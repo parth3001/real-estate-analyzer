@@ -82,6 +82,8 @@ import { handleTurn, streamTurn } from '../../agents/orchestrator/orchestrator';
 // eslint-disable-next-line import/first
 import { __resetChatSessionRateLimitForTests } from '../../middleware/chatSessionRateLimit';
 // eslint-disable-next-line import/first
+import { __resetChatPerIpRateLimitForTests } from '../../middleware/chatPerIpRateLimit';
+// eslint-disable-next-line import/first
 import type { OrchestratorStreamEvent } from '../../agents/orchestrator/streamEvents';
 
 const mockHandleTurn = handleTurn as jest.MockedFunction<typeof handleTurn>;
@@ -158,6 +160,7 @@ describe('POST /api/chat/turn', () => {
     mockDealFindOne.mockReset();
     mockFindActiveForProperty.mockReset();
     __resetChatSessionRateLimitForTests();
+    __resetChatPerIpRateLimitForTests();
     // Default: anonymous user. Tests that need an authed user flip this.
     mockChatIdentityState.userId = new Types.ObjectId().toHexString();
     mockChatIdentityState.anonymous = true;
@@ -579,6 +582,7 @@ describe('POST /api/chat/turn/stream (W6-S3)', () => {
   beforeEach(() => {
     mockStreamTurn.mockReset();
     __resetChatSessionRateLimitForTests();
+    __resetChatPerIpRateLimitForTests();
     mockChatIdentityState.userId = new Types.ObjectId().toHexString();
     mockChatIdentityState.anonymous = true;
   });
