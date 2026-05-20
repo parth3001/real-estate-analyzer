@@ -146,17 +146,20 @@ const PortfolioDashboard: React.FC = () => {
         (property.monthlyOperatingExpenses !== undefined) ||
         // If property type is OTHER and has basic rent/expense data
         (property.propertyType === 'OTHER' && property.monthlyRent) ||
-        // If it doesn't have a full investment decision verdict
-        (!property.analysis?.investmentDecision?.verdict)) {
+        // If it doesn't have a full investment decision verdict.
+        // Day 11h Stage 2 (2026-05-19): switched from stale nested
+        // `analysis.investmentDecision` to canonical top-level path.
+        (!property.investmentDecision?.verdict)) {
       console.log('✅ Detected as MANUAL property');
       return 'manual';
     }
-    
-    // Check if property has full analysis with investment decision
-    if (property.analysis && 
-        property.analysis.investmentDecision && 
-        property.analysis.investmentDecision.verdict &&
-        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.analysis.investmentDecision.verdict)) {
+
+    // Check if property has full analysis with investment decision.
+    // Day 11h Stage 2 (2026-05-19): top-level investmentDecision is
+    // canonical post-Stage 1; nested path is being deprecated.
+    if (property.investmentDecision &&
+        property.investmentDecision.verdict &&
+        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.investmentDecision.verdict)) {
       console.log('✅ Detected as ANALYZED property');
       return 'analyzed';
     }

@@ -250,9 +250,24 @@ export function getVariantChips(variant: SavedDealVariant): string[] {
 
 // ===== Score + decision data extraction =====
 //
-// Reads from BOTH paths since Issue #109 ensured top-level and nested
-// investmentDecision agree. Defensive: a Deal materialized before the
-// fix might have only one populated.
+// Reads top-level `investmentDecision` FIRST, then falls back to the
+// nested `analysis.investmentDecision`.
+//
+// Why top-level first (Day 11h Stage 2, 2026-05-19):
+// The DealMaterializationService writes the freshest decision to the
+// top-level path on every projection — including follow-up DecisionEvents
+// like "show me 100% cash". The nested path was historically kept in
+// sync by Issue #109, but that fix only covered the FIRST projection;
+// follow-up projections updated top-level only, leaving nested stale.
+// Concrete example: 1105 Daffodil St had top-level dealQuality=28
+// (fresh, post-100%-cash follow-up) while nested still showed 81
+// (stale, from the original leveraged analysis).
+//
+// Top-level is canonical. The nested-path fallback is a safety net for
+// any Deal documents materialized before Stage 1 ships the schema
+// cleanup + backfill. After Stage 1 + backfill complete, the nested
+// path will not exist and these fallbacks become dead code (to remove
+// in follow-up cleanup).
 
 export function getDealQualityScore(deal: SavedDealShape): number {
   return (

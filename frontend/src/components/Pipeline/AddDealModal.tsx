@@ -247,13 +247,21 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({
                                 Cap Rate: {formatPercent(property.analysis.keyMetrics.capRate)}
                               </Typography>
                             )}
-                            {property.analysis?.investmentDecision?.verdict && (
-                              <Chip 
-                                label={property.analysis.investmentDecision.verdict}
+                            {/* Day 11h Stage 2 (2026-05-19): switched read
+                                from stale `analysis.investmentDecision` to
+                                canonical top-level `investmentDecision`.
+                                NOTE: This chip displays BUY/NEGOTIATE verdict
+                                language which violates the locked-in policy
+                                (no verdict in public copy — liability risk).
+                                Tracked as separate cleanup; not removing here
+                                to keep Stage 2 scoped to the data-path fix. */}
+                            {property.investmentDecision?.verdict && (
+                              <Chip
+                                label={property.investmentDecision.verdict}
                                 size="small"
                                 color={
-                                  property.analysis.investmentDecision.verdict === 'BUY' ? 'success' :
-                                  property.analysis.investmentDecision.verdict === 'NEGOTIATE' ? 'warning' : 'default'
+                                  property.investmentDecision.verdict === 'BUY' ? 'success' :
+                                  property.investmentDecision.verdict === 'NEGOTIATE' ? 'warning' : 'default'
                                 }
                                 sx={{ fontSize: '0.65rem', height: 18 }}
                               />

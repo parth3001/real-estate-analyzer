@@ -47,12 +47,14 @@
  */
 
 import { Types } from 'mongoose';
-import type { IDeal, PropertyAddress, Analysis } from '../models/Deal';
+import type { IDeal, Analysis } from '../models/Deal';
 import { DealModel as Deal } from '../models/Deal';
 import { User } from '../models/User';
+import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { eventsRepositoryReads } from '../repositories/EventsRepositoryReads';
 import type { AnalysisPayload } from '../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../models/events/DecisionEvent';
+import { DecisionEventModel } from '../models/events/DecisionEvent';
 import type { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import type {
   ProfessionalAssessment,
@@ -78,23 +80,12 @@ export interface MaterializeDealResult {
 
 // ===== Helpers =====
 
-/**
- * Normalize an address for upsert dedup. Same property typed two
- * different ways ("123 main st" vs "123 Main Street") should resolve
- * to the same Deal, so we lowercase + collapse whitespace + strip
- * trailing punctuation. Imperfect — a future GeoLocation-keyed dedup
- * would be stronger — but good enough at this stage.
- */
-function addressFingerprint(addr: PropertyAddress): string {
-  const norm = (s: string | undefined): string =>
-    (s ?? '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
-  return `${norm(addr.street)}|${norm(addr.city)}|${norm(addr.state)}|${norm(
-    addr.zipCode
-  )}`;
-}
+// Day 11h (2026-05-20, Task #2): the local addressFingerprint helper was
+// removed. Deal dedup now uses buildCanonicalAddressKey (utils/) — the SAME
+// canonical key DealLicense uses — so Deal identity == License identity ==
+// one canonical property. The old fingerprint was also dead code in the
+// query path (only ever logged), which is how duplicate Deals slipped
+// through on address-string variance ("Daffodil St" vs "Daffodil Drive").
 
 function isSFR(p: SFRData | MultiFamilyData): p is SFRData {
   return p.propertyType === 'SFR';
@@ -108,7 +99,7 @@ function isSFR(p: SFRData | MultiFamilyData): p is SFRData {
  * §1.5. The legacy Deal model still has a `verdict` field consumed by old
  * code paths; we synthesize it from the score.
  */
-function deriveVerdict(dealQuality: number): InvestmentVerdict {
+export function deriveVerdict(dealQuality: number): InvestmentVerdict {
   if (dealQuality >= 80) return 'BUY';
   if (dealQuality >= 65) return 'NEGOTIATE';
   if (dealQuality >= 50) return 'CAUTION';
@@ -128,11 +119,16 @@ function deriveVerdict(dealQuality: number): InvestmentVerdict {
  * service wrote the top-level field only and left the nested one empty,
  * which is what produced the NaN bug observed during e2e testing 2026-05-17.
  *
- * Centralizing the constructor here ensures the two locations stay in
- * sync. ANY future field added to the substrate→Deal projection lands
- * in both places automatically.
+ * Day 11h (2026-05-20, decision 1b): this is no longer called at WRITE
+ * time. The Deal no longer stores investmentDecision in either location —
+ * the score lives solely in the substrate DecisionEvent. This function is
+ * now the READ-TIME assembler: the GET /deals endpoints import it to shape
+ * an investmentDecision object from the DecisionEvent that
+ * latestDecisionEventId points to, so the frontend keeps reading a
+ * top-level `investmentDecision` that is always single-source and can
+ * never diverge.
  */
-function buildInvestmentDecision(
+export function buildInvestmentDecision(
   dp: DecisionPayload,
   verdict: InvestmentVerdict,
   pa: ProfessionalAssessment
@@ -169,16 +165,60 @@ function buildInvestmentDecision(
 }
 
 /**
+ * READ-TIME decision assembler (Day 11h, decision 1b — the GET-endpoint
+ * bridge). Given a Deal's latestDecisionEventId, load the DecisionEvent and
+ * shape an investmentDecision from it. This is the SINGLE source of truth
+ * for a 2.0 deal's score: it returns exactly what the engine computed and
+ * recorded in the immutable event, so the displayed score can never diverge
+ * from the engine's output.
+ *
+ * Returns null if the event is missing — caller falls back to any stored
+ * legacy decision (legacy wizard deals have no latestDecisionEventId and
+ * keep their stored analysis.investmentDecision untouched).
+ */
+export async function assembleDecisionFromEvent(
+  decisionEventId: Types.ObjectId | string
+): Promise<NonNullable<Analysis['investmentDecision']> | null> {
+  const event = await DecisionEventModel.findById(decisionEventId).lean();
+  if (!event) return null;
+  const dp = (event as unknown as { payload: DecisionPayload }).payload;
+  const verdict = deriveVerdict(dp.dealQuality);
+  const pa = dp.professionalAssessment as ProfessionalAssessment;
+  return buildInvestmentDecision(dp, verdict, pa);
+}
+
+/**
+ * Batch version for list endpoints (getAllDeals) — ONE query for N events
+ * instead of N round-trips. Returns a map of decisionEventId → assembled
+ * investmentDecision.
+ */
+export async function assembleDecisionsForEvents(
+  decisionEventIds: (Types.ObjectId | string)[]
+): Promise<Map<string, NonNullable<Analysis['investmentDecision']>>> {
+  const result = new Map<string, NonNullable<Analysis['investmentDecision']>>();
+  if (decisionEventIds.length === 0) return result;
+  const events = await DecisionEventModel.find({
+    _id: { $in: decisionEventIds },
+  }).lean();
+  for (const event of events) {
+    const dp = (event as unknown as { payload: DecisionPayload }).payload;
+    const verdict = deriveVerdict(dp.dealQuality);
+    const pa = dp.professionalAssessment as ProfessionalAssessment;
+    result.set(
+      String((event as { _id: unknown })._id),
+      buildInvestmentDecision(dp, verdict, pa)
+    );
+  }
+  return result;
+}
+
+/**
  * Project substrate AnalysisPayload.monthlyAnalysis + .longTermAnalysis
  * + .metrics into the Deal model's Analysis shape. The substrate stores
  * everything as Record<string, unknown> at the schema level; we cast
  * defensively here.
  */
-function projectAnalysis(
-  ap: AnalysisPayload,
-  dp: DecisionPayload,
-  investmentDecision: NonNullable<Analysis['investmentDecision']>
-): Analysis {
+function projectAnalysis(ap: AnalysisPayload): Analysis {
   // Substrate's nested analysis structures are Record<string, unknown>
   // at the schema level — Mongoose / Zod read paths may surface them as
   // undefined if they were omitted at write time. Default to {} so the
@@ -218,6 +258,13 @@ function projectAnalysis(
   };
 
   return {
+    // Day 11h (Task #11, 2026-05-20): project walkAwayPrice from the
+    // substrate so SavedDealHero shows the engine's walk-away instead of
+    // $0. ap.walkAwayPrice is a required field on every AnalysisEvent, so
+    // it's always present. Previously dropped (never projected + not in
+    // AnalysisSchema), which is why the saved detail page showed $0 while
+    // the chat DealScoreCard showed the real number.
+    walkAwayPrice: (ap as { walkAwayPrice?: number }).walkAwayPrice,
     monthlyAnalysis: {
       expenses: monthlyExpenses,
       income: {
@@ -250,17 +297,14 @@ function projectAnalysis(
     // aiInsights shape. The chat surface's reasoningTrail lives on
     // DecisionPayload and surfaces via DealScoreCard, not via Deal.aiInsights.
     aiInsights: undefined,
-    // Surface the decision payload's reasoning at the Deal level for
-    // legacy /saved-properties detail-page consumers.
-    investmentDecisionMeta: {
-      primaryInsight: dp.reasoningTrail.primaryInsight,
-    } as unknown as Analysis['aiInsights'],
-    // Embed the full investmentDecision INSIDE the analysis as well —
-    // the legacy SFRAnalysis components read the Deal Quality Score
-    // via `analysis.investmentDecision.professionalAssessment.dealQuality`
-    // (prop-drilled from AnalysisDetails → AnalysisResults → ...).
-    // Without this, those views show NaN (Issue #109).
-    investmentDecision,
+    // Day 11h (2026-05-20, decision 1b): Deal.analysis now stores ONLY the
+    // math (cash flow, metrics, projections). The investmentDecision
+    // (score + factor scores + reasoning) is NO LONGER embedded here — it
+    // is derived at READ time from the DecisionEvent that
+    // latestDecisionEventId points to (see the GET /deals endpoints, which
+    // import buildInvestmentDecision to assemble it). This eliminates the
+    // dual-write divergence that caused the two-scores bug: there is now
+    // exactly one source of truth for the score — the substrate event.
   } as Analysis;
 }
 
@@ -337,14 +381,25 @@ export async function materializeDealFromDecision(
 
   // 3. Build the Partial<IDeal> from substrate
   const propertyName = `${property.propertyAddress.street}, ${property.propertyAddress.city}, ${property.propertyAddress.state}`;
-  const verdict = deriveVerdict(decisionPayload.dealQuality);
-  const pa = decisionPayload.professionalAssessment as ProfessionalAssessment;
-  // Build the investmentDecision block ONCE and embed it in BOTH the
-  // Deal's top-level `investmentDecision` AND the nested
-  // `analysis.investmentDecision`. Legacy views read from the nested
-  // path (Issue #109); chat-first views read the top level.
-  const investmentDecision = buildInvestmentDecision(decisionPayload, verdict, pa);
-  const projectedAnalysis = projectAnalysis(analysisPayload, decisionPayload, investmentDecision);
+
+  // Day 11h (2026-05-20, decision 1b): we NO LONGER build or store the
+  // investmentDecision here. The score lives solely in the substrate
+  // DecisionEvent; the Deal points to it via latestDecisionEventId and the
+  // GET endpoints assemble the decision at read time. projectAnalysis now
+  // stores only the math.
+  const projectedAnalysis = projectAnalysis(analysisPayload);
+
+  // Day 11h (2026-05-20, Task #2): canonical address key — the SAME key
+  // DealLicense uses. Aligns Deal identity with License identity (one
+  // canonical property = one Deal = one license) and fixes the dedup that
+  // previously used exact case/whitespace-sensitive string match, which let
+  // duplicate Deals through on RentCast address-string variance.
+  const canonicalAddressKey = buildCanonicalAddressKey({
+    street: property.propertyAddress.street,
+    city: property.propertyAddress.city,
+    state: property.propertyAddress.state,
+    zipCode: property.propertyAddress.zipCode,
+  });
 
   // Typed as a loose record because SFR-specific fields (monthlyRent,
   // bedrooms, etc.) live on ISFRDeal not IDeal. Mongoose validates the
@@ -411,20 +466,21 @@ export async function materializeDealFromDecision(
         }
       : {}),
     analysis: projectedAnalysis,
-    // Top-level investmentDecision (read by chat-first views); same
-    // object as analysis.investmentDecision (read by legacy SFR views)
-    // — built once via buildInvestmentDecision().
-    investmentDecision,
+    // Day 11h (2026-05-20): canonical address key for dedup + identity
+    // alignment with DealLicense.
+    canonicalAddressKey,
+    // Day 11h (2026-05-20, decision 1b): NO top-level investmentDecision
+    // stored. The score is derived at read time from the DecisionEvent
+    // that latestDecisionEventId points to. Single source of truth.
   };
 
-  // 4. Upsert by (userId, normalized address)
-  const fingerprint = addressFingerprint(property.propertyAddress);
+  // 4. Upsert by (userId, canonicalAddressKey) — Day 11h Task #2.
+  //    Canonical-key match (not exact string) so address-string variance
+  //    across chat turns resolves to the SAME Deal instead of spawning
+  //    duplicates.
   const existing = await Deal.findOne({
     userId,
-    'propertyAddress.street': property.propertyAddress.street,
-    'propertyAddress.city': property.propertyAddress.city,
-    'propertyAddress.state': property.propertyAddress.state,
-    'propertyAddress.zipCode': property.propertyAddress.zipCode,
+    canonicalAddressKey,
   }).exec();
 
   if (existing) {
@@ -436,7 +492,7 @@ export async function materializeDealFromDecision(
       dealId: existing._id?.toString(),
       userId: userId.toHexString(),
       decisionEventId: decisionEventId.toHexString(),
-      addressFingerprint: fingerprint,
+      canonicalAddressKey,
       dealQuality: decisionPayload.dealQuality,
     });
     // T1 (2026-05-18): Fire adversarial critique in background even on
@@ -453,7 +509,7 @@ export async function materializeDealFromDecision(
     dealId: created._id?.toString(),
     userId: userId.toHexString(),
     decisionEventId: decisionEventId.toHexString(),
-    addressFingerprint: fingerprint,
+    canonicalAddressKey,
     dealQuality: decisionPayload.dealQuality,
   });
   // T1 (2026-05-18): Fire adversarial critique in background. New saves

@@ -95,6 +95,22 @@ interface AnalysisResultsProps {
     currentProperties?: number;
     monthlyNetCashFlow?: number;
   }; // Portfolio context for displaying impact
+  /**
+   * Suppress the InvestmentDecisionHero card in the Overview section.
+   *
+   * Set to `true` when this component is rendered beneath another
+   * score-bearing surface (e.g., SavedDealHero on /analysis/:id) so the
+   * page shows ONE Deal Quality Score, not two. Defaults to `false` for
+   * the new-analysis flows (SFRAnalysis, MFAnalysis, SampleAnalysisPage)
+   * where this component IS the only score surface.
+   *
+   * Day 11h Stage 2 (2026-05-19): introduced to fix the two-scores bug
+   * where /analysis/:id rendered both SavedDealHero (top-level
+   * investmentDecision, fresh) AND this hero (analysis.investmentDecision,
+   * stale from materializer write-skew). Stage 1 will later kill the
+   * nested path entirely on the backend.
+   */
+  hideInvestmentHero?: boolean;
 }
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({
@@ -104,7 +120,8 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   dealId,
   onParameterChange,
   onApplyFix,
-  onLoadScenario
+  onLoadScenario,
+  hideInvestmentHero = false,
 }): React.ReactElement => {
   const { mode } = useDualMode();
   const { user } = useAuth();
@@ -955,19 +972,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       case 'overview':
         return (
           <Box>
-            {/* Investment Decision Hero Card - BOTH PRO AND LEARNING MODES */}
-            {(() => {
-              // CRITICAL DEBUG: Check what AnalysisResults component is receiving
-              console.log('🎯 ANALYSIS RESULTS DEBUG - Hero card check:', {
-                hasAnalysis: !!analysis,
-                hasInvestmentDecision: !!analysis?.investmentDecision,
-                investmentDecisionKeys: analysis?.investmentDecision ? Object.keys(analysis.investmentDecision) : 'MISSING',
-                dealQuality: analysis?.investmentDecision?.dealQuality || 'MISSING',
-                verdict: analysis?.investmentDecision?.verdict || 'MISSING'
-              });
-              return null;
-            })()}
-            {analysis?.investmentDecision && (
+            {/* Investment Decision Hero Card — suppressed on /analysis/:id
+                where SavedDealHero above already shows the canonical score.
+                See `hideInvestmentHero` prop docs above. */}
+            {!hideInvestmentHero && analysis?.investmentDecision && (
               <InvestmentDecisionHero
                 investmentDecision={analysis.investmentDecision}
                 analysis={analysis}
@@ -2444,6 +2452,17 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 currentAnalysis={analysis}
                 dealId={dealId}
                 onLoadScenario={onLoadScenario}
+                // Day 11h Stage 2 (2026-05-19): pass the canonical top-level
+                // investmentDecision so the scenario comparison reads the
+                // SAME score that SavedDealHero displays. `propertyData`
+                // here is the spread Deal (see AnalysisDetails.tsx call
+                // site), so propertyData.investmentDecision IS the
+                // canonical top-level. Falls back to analysis-nested for
+                // live analysis flows (SFRAnalysis, MFAnalysis,
+                // SampleAnalysisPage) where only the nested form exists.
+                currentInvestmentDecision={
+                  (propertyData as any)?.investmentDecision ?? analysis?.investmentDecision
+                }
               />
             )}
           </Box>

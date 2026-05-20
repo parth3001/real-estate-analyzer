@@ -87,14 +87,15 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         property.manualEntryData ||
         (property.monthlyOperatingExpenses !== undefined) ||
         (property.propertyType === 'OTHER' && property.monthlyRent) ||
-        (!property.analysis?.investmentDecision?.verdict)) {
+        // Day 11h Stage 2 (2026-05-19): switched from stale nested
+        // `analysis.investmentDecision` to canonical top-level path.
+        (!property.investmentDecision?.verdict)) {
       return 'manual';
     }
-    
-    if (property.analysis && 
-        property.analysis.investmentDecision && 
-        property.analysis.investmentDecision.verdict &&
-        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.analysis.investmentDecision.verdict)) {
+
+    if (property.investmentDecision &&
+        property.investmentDecision.verdict &&
+        ['BUY', 'PASS', 'NEGOTIATE'].includes(property.investmentDecision.verdict)) {
       return 'analyzed';
     }
     

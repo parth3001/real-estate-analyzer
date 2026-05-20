@@ -109,10 +109,17 @@ export const UniversalCalculator: React.FC = () => {
       const response = await propertyApi.analyzeAnonymous(backendPayload as any);
       setAnalysis(response.data.analysis);
 
+      // Day 11h Stage 2 (2026-05-19): prefer top-level investmentDecision
+      // if the API returns it (post-Stage 1 response shape), fall back to
+      // nested for backwards-compat. Defensive against future divergence.
+      const canonicalDecision =
+        (response.data as any).investmentDecision ??
+        response.data.analysis?.investmentDecision;
+
       // Track calculator completion
       analytics.trackCalculatorCompleted(
         data.investmentStrategy,
-        response.data.analysis.investmentDecision?.professionalAssessment?.dealQuality || 0
+        canonicalDecision?.professionalAssessment?.dealQuality || 0
       );
 
       // Save to localStorage for potential account creation

@@ -32,6 +32,19 @@ import { analytics } from '../../utils/analytics';
 interface EmailPdfSectionProps {
   analysis: Analysis;
   formData: CalculatorFormData;
+  /**
+   * Canonical top-level investmentDecision. When supplied, both the
+   * analytics track event AND the analysis payload sent to the PDF
+   * backend use this value instead of the (potentially stale) nested
+   * decision on `analysis.investmentDecision`. Critical because the
+   * PDF backend reads `analysis.investmentDecision` to render the
+   * score in the email — if we send stale data, the user receives an
+   * email showing a different score than what they saw on screen.
+   *
+   * Day 11h Stage 2 (2026-05-19): introduced as part of the two-scores
+   * bug fix.
+   */
+  investmentDecision?: any;
 }
 
 interface PdfError {
@@ -40,7 +53,13 @@ interface PdfError {
   retryAfter?: number;
 }
 
-export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, formData }) => {
+export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, formData, investmentDecision }) => {
+  // Day 11h Stage 2 (2026-05-19): canonical decision resolution.
+  // The PDF backend reads `analysis.investmentDecision` to render the
+  // score, so we substitute the canonical decision into the analysis
+  // payload before sending. Belt-and-suspenders: also use it for the
+  // analytics track event below.
+  const effectiveDecision = investmentDecision ?? analysis?.investmentDecision;
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -74,13 +93,19 @@ export const EmailPdfSection: React.FC<EmailPdfSectionProps> = ({ analysis, form
       // Track PDF request
       analytics.trackPdfRequestInitiated(
         formData.investmentStrategy,
-        analysis.investmentDecision?.professionalAssessment?.dealQuality
+        effectiveDecision?.professionalAssessment?.dealQuality
       );
 
-      // Send request to backend
+      // Day 11h Stage 2 (2026-05-19): substitute the canonical decision
+      // into the analysis payload before sending to the PDF backend.
+      // Without this override, a stale `analysis.investmentDecision`
+      // would land on the email PDF — the user would receive a report
+      // showing a different score than they saw on screen, which is a
+      // trust catastrophe. Stage 1 backfill removes the divergence at
+      // the source; this override is the runtime safety net.
       const response = await api.post('/pdf/send-anonymous-pdf', {
         email,
-        analysis,
+        analysis: { ...analysis, investmentDecision: effectiveDecision },
         formData,
         strategy: formData.investmentStrategy,
       });

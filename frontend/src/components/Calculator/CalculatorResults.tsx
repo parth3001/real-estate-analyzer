@@ -33,6 +33,20 @@ interface CalculatorResultsProps {
   analysis: Analysis | null;
   loading: boolean;
   formData: CalculatorFormData;
+  /**
+   * Canonical top-level investmentDecision. Optional for the live
+   * calculator flow (no persisted deal yet, so analysis.investmentDecision
+   * IS the canonical source). Pass explicitly only when this component
+   * is being rendered against a saved Deal whose top-level decision
+   * differs from the nested one.
+   *
+   * Day 11h Stage 2 (2026-05-19): introduced as part of the two-scores
+   * bug fix. The Calculator flow does not currently exhibit the bug
+   * (no materializer write-skew possible on live response), but the
+   * prop is added for architectural consistency and to give us a clean
+   * upgrade path post-Stage 1.
+   */
+  investmentDecision?: any;
 }
 
 const formatCurrency = (value: number | null | undefined): string => {
@@ -50,7 +64,12 @@ const formatPercent = (value: number | null | undefined): string => {
   return `${value.toFixed(2)}%`;
 };
 
-export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, loading, formData }) => {
+export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, loading, formData, investmentDecision }) => {
+  // Day 11h Stage 2 (2026-05-19): canonical decision = top-level prop
+  // if explicitly passed, else fall back to nested. Single resolution
+  // point ensures every read below sees the same value.
+  const effectiveDecision = investmentDecision ?? analysis?.investmentDecision;
+  const dealQualityScore = effectiveDecision?.professionalAssessment?.dealQuality;
   if (loading) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -97,15 +116,18 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
 
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
-      {/* Deal Quality Score - Professional Credibility Signal */}
-      {analysis.investmentDecision?.professionalAssessment?.dealQuality && (
+      {/* Deal Quality Score - Professional Credibility Signal.
+          Day 11h Stage 2 (2026-05-19): all 6 reads below now resolve
+          through `dealQualityScore` (single source) instead of accessing
+          the nested decision path directly. See effectiveDecision above. */}
+      {dealQualityScore && (
         <Paper
           elevation={3}
           sx={{
             p: 4,
             mb: 3,
             textAlign: 'center',
-            border: `2px solid ${getScoreColor(analysis.investmentDecision.professionalAssessment.dealQuality)}`,
+            border: `2px solid ${getScoreColor(dealQualityScore)}`,
             borderRadius: '16px',
             bgcolor: 'background.paper'
           }}
@@ -127,12 +149,12 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
             sx={{
               fontSize: { xs: '72px', sm: '96px' },
               fontWeight: 800,
-              color: getScoreColor(analysis.investmentDecision.professionalAssessment.dealQuality),
+              color: getScoreColor(dealQualityScore),
               lineHeight: 1,
               my: 1
             }}
           >
-            {Math.round(analysis.investmentDecision.professionalAssessment.dealQuality)}
+            {Math.round(dealQualityScore)}
             <Typography
               component="span"
               sx={{
@@ -149,7 +171,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
             sx={{
               width: '120px',
               height: '4px',
-              backgroundColor: getScoreColor(analysis.investmentDecision.professionalAssessment.dealQuality),
+              backgroundColor: getScoreColor(dealQualityScore),
               borderRadius: '2px',
               margin: '0 auto',
               mb: 2
@@ -163,7 +185,7 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
               fontWeight: 500
             }}
           >
-            {getScoreContext(analysis.investmentDecision.professionalAssessment.dealQuality)}
+            {getScoreContext(dealQualityScore)}
           </Typography>
           <Typography
             variant="body2"
@@ -180,7 +202,13 @@ export const CalculatorResults: React.FC<CalculatorResultsProps> = ({ analysis, 
       )}
 
       {/* Email PDF Section - Anonymous User Only */}
-      <EmailPdfSection analysis={analysis} formData={formData} />
+      <EmailPdfSection
+        analysis={analysis}
+        formData={formData}
+        // Day 11h Stage 2 (2026-05-19): propagate canonical decision so
+        // the email/PDF report shows the same score the user sees here.
+        investmentDecision={effectiveDecision}
+      />
 
       {/* Key Metrics Summary - Always Visible (Above Fold) */}
       <Paper elevation={2} sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>

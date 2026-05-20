@@ -55,6 +55,19 @@ interface ScenarioManagerProps {
   currentAnalysis: Analysis;
   dealId: string; // Required for MongoDB persistence
   onLoadScenario: (data: SFRPropertyData, analysis?: Analysis) => Promise<void>;
+  /**
+   * Canonical top-level investmentDecision for the currently-loaded deal.
+   *
+   * Day 11h Stage 2 (2026-05-19): Previously this component read scoring
+   * from `currentAnalysis.investmentDecision` (the nested path), which
+   * was subject to materializer write-skew where follow-up turns updated
+   * top-level but left nested stale. By accepting the top-level decision
+   * explicitly we guarantee the displayed Deal Quality Score matches what
+   * SavedDealHero shows. Optional for backwards-compat with live analysis
+   * flows (SFRAnalysis, etc.) where only `analysis.investmentDecision`
+   * exists in the live response.
+   */
+  currentInvestmentDecision?: any;
 }
 
 // SavedScenario interface now imported from API services
@@ -71,8 +84,35 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   currentPropertyData,
   currentAnalysis,
   dealId,
-  onLoadScenario
+  onLoadScenario,
+  currentInvestmentDecision,
 }) => {
+  // Day 11h Stage 2 (2026-05-19): canonical investmentDecision for the
+  // current view. Prefers the explicit prop (top-level, fresh after
+  // follow-up turns); falls back to currentAnalysis.investmentDecision
+  // for the live analysis flow where only the nested form exists.
+  // This ensures ScenarioManager NEVER shows a different score than
+  // SavedDealHero for the same loaded deal.
+  const effectiveCurrentDecision =
+    currentInvestmentDecision ?? currentAnalysis?.investmentDecision;
+
+  /**
+   * Resolve the canonical investmentDecision for a saved scenario.
+   * Prefers the top-level path (post-Stage 1 scenario shape), falls back
+   * to the nested path for scenarios saved before Stage 1 cleanup.
+   * Returns an Analysis-shaped object with the canonical decision
+   * substituted in, so legacy `metric.getValue(analysis)` lambdas read
+   * the right number without signature changes.
+   */
+  const getCanonicalScenarioAnalysis = (scenario: SavedScenario): Analysis => {
+    const canonical =
+      (scenario as any).investmentDecision ??
+      scenario.analysis?.investmentDecision;
+    return {
+      ...scenario.analysis,
+      investmentDecision: canonical,
+    } as Analysis;
+  };
   const [scenarios, setScenarios] = useState<SavedScenario[]>([]);
   const [selectedScenarios, setSelectedScenarios] = useState<Set<string>>(new Set());
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -197,12 +237,23 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         }
       });
 
+      // Day 11h Stage 2 (2026-05-19): snapshot the canonical investmentDecision
+      // alongside the analysis. Previously we only spread currentAnalysis,
+      // which could embed a stale nested decision (the one the materializer
+      // failed to update on follow-up turns). By writing the canonical
+      // decision back into the analysis snapshot we save AND surfacing it
+      // at the top level of the scenario, we ensure the saved scenario
+      // matches what the user saw on screen at save-time.
       const scenarioData = {
         name: scenarioName.trim(),
         description: scenarioDescription.trim() || undefined,
         // Complete Storage Architecture: Store complete snapshots
         propertyData: { ...currentPropertyData },
-        analysis: { ...currentAnalysis },
+        analysis: {
+          ...currentAnalysis,
+          investmentDecision: effectiveCurrentDecision,
+        },
+        investmentDecision: effectiveCurrentDecision,
         isFavorite: false,
         tags: []
       };
@@ -490,7 +541,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                 const isSelected = selectedScenarios.has(scenario._id);
                 const cashFlow = scenario.analysis.monthlyAnalysis?.cashFlow || 0;
                 const cocReturn = scenario.analysis.keyMetrics?.cashOnCashReturn || 0;
-                const dealQuality = scenario.analysis.investmentDecision?.professionalAssessment?.dealQuality || 0;
+                // Day 11h Stage 2 (2026-05-19): prefer top-level investmentDecision
+                // on the scenario object (post-Stage 1 shape), fall back to nested
+                // for legacy scenarios saved before the cleanup.
+                const dealQuality =
+                  (scenario as any).investmentDecision?.professionalAssessment?.dealQuality ??
+                  scenario.analysis.investmentDecision?.professionalAssessment?.dealQuality ??
+                  0;
                 
                 return (
                   <Box key={scenario._id}>
@@ -715,7 +772,11 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                     const selectedScenariosArray = Array.from(selectedScenarios);
                     const values = selectedScenariosArray.map(id => {
                       const scenario = scenarios.find(s => s._id === id);
-                      return scenario ? metric.getValue(scenario.analysis) : 0;
+                      // Day 11h Stage 2 (2026-05-19): enrich with canonical
+                      // investmentDecision before evaluating metrics so the
+                      // Deal Quality Score column reads top-level decision,
+                      // not the stale nested one.
+                      return scenario ? metric.getValue(getCanonicalScenarioAnalysis(scenario)) : 0;
                     });
                     const baseValue = values[0];
                     

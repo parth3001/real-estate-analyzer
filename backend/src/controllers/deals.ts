@@ -5,6 +5,10 @@ import { SFRAnalyzer } from '../analysis';
 import { SFRData, MultiFamilyData } from '../types/propertyTypes';
 import { MultiFamilyAnalyzer } from '../analysis/MultiFamilyAnalyzer';
 import { DealService } from '../services/dealService';
+import {
+  assembleDecisionFromEvent,
+  assembleDecisionsForEvents,
+} from '../services/dealMaterializationService';
 import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Removed unused propertyEnrichmentService imports
@@ -409,7 +413,30 @@ export const getAllDeals = async (req: AuthenticatedRequest, res: Response): Pro
     }
     
     const deals = await dealService.getAllDeals(userId);
-    res.json(deals);
+
+    // Day 11h (decision 1b — the GET bridge): batch-assemble decisions from
+    // substrate events for 2.0 deals (ONE query for N events, not N
+    // round-trips). Both the saved-properties LIST and the detail page now
+    // read the SAME event-derived decision — eliminating the list-vs-detail
+    // score divergence (e.g., 2110 Spruce list=28 / detail=49). Legacy deals
+    // (no latestDecisionEventId) keep their stored decision untouched.
+    const dealsArray = deals.map((d: { toObject?: () => unknown }) =>
+      typeof d?.toObject === 'function' ? d.toObject() : d
+    ) as Array<Record<string, any>>;
+    const eventIds = dealsArray
+      .filter((d) => d.latestDecisionEventId)
+      .map((d) => d.latestDecisionEventId as string);
+    const decisionMap = await assembleDecisionsForEvents(eventIds);
+    for (const d of dealsArray) {
+      if (d.latestDecisionEventId) {
+        const assembled = decisionMap.get(String(d.latestDecisionEventId));
+        if (assembled) {
+          d.investmentDecision = assembled;
+          if (d.analysis) d.analysis.investmentDecision = assembled;
+        }
+      }
+    }
+    res.json(dealsArray);
   } catch (error) {
     logger.error('Error getting all deals:', error);
     if (error instanceof Error) {
@@ -466,13 +493,30 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
     // Validate that saved deal has complete analysis structure
     if (!dealData.analysis) {
       logger.error(`Deal ${id} missing analysis data - may need regeneration`);
-      res.status(422).json({ 
+      res.status(422).json({
         error: 'Deal missing analysis data. Please regenerate this deal.',
-        needsRegeneration: true 
+        needsRegeneration: true
       });
       return;
     }
-    
+
+    // Day 11h (decision 1b — the GET bridge): for 2.0 deals materialized
+    // from substrate (have latestDecisionEventId), derive the
+    // investmentDecision from the immutable DecisionEvent — the SINGLE
+    // source of truth. We set it on BOTH the top-level field AND
+    // analysis.investmentDecision from the SAME assembled object, so every
+    // consumer (frontend hero, legacy SFR views, PDF) sees one consistent
+    // score that can never diverge. Legacy wizard deals (no
+    // latestDecisionEventId) are untouched — they keep their stored
+    // decision exactly as before.
+    if (dealData.latestDecisionEventId) {
+      const assembled = await assembleDecisionFromEvent(dealData.latestDecisionEventId);
+      if (assembled) {
+        (dealData as Record<string, unknown>).investmentDecision = assembled;
+        dealData.analysis.investmentDecision = assembled;
+      }
+    }
+
     // Log what we're returning for debugging
     logger.info(`Deal ${id} loaded successfully:`, {
       hasAnalysis: !!dealData.analysis,

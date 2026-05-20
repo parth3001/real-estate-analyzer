@@ -439,6 +439,12 @@ export interface IDeal extends Document {
    * Used to look up critiques + audit-trail for this Deal in substrate.
    */
   latestDecisionEventId?: mongoose.Schema.Types.ObjectId;
+  /**
+   * Canonical address key for dedup + identity alignment with DealLicense
+   * (Task #2, 2026-05-20). Built via utils/canonicalAddressKey. Optional:
+   * legacy/pre-Task#2 Deals have no value until the backfill (Task #4).
+   */
+  canonicalAddressKey?: string;
   portfolioId?: mongoose.Schema.Types.ObjectId; // Optional portfolio association
   ownershipPercentage?: number; // For fractional investments (syndications, partnerships)
   propertyName: string;
@@ -579,6 +585,16 @@ const ConfidenceSchema = new Schema({
 
 // Analysis schema
 const AnalysisSchema = new Schema({
+  /**
+   * Walk-away price — the max price at which the deal still meets the
+   * engine's target return (income approach: NOI / target cap rate).
+   * Day 11h (Task #11, 2026-05-20): added because the materializer was
+   * dropping it. AnalysisSchema is strict, so without this declaration
+   * Mongoose stripped walkAwayPrice on save → SavedDealHero showed $0.
+   * Computed by score_deal, lives in the substrate (AnalysisEvent +
+   * DecisionEvent.marketPosition); projectAnalysis now copies it here.
+   */
+  walkAwayPrice: Number,
   monthlyAnalysis: {
     expenses: {
       propertyTax: Number,
@@ -1134,6 +1150,22 @@ const DealSchema = new Schema({
     required: false,
     index: true,
   },
+  /**
+   * Canonical address key for dedup + identity alignment.
+   * Added Day 11h (Task #2, 2026-05-20). Built via
+   * utils/canonicalAddressKey — the SAME normalization DealLicense uses —
+   * so Deal identity == License identity == one canonical property.
+   * The materializer upserts on (userId, canonicalAddressKey), which fixes
+   * the prior exact-string-match dedup that spawned duplicate Deals on
+   * address-string variance ("Daffodil St" vs "Daffodil Drive").
+   * Optional: legacy/pre-Task#2 Deals have no value until the backfill
+   * (Task #4) sets it. The upsert lookup is served by the compound index
+   * { userId: 1, canonicalAddressKey: 1 } declared below.
+   */
+  canonicalAddressKey: {
+    type: String,
+    required: false,
+  },
   portfolioId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Portfolio',
@@ -1354,6 +1386,15 @@ DealSchema.index({ userId: 1, investmentStrategy: 1 });
 // "most recent deal for user" and "deals created this month" — see dealEmailHelper.
 DealSchema.index({ userId: 1, updatedAt: -1 });
 DealSchema.index({ userId: 1, createdAt: -1 });
+
+// Index 5: Deal dedup + identity (Task #2, 2026-05-20). The materializer
+// upserts on (userId, canonicalAddressKey); this compound index makes that
+// lookup fast and is the foundation for "one canonical property = one Deal".
+// NOT unique (yet) — the backfill (Task #4) must merge existing duplicate
+// Deals before a unique constraint can be safely added. Promote to
+// { unique: true } after backfill confirms no (userId, canonicalAddressKey)
+// collisions remain.
+DealSchema.index({ userId: 1, canonicalAddressKey: 1 });
 
 // DEFERRED indexes (add when >1K BRRRR deals):
 // - BRRRR Leaderboard: { investmentStrategy: 1, 'analysis.strategySpecific.capitalRecovery.capitalRecoveryRate': -1 }

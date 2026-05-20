@@ -197,6 +197,15 @@ const AnalysisDetails: React.FC = () => {
             }}
             analysis={deal.analysis}
             dealId={deal._id}
+            // Day 11h Stage 2 (2026-05-19): suppress the duplicate
+            // InvestmentDecisionHero in the legacy Overview tab.
+            // SavedDealHero above is the canonical score surface on this
+            // route; rendering a second hero from the stale nested
+            // analysis.investmentDecision caused the two-scores bug
+            // (28 vs 81 on 1105 Daffodil St). Stage 1 will kill the
+            // nested path on the backend; this prop is the frontend
+            // half of the fix.
+            hideInvestmentHero={true}
             onParameterChange={async () => {
               // Analysis is already saved, just log
               console.log('Analysis already saved');

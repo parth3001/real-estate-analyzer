@@ -205,8 +205,13 @@ const SavedProperties: React.FC = () => {
     switch (sortBy) {
       case 'dealQuality':
         return sorted.sort((a, b) => {
-          const aQuality = a.analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0;
-          const bQuality = b.analysis?.investmentDecision?.professionalAssessment?.dealQuality || 0;
+          // Day 11h (2026-05-20): top-level-first read, matching the row display + detail page.
+          const aQuality =
+            (a as any).investmentDecision?.professionalAssessment?.dealQuality ??
+            a.analysis?.investmentDecision?.professionalAssessment?.dealQuality ?? 0;
+          const bQuality =
+            (b as any).investmentDecision?.professionalAssessment?.dealQuality ??
+            b.analysis?.investmentDecision?.professionalAssessment?.dealQuality ?? 0;
           return bQuality - aQuality; // High to low
         });
       case 'cashFlow':
@@ -370,7 +375,16 @@ const SavedProperties: React.FC = () => {
 
           {/* Property Rows */}
           {sortedProperties.map((property) => {
-            const dealQuality = property.analysis?.investmentDecision?.professionalAssessment?.dealQuality;
+            // Day 11h Stage 2 fix (2026-05-20): read TOP-LEVEL investmentDecision
+            // first (canonical, matches the detail page's getDealQualityScore),
+            // then fall back to nested. This was the MISS that caused the
+            // list-vs-detail divergence (list showed nested 28, detail showed
+            // top-level 49). The GET bridge now assembles both from the event
+            // for 2.0 deals, but reading top-level first is the correct pattern.
+            // Preserve undefined (vs 0) so a scoreless deal shows no badge.
+            const dealQuality =
+              (property as any).investmentDecision?.professionalAssessment?.dealQuality ??
+              property.analysis?.investmentDecision?.professionalAssessment?.dealQuality;
             const cashFlow = property.analysis?.monthlyAnalysis?.cashFlow;
             const capRate = property.analysis?.keyMetrics?.capRate;
 
