@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Alert, CircularProgress, Button, Divider } from '@mui/material';
+import { Box, Typography, Alert, CircularProgress, Button, Divider, Collapse } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
 import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/api';
@@ -8,6 +8,7 @@ import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
 import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
+import { ScenarioDetails } from '../components/AnalysisDetails/ScenarioDetails';
 import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
 
 const AnalysisDetails: React.FC = () => {
@@ -22,6 +23,10 @@ const AnalysisDetails: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Full analysis for the selected scenario — drives the scenario-aware hero.
   const [selectedDetail, setSelectedDetail] = useState<ScenarioDetailWire | null>(null);
+  // Legacy 11-tab deep-dive: collapsed by default (Task #19). The workspace
+  // above is the primary surface; the legacy tabs (Tax/Comparables/Market —
+  // not yet migrated) live behind a de-emphasized toggle until migrated.
+  const [showLegacy, setShowLegacy] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -188,26 +193,32 @@ const AnalysisDetails: React.FC = () => {
           {id && scenarios.length > 0 && (
             <SensitivityPanel dealId={id} decisionEventId={selectedId} />
           )}
+          {/* Task #8 — per-scenario depth (financials + long-term), replacing
+              the scenario-dependent legacy tabs. Re-points on selection. */}
+          <ScenarioDetails detail={selectedDetail} />
         </Box>
 
         <Divider sx={{ my: 4 }} />
 
-        <Typography
-          variant="caption"
+        {/* Task #19 — the legacy 11-tab deep-dive is now collapsed behind a
+            de-emphasized toggle (was clashing with the workspace above). It
+            still holds not-yet-migrated depth (Tax / Comparables / Market),
+            so we keep it accessible rather than deleting it. */}
+        <Button
+          onClick={() => setShowLegacy((v) => !v)}
           sx={{
-            display: 'block',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
+            textTransform: 'none',
             color: 'text.secondary',
-            fontSize: 11,
-            mb: 2,
+            fontSize: 13,
+            px: 0,
+            mb: 1,
           }}
         >
-          Deep dive
-        </Typography>
+          {showLegacy ? '▾ Hide full analysis' : '▸ Show full analysis (tax, comps, market)'}
+        </Button>
       </Box>
 
+      <Collapse in={showLegacy} unmountOnExit>
       {/* Deep-dive dispatch by propertyType.
           - SFR: render the legacy AnalysisResults tabs (Overview /
             Financial Details / Long-term Analysis / Tax Intelligence /
@@ -292,6 +303,7 @@ const AnalysisDetails: React.FC = () => {
           />
         </AnalysisErrorBoundary>
       )}
+      </Collapse>
     </Box>
   );
 };
