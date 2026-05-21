@@ -49,13 +49,19 @@ export const RecallUserContextInputSchema = z.object({
    * Optional override. When omitted (the normal case), the tool uses
    * `ctx.userId`. Accepts ObjectId or 24-char hex string.
    */
+  // Day 11h (Task #16, 2026-05-21): a clean optional hex STRING — NOT a
+  // union with z.instanceof(Types.ObjectId). The instanceof branch could
+  // not be represented by zodToJsonSchema and collapsed to `{}` (matches
+  // anything), corrupting the tool's JSON Schema sent to the LLM. The
+  // model then couldn't fill this slot, the tool failed, and the LLM
+  // hallucinated a "can't resolve your user ID / session not attaching
+  // identity" message — which in turn broke stress-test reproducibility
+  // (no priorDecisionId → from-scratch re-score → wrong-direction result).
+  // Mirrors the clean regex form used by priorDecisionId. ObjectId callers
+  // are coerced to hex before validation in execute().
   userId: z
-    .union([
-      z.instanceof(Types.ObjectId),
-      z.string().refine((s) => Types.ObjectId.isValid(s), {
-        message: 'Expected 24-char hex ObjectId string',
-      }),
-    ])
+    .string()
+    .regex(/^[a-fA-F0-9]{24}$/, 'Expected 24-char hex ObjectId string')
     .optional(),
   /** Optional override for how many decisions to pull (default 10 per §8.2). */
   decisionsLimit: z.number().int().positive().max(100).optional(),
@@ -109,8 +115,18 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
   retrySemantics: DEFAULT_READ_RETRY,
 
   async execute(input: RecallUserContextInput, ctx: ToolContext): Promise<RecallUserContextOutput> {
+    // Day 11h (Task #16): coerce a possible ObjectId override to hex BEFORE
+    // validation. The schema is now a clean optional hex string (so it
+    // serializes to a coherent JSON Schema for the LLM), but programmatic
+    // callers (orchestrator/tests) may still pass an ObjectId — coerce it
+    // here so they don't fail the string regex.
+    const rawUserId = (input as { userId?: unknown } | null | undefined)?.userId;
+    const coercedInput =
+      rawUserId instanceof Types.ObjectId
+        ? { ...input, userId: rawUserId.toHexString() }
+        : input;
     // Trust boundary: validate input even though TS thinks it's clean.
-    const validated = RecallUserContextInputSchema.parse(input);
+    const validated = RecallUserContextInputSchema.parse(coercedInput);
     const decisionsLimit = validated.decisionsLimit ?? 10;
     const overridesLimit = validated.overridesLimit ?? 20;
 
