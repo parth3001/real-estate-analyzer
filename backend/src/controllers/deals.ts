@@ -11,6 +11,7 @@ import {
 } from '../services/dealMaterializationService';
 import { eventsRepositoryReads } from '../repositories/EventsRepositoryReads';
 import { diffScenarioInputs, scenarioInputSignature } from '../services/scenarioDiff';
+import { runScenarioSensitivity } from '../services/scenarioSensitivity';
 import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
@@ -750,6 +751,76 @@ export const getDealScenarioDetail = async (
   } catch (error) {
     logger.error(
       `Error getting scenario detail for decision ${req.params.decisionEventId}:`,
+      error
+    );
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    });
+  }
+};
+
+/**
+ * GET /api/deals/:id/scenario-sensitivity/:decisionEventId — Task #8 (2026-05-21).
+ *
+ * REAL sensitivity for a scenario: re-runs the analyzer→engine pipeline over
+ * perturbed inputs (single-variable curves on the make-or-break inputs +
+ * a stacked "realistic downside" preset). LLM-free (skipEnhancements gate).
+ *
+ * Investor-isolated on decision.userId. SFR-only for now (returns
+ * supported:false for MF — MFDecisionEngine gating is a follow-up).
+ */
+export const getDealScenarioSensitivity = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    const { decisionEventId } = req.params;
+
+    let bundle;
+    try {
+      bundle = await eventsRepositoryReads.getScenarioBundle(decisionEventId);
+    } catch {
+      res.status(404).json({ error: 'Scenario not found' });
+      return;
+    }
+    if (!bundle || bundle.decision.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Scenario not found' });
+      return;
+    }
+
+    const ap = bundle.analysis?.payload;
+    if (!ap) {
+      res.status(422).json({ error: 'Scenario analysis data missing' });
+      return;
+    }
+
+    const propertyData = ap.propertyData as SFRData & { propertyType?: string };
+    if (propertyData?.propertyType !== 'SFR') {
+      // Honest "not yet" rather than a broken/faked MF result.
+      res.json({
+        supported: false,
+        reason:
+          'Sensitivity is currently available for single-family (SFR) deals only.',
+      });
+      return;
+    }
+
+    const report = await runScenarioSensitivity({
+      propertyData: propertyData as SFRData,
+      assumptions: (ap.assumptions ?? {}) as AnalysisAssumptions,
+      marketIntelligence: ap.marketData,
+      userContext: bundle.decision.payload.userContext,
+    });
+
+    res.json({ supported: true, ...report });
+  } catch (error) {
+    logger.error(
+      `Error running scenario sensitivity for decision ${req.params.decisionEventId}:`,
       error
     );
     res.status(500).json({

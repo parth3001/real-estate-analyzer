@@ -1865,17 +1865,27 @@ export class InvestmentDecisionEngine {
       // Generate portfolio context for portfolio fit analysis
       const portfolioContext = this.generatePortfolioContext(propertyData, fundamentals, verdict.verdict, enhancedUserContext);
 
-      // Generate AI-enhanced goal reasoning (V3.0 80/20 Architecture)
+      // Generate AI-enhanced goal reasoning (V3.0 80/20 Architecture).
+      // Day 11h (2026-05-21): gate the AI call behind !skipEnhancements.
+      // Headless callers (the sensitivity service running this engine N
+      // times) pass skipEnhancements=true and must NOT incur a per-iteration
+      // OpenAI round-trip. The deterministic getGoalBasedReasoning() is used
+      // instead. This is narrative text only — the score + factor numbers
+      // are finalized above and are unaffected either way.
       let goalBasedReasoning: string;
-      try {
-        goalBasedReasoning = await aiEnhancedMessagingService.generatePersonalizedGoalReasoning(
-          { verdict: verdict.verdict, professionalAssessment } as InvestmentDecision,
-          analysis,
-          propertyData
-        );
-      } catch (error) {
-        logger.warn('AI goal-based reasoning failed, using fallback', error);
+      if (skipEnhancements) {
         goalBasedReasoning = this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals, professionalAssessment);
+      } else {
+        try {
+          goalBasedReasoning = await aiEnhancedMessagingService.generatePersonalizedGoalReasoning(
+            { verdict: verdict.verdict, professionalAssessment } as InvestmentDecision,
+            analysis,
+            propertyData
+          );
+        } catch (error) {
+          logger.warn('AI goal-based reasoning failed, using fallback', error);
+          goalBasedReasoning = this.getGoalBasedReasoning(verdict.verdict, propertyData, fundamentals, enhancedGoals, professionalAssessment);
+        }
       }
 
       const decision: InvestmentDecision = {
