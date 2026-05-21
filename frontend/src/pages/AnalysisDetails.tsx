@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Alert, CircularProgress, Button, Divider } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
+import type { ScenarioComparisonRowWire } from '../services/api';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
+import { ScenarioList } from '../components/AnalysisDetails/ScenarioList';
 import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
 
 const AnalysisDetails: React.FC = () => {
@@ -13,6 +15,10 @@ const AnalysisDetails: React.FC = () => {
   const [deal, setDeal] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Task #8 — scenario workspace spine. `scenarios` drives the comparison;
+  // `selectedId` (default = latest/current) drives the rest of the page.
+  const [scenarios, setScenarios] = useState<ScenarioComparisonRowWire[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -31,6 +37,20 @@ const AnalysisDetails: React.FC = () => {
       const response = await propertyApi.getProperty(id!);
       if (response.status === 200 && response.data) {
         setDeal(response.data);
+        // Task #8: load the scenario comparison (the spine). Non-fatal —
+        // a single-scenario deal or pre-stamp events just yield a short or
+        // empty list, and ScenarioList renders nothing for ≤1 scenario.
+        try {
+          const sc = await propertyApi.getScenarioComparison(id!);
+          const rows = sc.data?.scenarios ?? [];
+          setScenarios(rows);
+          // Default selection = the current/latest scenario (latest-wins).
+          const current = rows.find((r) => r.isCurrent) ?? rows[rows.length - 1];
+          setSelectedId(current?.decisionEventId ?? null);
+        } catch (scenarioErr) {
+          console.warn('Scenario comparison unavailable:', scenarioErr);
+          setScenarios([]);
+        }
       } else {
         throw new Error('Failed to load analysis');
       }
@@ -98,6 +118,15 @@ const AnalysisDetails: React.FC = () => {
         >
           Back to Saved properties
         </Button>
+
+        {/* Task #8 — scenario workspace spine. Renders only when ≥2
+            scenarios exist; selecting a row will drive the hero + details
+            (hero rewire is the next component). */}
+        <ScenarioList
+          scenarios={scenarios}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
 
         {/* Phase 4 / Issue #117 — chat-style summary card on top.
             Mirrors the DealScoreCard the user saw when they analyzed

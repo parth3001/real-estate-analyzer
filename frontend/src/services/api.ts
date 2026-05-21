@@ -162,6 +162,86 @@ export interface CritiqueWire {
 }
 
 // Property-related API calls
+// ===== Scenario workspace wire types (Task #8, 2026-05-21) =====
+
+export interface ScenarioFactorScores {
+  cashFlow?: number;
+  irr?: number;
+  marketStrength?: number;
+  debtStructure?: number;
+  exitStrategy?: number;
+  capRate?: number;
+  propertyRisk?: number;
+}
+
+/** One changed input between a scenario and the baseline. */
+export interface ScenarioDeltaWire {
+  field: string;
+  label: string;
+  unit: 'currency' | 'percent' | 'years' | 'months' | 'number';
+  baseline?: number;
+  scenario?: number;
+  formattedBaseline: string;
+  formattedScenario: string;
+  direction: 'up' | 'down' | 'changed';
+}
+
+/** One row in the scenario comparison — a substrate-derived what-if. */
+export interface ScenarioComparisonRowWire {
+  decisionEventId: string;
+  createdAt: string;
+  isBaseline: boolean;
+  isCurrent: boolean;
+  dealQuality: number;
+  factorScores: ScenarioFactorScores;
+  deltas: ScenarioDeltaWire[];
+  changedCount: number;
+}
+
+/** Full analysis for one selected scenario (lazy-loaded for Details). */
+export interface ScenarioDetailWire {
+  decisionEventId: string;
+  createdAt: string;
+  dealQuality: number;
+  factorScores: ScenarioFactorScores;
+  walkAwayPrice?: number;
+  propertyData?: any;
+  monthlyAnalysis?: any;
+  longTermAnalysis?: any;
+  metrics?: any;
+}
+
+export interface SensitivityPointWire {
+  delta: number;
+  label: string;
+  dealQuality: number;
+}
+export interface SensitivityVariableWire {
+  field: string;
+  label: string;
+  unit: 'currency' | 'percent' | 'years';
+  baseValue: number;
+  points: SensitivityPointWire[];
+}
+export interface StackedPerturbationWire {
+  field: string;
+  label: string;
+  from: number;
+  to: number;
+}
+/** Sensitivity report. `supported:false` for non-SFR (MF is a follow-up). */
+export interface SensitivityReportWire {
+  supported: boolean;
+  reason?: string;
+  baseDealQuality?: number;
+  variables?: SensitivityVariableWire[];
+  stackedDownside?: {
+    label: string;
+    perturbations: StackedPerturbationWire[];
+    dealQuality: number;
+  };
+}
+
 export const propertyApi = {
   // Get all properties
   getAllProperties: async (): Promise<ApiResponse<any[]>> => {
@@ -213,6 +293,62 @@ export const propertyApi = {
       return { data: response.data, status: response.status };
     } catch (error) {
       console.error('Error fetching deal critique:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Scenario comparison (Task #8, 2026-05-21) — every substrate-derived
+   * what-if for this deal's property, with score + 7 factors + a
+   * field-agnostic diff vs the baseline. Backs the scenario list + compare.
+   */
+  getScenarioComparison: async (
+    dealId: string
+  ): Promise<ApiResponse<{ scenarios: ScenarioComparisonRowWire[] }>> => {
+    try {
+      const response = await api.get(`/deals/${dealId}/scenario-comparison`);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      console.error('Error fetching scenario comparison:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Full analysis for one selected scenario — lazy-loaded for the Details
+   * sections when the user selects a scenario row.
+   */
+  getScenarioDetail: async (
+    dealId: string,
+    decisionEventId: string
+  ): Promise<ApiResponse<ScenarioDetailWire>> => {
+    try {
+      const response = await api.get(
+        `/deals/${dealId}/scenario-detail/${decisionEventId}`
+      );
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      console.error('Error fetching scenario detail:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Real sensitivity for a scenario — single-variable curves + the stacked
+   * "realistic downside" preset. LLM-free recompute. `supported:false`
+   * for non-SFR.
+   */
+  getScenarioSensitivity: async (
+    dealId: string,
+    decisionEventId: string
+  ): Promise<ApiResponse<SensitivityReportWire>> => {
+    try {
+      const response = await api.get(
+        `/deals/${dealId}/scenario-sensitivity/${decisionEventId}`
+      );
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      console.error('Error fetching scenario sensitivity:', error);
       throw error;
     }
   },
