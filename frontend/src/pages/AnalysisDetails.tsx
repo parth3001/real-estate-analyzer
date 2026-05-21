@@ -7,6 +7,8 @@ import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioList } from '../components/AnalysisDetails/ScenarioList';
+import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
+import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
 import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
 
 const AnalysisDetails: React.FC = () => {
@@ -175,6 +177,20 @@ const AnalysisDetails: React.FC = () => {
               : undefined
           }
         />
+
+        {/* Task #8 — factor-level scenario comparison (paid-tier depth).
+            Renders only for ≥2 scenarios; selecting a row drives the hero. */}
+        <Box sx={{ mt: 3 }}>
+          <ScenarioCompareTable
+            scenarios={scenarios}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+          {/* Task #8 — on-demand stress test for the selected scenario. */}
+          {id && scenarios.length > 0 && (
+            <SensitivityPanel dealId={id} decisionEventId={selectedId} />
+          )}
+        </Box>
 
         <Divider sx={{ my: 4 }} />
 
