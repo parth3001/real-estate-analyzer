@@ -46,10 +46,24 @@ import {
   propertyApi,
   type CritiqueWire,
   type LicenseStatusWire,
+  type ScenarioFactorScores,
 } from '../../services/api';
 
 export interface SavedDealHeroProps {
   deal: SavedDealShape;
+  /**
+   * Optional selected-scenario override (Task #8, 2026-05-21). When the
+   * scenario list selects a scenario, the hero reflects THAT scenario's
+   * score / factors / walk-away / price instead of the deal's default
+   * (latest). Absent → the hero shows the deal default. This is what makes
+   * the page scenario-scoped: selecting a row re-points the hero.
+   */
+  selectedScenario?: {
+    dealQuality: number;
+    factorScores: ScenarioFactorScores;
+    walkAwayPrice?: number;
+    purchasePrice?: number;
+  };
 }
 
 export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
@@ -141,8 +155,23 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
 
   // ===== Data extraction (defensive — older legacy deals may have
   //   different field shapes; missing data renders gracefully) =====
-  const dealQuality = getDealQualityScore(deal);
-  const pa = getProfessionalAssessment(deal);
+  // Task #8 (2026-05-21): when a scenario is selected, the hero reflects
+  // THAT scenario — its score, factor scores, walk-away, and price — instead
+  // of the deal's default (latest). Absent selectedScenario → deal default.
+  const sel = props.selectedScenario;
+  const dealQuality = sel?.dealQuality ?? getDealQualityScore(deal);
+  const pa = sel
+    ? ({
+        dealQuality: sel.dealQuality,
+        cashFlowScore: sel.factorScores.cashFlow,
+        irrScore: sel.factorScores.irr,
+        marketStrengthScore: sel.factorScores.marketStrength,
+        debtStructureScore: sel.factorScores.debtStructure,
+        exitStrategyScore: sel.factorScores.exitStrategy,
+        capRateScore: sel.factorScores.capRate,
+        propertyRiskScore: sel.factorScores.propertyRisk,
+      } as ReturnType<typeof getProfessionalAssessment>)
+    : getProfessionalAssessment(deal);
   const primaryReason = getPrimaryReason(deal);
 
   // Build factor data — each variant config tells us which 3 scores
@@ -163,11 +192,13 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
   // aware comparison row, BRRRR uses the same walk-away framing as
   // buy-hold (the engine still computes a walk-away for BRRRR; it's
   // just not the most-informative metric for that strategy).
-  const purchasePrice = deal.purchasePrice ?? 0;
+  // Selected scenario overrides price + walk-away (both scenario-dependent).
+  const purchasePrice = sel?.purchasePrice ?? deal.purchasePrice ?? 0;
   // walkAwayPrice was the bug-source in Issue #114. We read defensively
   // from any place the engine might have stashed it. If absent, fall
   // back to 0 (DealScoreCard handles 0 by suppressing the delta).
   const walkAwayPrice =
+    sel?.walkAwayPrice ??
     (deal as { walkAwayPrice?: number }).walkAwayPrice ??
     (deal.analysis as { walkAwayPrice?: number } | undefined)?.walkAwayPrice ??
     0;

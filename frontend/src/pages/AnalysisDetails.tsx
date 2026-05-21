@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Alert, CircularProgress, Button, Divider } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
-import type { ScenarioComparisonRowWire } from '../services/api';
+import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/api';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioList } from '../components/AnalysisDetails/ScenarioList';
@@ -19,6 +19,8 @@ const AnalysisDetails: React.FC = () => {
   // `selectedId` (default = latest/current) drives the rest of the page.
   const [scenarios, setScenarios] = useState<ScenarioComparisonRowWire[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Full analysis for the selected scenario — drives the scenario-aware hero.
+  const [selectedDetail, setSelectedDetail] = useState<ScenarioDetailWire | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -29,6 +31,28 @@ const AnalysisDetails: React.FC = () => {
 
     loadDeal();
   }, [id]);
+
+  // Task #8: when the selected scenario changes, lazy-load its full analysis
+  // for the scenario-aware hero (and, later, the Details sections). Default
+  // selection is the latest scenario, so this also loads the default view.
+  useEffect(() => {
+    if (!id || !selectedId) {
+      setSelectedDetail(null);
+      return;
+    }
+    let cancelled = false;
+    propertyApi
+      .getScenarioDetail(id, selectedId)
+      .then((res) => {
+        if (!cancelled) setSelectedDetail(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedDetail(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, selectedId]);
 
   const loadDeal = async () => {
     try {
@@ -138,7 +162,19 @@ const AnalysisDetails: React.FC = () => {
             them. Polymorphic across SFR Buy-Hold / BRRRR / House Hack
             / Multi-Family per the variant config in
             ../components/AnalysisDetails/savedDealVariants.ts. */}
-        <SavedDealHero deal={deal} />
+        <SavedDealHero
+          deal={deal}
+          selectedScenario={
+            selectedDetail
+              ? {
+                  dealQuality: selectedDetail.dealQuality,
+                  factorScores: selectedDetail.factorScores,
+                  walkAwayPrice: selectedDetail.walkAwayPrice,
+                  purchasePrice: selectedDetail.propertyData?.purchasePrice,
+                }
+              : undefined
+          }
+        />
 
         <Divider sx={{ my: 4 }} />
 
