@@ -49,6 +49,33 @@ import {
   type ScenarioFactorScores,
 } from '../../services/api';
 
+/**
+ * Map a scenario's resolved assumptions (substrate AnalysisAssumptions
+ * shape) to the DealScoreCard's display rows (Task #18, 2026-05-21).
+ * Only includes fields actually present. Empty input → [] (toggle hides).
+ */
+function buildAssumptionRows(
+  a: Record<string, unknown> | undefined
+): React.ComponentProps<typeof DealScoreCard>['assumptions'] {
+  if (!a) return [];
+  const rows: { label: string; value?: string; source?: string }[] = [];
+  const pct = (v: unknown, suffix = '%'): string | undefined =>
+    typeof v === 'number' ? `${parseFloat(v.toFixed(2))}${suffix}` : undefined;
+  const push = (label: string, value?: string): void => {
+    if (value !== undefined) rows.push({ label, value, source: 'standard' });
+  };
+  push('Vacancy', pct(a.vacancyRate));
+  push(
+    'Hold period',
+    typeof a.projectionYears === 'number' ? `${a.projectionYears} yr` : undefined
+  );
+  push('Rent growth', pct(a.annualRentIncrease, '%/yr'));
+  push('Appreciation', pct(a.annualPropertyValueIncrease, '%/yr'));
+  push('Expense growth', pct(a.annualExpenseIncrease, '%/yr'));
+  push('Selling costs', pct(a.sellingCosts));
+  return rows;
+}
+
 export interface SavedDealHeroProps {
   deal: SavedDealShape;
   /**
@@ -63,6 +90,8 @@ export interface SavedDealHeroProps {
     factorScores: ScenarioFactorScores;
     walkAwayPrice?: number;
     purchasePrice?: number;
+    /** Resolved assumptions for the selected scenario (Task #18). */
+    assumptions?: Record<string, unknown>;
   };
 }
 
@@ -218,12 +247,12 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
 
   // ===== Assumptions row =====
   //
-  // Materialized Deals don't currently carry the chat-flow's
-  // discloseAfterScoring assumptions list. Empty array for now;
-  // when the materialization service starts persisting them, this
-  // populates automatically. Empty list means the card hides the
-  // "Standard assumptions" toggle gracefully.
-  const assumptions = [] as React.ComponentProps<typeof DealScoreCard>['assumptions'];
+  // Task #18 (2026-05-21): populate from the selected scenario's resolved
+  // assumptions (now returned by the scenario-detail endpoint from the
+  // substrate AnalysisEvent.payload.assumptions). Previously hardcoded []
+  // because materialized Deals didn't carry them — now they do, per
+  // scenario. Empty list (e.g., no selectedScenario) hides the toggle.
+  const assumptions = buildAssumptionRows(sel?.assumptions);
 
   // ===== 10-year projection (Issue #112) =====
   //

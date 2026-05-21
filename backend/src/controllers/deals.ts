@@ -743,6 +743,10 @@ export const getDealScenarioDetail = async (
       walkAwayPrice: ap?.walkAwayPrice,
       // The scenario's input set (what makes it this scenario).
       propertyData: ap?.propertyData,
+      // Resolved assumptions used for THIS scenario (vacancy, hold period,
+      // rent growth, etc.) — feeds the hero's "Standard assumptions" accordion
+      // (Task #18). Substrate always snapshots these on the AnalysisEvent.
+      assumptions: ap?.assumptions,
       // The full analysis powering the Details sections.
       monthlyAnalysis: ap?.monthlyAnalysis,
       longTermAnalysis: ap?.longTermAnalysis,

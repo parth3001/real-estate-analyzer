@@ -6,7 +6,6 @@ import { propertyApi } from '../services/api';
 import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/api';
 import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
-import { ScenarioList } from '../components/AnalysisDetails/ScenarioList';
 import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
 import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
 import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
@@ -145,14 +144,12 @@ const AnalysisDetails: React.FC = () => {
           Back to Saved properties
         </Button>
 
-        {/* Task #8 — scenario workspace spine. Renders only when ≥2
-            scenarios exist; selecting a row will drive the hero + details
-            (hero rewire is the next component). */}
-        <ScenarioList
-          scenarios={scenarios}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
+        {/* Task #17 (2026-05-21): the standalone ScenarioList spine was
+            removed — it duplicated the ScenarioCompareTable below (two
+            tables of the same scenarios). The compare table is the single
+            scenario surface now: selectable (drives the hero) AND shows the
+            factor columns. ScenarioList component kept for potential reuse
+            (e.g., a future compact mobile selector). */}
 
         {/* Phase 4 / Issue #117 — chat-style summary card on top.
             Mirrors the DealScoreCard the user saw when they analyzed
@@ -173,6 +170,7 @@ const AnalysisDetails: React.FC = () => {
                   factorScores: selectedDetail.factorScores,
                   walkAwayPrice: selectedDetail.walkAwayPrice,
                   purchasePrice: selectedDetail.propertyData?.purchasePrice,
+                  assumptions: selectedDetail.assumptions,
                 }
               : undefined
           }

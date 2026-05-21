@@ -206,6 +206,8 @@ export interface ScenarioDetailWire {
   factorScores: ScenarioFactorScores;
   walkAwayPrice?: number;
   propertyData?: any;
+  /** Resolved assumptions for this scenario (vacancy, hold period, etc.). */
+  assumptions?: Record<string, any>;
   monthlyAnalysis?: any;
   longTermAnalysis?: any;
   metrics?: any;
