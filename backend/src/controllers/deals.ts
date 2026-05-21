@@ -9,6 +9,9 @@ import {
   assembleDecisionFromEvent,
   assembleDecisionsForEvents,
 } from '../services/dealMaterializationService';
+import { eventsRepositoryReads } from '../repositories/EventsRepositoryReads';
+import { diffScenarioInputs, scenarioInputSignature } from '../services/scenarioDiff';
+import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { logger } from '../utils/logger';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Removed unused propertyEnrichmentService imports
@@ -546,6 +549,140 @@ export const getDealById = async (req: AuthenticatedRequest, res: Response): Pro
     } else {
       res.status(500).json({ error: 'An unknown error occurred' });
     }
+  }
+};
+
+/**
+ * GET /api/deals/:id/scenario-comparison — Task #13/#8 (2026-05-20).
+ *
+ * Returns every SUBSTRATE-derived scenario for this deal's property (each
+ * chat analysis run = one scenario), with its Deal Quality Score + 7-factor
+ * breakdown + a FIELD-AGNOSTIC diff vs the baseline (oldest) scenario.
+ * Backs the scenario-scoped workspace + diff-based scenario indicator.
+ *
+ * Distinct from the legacy GET /:dealId/scenarios (explicit named Scenario
+ * collection / manual ScenarioManager saves). THIS is the auto-captured
+ * what-if history from the substrate.
+ *
+ * Investor-isolated: fetched by (userId, canonicalAddressKey) — never by
+ * canonical key alone.
+ */
+export const getDealScenarioComparison = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    const { id } = req.params;
+    const deal = await dealService.getDealById(id);
+    if (!deal || deal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+
+    // Canonical key — prefer the stored one; fall back to recompute from the
+    // deal's address for deals materialized before the key was added.
+    const dealAny = deal as unknown as {
+      canonicalAddressKey?: string;
+      latestDecisionEventId?: { toString(): string };
+      propertyAddress?: { street?: string; city?: string; state?: string; zipCode?: string };
+    };
+    let canonicalAddressKey = dealAny.canonicalAddressKey;
+    if (!canonicalAddressKey) {
+      const a = dealAny.propertyAddress;
+      if (a?.street && a?.city && a?.state) {
+        try {
+          canonicalAddressKey = buildCanonicalAddressKey({
+            street: a.street,
+            city: a.city,
+            state: a.state,
+            zipCode: a.zipCode,
+          });
+        } catch {
+          /* incomplete address — leave undefined */
+        }
+      }
+    }
+    if (!canonicalAddressKey) {
+      res.json({ scenarios: [] });
+      return;
+    }
+
+    const bundles = await eventsRepositoryReads.getScenariosForDeal(
+      userId,
+      canonicalAddressKey
+    );
+    if (bundles.length === 0) {
+      res.json({ scenarios: [] });
+      return;
+    }
+
+    // Dedup by input signature — identical re-runs collapse to one, keeping
+    // the latest by timestamp.
+    const bySig = new Map<string, (typeof bundles)[number]>();
+    for (const b of bundles) {
+      const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
+      const sig = scenarioInputSignature(pd);
+      const existing = bySig.get(sig);
+      if (
+        !existing ||
+        new Date(b.decision.timestamp).getTime() >
+          new Date(existing.decision.timestamp).getTime()
+      ) {
+        bySig.set(sig, b);
+      }
+    }
+    const ordered = [...bySig.values()].sort(
+      (x, y) =>
+        new Date(x.decision.timestamp).getTime() -
+        new Date(y.decision.timestamp).getTime()
+    );
+
+    // Baseline = oldest scenario; every other scenario diffs against it.
+    const baselinePd = (ordered[0].analysis?.payload?.propertyData ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const latestId = dealAny.latestDecisionEventId?.toString();
+
+    const scenarios = ordered.map((b, idx) => {
+      const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
+      const dp = b.decision.payload;
+      const pa = dp.professionalAssessment;
+      const diff =
+        idx === 0
+          ? { deltas: [], changedCount: 0 }
+          : diffScenarioInputs(baselinePd, pd);
+      return {
+        decisionEventId: b.decision._id.toString(),
+        createdAt: b.decision.timestamp,
+        isBaseline: idx === 0,
+        isCurrent: b.decision._id.toString() === latestId,
+        dealQuality: dp.dealQuality,
+        factorScores: {
+          cashFlow: pa?.cashFlowScore,
+          irr: pa?.irrScore,
+          marketStrength: pa?.marketStrengthScore,
+          debtStructure: pa?.debtStructureScore,
+          exitStrategy: pa?.exitStrategyScore,
+          capRate: pa?.capRateScore,
+          propertyRisk: pa?.propertyRiskScore,
+        },
+        deltas: diff.deltas,
+        changedCount: diff.changedCount,
+      };
+    });
+
+    res.json({ scenarios });
+  } catch (error) {
+    logger.error(`Error getting scenario comparison for deal ${req.params.id}:`, error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    });
   }
 };
 

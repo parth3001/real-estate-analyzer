@@ -50,6 +50,7 @@ import type {
   MultiFamilyMetrics,
 } from '../../types/propertyTypes';
 import type { MarketDataResponse } from '../../types/marketData';
+import { buildCanonicalAddressKey } from '../../utils/canonicalAddressKey';
 
 // ===== Engine-output shape (what we project FROM) =====
 
@@ -216,6 +217,41 @@ function extractReasoningTrail(
   };
 }
 
+// ===== Canonical key stamping (Task #13) =====
+
+/**
+ * Compute the canonical property key from propertyData, guarded against
+ * incomplete addresses. Stamped onto BOTH event payloads at write time so
+ * the scenario fetch can query by (userId, canonicalAddressKey) directly —
+ * the durable, immutability-safe substrate↔Deal bridge. Returns undefined
+ * for incomplete addresses (the fetch falls back to recompute for those).
+ */
+function stampCanonicalKey(
+  propertyData: SFRData | MultiFamilyData
+): string | undefined {
+  const addr = (
+    propertyData as {
+      propertyAddress?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+      };
+    }
+  ).propertyAddress;
+  if (!addr?.street || !addr?.city || !addr?.state) return undefined;
+  try {
+    return buildCanonicalAddressKey({
+      street: addr.street,
+      city: addr.city,
+      state: addr.state,
+      zipCode: addr.zipCode,
+    });
+  } catch {
+    return undefined;
+  }
+}
+
 // ===== Main projector =====
 
 /**
@@ -245,6 +281,10 @@ export function projectEngineOutputToEventPayloads(
   // anyway via z.number().min(0).max(100).
   const dealQuality = Math.max(0, Math.min(100, pa.dealQuality));
 
+  // Day 11h (Task #13): stamp the canonical property key on both payloads
+  // at write time. Same value on both so scenario grouping is consistent.
+  const canonicalAddressKey = stampCanonicalKey(input.propertyData);
+
   const analysisPayload: AnalysisPayload = {
     propertyData: input.propertyData,
     marketData: input.marketData,
@@ -257,10 +297,12 @@ export function projectEngineOutputToEventPayloads(
     enrichmentCacheHit: input.enrichmentCacheHit,
     engineVersion: input.engineVersion,
     computeTimeMs: input.computeTimeMs,
+    canonicalAddressKey,
   };
 
   const decisionPayloadDraft: Omit<DecisionPayload, 'analysisEventId'> = {
     dealId: input.dealId,
+    canonicalAddressKey,
     dealQuality,
     qualityLabel: deriveQualityLabel(dealQuality),
     qualityColor: deriveQualityColor(dealQuality),

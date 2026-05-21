@@ -91,6 +91,14 @@ export const AnalysisPayloadSchema = z.object({
   enrichmentCacheHit: z.boolean(),
   engineVersion: z.string().min(1),
   computeTimeMs: z.number().nonnegative(),
+
+  // Day 11h (Task #13, 2026-05-20): canonical property identity, stamped at
+  // write time from propertyData.propertyAddress. Lets the scenario fetch
+  // query events by (userId, canonicalAddressKey) directly — the durable,
+  // immutability-safe bridge to the Deal — instead of recomputing the key
+  // from the address on every read. Optional: pre-stamp/legacy events lack
+  // it (fetch falls back to recompute for those).
+  canonicalAddressKey: z.string().optional(),
 });
 
 /**
@@ -143,6 +151,13 @@ export interface AnalysisPayload {
 
   /** Time spent computing the analysis (ms). Performance observability. */
   computeTimeMs: number;
+
+  /**
+   * Canonical property key (Task #13, 2026-05-20) — `(userId,
+   * canonicalAddressKey)` is the durable substrate↔Deal bridge. Stamped at
+   * write time from propertyData.propertyAddress. Optional for legacy events.
+   */
+  canonicalAddressKey?: string;
 }
 
 // ===== Mongoose discriminator schema =====

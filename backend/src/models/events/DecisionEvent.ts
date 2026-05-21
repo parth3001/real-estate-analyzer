@@ -162,6 +162,12 @@ export const DecisionPayloadSchema = z.object({
   // Cross-event references
   analysisEventId: ObjectIdSchema,
   dealId: ObjectIdSchema.optional(),
+  // Day 11h (Task #13, 2026-05-20): canonical property identity stamped at
+  // write time. Enables the scenario fetch to query DecisionEvents by
+  // (userId, canonicalAddressKey) directly — durable, immutability-safe
+  // bridge to the Deal — instead of recomputing from address. Optional:
+  // pre-stamp/legacy events lack it (fetch falls back to recompute).
+  canonicalAddressKey: z.string().optional(),
 
   // PRIMARY OUTPUT — V3.0 Deal Quality scoring (single source of truth)
   dealQuality: z.number().min(0).max(100),
@@ -193,6 +199,13 @@ export const DecisionPayloadSchema = z.object({
 export interface DecisionPayload {
   analysisEventId: Types.ObjectId;
   dealId?: Types.ObjectId;
+
+  /**
+   * Canonical property key (Task #13, 2026-05-20) — `(userId,
+   * canonicalAddressKey)` is the durable substrate↔Deal bridge for the
+   * scenario fetch. Stamped at write time. Optional for legacy events.
+   */
+  canonicalAddressKey?: string;
 
   /** Deal Quality Score (0-100). The V3.0 single source of truth. */
   dealQuality: number;

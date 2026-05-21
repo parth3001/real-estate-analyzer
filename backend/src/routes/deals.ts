@@ -2,6 +2,7 @@ import express, { Router, Request, Response, NextFunction } from 'express';
 import {
   getAllDeals,
   getDealById,
+  getDealScenarioComparison,
   getDealCritique,
   getDealLicense,
   seedDealLicense,
@@ -62,6 +63,11 @@ router.get('/:id', authMiddleware, getDealById);
 // Critique is fired automatically on every save (see triggerOnSave.ts);
 // this surfaces both personas to the SavedDealHero.
 router.get('/:id/critique', authMiddleware, getDealCritique);
+// Task #13/#8 (2026-05-20): substrate-derived scenario comparison — every
+// analyzed what-if for this property, with score + factor breakdown + a
+// field-agnostic diff vs the baseline. Distinct from /:dealId/scenarios
+// (legacy named-Scenario collection). Backs the scenario-scoped workspace.
+router.get('/:id/scenario-comparison', authMiddleware, getDealScenarioComparison);
 // Day 10 (2026-05-18): license status + dev-mode license seed.
 // `getDealLicense` surfaces the user's active license (if any) for
 // this property's badge UX. `seedDealLicense` is dev-guarded by

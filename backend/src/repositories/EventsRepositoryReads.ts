@@ -84,6 +84,17 @@ export interface AuditTrailBundle {
   auditEvents: AuditTrailEventDocument[];
 }
 
+/**
+ * One scenario = a (DecisionEvent, AnalysisEvent) pair for a property
+ * (Task #13, 2026-05-20). The DecisionEvent holds the score + 7-factor
+ * breakdown; the AnalysisEvent holds the inputs to diff. Backs the
+ * scenario-scoped workspace + diff-based scenario indicator (Task #8).
+ */
+export interface ScenarioBundle {
+  decision: DecisionEventDocument;
+  analysis: AnalysisEventDocument | null;
+}
+
 // ===== Helpers =====
 
 /**
@@ -213,6 +224,62 @@ export class EventsRepositoryReads {
       .sort({ timestamp: 1 })
       .lean<DecisionEventDocument[]>()
       .exec();
+  }
+
+  /**
+   * All scenarios for a property — every (DecisionEvent, AnalysisEvent)
+   * pair sharing (userId, canonicalAddressKey), oldest first. Backs the
+   * scenario-scoped workspace + diff-based scenario indicator (Task #8).
+   *
+   * INVESTOR ISOLATION (non-negotiable): ALWAYS scoped by userId. The
+   * canonicalAddressKey is NEVER queried alone — two investors analyzing
+   * the same physical property must never see each other's scenarios.
+   *
+   * Uses the canonicalAddressKey stamped on DecisionEvents at write time
+   * (Task #13). Pre-stamp/legacy events lack the key and won't appear —
+   * re-analyze the property to repopulate. (Prod has no 2.0 data yet, so
+   * this only affects pre-stamp dev events.)
+   *
+   * Hits index `{ userId: 1, timestamp: -1 }`; a
+   * `{ userId, 'payload.canonicalAddressKey' }` index is a future
+   * optimization once scenario volume warrants it (events store §7).
+   */
+  async getScenariosForDeal(
+    userId: Types.ObjectId | string,
+    canonicalAddressKey: string
+  ): Promise<ScenarioBundle[]> {
+    const uid = toObjectId(userId);
+    const decisions = await DecisionEventModel.find({
+      userId: uid,
+      'payload.canonicalAddressKey': canonicalAddressKey,
+    })
+      .sort({ timestamp: 1 })
+      .lean<DecisionEventDocument[]>()
+      .exec();
+
+    if (decisions.length === 0) return [];
+
+    // Batch-load the paired AnalysisEvents — ONE query for all scenarios,
+    // not N round-trips.
+    const analysisIds = decisions
+      .map((d) => d.payload.analysisEventId)
+      .filter((id): id is Types.ObjectId => Boolean(id));
+    const analyses = await AnalysisEventModel.find({
+      _id: { $in: analysisIds },
+    })
+      .lean<AnalysisEventDocument[]>()
+      .exec();
+    const analysisById = new Map(
+      analyses.map((a) => [a._id.toHexString(), a])
+    );
+
+    return decisions.map((decision) => ({
+      decision,
+      analysis:
+        analysisById.get(
+          decision.payload.analysisEventId?.toHexString() ?? ''
+        ) ?? null,
+    }));
   }
 
   // ===== 8.3 — Calibration drift signal =====
