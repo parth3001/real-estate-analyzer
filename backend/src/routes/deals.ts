@@ -3,6 +3,7 @@ import {
   getAllDeals,
   getDealById,
   getDealScenarioComparison,
+  getDealScenarioDetail,
   getDealCritique,
   getDealLicense,
   seedDealLicense,
@@ -68,6 +69,9 @@ router.get('/:id/critique', authMiddleware, getDealCritique);
 // field-agnostic diff vs the baseline. Distinct from /:dealId/scenarios
 // (legacy named-Scenario collection). Backs the scenario-scoped workspace.
 router.get('/:id/scenario-comparison', authMiddleware, getDealScenarioComparison);
+// Task #8 (2026-05-20): full analysis for ONE selected scenario (lazy-loaded
+// by the workspace for the Financials/Long-term/Tax depth sections).
+router.get('/:id/scenario-detail/:decisionEventId', authMiddleware, getDealScenarioDetail);
 // Day 10 (2026-05-18): license status + dev-mode license seed.
 // `getDealLicense` surfaces the user's active license (if any) for
 // this property's badge UX. `seedDealLicense` is dev-guarded by

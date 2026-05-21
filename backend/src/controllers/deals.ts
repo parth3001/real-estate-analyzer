@@ -687,6 +687,78 @@ export const getDealScenarioComparison = async (
 };
 
 /**
+ * GET /api/deals/:id/scenario-detail/:decisionEventId — Task #8 (2026-05-20).
+ *
+ * Full analysis for ONE selected scenario — the Financials / Long-term /
+ * Tax depth the scenario-comparison list intentionally omits (for payload
+ * leanness). Lazy-loaded by the workspace when the user selects a scenario.
+ *
+ * Investor isolation: the DecisionEvent must belong to the requesting user
+ * (checked on decision.userId) — never trust the path id alone.
+ */
+export const getDealScenarioDetail = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    const { decisionEventId } = req.params;
+
+    let bundle;
+    try {
+      bundle = await eventsRepositoryReads.getScenarioBundle(decisionEventId);
+    } catch {
+      // Invalid ObjectId etc.
+      res.status(404).json({ error: 'Scenario not found' });
+      return;
+    }
+    // Isolation: the scenario must belong to this user.
+    if (!bundle || bundle.decision.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Scenario not found' });
+      return;
+    }
+
+    const ap = bundle.analysis?.payload;
+    const dp = bundle.decision.payload;
+    const pa = dp.professionalAssessment;
+
+    res.json({
+      decisionEventId: bundle.decision._id.toString(),
+      createdAt: bundle.decision.timestamp,
+      dealQuality: dp.dealQuality,
+      factorScores: {
+        cashFlow: pa?.cashFlowScore,
+        irr: pa?.irrScore,
+        marketStrength: pa?.marketStrengthScore,
+        debtStructure: pa?.debtStructureScore,
+        exitStrategy: pa?.exitStrategyScore,
+        capRate: pa?.capRateScore,
+        propertyRisk: pa?.propertyRiskScore,
+      },
+      walkAwayPrice: ap?.walkAwayPrice,
+      // The scenario's input set (what makes it this scenario).
+      propertyData: ap?.propertyData,
+      // The full analysis powering the Details sections.
+      monthlyAnalysis: ap?.monthlyAnalysis,
+      longTermAnalysis: ap?.longTermAnalysis,
+      metrics: ap?.metrics,
+    });
+  } catch (error) {
+    logger.error(
+      `Error getting scenario detail for decision ${req.params.decisionEventId}:`,
+      error
+    );
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    });
+  }
+};
+
+/**
  * GET /api/deals/:id/critique — T1 (Day 9a, 2026-05-18).
  *
  * Returns the adversarial-critic CritiqueEvents (both personas) tied

@@ -282,6 +282,30 @@ export class EventsRepositoryReads {
     }));
   }
 
+  /**
+   * One scenario's (DecisionEvent, AnalysisEvent) bundle by decision id.
+   * Backs the per-scenario detail fetch (Task #8) — lazy-loads the full
+   * analysis for the selected scenario's Financials/Long-term/Tax sections.
+   * Lean (2 queries), unlike getAuditTrail which also pulls overrides/
+   * critiques/audit. Returns null if the decision is missing.
+   *
+   * Caller MUST enforce investor isolation by checking decision.userId.
+   */
+  async getScenarioBundle(
+    decisionEventId: Types.ObjectId | string
+  ): Promise<ScenarioBundle | null> {
+    const decision = await DecisionEventModel.findById(toObjectId(decisionEventId))
+      .lean<DecisionEventDocument | null>()
+      .exec();
+    if (!decision) return null;
+    const analysis = await AnalysisEventModel.findById(
+      decision.payload.analysisEventId
+    )
+      .lean<AnalysisEventDocument | null>()
+      .exec();
+    return { decision, analysis };
+  }
+
   // ===== 8.3 — Calibration drift signal =====
 
   /**
