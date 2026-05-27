@@ -25,6 +25,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -34,10 +35,12 @@ import {
 // ===== Input schema =====
 
 export const RenderAuditTrailInputSchema = z.object({
-  decisionId: z.union([z.instanceof(Types.ObjectId), z.string()]),
+  // Task #16 (2026-05-23): strict hex pattern (see export_audit_pdf).
+  decisionId: objectIdHex,
 });
 
-export type RenderAuditTrailInput = z.infer<typeof RenderAuditTrailInputSchema>;
+// Task #16 (2026-05-23): z.input so internal callers can pass ObjectId for decisionId.
+export type RenderAuditTrailInput = z.input<typeof RenderAuditTrailInputSchema>;
 
 // ===== Output schema =====
 
@@ -92,6 +95,7 @@ export const renderAuditTrail: Tool<RenderAuditTrailInput, RenderAuditTrailOutpu
     input: RenderAuditTrailInput,
     ctx: ToolContext
   ): Promise<RenderAuditTrailOutput> {
+    // Task #16: objectIdHex.preprocess handles ObjectId → hex inside parse.
     const validated = RenderAuditTrailInputSchema.parse(input);
     const decisionId = resolveObjectId(validated.decisionId);
 

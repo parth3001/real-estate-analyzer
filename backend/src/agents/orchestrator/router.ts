@@ -34,7 +34,23 @@ export type ToolTarget =
   | 'tool:export_audit_pdf'
   | 'tool:save_to_watchlist';
 
-export type RoutingTarget = AgentTarget | ToolTarget | 'fallback' | 'deflection:off_topic';
+/**
+ * Service targets — deterministic backend services that do NOT loop through
+ * the agent runner. Used when the path is fully owned by a typed service
+ * (e.g., the stress-test pipeline in `services/perturbation/` — Path B).
+ *
+ * Why not an agent target: agents are LLM-loop-driven and free-form. Services
+ * are deterministic call chains with bounded LLM use at known points (Layer 2
+ * extract + Layer 4 narrate). Different runtime model, different routing.
+ */
+export type ServiceTarget = 'service:stress_test';
+
+export type RoutingTarget =
+  | AgentTarget
+  | ToolTarget
+  | ServiceTarget
+  | 'fallback'
+  | 'deflection:off_topic';
 
 /**
  * The routed-to enum that gets persisted on the ConversationEvent
@@ -47,6 +63,7 @@ export type RoutedTo =
   | 'agent:qa'
   | 'agent:adversarial_critic'
   | 'tool_only'
+  | 'service:stress_test'
   | 'fallback'
   | 'deflection:off_topic';
 
@@ -211,20 +228,30 @@ export function routeIntent(
       };
 
     case 'override_assumption':
-      // Chat-flow overrides go through the deal-scoring agent — it
-      // recalls the recent decision context (via recall_user_context)
-      // and re-runs resolve_property_inputs with userOverrides set,
-      // then re-scores. apply_override (the deterministic tool) is
-      // still in the registry and callable directly from the
-      // frontend (e.g., a future drag-the-slider UI on DealScoreCard)
-      // when the caller has a structured `{ decisionId, fieldPath,
-      // newValue }` payload. Updated 2026-05-16 (Issue #104) — the
-      // old direct tool:apply_override route fails for chat input
-      // because the chat surface has no way to construct the
-      // structured payload.
+      // Path B (Task #16, 2026-05-27): override_assumption now routes to
+      // the deterministic service:stress_test pipeline, NOT the LLM-driven
+      // deal-scoring agent.
+      //
+      // Why we flipped: the agent path passed userOverrides through the
+      // LLM, which produced unit mismatches (e.g., LLM sent
+      // `interestRate: 0.075` where engine wanted `7.5` → engine read
+      // 0.00075% → mortgage payment collapsed → bogus 81/100 score on
+      // deals that should have scored ~30).
+      //
+      // The service pipeline (services/perturbation/) keeps the LLM
+      // bounded to (a) typed extraction with Zod-validated unit
+      // declarations and (b) narrative composition over verified
+      // numbers. Math runs in a deterministic Layer 3
+      // (SFRAnalyzer + InvestmentDecisionEngine) that the LLM never
+      // touches. See /backend/src/services/perturbation/README or the
+      // module docstrings for the full architecture.
+      //
+      // tool:apply_override stays in the registry for any future
+      // structured frontend (e.g., a slider-drag UI on DealScoreCard
+      // that already has the typed payload).
       return {
-        target: 'agent:deal_scoring',
-        routedTo: 'agent:deal_scoring',
+        target: 'service:stress_test',
+        routedTo: 'service:stress_test',
         classifierIntent: intent,
         classifierConfidence: confidence,
       };

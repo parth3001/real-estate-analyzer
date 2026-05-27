@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Alert, CircularProgress, Button, Divider, Collapse } from '@mui/material';
+import { Box, Typography, Alert, CircularProgress, Button } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
 import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/api';
-import AnalysisResults from '../components/SFRAnalysis/AnalysisResults';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
 import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
 import { ScenarioDetails } from '../components/AnalysisDetails/ScenarioDetails';
-import { AnalysisErrorBoundary } from '../components/common/AnalysisErrorBoundary';
 
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,10 +21,6 @@ const AnalysisDetails: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Full analysis for the selected scenario — drives the scenario-aware hero.
   const [selectedDetail, setSelectedDetail] = useState<ScenarioDetailWire | null>(null);
-  // Legacy 11-tab deep-dive: collapsed by default (Task #19). The workspace
-  // above is the primary surface; the legacy tabs (Tax/Comparables/Market —
-  // not yet migrated) live behind a de-emphasized toggle until migrated.
-  const [showLegacy, setShowLegacy] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -140,7 +134,11 @@ const AnalysisDetails: React.FC = () => {
 
   return (
     <Box sx={{ backgroundColor: 'grey.50', minHeight: '100vh' }}>
-      <Box sx={{ p: 3 }}>
+      {/* Centered reading column (Task #19 polish): financial data reads
+          calmer in a constrained measure than stretched edge-to-edge on wide
+          screens. One column holds the whole workspace — hero, compare,
+          stress, details — so it scans as a single surface. */}
+      <Box sx={{ p: 3, maxWidth: 880, mx: 'auto' }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/saved-properties')}
@@ -159,12 +157,11 @@ const AnalysisDetails: React.FC = () => {
         {/* Phase 4 / Issue #117 — chat-style summary card on top.
             Mirrors the DealScoreCard the user saw when they analyzed
             this property in chat; gives them the continuity moment +
-            quick action chips to dig deeper. The legacy SFRAnalysis
-            tabs below provide the depth (Tax Intelligence, Interactive
-            Analysis, Deal Optimizer, etc.) — UX Designer call was to
-            preserve those tabs as the deep-dive surface, not replace
-            them. Polymorphic across SFR Buy-Hold / BRRRR / House Hack
-            / Multi-Family per the variant config in
+            quick action chips to dig deeper. The depth now lives in the
+            scenario workspace below (Compare / Stress test / Details),
+            all fed from the substrate — the legacy SFRAnalysis deep-dive
+            tabs were removed (Task #19). Polymorphic across SFR Buy-Hold /
+            BRRRR / House Hack / Multi-Family per the variant config in
             ../components/AnalysisDetails/savedDealVariants.ts. */}
         <SavedDealHero
           deal={deal}
@@ -198,42 +195,25 @@ const AnalysisDetails: React.FC = () => {
           <ScenarioDetails detail={selectedDetail} />
         </Box>
 
-        <Divider sx={{ my: 4 }} />
+        {/* Task #19 (2026-05-21): the legacy SFR 11-tab deep-dive (AnalysisResults)
+            was REMOVED. Its substrate-backed depth — Financial Details, Long-term,
+            the year-by-year projection, Market, and Comparables — now lives in the
+            scenario-scoped workspace above (ScenarioDetails), read from the SAME
+            engine output, in the shape it's actually stored in. The legacy tabs
+            read a wizard-flow shape the substrate doesn't populate, so they showed
+            $0 / "No Projection Data Available" — a trust-killer we removed rather
+            than patched (Architect + UX Designer aligned). Tax Intelligence and
+            Deal Optimizer were NOT substrate-backed (dropped at projection time),
+            so they're deferred to a future recompute path, not migrated.
 
-        {/* Task #19 — the legacy 11-tab deep-dive is now collapsed behind a
-            de-emphasized toggle (was clashing with the workspace above). It
-            still holds not-yet-migrated depth (Tax / Comparables / Market),
-            so we keep it accessible rather than deleting it. */}
-        <Button
-          onClick={() => setShowLegacy((v) => !v)}
-          sx={{
-            textTransform: 'none',
-            color: 'text.secondary',
-            fontSize: 13,
-            px: 0,
-            mb: 1,
-          }}
-        >
-          {showLegacy ? '▾ Hide full analysis' : '▸ Show full analysis (tax, comps, market)'}
-        </Button>
-      </Box>
-
-      <Collapse in={showLegacy} unmountOnExit>
-      {/* Deep-dive dispatch by propertyType.
-          - SFR: render the legacy AnalysisResults tabs (Overview /
-            Financial Details / Long-term Analysis / Tax Intelligence /
-            Interactive Analysis / Deal Optimizer). They're well-crafted
-            and earn their keep as the depth surface beneath the hero.
-          - MF: the legacy MF deep-dive page (/mf-analysis?id=X) has
-            unit-level breakdowns + multi-family-specific tabs. For now
-            we link out (MF deep-dive inline-rendering is follow-up
-            work — Issue #117 follow-up). The SavedDealHero above
-            already shows the chat-style summary for MF deals; the
-            link sends the user to the legacy depth surface. */}
-      {deal.propertyType === 'MF' ? (
-        <Box sx={{ p: 3 }}>
+            MF deals keep the link-out to the legacy MF deep-dive: the workspace
+            Details is currently SFR-shaped and the MF Details variant is WIP
+            (Task #21). Until it lands, MF users get the working legacy MF page
+            rather than a half-empty workspace — never a broken one. */}
+        {deal.propertyType === 'MF' && (
           <Box
             sx={{
+              mt: 2,
               bgcolor: 'background.paper',
               border: '1px solid',
               borderColor: 'divider',
@@ -254,56 +234,8 @@ const AnalysisDetails: React.FC = () => {
               View detailed MF analysis →
             </Button>
           </Box>
-        </Box>
-      ) : (
-        // D2 fix (Day 11a, 2026-05-18): wrap legacy AnalysisResults in
-        // an ErrorBoundary so a runtime error in the tabs doesn't nuke
-        // the new SavedDealHero above. Resets when the dealId changes.
-        //
-        // D1 fix (same commit): the materialized chat-flow Deal stores
-        // fields FLAT (deal.propertyType, deal.investmentStrategy, etc.),
-        // NOT nested under `propertyData`. The legacy AnalysisResults
-        // was built for the wizard-flow API response which DID nest.
-        // Construct a propertyData shim from the flat Deal so all the
-        // legacy reads (propertyType, strategy, purchasePrice, etc.)
-        // find what they expect.
-        //
-        // The strategy field is also renamed: chat-flow uses
-        // `investmentStrategy` ('buy-hold' | 'brrrr'), legacy expects
-        // `strategy`. Shim maps it.
-        <AnalysisErrorBoundary resetKey={deal._id}>
-          <AnalysisResults
-            propertyData={{
-              // Spread flat fields from the Deal — propertyType,
-              // monthlyRent, squareFootage, purchasePrice, downPayment,
-              // closingCosts, bedrooms, bathrooms, yearBuilt, etc.
-              ...deal,
-              // Override strategy from the renamed investmentStrategy.
-              // Map 'buy_hold' → 'buy-hold' for legacy compatibility.
-              strategy:
-                deal.investmentStrategy === 'brrrr'
-                  ? 'brrrr'
-                  : 'buy-hold',
-            }}
-            analysis={deal.analysis}
-            dealId={deal._id}
-            // Day 11h Stage 2 (2026-05-19): suppress the duplicate
-            // InvestmentDecisionHero in the legacy Overview tab.
-            // SavedDealHero above is the canonical score surface on this
-            // route; rendering a second hero from the stale nested
-            // analysis.investmentDecision caused the two-scores bug
-            // (28 vs 81 on 1105 Daffodil St). Stage 1 will kill the
-            // nested path on the backend; this prop is the frontend
-            // half of the fix.
-            hideInvestmentHero={true}
-            onParameterChange={async () => {
-              // Analysis is already saved, just log
-              console.log('Analysis already saved');
-            }}
-          />
-        </AnalysisErrorBoundary>
-      )}
-      </Collapse>
+        )}
+      </Box>
     </Box>
   );
 };

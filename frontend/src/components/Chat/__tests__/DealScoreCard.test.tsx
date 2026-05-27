@@ -15,6 +15,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
+import { MemoryRouter } from 'react-router-dom';
 import { DealScoreCard, type DealScoreCardProps } from '../DealScoreCard';
 import { chatTheme } from '../../../theme/chatTheme';
 
@@ -39,9 +40,11 @@ function renderCard(overrides: Partial<DealScoreCardProps> = {}) {
   };
   return {
     ...render(
-      <ThemeProvider theme={chatTheme}>
-        <DealScoreCard {...props} />
-      </ThemeProvider>
+      <MemoryRouter>
+        <ThemeProvider theme={chatTheme}>
+          <DealScoreCard {...props} />
+        </ThemeProvider>
+      </MemoryRouter>
     ),
     props,
   };
@@ -284,6 +287,51 @@ describe('DealScoreCard', () => {
       // After Enter, table is in the DOM (Collapse animates open)
       expect(
         screen.getByTestId('deal-score-card-projection-table')
+      ).toBeInTheDocument();
+    });
+  });
+
+  // Task #22 (2026-05-23) — anonymous teaser polish.
+  describe('gated anonymous teaser', () => {
+    it('hides Top factors / Walk-away / Assumptions rows when gated', () => {
+      renderCard({
+        gated: true,
+        topFactors: [],
+        walkAwayPrice: 0,
+        assumptions: [],
+      });
+      // Score still visible (anonymous still sees the headline number).
+      expect(screen.getByTestId('deal-score-card-score')).toBeInTheDocument();
+      // The three gated sections must NOT render their scaffolding.
+      // Use anchors unique to the GATED rows (not the CTA copy, which
+      // intentionally names what's locked).
+      expect(screen.queryByTestId('deal-score-card-factor')).not.toBeInTheDocument();
+      expect(screen.queryByText('Your offer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('deal-score-card-assumptions-toggle')
+      ).not.toBeInTheDocument();
+    });
+
+    it('renders the Sign-in CTA in place of the gated rows', () => {
+      renderCard({ gated: true, topFactors: [], walkAwayPrice: 0, assumptions: [] });
+      const cta = screen.getByTestId('deal-score-card-anon-cta');
+      expect(cta).toBeInTheDocument();
+      const signIn = screen.getByTestId('deal-score-card-anon-signin');
+      expect(signIn).toHaveAttribute('href', '/login');
+    });
+
+    it('renders the full card (no CTA, all sections) when gated=false (default)', () => {
+      // Default is the logged-in / saved-deal path — make sure the polish
+      // didn't change behavior for non-anonymous consumers.
+      renderCard(); // no `gated` override → default false
+      expect(
+        screen.queryByTestId('deal-score-card-anon-cta')
+      ).not.toBeInTheDocument();
+      // All three gated sections render in the default (non-anon) path.
+      expect(screen.getAllByTestId('deal-score-card-factor').length).toBeGreaterThan(0);
+      expect(screen.getByText('Your offer')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('deal-score-card-assumptions-toggle')
       ).toBeInTheDocument();
     });
   });

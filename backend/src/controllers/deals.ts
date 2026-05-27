@@ -751,6 +751,13 @@ export const getDealScenarioDetail = async (
       monthlyAnalysis: ap?.monthlyAnalysis,
       longTermAnalysis: ap?.longTermAnalysis,
       metrics: ap?.metrics,
+      // Task #19 (2026-05-21): market snapshot frozen at analysis time —
+      // powers the workspace Market + Comparables sections that replace the
+      // legacy Market Analysis / Comparables tabs. This is a point-in-time
+      // snapshot (better than a fresh re-fetch: it reflects the market as of
+      // when THIS scenario was scored). Substrate always captures it on the
+      // AnalysisEvent (AnalysisPayload.marketData: MarketDataResponse).
+      marketData: ap?.marketData,
     });
   } catch (error) {
     logger.error(

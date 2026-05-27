@@ -1,0 +1,467 @@
+/**
+ * Runner — Layer 3 of the chat stress-test architecture (Task #16, Path B).
+ *
+ * Deterministic, LLM-free. Given a prior decision and a set of typed
+ * perturbations, this service:
+ *
+ *   1. Loads the prior AnalysisEvent payload VERBATIM (propertyData +
+ *      assumptions exactly as they were scored), scoped by userId for
+ *      investor isolation.
+ *   2. Clones the loaded inputs (no in-place mutation of cached events).
+ *   3. Applies each perturbation:
+ *        - looks up the field in the registry
+ *        - converts user-declared unit → engine-expected unit
+ *        - validates against bounds (warnings, not errors)
+ *        - writes to the right container/path
+ *        - handles set / increase_by / decrease_by operations
+ *   4. Re-runs the genuine SFRAnalyzer + InvestmentDecisionEngine on
+ *      BOTH baseline and stressed inputs (same engine version → comparable
+ *      results).
+ *   5. Returns a structured StressTestResult — every number Layer 4 can
+ *      narrate is grounded in this object.
+ *
+ * The LLM never sees this code path's math. Layer 2 extracts intent into a
+ * typed schema; Layer 3 runs the engine; Layer 4 narrates. The 81/100
+ * confabulation failure mode is structurally prevented because no math
+ * happens outside the engine.
+ *
+ * SFR-only for now. MF needs MFDecisionEngine with skipEnhancements; tracked
+ * as a follow-up (Task #21 — MF WIP messaging + property-type registry #20
+ * will pick up the dispatch).
+ */
+
+import { Types } from 'mongoose';
+import { SFRAnalyzer } from '../../analysis';
+import { InvestmentDecisionEngine } from '../investment/investmentDecisionEngine';
+import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
+import type { SFRData } from '../../types/propertyTypes';
+import type { AnalysisAssumptions } from '../../analysis/BasePropertyAnalyzer';
+import { logger } from '../../utils/logger';
+import {
+  getFieldDef,
+  normalizeToEngineUnit,
+  validateEngineValue,
+  type PerturbableFieldDef,
+} from './fieldRegistry';
+import {
+  StressTestRequestSchema,
+  type StressTestRequest,
+  type StressTestResult,
+  type ScenarioSnapshot,
+  type PerturbationDelta,
+  type PerturbationSpec,
+} from './schemas';
+
+// ===== Typed errors (so orchestrator + tests can branch cleanly) =====
+
+export class StressTestNotFoundError extends Error {
+  constructor(decisionId: string) {
+    super(`Prior decision ${decisionId} not found.`);
+    this.name = 'StressTestNotFoundError';
+  }
+}
+
+export class StressTestForbiddenError extends Error {
+  constructor() {
+    // Generic message — never leak existence of another user's decision.
+    super('Prior decision not found.');
+    this.name = 'StressTestForbiddenError';
+  }
+}
+
+export class StressTestIncompleteError extends Error {
+  constructor(decisionId: string) {
+    super(
+      `Prior decision ${decisionId} has no linked AnalysisEvent — cannot reproduce inputs.`
+    );
+    this.name = 'StressTestIncompleteError';
+  }
+}
+
+export class StressTestUnsupportedError extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'StressTestUnsupportedError';
+  }
+}
+
+// ===== Helpers =====
+
+/**
+ * Deep-clone via structured JSON — substrate payloads are plain JSON-y
+ * objects (no Dates/Maps/Sets at the leaves the engine reads), so this
+ * is safe and isolates downstream mutation from the cached event.
+ */
+function deepClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+/**
+ * Resolve the value at a registry-defined path on the engine call shape.
+ * Used by 'increase_by' / 'decrease_by' to read the prior value.
+ *
+ * The registry constrains `path` to keys on either SFRData or
+ * AnalysisAssumptions, so this is type-safe in practice; we widen here
+ * because the helper handles both containers generically.
+ */
+function readEngineField(
+  propertyData: Record<string, unknown>,
+  assumptions: Record<string, unknown>,
+  def: PerturbableFieldDef
+): number | undefined {
+  const bag = def.container === 'propertyData' ? propertyData : assumptions;
+  const v = bag[def.path];
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
+
+/**
+ * Write a value to the registry-defined path on the engine call shape.
+ * Mutates the bag — the runner clones BEFORE calling this so the original
+ * cached payload stays clean.
+ */
+function writeEngineField(
+  propertyData: Record<string, unknown>,
+  assumptions: Record<string, unknown>,
+  def: PerturbableFieldDef,
+  value: number
+): void {
+  const bag = def.container === 'propertyData' ? propertyData : assumptions;
+  bag[def.path] = value;
+}
+
+/**
+ * Apply ALL perturbations atomically against cloned propertyData +
+ * assumptions. Returns the per-field deltas (baseline → stressed) for
+ * Layer 4 to narrate, plus any validation warnings.
+ *
+ * 'set' replaces. 'increase_by' / 'decrease_by' read the current value
+ * (post-clone, but before THIS perturbation's write) and apply the delta.
+ * If two perturbations target the same field, the second one wins for
+ * 'set' and stacks for 'increase_by' — same behavior as if a human had
+ * applied them in order.
+ */
+function applyPerturbations(
+  propertyData: Record<string, unknown>,
+  assumptions: Record<string, unknown>,
+  baselinePropertyData: Record<string, unknown>,
+  baselineAssumptions: Record<string, unknown>,
+  perturbations: PerturbationSpec[]
+): { deltas: PerturbationDelta[]; warnings: string[] } {
+  const deltas: PerturbationDelta[] = [];
+  const warnings: string[] = [];
+
+  for (const p of perturbations) {
+    const def = getFieldDef(p.field);
+    const baselineValue = readEngineField(baselinePropertyData, baselineAssumptions, def);
+
+    // Convert user-declared unit → engine unit. Throws loudly if the
+    // conversion isn't defined (the LLM mis-declared the unit pair).
+    const userValueInEngineUnit = normalizeToEngineUnit(p.value, p.unit, def);
+
+    let stressedValue: number;
+    if (p.operation === 'set') {
+      stressedValue = userValueInEngineUnit;
+    } else {
+      // increase_by / decrease_by — must have a baseline to perturb against.
+      if (baselineValue === undefined) {
+        warnings.push(
+          `Cannot ${p.operation} ${def.label}: no baseline value found in prior analysis. ` +
+            `Treated as 'set' instead.`
+        );
+        stressedValue = userValueInEngineUnit;
+      } else {
+        stressedValue =
+          p.operation === 'increase_by'
+            ? baselineValue + userValueInEngineUnit
+            : baselineValue - userValueInEngineUnit;
+      }
+    }
+
+    const validationError = validateEngineValue(stressedValue, def);
+    if (validationError) {
+      // Soft warning — proceed with the value but flag it. Engine itself
+      // will produce whatever number the formula yields; the user sees
+      // both the result AND the warning so nothing's hidden.
+      warnings.push(validationError);
+    }
+
+    writeEngineField(propertyData, assumptions, def, stressedValue);
+
+    deltas.push({
+      field: def.key,
+      label: def.label,
+      baselineValue: baselineValue ?? NaN,
+      stressedValue,
+      engineUnit: def.engineUnit,
+    });
+  }
+
+  return { deltas, warnings };
+}
+
+/** Engine's userContext shape — required parameter. */
+interface EngineUserContext {
+  availableCash: number;
+  experienceLevel: 'novice' | 'intermediate' | 'experienced';
+  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  investmentGoals: 'cash_flow' | 'appreciation' | 'balanced';
+}
+
+/**
+ * Build the engine's userContext from the prior decision's substrate snapshot
+ * (DecisionPayload.userContext) plus the propertyData. The substrate stores a
+ * slightly different shape than the engine accepts (no availableCash, slightly
+ * different field names), so we translate here. Both baseline and stressed
+ * receive IDENTICAL context — guarantees the only variable is the perturbation.
+ */
+function buildEngineUserContext(
+  propertyData: SFRData,
+  priorUserContext: unknown
+): EngineUserContext {
+  const pc = (priorUserContext ?? {}) as {
+    riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
+    investmentStrategy?: 'cashflow' | 'appreciation' | 'balanced';
+    experienceLevel?: 'novice' | 'intermediate' | 'experienced' | 'expert';
+  };
+
+  // availableCash: not in substrate; reconstruct from the deal's own committed
+  // capital (down + closing). This is what the user was willing to invest at
+  // analysis time and matches the engine's affordability checks.
+  const availableCash =
+    (propertyData.downPayment ?? 0) + (propertyData.closingCosts ?? 0);
+
+  // experienceLevel: engine doesn't accept 'expert' — clamp to 'experienced'.
+  const experienceLevel: EngineUserContext['experienceLevel'] =
+    pc.experienceLevel === 'expert' ? 'experienced' : pc.experienceLevel ?? 'intermediate';
+
+  // investmentGoals: substrate uses 'cashflow'; engine expects 'cash_flow'.
+  const investmentGoals: EngineUserContext['investmentGoals'] =
+    pc.investmentStrategy === 'cashflow'
+      ? 'cash_flow'
+      : pc.investmentStrategy === 'appreciation'
+      ? 'appreciation'
+      : 'balanced';
+
+  return {
+    availableCash,
+    experienceLevel,
+    riskTolerance: pc.riskTolerance ?? 'moderate',
+    investmentGoals,
+  };
+}
+
+/**
+ * Run the analyzer + engine once and project the result into the
+ * ScenarioSnapshot shape. LLM-free (`skipEnhancements=true`) — pure math.
+ *
+ * Throws if the engine returns a malformed result; deal-quality must exist
+ * for the narration to be honest.
+ */
+async function scoreOnce(
+  propertyData: SFRData,
+  assumptions: AnalysisAssumptions,
+  userContext: EngineUserContext
+): Promise<ScenarioSnapshot> {
+  const analyzer = new SFRAnalyzer(propertyData, assumptions);
+  const analysis = analyzer.analyze();
+
+  const engine = new InvestmentDecisionEngine();
+  const decision = await engine.generateInvestmentDecision(
+    propertyData,
+    analysis,
+    null, // predictions — not needed for the deterministic score
+    null, // marketIntelligence — not needed for stress-only
+    userContext, // identical for baseline + stressed — only perturbation varies
+    undefined, // enhancedGoals
+    true // skipEnhancements — NO LLM. THIS IS THE WHOLE POINT.
+  );
+
+  // Defensively unwrap. The engine's TypeScript type is broad; we narrow.
+  const d = decision as {
+    professionalAssessment?: {
+      dealQuality?: number;
+      cashFlowScore?: number;
+      irrScore?: number;
+      marketStrengthScore?: number;
+      debtStructureScore?: number;
+      exitStrategyScore?: number;
+      capRateScore?: number;
+      propertyRiskScore?: number;
+    };
+    marketPosition?: { walkAwayPrice?: number };
+  };
+
+  const pa = d.professionalAssessment;
+  if (!pa || typeof pa.dealQuality !== 'number') {
+    throw new Error(
+      'scoreOnce: engine returned no professionalAssessment.dealQuality — cannot proceed.'
+    );
+  }
+
+  // The legacy analyzer's runtime return shape uses `keyMetrics`, not the
+  // typed-interface `metrics`. compute_analysis also handles this (see
+  // backend/src/agents/tools/compute_analysis.ts → extractMetrics). Read
+  // both with fallback so we survive either shape and don't reproduce the
+  // empty-metrics bug that showed up on the first runner test pass.
+  const a = analysis as {
+    monthlyAnalysis?: { cashFlow?: number };
+    metrics?: {
+      capRate?: number;
+      cashOnCashReturn?: number;
+      dscr?: number;
+      irr?: number;
+    };
+    keyMetrics?: {
+      capRate?: number;
+      cashOnCashReturn?: number;
+      dscr?: number;
+      irr?: number;
+    };
+  };
+  const m = a.keyMetrics ?? a.metrics ?? {};
+
+  return {
+    dealQuality: pa.dealQuality,
+    qualityLabel: deriveQualityLabel(pa.dealQuality),
+    factorScores: {
+      cashFlow: pa.cashFlowScore ?? 0,
+      irr: pa.irrScore ?? 0,
+      marketStrength: pa.marketStrengthScore ?? 0,
+      debtStructure: pa.debtStructureScore ?? 0,
+      exitStrategy: pa.exitStrategyScore ?? 0,
+      capRate: pa.capRateScore ?? 0,
+      propertyRisk: pa.propertyRiskScore ?? 0,
+    },
+    monthlyCashFlow: a.monthlyAnalysis?.cashFlow ?? 0,
+    capRate: m.capRate ?? 0,
+    cashOnCashReturn: m.cashOnCashReturn ?? 0,
+    dscr: m.dscr ?? 0,
+    walkAwayPrice: d.marketPosition?.walkAwayPrice ?? 0,
+    irr: m.irr ?? 0,
+  };
+}
+
+/** Same bins the projector uses — kept in lockstep with the substrate. */
+function deriveQualityLabel(dealQuality: number): string {
+  if (dealQuality >= 80) return 'Above professional standards';
+  if (dealQuality >= 65) return 'Meets professional standards';
+  if (dealQuality >= 50) return 'Requires optimization';
+  return 'Below professional standards';
+}
+
+// ===== Public API =====
+
+/**
+ * Run a deterministic stress test.
+ *
+ *   - Loads the prior AnalysisEvent for `priorDecisionId` (scoped by `userId`).
+ *   - Applies typed perturbations with explicit unit conversion via the
+ *     registry. The unit-mismatch failure mode (the 0.075-vs-7.5 bug) is
+ *     structurally impossible at this layer.
+ *   - Re-runs the engine on BOTH baseline and stressed inputs (same engine
+ *     version → numbers are directly comparable).
+ *   - Returns the structured result for Layer 4 narration.
+ *
+ * Throws typed errors that the orchestrator translates to user-facing
+ * messages:
+ *   - StressTestNotFoundError       — decisionId is gibberish or unknown
+ *   - StressTestForbiddenError      — decision belongs to another user
+ *   - StressTestIncompleteError     — decision lacks linked AnalysisEvent
+ *   - StressTestUnsupportedError    — property type isn't SFR (MF TBD)
+ */
+export async function runStressTest(
+  rawRequest: unknown
+): Promise<StressTestResult> {
+  // Trust boundary — even if the caller is internal, parse before trusting.
+  const request: StressTestRequest = StressTestRequestSchema.parse(rawRequest);
+
+  // ===== 1. Load prior bundle (decision + analysis) =====
+  let bundle;
+  try {
+    bundle = await eventsRepositoryReads.getScenarioBundle(
+      new Types.ObjectId(request.priorDecisionId)
+    );
+  } catch (err) {
+    logger.warn('runStressTest: getScenarioBundle threw', {
+      priorDecisionId: request.priorDecisionId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw new StressTestNotFoundError(request.priorDecisionId);
+  }
+  if (!bundle) {
+    throw new StressTestNotFoundError(request.priorDecisionId);
+  }
+
+  // ===== 2. Investor isolation — decision must belong to this user =====
+  if (bundle.decision.userId?.toString() !== request.userId) {
+    // Same generic message as NotFound — never confirm "exists but not yours."
+    throw new StressTestForbiddenError();
+  }
+
+  if (!bundle.analysis) {
+    throw new StressTestIncompleteError(request.priorDecisionId);
+  }
+
+  // ===== 3. Extract prior inputs verbatim =====
+  const priorPropertyData = bundle.analysis.payload.propertyData as SFRData & {
+    propertyType?: string;
+  };
+
+  if (priorPropertyData?.propertyType !== 'SFR') {
+    throw new StressTestUnsupportedError(
+      `Stress-testing is only supported for single-family (SFR) deals today; ` +
+        `this deal is ${priorPropertyData?.propertyType ?? 'unknown'}.`
+    );
+  }
+
+  const priorAssumptions = (bundle.analysis.payload.assumptions ?? {}) as AnalysisAssumptions;
+
+  // Reconstruct the engine userContext from the prior decision's substrate
+  // snapshot. Both baseline AND stressed get the SAME context — the only
+  // variable across the two runs is the perturbation set.
+  const engineUserContext = buildEngineUserContext(
+    priorPropertyData,
+    (bundle.decision.payload as { userContext?: unknown })?.userContext
+  );
+
+  // ===== 4. Score baseline (re-run for same-version comparability) =====
+  const baselineSnapshot = await scoreOnce(
+    priorPropertyData,
+    priorAssumptions,
+    engineUserContext
+  );
+
+  // ===== 5. Apply perturbations to a clone, score stressed =====
+  const stressedPropertyData = deepClone(priorPropertyData);
+  const stressedAssumptions = deepClone(priorAssumptions);
+
+  const { deltas, warnings } = applyPerturbations(
+    stressedPropertyData as unknown as Record<string, unknown>,
+    stressedAssumptions as unknown as Record<string, unknown>,
+    priorPropertyData as unknown as Record<string, unknown>,
+    priorAssumptions as unknown as Record<string, unknown>,
+    request.perturbations
+  );
+
+  const stressedSnapshot = await scoreOnce(
+    stressedPropertyData,
+    stressedAssumptions,
+    engineUserContext
+  );
+
+  logger.info('runStressTest: completed', {
+    priorDecisionId: request.priorDecisionId,
+    userId: request.userId,
+    perturbationCount: request.perturbations.length,
+    baselineScore: baselineSnapshot.dealQuality,
+    stressedScore: stressedSnapshot.dealQuality,
+    warningCount: warnings.length,
+  });
+
+  return {
+    baseline: baselineSnapshot,
+    stressed: stressedSnapshot,
+    deltas,
+    warnings,
+  };
+}

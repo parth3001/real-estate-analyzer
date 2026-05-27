@@ -84,6 +84,17 @@ export interface DealScoreCardWireShape {
     /** Monthly debt service in dollars. */
     monthlyDebtService?: number;
   };
+  /**
+   * True when the card has been gated for anonymous users (Task #22,
+   * 2026-05-23). When set, the frontend hides the gated sections
+   * (top-factor bars, walk-away/your-offer comparison, assumptions
+   * accordion) and renders a single "Sign in to unlock" CTA instead of
+   * empty scaffolding. Explicit flag beats sentinel inference
+   * (walkAwayPrice===0) because legitimate edge cases could in principle
+   * yield zero, and the gate's INTENT shouldn't be inferred from a
+   * coincidence of values.
+   */
+  gated?: boolean;
 }
 
 // ===== Helpers =====
@@ -400,5 +411,11 @@ export function gateCardForAnonymous(
     nextStep: card.nextStep,
     assumptions: [],
     // projection + keyMetrics are optional → omit entirely.
+    // Task #22 (2026-05-23): explicit flag so the frontend can render a
+    // clean "Sign in to unlock" CTA in place of the gated rows, rather
+    // than empty scaffolding (broken-looking $0 walk-away, empty
+    // assumptions accordion). The gate's intent is now declared, not
+    // inferred from sentinel zeros.
+    gated: true,
   };
 }

@@ -40,6 +40,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -298,7 +299,9 @@ export const ScoreDealInputSchema = z.object({
   walkAwayPrice: z.number().finite().optional(),
 
   /** Cross-event correlation — the deal this analysis is for. */
-  dealId: z.union([z.instanceof(Types.ObjectId), z.string()]).optional(),
+  // Task #16 (2026-05-23): use objectIdHex so the LLM sees a strict
+  // pattern instead of `{}` (the old union collapsed in zod-to-json-schema).
+  dealId: objectIdHex.optional(),
 
   /** Provenance for the substrate AnalysisEvent. */
   enrichmentSource: EnrichmentSourceSchema.optional(),
@@ -309,7 +312,8 @@ export const ScoreDealInputSchema = z.object({
   predictions: z.unknown().optional(),
 });
 
-export type ScoreDealInput = z.infer<typeof ScoreDealInputSchema>;
+// Task #16 (2026-05-23): z.input so internal callers can pass ObjectId for dealId.
+export type ScoreDealInput = z.input<typeof ScoreDealInputSchema>;
 
 // ===== Output schema =====
 
@@ -389,15 +393,13 @@ const DEFAULT_SCORING_WEIGHTS = {
 
 // ===== Helpers =====
 
-function resolveDealId(
-  raw: ScoreDealInput['dealId']
-): Types.ObjectId | undefined {
+function resolveDealId(raw: string | undefined): Types.ObjectId | undefined {
+  // Task #16 (2026-05-23): callers pass `validated.dealId` (the POST-parse
+  // hex string), so the param type is `string | undefined`. The schema's
+  // preprocess + regex have already coerced any internal-caller ObjectId
+  // to hex and validated it; this function only needs string→ObjectId.
   if (!raw) return undefined;
-  if (raw instanceof Types.ObjectId) return raw;
-  if (typeof raw === 'string' && Types.ObjectId.isValid(raw)) {
-    return new Types.ObjectId(raw);
-  }
-  return undefined;
+  return Types.ObjectId.isValid(raw) ? new Types.ObjectId(raw) : undefined;
 }
 
 /**
@@ -546,7 +548,9 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
   retrySemantics: NO_RETRY,
 
   async execute(input: ScoreDealInput, ctx: ToolContext): Promise<ScoreDealOutput> {
-    // Trust boundary
+    // Trust boundary. Task #16: objectIdHex.preprocess handles ObjectId →
+    // hex coercion inside .parse(), so internal callers passing an ObjectId
+    // instance for dealId still validate cleanly.
     const validated = ScoreDealInputSchema.parse(input);
 
     // Normalize analysisResult — handles both shapes (keyMetrics vs metrics)

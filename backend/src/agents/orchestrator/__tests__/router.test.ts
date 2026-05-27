@@ -28,7 +28,10 @@ describe('routeIntent (W2-S1)', () => {
       // CAN'T construct now routes through an agent that resolves the
       // payload via recall_user_context, then calls the tool. Direct
       // tool routes stay in the registry for structured frontend use.
-      ['override_assumption', 'agent:deal_scoring', 'agent:deal_scoring'],
+      // Task #16 Path B (2026-05-27): override_assumption now routes to the
+      // deterministic service:stress_test pipeline instead of the LLM-driven
+      // deal-scoring agent. See router.ts for the rationale.
+      ['override_assumption', 'service:stress_test', 'service:stress_test'],
       ['request_audit_trail', 'agent:qa', 'agent:qa'],
       ['request_export', 'agent:deal_scoring', 'agent:deal_scoring'],
       ['request_critique', 'agent:adversarial_critic', 'agent:adversarial_critic'],

@@ -211,6 +211,50 @@ export interface ScenarioDetailWire {
   monthlyAnalysis?: any;
   longTermAnalysis?: any;
   metrics?: any;
+  /**
+   * Market snapshot frozen at analysis time (Task #19). Powers the workspace
+   * Market + Comparables sections. Shape mirrors backend MarketDataResponse;
+   * loosely typed here (substrate stores it as Mixed) but the fields the UI
+   * reads are declared on ScenarioMarketDataWire for safety.
+   */
+  marketData?: ScenarioMarketDataWire;
+}
+
+/** Subset of MarketDataResponse the workspace Market/Comparables sections read. */
+export interface ScenarioComparableWire {
+  address?: string;
+  distance?: number;
+  salePrice?: number;
+  pricePerSqft?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  daysOnMarket?: number;
+  yearBuilt?: number;
+}
+export interface ScenarioMarketDataWire {
+  comparables?: ScenarioComparableWire[];
+  marketTrends?: {
+    medianRent?: number;
+    averageRent?: number;
+    rentGrowthRate?: number;
+    medianSalePrice?: number;
+    priceGrowthRate?: number;
+    daysOnMarket?: number;
+    inventoryLevel?: string;
+    priceToRentRatio?: number;
+  };
+  economicIndicators?: {
+    currentMortgageRate?: number;
+    mortgageRateTrend?: string;
+    inflationRate?: number;
+    unemploymentRate?: number;
+  };
+  location?: {
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
 }
 
 export interface SensitivityPointWire {

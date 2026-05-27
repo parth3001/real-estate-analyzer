@@ -74,6 +74,12 @@ const RoutedToSchema = z.enum([
   // deflection response. No agent invoked; substrate records the routed-to
   // value for activation-funnel queries ("how often are we deflecting?").
   'deflection:off_topic',
+  // Task #16 Path B (2026-05-27) — override_assumption intent now routes
+  // to a deterministic service pipeline (services/perturbation) instead
+  // of the LLM-driven deal-scoring agent. Substrate logs this so we can
+  // track adoption + compare conversion rates against the old broken
+  // path during the transition window.
+  'service:stress_test',
 ]);
 export type RoutedTo = z.infer<typeof RoutedToSchema>;
 

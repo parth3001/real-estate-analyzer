@@ -37,6 +37,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -48,11 +49,16 @@ import {
 const ExportFormatSchema = z.enum(['pdf', 'csv', 'json']);
 
 export const ExportAuditPdfInputSchema = z.object({
-  decisionId: z.union([z.instanceof(Types.ObjectId), z.string()]),
+  // Task #16 (2026-05-23): strict hex pattern so the LLM-facing JSON
+  // schema renders cleanly (the prior z.union collapsed to `{}`).
+  decisionId: objectIdHex,
   format: ExportFormatSchema,
 });
 
-export type ExportAuditPdfInput = z.infer<typeof ExportAuditPdfInputSchema>;
+// Task #16 (2026-05-23): z.input (not z.infer) so internal callers can pass
+// a Types.ObjectId for decisionId; the schema's preprocess coerces to hex
+// before the regex validates. Other fields keep their narrow types.
+export type ExportAuditPdfInput = z.input<typeof ExportAuditPdfInputSchema>;
 
 // ===== Output schema =====
 
@@ -210,6 +216,7 @@ export const exportAuditPdf: Tool<ExportAuditPdfInput, ExportAuditPdfOutput> = {
     input: ExportAuditPdfInput,
     ctx: ToolContext
   ): Promise<ExportAuditPdfOutput> {
+    // Task #16: objectIdHex.preprocess handles ObjectId → hex inside parse.
     const validated = ExportAuditPdfInputSchema.parse(input);
     const decisionId = resolveObjectId(validated.decisionId);
 

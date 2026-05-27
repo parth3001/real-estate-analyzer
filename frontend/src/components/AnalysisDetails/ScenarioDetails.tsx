@@ -7,14 +7,26 @@
  * so switching scenarios re-points these numbers too (the whole point of
  * the scenario-scoped page).
  *
+ * Migration (Task #19, 2026-05-21): this now carries the FULL substrate-backed
+ * depth that the legacy AnalysisResults tabs used to show — including the
+ * monthly income/expense breakdown (Financial Details tab) and the
+ * year-by-year projection table (Long-term Analysis tab, the section that
+ * rendered "No Projection Data Available" in legacy). All fields read the
+ * REAL analyzer shape verified against BasePropertyAnalyzer.analyze():
+ *   monthlyAnalysis  = { income:{gross,effective}, expenses:{operating,debt,total}, cashFlow }
+ *   longTermAnalysis = { projections: YearlyProjection[], exitAnalysis, returns, projectionYears }
+ *   returns          = { irr (decimal), totalCashFlow, totalAppreciation, totalReturn }
+ *
  * Collapsible sections (Apple progressive disclosure). Defensive field
  * access — substrate analysis payloads are loose Record shapes; missing
- * values render "–" rather than crashing.
+ * values render "–" rather than crashing. Negative cash flow renders in the
+ * danger color so a money-bleeding deal reads honestly (trust > optics).
  */
 
 import { useState } from 'react';
 import { Box, Typography, Collapse } from '@mui/material';
-import type { ScenarioDetailWire } from '../../services/api';
+import type { ScenarioDetailWire, ScenarioComparableWire } from '../../services/api';
+import { WorkspaceSection } from './WorkspaceSection';
 
 export interface ScenarioDetailsProps {
   detail: ScenarioDetailWire | null;
@@ -35,6 +47,15 @@ const fmtPct = (v: unknown): string =>
 const fmtRatio = (v: unknown): string =>
   typeof v === 'number' && !Number.isNaN(v) ? v.toFixed(2) : '–';
 
+const fmtNum = (v: unknown): string =>
+  typeof v === 'number' && !Number.isNaN(v) ? Math.round(v).toLocaleString('en-US') : '–';
+
+const fmtMiles = (v: unknown): string =>
+  typeof v === 'number' && !Number.isNaN(v) ? `${v.toFixed(1)} mi` : '–';
+
+const fmtText = (v: unknown): string =>
+  typeof v === 'string' && v.trim().length > 0 ? v : '–';
+
 // IRR is stored as a decimal (e.g. 0.0608) — display as a percent.
 const fmtIrr = (v: unknown): string =>
   typeof v === 'number' && !Number.isNaN(v)
@@ -44,6 +65,27 @@ const fmtIrr = (v: unknown): string =>
 function num(o: Record<string, unknown> | undefined, k: string): unknown {
   return o ? o[k] : undefined;
 }
+
+/** Loose nested access for the income/expenses sub-objects. */
+function nestedNum(
+  o: Record<string, unknown> | undefined,
+  k1: string,
+  k2: string
+): unknown {
+  const inner = o ? (o[k1] as Record<string, unknown> | undefined) : undefined;
+  return inner ? inner[k2] : undefined;
+}
+
+/** A label/value row; `negative` paints the value in the danger color. */
+interface Row {
+  label: string;
+  value: string;
+  negative?: boolean;
+}
+
+/** True when a numeric value is a real (non-NaN) negative number. */
+const isNeg = (v: unknown): boolean =>
+  typeof v === 'number' && !Number.isNaN(v) && v < 0;
 
 export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Element | null {
   const [openSection, setOpenSection] = useState<string | null>('financials');
@@ -55,51 +97,85 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
   const lt = (detail.longTermAnalysis ?? {}) as Record<string, unknown>;
   const returns = (lt.returns ?? {}) as Record<string, unknown>;
   const exit = (lt.exitAnalysis ?? {}) as Record<string, unknown>;
+  const projections = Array.isArray(lt.projections)
+    ? (lt.projections as Array<Record<string, unknown>>)
+    : [];
 
-  const financials: Array<[string, string]> = [
-    ['Monthly cash flow', fmtCurrency(num(ma, 'cashFlow'))],
-    ['Cap rate', fmtPct(num(m, 'capRate'))],
-    ['Cash-on-cash', fmtPct(num(m, 'cashOnCashReturn'))],
-    ['DSCR', fmtRatio(num(m, 'dscr'))],
-    ['Annual NOI', fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI'))],
+  // Market snapshot frozen at analysis time (Task #19) — powers Market +
+  // Comparables sections that replace the legacy Market/Comparables tabs.
+  const md = detail.marketData ?? {};
+  const trends = md.marketTrends ?? {};
+  const econ = md.economicIndicators ?? {};
+  const comps = Array.isArray(md.comparables) ? md.comparables : [];
+
+  const market: Row[] = [
+    { label: 'Median rent', value: fmtCurrency(trends.medianRent) },
+    { label: 'Rent growth (12mo)', value: fmtPct(trends.rentGrowthRate) },
+    { label: 'Median sale price', value: fmtCurrency(trends.medianSalePrice) },
+    { label: 'Price growth (12mo)', value: fmtPct(trends.priceGrowthRate) },
+    { label: 'Days on market', value: fmtNum(trends.daysOnMarket) },
+    { label: 'Inventory level', value: fmtText(trends.inventoryLevel) },
+    { label: 'Price-to-rent ratio', value: fmtRatio(trends.priceToRentRatio) },
+    { label: 'Current mortgage rate', value: fmtPct(econ.currentMortgageRate) },
+    { label: 'Rate trend', value: fmtText(econ.mortgageRateTrend) },
+  ];
+  // Render Market only if the snapshot actually carries trend/economic data
+  // (a fallback-enriched analysis may have none — don't show a wall of "–").
+  const hasMarket = [
+    trends.medianRent,
+    trends.medianSalePrice,
+    trends.rentGrowthRate,
+    econ.currentMortgageRate,
+  ].some((v) => typeof v === 'number' && !Number.isNaN(v));
+
+  const monthlyCashFlow = num(ma, 'cashFlow');
+
+  const financials: Row[] = [
+    // Monthly cash-flow breakdown (was the legacy "Financial Details" tab).
+    { label: 'Gross monthly income', value: fmtCurrency(nestedNum(ma, 'income', 'gross')) },
+    {
+      label: 'Effective income (after vacancy)',
+      value: fmtCurrency(nestedNum(ma, 'income', 'effective')),
+    },
+    { label: 'Operating expenses', value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')) },
+    { label: 'Debt service (mortgage)', value: fmtCurrency(nestedNum(ma, 'expenses', 'debt')) },
+    {
+      label: 'Monthly cash flow',
+      value: fmtCurrency(monthlyCashFlow),
+      negative: isNeg(monthlyCashFlow),
+    },
+    // Headline return metrics.
+    { label: 'Cap rate', value: fmtPct(num(m, 'capRate')) },
+    { label: 'Cash-on-cash', value: fmtPct(num(m, 'cashOnCashReturn')) },
+    { label: 'DSCR', value: fmtRatio(num(m, 'dscr')) },
+    { label: 'Annual NOI', value: fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI')) },
   ];
 
-  const longTerm: Array<[string, string]> = [
-    ['Hold period', typeof lt.projectionYears === 'number' ? `${lt.projectionYears} yr` : '–'],
-    ['IRR', fmtIrr(num(returns, 'irr'))],
-    ['Total return', fmtCurrency(num(returns, 'totalReturn'))],
-    ['Projected sale price', fmtCurrency(num(exit, 'projectedSalePrice'))],
-    ['Net proceeds at exit', fmtCurrency(num(exit, 'netProceedsFromSale'))],
+  const totalCashFlow = num(returns, 'totalCashFlow');
+  const longTerm: Row[] = [
+    {
+      label: 'Hold period',
+      value: typeof lt.projectionYears === 'number' ? `${lt.projectionYears} yr` : '–',
+    },
+    { label: 'IRR', value: fmtIrr(num(returns, 'irr')) },
+    // Total cash flow over the hold — NEGATIVE for a money-bleeding deal,
+    // exactly as it should be. Read straight from the (correct) substrate
+    // returns; the legacy tab displayed $0 here due to a field-map bug.
+    {
+      label: 'Total cash flow',
+      value: fmtCurrency(totalCashFlow),
+      negative: isNeg(totalCashFlow),
+    },
+    { label: 'Total appreciation', value: fmtCurrency(num(returns, 'totalAppreciation')) },
+    { label: 'Total return', value: fmtCurrency(num(returns, 'totalReturn')) },
+    { label: 'Projected sale price', value: fmtCurrency(num(exit, 'projectedSalePrice')) },
+    { label: 'Net proceeds at exit', value: fmtCurrency(num(exit, 'netProceedsFromSale')) },
   ];
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="caption"
-        sx={{
-          display: 'block',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          fontWeight: 600,
-          color: 'text.secondary',
-          fontSize: 11,
-          mb: 1,
-        }}
-      >
-        Details · selected scenario
-      </Typography>
-
-      <Box
-        sx={{
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 2,
-          overflow: 'hidden',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Section
-          title="Financials"
+    <WorkspaceSection label="Details · selected scenario">
+      <Section
+        title="Financials"
           open={openSection === 'financials'}
           onToggle={() => setOpenSection((s) => (s === 'financials' ? null : 'financials'))}
           rows={financials}
@@ -111,8 +187,34 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
           rows={longTerm}
           borderTop
         />
-      </Box>
-    </Box>
+        {projections.length > 0 && (
+          <ProjectionSection
+            open={openSection === 'projection'}
+            onToggle={() =>
+              setOpenSection((s) => (s === 'projection' ? null : 'projection'))
+            }
+            projections={projections}
+          />
+        )}
+        {hasMarket && (
+          <Section
+            title="Market"
+            open={openSection === 'market'}
+            onToggle={() => setOpenSection((s) => (s === 'market' ? null : 'market'))}
+            rows={market}
+            borderTop
+          />
+        )}
+        {comps.length > 0 && (
+          <ComparablesSection
+            open={openSection === 'comparables'}
+            onToggle={() =>
+              setOpenSection((s) => (s === 'comparables' ? null : 'comparables'))
+            }
+            comparables={comps}
+          />
+        )}
+    </WorkspaceSection>
   );
 }
 
@@ -126,43 +228,15 @@ function Section({
   title: string;
   open: boolean;
   onToggle: () => void;
-  rows: Array<[string, string]>;
+  rows: Row[];
   borderTop?: boolean;
 }): React.JSX.Element {
   return (
     <Box sx={{ borderTop: borderTop ? '1px solid' : 'none', borderColor: 'divider' }}>
-      <Box
-        role="button"
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') onToggle();
-        }}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1.5,
-          cursor: 'pointer',
-          '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' },
-        }}
-      >
-        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{title}</Typography>
-        <Box
-          sx={{
-            color: 'text.secondary',
-            fontSize: 12,
-            transform: open ? 'rotate(90deg)' : 'none',
-            transition: 'transform 0.15s ease',
-          }}
-        >
-          ▸
-        </Box>
-      </Box>
+      <SectionHeader title={title} open={open} onToggle={onToggle} />
       <Collapse in={open} unmountOnExit>
         <Box sx={{ px: 2, pb: 1.5 }}>
-          {rows.map(([label, value]) => (
+          {rows.map(({ label, value, negative }) => (
             <Box
               key={label}
               sx={{
@@ -174,13 +248,251 @@ function Section({
               }}
             >
               <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
-              <Typography sx={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: negative ? 'error.main' : 'text.primary',
+                }}
+              >
                 {value}
               </Typography>
             </Box>
           ))}
         </Box>
       </Collapse>
+    </Box>
+  );
+}
+
+/**
+ * Year-by-year projection table — the substrate's longTermAnalysis.projections
+ * (YearlyProjection[]). This is the depth the legacy "Long-term Analysis" tab
+ * rendered (and which broke to "No Projection Data Available"); the data was
+ * in the substrate all along. Horizontally scrollable on mobile with a sticky
+ * Year column.
+ */
+function ProjectionSection({
+  open,
+  onToggle,
+  projections,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  projections: Array<Record<string, unknown>>;
+}): React.JSX.Element {
+  const cols: Array<{ key: string; label: string }> = [
+    { key: 'cashFlow', label: 'Cash flow' },
+    { key: 'noi', label: 'NOI' },
+    { key: 'equity', label: 'Equity' },
+    { key: 'propertyValue', label: 'Value' },
+    { key: 'totalReturn', label: 'Total return' },
+  ];
+
+  return (
+    <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+      <SectionHeader title="Year-by-year projection" open={open} onToggle={onToggle} />
+      <Collapse in={open} unmountOnExit>
+        <Box sx={{ px: 2, pb: 2, overflowX: 'auto' }}>
+          <Box
+            component="table"
+            sx={{
+              borderCollapse: 'collapse',
+              width: '100%',
+              minWidth: 520,
+              '& th, & td': {
+                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
+                textAlign: 'right',
+                py: 0.75,
+                px: 1,
+                whiteSpace: 'nowrap',
+                borderTop: '1px solid',
+                borderColor: 'grey.100',
+              },
+              '& th': {
+                color: 'text.secondary',
+                fontWeight: 600,
+                position: 'sticky',
+                top: 0,
+              },
+              // Year column: left-aligned + sticky so it stays in view while scrolling.
+              '& th:first-of-type, & td:first-of-type': {
+                textAlign: 'left',
+                position: 'sticky',
+                left: 0,
+                bgcolor: 'background.paper',
+                fontWeight: 600,
+              },
+            }}
+          >
+            <Box component="thead">
+              <Box component="tr">
+                <Box component="th">Year</Box>
+                {cols.map((c) => (
+                  <Box component="th" key={c.key}>
+                    {c.label}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Box component="tbody">
+              {projections.map((p, i) => {
+                const cf = p.cashFlow;
+                return (
+                  <Box component="tr" key={(p.year as number) ?? i}>
+                    <Box component="td">{(p.year as number) ?? i + 1}</Box>
+                    {cols.map((c) => (
+                      <Box
+                        component="td"
+                        key={c.key}
+                        sx={{
+                          color:
+                            c.key === 'cashFlow' && isNeg(cf) ? 'error.main' : 'text.primary',
+                        }}
+                      >
+                        {fmtCurrency(p[c.key])}
+                      </Box>
+                    ))}
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
+
+/**
+ * Comparable sales table — the substrate's marketData.comparables
+ * (ComparableProperty[]), the depth the legacy "Comparables" tab showed.
+ * Horizontally scrollable with a sticky Address column. Snapshot frozen at
+ * analysis time, so it reflects the comps as of when this scenario was scored.
+ */
+function ComparablesSection({
+  open,
+  onToggle,
+  comparables,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  comparables: ScenarioComparableWire[];
+}): React.JSX.Element {
+  return (
+    <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+      <SectionHeader
+        title={`Comparable sales (${comparables.length})`}
+        open={open}
+        onToggle={onToggle}
+      />
+      <Collapse in={open} unmountOnExit>
+        <Box sx={{ px: 2, pb: 2, overflowX: 'auto' }}>
+          <Box
+            component="table"
+            sx={{
+              borderCollapse: 'collapse',
+              width: '100%',
+              minWidth: 560,
+              '& th, & td': {
+                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
+                textAlign: 'right',
+                py: 0.75,
+                px: 1,
+                whiteSpace: 'nowrap',
+                borderTop: '1px solid',
+                borderColor: 'grey.100',
+              },
+              '& th': { color: 'text.secondary', fontWeight: 600 },
+              '& th:first-of-type, & td:first-of-type': {
+                textAlign: 'left',
+                position: 'sticky',
+                left: 0,
+                bgcolor: 'background.paper',
+                fontWeight: 600,
+                maxWidth: 200,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              },
+            }}
+          >
+            <Box component="thead">
+              <Box component="tr">
+                <Box component="th">Address</Box>
+                <Box component="th">Sale price</Box>
+                <Box component="th">$/sqft</Box>
+                <Box component="th">Bed/Bath</Box>
+                <Box component="th">Sqft</Box>
+                <Box component="th">DOM</Box>
+                <Box component="th">Distance</Box>
+              </Box>
+            </Box>
+            <Box component="tbody">
+              {comparables.map((c, i) => (
+                <Box component="tr" key={c.address ?? i}>
+                  <Box component="td" title={c.address}>
+                    {fmtText(c.address)}
+                  </Box>
+                  <Box component="td">{fmtCurrency(c.salePrice)}</Box>
+                  <Box component="td">{fmtCurrency(c.pricePerSqft)}</Box>
+                  <Box component="td">
+                    {fmtNum(c.bedrooms)} / {fmtNum(c.bathrooms)}
+                  </Box>
+                  <Box component="td">{fmtNum(c.sqft)}</Box>
+                  <Box component="td">{fmtNum(c.daysOnMarket)}</Box>
+                  <Box component="td">{fmtMiles(c.distance)}</Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
+
+/** Shared collapsible header row (chevron rotates on open). */
+function SectionHeader({
+  title,
+  open,
+  onToggle,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+}): React.JSX.Element {
+  return (
+    <Box
+      role="button"
+      tabIndex={0}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onToggle();
+      }}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 2,
+        py: 1.5,
+        cursor: 'pointer',
+        '&:hover': { backgroundColor: 'rgba(0,0,0,0.02)' },
+      }}
+    >
+      <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{title}</Typography>
+      <Box
+        sx={{
+          color: 'text.secondary',
+          fontSize: 12,
+          transform: open ? 'rotate(90deg)' : 'none',
+          transition: 'transform 0.15s ease',
+        }}
+      >
+        ▸
+      </Box>
     </Box>
   );
 }

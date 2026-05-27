@@ -19,6 +19,7 @@
 import { useState } from 'react';
 import { Box, Typography, Collapse } from '@mui/material';
 import { getScoreColor } from '../../utils/scoreColors';
+import { WorkspaceSection } from './WorkspaceSection';
 import type {
   ScenarioComparisonRowWire,
   ScenarioDeltaWire,
@@ -64,31 +65,7 @@ export function ScenarioCompareTable({
   if (scenarios.length <= 1) return null;
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="caption"
-        sx={{
-          display: 'block',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          fontWeight: 600,
-          color: 'text.secondary',
-          fontSize: 11,
-          mb: 1,
-        }}
-      >
-        Compare scenarios
-      </Typography>
-
-      <Box
-        sx={{
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 2,
-          overflow: 'hidden',
-          bgcolor: 'background.paper',
-        }}
-      >
+    <WorkspaceSection label="Compare scenarios">
         {/* Header row */}
         <Box
           sx={{
@@ -222,8 +199,7 @@ export function ScenarioCompareTable({
             </Box>
           );
         })}
-      </Box>
-    </Box>
+    </WorkspaceSection>
   );
 }
 

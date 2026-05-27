@@ -20,6 +20,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -49,27 +50,19 @@ export const RecallUserContextInputSchema = z.object({
    * Optional override. When omitted (the normal case), the tool uses
    * `ctx.userId`. Accepts ObjectId or 24-char hex string.
    */
-  // Day 11h (Task #16, 2026-05-21): a clean optional hex STRING — NOT a
-  // union with z.instanceof(Types.ObjectId). The instanceof branch could
-  // not be represented by zodToJsonSchema and collapsed to `{}` (matches
-  // anything), corrupting the tool's JSON Schema sent to the LLM. The
-  // model then couldn't fill this slot, the tool failed, and the LLM
-  // hallucinated a "can't resolve your user ID / session not attaching
-  // identity" message — which in turn broke stress-test reproducibility
-  // (no priorDecisionId → from-scratch re-score → wrong-direction result).
-  // Mirrors the clean regex form used by priorDecisionId. ObjectId callers
-  // are coerced to hex before validation in execute().
-  userId: z
-    .string()
-    .regex(/^[a-fA-F0-9]{24}$/, 'Expected 24-char hex ObjectId string')
-    .optional(),
+  // Task #16: shared objectIdHex schema — preprocess coerces ObjectId →
+  // hex before the regex validates, JSON Schema seen by LLM is a clean
+  // `{type: string, pattern: ^[a-fA-F0-9]{24}$}`. Replaces the inlined
+  // regex from the original ec8cd76 fix (now centralized for all tools).
+  userId: objectIdHex.optional(),
   /** Optional override for how many decisions to pull (default 10 per §8.2). */
   decisionsLimit: z.number().int().positive().max(100).optional(),
   /** Optional override for how many overrides to pull (default 20 per §8.2). */
   overridesLimit: z.number().int().positive().max(100).optional(),
 });
 
-export type RecallUserContextInput = z.infer<typeof RecallUserContextInputSchema>;
+// Task #16 (2026-05-23): z.input so internal callers can pass ObjectId for userId.
+export type RecallUserContextInput = z.input<typeof RecallUserContextInputSchema>;
 
 // ===== Output schema =====
 
@@ -84,7 +77,15 @@ export type RecallUserContextInput = z.infer<typeof RecallUserContextInputSchema
  * back to specific events in subsequent tool calls.
  */
 const EventSummarySchema = z.object({
-  _id: z.unknown(), // ObjectId; opaque at this layer
+  // Task #16 (2026-05-23, retest): the LLM needs a STABLE, parseable
+  // string here — it's how it extracts `priorDecisionId` to pass into
+  // resolve_property_inputs for stress tests / overrides. Previously
+  // typed z.unknown() and passed raw (Mongoose ObjectId), which yields
+  // an unstable serialization shape (sometimes hex string, sometimes
+  // `{$oid:...}`, sometimes `[object Object]`). Forcing a 24-char hex
+  // string here means the JSON Schema for the LLM AND the wire payload
+  // are both unambiguous, so the agent can reliably round-trip the id.
+  _id: z.string().regex(/^[a-fA-F0-9]{24}$/, '24-char hex ObjectId'),
   traceId: z.string(),
   eventType: z.string(),
   timestamp: z.date(),
@@ -115,18 +116,10 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
   retrySemantics: DEFAULT_READ_RETRY,
 
   async execute(input: RecallUserContextInput, ctx: ToolContext): Promise<RecallUserContextOutput> {
-    // Day 11h (Task #16): coerce a possible ObjectId override to hex BEFORE
-    // validation. The schema is now a clean optional hex string (so it
-    // serializes to a coherent JSON Schema for the LLM), but programmatic
-    // callers (orchestrator/tests) may still pass an ObjectId — coerce it
-    // here so they don't fail the string regex.
-    const rawUserId = (input as { userId?: unknown } | null | undefined)?.userId;
-    const coercedInput =
-      rawUserId instanceof Types.ObjectId
-        ? { ...input, userId: rawUserId.toHexString() }
-        : input;
-    // Trust boundary: validate input even though TS thinks it's clean.
-    const validated = RecallUserContextInputSchema.parse(coercedInput);
+    // Task #16 (2026-05-23): manual ObjectId→hex coercion is no longer
+    // needed here — the shared objectIdHex schema's preprocess step handles
+    // it inside `.parse()`. Trust-boundary still applies (validation runs).
+    const validated = RecallUserContextInputSchema.parse(input);
     const decisionsLimit = validated.decisionsLimit ?? 10;
     const overridesLimit = validated.overridesLimit ?? 20;
 
@@ -145,15 +138,19 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
     // Output validation — same trust boundary, return side.
     return RecallUserContextOutputSchema.parse({
       profile: profile as Record<string, unknown> | null,
+      // Task #16: explicit .toString() so the LLM always sees a clean
+      // 24-char hex string. Mongoose ObjectId.prototype.toString() returns
+      // the hex form; an already-hex string passes through unchanged. This
+      // is what makes priorDecisionId round-tripping reliable.
       recentDecisions: recentDecisions.map((e) => ({
-        _id: e._id,
+        _id: (e._id as { toString(): string }).toString(),
         traceId: e.traceId,
         eventType: e.eventType,
         timestamp: e.timestamp,
         payload: e.payload as unknown as Record<string, unknown>,
       })),
       recentOverrides: recentOverrides.map((e) => ({
-        _id: e._id,
+        _id: (e._id as { toString(): string }).toString(),
         traceId: e.traceId,
         eventType: e.eventType,
         timestamp: e.timestamp,

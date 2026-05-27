@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { propertyApi, type SensitivityReportWire } from '../../services/api';
 import { getScoreColor } from '../../utils/scoreColors';
+import { WorkspaceSection } from './WorkspaceSection';
 
 export interface SensitivityPanelProps {
   dealId: string;
@@ -57,22 +58,7 @@ export function SensitivityPanel({
   };
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="caption"
-        sx={{
-          display: 'block',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          fontWeight: 600,
-          color: 'text.secondary',
-          fontSize: 11,
-          mb: 1,
-        }}
-      >
-        Stress test
-      </Typography>
-
+    <WorkspaceSection label="Stress test" card={false}>
       {!hasRun && (
         <Button
           variant="outlined"
@@ -155,7 +141,7 @@ export function SensitivityPanel({
           </Box>
         </Box>
       )}
-    </Box>
+    </WorkspaceSection>
   );
 }
 

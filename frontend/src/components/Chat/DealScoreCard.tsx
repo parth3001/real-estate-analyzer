@@ -39,6 +39,8 @@ import {
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { Link as RouterLink } from 'react-router-dom';
 import { bandForScore, tabularNumsSx } from '../../theme/chatTheme';
 
 // ===== Props =====
@@ -105,6 +107,14 @@ export interface DealScoreCardProps {
     propertyValue: number;
     equity: number;
   }>;
+  /**
+   * Anonymous teaser gate flag (Task #22, 2026-05-23). When true, the
+   * card hides the three gated sections (top factors, walk-away/offer,
+   * assumptions accordion) and renders ONE clean "Sign in to unlock"
+   * CTA instead of empty scaffolding. Set explicitly by the backend's
+   * gateCardForAnonymous — never inferred from sentinel zeros.
+   */
+  gated?: boolean;
 }
 
 // ===== Helpers =====
@@ -137,6 +147,7 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
     assumptions,
     onChangeAssumptions,
     projection,
+    gated = false,
   } = props;
 
   const band = bandForScore(dealQuality);
@@ -227,6 +238,51 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
           </Typography>
         </Box>
 
+        {/* Task #22 — anonymous teaser CTA. Replaces the gated rows
+            (top factors / walk-away / assumptions) with ONE clean
+            "sign in to unlock" affordance. Apple Simplicity: one
+            conversion moment, not three locked padlocks. Marcus's
+            Layer-1 funnel: the gate IS the signup prompt. */}
+        {gated && (
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              bgcolor: 'grey.50',
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 3,
+            }}
+            data-testid="deal-score-card-anon-cta"
+          >
+            <LockOutlinedIcon sx={{ color: 'text.secondary', fontSize: 22 }} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, mb: 0.25 }}>
+                See the full breakdown
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.4 }}>
+                Walk-away price, factor breakdown, and standard assumptions —
+                free for your first deal.
+              </Typography>
+            </Box>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="contained"
+              size="small"
+              sx={{ textTransform: 'none', borderRadius: 2, flexShrink: 0 }}
+              data-testid="deal-score-card-anon-signin"
+            >
+              Sign in
+            </Button>
+          </Box>
+        )}
+
+        {!gated && (
+          <>
         <Divider sx={{ mb: 2 }} />
 
         {/* 4. Top factors */}
@@ -306,6 +362,8 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
             </Box>
           </Box>
         </Box>
+          </>
+        )}
 
         {/* 6. Next step */}
         <Typography
@@ -326,6 +384,8 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
           {nextStep}
         </Typography>
 
+        {!gated && (
+          <>
         <Divider sx={{ mb: 1 }} />
 
         {/* 7. Disclose-after — collapsed assumptions row */}
@@ -420,6 +480,8 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
             )}
           </Box>
         </Collapse>
+          </>
+        )}
 
         {/* ===== 8. 10-year projection (Issue #112) =====
             Optional section. Renders only when the backend projector

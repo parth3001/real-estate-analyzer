@@ -29,6 +29,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -43,7 +44,8 @@ const WatchlistSourceSchema = z.enum(['chat', 'wizard', 'import', 'shared_link']
 
 export const SaveToWatchlistInputSchema = z.object({
   /** The decision being saved (its dealId is captured into the event). */
-  decisionId: z.union([z.instanceof(Types.ObjectId), z.string()]),
+  // Task #16 (2026-05-23): strict hex pattern (see export_audit_pdf).
+  decisionId: objectIdHex,
 
   /** Which surface produced the save. */
   source: WatchlistSourceSchema,
@@ -52,7 +54,8 @@ export const SaveToWatchlistInputSchema = z.object({
   note: z.string().optional(),
 });
 
-export type SaveToWatchlistInput = z.infer<typeof SaveToWatchlistInputSchema>;
+// Task #16 (2026-05-23): z.input so internal callers can pass ObjectId.
+export type SaveToWatchlistInput = z.input<typeof SaveToWatchlistInputSchema>;
 
 // ===== Output schema =====
 
@@ -93,6 +96,7 @@ export const saveToWatchlist: Tool<SaveToWatchlistInput, SaveToWatchlistOutput> 
   retrySemantics: NO_RETRY,
 
   async execute(input: SaveToWatchlistInput, ctx: ToolContext): Promise<SaveToWatchlistOutput> {
+    // Task #16: objectIdHex.preprocess handles ObjectId → hex inside parse.
     const validated = SaveToWatchlistInputSchema.parse(input);
     const decisionId = resolveObjectId(validated.decisionId);
 

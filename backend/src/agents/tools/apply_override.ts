@@ -46,6 +46,7 @@
 
 import { z } from 'zod';
 import { Types } from 'mongoose';
+import { objectIdHex } from './schemas/objectIdHex';
 import {
   type Tool,
   type ToolContext,
@@ -76,7 +77,9 @@ export const ApplyOverrideInputSchema = z.object({
   // ===== Override metadata =====
 
   /** The decision being overridden. */
-  originalDecisionId: z.union([z.instanceof(Types.ObjectId), z.string()]),
+  // Task #16 (2026-05-23): strict hex pattern so the LLM-facing JSON
+  // schema renders cleanly (the prior z.union collapsed to `{}`).
+  originalDecisionId: objectIdHex,
 
   /**
    * Dot-path of the overridden field. Free-form string at this layer;
@@ -109,14 +112,17 @@ export const ApplyOverrideInputSchema = z.object({
   assumptions: ObjectShape.optional(),
   userContext: ScoreDealInputSchema.shape.userContext,
   walkAwayPrice: z.number().finite().optional(),
-  dealId: z.union([z.instanceof(Types.ObjectId), z.string()]).optional(),
+  // Task #16 (2026-05-23): strict hex pattern (see originalDecisionId).
+  dealId: objectIdHex.optional(),
   enrichmentSource: ScoreDealInputSchema.shape.enrichmentSource,
   enrichmentCacheHit: z.boolean().optional(),
   marketIntelligence: z.unknown().optional(),
   predictions: z.unknown().optional(),
 });
 
-export type ApplyOverrideInput = z.infer<typeof ApplyOverrideInputSchema>;
+// Task #16 (2026-05-23): z.input so internal callers can pass ObjectId for
+// originalDecisionId / dealId. Other fields keep their narrow types.
+export type ApplyOverrideInput = z.input<typeof ApplyOverrideInputSchema>;
 
 // ===== Output schema =====
 
@@ -177,6 +183,9 @@ export const applyOverride: Tool<ApplyOverrideInput, ApplyOverrideOutput> = {
   retrySemantics: NO_RETRY,
 
   async execute(input: ApplyOverrideInput, ctx: ToolContext): Promise<ApplyOverrideOutput> {
+    // Task #16: objectIdHex.preprocess handles ObjectId → hex coercion inside
+    // .parse() for both originalDecisionId and dealId, so internal callers
+    // passing ObjectId instances still validate.
     const validated = ApplyOverrideInputSchema.parse(input);
     const originalDecisionId = resolveObjectId(validated.originalDecisionId);
 
