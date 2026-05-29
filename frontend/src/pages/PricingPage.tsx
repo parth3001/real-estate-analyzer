@@ -70,7 +70,7 @@ const PricingPage: React.FC = () => {
         'Tax modeling + audit trail',
         'Override any assumption, re-score instantly',
         'Save to portfolio · PDF export',
-        '30-day editing window per deal',
+        '180-day editing window per deal',
       ],
       cta: { label: 'Try free first →', action: () => navigate('/app') },
       accent: true,
@@ -106,14 +106,14 @@ const PricingPage: React.FC = () => {
     { label: 'Save to portfolio', detail: 'Add to your tracked workspace; survives license expiry as read-only' },
     { label: 'PDF + email export', detail: 'Lender-ready report. Send to your loan officer, CPA, or partner.' },
     { label: 'Compare with other licensed deals', detail: 'Side-by-side scoring on multiple properties (Phase 4b)' },
-    { label: '30 days of editable access', detail: 'Re-run with new assumptions any time within 30 days of purchase' },
+    { label: '180 days of editable access', detail: 'Re-run with new assumptions any time within 180 days of purchase' },
     { label: 'Continuous chat depth', detail: 'Ask follow-up questions — stress tests, what-ifs, comparisons — until you understand the deal' },
   ];
 
   const faqItems: FAQItem[] = [
     {
       question: 'What counts as one "deal"?',
-      answer: 'One property analysis. You can switch strategies (BRRRR vs buy-and-hold), override assumptions, re-run stress tests, and access the full underwriting unlimited times on the SAME property for 30 days. A different property is a different deal.',
+      answer: 'One property analysis. You can switch strategies (BRRRR vs buy-and-hold), override assumptions, re-run stress tests, and access the full underwriting unlimited times on the SAME property for 180 days. A different property is a different deal.',
     },
     {
       question: 'Why no monthly subscription?',
@@ -124,8 +124,8 @@ const PricingPage: React.FC = () => {
       answer: '7 days, no questions asked, refunded via your purchase history. After 7 days, individual deals are non-refundable but unused bundle credits can be refunded within 60 days of purchase.',
     },
     {
-      question: 'What happens after 30 days on a purchased deal?',
-      answer: 'The deal becomes read-only — you can still see everything you bought (score, audit trail, projections), it just stops accepting new assumption overrides or fresh re-runs. Market data and rates drift over a month; re-purchase if you want fresh analysis on that property.',
+      question: 'What happens after 180 days on a purchased deal?',
+      answer: 'The deal becomes read-only — you can still see everything you bought (score, audit trail, projections), it just stops accepting new assumption overrides or fresh re-runs. Market data and rates drift over six months; re-purchase if you want fresh analysis on that property.',
     },
     {
       question: 'Do bundle credits expire?',
@@ -137,7 +137,7 @@ const PricingPage: React.FC = () => {
     },
     {
       question: 'Is my first analysis really free?',
-      answer: 'Yes. After signup, your first property unlock — full depth, 30-day window — is free. No credit card required for the free tier. We bet that the first analysis is good enough to make $4.99 feel reasonable for the next one.',
+      answer: 'Yes. After signup, your first property unlock — full depth, 180-day window — is free. No credit card required for the free tier. We bet that the first analysis is good enough to make $4.99 feel reasonable for the next one.',
     },
     {
       question: 'Do you handle multi-family?',

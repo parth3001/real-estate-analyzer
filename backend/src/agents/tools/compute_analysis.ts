@@ -36,10 +36,14 @@ import {
   type ToolContext,
   NO_RETRY,
 } from './types';
-import { SFRAnalyzer } from '../../analysis/SFRAnalyzer';
-import { MultiFamilyAnalyzer } from '../../analysis/MultiFamilyAnalyzer';
+// Task #20: analyzer construction is now owned by the property-type registry.
+// The registry provides analyzerFactory which wraps SFRAnalyzer +
+// MultiFamilyAnalyzer behind one call shape. Direct imports of the analyzer
+// classes removed from this file.
+import { getPropertyTypeCapabilities } from '../../services/propertyType/registry';
 import type {
   AnalysisResult,
+  PropertyType,
   SFRData,
   MultiFamilyData,
   SFRMetrics,
@@ -64,24 +68,27 @@ export interface AnalyzerAdapter {
   analyze(args: {
     propertyData: SFRData | MultiFamilyData;
     assumptions: AnalysisAssumptions;
-    propertyType: 'SFR' | 'Multi-Family';
+    /** Canonical PropertyType (Task #20 — aligned with propertyTypes.ts).
+     *  Previously this enum used `'Multi-Family'` while the canonical enum
+     *  used `'MF'` — vocabulary drift that risked silent fallthrough at
+     *  property type #3. Now uses the canonical PropertyType. */
+    propertyType: PropertyType;
   }): Promise<AnyAnalysisResult>;
 }
 
+/**
+ * Default analyzer adapter. Task #20: routes via the property-type
+ * registry instead of an open-coded if/else. Unknown types throw loudly
+ * (registry default) rather than silently falling through to SFR.
+ */
 export const defaultAnalyzerAdapter: AnalyzerAdapter = {
   async analyze({ propertyData, assumptions, propertyType }) {
-    if (propertyType === 'Multi-Family') {
-      const analyzer = new MultiFamilyAnalyzer(
-        propertyData as MultiFamilyData,
-        assumptions
-      );
-      // AnalysisResult<SFRMetrics> | AnalysisResult<MFMetrics> isn't
-      // assignable to the union AnyAnalysisResult without widening;
-      // cast through unknown — both branches return shape-compatible
-      // results, only the `metrics` discriminator differs.
-      return analyzer.analyze() as unknown as AnyAnalysisResult;
-    }
-    const analyzer = new SFRAnalyzer(propertyData as SFRData, assumptions);
+    const cap = getPropertyTypeCapabilities(propertyType);
+    const analyzer = cap.analyzerFactory(propertyData, assumptions);
+    // AnalysisResult<SFRMetrics> | AnalysisResult<MFMetrics> isn't
+    // assignable to the union AnyAnalysisResult without widening;
+    // cast through unknown — both branches return shape-compatible
+    // results, only the `metrics` discriminator differs.
     return analyzer.analyze() as unknown as AnyAnalysisResult;
   },
 };
@@ -103,7 +110,15 @@ const ObjectShape = z.custom<Record<string, unknown>>(
   { message: 'Expected a non-null object' }
 );
 
-const PropertyTypeSchema = z.enum(['SFR', 'Multi-Family']);
+/**
+ * Task #20 (2026-05-27): aligned with the canonical PropertyType enum
+ * in propertyTypes.ts. Previously used 'Multi-Family' here while the
+ * canonical enum used 'MF' — vocabulary drift that the registry refactor
+ * eliminates. The LLM picks up the new tool spec on its next turn (no
+ * persistent state), so the cutover is safe — old 'Multi-Family' calls
+ * fail loudly with a Zod error rather than silently misrouting.
+ */
+const PropertyTypeSchema = z.enum(['SFR', 'MF']);
 
 /**
  * AnalysisAssumptions Zod schema. Required for the analyzer; the agent

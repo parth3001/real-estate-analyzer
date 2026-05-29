@@ -112,7 +112,10 @@ export class LicenseRepository {
   ): Promise<Types.ObjectId> {
     const canonicalKey = buildCanonicalAddressKey(input.propertyAddress);
     const purchasedAt = new Date();
-    const expiresAt = computeExpiry(purchasedAt, input.windowDays ?? 30);
+    // Task #7 (2026-05-28): default window is now 180 days (was 30).
+    // computeExpiry's signature default also matches; the explicit ?? here
+    // preserves the override path for paid tiers / promotions.
+    const expiresAt = computeExpiry(purchasedAt, input.windowDays ?? 180);
 
     const payload: DealLicensePayload = {
       userId: input.userId,

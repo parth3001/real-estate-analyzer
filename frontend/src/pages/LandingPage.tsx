@@ -877,7 +877,7 @@ const LandingPage: React.FC = () => {
                 lines: [
                   '28+ professional metrics',
                   '10-year projection + walk-away price',
-                  '30-day editing window · PDF export',
+                  '180-day editing window · PDF export',
                 ],
                 accent: true,
               },

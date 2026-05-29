@@ -73,11 +73,11 @@ describe('LicenseRepository (Issue #105 substrate)', () => {
     expect(doc?.pricePaidCents).toBe(499);
     expect(doc?.stripePaymentIntentId).toBe('pi_test_1');
     expect(doc?.costBudgetCentsStart).toBe(200); // default
-    // expiresAt ≈ purchasedAt + 30d
+    // Task #7 (2026-05-28): default window is now 180d, was 30d.
     const delta =
       (doc!.expiresAt as Date).getTime() -
       (doc!.purchasedAt as Date).getTime();
-    expect(delta).toBeCloseTo(30 * 24 * 60 * 60 * 1000, -3);
+    expect(delta).toBeCloseTo(180 * 24 * 60 * 60 * 1000, -3);
   });
 
   it('purchases a first-free license (no payment intent, $0)', async () => {

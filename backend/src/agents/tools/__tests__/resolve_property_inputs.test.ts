@@ -284,6 +284,45 @@ describe('tool:resolve_property_inputs (W5-Phase1)', () => {
     });
   });
 
+  // ===== Task #15 — auto-populate purchasePrice from RentCast AVM =====
+
+  describe('Task #15 — purchasePrice fallback to RentCast valueEstimate', () => {
+    it('uses ext.valueEstimate (AVM) when user omitted purchasePrice', async () => {
+      setPropertyResolverAdapter(stubAdapter(FULL_EXTERNAL)); // valueEstimate: 430000
+
+      const result = await resolvePropertyInputs.execute(
+        { address: ADDRESS, propertyType: 'SFR' }, // no purchasePrice
+        ctxFor('t')
+      );
+
+      expect(result.propertyData.purchasePrice).toBe(430000);
+      expect(result.provenance.purchasePrice).toBe('rentcast_estimate');
+    });
+
+    it('still honors user purchasePrice when supplied (AVM is the fallback, not override)', async () => {
+      setPropertyResolverAdapter(stubAdapter(FULL_EXTERNAL));
+
+      const result = await resolvePropertyInputs.execute(
+        { address: ADDRESS, purchasePrice: 380000, propertyType: 'SFR' },
+        ctxFor('t')
+      );
+
+      expect(result.propertyData.purchasePrice).toBe(380000);
+      expect(result.provenance.purchasePrice).toBe('user_provided');
+    });
+
+    it('throws when user omits price AND RentCast has no valueEstimate', async () => {
+      setPropertyResolverAdapter(stubAdapter({ rentEstimate: 2800 })); // no valueEstimate
+
+      await expect(
+        resolvePropertyInputs.execute(
+          { address: ADDRESS, propertyType: 'SFR' },
+          ctxFor('t')
+        )
+      ).rejects.toThrow(/no purchase price.*no RentCast.*AVM/i);
+    });
+  });
+
   // ===== Trust boundary =====
 
   describe('input validation', () => {

@@ -346,6 +346,33 @@ describe('runStressTest — original-bug regression lock', () => {
     expect(result.deltas[0].stressedValue).toBeCloseTo(7.51, 5);
   });
 
+  it('Task #27: walkAwayPrice is NON-ZERO on stress-test snapshots (was always $0)', async () => {
+    // Regression lock: before #27, the runner left walkAwayPrice as 0
+    // because the engine's marketPosition.walkAwayPrice was undefined on
+    // re-runs. Now the runner computes it via resolveWalkAwayPrice
+    // (NOI / target cap rate). Both baseline and stressed snapshots
+    // must surface a real number.
+    mockGetScenarioBundle.mockResolvedValue(
+      fixtureBundle({ userId, decisionId: validHex }) as never
+    );
+
+    const result = await runStressTest({
+      priorDecisionId: validHex,
+      userId,
+      perturbations: [
+        { field: 'mortgageRate', value: 7.5, unit: 'percent', operation: 'set' },
+      ],
+    });
+
+    expect(result.baseline.walkAwayPrice).toBeGreaterThan(0);
+    expect(result.stressed.walkAwayPrice).toBeGreaterThan(0);
+    // Sanity: walk-away is an income-anchored value, not a fraction of
+    // purchase price. For our $205K / $1,800-rent fixture, NOI / 6.5%
+    // target cap should land somewhere in the $130k-$170k range.
+    expect(result.baseline.walkAwayPrice).toBeGreaterThan(80_000);
+    expect(result.baseline.walkAwayPrice).toBeLessThan(300_000);
+  });
+
   it('out-of-range value generates a warning but does NOT block the run', async () => {
     mockGetScenarioBundle.mockResolvedValue(
       fixtureBundle({ userId, decisionId: validHex }) as never

@@ -43,6 +43,8 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  // Task #23: inline-edit input for thread rename.
+  InputBase,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -59,6 +61,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import {
   getThreads,
   groupByTime,
+  renameThread,
   subscribe,
   type ThreadRecord,
 } from '../../services/threadStore';
@@ -132,6 +135,30 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
 
   const groups = groupByTime(threads);
 
+  // Task #23: inline thread rename. Double-click a row to edit; Enter
+  // commits, Esc cancels, blur commits. Editing state is scoped to the
+  // sidebar — once committed, threadStore.renameThread persists. Only
+  // ONE row can be editing at a time (single-instance edit pattern).
+  const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+
+  const commitRename = (): void => {
+    if (editingThreadId === null) return;
+    renameThread(editingThreadId, editingTitle);
+    setEditingThreadId(null);
+    setEditingTitle('');
+  };
+
+  const cancelRename = (): void => {
+    setEditingThreadId(null);
+    setEditingTitle('');
+  };
+
+  const beginRename = (t: ThreadRecord): void => {
+    setEditingThreadId(t.id);
+    setEditingTitle(t.title);
+  };
+
   const renderGroup = (
     label: string,
     rows: ThreadRecord[]
@@ -156,17 +183,27 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
         </Typography>
         {rows.map((t) => {
           const isActive = t.id === activeThreadId;
+          const isEditing = t.id === editingThreadId;
           return (
             <Box
               key={t.id}
-              onClick={() => onSelectThread(t.id)}
+              onClick={() => {
+                if (isEditing) return; // don't navigate while editing
+                onSelectThread(t.id);
+              }}
+              // Task #23: double-click on the row enters rename mode.
+              // Apple HIG: double-click to edit, single-click to select.
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                beginRename(t);
+              }}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1.25,
                 px: 2,
                 py: 1,
-                cursor: 'pointer',
+                cursor: isEditing ? 'text' : 'pointer',
                 bgcolor: isActive ? 'action.selected' : 'transparent',
                 '&:hover': {
                   bgcolor: isActive ? 'action.selected' : 'action.hover',
@@ -174,6 +211,7 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
                 minHeight: 36,
               }}
               data-testid={`sidebar-thread-${t.id}`}
+              title={isEditing ? undefined : 'Double-click to rename'}
             >
               <Box
                 sx={{
@@ -189,18 +227,48 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
                     : 'No score yet'
                 }
               />
-              <Typography
-                variant="body2"
-                noWrap
-                sx={{
-                  flex: 1,
-                  minWidth: 0,
-                  color: 'text.primary',
-                  fontSize: '14px',
-                }}
-              >
-                {t.title}
-              </Typography>
+              {isEditing ? (
+                <InputBase
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitRename();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelRename();
+                    }
+                  }}
+                  onBlur={commitRename}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  inputProps={{
+                    'aria-label': 'Rename thread',
+                    maxLength: 80,
+                    'data-testid': `sidebar-thread-rename-input-${t.id}`,
+                  }}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: '14px',
+                    color: 'text.primary',
+                  }}
+                />
+              ) : (
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    color: 'text.primary',
+                    fontSize: '14px',
+                  }}
+                >
+                  {t.title}
+                </Typography>
+              )}
             </Box>
           );
         })}

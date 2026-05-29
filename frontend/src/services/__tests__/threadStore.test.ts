@@ -19,6 +19,7 @@ import {
   getThreads,
   groupByTime,
   removeThread,
+  renameThread,
   subscribe,
   upsertThread,
 } from '../threadStore';
@@ -145,5 +146,51 @@ describe('threadStore — deriveTitle', () => {
     const title = deriveTitle(long, 20);
     expect(title.endsWith('…')).toBe(true);
     expect(title.length).toBeLessThanOrEqual(20);
+  });
+});
+
+// ===== Task #23 — rename =====
+
+describe('threadStore — renameThread', () => {
+  it('persists the new title', () => {
+    upsertThread({ id: 't1', title: 'Stress-test at 7% mort…' });
+    renameThread('t1', '1837 Walnut Way — initial');
+    expect(getThreads().find((r) => r.id === 't1')?.title).toBe(
+      '1837 Walnut Way — initial'
+    );
+  });
+
+  it('rename SURVIVES a subsequent upsert that omits title (typical chat-turn pattern)', () => {
+    // This is the key behavior: ChatOverlay calls upsertThread on every
+    // turn but only writes `title` on the FIRST turn. Once renamed, the
+    // user's title must not be overwritten by activity-bump upserts.
+    upsertThread({ id: 't1', title: 'Stress-test at 7% mort…' });
+    renameThread('t1', 'My custom title');
+    upsertThread({ id: 't1', dealQualityScore: 81 });
+    upsertThread({ id: 't1', preview: 'some preview' });
+    expect(getThreads().find((r) => r.id === 't1')?.title).toBe(
+      'My custom title'
+    );
+  });
+
+  it('trims and collapses whitespace', () => {
+    upsertThread({ id: 't1', title: 'original' });
+    renameThread('t1', '   Multi    Space   ');
+    expect(getThreads().find((r) => r.id === 't1')?.title).toBe('Multi Space');
+  });
+
+  it('silently no-ops on empty / whitespace-only input (no row gets a blank title)', () => {
+    upsertThread({ id: 't1', title: 'original' });
+    renameThread('t1', '');
+    renameThread('t1', '   ');
+    expect(getThreads().find((r) => r.id === 't1')?.title).toBe('original');
+  });
+
+  it('truncates with ellipsis past 80 chars', () => {
+    upsertThread({ id: 't1', title: 'original' });
+    renameThread('t1', 'a'.repeat(100));
+    const title = getThreads().find((r) => r.id === 't1')!.title;
+    expect(title.endsWith('…')).toBe(true);
+    expect(title.length).toBeLessThanOrEqual(80);
   });
 });

@@ -429,7 +429,13 @@ function resolveDealId(raw: string | undefined): Types.ObjectId | undefined {
  *   4. As an absolute last resort, return 0 (let the UI show "—" rather
  *      than a misleading number tied to the offer)
  */
-function resolveWalkAwayPrice(
+// Task #27 (2026-05-27): exported so the deterministic stress-test runner
+// (services/perturbation/runner.ts) can compute walk-away with the SAME
+// logic that fresh scoring uses. Previously the runner left walkAway as
+// 0 because it bypasses score_deal entirely, surfacing "$0 walk-away" in
+// stress narratives. The function is pure (Record-typed inputs, no I/O)
+// so it's safe to reuse from other call sites.
+export function resolveWalkAwayPrice(
   explicit: number | undefined,
   propertyData: Record<string, unknown>,
   engineOutput: Record<string, unknown>,

@@ -99,8 +99,10 @@ export interface DealScoreCardWireShape {
 
 // ===== Helpers =====
 
+// Task #20: delegate to the property-type registry's shared isSFR.
+import { isSFR as _registryIsSFR } from '../../services/propertyType/registry';
 function isSFR(p: SFRData | MultiFamilyData): p is SFRData {
-  return p.propertyType === 'SFR';
+  return _registryIsSFR(p);
 }
 
 /**

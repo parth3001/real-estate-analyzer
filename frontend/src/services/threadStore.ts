@@ -145,6 +145,22 @@ export function upsertThread(
   emit();
 }
 
+/**
+ * Task #23: rename a thread. Thin wrapper around upsertThread that
+ * normalizes the title (trim, truncate) and silently no-ops on empty
+ * input so the row can't end up titled with whitespace from a
+ * stray Enter press. Once renamed, the title survives subsequent
+ * upserts because ChatOverlay only writes `title` on the first turn
+ * (line 526-527) — all later turns patch lastActivityAt/score/preview
+ * without touching title.
+ */
+export function renameThread(id: string, rawTitle: string): void {
+  const cleaned = rawTitle.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return;
+  const truncated = cleaned.length > 80 ? cleaned.slice(0, 79).trimEnd() + '…' : cleaned;
+  upsertThread({ id, title: truncated });
+}
+
 export function removeThread(id: string): void {
   const records = safeRead().filter((r) => r.id !== id);
   safeWrite(records);

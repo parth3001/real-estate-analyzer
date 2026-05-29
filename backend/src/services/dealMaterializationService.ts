@@ -87,8 +87,11 @@ export interface MaterializeDealResult {
 // query path (only ever logged), which is how duplicate Deals slipped
 // through on address-string variance ("Daffodil St" vs "Daffodil Drive").
 
+// Task #20: delegate to the property-type registry's shared isSFR. Keeping
+// the local re-export so call sites in this file stay unchanged.
+import { isSFR as _registryIsSFR } from './propertyType/registry';
 function isSFR(p: SFRData | MultiFamilyData): p is SFRData {
-  return p.propertyType === 'SFR';
+  return _registryIsSFR(p);
 }
 
 /**

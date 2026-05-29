@@ -230,7 +230,16 @@ const AddressSchema = z.object({
 
 export const ResolvePropertyInputsInputSchema = z.object({
   address: AddressSchema,
-  purchasePrice: z.number().positive().finite(),
+  /**
+   * Task #15 (2026-05-28): purchasePrice is OPTIONAL when the user gave
+   * only an address. The resolver falls back to RentCast's valueEstimate
+   * (AVM) so the agent doesn't have to interrupt the conversation asking
+   * for a number that's publicly knowable. If RentCast has no AVM for
+   * the address either, the resolver throws a clear "specify a price"
+   * error the agent surfaces to the user. Provenance is tagged
+   * `external_data` when the AVM was used, `user_provided` otherwise.
+   */
+  purchasePrice: z.number().positive().finite().optional(),
   propertyType: z.enum(['SFR']), // MF is a separate path — see file header
   /**
    * User-corrected field values. Anything here overrides the
@@ -495,10 +504,29 @@ export const resolvePropertyInputs: Tool<
       state: string;
       zipCode: string;
     };
+    // Task #15 (2026-05-28): when the user hasn't specified a price,
+    // pass 0 to fetchExternalData. The tax service tolerates 0 (it
+    // returns the state-level effective rate independently of the
+    // dollar amount), and we'll resolve the true price from
+    // ext.valueEstimate (RentCast AVM) immediately after.
     const ext = await currentResolverAdapter.fetchExternalData({
       address,
-      purchasePrice: validated.purchasePrice,
+      purchasePrice: validated.purchasePrice ?? 0,
     });
+
+    // Task #15: resolve purchasePrice — user input wins; otherwise the
+    // RentCast AVM (valueEstimate); otherwise we cannot proceed and the
+    // agent must ask the user.
+    const resolvedPurchasePrice =
+      validated.purchasePrice ??
+      (ext.valueEstimate && ext.valueEstimate > 0 ? ext.valueEstimate : undefined);
+    if (resolvedPurchasePrice === undefined) {
+      throw new Error(
+        'resolve_property_inputs: no purchase price provided AND no RentCast ' +
+          'AVM (valueEstimate) available for this address. The agent must ask ' +
+          'the user for the purchase price.'
+      );
+    }
 
     const provenance: Record<string, FieldProvenance> = {};
 
@@ -522,8 +550,10 @@ export const resolvePropertyInputs: Tool<
       );
     }
 
-    // ===== purchasePrice — always user_provided =====
-    provenance.purchasePrice = 'user_provided';
+    // ===== purchasePrice — user_provided if specified, else from RentCast AVM =====
+    provenance.purchasePrice = validated.purchasePrice !== undefined
+      ? 'user_provided'
+      : 'rentcast_estimate';
 
     // ===== Property-record fields (RentCast property record or default) =====
     const [bedrooms, bedroomsProv] = pick(
@@ -578,7 +608,7 @@ export const resolvePropertyInputs: Tool<
 
     // ===== Assumption-default fields =====
     const downPayment =
-      overrides.downPayment ?? validated.purchasePrice * DEFAULTS.downPaymentRatio;
+      overrides.downPayment ?? resolvedPurchasePrice * DEFAULTS.downPaymentRatio;
     provenance.downPayment =
       overrides.downPayment !== undefined ? 'user_provided' : 'assumption_default';
 
@@ -592,7 +622,7 @@ export const resolvePropertyInputs: Tool<
 
     const maintenanceCost =
       overrides.maintenanceCost ??
-      validated.purchasePrice * DEFAULTS.maintenanceRatio;
+      resolvedPurchasePrice * DEFAULTS.maintenanceRatio;
     provenance.maintenanceCost =
       overrides.maintenanceCost !== undefined
         ? 'user_provided'
@@ -607,14 +637,14 @@ export const resolvePropertyInputs: Tool<
 
     const closingCosts =
       overrides.closingCosts ??
-      validated.purchasePrice * DEFAULTS.closingCostsRatio;
+      resolvedPurchasePrice * DEFAULTS.closingCostsRatio;
     provenance.closingCosts =
       overrides.closingCosts !== undefined ? 'user_provided' : 'assumption_default';
 
     // ===== Assemble SFRData =====
     const propertyData: SFRData = {
       propertyType: 'SFR',
-      purchasePrice: validated.purchasePrice,
+      purchasePrice: resolvedPurchasePrice,
       downPayment,
       interestRate,
       loanTerm,

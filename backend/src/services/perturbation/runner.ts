@@ -33,6 +33,9 @@
 import { Types } from 'mongoose';
 import { SFRAnalyzer } from '../../analysis';
 import { InvestmentDecisionEngine } from '../investment/investmentDecisionEngine';
+// Task #27: reuse score_deal's walk-away resolver so stress narratives get
+// a real number (NOI / target cap rate) instead of $0.
+import { resolveWalkAwayPrice } from '../../agents/tools/score_deal';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
 import type { SFRData } from '../../types/propertyTypes';
 import type { AnalysisAssumptions } from '../../analysis/BasePropertyAnalyzer';
@@ -320,6 +323,20 @@ async function scoreOnce(
   };
   const m = a.keyMetrics ?? a.metrics ?? {};
 
+  // Task #27: compute walkAwayPrice the same way score_deal does
+  // (NOI / target cap rate with sensible fallbacks). The engine's
+  // marketPosition.walkAwayPrice is typically undefined on stress runs
+  // because we don't pass marketIntelligence through (it's a fresh re-run
+  // of the analyzer + engine, not a full freshly-enriched scoring pass).
+  // Without this, stress narratives reported "$0 walk-away" — a real
+  // trust-killer because users use walk-away to know if they're overpaying.
+  const walkAwayPrice = resolveWalkAwayPrice(
+    undefined, // no explicit override — let the helper compute from NOI
+    propertyData as unknown as Record<string, unknown>,
+    decision as unknown as Record<string, unknown>,
+    analysis as unknown as Record<string, unknown>
+  );
+
   return {
     dealQuality: pa.dealQuality,
     qualityLabel: deriveQualityLabel(pa.dealQuality),
@@ -336,7 +353,7 @@ async function scoreOnce(
     capRate: m.capRate ?? 0,
     cashOnCashReturn: m.cashOnCashReturn ?? 0,
     dscr: m.dscr ?? 0,
-    walkAwayPrice: d.marketPosition?.walkAwayPrice ?? 0,
+    walkAwayPrice,
     irr: m.irr ?? 0,
   };
 }

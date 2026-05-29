@@ -2,7 +2,7 @@
  * DealLicense — the unit of paid access in REanalyzr 2.0.
  *
  * Per the locked pricing decision in Issue #105:
- *   - One license = one property = one user = 30 days
+ *   - One license = one property = one user = 180 days (Task #7, was 30)
  *   - $4.99 single OR consumed from a 5-/10-pack bundle
  *   - Covers ALL analytical actions on that property (overrides,
  *     stress tests, strategy switches, exports, etc.)
@@ -23,7 +23,7 @@
  *
  * Status state machine:
  *   active     → license is live; user can run any analysis
- *   expired    → 30 days elapsed OR cost-budget exhausted; read-only
+ *   expired    → 180 days elapsed OR cost-budget exhausted; read-only
  *   refunded   → Stripe refund processed; license void
  *
  * Transitions are write-once. We don't mutate `active → expired`
@@ -76,9 +76,10 @@ const AddressSchemaZ = z.object({
 // ===== Payload schema =====
 
 /**
- * The 30-day license window is computed at create-time from
- * `purchasedAt + 30 days`. We store both endpoints explicitly so
- * read queries don't have to compute the expiry on the fly.
+ * The 180-day license window is computed at create-time from
+ * `purchasedAt + 180 days` (Task #7, extended from 30). We store both
+ * endpoints explicitly so read queries don't have to compute the expiry
+ * on the fly.
  *
  * `costBudgetCentsStart` is the snapshot of the COGS budget at
  * purchase time. The CURRENT remaining budget is computed from
@@ -212,10 +213,22 @@ dealLicenseSchema.index(
 
 // ===== Helpers =====
 
-/** Compute the 30-day expiry from a purchase date. */
+/**
+ * Compute the license expiry from a purchase date.
+ *
+ * Task #7 (2026-05-28): default window extended from 30 → 180 days. The
+ * original 30-day window was set when the product was framed as
+ * "transactional analysis" — pay-once, decide-in-a-month. Real-world
+ * behavior showed investors revisiting the same property over a much
+ * longer horizon (re-stress on rate moves, re-check before LOI, re-run
+ * after walk-through). 180 days covers that exploration window without
+ * giving away free perpetual access. The `windowDays` parameter is
+ * preserved as an override so paid tiers / special promotions can
+ * extend further without code changes.
+ */
 export function computeExpiry(
   purchasedAt: Date,
-  windowDays = 30
+  windowDays = 180
 ): Date {
   const ms = purchasedAt.getTime() + windowDays * 24 * 60 * 60 * 1000;
   return new Date(ms);

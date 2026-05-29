@@ -800,24 +800,48 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
             );
           })()}
 
-          {messages.map((msg, idx) => {
-            // The "is last assistant" flag drives whether follow-up chips
-            // render below the bubble. We only want chips under the
-            // most-recent assistant message — historical chips would
-            // crowd the thread and become stale on each new turn.
-            const isLastAssistant =
-              msg.role === 'assistant' && idx === messages.length - 1;
-            return (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isLastAssistant={isLastAssistant}
-                onEmailCta={handleEmailCta}
-                onPortfolioCta={handlePortfolioCta}
-                onChipTap={handleChipTap}
-              />
+          {/* Task #25: detect whether the session has a deal that could be
+              saved. True iff any prior assistant message rendered a
+              DealScoreCard structured output. Used to gate the inline
+              "Save this deal" CTA on text-only stress-test responses
+              (which have no structured output of their own). */}
+          {(() => {
+            const sessionHasDeal = messages.some(
+              (m) =>
+                m.role === 'assistant' &&
+                (m.structuredOutputs ?? []).some(
+                  (so) => so.kind === 'deal_score_card'
+                )
             );
-          })}
+            const userIsAnonymous = props.currentUserIsAuthed !== true;
+            return messages.map((msg, idx) => {
+              const isLastAssistant =
+                msg.role === 'assistant' && idx === messages.length - 1;
+              // Inline CTA conditions: anonymous user, latest assistant
+              // turn, session has a deal, AND this message itself has no
+              // structured outputs (otherwise the existing under-card CTA
+              // covers it). Text-only stress-test narratives match.
+              const msgHasStructuredOutputs =
+                msg.role === 'assistant' &&
+                (msg.structuredOutputs ?? []).length > 0;
+              const showInlineSaveDealCta =
+                userIsAnonymous &&
+                isLastAssistant &&
+                sessionHasDeal &&
+                !msgHasStructuredOutputs;
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isLastAssistant={isLastAssistant}
+                  onEmailCta={handleEmailCta}
+                  onPortfolioCta={handlePortfolioCta}
+                  onChipTap={handleChipTap}
+                  showInlineSaveDealCta={showInlineSaveDealCta}
+                />
+              );
+            });
+          })()}
 
           {/* Thinking indicator — only shown BEFORE the first token of
               the streaming assistant message arrives. Once tokens start
@@ -963,6 +987,16 @@ interface MessageBubbleProps {
   onPortfolioCta?: (assistantMsg: AssistantMessage) => void;
   /** Phase 3+4, Day 4 — chip tap-to-prefill (does NOT auto-send). */
   onChipTap?: (text: string) => void;
+  /**
+   * Task #25 (2026-05-28): show the Save/Email CTAs INLINE on text-only
+   * assistant messages (e.g., stress-test narratives) when the session
+   * has a prior deal to save. Set by ChatOverlay only for the latest
+   * assistant message when (anonymous AND there's a deal_score_card
+   * earlier in the thread AND THIS message has no structured outputs of
+   * its own). Captures the conversion moment after stress-test engagement
+   * without duplicating the existing CTA under DealScoreCards.
+   */
+  showInlineSaveDealCta?: boolean;
 }
 
 function MessageBubble({
@@ -971,6 +1005,7 @@ function MessageBubble({
   onEmailCta,
   onPortfolioCta,
   onChipTap,
+  showInlineSaveDealCta,
 }: MessageBubbleProps): React.JSX.Element {
   if (message.role === 'error') {
     return (
@@ -1077,6 +1112,23 @@ function MessageBubble({
           }
           return null;
         })}
+
+      {/* Task #25 — anonymous "Save this deal" CTA on text-only assistant
+          turns. Captures the conversion moment on stress-test responses
+          (which have no DealScoreCard structured output and so previously
+          had no save affordance). ChatOverlay only sets the flag when
+          (anonymous + isLastAssistant + a prior deal exists in the
+          thread + THIS message has no structured outputs of its own),
+          which keeps the CTA from doubling under DealScoreCards. */}
+      {showInlineSaveDealCta && message.role === 'assistant' && (
+        <Box sx={{ alignSelf: 'flex-start', mt: 0.5 }}>
+          <ChatCardCtas
+            message={message}
+            onEmailCta={onEmailCta}
+            onPortfolioCta={onPortfolioCta}
+          />
+        </Box>
+      )}
 
       {/* Follow-up chips — render only under the LATEST assistant
           message, only once streaming is done, and only when the agent

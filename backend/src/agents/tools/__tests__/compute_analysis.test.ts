@@ -4,7 +4,7 @@
  * Uses a fake AnalyzerAdapter (legacy analyzers are sealed per the
  * strangler-fig rule). Verifies:
  *   1. Tool contract conformance (invokeLLM: false, no events, no API)
- *   2. Property-type routing (SFR vs Multi-Family)
+ *   2. Property-type routing (SFR vs MF — canonical Task #20 vocab)
  *   3. Output reshape: bundles annualAnalysis + projections +
  *      exitAnalysis into longTermAnalysis
  *   4. Output shape matches what score_deal's input expects
@@ -79,7 +79,7 @@ describe('tool:compute_analysis (W4-S6)', () => {
   }
 
   function makeInput(
-    propertyType: 'SFR' | 'Multi-Family' = 'SFR'
+    propertyType: 'SFR' | 'MF' = 'SFR'
   ) {
     return {
       propertyData: { purchasePrice: 425000, propertyType },
@@ -120,7 +120,7 @@ describe('tool:compute_analysis (W4-S6)', () => {
 
   describe('property-type routing', () => {
     it('routes SFR to the SFR path with propertyType: SFR', async () => {
-      let capturedType: 'SFR' | 'Multi-Family' | undefined;
+      let capturedType: 'SFR' | 'MF' | undefined;
       setAnalyzerAdapter(
         makeAdapter(stubResult(), (args) => {
           capturedType = args.propertyType;
@@ -131,16 +131,16 @@ describe('tool:compute_analysis (W4-S6)', () => {
       expect(capturedType).toBe('SFR');
     });
 
-    it('routes Multi-Family to the MF path with propertyType: Multi-Family', async () => {
-      let capturedType: 'SFR' | 'Multi-Family' | undefined;
+    it('routes MF to the MF path with propertyType: MF (Task #20 canonical vocab)', async () => {
+      let capturedType: 'SFR' | 'MF' | undefined;
       setAnalyzerAdapter(
         makeAdapter(stubResult(), (args) => {
           capturedType = args.propertyType;
         })
       );
 
-      await computeAnalysis.execute(makeInput('Multi-Family'), makeCtx());
-      expect(capturedType).toBe('Multi-Family');
+      await computeAnalysis.execute(makeInput('MF'), makeCtx());
+      expect(capturedType).toBe('MF');
     });
   });
 
