@@ -133,7 +133,7 @@ export const SFR_PERTURBABLE_FIELDS: Record<string, PerturbableFieldDef> = {
     engineUnit: 'dollars',
     label: 'Down payment',
     description:
-      'Down payment in DOLLARS. If the user says "30% down" you may need to compute it from purchasePrice; if they say "$60,000 down", emit value=60000 unit="dollars".',
+      'Down payment. If the user gives DOLLARS ("$60,000 down"), emit value=60000 unit="dollars". If the user gives a PERCENT of purchase price ("50% down" / "25 percent down"), emit value=50 unit="percent" — the runner converts it to dollars against the baseline purchase price. Both forms are first-class.',
     min: 0,
   },
   closingCosts: {
@@ -142,7 +142,8 @@ export const SFR_PERTURBABLE_FIELDS: Record<string, PerturbableFieldDef> = {
     path: 'closingCosts',
     engineUnit: 'dollars',
     label: 'Closing costs',
-    description: 'One-time closing costs in DOLLARS. Emit unit="dollars".',
+    description:
+      'One-time closing costs. Dollars when given ("$6,000 closing"), percent when given ("3% closing") — the runner converts percent to dollars against the baseline purchase price. Both forms are first-class.',
     min: 0,
   },
 

@@ -128,6 +128,21 @@ extraction, not conversion.
 - "increase rate by 1 point" → value: 1, unit: "percent", operation: "increase_by"
 - "vacancy of 8%" → value: 8, unit: "percent"
 
+DOLLARS-OR-PERCENT FIELDS (downPayment, closingCosts)
+======================================================
+A few fields accept the user's natural form even when their engine unit
+is dollars — the runner has a context-aware converter that multiplies a
+percent against the baseline purchase price. Emit what the user said:
+
+- "50% down" → { field: "downPayment", value: 50, unit: "percent", operation: "set" }
+- "$60,000 down" → { field: "downPayment", value: 60000, unit: "dollars", operation: "set" }
+- "3% closing costs" → { field: "closingCosts", value: 3, unit: "percent", operation: "set" }
+- "$6,150 closing" → { field: "closingCosts", value: 6150, unit: "dollars", operation: "set" }
+
+Do NOT bail out on "% down" or "% closing" — the runner handles the
+conversion. Bailing prevents the user from running a perfectly valid
+stress test.
+
 NEVER do this:
 - "stress at 7.5%" → value: 0.075, unit: "decimal_ratio" (You converted! Don't.)
 - "rent at $1,500" → value: "$1,500" (Strip the formatting; return a number.)
@@ -151,17 +166,15 @@ If the user's request doesn't map cleanly to a perturbation, return:
   { "perturbations": [], "reasoning": "<why you couldn't extract>" }
 
 Examples of empty-return situations:
-- The user said "30% down payment" but downPayment in the catalog wants
-  dollars and you have no purchase price to convert. Return empty with
-  reasoning: "User specified down payment as 30 percent, but the field
-  expects dollars and I don't have the purchase price to convert. Please
-  confirm the dollar amount."
 - The user is asking a question, not requesting a perturbation
   ("can I stress-test rates?"). Return empty with reasoning.
 - The user named a field not in the catalog ("change the school
   district"). Return empty with reasoning naming the supported fields.
 - The user's value is ambiguous ("stress at high rate"). Return empty
   with reasoning asking for a specific number.
+
+NOTE: "% down" and "% closing" are NOT empty-return cases — emit them
+with unit="percent" per the DOLLARS-OR-PERCENT FIELDS rule above.
 
 Honest "I'm not sure" beats a confident wrong extraction every time.
 

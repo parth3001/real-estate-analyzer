@@ -133,9 +133,58 @@ function writeEngineField(
 }
 
 /**
+ * Higher-layer unit conversions that require context (e.g., a purchase
+ * price) and therefore can't live in the registry's context-free
+ * normalizeToEngineUnit helper.
+ *
+ * Currently handles:
+ *   downPayment / closingCosts (dollars):
+ *     User says "50% down" or "3% closing" → compute from baseline
+ *     purchasePrice. Common, natural way users describe these fields.
+ *
+ * Returns the converted engine-unit value, or `undefined` if no context-
+ * aware conversion applies for this (field, user-unit) pair. Callers
+ * fall back to the registry's standard normalizeToEngineUnit when this
+ * returns undefined.
+ */
+function contextualConversion(
+  field: string,
+  userValue: number,
+  userUnit: PerturbationSpec['unit'],
+  baselinePropertyData: Record<string, unknown>
+): number | undefined {
+  // Percent or decimal_ratio → dollars (% of purchase price).
+  // Applies to fields that users commonly express as "% of price".
+  const percentOfPriceFields = new Set(['downPayment', 'closingCosts']);
+  if (
+    percentOfPriceFields.has(field) &&
+    (userUnit === 'percent' || userUnit === 'decimal_ratio')
+  ) {
+    const price = baselinePropertyData.purchasePrice;
+    if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
+      // No baseline price to multiply against — caller falls back, which
+      // will surface a clear "couldn't apply" warning to the user.
+      return undefined;
+    }
+    // percent: 50 → 0.50; decimal_ratio: 0.5 → 0.5
+    const fraction = userUnit === 'percent' ? userValue / 100 : userValue;
+    return Math.round(price * fraction);
+  }
+
+  return undefined;
+}
+
+/**
  * Apply ALL perturbations atomically against cloned propertyData +
  * assumptions. Returns the per-field deltas (baseline → stressed) for
  * Layer 4 to narrate, plus any validation warnings.
+ *
+ * Resilience: each perturbation runs in a try/catch so one bad
+ * extraction (e.g., the LLM declared a unit that can't be converted
+ * for the field) degrades gracefully — a warning is recorded for that
+ * field but the rest of the perturbations still apply. Without this,
+ * a chat turn with 3 perturbations would crash on the first failure
+ * and the user would see "Chat turn failed" with no result.
  *
  * 'set' replaces. 'increase_by' / 'decrease_by' read the current value
  * (post-clone, but before THIS perturbation's write) and apply the delta.
@@ -154,49 +203,73 @@ function applyPerturbations(
   const warnings: string[] = [];
 
   for (const p of perturbations) {
-    const def = getFieldDef(p.field);
-    const baselineValue = readEngineField(baselinePropertyData, baselineAssumptions, def);
+    try {
+      const def = getFieldDef(p.field);
+      const baselineValue = readEngineField(baselinePropertyData, baselineAssumptions, def);
 
-    // Convert user-declared unit → engine unit. Throws loudly if the
-    // conversion isn't defined (the LLM mis-declared the unit pair).
-    const userValueInEngineUnit = normalizeToEngineUnit(p.value, p.unit, def);
+      // 1) Try a context-aware conversion first (e.g., "50% down" needs
+      //    the baseline purchasePrice to compute the dollar amount).
+      // 2) Fall back to the registry's context-free unit normalization.
+      const contextual = contextualConversion(
+        p.field,
+        p.value,
+        p.unit,
+        baselinePropertyData
+      );
+      const userValueInEngineUnit =
+        contextual !== undefined
+          ? contextual
+          : normalizeToEngineUnit(p.value, p.unit, def);
 
-    let stressedValue: number;
-    if (p.operation === 'set') {
-      stressedValue = userValueInEngineUnit;
-    } else {
-      // increase_by / decrease_by — must have a baseline to perturb against.
-      if (baselineValue === undefined) {
-        warnings.push(
-          `Cannot ${p.operation} ${def.label}: no baseline value found in prior analysis. ` +
-            `Treated as 'set' instead.`
-        );
+      let stressedValue: number;
+      if (p.operation === 'set') {
         stressedValue = userValueInEngineUnit;
       } else {
-        stressedValue =
-          p.operation === 'increase_by'
-            ? baselineValue + userValueInEngineUnit
-            : baselineValue - userValueInEngineUnit;
+        // increase_by / decrease_by — must have a baseline to perturb against.
+        if (baselineValue === undefined) {
+          warnings.push(
+            `Cannot ${p.operation} ${def.label}: no baseline value found in prior analysis. ` +
+              `Treated as 'set' instead.`
+          );
+          stressedValue = userValueInEngineUnit;
+        } else {
+          stressedValue =
+            p.operation === 'increase_by'
+              ? baselineValue + userValueInEngineUnit
+              : baselineValue - userValueInEngineUnit;
+        }
       }
+
+      const validationError = validateEngineValue(stressedValue, def);
+      if (validationError) {
+        // Soft warning — proceed with the value but flag it. Engine itself
+        // will produce whatever number the formula yields; the user sees
+        // both the result AND the warning so nothing's hidden.
+        warnings.push(validationError);
+      }
+
+      writeEngineField(propertyData, assumptions, def, stressedValue);
+
+      deltas.push({
+        field: def.key,
+        label: def.label,
+        baselineValue: baselineValue ?? NaN,
+        stressedValue,
+        engineUnit: def.engineUnit,
+      });
+    } catch (err) {
+      // ONE perturbation failed (incompatible unit pair, unknown field,
+      // etc.). Record a user-facing warning and continue with the rest.
+      // Crashing the whole turn on a single bad extraction is the worst
+      // possible UX — better to apply what we can and explain what we
+      // couldn't.
+      const msg = err instanceof Error ? err.message : String(err);
+      warnings.push(
+        `Couldn't apply the change to '${p.field}' (${p.value} ${p.unit}). ` +
+          `Try expressing it differently — e.g., in dollars for amounts, ` +
+          `percent for rates. Detail: ${msg.split('.')[0]}.`
+      );
     }
-
-    const validationError = validateEngineValue(stressedValue, def);
-    if (validationError) {
-      // Soft warning — proceed with the value but flag it. Engine itself
-      // will produce whatever number the formula yields; the user sees
-      // both the result AND the warning so nothing's hidden.
-      warnings.push(validationError);
-    }
-
-    writeEngineField(propertyData, assumptions, def, stressedValue);
-
-    deltas.push({
-      field: def.key,
-      label: def.label,
-      baselineValue: baselineValue ?? NaN,
-      stressedValue,
-      engineUnit: def.engineUnit,
-    });
   }
 
   return { deltas, warnings };

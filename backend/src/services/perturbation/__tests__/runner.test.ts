@@ -373,6 +373,84 @@ describe('runStressTest — original-bug regression lock', () => {
     expect(result.baseline.walkAwayPrice).toBeLessThan(300_000);
   });
 
+  it("contextual conversion: '50% down' → dollars using baseline purchasePrice (Task #27 follow-up)", async () => {
+    // User says "50% down" → LLM extracts { downPayment, 0.5, decimal_ratio }.
+    // The field is dollars. Without contextual conversion, this throws.
+    // With the fix: read baseline purchasePrice ($205K) and compute
+    // 0.5 * 205000 = $102,500.
+    mockGetScenarioBundle.mockResolvedValue(
+      fixtureBundle({ userId, decisionId: validHex }) as never
+    );
+
+    const result = await runStressTest({
+      priorDecisionId: validHex,
+      userId,
+      perturbations: [
+        { field: 'downPayment', value: 0.5, unit: 'decimal_ratio', operation: 'set' },
+      ],
+    });
+
+    expect(result.deltas).toHaveLength(1);
+    expect(result.deltas[0].field).toBe('downPayment');
+    expect(result.deltas[0].engineUnit).toBe('dollars');
+    expect(result.deltas[0].stressedValue).toBe(102_500); // 0.5 * $205K
+    // Bigger down = smaller loan = less debt service = better cash flow.
+    expect(result.stressed.monthlyCashFlow).toBeGreaterThan(
+      result.baseline.monthlyCashFlow
+    );
+  });
+
+  it("contextual conversion: '50 percent down' (percent unit) → same dollar result", async () => {
+    // Same intent, different unit declaration. Result must match.
+    mockGetScenarioBundle.mockResolvedValue(
+      fixtureBundle({ userId, decisionId: validHex }) as never
+    );
+
+    const result = await runStressTest({
+      priorDecisionId: validHex,
+      userId,
+      perturbations: [
+        { field: 'downPayment', value: 50, unit: 'percent', operation: 'set' },
+      ],
+    });
+
+    expect(result.deltas[0].stressedValue).toBe(102_500); // 50/100 * $205K
+  });
+
+  it('graceful failure: ONE bad perturbation does NOT crash the turn — others still apply', async () => {
+    // Mixed batch: a valid rate stress + a perturbation with an
+    // unconvertible unit pair for a field that has no contextual
+    // converter. Pre-fix this would have thrown and the chat turn
+    // would have failed. Post-fix: the bad one becomes a warning,
+    // the rate stress still runs.
+    mockGetScenarioBundle.mockResolvedValue(
+      fixtureBundle({ userId, decisionId: validHex }) as never
+    );
+
+    const result = await runStressTest({
+      priorDecisionId: validHex,
+      userId,
+      perturbations: [
+        // Valid — should apply.
+        { field: 'mortgageRate', value: 8, unit: 'percent', operation: 'set' },
+        // Invalid — 'rent' is dollars, no contextual converter for "% rent",
+        // normalizeToEngineUnit throws. Should become a warning, not crash.
+        { field: 'rent', value: 10, unit: 'years', operation: 'set' },
+      ],
+    });
+
+    // The good perturbation applied.
+    const rateDelta = result.deltas.find((d) => d.field === 'mortgageRate');
+    expect(rateDelta).toBeDefined();
+    expect(rateDelta?.stressedValue).toBe(8);
+
+    // The bad one became a warning.
+    expect(result.warnings.some((w) => w.includes("'rent'"))).toBe(true);
+
+    // The turn produced a result (didn't throw).
+    expect(result.stressed.dealQuality).toBeDefined();
+  });
+
   it('out-of-range value generates a warning but does NOT block the run', async () => {
     mockGetScenarioBundle.mockResolvedValue(
       fixtureBundle({ userId, decisionId: validHex }) as never
