@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User, IUser, UserMode, PersonaType } from '../models/User';
 import { logger } from '../utils/logger';
+import { licenseRepository } from '../repositories/LicenseRepository';
 
 export interface RegisterData {
   email: string;
@@ -83,6 +84,32 @@ export class AuthService {
 
       const savedUser = await user.save();
       logger.info(`[AuthService] User registered successfully: ${savedUser.id}`);
+
+      // Task #38 (2026-06-13) — issue the "first full analysis free" credit
+      // promised on the pricing page free tier. DealCredit infrastructure
+      // pre-existed (sourceType: 'first_free') but no code was calling it
+      // on signup, so the promise was unfulfilled. Wrapped in try/catch
+      // because credit issuance failure must NOT block account creation —
+      // a user without credits can be granted one later via ops, but a
+      // failed signup is a hard miss. Default 365-day credit window per
+      // computeCreditExpiry; 180-day usage window kicks in at redemption
+      // (when the credit becomes a DealLicense on first analysis).
+      try {
+        const creditIds = await licenseRepository.issueCredits({
+          userId: savedUser._id as IUser['_id'],
+          sourceType: 'first_free',
+          pricePaidCents: 0,
+        });
+        logger.info(
+          `[AuthService] first_free credit issued for ${savedUser.id}: ${creditIds[0]?.toString()}`
+        );
+      } catch (creditError) {
+        logger.error(
+          `[AuthService] Failed to issue first_free credit for ${savedUser.id} ` +
+            `(account created, credit must be granted manually):`,
+          creditError
+        );
+      }
 
       // Generate tokens
       const tokens = this.generateTokens(savedUser);
