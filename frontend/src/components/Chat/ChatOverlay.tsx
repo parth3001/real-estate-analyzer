@@ -479,15 +479,36 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
    * additive at the magic-link consume step.
    */
   const handlePortfolioCta = (msg: AssistantMessage): void => {
+    // Task #25 / Task #31 fix: when the user clicks Save on a text-only
+    // assistant turn (stress-test response with no structured outputs),
+    // `msg.conversationEventId` points to a turn that has no
+    // deal_score_card to claim. The post-login claim handler then finds
+    // nothing and silently no-ops. Walk backward through the thread to
+    // find the most recent turn that actually produced a deal_score_card
+    // and claim from THAT one instead. Falls back to the clicked message
+    // if no prior deal turn exists (defensive — the inline CTA gate
+    // already requires sessionHasDeal, so this shouldn't trigger).
+    const msgHasDealCard = (m: AssistantMessage): boolean =>
+      (m.structuredOutputs ?? []).some((so) => so.kind === 'deal_score_card');
+    let claimMsg: AssistantMessage = msg;
+    if (!msgHasDealCard(msg)) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (m.role === 'assistant' && msgHasDealCard(m as AssistantMessage)) {
+          claimMsg = m as AssistantMessage;
+          break;
+        }
+      }
+    }
     writePendingChatClaim({
       sessionId,
       returnTo: '/app',
-      conversationEventId: msg.conversationEventId,
+      conversationEventId: claimMsg.conversationEventId,
     });
     const params = new URLSearchParams({
       returnTo: '/app',
-      ...(msg.conversationEventId
-        ? { pendingConversationId: msg.conversationEventId }
+      ...(claimMsg.conversationEventId
+        ? { pendingConversationId: claimMsg.conversationEventId }
         : {}),
     });
     navigate(`/login?${params.toString()}`);
@@ -800,11 +821,20 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
             );
           })()}
 
-          {/* Task #25: detect whether the session has a deal that could be
-              saved. True iff any prior assistant message rendered a
-              DealScoreCard structured output. Used to gate the inline
-              "Save this deal" CTA on text-only stress-test responses
-              (which have no structured output of their own). */}
+          {/* Task #25 / Task #31: detect whether the session has a deal
+              that could be saved. True iff any prior assistant message
+              rendered a DealScoreCard structured output. Used to gate the
+              inline "Save this deal" CTA on text-only stress-test
+              responses (which have no structured output of their own).
+
+              The inline CTA was originally anonymous-only (Task #25 framed
+              save as a conversion moment for anon users). The user-visible
+              bug: logged-in users saw the CTA on their FIRST analysis
+              (under the DealScoreCard) but it DISAPPEARED on every
+              subsequent stress-test turn — because those are text-only
+              and the inline gate excluded logged-in users. Removed the
+              anonymous gate so the inline CTA mirrors the under-card CTA:
+              both render for any user when there's a deal to save. */}
           {(() => {
             const sessionHasDeal = messages.some(
               (m) =>
@@ -813,19 +843,19 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
                   (so) => so.kind === 'deal_score_card'
                 )
             );
-            const userIsAnonymous = props.currentUserIsAuthed !== true;
             return messages.map((msg, idx) => {
               const isLastAssistant =
                 msg.role === 'assistant' && idx === messages.length - 1;
-              // Inline CTA conditions: anonymous user, latest assistant
-              // turn, session has a deal, AND this message itself has no
-              // structured outputs (otherwise the existing under-card CTA
-              // covers it). Text-only stress-test narratives match.
+              // Inline CTA conditions: latest assistant turn, session has
+              // a deal, AND this message itself has no structured outputs
+              // (otherwise the existing under-card CTA covers it).
+              // Text-only stress-test narratives match. Anonymous users
+              // get the same affordance; the magic-link signup hook lives
+              // in onPortfolioCta, not in this render gate.
               const msgHasStructuredOutputs =
                 msg.role === 'assistant' &&
                 (msg.structuredOutputs ?? []).length > 0;
               const showInlineSaveDealCta =
-                userIsAnonymous &&
                 isLastAssistant &&
                 sessionHasDeal &&
                 !msgHasStructuredOutputs;
