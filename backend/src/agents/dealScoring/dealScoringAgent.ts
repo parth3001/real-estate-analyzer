@@ -44,6 +44,7 @@ import { recallUserContext } from '../tools/recall_user_context';
 import { resolvePropertyInputs } from '../tools/resolve_property_inputs';
 import { computeAnalysis } from '../tools/compute_analysis';
 import { scoreDeal } from '../tools/score_deal';
+import { getDecisionBreakdown } from '../tools/get_decision_breakdown';
 
 // ===== System prompt =====
 
@@ -315,6 +316,54 @@ NEVER silently default a value the user would care about without
 disclosing it. Transparency is the trust mechanism. A score the user
 doesn't understand the inputs to is worse than no score.
 
+AUDIT-TRAIL QUESTIONS — when the user asks how a number was derived
+────────────────────────────────────────────────────────────────────
+
+If the user's current message asks something like:
+  - "how did you arrive at [the cash flow / the score / this number]?"
+  - "show me the breakdown" / "break it down for me"
+  - "where do these numbers come from?"
+  - "what are the expenses?" / "what's the math?"
+  - "walk me through the cash flow" / "audit trail" / "line items"
+
+…and you HAVE a prior decision for this property (i.e., the user's
+recent decisions in recall_user_context include one for the property
+under discussion), DO NOT narrate the breakdown from memory or from
+the prior turn's text. Call tool:get_decision_breakdown with:
+
+  { decisionId: "<recentDecisions[0]._id for the property in question>" }
+
+The tool returns the engine's ACTUAL line-item monthly breakdown:
+  property.purchasePrice, property.monthlyRent
+  loan.loanAmount, loan.interestRate, loan.monthlyPayment
+  monthly.grossRent, monthly.vacancyLoss, monthly.effectiveRent
+  monthly.expenses.{propertyTax, insurance, maintenance,
+                    propertyManagement, tenantTurnover, capEx, hoa,
+                    utilities, otherOperating, totalOperating,
+                    mortgagePayment, total}
+  monthly.netCashFlow
+  metrics.{dscr, capRate, monthlyNOI}
+
+Narrate FROM these values verbatim. Surface the 5-7 most material
+line items (whichever are non-zero and load-bearing for this property
+type) — not all 13. Add total operating + mortgage = total expenses,
+then total expenses vs. effective rent = net cash flow. Close with a
+brief honest framing of any line item the user might want to revisit
+(e.g., "the $171 maintenance estimate is the standard $2,050/yr
+assumption — happy to swap your number in").
+
+⚠️ Confabulation is the failure mode this tool prevents. If
+get_decision_breakdown returns a line item as 0, REPORT it as 0. Do
+NOT invent a non-zero value to make the breakdown "look complete."
+If a line item the user expects (e.g., HOA) is genuinely 0 in the
+engine's breakdown, say so plainly: "HOA isn't in the model right
+now — let me know if there's a fee and I'll fold it in."
+
+If there is NO prior decision (recall_user_context returns nothing
+matching the property), do not call get_decision_breakdown. Instead
+respond plainly: "I don't see a recent analysis for that property —
+want to run one fresh?" and stop.
+
 OUTPUT
 ──────
 
@@ -411,6 +460,7 @@ const ALLOWED_TOOLS = {
   resolve_property_inputs: resolvePropertyInputs,
   compute_analysis: computeAnalysis,
   score_deal: scoreDeal,
+  get_decision_breakdown: getDecisionBreakdown,
 } as const;
 
 // ===== Config =====
