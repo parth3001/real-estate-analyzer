@@ -48,7 +48,7 @@ import { DealLicenseModel } from '../src/models/license/DealLicense';
 import { DealCreditModel } from '../src/models/license/DealCredit';
 import { DealModel } from '../src/models/Deal';
 import { normalizeEmail } from '../src/utils/magicLinkToken';
-import { MagicLinkTokenModel } from '../src/models/MagicLinkToken';
+import { MagicLinkToken } from '../src/models/MagicLinkToken';
 // NOTE: BaseEventModel + CostEvent are NOT imported. Both collections
 // (events + cost_events) have append-only Mongoose middleware that
 // blocks deleteMany. The script bypasses via raw collection access
@@ -183,7 +183,7 @@ async function main() {
 
   // 5. MagicLinkToken — match by emailNormalized field per
   //    MagicLinkToken.ts schema.
-  const magicLinkCount = await MagicLinkTokenModel.deleteMany({
+  const magicLinkCount = await MagicLinkToken.deleteMany({
     emailNormalized: normalized,
   }).then((r) => r.deletedCount ?? 0);
   console.log(`  magic_link_tokens:      ${magicLinkCount}`);
