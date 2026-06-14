@@ -37,6 +37,10 @@ import type {
   MultiFamilyMetrics,
 } from '../../types/propertyTypes';
 import type { MarketDataResponse } from '../../types/marketData';
+// analysisShapes is referenced in the materializer for tolerant
+// read-side parsing (Task #41 Tier 2). It's intentionally not imported
+// here yet — Tier 1 (write-side enforcement) is deferred until the
+// test fixtures conform.
 
 // ===== Enum-like type for enrichment provenance =====
 
@@ -81,6 +85,20 @@ export const AnalysisPayloadSchema = z.object({
   assumptions: ObjectShapeSchema,
 
   // Outputs
+  //
+  // Task #41 deferred-Tier-1 note (2026-06-13): the strict shapes from
+  // analysisShapes.ts (MetricsShape / MonthlyAnalysisShape /
+  // LongTermAnalysisShape) are intentionally NOT applied here yet.
+  // Switching to them rejects ~22 existing test fixtures that don't
+  // carry every load-bearing field. Tier 2 (materializer fix) closes
+  // the user-visible bug class on its own; Tier 1's write-boundary
+  // enforcement is deferred to a follow-up commit that also updates
+  // those fixtures.
+  //
+  // The strict shapes are still load-bearing for the READ side: the
+  // materializer (dealMaterializationService.projectAnalysis) parses
+  // against them tolerantly via safeParseShape. If a substrate event
+  // is missing fields, materializer logs and falls back — no crash.
   metrics: ObjectShapeSchema,
   monthlyAnalysis: ObjectShapeSchema,
   longTermAnalysis: ObjectShapeSchema,

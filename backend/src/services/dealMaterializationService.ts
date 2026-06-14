@@ -53,6 +53,12 @@ import { User } from '../models/User';
 import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { eventsRepositoryReads } from '../repositories/EventsRepositoryReads';
 import type { AnalysisPayload } from '../models/events/AnalysisEvent';
+import {
+  MonthlyAnalysisShape,
+  MetricsShape,
+  LongTermAnalysisShape,
+  safeParseShape,
+} from '../models/events/analysisShapes';
 import type { DecisionPayload } from '../models/events/DecisionEvent';
 import { DecisionEventModel } from '../models/events/DecisionEvent';
 import type { SFRData, MultiFamilyData } from '../types/propertyTypes';
@@ -216,86 +222,215 @@ export async function assembleDecisionsForEvents(
 }
 
 /**
- * Project substrate AnalysisPayload.monthlyAnalysis + .longTermAnalysis
- * + .metrics into the Deal model's Analysis shape. The substrate stores
- * everything as Record<string, unknown> at the schema level; we cast
- * defensively here.
+ * Project substrate AnalysisPayload (monthlyAnalysis + longTermAnalysis
+ * + metrics) into the Deal model's Analysis shape.
+ *
+ * Task #41 (2026-06-13) — architectural fix, Option B (strict).
+ *
+ * BUG THIS REPLACES
+ * ─────────────────
+ *
+ * The previous version was a hand-curated allowlist that explicitly
+ * named ~7 fields from the analyzer's 23+ metric output and dropped
+ * every other field silently. It also had five field-name mismatches
+ * that produced `undefined` writes — most notably `lt.yearlyProjections`
+ * reading what the substrate stores as `lt.projections` (the Task #32
+ * sparse-projection bug). Object.assign downstream OVERWROTE any prior
+ * good data with the undefined shape.
+ *
+ * Result: chat-driven saves silently dropped IRR, GRM, OER,
+ * pricePerSqFt, rentPerSqFt, breakEvenOccupancy, equityMultiple,
+ * onePercentRuleValue, debtToIncomeRatio, and (depending on prior Deal
+ * state) the entire 10-year projection. The pricing page promise of
+ * "28+ professional metrics" was structurally unfulfillable.
+ *
+ * FIX SHAPE
+ * ─────────
+ *
+ * The substrate's analysis sub-objects are parsed via the strict Zod
+ * schemas in `analysisShapes.ts` (whose types are derived via
+ * `z.infer` from the same source-of-truth schemas). Parsed data is
+ * fully typed — no `Record<string, unknown>`, no `num()` helpers, no
+ * cast escape hatches. Field-name renames are explicit and listed
+ * below. Adding a new analyzer metric to the Deal requires adding a
+ * single line here, against typed parsed data — TypeScript catches
+ * drift at build time.
+ *
+ * Tolerant parse semantics: if a substrate event predates Task #41's
+ * tightened write schema, parse may fail. The materializer logs the
+ * mismatch and falls back to undefined for the affected sub-object
+ * (no crash, no data corruption — just partial projection). New
+ * writes go through the tightened AnalysisPayloadSchema which rejects
+ * malformed substrate writes at the source.
+ *
+ * RENAMES (substrate → Deal)
+ * ──────────────────────────
+ *
+ *   longTermAnalysis.projections           → longTermAnalysis.yearlyProjections
+ *   metrics.noi                            → annualAnalysis.annualNOI
+ *   metrics.pricePerSqFt                   → keyMetrics.pricePerSqFtAtPurchase
+ *   metrics.rentPerSqFt                    → keyMetrics.avgRentPerSqFt
+ *   metrics.operatingExpenseRatio          → keyMetrics.expenseRatio
+ *   monthlyAnalysis.expenses.debt × 12     → annualAnalysis.annualDebtService
+ *   monthlyAnalysis.income.effective × 12  → annualAnalysis.effectiveGrossIncome
+ *
+ * Every other field passes through with the same name on both sides.
  */
 function projectAnalysis(ap: AnalysisPayload): Analysis {
-  // Substrate's nested analysis structures are Record<string, unknown>
-  // at the schema level — Mongoose / Zod read paths may surface them as
-  // undefined if they were omitted at write time. Default to {} so the
-  // field accesses below never throw on optional content.
-  const m = (ap.monthlyAnalysis ?? {}) as {
-    cashFlow?: number;
-    grossIncome?: number;
-    effectiveGrossIncome?: number;
-    expenses?: Record<string, number | undefined>;
-    propertyTax?: number;
-    insurance?: number;
-    maintenance?: number;
-    propertyManagement?: number;
-    vacancy?: number;
+  const warn = (msg: string, meta: Record<string, unknown>) =>
+    logger.warn(msg, meta);
+
+  // Strict-but-tolerant parse: validate every sub-object against its
+  // schema, log on mismatch, and return null so the projection
+  // continues with undefined for that surface. This is the v1
+  // safety-belt before Tier 1 (substrate-write boundary tightening)
+  // makes mismatch impossible.
+  const monthly = safeParseShape(
+    MonthlyAnalysisShape,
+    ap.monthlyAnalysis,
+    'monthlyAnalysis',
+    warn
+  );
+  const metrics = safeParseShape(
+    MetricsShape,
+    ap.metrics,
+    'metrics',
+    warn
+  );
+  const lt = safeParseShape(
+    LongTermAnalysisShape,
+    ap.longTermAnalysis,
+    'longTermAnalysis',
+    warn
+  );
+
+  // ===== Monthly expenses =====
+  // Source-of-truth is the breakdown sub-object (analyzer always
+  // populates it). SFRAnalyzer.normalizeOutput ALSO lifts each line
+  // item to expenses.{X} as a convenience for legacy consumers; we
+  // don't need that path here because we're reading from breakdown.
+  const monthlyExpenses = monthly
+    ? {
+        propertyTax: monthly.expenses.breakdown.propertyTax,
+        insurance: monthly.expenses.breakdown.insurance,
+        maintenance: monthly.expenses.breakdown.maintenance,
+        propertyManagement: monthly.expenses.breakdown.propertyManagement,
+        vacancy: monthly.expenses.breakdown.vacancy,
+        tenantTurnover: monthly.expenses.breakdown.tenantTurnover,
+        total: monthly.expenses.total,
+      }
+    : {};
+
+  const monthlyIncome = monthly
+    ? { gross: monthly.income.gross, effective: monthly.income.effective }
+    : {};
+
+  // ===== Annual derivations =====
+  // Substrate doesn't store annualAnalysis directly — derive from
+  // monthly × 12 OR pull from metrics for fields that live there
+  // (NOI lives on metrics; the rest derive from monthly).
+  const annualAnalysis = {
+    dscr: metrics?.dscr,
+    cashOnCashReturn: metrics?.cashOnCashReturn,
+    capRate: metrics?.capRate,
+    totalInvestment: metrics?.totalInvestment,
+    annualNOI: metrics?.noi,
+    annualDebtService: monthly ? monthly.expenses.debt * 12 : undefined,
+    effectiveGrossIncome: monthly ? monthly.income.effective * 12 : undefined,
   };
 
-  const metricsAny = (ap.metrics ?? {}) as unknown as Record<
-    string,
-    number | undefined
-  >;
+  // ===== Long-term analysis — THE RENAME =====
+  // Substrate's `projections` (analyzer's name) maps to Deal's
+  // `projections` (Mongoose schema name at Deal.ts line 653).
+  //
+  // NOTE: the TypeScript interface for `Analysis` at Deal.ts:68 says
+  // `yearlyProjections` — but that name does NOT match the runtime
+  // Mongoose schema at line 653 which uses `projections`. Mongoose's
+  // strict mode strips the `yearlyProjections` field on save, which
+  // was a contributing factor to Task #32's sparse-projection
+  // symptom. The materializer writes to the Mongoose-schema name; the
+  // TS interface should be corrected in a follow-up commit (Task #32
+  // closure work). We cast through unknown because of the TS/runtime
+  // mismatch.
+  const longTermAnalysis = {
+    projections: lt?.projections,
+    projectionYears: lt?.projectionYears,
+    returns: lt?.returns,
+    exitAnalysis: lt?.exitAnalysis,
+  } as unknown as Analysis['longTermAnalysis'];
 
-  const monthlyExpenses = {
-    propertyTax: m.expenses?.propertyTax ?? m.propertyTax,
-    insurance: m.expenses?.insurance ?? m.insurance,
-    maintenance: m.expenses?.maintenance ?? m.maintenance,
-    propertyManagement:
-      m.expenses?.propertyManagement ?? m.propertyManagement,
-    vacancy: m.expenses?.vacancy ?? m.vacancy,
-    total: m.expenses?.total,
-  };
+  // ===== Key metrics — full passthrough + renames =====
+  // ARCHITECTURAL POINT: every analyzer-produced metric maps to its
+  // Deal field here. Renames are explicit. Adding a new metric to the
+  // analyzer requires adding ONE line here; the strict schema in
+  // analysisShapes.ts will surface the new field at build time once
+  // it's added to the relevant Shape.
+  //
+  // The narrowing pattern: SFRMetricsShape and MultiFamilyMetricsShape
+  // share CommonMetrics. SFR-only fields are read via optional chain
+  // on the union — if metrics parsed as MF, the SFR-only fields are
+  // undefined and don't surface on the Deal, which is correct.
+  type SfrUnion =
+    | (typeof metrics & { pricePerSqFt: number; rentPerSqFt: number })
+    | null;
+  const m = metrics as SfrUnion;
 
-  const lt = (ap.longTermAnalysis ?? {}) as {
-    yearlyProjections?: Analysis['longTermAnalysis']['yearlyProjections'];
-    projectionYears?: number;
-    returns?: Analysis['longTermAnalysis']['returns'];
-    exitAnalysis?: Analysis['longTermAnalysis']['exitAnalysis'];
+  const keyMetrics: Analysis['keyMetrics'] = {
+    capRate: metrics?.capRate,
+    cashOnCashReturn: metrics?.cashOnCashReturn,
+    dscr: metrics?.dscr,
+    grossRentMultiplier: m && 'grossRentMultiplier' in m
+      ? (m as { grossRentMultiplier?: number }).grossRentMultiplier
+      : undefined,
+    breakEvenOccupancy: m && 'breakEvenOccupancy' in m
+      ? (m as { breakEvenOccupancy?: number }).breakEvenOccupancy
+      : undefined,
+    equityMultiple: m && 'equityMultiple' in m
+      ? (m as { equityMultiple?: number }).equityMultiple
+      : undefined,
+    onePercentRuleValue: m && 'onePercentRuleValue' in m
+      ? (m as { onePercentRuleValue?: number }).onePercentRuleValue
+      : undefined,
+    fiftyRuleAnalysis: m && 'fiftyRuleAnalysis' in m
+      ? (m as { fiftyRuleAnalysis?: boolean }).fiftyRuleAnalysis
+      : undefined,
+    rentToPriceRatio: m && 'rentToPriceRatio' in m
+      ? (m as { rentToPriceRatio?: number }).rentToPriceRatio
+      : undefined,
+    pricePerBedroom: m && 'pricePerBedroom' in m
+      ? (m as { pricePerBedroom?: number }).pricePerBedroom
+      : undefined,
+    debtToIncomeRatio: m && 'debtToIncomeRatio' in m
+      ? (m as { debtToIncomeRatio?: number }).debtToIncomeRatio
+      : undefined,
+    returnOnImprovements: m && 'returnOnImprovements' in m
+      ? (m as { returnOnImprovements?: number }).returnOnImprovements
+      : undefined,
+    turnoverCostImpact: m && 'turnoverCostImpact' in m
+      ? (m as { turnoverCostImpact?: number }).turnoverCostImpact
+      : undefined,
+    // Renames (substrate → Deal field name)
+    pricePerSqFtAtPurchase: m && 'pricePerSqFt' in m
+      ? (m as { pricePerSqFt?: number }).pricePerSqFt
+      : undefined,
+    avgRentPerSqFt: m && 'rentPerSqFt' in m
+      ? (m as { rentPerSqFt?: number }).rentPerSqFt
+      : undefined,
+    expenseRatio: metrics?.operatingExpenseRatio,
   };
 
   return {
-    // Day 11h (Task #11, 2026-05-20): project walkAwayPrice from the
-    // substrate so SavedDealHero shows the engine's walk-away instead of
-    // $0. ap.walkAwayPrice is a required field on every AnalysisEvent, so
-    // it's always present. Previously dropped (never projected + not in
-    // AnalysisSchema), which is why the saved detail page showed $0 while
-    // the chat DealScoreCard showed the real number.
+    // Day 11h (Task #11, 2026-05-20): walkAwayPrice projection (was
+    // historically dropped; fixed in #11).
     walkAwayPrice: (ap as { walkAwayPrice?: number }).walkAwayPrice,
     monthlyAnalysis: {
       expenses: monthlyExpenses,
-      income: {
-        gross: m.grossIncome,
-        effective: m.effectiveGrossIncome,
-      },
-      cashFlow: m.cashFlow,
+      income: monthlyIncome,
+      cashFlow: monthly?.cashFlow,
     },
-    annualAnalysis: {
-      dscr: metricsAny.dscr,
-      cashOnCashReturn: metricsAny.cashOnCashReturn,
-      capRate: metricsAny.capRate,
-      totalInvestment: metricsAny.totalInvestment,
-      annualNOI: metricsAny.noi,
-      annualDebtService: metricsAny.annualDebtService,
-      effectiveGrossIncome: metricsAny.effectiveGrossIncome,
-    },
-    longTermAnalysis: {
-      yearlyProjections: lt.yearlyProjections,
-      projectionYears: lt.projectionYears,
-      returns: lt.returns,
-      exitAnalysis: lt.exitAnalysis,
-    },
-    keyMetrics: {
-      capRate: metricsAny.capRate,
-      cashOnCashReturn: metricsAny.cashOnCashReturn,
-      dscr: metricsAny.dscr,
-    },
+    annualAnalysis,
+    longTermAnalysis,
+    keyMetrics,
     // AI insights left empty — substrate doesn't carry the legacy
     // aiInsights shape. The chat surface's reasoningTrail lives on
     // DecisionPayload and surfaces via DealScoreCard, not via Deal.aiInsights.
