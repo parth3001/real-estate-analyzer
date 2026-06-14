@@ -248,17 +248,38 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
 
       // ✅ OPTION A FIX: Add SFR-specific operating expenses to projections (Jan 2026)
       // This fixes the discrepancy where new expenses were in monthly analysis but missing from projections
+      //
+      // ✅ Task #43 FIX (2026-06-13): CapEx default MUST match the headline
+      // analyzer's SFRCalculationEngine.calculateOperatingExpenses() default
+      // of "5% of rent" — see utils/financialCalculations.ts:782. Before
+      // this fix the headline used 5% of rent and the projection used 0,
+      // producing a Year-1 NOI / Financials NOI mismatch of exactly the
+      // CapEx delta (~$92/mo for a $1,850/mo rent property). That was the
+      // root cause of the "Financials cash flow doesn't match Year 1" bug.
+      //
+      // ARCHITECTURAL DEBT (filed as #44 Tier 2): the headline + projection
+      // OpEx calculations should share a SINGLE function. Today they
+      // duplicate logic with this default as the divergence point. A
+      // proper fix unifies the calculation entirely.
       if (this.data.propertyType === 'SFR') {
         const hoa = (this.data.monthlyHOA ?? 0) * 12 * expenseInflationFactor;
         const utilities = (this.data.monthlyUtilities ?? 0) * 12 * expenseInflationFactor;
-        const capEx = (this.data.monthlyCapEx ?? 0) * 12 * expenseInflationFactor;
+        // Match SFRCalculationEngine's "5% of rent" default for CapEx.
+        // grossIncome is annual rent; convert to monthly, take 5%, then
+        // annualize × 12. Same formula on both code paths.
+        const capExMonthly =
+          (this.data as { monthlyCapEx?: number }).monthlyCapEx ??
+          ((grossIncome / 12) * 0.05);
+        const capEx = capExMonthly * 12 * expenseInflationFactor;
 
         debug(`Year ${year} SFR-Specific Expenses:`, {
           hoa,
           utilities,
           capEx,
           total: hoa + utilities + capEx,
-          inflationFactor: expenseInflationFactor
+          inflationFactor: expenseInflationFactor,
+          capExDefaultUsed:
+            (this.data as { monthlyCapEx?: number }).monthlyCapEx === undefined,
         });
 
         operatingExpenses += hoa + utilities + capEx;
