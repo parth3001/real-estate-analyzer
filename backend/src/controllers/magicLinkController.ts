@@ -12,6 +12,7 @@ import {
   normalizeEmail,
 } from '../utils/magicLinkToken';
 import { logger } from '../utils/logger';
+import { licenseRepository } from '../repositories/LicenseRepository';
 
 const MAGIC_LINK_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
 const TERMS_VERSION = process.env.TERMS_VERSION || '2026-01';
@@ -199,6 +200,29 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
         termsVersion: TERMS_VERSION,
         termsAcceptedIp: tokenDoc.requestIp,
       });
+
+      // Task #38 follow-up (2026-06-14): issue the "first full analysis
+      // free" credit for new users created via the magic-link path —
+      // matches authService.register() behavior. Without this, only
+      // password-based signups received the free credit, while magic-link
+      // signups silently missed it. Wrapped in try/catch because credit
+      // issuance failure must NOT fail account creation.
+      try {
+        const creditIds = await licenseRepository.issueCredits({
+          userId: user._id as Types.ObjectId,
+          sourceType: 'first_free',
+          pricePaidCents: 0,
+        });
+        logger.info(
+          `[MagicLink] first_free credit issued for ${user._id?.toString()}: ${creditIds[0]?.toString()}`
+        );
+      } catch (creditError) {
+        logger.error(
+          `[MagicLink] Failed to issue first_free credit for ${user._id?.toString()} ` +
+            `(account created, credit must be granted manually):`,
+          creditError
+        );
+      }
     } else {
       user.lastLogin = new Date();
       if (!user.isVerified) user.isVerified = true;
