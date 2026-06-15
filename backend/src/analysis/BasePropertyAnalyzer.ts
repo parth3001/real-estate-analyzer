@@ -146,6 +146,34 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       loanTerm: this.data.loanTerm,
       initialLoanBalance: currentLoanBalance
     });
+
+    // Per-row totalReturn fix (2026-06-14) — see drifting-booping-ripple plan.
+    //
+    // The per-row totalReturn field was historically `cashFlow + appreciation`,
+    // which mixed a single-year cashFlow with cumulative appreciation and gave
+    // meaningless values. The v1.0 frontend bypassed this field entirely and
+    // computed Total Return from primitives. The v2.0 workspace year-by-year
+    // table started consuming the field directly, exposing the bug.
+    //
+    // The fix: emit, at each year, the SAME formula v1.0 frontend used and the
+    // summary in this file uses — "total return if you sold at end of year N":
+    //
+    //   totalReturnAtYearN = cumulativeCashFlowThroughN
+    //                       + netSaleProceedsIfSoldAtN
+    //                       - totalInvestment
+    //
+    // By construction, the value at year = projectionYears equals the summary
+    // totalReturn computed below at line ~436. Locked in by contract test
+    // financialMathContracts.test.ts (Phase: post-V3.0 hardening).
+    const totalInvestmentForReturn =
+      this.data.downPayment +
+      (this.data.closingCosts || 0) +
+      (this.data.capitalInvestments || 0);
+    const sellingCostsRate =
+      typeof this.assumptions.sellingCosts === 'number'
+        ? this.assumptions.sellingCosts
+        : 6; // industry-standard default; matches exitAnalysis
+    let cumulativeCashFlow = 0;
     
     const basePropertyTaxForYear1 = this.data.purchasePrice * (this.data.propertyTaxRate / 100);
     const baseInsuranceForYear1 = this.data.purchasePrice * (this.data.insuranceRate / 100);
@@ -320,6 +348,15 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         currentLoanBalance
       });
 
+      // Per-row totalReturn: same formula as the summary at line ~436 and as
+      // v1.0's frontend Total Return computation (AnalysisResults.tsx:1941),
+      // evaluated as "if sold at end of this year." See top-of-function comment.
+      cumulativeCashFlow += cashFlow;
+      const netSaleProceedsIfSoldNow =
+        currentPropertyValue * (1 - sellingCostsRate / 100) - currentLoanBalance;
+      const totalReturnIfSoldNow =
+        cumulativeCashFlow + netSaleProceedsIfSoldNow - totalInvestmentForReturn;
+
       projections.push({
         year,
         propertyValue: currentPropertyValue,
@@ -330,7 +367,7 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         cashFlow,
         equity: currentPropertyValue - currentLoanBalance,
         mortgageBalance: currentLoanBalance,
-        totalReturn: cashFlow + appreciation,
+        totalReturn: totalReturnIfSoldNow,
         propertyTax,
         insurance,
         maintenance,

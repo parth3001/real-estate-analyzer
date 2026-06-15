@@ -333,8 +333,23 @@ export class InvestmentDecisionEngine {
       propertyRentToPriceRatio
     );
     
-    // Calculate fair market value using market tier analysis
-    const noi = fundamentals.noi || (propertyData.monthlyRent * 12 * 0.6); // Net Operating Income estimate
+    // Calculate fair market value using market tier analysis.
+    //
+    // Pre-2026-06-14 this used `fundamentals.noi || monthlyRent * 12 * 0.6`
+    // — a gross-rent-based fallback that fired whenever fundamentals.noi
+    // was falsy. That fallback (a) wasn't anchored in real expenses and
+    // (b) compounded with the marketTierService.ts:220 unit bug to push
+    // fairValue to ~$18.5M on $250K rentals. The fundamentals object
+    // already carries the analyzer's real NOI for every property type;
+    // when it's truly absent, the right move is to skip fairValue, not
+    // to invent one. Locked in by financialMathContracts.test.ts.
+    const noi = fundamentals.noi;
+    if (!noi || noi <= 0) {
+      logger.warn('Fair Market Value skipped: NOI unavailable', {
+        propertyAddress: propertyData.propertyAddress,
+        hasFundamentals: !!fundamentals,
+      });
+    }
     let fairMarketValue;
     
     if (noi > 0) {

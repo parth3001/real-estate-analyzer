@@ -285,34 +285,6 @@ export function projectEngineOutputToEventPayloads(
   // at write time. Same value on both so scenario grouping is consistent.
   const canonicalAddressKey = stampCanonicalKey(input.propertyData);
 
-  // Task #32 (2026-06-09) — diagnostic for the sparse-projection bug. The
-  // saved-deal detail page shows only 2-3 projection rows (vs the 10+ the
-  // analyzer pushes) and Years 5/10 lack NOI. Verified the corruption is at
-  // substrate write-time, but couldn't pinpoint upstream code path via grep.
-  // This log captures the exact shape arriving at the write boundary so the
-  // next chat-analyze run tells us in one turn whether projections arrive
-  // already sparse (analyzer-side bug) or full (write-time mutation).
-  // Remove once root cause is fixed.
-  const lt = input.analysisResult.longTermAnalysis as Record<string, unknown> | undefined;
-  const ltProjections = Array.isArray(lt?.projections)
-    ? (lt.projections as Array<Record<string, unknown>>)
-    : null;
-  console.log('[Task #32] projectToEventPayloads — projection shape at write boundary:', {
-    projectionsCount: ltProjections?.length ?? 0,
-    firstRowKeys: ltProjections?.[0] ? Object.keys(ltProjections[0]) : null,
-    middleRowKeys:
-      ltProjections && ltProjections.length > 2
-        ? Object.keys(ltProjections[Math.floor(ltProjections.length / 2)])
-        : null,
-    lastRowKeys:
-      ltProjections && ltProjections.length > 0
-        ? Object.keys(ltProjections[ltProjections.length - 1])
-        : null,
-    projectionYears: lt?.projectionYears,
-    assumptionsProjectionYears: (input.assumptions as Record<string, unknown> | undefined)
-      ?.projectionYears,
-  });
-
   const analysisPayload: AnalysisPayload = {
     propertyData: input.propertyData,
     marketData: input.marketData,

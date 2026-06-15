@@ -314,24 +314,55 @@ async function withLlmRetry<T>(
   throw lastErr;
 }
 
+/**
+ * Build the Anthropic `messages.create` params, gating `temperature` on
+ * caller opt-in (Task B2 / drifting-booping-ripple plan, 2026-06-14).
+ *
+ * Anthropic deprecated `temperature` on Opus 4.5+ — passing it to those
+ * models returns 400 "temperature is deprecated for this model". The
+ * adversarialCritic and dealScoring agents (both opus tier) were silently
+ * broken by the adapter's `?? 0` default that always included it.
+ *
+ * Behavior:
+ *   - Caller didn't pass temperature → omit from API call entirely;
+ *     model uses its own default (already low for instruction-following).
+ *   - Caller passed an explicit number (e.g., intentClassifier passes 0
+ *     on haiku, which still accepts it) → forward as-is.
+ *
+ * Future-proof: when more models deprecate the param, no further change
+ * is needed here — callers that explicitly want a non-default temperature
+ * are responsible for picking a model that supports it.
+ */
+function maybeIncludeTemperature(
+  params: Record<string, unknown>,
+  temperature: number | undefined
+): void {
+  if (typeof temperature === 'number') {
+    params.temperature = temperature;
+  }
+}
+
 export const defaultAnthropicAdapter: AnthropicAdapter = {
   async call(input: AnthropicCallInput): Promise<AnthropicCallOutput> {
     const model = resolveModelName(input.tier);
     // Wrap the system prompt for prompt-caching when it's large enough
     // to be worth caching (Issue #106 Phase A). See formatSystemForCache.
     const systemForApi = formatSystemForCache(input.systemPrompt);
-    const response = await withLlmRetry(`call:${model}`, () =>
-      getClient().messages.create({
-        model,
-        max_tokens: input.maxTokens ?? 1024,
-        temperature: input.temperature ?? 0,
-        // Cast through unknown: the SDK's `system` field accepts both
-        // a string and an array-of-blocks, but the union type is
-        // narrower in the TS bindings than the wire reality.
-        system: systemForApi as unknown as string,
-        messages: [{ role: 'user', content: input.userPrompt }],
-      })
-    );
+    const callParams: Record<string, unknown> = {
+      model,
+      max_tokens: input.maxTokens ?? 1024,
+      // Cast through unknown: the SDK's `system` field accepts both
+      // a string and an array-of-blocks, but the union type is
+      // narrower in the TS bindings than the wire reality.
+      system: systemForApi as unknown as string,
+      messages: [{ role: 'user', content: input.userPrompt }],
+    };
+    maybeIncludeTemperature(callParams, input.temperature);
+    const response = (await withLlmRetry(`call:${model}`, () =>
+      getClient().messages.create(
+        callParams as unknown as Parameters<Anthropic['messages']['create']>[0]
+      )
+    )) as Anthropic.Message;
 
     // Concatenate text blocks. Multi-block responses are unusual for
     // single-shot extraction but defensive merging is cheap.
@@ -375,14 +406,15 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
         ? Anthropic['messages']['create']
         : Anthropic['messages']['create']
     >[0];
-    const params = {
+    const callParams: Record<string, unknown> = {
       model,
       max_tokens: input.maxTokens ?? 4096,
-      temperature: input.temperature ?? 0,
       system: formatSystemForCache(input.systemPrompt),
       messages: input.messages,
       tools: input.tools,
-    } as unknown as SdkMessageCreate;
+    };
+    maybeIncludeTemperature(callParams, input.temperature);
+    const params = callParams as unknown as SdkMessageCreate;
 
     // Force the non-streaming return type. params has no `stream: true`,
     // so the SDK returns Message — but the overload union confuses TS.
@@ -432,14 +464,15 @@ export const defaultAnthropicAdapter: AnthropicAdapter = {
     type SdkMessageCreate = Parameters<
       Anthropic['messages']['stream']
     >[0];
-    const params = {
+    const callParams: Record<string, unknown> = {
       model,
       max_tokens: input.maxTokens ?? 4096,
-      temperature: input.temperature ?? 0,
       system: formatSystemForCache(input.systemPrompt),
       messages: input.messages,
       tools: input.tools,
-    } as unknown as SdkMessageCreate;
+    };
+    maybeIncludeTemperature(callParams, input.temperature);
+    const params = callParams as unknown as SdkMessageCreate;
 
     // The SDK's stream() returns synchronously and runs in the background.
     // We attach our own AbortSignal so callers (the SSE route on client

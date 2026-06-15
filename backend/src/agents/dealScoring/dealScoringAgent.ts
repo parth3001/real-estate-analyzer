@@ -14,8 +14,15 @@
  *                                 (RentCast facts + rent, FRED rate,
  *                                  tax service, standard defaults) +
  *                                  the confirm-before / disclose-after split
- *   3. compute_analysis        → metrics + monthly + projection
- *   4. score_deal              → dealQuality + breakdown + substrate writes
+ *   3. score_deal              → analyzer runs INTERNALLY → dealQuality
+ *                                + breakdown + substrate writes
+ *
+ * compute_analysis was removed from this flow in Task #51 (2026-06-14).
+ * The LLM was truncating the analyzer's projection output during the
+ * compute_analysis → score_deal transcription. score_deal now invokes
+ * the analyzer itself, so the data never crosses the LLM hop.
+ * compute_analysis remains in the tool registry for apply_override and
+ * other future callers that need pure-compute without persistence.
  *
  * Emits text response describing the deal, with the substrate-written
  * AnalysisEvent + DecisionEvent IDs surfaced via the runner's
@@ -231,7 +238,7 @@ EXACT order. Do not skip steps. Do not substitute tools.
     It internally fetches RentCast property facts + rent estimate,
     the FRED mortgage rate, and the property tax rate, then fills the
     rest with standard defaults. It returns:
-      - propertyData         (complete SFRData — feed to compute_analysis)
+      - propertyData         (complete SFRData — feed directly to score_deal)
       - assumptions          (standard projection assumptions)
       - provenance           (per-field: where each value came from)
       - confirmBeforeScoring (fields to CONFIRM with the user FIRST)
@@ -272,7 +279,7 @@ EXACT order. Do not skip steps. Do not substitute tools.
   *** CHECKPOINT after STEP 2 ***
     If confirmBeforeScoring is NON-EMPTY, you MUST stop here.
     Surface those items to the user using each item's 'prompt' text,
-    then end your turn. Do NOT call compute_analysis or score_deal yet.
+    then end your turn. Do NOT call score_deal yet.
     On the user's next message:
       - if they confirm → re-call resolve_property_inputs (the values
         are stable) and continue to STEP 3
@@ -283,17 +290,36 @@ EXACT order. Do not skip steps. Do not substitute tools.
     text about this transition. The user does not need to be told
     that you're proceeding; they will see the analysis arrive next.
 
-  STEP 3 — compute_analysis
-    Compute the 60+ metrics from the resolved propertyData +
-    assumptions. propertyType: "SFR".
+  STEP 3 — score_deal
+    Call score_deal DIRECTLY with the resolved propertyData + assumptions
+    + propertyType + userContext. Do NOT call compute_analysis first —
+    score_deal now runs the analyzer internally (Task #51, 2026-06-14).
 
-  STEP 4 — score_deal
-    Pass the analysis + property data + user context to the
-    deterministic scoring engine. CRITICAL: include the investment
-    strategy in the propertyData you pass —
-    propertyData.investmentStrategy = "buy_hold" | "brrrr" — this is
-    what routes the engine to the correct code path. score_deal emits
-    AnalysisEvent + DecisionEvent and returns the dealQuality (0-100).
+    WHY: previously, compute_analysis returned the analysis as a large
+    structured object that the agent had to transcribe verbatim into
+    score_deal's input. The LLM was truncating that transcription
+    (dropping projection rows and per-row fields), corrupting the
+    substrate. score_deal now computes the analysis itself, so no
+    truncation surface exists.
+
+    Tool call shape:
+      score_deal({
+        propertyData: <from resolve_property_inputs, with
+                       propertyData.investmentStrategy =
+                       "buy_hold" | "brrrr">,
+        propertyType: "SFR",
+        assumptions: <from resolve_property_inputs>,
+        userContext: <from recall_user_context, if available>
+      })
+
+    CRITICAL: include propertyData.investmentStrategy — this is what
+    routes the engine to the correct code path (BRRRR vs Buy & Hold).
+    score_deal emits AnalysisEvent + DecisionEvent and returns the
+    dealQuality (0-100).
+
+    Do NOT include "analysisResult" in the score_deal call. Passing
+    "analysisResult" reactivates the legacy LLM-transcription path
+    that this refactor was designed to eliminate.
 
 TRANSPARENCY — the two buckets resolve_property_inputs gives you
 ─────────────────────────────────────────────────────────────────
@@ -310,7 +336,7 @@ TRANSPARENCY — the two buckets resolve_property_inputs gives you
        1.8% property tax, plus standard vacancy/maintenance. Want to
        change any?"
     The user can override any of them — that re-runs the score
-    (re-call resolve_property_inputs with the override, then STEP 3+4).
+    (re-call resolve_property_inputs with the override, then STEP 3).
 
 NEVER silently default a value the user would care about without
 disclosing it. Transparency is the trust mechanism. A score the user

@@ -113,6 +113,22 @@ export async function extractAndSanitizeGoals(
     const rawContent = response.choices[0].message.content || '{}';
     const extracted = JSON.parse(rawContent);
 
+    // Normalize numericGoals — when the user supplied no goal (e.g. the
+    // "Not specified" default from the chat agent), gpt-4o-mini returns
+    // `"numericGoals": null` rather than an all-null object. Subsequent
+    // field access (line ~131-134, plus consumers in Stage 2) was
+    // crashing with "Cannot read properties of null (reading 'cashFlow')"
+    // on every analysis without a numeric goal — drifting-booping-ripple
+    // plan Phase B3 (2026-06-14).
+    if (!extracted.numericGoals || typeof extracted.numericGoals !== 'object') {
+      extracted.numericGoals = {
+        cashFlow: null,
+        capRate: null,
+        irr: null,
+        appreciation: null,
+      };
+    }
+
     const processingTime = Date.now() - startTime;
 
     // Logging for observability (Issue #78 debugging enhanced)
@@ -122,7 +138,7 @@ export async function extractAndSanitizeGoals(
       sanitizationApplied: extracted.sanitizationApplied,
       piiDetected: extracted.piiDetected,
       threatDetected: extracted.threatDetected,
-      hasNumericGoals: Object.values(extracted.numericGoals || {}).some((v: any) => v !== null),
+      hasNumericGoals: Object.values(extracted.numericGoals).some((v: any) => v !== null),
       strategy: extracted.strategy,
       sentiment: extracted.sentiment,
       processingTime: `${processingTime}ms`,

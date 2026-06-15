@@ -23,6 +23,7 @@ import {
   scoreDeal,
   setEngineAdapter,
   resetEngineAdapter,
+  ScoreDealInputSchema,
   type ScoringEngineAdapter,
   type ScoreDealInput,
 } from '../score_deal';
@@ -149,6 +150,61 @@ describe('tool:score_deal (W4-S1)', () => {
 
     it('has the stable global name', () => {
       expect(scoreDeal.name).toBe('score_deal');
+    });
+
+    // ===== Task #51 regression guard (drifting-booping-ripple, Phase D) =====
+    //
+    // analysisResult MUST stay optional in the schema. The whole point of
+    // the #51 refactor was to stop the LLM from transcribing a large
+    // structured projections array as a tool input (sonnet-4-6 was
+    // dropping 8 of 10 rows + 10 of 20 fields per row, corrupting every
+    // saved deal). If a future PR makes analysisResult required again
+    // (e.g., as a "strict schema" tightening), this test fails — and the
+    // failure message points the contributor at score_deal.ts INVARIANT
+    // #6 explaining why.
+    it('analysisResult stays OPTIONAL — required would reactivate the LLM-truncation bug class', () => {
+      const minimalInputWithoutAnalysisResult = {
+        propertyData: {
+          purchasePrice: 250000,
+          downPayment: 62500,
+          loanAmount: 187500,
+          interestRate: 7,
+          loanTerm: 30,
+          propertyTaxRate: 1.8,
+          insuranceRate: 0.5,
+          maintenanceCost: 2050,
+          propertyManagementRate: 8,
+          monthlyRent: 2050,
+          propertyAddress: {
+            street: '1 Contract Test St',
+            city: 'Plano',
+            state: 'TX',
+            zipCode: '75074',
+          },
+          squareFootage: 1268,
+          bedrooms: 3,
+          bathrooms: 2,
+          yearBuilt: 2007,
+        },
+        propertyType: 'SFR' as const,
+        assumptions: { vacancyRate: 5, projectionYears: 10 },
+        // NO analysisResult — the new agent flow doesn't send this.
+      };
+      const parsed = ScoreDealInputSchema.safeParse(
+        minimalInputWithoutAnalysisResult
+      );
+      if (!parsed.success) {
+        // Failure message is intentionally long — future contributors
+        // need the full context to understand WHY they can't tighten this.
+        throw new Error(
+          `[REGRESSION] ScoreDealInputSchema rejected an input without analysisResult.\n` +
+            `This breaks the Task #51 fix and reopens Task #32 (LLM truncation of ` +
+            `the projections array). See score_deal.ts INVARIANT #6 + the ` +
+            `drifting-booping-ripple plan for context.\n` +
+            `Zod error: ${JSON.stringify(parsed.error.issues, null, 2)}`
+        );
+      }
+      expect(parsed.success).toBe(true);
     });
   });
 

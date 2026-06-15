@@ -36,6 +36,29 @@
  *
  *   5. Same actorType for both writes: 'tool:score_deal'. Makes
  *      substrate joins by actorType trivial during audits.
+ *
+ *   6. NO LARGE STRUCTURED INPUT FROM THE LLM. (Task #32/#51, 2026-06-14.)
+ *      Tools invoked by an LLM must NOT accept large structured payloads
+ *      as required input. The LLM tool-calling loop re-transcribes the
+ *      JSON input on every call; sonnet-4-6 was caught truncating a
+ *      10-row × 20-field projection array down to 2 rows × 10 fields when
+ *      re-emitting it as the next tool's input. Drop 8 of 10 years, drop
+ *      10 of 20 fields per row. Substrate received garbage; every saved
+ *      deal had sparse projections for weeks.
+ *
+ *      The rule: either (a) the tool computes the structured payload
+ *      itself from a small set of LLM-supplied identifiers (this is what
+ *      score_deal does — propertyType + propertyData + assumptions →
+ *      analyzer runs INSIDE the tool), or (b) the tool reads the payload
+ *      from substrate via an ObjectId reference. The LLM transcribing a
+ *      large JSON object is a latent bug surface; do not introduce it.
+ *
+ *      analysisResult here is OPTIONAL, kept for back-compat with
+ *      non-LLM callers (apply_override, tests, frontend). The new
+ *      dealScoring agent flow OMITS it. The contract test in
+ *      score_deal.test.ts enforces that omission stays valid; if a future
+ *      contributor reintroduces analysisResult as a required field for
+ *      "schema strictness," that test fails with a pointer back here.
  */
 
 import { z } from 'zod';
@@ -67,6 +90,9 @@ import { InvestmentDecisionEngine } from '../../services/investment/investmentDe
 import { MFDecisionEngine } from '../../services/investment/MFDecisionEngine';
 import { materializeDealFromDecision } from '../../services/dealMaterializationService';
 import { logger } from '../../utils/logger';
+import { getPropertyTypeCapabilities } from '../../services/propertyType/registry';
+import type { AnalysisAssumptions } from '../../analysis/BasePropertyAnalyzer';
+import type { PropertyType } from '../../types/propertyTypes';
 
 // ===== Engine adapter =====
 
@@ -245,13 +271,36 @@ export const ScoreDealInputSchema = z.object({
   propertyData: ObjectShape,
 
   /**
-   * Already-computed analysis (from compute_analysis tool or legacy
-   * analyzer).
+   * Property type — drives analyzer routing when score_deal runs the
+   * analysis internally (Task #51, 2026-06-14). Required for the new
+   * agent flow that bypasses compute_analysis. Optional when caller
+   * provides a precomputed `analysisResult` (e.g., apply_override flow,
+   * test fixtures).
+   */
+  propertyType: z.enum(['SFR', 'MF']).optional(),
+
+  /**
+   * Precomputed analysis. Now OPTIONAL.
+   *
+   * Why optional (Task #51, 2026-06-14):
+   *   The dealScoring agent used to call compute_analysis FIRST, then
+   *   transcribe its full output into the score_deal tool call. The LLM
+   *   (sonnet-4-6) was truncating the 10-row × 20-field projections array
+   *   to 2 rows × 10 fields during JSON transcription, corrupting the
+   *   substrate. Diagnosed via paired logs on 1500 Oak Lane, Frisco TX.
+   *
+   * The fix: when `analysisResult` is OMITTED, score_deal runs the
+   * analyzer internally (via registry.analyzerFactory) — same call the
+   * legacy compute_analysis tool makes — and projects the FULL result to
+   * substrate. The LLM never transcribes the projections array.
+   *
+   * Back-compat: when `analysisResult` IS provided (apply_override,
+   * tests, frontend), the legacy path runs unchanged.
    *
    * SHAPE NORMALIZATION
    * -------------------
    *
-   * Two valid input shapes are accepted because the codebase has two
+   * Two valid input shapes accepted because the codebase has two
    * conflicting "AnalysisResult" definitions:
    *
    *   1. Tool/agent shape (substrate-aligned):
@@ -259,7 +308,6 @@ export const ScoreDealInputSchema = z.object({
    *   2. Legacy analyzer shape (BasePropertyAnalyzer.analyze()):
    *        { keyMetrics, monthlyAnalysis, longTermAnalysis, annualAnalysis, ... }
    *
-   * Zod accepts EITHER `metrics` OR `keyMetrics` (one is required).
    * `.passthrough()` preserves all extra fields (annualAnalysis,
    * projections, etc.) so the engine adapter sees the full picture.
    * Internal normalization (in execute()) maps keyMetrics → metrics for
@@ -276,7 +324,8 @@ export const ScoreDealInputSchema = z.object({
     .refine(
       (v) => !!v.metrics || !!v.keyMetrics,
       { message: 'analysisResult must include either `metrics` or `keyMetrics`' }
-    ),
+    )
+    .optional(),
 
   /**
    * Snapshot of market data used (from enrich_property). Optional in v1
@@ -559,11 +608,45 @@ export const scoreDeal: Tool<ScoreDealInput, ScoreDealOutput> = {
     // instance for dealId still validate cleanly.
     const validated = ScoreDealInputSchema.parse(input);
 
-    // Normalize analysisResult — handles both shapes (keyMetrics vs metrics)
-    // so the engine and the projector see consistent data.
-    const normalizedAnalysisResult = normalizeAnalysisResult(
-      validated.analysisResult as unknown as Record<string, unknown>
-    );
+    // Task #51 (2026-06-14): internal-analyzer fallback.
+    // If the caller did NOT provide analysisResult, we run the analyzer
+    // here — never letting the analysis transit through the LLM as a tool
+    // input. See INVARIANT #6 at the top of this file. apply_override and
+    // tests continue to pass analysisResult directly.
+    let normalizedAnalysisResult: Record<string, unknown>;
+    if (validated.analysisResult) {
+      normalizedAnalysisResult = normalizeAnalysisResult(
+        validated.analysisResult as unknown as Record<string, unknown>
+      );
+    } else {
+      if (!validated.propertyType) {
+        throw new Error(
+          'score_deal: when analysisResult is omitted, propertyType is required ' +
+            '(SFR | MF) so the analyzer can be routed via the property-type registry.'
+        );
+      }
+      const capabilities = getPropertyTypeCapabilities(
+        validated.propertyType as PropertyType
+      );
+      const analyzer = capabilities.analyzerFactory(
+        validated.propertyData as unknown as Parameters<
+          typeof capabilities.analyzerFactory
+        >[0],
+        (validated.assumptions ?? {}) as unknown as AnalysisAssumptions
+      );
+      const analyzerResult = (await analyzer.analyze()) as unknown as Record<
+        string,
+        unknown
+      >;
+      normalizedAnalysisResult = normalizeAnalysisResult(analyzerResult);
+
+      // Permanent low-volume telemetry — confirms the truncation-immune
+      // path was taken. Useful when investigating any future score drift
+      // (apply_override and tests bypass this branch).
+      logger.debug('score_deal: analyzer run internally (no LLM transit)', {
+        propertyType: validated.propertyType,
+      });
+    }
 
     // Call the engine via the adapter (engine itself is unchanged)
     const startTime = Date.now();

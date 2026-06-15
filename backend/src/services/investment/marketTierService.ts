@@ -211,17 +211,33 @@ export class MarketTierService {
     marketMedianCapRate?: number
   ): { fairValue: number; targetCapRate: number; reasoning: string } {
     
-    // Use market median if available, otherwise use tier-appropriate target
+    // Use market median if available, otherwise use tier-appropriate target.
+    // All cap rates handled here are in DECIMAL form (0.07 = 7%), matching
+    // the engine's representation and getTierTargetCapRate's return values.
     let targetCapRate = marketMedianCapRate || this.getTierTargetCapRate(marketTier.tier);
-    
-    // Apply tier-specific adjustments
+
+    // Apply tier-specific adjustments (also decimal — see Tier 1-3 defs below)
     targetCapRate += marketTier.thresholds.capRatePremium;
-    
-    const fairValue = netOperatingIncome / (targetCapRate / 100);
-    
-    const reasoning = marketMedianCapRate 
-      ? `Based on ${targetCapRate.toFixed(1)}% target cap rate (${marketMedianCapRate.toFixed(1)}% market median + ${(marketTier.thresholds.capRatePremium * 100).toFixed(0)}bps premium)`
-      : `Based on ${targetCapRate.toFixed(1)}% target cap rate for ${marketTier.name} markets`;
+
+    // Income approach: fair value = NOI / cap rate.
+    //
+    // Pre-2026-06-14: this formula had a spurious `/100` that produced a
+    // 100× inflated value. The function had been written assuming
+    // targetCapRate was a percentage (e.g., 7), but every caller passes
+    // it as a decimal (0.07). For a $250K rental, the bug produced
+    // fairValue of $12.5M–$18.5M, silently flagging EVERY property as
+    // "not overpriced" in investmentDecisionEngine.ts:347's `overpriced`
+    // check. Locked in by financialMathContracts.test.ts.
+    const fairValue = netOperatingIncome / targetCapRate;
+
+    // Format for display: multiply by 100 since targetCapRate is decimal.
+    const targetCapRatePct = (targetCapRate * 100).toFixed(1);
+    const marketMedianPct = marketMedianCapRate
+      ? (marketMedianCapRate * 100).toFixed(1)
+      : '';
+    const reasoning = marketMedianCapRate
+      ? `Based on ${targetCapRatePct}% target cap rate (${marketMedianPct}% market median + ${(marketTier.thresholds.capRatePremium * 100).toFixed(0)}bps premium)`
+      : `Based on ${targetCapRatePct}% target cap rate for ${marketTier.name} markets`;
     
     return {
       fairValue: Math.round(fairValue),
