@@ -42,6 +42,12 @@ const PricingPage: React.FC = () => {
   }, []);
 
   // ===== Tiers =====
+  //
+  // Task #48 (2026-06-14): rewrote tier cards to remove unbuilt promises.
+  // Strip-list per #33 audit: bundles tier (no Stripe), tax modeling
+  // (engine commented out), adversarial bear case (not verified wired),
+  // sensitivity analysis (not surfaced). Soft-reworded "lender-ready"
+  // PDF claim and split free tier into anonymous + signed-up benefits.
   const tiers = [
     {
       eyebrow: 'FREE',
@@ -49,10 +55,10 @@ const PricingPage: React.FC = () => {
       priceTail: '',
       title: 'Get the score',
       lines: [
-        'Deal Quality Score on any property',
+        'Deal Quality Score on any property — no signup needed',
+        'Sign up free (no card) to save deals to your workspace',
+        'First full analysis free after signup',
         'Portfolio + Pipeline workspace',
-        'First full analysis free on signup',
-        'Save deals to your workspace forever',
       ],
       cta: { label: 'Start free →', action: () => navigate('/app') },
       accent: false,
@@ -65,83 +71,69 @@ const PricingPage: React.FC = () => {
       lines: [
         '28+ professional metrics',
         'Walk-away price + 10-year projection',
-        'Stress tests + sensitivity analysis',
-        'AI commentary + adversarial bear case',
-        'Tax modeling + audit trail',
+        'Stress tests — rate shocks, vacancy, rent drops',
+        'AI commentary on every score and trade-off',
+        'Full audit trail — every input and assumption',
         'Override any assumption, re-score instantly',
-        'Save to portfolio · PDF export',
+        'Save to workspace · PDF export',
         '180-day editing window per deal',
       ],
       cta: { label: 'Try free first →', action: () => navigate('/app') },
       accent: true,
     },
-    {
-      eyebrow: 'BUNDLES',
-      price: '$3.50',
-      priceTail: '/ deal (10-pack)',
-      title: 'Building a pipeline',
-      lines: [
-        '5-pack — $19.99 ($4.00 / deal effective)',
-        '10-pack — $34.99 ($3.50 / deal effective)',
-        'Credits never expire within 12 months',
-        'Same depth per analysis as Per Deal',
-        'Best value if you analyze 5+ deals',
-      ],
-      cta: { label: 'See bundles →', action: () => navigate('/app') },
-      accent: false,
-    },
   ];
 
+  // Task #48 (2026-06-14): trimmed value-prop list to items that ship
+  // in v1. Removed sensitivity analysis (not surfaced), adversarial bear
+  // case (not verified wired), tax + exit modeling (engine commented
+  // out), compare-licensed-deals (Phase 4b). Softened "lender-ready"
+  // PDF claim. From 15 items to 11 — still substantive, all deliverable.
   const valueProps = [
     { label: 'Know if it works', detail: 'Full 28+ professional metrics — Cap Rate, DSCR, IRR, Cash-on-Cash, GRM, BEO, debt yield, the works' },
     { label: 'Know your max bid', detail: 'Walk-away price anchored in income approach (NOI ÷ market cap rate), not your offer' },
     { label: 'Project forward 10 years', detail: 'Year-by-year cash flow, equity buildup, total return — the chart you show your partner' },
     { label: 'Stress-test it', detail: 'Rate shocks, vacancy spikes, rent drops — find what breaks the deal before you sign' },
-    { label: 'Sensitivity analysis', detail: 'See which inputs the deal is most fragile to' },
     { label: 'AI commentary', detail: 'Plain-English explanation of why the score is what it is + what to negotiate' },
-    { label: 'Adversarial bear case', detail: 'Second agent persona running the deal as a skeptic — gut-check against your optimism' },
-    { label: 'Tax + exit modeling', detail: 'Depreciation impact, after-tax IRR, optimal hold period' },
     { label: 'Override anything', detail: 'Drag rent, vacancy, rate, anything. Re-score in real time.' },
-    { label: 'Full audit trail', detail: 'Every input, every assumption, every data source. Defendable to a lender.' },
-    { label: 'Save to portfolio', detail: 'Add to your tracked workspace; survives license expiry as read-only' },
-    { label: 'PDF + email export', detail: 'Lender-ready report. Send to your loan officer, CPA, or partner.' },
-    { label: 'Compare with other licensed deals', detail: 'Side-by-side scoring on multiple properties (Phase 4b)' },
+    { label: 'Full audit trail', detail: 'Every input, every assumption, every data source — line-item breakdown of every number you see.' },
+    { label: 'Save to workspace', detail: 'Add to your tracked workspace; survives license expiry as read-only' },
+    { label: 'PDF export', detail: 'Export your full analysis as a PDF. Send to your loan officer, CPA, or partner.' },
     { label: '180 days of editable access', detail: 'Re-run with new assumptions any time within 180 days of purchase' },
     { label: 'Continuous chat depth', detail: 'Ask follow-up questions — stress tests, what-ifs, comparisons — until you understand the deal' },
   ];
 
+  // Task #48 (2026-06-14): trimmed FAQ to items that match shipped product.
+  // Removed bundles Q (bundles deferred to v1.1), changed MF/BRRRR Q to
+  // honestly state SFR-only today, dropped the gated-vs-free hairsplit
+  // line that contradicted the free tier card.
   const faqItems: FAQItem[] = [
     {
       question: 'What counts as one "deal"?',
-      answer: 'One property analysis. You can switch strategies (BRRRR vs buy-and-hold), override assumptions, re-run stress tests, and access the full underwriting unlimited times on the SAME property for 180 days. A different property is a different deal.',
+      answer: 'One property analysis. You can switch strategies, override assumptions, re-run stress tests, and access the full underwriting unlimited times on the SAME property for 180 days. A different property is a different deal.',
     },
     {
       question: 'Why no monthly subscription?',
-      answer: 'Real estate investing is episodic — you analyze 5-10 deals in a pipeline sprint, then nothing for months. Subscriptions don\'t match that behavior. Pay-per-deal aligns price with use. Power users running 5+ deals/month rationally upgrade to the 10-pack ($3.50/deal effective). No surprise auto-renews.',
+      answer: 'Real estate investing is episodic — you analyze 5-10 deals in a pipeline sprint, then nothing for months. Subscriptions don\'t match that behavior. Pay-per-deal aligns price with use. No surprise auto-renews.',
     },
     {
       question: 'What if I want a refund?',
-      answer: '7 days, no questions asked, refunded via your purchase history. After 7 days, individual deals are non-refundable but unused bundle credits can be refunded within 60 days of purchase.',
+      answer: '7 days, no questions asked. Email us with your purchase reference and we will refund the deal.',
     },
     {
       question: 'What happens after 180 days on a purchased deal?',
       answer: 'The deal becomes read-only — you can still see everything you bought (score, audit trail, projections), it just stops accepting new assumption overrides or fresh re-runs. Market data and rates drift over six months; re-purchase if you want fresh analysis on that property.',
     },
     {
-      question: 'Do bundle credits expire?',
-      answer: 'Credits are good for 12 months from purchase. We send reminder emails 30, 14, and 7 days before expiry. Unused credits within 60 days of original purchase can be refunded.',
-    },
-    {
       question: 'How is the free Deal Quality Score useful if it\'s just one number?',
-      answer: 'The score (0-100) tells you if a deal is in the ballpark of "above professional standards" or "below" — enough to know if it\'s worth $4.99 to find out for real. Plus you get headline metrics (cash flow direction, cap rate, 1% rule). What\'s gated: the depth (audit trail, stress tests, 10-year projection, AI commentary, save-to-portfolio).',
+      answer: 'The score (0-100) tells you if a deal is in the ballpark of "above professional standards" or "below" — enough to know if it\'s worth $4.99 to find out for real. Plus you get headline metrics (cash flow direction, cap rate, 1% rule). The deeper detail (audit trail, stress tests, 10-year projection, AI commentary) unlocks with the $4.99 deal.',
     },
     {
       question: 'Is my first analysis really free?',
-      answer: 'Yes. After signup, your first property unlock — full depth, 180-day window — is free. No credit card required for the free tier. We bet that the first analysis is good enough to make $4.99 feel reasonable for the next one.',
+      answer: 'Yes. After signup, your first property unlock — full depth, 180-day window — is free. No credit card required. We bet that the first analysis is good enough to make $4.99 feel reasonable for the next one.',
     },
     {
       question: 'Do you handle multi-family?',
-      answer: 'Yes — single-family, duplexes, triplexes, multi-family up to 32 units, and BRRRR. Same pricing today; MF will likely get its own tier ($9.99-$14.99) when MF chat ships fully, reflecting the heavier engine + unit-level data.',
+      answer: 'Today: single-family residential (SFR) buy-and-hold. Multi-family and BRRRR analysis are in active development and will land later this year — they\'ll likely get their own tier reflecting the heavier engine and unit-level inputs.',
     },
     {
       question: 'I\'m a lender / agent / syndicator. Do you have volume pricing?',
@@ -161,7 +153,7 @@ const PricingPage: React.FC = () => {
         <title>Pricing — REanalyzr | Pay only when you go deep</title>
         <meta
           name="description"
-          content="REanalyzr pricing: free Deal Quality Score on any property, $4.99 per deep analysis, no subscription. Bundles available for active pipelines."
+          content="REanalyzr pricing: free Deal Quality Score on any property, $4.99 per deep analysis, no subscription."
         />
         <link rel="canonical" href="https://reanalyzr.com/pricing" />
       </Helmet>
@@ -308,7 +300,7 @@ const PricingPage: React.FC = () => {
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '0.9375rem', color: '#6B7280' }}>
-              7-day no-questions refund · Bundle credits refundable within 60 days · No subscription · No auto-renew
+              7-day no-questions refund · No subscription · No auto-renew
             </Typography>
           </Box>
         </Container>
