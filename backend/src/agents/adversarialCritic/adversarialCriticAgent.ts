@@ -58,17 +58,41 @@ import { Types } from 'mongoose';
 // this schema. The agent emits one structured response, the runner
 // returns text, this module parses and writes the CritiqueEvent.
 
+// Task #56 follow-up (2026-06-16): the LLM frequently emits
+// alternativeAssumptions as plain strings (the reasoning text only) and
+// occasionally omits severityScore. Both shapes are useful — refusing to
+// store a critique because of a structural mismatch loses the LLM's
+// actual reasoning. So the schema accepts BOTH the strict shape (object
+// with fieldPath + suggestedValue + reasoning) AND the looser fallback
+// shape (bare string = the reasoning, with placeholder fieldPath).
+// severityScore defaults to 50 ('medium concern') when omitted, which
+// matches the engine's calibration for an unspecified-severity finding.
+//
+// Pair this with the explicit JSON example in BASE_PROMPT_HEADER below
+// that shows the strict shape — most calls now emit the correct shape;
+// these fallbacks just catch the misses without dropping the critique.
+const AlternativeAssumptionStrictShape = z.object({
+  fieldPath: z.string().min(1),
+  suggestedValue: z.union([z.number(), z.string(), z.boolean()]),
+  reasoning: z.string().min(1),
+});
+type AlternativeAssumption = z.infer<typeof AlternativeAssumptionStrictShape>;
+const AlternativeAssumptionPermissive = z.union([
+  AlternativeAssumptionStrictShape,
+  z.string().min(1).transform(
+    (s): AlternativeAssumption => ({
+      fieldPath: 'unspecified',
+      suggestedValue: '',
+      reasoning: s,
+    })
+  ),
+]);
+
 const StructuredCritiqueSchema = z.object({
   agreementWithOriginal: z.boolean(),
   divergenceReasons: z.array(z.string().min(1)),
-  alternativeAssumptions: z.array(
-    z.object({
-      fieldPath: z.string().min(1),
-      suggestedValue: z.union([z.number(), z.string(), z.boolean()]),
-      reasoning: z.string().min(1),
-    })
-  ),
-  severityScore: z.number().min(0).max(100),
+  alternativeAssumptions: z.array(AlternativeAssumptionPermissive),
+  severityScore: z.number().min(0).max(100).optional().default(50),
 });
 
 type StructuredCritique = z.infer<typeof StructuredCritiqueSchema>;
@@ -96,17 +120,40 @@ WORKFLOW
    relevant to your critique.
 
 3. Emit ONE FINAL TEXT RESPONSE that is valid JSON matching this
-   schema (no markdown, no commentary):
+   schema EXACTLY (no markdown, no commentary, no trailing text):
 
    {
-     "agreementWithOriginal": <boolean — do you broadly accept the
-                                engine's call, allowing minor quibbles?>,
-     "divergenceReasons": <array of specific points where you diverge>,
-     "alternativeAssumptions": <array of input changes you'd suggest;
-                                 may be empty if you don't propose fixes>,
-     "severityScore": <0-100 — how strongly you disagree.
-                       0 = essentially agree; 100 = fundamental disagreement>
+     "agreementWithOriginal": true,
+     "divergenceReasons": [
+       "DSCR margin of 1.05 leaves no buffer for a 50bp rate increase",
+       "Property tax growth assumption of 2% understates the 4.5%
+        TX historical average"
+     ],
+     "alternativeAssumptions": [
+       {
+         "fieldPath": "assumptions.vacancyRate",
+         "suggestedValue": 8,
+         "reasoning": "Class C properties in this submarket run 7-9% vacancy
+                       historically — engine's 5% assumption is too rosy"
+       },
+       {
+         "fieldPath": "propertyData.monthlyRent",
+         "suggestedValue": 2400,
+         "reasoning": "Comps support $2,300-$2,500 not $2,800"
+       }
+     ],
+     "severityScore": 35
    }
+
+   CRITICAL FORMAT RULES:
+   - "alternativeAssumptions" MUST be an array of OBJECTS, each with exactly
+     these three fields: fieldPath (string), suggestedValue (number/string/
+     boolean), reasoning (string). NEVER use bare strings here — strings
+     belong in "divergenceReasons".
+   - "severityScore" is REQUIRED — a number from 0 to 100. Pick a value
+     even if you broadly agree.
+   - "alternativeAssumptions" may be an empty array [] if you don't
+     propose specific input changes; do not omit the field.
 
 CONSTRAINTS
 ───────────
