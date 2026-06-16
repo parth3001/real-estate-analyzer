@@ -2343,6 +2343,13 @@ export class InvestmentDecisionEngine {
     // Extract all the metrics we already calculate
     const fundamentals = {
       // Core metrics from existing analysis
+      // Task #55 (2026-06-16): `noi` was missing from this object since the
+      // engine was first wired up — every NOI access via `fundamentals.noi`
+      // returned undefined and silently fell back to bogus heuristics
+      // (e.g., the marketTierService.calculateFairMarketValue path).
+      // Now sourced from the analyzer's keyMetrics.noi like every other
+      // metric on this object.
+      noi: metrics.noi || 0,
       capRate: metrics.capRate || 0,
       cashFlow: monthlyAnalysis.cashFlow || 0,
       cashOnCashReturn: metrics.cashOnCashReturn || 0,

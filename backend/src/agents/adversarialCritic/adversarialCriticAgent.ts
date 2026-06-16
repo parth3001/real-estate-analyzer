@@ -195,15 +195,31 @@ function parseCritique(text: string): StructuredCritique {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
+
+  // Task #56 (2026-06-16): the persona returns LLM-emitted JSON that
+  // occasionally contains unescaped characters inside string values
+  // (em-dashes, internal quotes, soft line breaks) — strict JSON.parse
+  // breaks at the first violation, throwing away an otherwise-coherent
+  // critique. The fallback uses `jsonrepair` to fix the common LLM
+  // mistakes (trailing commas, single quotes, unescaped strings) and
+  // re-parse. If even repair fails, we surface the error with detail.
   let parsed: unknown;
   try {
     parsed = JSON.parse(cleaned);
-  } catch (err) {
-    throw new Error(
-      `adversarialCritic: persona returned non-JSON output. ` +
-        `First 300 chars: "${cleaned.slice(0, 300)}". ` +
-        `Parse error: ${err instanceof Error ? err.message : String(err)}`
-    );
+  } catch (strictErr) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { jsonrepair } = require('jsonrepair') as { jsonrepair: (s: string) => string };
+      const repaired = jsonrepair(cleaned);
+      parsed = JSON.parse(repaired);
+    } catch (repairErr) {
+      throw new Error(
+        `adversarialCritic: persona returned non-JSON output (even after repair). ` +
+          `First 300 chars: "${cleaned.slice(0, 300)}". ` +
+          `Strict parse: ${strictErr instanceof Error ? strictErr.message : String(strictErr)}. ` +
+          `Repair attempt: ${repairErr instanceof Error ? repairErr.message : String(repairErr)}`
+      );
+    }
   }
   return StructuredCritiqueSchema.parse(parsed);
 }

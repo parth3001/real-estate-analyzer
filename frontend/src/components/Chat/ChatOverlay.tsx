@@ -1483,33 +1483,56 @@ function ChatCardCtas({
   onPortfolioCta?: (m: AssistantMessage) => void;
 }): React.JSX.Element {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        mt: 1.5,
-        flexWrap: 'wrap',
-      }}
-      data-testid="chat-card-ctas"
-    >
-      <Button
-        variant="outlined"
-        startIcon={<EmailOutlinedIcon />}
-        onClick={() => onEmailCta?.(message)}
-        sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
-        data-testid="chat-cta-email"
+    <Box sx={{ mt: 1.5 }} data-testid="chat-card-ctas">
+      {/*
+        Task #57 (2026-06-16): the "Save this deal" button alone didn't
+        explain WHY saving matters — the user can read every number in
+        chat. The saved-deal workspace is where the full year-by-year
+        projection, financials breakdown, and long-term summary live —
+        that's the destination users should aim for. This helper line
+        tells them what they get by saving.
+      */}
+      <Typography
+        variant="caption"
+        sx={{
+          display: 'block',
+          color: 'text.secondary',
+          mb: 0.75,
+          fontSize: '0.8125rem',
+          lineHeight: 1.4,
+        }}
+        data-testid="chat-card-save-rationale"
       >
-        Email me this
-      </Button>
-      <Button
-        variant="contained"
-        startIcon={<BookmarkBorderIcon />}
-        onClick={() => onPortfolioCta?.(message)}
-        sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
-        data-testid="chat-cta-portfolio"
+        💡 Save this deal to view the full year-by-year projection,
+        financials breakdown, and long-term return analysis in a dedicated
+        workspace.
+      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          flexWrap: 'wrap',
+        }}
       >
-        Save this deal
-      </Button>
+        <Button
+          variant="outlined"
+          startIcon={<EmailOutlinedIcon />}
+          onClick={() => onEmailCta?.(message)}
+          sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+          data-testid="chat-cta-email"
+        >
+          Email me this
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<BookmarkBorderIcon />}
+          onClick={() => onPortfolioCta?.(message)}
+          sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+          data-testid="chat-cta-portfolio"
+        >
+          Save this deal
+        </Button>
+      </Box>
     </Box>
   );
 }
