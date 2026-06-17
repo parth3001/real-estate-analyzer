@@ -131,11 +131,14 @@ export const CALIBRATION_FIXTURES: CalibrationFixture[] = [
   //
   // Same Anna TX property but at a 30% lower purchase price ($297K).
   // This dramatically improves DSCR + cap rate. Expected to land in
-  // a higher scoring band. Specific value calibrated 2026-05-13.
+  // a higher scoring band. Originally calibrated 2026-05-13 at 54;
+  // recalibrated 2026-06-17 to 50 after Task #58 added a -30
+  // dataReliability penalty for fallback assumptions (intentional
+  // downward shift; same band — "Requires optimization" 50-64).
   {
     name: 'anna-tx-cheaper-price-moderate (better fundamentals)',
     engineVersion: 'v3.0',
-    lastValidated: '2026-05-13',
+    lastValidated: '2026-06-17',
     inputs: {
       propertyData: {
         propertyType: 'SFR',
@@ -165,12 +168,13 @@ export const CALIBRATION_FIXTURES: CalibrationFixture[] = [
       userContext: { riskTolerance: 'moderate', availableCash: 75000 },
     },
     expected: {
-      // Calibrated 2026-05-13 via initial substrate-eval run.
+      // Recalibrated 2026-06-17 (was 54 on 2026-05-13).
       // Cheaper price ($297K vs $425K) lifts the score above the
       // "Below professional standards" floor — but only into
       // "Requires optimization" (50-64 band), because the engine
-      // still penalizes weak debt/IRR fundamentals.
-      dealQuality: 54,
+      // still penalizes weak debt/IRR fundamentals plus a -30
+      // dataReliability penalty for fallback assumptions (#58).
+      dealQuality: 50,
       qualityLabel: 'Requires optimization',
     },
   },
