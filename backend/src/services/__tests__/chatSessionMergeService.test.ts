@@ -13,6 +13,7 @@
 import mongoose, { Types } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { mergeAnonymousSessionIntoUser } from '../chatSessionMergeService';
+import { assembleDecisionFromEvent } from '../dealMaterializationService';
 import { User } from '../../models/User';
 import { eventsRepository } from '../../repositories/EventsRepository';
 import { costEventRepository } from '../../repositories/CostEventRepository';
@@ -376,8 +377,17 @@ describe('mergeAnonymousSessionIntoUser', () => {
         street: '336 Highland Ridge Drive',
         city: 'Anna',
       });
-      expect(deals[0].investmentDecision?.score).toBe(78);
-      expect(deals[0].investmentDecision?.verdict).toBe('NEGOTIATE'); // 65 ≤ 78 < 80
+      // Task #49 cleanup (2026-06-17): post-Task-#1 (May 20, 2026), the
+      // Deal no longer stores investmentDecision at write time. The Deal
+      // carries latestDecisionEventId; the score is assembled at GET
+      // time via assembleDecisionFromEvent from the substrate event.
+      const claimedDecisionEventId = deals[0].latestDecisionEventId;
+      expect(claimedDecisionEventId).toBeTruthy();
+      const assembled = await assembleDecisionFromEvent(
+        claimedDecisionEventId as unknown as Types.ObjectId
+      );
+      expect(assembled?.score).toBe(78);
+      expect(assembled?.verdict).toBe('NEGOTIATE'); // 65 ≤ 78 < 80
     });
   });
 

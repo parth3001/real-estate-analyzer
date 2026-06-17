@@ -23,6 +23,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import {
   materializeDealFromDecision,
   materializeDealsForUser,
+  assembleDecisionFromEvent,
 } from '../dealMaterializationService';
 import { User } from '../../models/User';
 import { DealModel as Deal } from '../../models/Deal';
@@ -221,25 +222,42 @@ describe('dealMaterializationService', () => {
       });
       expect(result.deal?.purchasePrice).toBe(295000);
       expect(result.deal?.investmentStrategy).toBe('buy-hold'); // chat 'buy_hold' → legacy 'buy-hold'
-      expect(result.deal?.investmentDecision?.score).toBe(87);
-      expect(result.deal?.investmentDecision?.verdict).toBe('BUY'); // 87 ≥ 80
-      expect(result.deal?.investmentDecision?.professionalAssessment?.dealQuality).toBe(87);
-      expect(result.deal?.investmentDecision?.professionalAssessment?.cashFlowScore).toBe(88);
+
+      // Task #49 cleanup (2026-06-17): post-Task-#1 (May 20, 2026), the
+      // Deal no longer stores investmentDecision at WRITE time — it lives
+      // solely in the substrate DecisionEvent and is assembled at READ
+      // time via assembleDecisionFromEvent. So the materializer's
+      // contract is now: latestDecisionEventId points at the right
+      // DecisionEvent, and assembling it yields the expected score.
+      expect(result.deal?.latestDecisionEventId?.toString()).toBe(
+        decisionEventId.toString()
+      );
+      const assembled = await assembleDecisionFromEvent(decisionEventId);
+      expect(assembled).not.toBeNull();
+      expect(assembled?.score).toBe(87);
+      expect(assembled?.verdict).toBe('BUY'); // 87 ≥ 80
+      expect(assembled?.professionalAssessment?.dealQuality).toBe(87);
+      expect(assembled?.professionalAssessment?.cashFlowScore).toBe(88);
       expect(result.deal?.userId.toString()).toBe(userId.toString());
     });
 
-    it('also embeds investmentDecision INSIDE deal.analysis (Issue #109 — NaN regression guard)', async () => {
-      // The legacy SFRAnalysis components (InvestmentDecisionHero,
-      // DealQualityHeader, ProgressiveMetricsSystem, DynamicSliders) read
-      // the Deal Quality Score via:
-      //   analysis.investmentDecision.professionalAssessment.dealQuality
-      // NOT via the top-level deal.investmentDecision.* path. Earlier
-      // materialization wrote only the top-level field and left the
-      // nested path undefined, which produced the NaN score observed
-      // during e2e testing 2026-05-17.
+    it('assembleDecisionFromEvent returns a single-source decision shape (Issue #109 — NaN regression guard, refactored 2026-06-17)', async () => {
+      // Issue #109 (originally 2026-05-17): the legacy SFRAnalysis views
+      // rendered NaN when materialization stored investmentDecision in
+      // only one of two duplicate locations (top-level vs. nested under
+      // analysis). The fix at that time was to write both.
       //
-      // This test asserts BOTH paths carry the score. If a future change
-      // drops the nested embedding, the bug returns silently.
+      // Task #1 (2026-05-20) eliminated the duplication entirely — the
+      // Deal stops storing investmentDecision in either location, and
+      // assembleDecisionFromEvent shapes it once at GET time from the
+      // substrate DecisionEvent. The NaN bug class is structurally
+      // impossible now: one source, one shape, no divergence possible.
+      //
+      // What this test now guards: assembling from the substrate produces
+      // the complete investmentDecision shape that all consumers (chat
+      // surface AND legacy SFRAnalysis) read. Any future change that
+      // returns a partial shape (missing professionalAssessment or
+      // dealQuality) re-introduces the NaN failure mode upstream.
       const userId = await createRealUser('nested-decision@example.com');
       const { decisionEventId } = await seedAnalysisAndDecision({
         userId,
@@ -249,23 +267,19 @@ describe('dealMaterializationService', () => {
       });
       const result = await materializeDealFromDecision(decisionEventId, userId);
 
-      // Top-level (chat-first views read here)
-      expect(result.deal?.investmentDecision?.professionalAssessment?.dealQuality).toBe(75);
-
-      // Nested under analysis (legacy SFRAnalysis views read here — the
-      // path that was returning undefined and rendering NaN)
-      const analysis = result.deal?.analysis as
-        | { investmentDecision?: { professionalAssessment?: { dealQuality?: number } } }
-        | undefined;
-      expect(analysis?.investmentDecision).toBeDefined();
-      expect(analysis?.investmentDecision?.professionalAssessment).toBeDefined();
-      expect(analysis?.investmentDecision?.professionalAssessment?.dealQuality).toBe(75);
-
-      // Both locations must be the SAME object reference shape (same
-      // score, same verdict) so legacy and new views never disagree.
-      expect(analysis?.investmentDecision?.professionalAssessment?.dealQuality).toBe(
-        result.deal?.investmentDecision?.professionalAssessment?.dealQuality
+      // Materialization points at the right event.
+      expect(result.deal?.latestDecisionEventId?.toString()).toBe(
+        decisionEventId.toString()
       );
+
+      // Assembled decision is complete and correct — no partial shape
+      // that would let `professionalAssessment?.dealQuality` ride through
+      // as undefined to a downstream NaN.
+      const assembled = await assembleDecisionFromEvent(decisionEventId);
+      expect(assembled).not.toBeNull();
+      expect(assembled?.professionalAssessment).toBeDefined();
+      expect(assembled?.professionalAssessment?.dealQuality).toBe(75);
+      expect(assembled?.score).toBe(75);
     });
 
     it('normalizes BRRRR strategy correctly', async () => {
@@ -293,8 +307,11 @@ describe('dealMaterializationService', () => {
           street: `Verdict Test ${score}`,
           dealQuality: score,
         });
-        const result = await materializeDealFromDecision(decisionEventId, userId);
-        expect(result.deal?.investmentDecision?.verdict).toBe(expected);
+        await materializeDealFromDecision(decisionEventId, userId);
+        // Task #49 cleanup (2026-06-17): verdict lives on the assembled
+        // decision now, not on the materialized Deal. See top of file.
+        const assembled = await assembleDecisionFromEvent(decisionEventId);
+        expect(assembled?.verdict).toBe(expected);
       }
     });
   });
@@ -350,7 +367,14 @@ describe('dealMaterializationService', () => {
 
       expect(second.created).toBe(false); // UPDATE, not create
       expect(second.deal?._id?.toString()).toBe(firstDealId?.toString()); // same row
-      expect(second.deal?.investmentDecision?.score).toBe(65); // updated
+
+      // Task #49 cleanup (2026-06-17): post-#1, the updated Deal points at
+      // the NEW DecisionEvent; the score is assembled from that event.
+      expect(second.deal?.latestDecisionEventId?.toString()).toBe(
+        secondDecisionId.toString()
+      );
+      const updatedDecision = await assembleDecisionFromEvent(secondDecisionId);
+      expect(updatedDecision?.score).toBe(65); // updated
 
       // Only one Deal row exists
       const count = await Deal.countDocuments({ userId });
