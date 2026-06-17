@@ -130,13 +130,40 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
 
   const monthlyCashFlow = num(ma, 'cashFlow');
 
+  // Task #58 (2026-06-16): break out vacancy as its own line in the
+  // monthly cash-flow display. The adversarial critic flagged "vacancy
+  // ignored" because the previous design folded it into the gross→
+  // effective drop without a dedicated row — a CPA scanning a column of
+  // expense line items reasonably reads "no vacancy line = $0 vacancy."
+  // Math is unchanged; this is purely a transparency presentation fix.
+  const grossMonthly = nestedNum(ma, 'income', 'gross');
+  const effectiveMonthly = nestedNum(ma, 'income', 'effective');
+  const vacancyMonthly =
+    typeof grossMonthly === 'number' && typeof effectiveMonthly === 'number'
+      ? grossMonthly - effectiveMonthly
+      : undefined;
+  const vacancyRate =
+    typeof vacancyMonthly === 'number' &&
+    typeof grossMonthly === 'number' &&
+    grossMonthly > 0
+      ? (vacancyMonthly / grossMonthly) * 100
+      : undefined;
+
   const financials: Row[] = [
     // Monthly cash-flow breakdown (was the legacy "Financial Details" tab).
-    { label: 'Gross monthly income', value: fmtCurrency(nestedNum(ma, 'income', 'gross')) },
+    { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
     {
-      label: 'Effective income (after vacancy)',
-      value: fmtCurrency(nestedNum(ma, 'income', 'effective')),
+      label:
+        typeof vacancyRate === 'number'
+          ? `Less: Vacancy (${vacancyRate.toFixed(1)}%)`
+          : 'Less: Vacancy',
+      value:
+        typeof vacancyMonthly === 'number'
+          ? `−${fmtCurrency(vacancyMonthly)}`
+          : '–',
+      negative: true,
     },
+    { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
     { label: 'Operating expenses', value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')) },
     { label: 'Debt service (mortgage)', value: fmtCurrency(nestedNum(ma, 'expenses', 'debt')) },
     {

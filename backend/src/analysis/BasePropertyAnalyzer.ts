@@ -289,28 +289,37 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
       // OpEx calculations should share a SINGLE function. Today they
       // duplicate logic with this default as the divergence point. A
       // proper fix unifies the calculation entirely.
+      // Task #58 (2026-06-16): track CapEx + HOA + utilities as their own
+      // projection-row fields. Previously these were folded into the
+      // operatingExpenses total with no per-row breakdown — the CPA
+      // critique flagged "CapEx is literally $0 in every projection year"
+      // because the audit trail couldn't see them. They're set to 0
+      // outside the SFR branch so non-SFR rows still emit a stable shape.
+      let yearCapEx = 0;
+      let yearHoa = 0;
+      let yearUtilities = 0;
       if (this.data.propertyType === 'SFR') {
-        const hoa = (this.data.monthlyHOA ?? 0) * 12 * expenseInflationFactor;
-        const utilities = (this.data.monthlyUtilities ?? 0) * 12 * expenseInflationFactor;
+        yearHoa = (this.data.monthlyHOA ?? 0) * 12 * expenseInflationFactor;
+        yearUtilities = (this.data.monthlyUtilities ?? 0) * 12 * expenseInflationFactor;
         // Match SFRCalculationEngine's "5% of rent" default for CapEx.
         // grossIncome is annual rent; convert to monthly, take 5%, then
         // annualize × 12. Same formula on both code paths.
         const capExMonthly =
           (this.data as { monthlyCapEx?: number }).monthlyCapEx ??
           ((grossIncome / 12) * 0.05);
-        const capEx = capExMonthly * 12 * expenseInflationFactor;
+        yearCapEx = capExMonthly * 12 * expenseInflationFactor;
 
         debug(`Year ${year} SFR-Specific Expenses:`, {
-          hoa,
-          utilities,
-          capEx,
-          total: hoa + utilities + capEx,
+          hoa: yearHoa,
+          utilities: yearUtilities,
+          capEx: yearCapEx,
+          total: yearHoa + yearUtilities + yearCapEx,
           inflationFactor: expenseInflationFactor,
           capExDefaultUsed:
             (this.data as { monthlyCapEx?: number }).monthlyCapEx === undefined,
         });
 
-        operatingExpenses += hoa + utilities + capEx;
+        operatingExpenses += yearHoa + yearUtilities + yearCapEx;
       }
 
       const noi = FinancialCalculations.calculateNOI(effectiveIncome, operatingExpenses);
@@ -377,7 +386,13 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
         grossRent: grossIncome,
         appreciation,
         turnoverCosts,
-        capitalImprovements
+        capitalImprovements,
+        // Task #58: per-year recurring CapEx, HOA, utilities — broken out
+        // so audit-trail readers can see them as line items instead of
+        // having them silently rolled into operatingExpenses.
+        capEx: yearCapEx,
+        hoa: yearHoa,
+        utilities: yearUtilities
       });
     }
 

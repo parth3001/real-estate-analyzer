@@ -270,6 +270,20 @@ export interface YearlyProjection {
   totalReturn: number;
   turnoverCosts?: number;
   capitalImprovements?: number;
+  // Per-year expense line items — broken out so audit-trail readers can
+  // see them as their own values instead of folded silently into
+  // operatingExpenses (Task #58).
+  propertyTax?: number;
+  insurance?: number;
+  maintenance?: number;
+  propertyManagement?: number;
+  vacancy?: number;
+  realtorBrokerageFee?: number;
+  grossRent?: number;
+  appreciation?: number;
+  capEx?: number;
+  hoa?: number;
+  utilities?: number;
 }
 
 export interface ExitAnalysis {

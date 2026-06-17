@@ -131,6 +131,13 @@ export interface YearlyProjection {
   pricePerSqFtAtThisPoint?: number;
   turnoverCosts?: number; // Annual tenant turnover costs
   capitalImprovements?: number; // Capital investments (only in year 1)
+  // Task #58 (2026-06-16): per-year recurring expense line items broken
+  // out for audit-trail visibility. Previously rolled silently into
+  // operatingExpenses — the CPA critique flagged "CapEx is $0" because
+  // the breakdown was invisible.
+  capEx?: number;
+  hoa?: number;
+  utilities?: number;
 }
 
 export interface ExitAnalysis {

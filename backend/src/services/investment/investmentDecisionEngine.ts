@@ -1474,20 +1474,32 @@ export class InvestmentDecisionEngine {
     marketIntelligence: any
   ): number {
     let reliability = 80; // Base reliability
-    
+
     // Required fields check
     if (!propertyData.monthlyRent) reliability -= 15;
     if (!propertyData.purchasePrice) reliability -= 15;
     if (!propertyData.yearBuilt) reliability -= 10;
-    
+
     // Market data availability
     if (!marketIntelligence.marketTier) reliability -= 10;
     if (!fundamentals.capRate) reliability -= 10;
-    
+
+    // Task #58 (2026-06-16): adversarial critic correctly flagged that
+    // dataReliability scored 80/100 while enrichmentSource was 'fallback'.
+    // The score must respect the actual data provenance — fallback means
+    // RentCast / FRED / Census enrichment FAILED and the engine is
+    // analyzing on tier-default and state-average data. Calling that
+    // 80% reliable is dishonest.
+    //
+    // Penalty: -30 points. That drops base 80 → 50 (the floor below),
+    // which surfaces as "Requires Verification" in the dataReliability
+    // visualization and matches the truth.
+    if (marketIntelligence?.usingFallbackData === true) reliability -= 30;
+
     // Reasonable value checks
     const rentToPrice = propertyData.monthlyRent / propertyData.purchasePrice;
     if (rentToPrice < 0.003 || rentToPrice > 0.02) reliability -= 15; // Suspicious ratios
-    
+
     return Math.max(50, Math.min(100, reliability));
   }
   
