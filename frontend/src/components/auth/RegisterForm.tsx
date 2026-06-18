@@ -206,7 +206,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     flexDirection: 'column' as const,
     justifyContent: 'flex-start', // Changed desktop from 'center' to 'flex-start' for natural scrolling
     alignItems: 'center',
-    padding: isMobile ? '16px' : isTablet ? '24px' : '40px',
+    padding: isMobile
+      ? '16px 16px calc(16px + env(safe-area-inset-bottom)) 16px'
+      : isTablet ? '24px' : '40px',
     boxSizing: 'border-box' as const,
     overflowY: 'auto' as const
   });

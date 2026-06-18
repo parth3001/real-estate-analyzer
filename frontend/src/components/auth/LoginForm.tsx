@@ -172,7 +172,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
     flexDirection: 'column' as const,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: isMobile ? '20px' : isTablet ? '30px' : '40px',
+    padding: isMobile
+      ? '20px 20px calc(20px + env(safe-area-inset-bottom)) 20px'
+      : isTablet ? '30px' : '40px',
     boxSizing: 'border-box' as const,
     overflowY: 'auto' as const
   });

@@ -665,27 +665,33 @@ const SampleAnalysisPage: React.FC = () => {
                       {propertyData.propertyAddress.zipCode}
                     </Typography>
 
-                    <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(auto-fit, minmax(110px, max-content))' },
+                        gap: 1,
+                      }}
+                    >
                       <Chip
                         icon={<BedIcon />}
                         label={`${(propertyData as SFRPropertyData).bedrooms} bed`}
-                        sx={{ fontWeight: 500 }}
+                        sx={{ fontWeight: 500, justifyContent: 'flex-start' }}
                       />
                       <Chip
                         icon={<BathIcon />}
                         label={`${(propertyData as SFRPropertyData).bathrooms} bath`}
-                        sx={{ fontWeight: 500 }}
+                        sx={{ fontWeight: 500, justifyContent: 'flex-start' }}
                       />
                       <Chip
                         icon={<SquareFootIcon />}
                         label={`${(propertyData as SFRPropertyData).squareFootage?.toLocaleString()} sqft`}
-                        sx={{ fontWeight: 500 }}
+                        sx={{ fontWeight: 500, justifyContent: 'flex-start' }}
                       />
                       <Chip
                         label={`Built ${propertyData.yearBuilt}`}
-                        sx={{ fontWeight: 500 }}
+                        sx={{ fontWeight: 500, justifyContent: 'flex-start' }}
                       />
-                    </Stack>
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>

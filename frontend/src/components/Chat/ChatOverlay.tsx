@@ -950,8 +950,9 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
               aria-label="Stop generating"
               data-testid="chat-stop"
               sx={{
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
+                touchAction: 'manipulation',
                 bgcolor: 'text.primary',
                 color: 'background.paper',
                 '&:hover': { bgcolor: 'text.secondary' },
@@ -966,8 +967,9 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
               aria-label="Send"
               data-testid="chat-send"
               sx={{
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
+                touchAction: 'manipulation',
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
                 '&:hover': { bgcolor: 'primary.dark' },
@@ -1432,9 +1434,14 @@ function FollowupChips({
             alignItems: 'center',
             // Prevent chips from shrinking below their content width
             // on mobile horizontal scroll — otherwise long chip text
-            // collapses awkwardly.
+            // collapses awkwardly. Wrap on xs so long suggestions
+            // ("Stress-test at 7.5% and show 30% down payment impact")
+            // don't truncate behind the chip edge.
             flexShrink: 0,
-            whiteSpace: 'nowrap',
+            maxWidth: { xs: '85vw', sm: 'none' },
+            whiteSpace: { xs: 'normal', sm: 'nowrap' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
             transition: 'background-color 120ms ease, border-color 120ms ease',
             '&:hover': {
               bgcolor: 'action.hover',

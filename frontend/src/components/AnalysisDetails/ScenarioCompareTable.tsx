@@ -45,7 +45,7 @@ function rowLabel(row: ScenarioComparisonRowWire): string {
 /** A small numeric factor cell. */
 function FactorCell({ value }: { value?: number }): React.JSX.Element {
   return (
-    <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right' }}>
+    <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
       <Typography
         sx={{ fontSize: 13, fontWeight: 500, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}
       >
@@ -85,13 +85,13 @@ export function ScenarioCompareTable({
           <Box sx={{ width: 48, flexShrink: 0, textAlign: 'right' }}>
             <HeaderLabel>Score</HeaderLabel>
           </Box>
-          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right' }}>
+          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
             <HeaderLabel>Cash flow</HeaderLabel>
           </Box>
-          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right' }}>
+          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
             <HeaderLabel>IRR</HeaderLabel>
           </Box>
-          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right' }}>
+          <Box sx={{ width: 56, flexShrink: 0, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
             <HeaderLabel>Market</HeaderLabel>
           </Box>
           <Box sx={{ width: 20, flexShrink: 0 }} />
