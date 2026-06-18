@@ -691,7 +691,11 @@ export const AppleNavigation: React.FC<AppleNavigationProps> = ({ children }) =>
           variant="temporary"
           open={mobileOpen}
           onClose={handleMobileDrawerClose}
-          ModalProps={{ keepMounted: true }}
+          // Task #59 P1 (2026-06-18): explicitly opt INTO scroll-lock so
+          // the page content behind the drawer doesn't scroll on iOS when
+          // the user touches outside the drawer. MUI defaults to locking,
+          // but being explicit guards against a future opt-out.
+          ModalProps={{ keepMounted: true, disableScrollLock: false }}
           sx={{
             '& .MuiDrawer-paper': {
               width: SIDEBAR_WIDTH,
