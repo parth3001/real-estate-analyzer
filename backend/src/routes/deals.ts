@@ -17,7 +17,8 @@ import {
   analyzeDeal,
   analyzeAnonymous,
   getQuickPredictions,
-  analyzeGoals
+  analyzeGoals,
+  exportDealPdf,
 } from '../controllers/deals';
 import {
   getScenarios,
@@ -84,6 +85,12 @@ router.get('/:id/scenario-sensitivity/:decisionEventId', authMiddleware, getDeal
 // experience end-to-end before Stripe is wired.
 router.get('/:id/license', authMiddleware, getDealLicense);
 router.post('/:id/seed-license', authMiddleware, seedDealLicense);
+
+// Task #61 (2026-06-18): PDF export + email-PDF from the workspace.
+// mode: 'download' streams application/pdf, mode: 'email' sends as
+// attachment to req.body.email (or the authenticated user's email).
+router.post('/:id/export-pdf', authMiddleware, exportDealPdf);
+
 router.post('/', authMiddleware, createDeal);
 router.put('/:id', authMiddleware, updateDeal);
 router.delete('/:id', authMiddleware, deleteDeal);

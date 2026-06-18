@@ -318,6 +318,27 @@ export const propertyApi = {
   },
 
   /**
+   * Task #61 (2026-06-18): export a saved deal as PDF.
+   *   mode: 'download' → returns the raw Blob the caller hands to a
+   *                       browser download trigger.
+   *   mode: 'email'    → server emails the PDF to the authenticated
+   *                       user's address; resolves to undefined.
+   */
+  exportPdf: async (
+    id: string,
+    opts: { mode: 'download' | 'email'; email?: string }
+  ): Promise<Blob | void> => {
+    if (opts.mode === 'email') {
+      await api.post(`/deals/${id}/export-pdf`, opts);
+      return;
+    }
+    const response = await api.post(`/deals/${id}/export-pdf`, opts, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
+
+  /**
    * Get the adversarial critique tied to this deal's latest decision
    * (T1, 2026-05-18). Returns { critiques: [...], pending: boolean }.
    *

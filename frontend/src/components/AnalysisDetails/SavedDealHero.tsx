@@ -25,9 +25,9 @@
  * flow — no decisionId surfaced to the user (Issue #116 guardrail).
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack } from '@mui/material';
+import { Box, Button, Typography, Stack } from '@mui/material';
 import { DealScoreCard, type DealScoreCardFactor } from '../Chat/DealScoreCard';
 import {
   detectSavedDealVariant,
@@ -410,6 +410,97 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
           ))}
         </Stack>
       </Box>
+
+      {/* Task #61 (2026-06-18): PDF export + email-PDF. Closes the
+          pricing-page promise that the workspace was silently missing.
+          Two buttons: Download (browser triggers application/pdf
+          download), Email (sends PDF as attachment to the logged-in
+          user's email). */}
+      <ExportPdfActions dealId={dealId} />
+    </Box>
+  );
+}
+
+// ===== Task #61 (2026-06-18): PDF export actions =====
+
+interface ExportPdfActionsProps {
+  dealId: string | undefined;
+}
+
+function ExportPdfActions({
+  dealId,
+}: ExportPdfActionsProps): React.JSX.Element | null {
+  const [status, setStatus] = React.useState<
+    'idle' | 'downloading' | 'emailing' | 'emailed' | 'error'
+  >('idle');
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  if (!dealId) return null;
+
+  const handleDownload = async (): Promise<void> => {
+    setStatus('downloading');
+    setErrorMsg(null);
+    try {
+      const blob = await propertyApi.exportPdf(dealId, { mode: 'download' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reanalyzr-${dealId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus('idle');
+    } catch (err) {
+      setStatus('error');
+      setErrorMsg(err instanceof Error ? err.message : 'Could not download PDF');
+    }
+  };
+
+  const handleEmail = async (): Promise<void> => {
+    setStatus('emailing');
+    setErrorMsg(null);
+    try {
+      await propertyApi.exportPdf(dealId, { mode: 'email' });
+      setStatus('emailed');
+      setTimeout(() => setStatus('idle'), 3500);
+    } catch (err) {
+      setStatus('error');
+      setErrorMsg(err instanceof Error ? err.message : 'Could not email PDF');
+    }
+  };
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+        <Button
+          variant="outlined"
+          onClick={handleDownload}
+          disabled={status === 'downloading' || status === 'emailing'}
+          sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+          data-testid="export-pdf-download"
+        >
+          {status === 'downloading' ? 'Preparing…' : '⬇️ Download PDF'}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleEmail}
+          disabled={status === 'downloading' || status === 'emailing' || status === 'emailed'}
+          sx={{ minHeight: 44, textTransform: 'none', borderRadius: 2 }}
+          data-testid="export-pdf-email"
+        >
+          {status === 'emailing'
+            ? 'Sending…'
+            : status === 'emailed'
+            ? '✓ Sent to your inbox'
+            : '✉️ Email PDF to me'}
+        </Button>
+      </Stack>
+      {status === 'error' && errorMsg && (
+        <Typography sx={{ fontSize: 12, color: 'error.main' }}>
+          {errorMsg}
+        </Typography>
+      )}
     </Box>
   );
 }

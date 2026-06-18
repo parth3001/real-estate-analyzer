@@ -37,6 +37,10 @@ import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiServi
 // Import Google Maps Service for Property Images (Feature #9)
 import googleMapsService from '../services/googleMapsService';
 
+// Task #61: PDF export + email-PDF for the workspace
+import pdfService from '../services/pdfService';
+import { emailService } from '../services/emailService';
+
 // Import Analytics Service for platform tracking
 import { analyticsService } from '../services/analyticsService';
 
@@ -2619,6 +2623,152 @@ export const analyzeAnonymous = async (req: Request, res: Response) => {
     return res.status(500).json({
       error: 'Analysis failed',
       message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+// ===== Task #61 (2026-06-18): Workspace PDF export + email =====
+//
+// Closes the pricing-page promise gap: "PDF export · Send to your loan
+// officer, CPA, or partner." Two modes:
+//
+//   mode: 'download' → returns the PDF buffer as application/pdf so the
+//                      browser triggers a download.
+//   mode: 'email'    → emails the PDF as an attachment to req.body.email
+//                      (defaults to the authenticated user's address).
+//
+// The PdfService was built for the wizard's analysis shape. Deal.analysis
+// is the SAME shape (the materializer writes Analysis-typed fields onto
+// the Deal model), so the only mapping work is constructing PdfFormData
+// from Deal headline fields + ensuring investmentDecision is hydrated
+// from substrate (same getDealById pattern). No new PDF renderer needed.
+
+export const exportDealPdf = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+    const mode = (req.body?.mode as 'download' | 'email') ?? 'download';
+    const emailTarget = req.body?.email as string | undefined;
+
+    const deal = await dealService.getDealById(id);
+    if (!deal || deal.userId?.toString() !== userId) {
+      res.status(404).json({ error: 'Deal not found' });
+      return;
+    }
+
+    const dealData = deal.toObject();
+    // Hydrate investmentDecision from substrate (single source of truth).
+    if (dealData.latestDecisionEventId) {
+      const assembled = await assembleDecisionFromEvent(
+        dealData.latestDecisionEventId
+      );
+      if (assembled && dealData.analysis) {
+        dealData.analysis.investmentDecision = assembled;
+        (dealData as Record<string, unknown>).investmentDecision = assembled;
+      }
+    }
+
+    if (!dealData.analysis) {
+      res.status(422).json({
+        error: 'This deal has no analysis to render. Re-run the analysis first.',
+      });
+      return;
+    }
+
+    // Map Deal → PdfFormData. The address string concatenates parts the
+    // way the PDF template renders headline addresses.
+    const addr = dealData.propertyAddress;
+    const addressString =
+      addr && typeof addr === 'object'
+        ? `${addr.street ?? ''}${addr.city ? ', ' + addr.city : ''}${addr.state ? ', ' + addr.state : ''}${addr.zipCode ? ' ' + addr.zipCode : ''}`.trim()
+        : dealData.propertyName ?? 'Property analysis';
+
+    const formData = {
+      purchasePrice: dealData.purchasePrice ?? 0,
+      downPayment: (dealData as { downPayment?: number }).downPayment ?? 0,
+      monthlyRent: (dealData as { monthlyRent?: number }).monthlyRent ?? 0,
+      squareFeet: (dealData as { squareFootage?: number }).squareFootage ?? 0,
+      investmentStrategy:
+        dealData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy-hold',
+      projectionYears:
+        (dealData as { longTermAssumptions?: { projectionYears?: number } })
+          .longTermAssumptions?.projectionYears ?? 10,
+      propertyAddress: addressString,
+      ...((dealData as { brrrr?: { rehabBudget?: number; afterRepairValue?: number } })
+        .brrrr
+        ? {
+            rehabCost: (dealData as { brrrr?: { rehabBudget?: number } }).brrrr
+              ?.rehabBudget,
+            afterRepairValue: (
+              dealData as { brrrr?: { afterRepairValue?: number } }
+            ).brrrr?.afterRepairValue,
+          }
+        : {}),
+    } as Parameters<typeof pdfService.generateAnalysisPdf>[1];
+
+    const strategy: 'brrrr' | 'buy-hold' =
+      dealData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy-hold';
+
+    const pdfResult = await pdfService.generateAnalysisPdf(
+      dealData.analysis as Parameters<typeof pdfService.generateAnalysisPdf>[0],
+      formData,
+      strategy
+    );
+
+    const dealQualityScore =
+      (dealData.analysis as { investmentDecision?: { professionalAssessment?: { dealQuality?: number } } })
+        .investmentDecision?.professionalAssessment?.dealQuality ?? 0;
+    const filename = `reanalyzr-${(addressString || 'deal').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}.pdf`;
+
+    if (mode === 'email') {
+      const recipient = emailTarget || req.user?.email;
+      if (!recipient) {
+        res.status(400).json({
+          error:
+            'No email address available. Pass `email` in the request body or set one on your account.',
+        });
+        return;
+      }
+      await emailService.sendAnonymousPdfEmail(
+        recipient,
+        {
+          filename,
+          content: pdfResult.pdfBuffer,
+          contentType: 'application/pdf',
+        },
+        strategy,
+        Math.round(dealQualityScore),
+        addressString,
+        dealData.analysis
+      );
+      res.status(200).json({
+        ok: true,
+        emailedTo: recipient,
+        fileSizeBytes: pdfResult.fileSizeBytes,
+      });
+      return;
+    }
+
+    // mode === 'download' (default): stream the PDF back.
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`
+    );
+    res.setHeader('Content-Length', pdfResult.pdfBuffer.length);
+    res.send(pdfResult.pdfBuffer);
+  } catch (error) {
+    logger.error('exportDealPdf error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Could not export PDF',
     });
   }
 };
