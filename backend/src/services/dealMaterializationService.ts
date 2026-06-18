@@ -379,6 +379,12 @@ function projectAnalysis(ap: AnalysisPayload): Analysis {
     capRate: metrics?.capRate,
     cashOnCashReturn: metrics?.cashOnCashReturn,
     dscr: metrics?.dscr,
+    // Task #46 (2026-06-17): irr was missing from the materializer's
+    // keyMetrics, so 2.0 deals showed "N/A" for IRR on the saved-
+    // properties list while the detail page (which assembles from
+    // substrate) had the real number — a real source of list↔detail
+    // drift. Substrate metrics.irr is the canonical value.
+    irr: metrics?.irr,
     grossRentMultiplier: m && 'grossRentMultiplier' in m
       ? (m as { grossRentMultiplier?: number }).grossRentMultiplier
       : undefined,

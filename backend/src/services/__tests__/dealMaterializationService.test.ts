@@ -103,6 +103,7 @@ async function seedAnalysisAndDecision(opts: {
     marketData: {} as AnalysisPayload['marketData'],
     assumptions: { vacancyRate: 5 },
     metrics: {
+      // CommonMetrics
       noi: 18000,
       capRate: 6.1,
       cashOnCashReturn: 8.2,
@@ -110,6 +111,22 @@ async function seedAnalysisAndDecision(opts: {
       dscr: 1.4,
       operatingExpenseRatio: 0.4,
       totalInvestment: 80000,
+      // SFRMetricsShape — required so safeParseShape accepts the metrics
+      // block (analyzer always populates these in production).
+      pricePerSqFt: 159,
+      rentPerSqFt: 1.6,
+      grossRentMultiplier: 9.8,
+      breakEvenOccupancy: 62,
+      equityMultiple: 1.8,
+      onePercentRuleValue: 0.95,
+      fiftyRuleAnalysis: true,
+      rentToPriceRatio: 0.0095,
+      pricePerBedroom: 98333,
+      debtToIncomeRatio: 0.35,
+      returnOnImprovements: 0,
+      turnoverCostImpact: 0.04,
+      debtYield: 0.08,
+      grossYield: 0.115,
     } as AnalysisPayload['metrics'],
     monthlyAnalysis: {
       cashFlow: 250,
@@ -222,6 +239,15 @@ describe('dealMaterializationService', () => {
       });
       expect(result.deal?.purchasePrice).toBe(295000);
       expect(result.deal?.investmentStrategy).toBe('buy-hold'); // chat 'buy_hold' → legacy 'buy-hold'
+
+      // Task #46 (2026-06-17): keyMetrics.irr must be projected onto the
+      // Deal — the saved-properties list reads property.analysis.keyMetrics.irr
+      // directly. Prior to this fix, irr was silently dropped by the
+      // materializer (capRate / cashOnCashReturn / dscr were copied but
+      // not irr), so 2.0 deals showed "N/A" on the list while the detail
+      // page assembled the real number from substrate — a real source of
+      // list↔detail drift.
+      expect(result.deal?.analysis?.keyMetrics?.irr).toBe(11);
 
       // Task #49 cleanup (2026-06-17): post-Task-#1 (May 20, 2026), the
       // Deal no longer stores investmentDecision at WRITE time — it lives

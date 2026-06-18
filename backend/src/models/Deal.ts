@@ -108,6 +108,12 @@ export interface Analysis {
     capRate?: number;
     cashOnCashReturn?: number;
     dscr?: number;
+    // Task #46 (2026-06-17): irr is in the Mongoose schema (Deal.ts:700)
+    // and the saved-properties list reads property.analysis.keyMetrics.irr,
+    // but the TS interface was missing it — so the materializer's irr
+    // passthrough was silently rejected by the type system. Restoring the
+    // type closes the list↔detail drift on the IRR column.
+    irr?: number;
     pricePerSqFtAtPurchase?: number;
     pricePerSqFtAtSale?: number;
     avgRentPerSqFt?: number;
