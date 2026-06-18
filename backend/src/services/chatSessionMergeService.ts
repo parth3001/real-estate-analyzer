@@ -206,6 +206,11 @@ export async function mergeAnonymousSessionIntoUser(
             }
           );
         }
+
+        // Task #14 (2026-06-17): freemium auto-redeem fires INSIDE
+        // materializeDealFromDecision — see fireAutoRedeemFirstFreeCredit
+        // there. Lives in the materializer (not here) so the direct
+        // /analyze path gets the same behavior as the chat-claim path.
       }
     }
   } catch (materializeErr) {

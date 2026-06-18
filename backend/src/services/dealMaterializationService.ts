@@ -68,6 +68,12 @@ import type {
 } from '../services/investment/BaseDecisionEngine';
 import { logger } from '../utils/logger';
 import { fireCritiqueOnSave } from '../agents/adversarialCritic/triggerOnSave';
+import { licenseRepository } from '../repositories/LicenseRepository';
+
+// PropertyAddress type used by the auto-redeem helper. Materializer
+// reads it off propertyData.propertyAddress which is already typed via
+// SFRData/MultiFamilyData; we just need a structural alias here.
+type PropertyAddress = SFRData['propertyAddress'];
 
 // ===== Result shape =====
 
@@ -644,6 +650,14 @@ export async function materializeDealFromDecision(
     // to warrant a fresh second opinion. The function is fire-and-
     // forget and cost-cap-aware; no impact on this code path's latency.
     fireCritiqueOnSave({ decisionEventId, userId });
+    // Task #14 (2026-06-17): fire auto-redeem on updates too — a user
+    // who analyzed → re-ran → THEN signed up lands here on the update
+    // path. The helper is idempotent (skips if an active license
+    // already exists), so re-runs of the same deal don't double-burn.
+    fireAutoRedeemFirstFreeCredit({
+      userId,
+      propertyAddress: property.propertyAddress,
+    });
     return { deal: existing, created: false, skipped: false };
   }
 
@@ -661,7 +675,86 @@ export async function materializeDealFromDecision(
   // a 2-persona second opinion regardless of score. Fire-and-forget,
   // bounded by the daily cost cap; no impact on this function's latency.
   fireCritiqueOnSave({ decisionEventId, userId });
+  // Task #14 (2026-06-17): freemium auto-redeem. If the user signed up
+  // through chat (anonymous → claim → first deal here) OR through the
+  // direct /analyze path, they have a 'first_free' credit waiting from
+  // authService. Burn it down NOW so they land in the unlocked $4.99
+  // workspace instead of a teaser. Idempotent — re-materialization of
+  // an existing deal won't double-burn. Fire-and-forget; failure is
+  // non-fatal and ops-recoverable.
+  fireAutoRedeemFirstFreeCredit({
+    userId,
+    propertyAddress: property.propertyAddress,
+  });
   return { deal: created, created: true, skipped: false };
+}
+
+/**
+ * Task #14 (2026-06-17) — first_free auto-redeem.
+ *
+ * Background-fired from materializeDealFromDecision. Picks the oldest
+ * unredeemed credit (FIFO — first_free at signup time, in v1) and
+ * burns it down against the just-materialized property. Idempotent:
+ * skips if an active license already exists on this property OR if
+ * the user has no redeemable credits.
+ *
+ * Fire-and-forget semantics — the materializer must NEVER block or
+ * fail because of license issuance, so this swallows all errors and
+ * logs them for ops backfill.
+ */
+function fireAutoRedeemFirstFreeCredit(opts: {
+  userId: Types.ObjectId;
+  propertyAddress: PropertyAddress;
+}): void {
+  const { userId, propertyAddress } = opts;
+  // Defer the work — don't block the caller while we hit the license
+  // collection. Errors are caught inside.
+  setImmediate(async () => {
+    try {
+      const existingLicense =
+        await licenseRepository.findActiveForProperty(userId, propertyAddress);
+      if (existingLicense) {
+        logger.info(
+          '[dealMaterialization:autoRedeem] property already licensed — skipping',
+          {
+            userId: userId.toHexString(),
+            licenseId: existingLicense._id.toString(),
+          }
+        );
+        return;
+      }
+
+      const credits = await licenseRepository.findRedeemableCredits(userId, 1);
+      if (credits.length === 0) {
+        // Common case for users without a signup credit (legacy users,
+        // already-redeemed paid users). Not an error.
+        return;
+      }
+
+      const { licenseId } = await licenseRepository.redeemCreditForProperty({
+        userId,
+        creditId: credits[0]._id,
+        propertyAddress,
+      });
+      logger.info(
+        '[dealMaterialization:autoRedeem] first_free credit redeemed',
+        {
+          userId: userId.toHexString(),
+          creditId: credits[0]._id.toString(),
+          licenseId: licenseId.toString(),
+          sourceType: credits[0].sourceType,
+        }
+      );
+    } catch (err) {
+      logger.warn(
+        '[dealMaterialization:autoRedeem] failed (non-fatal — user still has the deal as a teaser)',
+        {
+          userId: userId.toHexString(),
+          error: err instanceof Error ? err.message : String(err),
+        }
+      );
+    }
+  });
 }
 
 /**

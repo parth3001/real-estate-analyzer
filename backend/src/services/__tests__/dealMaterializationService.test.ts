@@ -28,9 +28,17 @@ import {
 import { User } from '../../models/User';
 import { DealModel as Deal } from '../../models/Deal';
 import { eventsRepository } from '../../repositories/EventsRepository';
+import { licenseRepository } from '../../repositories/LicenseRepository';
 import type { AnalysisPayload } from '../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../models/events/DecisionEvent';
 import type { SFRData } from '../../types/propertyTypes';
+
+/** setImmediate is fire-and-forget; flush it before asserting side-effects. */
+async function flushImmediate(): Promise<void> {
+  // Two cycles: setImmediate body, then any inner awaits. 50ms is enough
+  // for the in-memory Mongo round-trips the auto-redeem helper does.
+  await new Promise((r) => setTimeout(r, 50));
+}
 
 const SETUP_TIMEOUT_MS = 90_000;
 
@@ -469,6 +477,98 @@ describe('dealMaterializationService', () => {
       const result = await materializeDealsForUser([validId, bogusId], userId);
       expect(result.successCount).toBe(1);
       expect(result.failureCount).toBe(1);
+    });
+  });
+
+  // Task #14 (2026-06-17) — first_free auto-redeem on materialization.
+  // The materializer fires a background redemption of the user's oldest
+  // unredeemed credit against the property it just materialized. This
+  // closes the freemium funnel: signup → first_free credit → first
+  // analysis → unlocked $4.99 workspace without a manual purchase step.
+  describe('Task #14: first_free auto-redeem', () => {
+    it('burns a first_free credit on first materialization, creating an active license', async () => {
+      const userId = await createRealUser('autoredeem-fresh@example.com');
+      // Issue the signup-time credit BEFORE materialization, exactly
+      // as authService does post-signup.
+      await licenseRepository.issueCredits({
+        userId,
+        sourceType: 'first_free',
+        pricePaidCents: 0,
+        count: 1,
+      });
+
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 300000,
+        strategy: 'buy_hold',
+        dealQuality: 72,
+      });
+      const result = await materializeDealFromDecision(decisionEventId, userId);
+      expect(result.deal).not.toBeNull();
+      await flushImmediate();
+
+      const license = await licenseRepository.findActiveForProperty(
+        userId,
+        result.deal!.propertyAddress as Parameters<
+          typeof licenseRepository.findActiveForProperty
+        >[1]
+      );
+      expect(license).not.toBeNull();
+      expect(license?.pricePaidCents).toBe(0); // first_free
+    });
+
+    it('is idempotent — second materialization of the same property does not double-burn', async () => {
+      const userId = await createRealUser('autoredeem-idempotent@example.com');
+      await licenseRepository.issueCredits({
+        userId,
+        sourceType: 'first_free',
+        pricePaidCents: 0,
+        count: 1,
+      });
+
+      const seed1 = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 300000,
+        strategy: 'buy_hold',
+        dealQuality: 72,
+      });
+      await materializeDealFromDecision(seed1.decisionEventId, userId);
+      await flushImmediate();
+
+      // Re-run the analysis (stress test) — same address, new decision.
+      const seed2 = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 300000,
+        strategy: 'buy_hold',
+        dealQuality: 65, // dropped after a tougher rate assumption
+      });
+      await materializeDealFromDecision(seed2.decisionEventId, userId);
+      await flushImmediate();
+
+      // Still exactly ONE active license; the second pass saw it and
+      // skipped redemption rather than burning a non-existent 2nd credit.
+      const licenses = await licenseRepository.findLicensesForUser(userId, {
+        status: 'active',
+      });
+      expect(licenses).toHaveLength(1);
+    });
+
+    it('skips silently when the user has no redeemable credits (post-launch users without first_free)', async () => {
+      const userId = await createRealUser('autoredeem-nocredit@example.com');
+      // No credit issued — simulates a user who never got first_free
+      // (e.g. legacy account from before #38 shipped).
+
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 300000,
+        strategy: 'buy_hold',
+        dealQuality: 72,
+      });
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+
+      const licenses = await licenseRepository.findLicensesForUser(userId);
+      expect(licenses).toHaveLength(0);
     });
   });
 });
