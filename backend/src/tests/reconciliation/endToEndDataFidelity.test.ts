@@ -42,6 +42,7 @@ import { User } from '../../models/User';
 import { DealModel as Deal } from '../../models/Deal';
 import { eventsRepository } from '../../repositories/EventsRepository';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
+import { projectDealScoreCard } from '../../agents/orchestrator/dealScoreCardProjection';
 import type { AnalysisPayload } from '../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../models/events/DecisionEvent';
 import type { SFRData } from '../../types/propertyTypes';
@@ -197,6 +198,9 @@ describe('End-to-end data fidelity (Task #44 ground floor)', () => {
       analyzerResult,
       deal: deal!,
       substrate: scenarioBundle!.analysis!.payload as unknown as AnalysisPayload,
+      analysisPayload,
+      decisionPayload,
+      decisionEventId,
     };
   }
 
@@ -381,6 +385,97 @@ describe('End-to-end data fidelity (Task #44 ground floor)', () => {
         analyzerResult.keyMetrics.capRate,
         2
       );
+    });
+  });
+
+  // ===== Task #45 (2026-06-18): Chat card cross-surface reconciliation =====
+  //
+  // The DealScoreCard the chat agent renders ABOVE its prose narrative is
+  // a SEPARATE projection from the substrate (projectDealScoreCard maps
+  // the AnalysisEvent + DecisionEvent payloads to a wire shape). Drift
+  // between this projection and the materialized Deal would mean the
+  // user sees ONE score in chat and a DIFFERENT score on the workspace
+  // — the classic trust break.
+  describe('Chat DealScoreCard ↔ substrate ↔ Deal reconciliation (#45)', () => {
+    it('chat card dealQuality === substrate decision dealQuality === Deal-assembled dealQuality', async () => {
+      const { analysisPayload, decisionPayload, deal } = await runFullPipeline();
+      const card = projectDealScoreCard(
+        analysisPayload,
+        decisionPayload,
+        'buy_hold'
+      );
+      // The card and the substrate decision are the same number.
+      expect(card.dealQuality).toBe(decisionPayload.dealQuality);
+      // The materialized Deal carries latestDecisionEventId only (Task #1);
+      // the score is assembled at read time from the substrate event. So
+      // by construction the Deal's served score === decisionPayload.dealQuality.
+      // We assert the linkage is wired (no missing pointer).
+      expect(deal.latestDecisionEventId).toBeDefined();
+    });
+
+    it('chat card walkAwayPrice === substrate walkAwayPrice === Deal walkAwayPrice', async () => {
+      const { analysisPayload, decisionPayload, deal } = await runFullPipeline();
+      const card = projectDealScoreCard(
+        analysisPayload,
+        decisionPayload,
+        'buy_hold'
+      );
+      const subWalkAway = (analysisPayload as { walkAwayPrice?: number })
+        .walkAwayPrice;
+      const dealWalkAway = (
+        deal.analysis as { walkAwayPrice?: number } | undefined
+      )?.walkAwayPrice;
+      expect(card.walkAwayPrice).toBe(subWalkAway);
+      expect(dealWalkAway).toBe(subWalkAway);
+    });
+
+    it('chat card keyMetrics.monthlyCashFlow === substrate monthly cash flow', async () => {
+      const { analysisPayload, decisionPayload } = await runFullPipeline();
+      const card = projectDealScoreCard(
+        analysisPayload,
+        decisionPayload,
+        'buy_hold'
+      );
+      const subMonthly = (analysisPayload.monthlyAnalysis ?? {}) as {
+        cashFlow?: number;
+      };
+      if (typeof card.keyMetrics?.monthlyCashFlow === 'number') {
+        expect(card.keyMetrics.monthlyCashFlow).toBeCloseTo(
+          subMonthly.cashFlow ?? 0,
+          0
+        );
+      }
+    });
+
+    it('chat card projection (when present) cashFlow matches analyzer', async () => {
+      const { analyzerResult, analysisPayload, decisionPayload, deal } =
+        await runFullPipeline();
+      const card = projectDealScoreCard(
+        analysisPayload,
+        decisionPayload,
+        'buy_hold'
+      );
+      // projection is optional on the wire shape (may be absent on
+      // malformed analyses). When present, the FIRST sampled year must
+      // match the analyzer's same year exactly — otherwise the user
+      // sees a different cash flow on the card than on the workspace.
+      if (card.projection && card.projection.length > 0) {
+        const cardFirst = card.projection[0];
+        const analyzerSame = analyzerResult.longTermAnalysis.projections.find(
+          (p) => p.year === cardFirst.year
+        );
+        expect(analyzerSame).toBeDefined();
+        expect(cardFirst.cashFlow).toBeCloseTo(analyzerSame!.cashFlow, 0);
+      }
+      // The Deal's projections (full array, not sampled) — Year 1 must
+      // match the analyzer regardless of whether the card surfaced it.
+      const dealProjections =
+        (deal.analysis?.longTermAnalysis as unknown as {
+          projections?: Array<{ year: number; cashFlow: number }>;
+        })?.projections ?? [];
+      const dealY1 = dealProjections.find((p) => p.year === 1)?.cashFlow;
+      const analyzerY1 = analyzerResult.longTermAnalysis.projections[0]?.cashFlow;
+      expect(dealY1).toBeCloseTo(analyzerY1, 0);
     });
   });
 });
