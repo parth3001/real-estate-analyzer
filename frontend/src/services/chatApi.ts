@@ -357,6 +357,39 @@ export async function claimChatSession(
   }
 }
 
+// ===== Task #40 (2026-06-18): persist stress test as a saved scenario =====
+
+export interface SaveStressScenarioResult {
+  newDecisionEventId: string;
+  newAnalysisEventId: string;
+  dealQuality: number;
+}
+
+/**
+ * Persist a stress-test as a substrate scenario. Anchored on the
+ * priorDecisionId (the baseline the stress test ran against) plus the
+ * user's original prompt (the backend re-extracts perturbations from it
+ * so the saved scenario matches what the narrative cited).
+ */
+export async function saveStressScenario(input: {
+  priorDecisionId: string;
+  userMessage: string;
+}): Promise<SaveStressScenarioResult> {
+  try {
+    const { data } = await api.post<SaveStressScenarioResult>(
+      '/chat/stress-test/save',
+      input
+    );
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const body = err.response?.data as { error?: string } | undefined;
+      throw new Error(body?.error ?? 'Could not save stress scenario.');
+    }
+    throw err;
+  }
+}
+
 export async function* streamChatTurn(
   request: ChatTurnRequest,
   opts: { signal?: AbortSignal } = {}

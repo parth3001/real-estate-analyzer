@@ -54,6 +54,8 @@ import {
   StressTestIncompleteError,
   StressTestUnsupportedError,
 } from '../services/perturbation';
+import { extractPerturbations } from '../services/perturbation/extractor';
+import { getAnthropicAdapter } from '../agents/llm/anthropicAdapter';
 import { licenseRepository } from '../repositories/LicenseRepository';
 
 // ===== Request validation =====
@@ -817,14 +819,21 @@ router.get(
 //
 // Errors map to status codes via the same typed-error catch pattern the
 // turn endpoint uses.
-const SaveStressScenarioRequestSchema = z.object({
-  priorDecisionId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, 'priorDecisionId must be a 24-char hex string'),
-  perturbations: z
-    .array(PerturbationSpecSchema)
-    .min(1, 'at least one perturbation is required'),
-});
+// Accepts EITHER perturbations (programmatic callers) OR userMessage
+// (chat-side callers: re-extract from the original prompt). The frontend
+// chip only has the user's prompt string + the priorDecisionId from
+// relatedEventIds — it doesn't have the typed perturbations.
+const SaveStressScenarioRequestSchema = z
+  .object({
+    priorDecisionId: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, 'priorDecisionId must be a 24-char hex string'),
+    perturbations: z.array(PerturbationSpecSchema).min(1).optional(),
+    userMessage: z.string().min(1).max(2000).optional(),
+  })
+  .refine((d) => d.perturbations || d.userMessage, {
+    message: 'Either perturbations or userMessage must be provided',
+  });
 
 router.post(
   '/stress-test/save',
@@ -845,10 +854,33 @@ router.post(
     }
 
     try {
+      // Resolve perturbations: caller-supplied → use directly; else
+      // re-extract from the user's stress-test prompt (one extra LLM
+      // call, but mirrors what handleStressTest already did so the
+      // saved scenario matches what the narrative described).
+      let perturbations = parsed.data.perturbations;
+      if (!perturbations) {
+        const adapter = getAnthropicAdapter();
+        const extraction = await extractPerturbations({
+          userMessage: parsed.data.userMessage!,
+          adapter,
+        });
+        if (extraction.perturbations.length === 0) {
+          res.status(400).json({
+            error:
+              'Could not extract any assumption changes from the original prompt. ' +
+              'Try re-running the stress test with a more explicit message.',
+            extractionReasoning: extraction.reasoning,
+          });
+          return;
+        }
+        perturbations = extraction.perturbations;
+      }
+
       const result = await persistStressScenario({
         priorDecisionId: parsed.data.priorDecisionId,
         userId: req.user.id,
-        perturbations: parsed.data.perturbations,
+        perturbations,
       });
       logger.info('[chat/stress-test/save] scenario persisted', {
         userId: req.user.id,

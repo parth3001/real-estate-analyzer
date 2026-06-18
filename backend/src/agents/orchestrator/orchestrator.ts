@@ -1100,12 +1100,24 @@ export async function* streamTurn(
         let extractionTokens = 0;
         let narrativeTokens = 0;
 
+        let stressSavePayload: {
+          priorDecisionId: string;
+          userMessage: string;
+        } | null = null;
         switch (out.kind) {
           case 'success':
             responseText = out.narrative;
             relatedEventIds = [new Types.ObjectId(out.priorDecisionId)];
             extractionTokens = out.usage.extractionTokens;
             narrativeTokens = out.usage.narrativeTokens;
+            // Task #40 (2026-06-18): payload the frontend needs to render
+            // a "Save as scenario" chip. priorDecisionId anchors the save
+            // endpoint to the right baseline; userMessage gets re-extracted
+            // on save so the perturbations match what the narrative cited.
+            stressSavePayload = {
+              priorDecisionId: out.priorDecisionId,
+              userMessage: input.userInput,
+            };
             break;
           case 'no_prior_decision':
           case 'extraction_failed':
@@ -1126,6 +1138,16 @@ export async function* streamTurn(
         modelUsed = 'claude-haiku';
 
         yield { type: 'text_delta', text: responseText };
+        // Emit the save-intent ONLY on success — error paths don't have
+        // a saveable scenario. Frontend MessageBubble renders the chip
+        // when this structured output is present.
+        if (stressSavePayload) {
+          yield {
+            type: 'structured_output',
+            kind: 'stress_save_intent',
+            data: stressSavePayload,
+          };
+        }
       } else {
         throw new Error(
           `orchestrator.streamTurn: unknown route '${routing.target}'`

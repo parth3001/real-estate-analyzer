@@ -42,6 +42,7 @@ import { chatTheme } from '../../theme/chatTheme';
 import {
   streamChatTurn,
   loadChatHistory,
+  saveStressScenario,
   type ChatStreamEvent,
 } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
@@ -1162,6 +1163,35 @@ function MessageBubble({
         </Box>
       )}
 
+      {/* Task #40 (2026-06-18): "Save as scenario" chip on stress-test
+          turns. The orchestrator emits a `stress_save_intent` structured
+          output carrying priorDecisionId + the original user prompt on
+          successful stress runs. Click → POST /api/chat/stress-test/save
+          → backend re-extracts perturbations + writes new substrate
+          DecisionEvent → materializer hooks fire (Deal materialized,
+          #14 auto-redeem). On success, navigate to the workspace where
+          the new scenario appears alongside baseline in the spine. */}
+      {(() => {
+        if (message.role !== 'assistant') return null;
+        const so = (message.structuredOutputs ?? []).find(
+          (x) => x.kind === 'stress_save_intent'
+        );
+        if (!so) return null;
+        const payload = so.data as {
+          priorDecisionId?: string;
+          userMessage?: string;
+        };
+        if (!payload?.priorDecisionId || !payload?.userMessage) return null;
+        return (
+          <Box sx={{ alignSelf: 'flex-start', mt: 0.5 }}>
+            <SaveAsScenarioChip
+              priorDecisionId={payload.priorDecisionId}
+              userMessage={payload.userMessage}
+            />
+          </Box>
+        );
+      })()}
+
       {/* Follow-up chips — render only under the LATEST assistant
           message, only once streaming is done, and only when the agent
           actually emitted any. Tap fills the input (does NOT submit). */}
@@ -1540,6 +1570,86 @@ function ChatCardCtas({
           Save this deal
         </Button>
       </Box>
+    </Box>
+  );
+}
+
+// ===== Task #40 (2026-06-18): Save-as-scenario chip on stress narratives =====
+
+interface SaveAsScenarioChipProps {
+  /** Anchor decision the stress test ran against. */
+  priorDecisionId: string;
+  /**
+   * The user's original stress prompt — backend re-extracts perturbations
+   * from this so the saved scenario matches what the narrative cited.
+   */
+  userMessage: string;
+}
+
+function SaveAsScenarioChip({
+  priorDecisionId,
+  userMessage,
+}: SaveAsScenarioChipProps): React.JSX.Element {
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle'
+  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const handleClick = async (): Promise<void> => {
+    if (status === 'saving' || status === 'saved') return;
+    setStatus('saving');
+    setErrorMsg(null);
+    try {
+      const result = await saveStressScenario({
+        priorDecisionId,
+        userMessage,
+      });
+      setStatus('saved');
+      // Brief delay so the user sees the success state, then route to the
+      // workspace where the new scenario appears alongside baseline. We
+      // navigate by decisionEventId; the workspace page resolves the
+      // owning Deal and lands on the just-saved scenario via
+      // selectedId = current.
+      setTimeout(() => {
+        navigate(`/analysis/${result.newDecisionEventId}`);
+      }, 700);
+    } catch (err) {
+      setStatus('error');
+      setErrorMsg(err instanceof Error ? err.message : 'Could not save scenario');
+    }
+  };
+
+  const label =
+    status === 'saving'
+      ? 'Saving…'
+      : status === 'saved'
+      ? '✓ Saved — opening workspace'
+      : status === 'error'
+      ? 'Try again'
+      : '💾 Save as scenario';
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      <Button
+        variant="outlined"
+        onClick={handleClick}
+        disabled={status === 'saving' || status === 'saved'}
+        sx={{
+          minHeight: 44,
+          textTransform: 'none',
+          borderRadius: 2,
+          alignSelf: 'flex-start',
+        }}
+        data-testid="chat-cta-save-stress-scenario"
+      >
+        {label}
+      </Button>
+      {status === 'error' && errorMsg && (
+        <Typography sx={{ fontSize: 12, color: 'error.main' }}>
+          {errorMsg}
+        </Typography>
+      )}
     </Box>
   );
 }
