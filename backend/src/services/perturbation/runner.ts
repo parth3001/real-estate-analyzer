@@ -192,7 +192,7 @@ function contextualConversion(
  * 'set' and stacks for 'increase_by' — same behavior as if a human had
  * applied them in order.
  */
-function applyPerturbations(
+export function applyPerturbations(
   propertyData: Record<string, unknown>,
   assumptions: Record<string, unknown>,
   baselinePropertyData: Record<string, unknown>,
@@ -276,7 +276,7 @@ function applyPerturbations(
 }
 
 /** Engine's userContext shape — required parameter. */
-interface EngineUserContext {
+export interface EngineUserContext {
   availableCash: number;
   experienceLevel: 'novice' | 'intermediate' | 'experienced';
   riskTolerance: 'conservative' | 'moderate' | 'aggressive';
@@ -290,7 +290,7 @@ interface EngineUserContext {
  * different field names), so we translate here. Both baseline and stressed
  * receive IDENTICAL context — guarantees the only variable is the perturbation.
  */
-function buildEngineUserContext(
+export function buildEngineUserContext(
   propertyData: SFRData,
   priorUserContext: unknown
 ): EngineUserContext {

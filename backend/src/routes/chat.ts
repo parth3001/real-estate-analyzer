@@ -46,6 +46,14 @@ import { ConversationEventModel } from '../models/events/ConversationEvent';
 import { emailService } from '../services/emailService';
 import { logger } from '../utils/logger';
 import { DealModel } from '../models/Deal';
+import {
+  persistStressScenario,
+  PerturbationSpecSchema,
+  StressTestNotFoundError,
+  StressTestForbiddenError,
+  StressTestIncompleteError,
+  StressTestUnsupportedError,
+} from '../services/perturbation';
 import { licenseRepository } from '../repositories/LicenseRepository';
 
 // ===== Request validation =====
@@ -787,6 +795,95 @@ router.get(
         error: err instanceof Error ? err.stack ?? err.message : String(err),
       });
       res.status(500).json({ error: 'Could not load conversation history.' });
+    }
+  }
+);
+
+// ===== Task #40 (2026-06-18): persist a stress test as a saved scenario =====
+//
+// The chat stress-test path (handleStressTest) returns a narrative + a
+// structured StressTestResult to the LLM, but does NOT write substrate.
+// This endpoint takes the same anchor decision + perturbation set and
+// persists the stressed scenario as a real DecisionEvent — making it
+// visible in the workspace's scenario-comparison spine alongside the
+// baseline.
+//
+// Flow:
+//   1. Validate body (priorDecisionId + perturbations array)
+//   2. Service does ownership check + perturbation application + score_deal
+//   3. score_deal writes AnalysisEvent + DecisionEvent + materializes Deal
+//      + fires #14 auto-redeem + #18 critique (all already wired)
+//   4. Return the new decisionEventId so the frontend can deep-link
+//
+// Errors map to status codes via the same typed-error catch pattern the
+// turn endpoint uses.
+const SaveStressScenarioRequestSchema = z.object({
+  priorDecisionId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, 'priorDecisionId must be a 24-char hex string'),
+  perturbations: z
+    .array(PerturbationSpecSchema)
+    .min(1, 'at least one perturbation is required'),
+});
+
+router.post(
+  '/stress-test/save',
+  authMiddleware,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Authentication required.' });
+      return;
+    }
+
+    const parsed = SaveStressScenarioRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request body.',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    try {
+      const result = await persistStressScenario({
+        priorDecisionId: parsed.data.priorDecisionId,
+        userId: req.user.id,
+        perturbations: parsed.data.perturbations,
+      });
+      logger.info('[chat/stress-test/save] scenario persisted', {
+        userId: req.user.id,
+        priorDecisionId: parsed.data.priorDecisionId,
+        newDecisionEventId: result.newDecisionEventId,
+        dealQuality: result.dealQuality,
+      });
+      res.status(201).json(result);
+    } catch (err) {
+      if (
+        err instanceof StressTestNotFoundError ||
+        err instanceof StressTestForbiddenError
+      ) {
+        // Generic 404 for both — never leak existence of another user's
+        // decision (same posture as runStressTest).
+        res.status(404).json({ error: 'Prior decision not found.' });
+        return;
+      }
+      if (err instanceof StressTestIncompleteError) {
+        res.status(422).json({
+          error:
+            'The prior decision is missing its linked AnalysisEvent and cannot be re-scored.',
+        });
+        return;
+      }
+      if (err instanceof StressTestUnsupportedError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      logger.error('[chat/stress-test/save] unexpected error', {
+        userId: req.user.id,
+        priorDecisionId: parsed.data.priorDecisionId,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      res.status(500).json({ error: 'Could not save stress scenario.' });
     }
   }
 );
