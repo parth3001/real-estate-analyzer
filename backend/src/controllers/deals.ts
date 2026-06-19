@@ -2724,20 +2724,67 @@ export const exportDealPdf = async (
       { label: 'Market strength', score: Math.round(pa.marketStrengthScore ?? 0) },
     ];
 
-    // Key metrics block from materialized Deal + assembled decision.
-    const monthly = (dealData.analysis as { monthlyAnalysis?: { cashFlow?: number; expenses?: { debt?: number } } }).monthlyAnalysis;
-    const annual = (dealData.analysis as { annualAnalysis?: { annualNOI?: number } }).annualAnalysis;
-    const km = (dealData.analysis as { keyMetrics?: { capRate?: number; cashOnCashReturn?: number; dscr?: number; irr?: number; totalInvestment?: number } }).keyMetrics ?? {};
-    const longTermReturns = (dealData.analysis as { longTermAnalysis?: { returns?: { irr?: number } } }).longTermAnalysis?.returns;
+    // Task #65/#66 follow-up (2026-06-18 PM): correct data paths.
+    // Verified against actual rendered PDF:
+    //   - walkAwayPrice was $0 (path investmentDecision.marketPosition is
+    //     not where the materializer stores it; defensive multi-path read
+    //     mirrors SavedDealHero.tsx:230)
+    //   - IRR was 0.09% (engine stores IRR as DECIMAL 0.0889; PDF was
+    //     formatting directly; multiply by 100 — see ScenarioDetails:59
+    //     "IRR is stored as a decimal (e.g. 0.0608) — display as a percent")
+    //   - monthlyDebtService was undefined (materializer doesn't write
+    //     monthlyAnalysis.expenses.debt onto the Deal; derive from
+    //     annualAnalysis.annualDebtService / 12 which IS written)
+    //   - totalInvestment was undefined (materializer puts it on
+    //     annualAnalysis, not keyMetrics — pull from there)
+    const monthly = (dealData.analysis as {
+      monthlyAnalysis?: { cashFlow?: number; expenses?: { debt?: number } };
+    }).monthlyAnalysis;
+    const annual = (dealData.analysis as {
+      annualAnalysis?: {
+        annualNOI?: number;
+        annualDebtService?: number;
+        totalInvestment?: number;
+      };
+    }).annualAnalysis;
+    const km = (dealData.analysis as {
+      keyMetrics?: {
+        capRate?: number;
+        cashOnCashReturn?: number;
+        dscr?: number;
+        irr?: number;
+        totalInvestment?: number;
+      };
+    }).keyMetrics ?? {};
+    const longTermReturns = (dealData.analysis as {
+      longTermAnalysis?: { returns?: { irr?: number } };
+    }).longTermAnalysis?.returns;
+
+    // IRR: stored as decimal everywhere — multiply by 100 for display.
+    const irrDecimal = longTermReturns?.irr ?? km.irr;
+    const irrPercent =
+      typeof irrDecimal === 'number' && Number.isFinite(irrDecimal)
+        ? irrDecimal * 100
+        : undefined;
+
+    // Monthly debt service: prefer the raw monthly path if present,
+    // else derive from annualDebtService (which the materializer writes).
+    const monthlyDebtService =
+      typeof monthly?.expenses?.debt === 'number'
+        ? monthly.expenses.debt
+        : typeof annual?.annualDebtService === 'number'
+          ? annual.annualDebtService / 12
+          : undefined;
+
     const keyMetrics = {
       monthlyCashFlow: monthly?.cashFlow,
       capRate: km.capRate,
-      irr: longTermReturns?.irr ?? km.irr,
+      irr: irrPercent,
       dscr: km.dscr,
       cashOnCashReturn: km.cashOnCashReturn,
       annualNOI: annual?.annualNOI,
-      totalInvestment: km.totalInvestment,
-      monthlyDebtService: monthly?.expenses?.debt,
+      totalInvestment: km.totalInvestment ?? annual?.totalInvestment,
+      monthlyDebtService,
     };
 
     // Year-by-year milestone sampling — pick 1/3/5/7/10 (or what's
@@ -2769,23 +2816,43 @@ export const exportDealPdf = async (
       }));
 
     // Standard assumptions surface (matches workspace accordion).
-    const lta = (dealData as { longTermAssumptions?: { vacancyRate?: number; projectionYears?: number; annualRentIncrease?: number; annualPropertyValueIncrease?: number; sellingCostsPercentage?: number } }).longTermAssumptions;
+    // Includes expense growth (was omitted in initial #61 wiring).
+    const lta = (dealData as {
+      longTermAssumptions?: {
+        vacancyRate?: number;
+        projectionYears?: number;
+        annualRentIncrease?: number;
+        annualPropertyValueIncrease?: number;
+        annualExpenseIncrease?: number;
+        sellingCostsPercentage?: number;
+      };
+    }).longTermAssumptions;
     const assumptions = lta
       ? [
           { label: 'Vacancy', value: `${(lta.vacancyRate ?? 5).toFixed(0)}%`, source: 'standard' },
           { label: 'Hold period', value: `${lta.projectionYears ?? 10} yr`, source: 'standard' },
           { label: 'Rent growth', value: `${(lta.annualRentIncrease ?? 3).toFixed(0)}%/yr`, source: 'standard' },
           { label: 'Appreciation', value: `${(lta.annualPropertyValueIncrease ?? 3.5).toFixed(1)}%/yr`, source: 'standard' },
+          { label: 'Expense growth', value: `${(lta.annualExpenseIncrease ?? 2.5).toFixed(1)}%/yr`, source: 'standard' },
           { label: 'Selling costs', value: `${(lta.sellingCostsPercentage ?? 6).toFixed(0)}%`, source: 'standard' },
         ]
       : undefined;
+
+    // Walk-away: defensive multi-path read mirroring SavedDealHero.tsx:230.
+    // The engine has stashed this in three different places across versions
+    // and the materializer doesn't fully unify them.
+    const walkAwayPrice =
+      (investmentDecision?.marketPosition?.walkAwayPrice as number | undefined) ??
+      (dealData as { walkAwayPrice?: number }).walkAwayPrice ??
+      (dealData.analysis as { walkAwayPrice?: number } | undefined)?.walkAwayPrice ??
+      0;
 
     const pdfResult = await generateSubstrateDealPdf({
       strategy,
       addressLine: addressString,
       dealQuality: dealQualityScore,
       topFactors,
-      walkAwayPrice: investmentDecision?.marketPosition?.walkAwayPrice ?? 0,
+      walkAwayPrice,
       purchasePrice: dealData.purchasePrice ?? 0,
       nextStep: investmentDecision?.nextStep ?? investmentDecision?.primaryInsight ?? '',
       assumptions,
