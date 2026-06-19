@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "allowJs": true,
+    "jsx": "react",
     "types": ["node", "jest"]
   },
   "include": ["src/**/*"],

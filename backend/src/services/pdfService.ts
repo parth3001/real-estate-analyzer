@@ -1284,6 +1284,46 @@ export class PdfService {
 }
 
 // ============================================================
+// Task #65/#66 (2026-06-18) — substrate-native PDF
+// ============================================================
+
+import {
+  SubstrateDealPdfDocument,
+  type SubstrateDealPdfInput,
+} from './SubstrateDealPdf';
+
+/**
+ * Render a substrate-derived deal as a single-page PDF using the
+ * SubstrateDealPdfDocument component. Mirrors the email-summary
+ * content the user explicitly praised. Used by exportDealPdf for the
+ * workspace download + email-PDF actions.
+ */
+export async function generateSubstrateDealPdf(
+  input: SubstrateDealPdfInput
+): Promise<{ pdfBuffer: Buffer; fileSizeBytes: number }> {
+  const startTime = Date.now();
+  try {
+    const doc = SubstrateDealPdfDocument({ data: input });
+    const pdfBlob = await pdf(doc).toBlob();
+    const arrayBuffer = await pdfBlob.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
+    const fileSizeBytes = pdfBuffer.length;
+    logger.info('[PdfService] Substrate-deal PDF generated', {
+      durationMs: Date.now() - startTime,
+      fileSizeKB: Math.round(fileSizeBytes / 1024),
+      dealQuality: Math.round(input.dealQuality),
+    });
+    return { pdfBuffer, fileSizeBytes };
+  } catch (err) {
+    logger.error('[PdfService] Failed to generate substrate-deal PDF', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+      durationMs: Date.now() - startTime,
+    });
+    throw new Error('PDF generation failed');
+  }
+}
+
+// ============================================================
 // Export Singleton Instance
 // ============================================================
 

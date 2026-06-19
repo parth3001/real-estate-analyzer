@@ -38,7 +38,7 @@ import { analyzeInvestmentGoals, EnhancedGoalContext } from '../services/aiServi
 import googleMapsService from '../services/googleMapsService';
 
 // Task #61: PDF export + email-PDF for the workspace
-import pdfService from '../services/pdfService';
+import pdfService, { generateSubstrateDealPdf } from '../services/pdfService';
 import { emailService } from '../services/emailService';
 
 // Import Analytics Service for platform tracking
@@ -2683,50 +2683,118 @@ export const exportDealPdf = async (
       return;
     }
 
-    // Map Deal → PdfFormData. The address string concatenates parts the
-    // way the PDF template renders headline addresses.
+    // Task #65/#66 (2026-06-18): substrate-native PDF rendering. The
+    // legacy generateAnalysisPdf path expects the wizard's 60+ field
+    // shape and produced a thin/empty PDF for 2.0 deals. New generator
+    // takes the substrate-derived deal directly, mirrors the email
+    // summary the user praised, single page, includes the #76 footer.
     const addr = dealData.propertyAddress;
     const addressString =
       addr && typeof addr === 'object'
         ? `${addr.street ?? ''}${addr.city ? ', ' + addr.city : ''}${addr.state ? ', ' + addr.state : ''}${addr.zipCode ? ' ' + addr.zipCode : ''}`.trim()
         : dealData.propertyName ?? 'Property analysis';
-
-    const formData = {
-      purchasePrice: dealData.purchasePrice ?? 0,
-      downPayment: (dealData as { downPayment?: number }).downPayment ?? 0,
-      monthlyRent: (dealData as { monthlyRent?: number }).monthlyRent ?? 0,
-      squareFeet: (dealData as { squareFootage?: number }).squareFootage ?? 0,
-      investmentStrategy:
-        dealData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy-hold',
-      projectionYears:
-        (dealData as { longTermAssumptions?: { projectionYears?: number } })
-          .longTermAssumptions?.projectionYears ?? 10,
-      propertyAddress: addressString,
-      ...((dealData as { brrrr?: { rehabBudget?: number; afterRepairValue?: number } })
-        .brrrr
-        ? {
-            rehabCost: (dealData as { brrrr?: { rehabBudget?: number } }).brrrr
-              ?.rehabBudget,
-            afterRepairValue: (
-              dealData as { brrrr?: { afterRepairValue?: number } }
-            ).brrrr?.afterRepairValue,
-          }
-        : {}),
-    } as Parameters<typeof pdfService.generateAnalysisPdf>[1];
-
-    const strategy: 'brrrr' | 'buy-hold' =
-      dealData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy-hold';
-
-    const pdfResult = await pdfService.generateAnalysisPdf(
-      dealData.analysis as Parameters<typeof pdfService.generateAnalysisPdf>[0],
-      formData,
-      strategy
-    );
-
-    const dealQualityScore =
-      (dealData.analysis as { investmentDecision?: { professionalAssessment?: { dealQuality?: number } } })
-        .investmentDecision?.professionalAssessment?.dealQuality ?? 0;
+    const strategy: 'buy_hold' | 'brrrr' =
+      dealData.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+    const investmentDecision = (dealData.analysis as {
+      investmentDecision?: {
+        professionalAssessment?: {
+          dealQuality?: number;
+          cashFlowScore?: number;
+          irrScore?: number;
+          marketStrengthScore?: number;
+          capRateScore?: number;
+          debtStructureScore?: number;
+          exitStrategyScore?: number;
+          propertyRiskScore?: number;
+        };
+        marketPosition?: { walkAwayPrice?: number };
+        primaryInsight?: string;
+        nextStep?: string;
+      };
+    }).investmentDecision;
+    const dealQualityScore = investmentDecision?.professionalAssessment?.dealQuality ?? 0;
     const filename = `reanalyzr-${(addressString || 'deal').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}.pdf`;
+
+    // Build top factors (pick most informative three — same heuristic
+    // as projectDealScoreCard).
+    const pa = investmentDecision?.professionalAssessment ?? {};
+    const topFactors = [
+      { label: 'Cash flow', score: Math.round(pa.cashFlowScore ?? 0) },
+      { label: 'IRR', score: Math.round(pa.irrScore ?? 0) },
+      { label: 'Market strength', score: Math.round(pa.marketStrengthScore ?? 0) },
+    ];
+
+    // Key metrics block from materialized Deal + assembled decision.
+    const monthly = (dealData.analysis as { monthlyAnalysis?: { cashFlow?: number; expenses?: { debt?: number } } }).monthlyAnalysis;
+    const annual = (dealData.analysis as { annualAnalysis?: { annualNOI?: number } }).annualAnalysis;
+    const km = (dealData.analysis as { keyMetrics?: { capRate?: number; cashOnCashReturn?: number; dscr?: number; irr?: number; totalInvestment?: number } }).keyMetrics ?? {};
+    const longTermReturns = (dealData.analysis as { longTermAnalysis?: { returns?: { irr?: number } } }).longTermAnalysis?.returns;
+    const keyMetrics = {
+      monthlyCashFlow: monthly?.cashFlow,
+      capRate: km.capRate,
+      irr: longTermReturns?.irr ?? km.irr,
+      dscr: km.dscr,
+      cashOnCashReturn: km.cashOnCashReturn,
+      annualNOI: annual?.annualNOI,
+      totalInvestment: km.totalInvestment,
+      monthlyDebtService: monthly?.expenses?.debt,
+    };
+
+    // Year-by-year milestone sampling — pick 1/3/5/7/10 (or what's
+    // available). Sourced from substrate longTermAnalysis.projections.
+    const allYears = ((dealData.analysis as {
+      longTermAnalysis?: {
+        projections?: Array<{
+          year: number;
+          cashFlow: number;
+          propertyValue: number;
+          equity: number;
+        }>;
+      };
+    }).longTermAnalysis?.projections ?? []) as Array<{
+      year: number;
+      cashFlow: number;
+      propertyValue: number;
+      equity: number;
+    }>;
+    const milestoneYears = [1, 3, 5, 7, 10];
+    const projection = milestoneYears
+      .map((y) => allYears.find((p) => p.year === y))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined)
+      .map((p) => ({
+        year: p.year,
+        cashFlow: p.cashFlow,
+        propertyValue: p.propertyValue,
+        equity: p.equity,
+      }));
+
+    // Standard assumptions surface (matches workspace accordion).
+    const lta = (dealData as { longTermAssumptions?: { vacancyRate?: number; projectionYears?: number; annualRentIncrease?: number; annualPropertyValueIncrease?: number; sellingCostsPercentage?: number } }).longTermAssumptions;
+    const assumptions = lta
+      ? [
+          { label: 'Vacancy', value: `${(lta.vacancyRate ?? 5).toFixed(0)}%`, source: 'standard' },
+          { label: 'Hold period', value: `${lta.projectionYears ?? 10} yr`, source: 'standard' },
+          { label: 'Rent growth', value: `${(lta.annualRentIncrease ?? 3).toFixed(0)}%/yr`, source: 'standard' },
+          { label: 'Appreciation', value: `${(lta.annualPropertyValueIncrease ?? 3.5).toFixed(1)}%/yr`, source: 'standard' },
+          { label: 'Selling costs', value: `${(lta.sellingCostsPercentage ?? 6).toFixed(0)}%`, source: 'standard' },
+        ]
+      : undefined;
+
+    const pdfResult = await generateSubstrateDealPdf({
+      strategy,
+      addressLine: addressString,
+      dealQuality: dealQualityScore,
+      topFactors,
+      walkAwayPrice: investmentDecision?.marketPosition?.walkAwayPrice ?? 0,
+      purchasePrice: dealData.purchasePrice ?? 0,
+      nextStep: investmentDecision?.nextStep ?? investmentDecision?.primaryInsight ?? '',
+      assumptions,
+      projection: projection.length > 0 ? projection : undefined,
+      keyMetrics,
+    });
+    // Suppress unused-import warning for legacy generator path retained
+    // for the wizard flow.
+    void pdfService;
 
     if (mode === 'email') {
       const recipient = emailTarget || req.user?.email;
