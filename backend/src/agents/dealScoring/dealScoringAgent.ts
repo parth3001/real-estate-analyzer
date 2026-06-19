@@ -52,6 +52,7 @@ import { resolvePropertyInputs } from '../tools/resolve_property_inputs';
 import { computeAnalysis } from '../tools/compute_analysis';
 import { scoreDeal } from '../tools/score_deal';
 import { getDecisionBreakdown } from '../tools/get_decision_breakdown';
+import { getLongTermProjection } from '../tools/get_long_term_projection';
 
 // ===== System prompt =====
 
@@ -373,7 +374,16 @@ The tool returns the engine's ACTUAL line-item monthly breakdown:
 Narrate FROM these values verbatim. Surface the 5-7 most material
 line items (whichever are non-zero and load-bearing for this property
 type) — not all 13. Add total operating + mortgage = total expenses,
-then total expenses vs. effective rent = net cash flow. Close with a
+then total expenses vs. effective rent = net cash flow.
+
+⚠️ THE LINE ITEMS YOU SHOW MUST SUM TO TOTAL OPERATING (Task #69).
+If capEx, hoa, utilities, or otherOperating are non-zero, INCLUDE
+THEM as their own rows even when surfacing only 5-7 lines. The user's
+trust breaks if visible line items don't reconcile to the displayed
+Total Operating — verified failure mode 2026-06-18 where capEx ~$105
+was omitted from the table and the math gap was $106 between visible
+items and net cash flow. INVARIANT: visible expense rows + mortgage =
+net cash flow gap from effective rent, to the dollar. Close with a
 brief honest framing of any line item the user might want to revisit
 (e.g., "the $171 maintenance estimate is the standard $2,050/yr
 assumption — happy to swap your number in").
@@ -389,6 +399,58 @@ If there is NO prior decision (recall_user_context returns nothing
 matching the property), do not call get_decision_breakdown. Instead
 respond plainly: "I don't see a recent analysis for that property —
 want to run one fresh?" and stop.
+
+LONG-TERM / 10-YEAR / PROJECTION QUESTIONS — Task #71 (2026-06-18)
+─────────────────────────────────────────────────────────────────
+
+When the user asks ANY of these — and a prior decision exists for the
+property in question:
+
+  - "show me the 10-year projection" / "year-by-year"
+  - "what does Y5 / Y10 look like" / "Y10 value"
+  - "when does this turn cash-flow positive" / "break-even year"
+  - "what's the IRR" / "walk me through the IRR"
+  - "how much equity will I build" / "exit proceeds"
+  - "what's the long-term picture" / "projection table"
+
+…CALL tool:get_long_term_projection with:
+
+  { decisionId: "<recentDecisions[0]._id for the property in question>" }
+
+The tool returns:
+  - assumptions.{projectionYears, annualRentIncrease,
+                  annualPropertyValueIncrease, annualExpenseIncrease,
+                  vacancyRate, sellingCosts} — surface these EXACTLY
+                  (don't paraphrase "3%" when the engine used 3.5%)
+  - projections[] — each year's {year, propertyValue, grossIncome,
+                  operatingExpenses, noi, debtService, cashFlow, equity,
+                  mortgageBalance, totalReturn}
+  - returns.{irr, totalCashFlow, totalAppreciation, totalReturn,
+              totalInvestment} — the IRR walkthrough numbers
+  - exitAnalysis.{projectedSalePrice, sellingCosts, mortgagePayoff,
+                  netProceedsFromSale} — sale-at-end-of-horizon math
+  - breakEvenYear — the first year cash flow turns non-negative; null
+                    if the projection never turns positive
+
+NARRATE FROM these values verbatim. NEVER estimate from "standard
+assumptions" — the engine has the real numbers. NEVER claim the
+projection "isn't exposed" or "lives in a separate output" — it IS
+exposed via THIS TOOL.
+
+⚠️ This tool was built because the agent was previously confabulating
+projections. On 1837 Walnut Way the agent guessed "3% appreciation,
+Y10 value $335K, break-even Y4-5, cumulative outflow $10-12K" when
+the engine had "3.5% appreciation, Y10 value $352,650, break-even Y8,
+cumulative outflow $7,965 + turns positive Y8." A user could pass on
+a deal based on those invented numbers. NEVER let that happen again.
+
+If breakEvenYear is null, say so plainly: "Cash flow doesn't turn
+positive within the [N]-year horizon — total cumulative outflow of
+$X." Don't invent a future positive year.
+
+If there's NO prior decision for the property, respond: "I don't see
+a recent analysis for that property — want to run one fresh?" and
+stop.
 
 OUTPUT
 ──────
@@ -487,6 +549,7 @@ const ALLOWED_TOOLS = {
   compute_analysis: computeAnalysis,
   score_deal: scoreDeal,
   get_decision_breakdown: getDecisionBreakdown,
+  get_long_term_projection: getLongTermProjection,
 } as const;
 
 // ===== Config =====

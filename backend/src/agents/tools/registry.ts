@@ -44,6 +44,7 @@ import { applyOverride } from './apply_override';
 import { saveToWatchlist } from './save_to_watchlist';
 import { renderAuditTrail } from './render_audit_trail';
 import { getDecisionBreakdown } from './get_decision_breakdown';
+import { getLongTermProjection } from './get_long_term_projection';
 import { enrichProperty } from './enrich_property';
 import { computeAnalysis } from './compute_analysis';
 import { profileExtraction } from './profile_extraction';
@@ -67,6 +68,7 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   save_to_watchlist: saveToWatchlist as unknown as Tool<unknown, unknown>,
   render_audit_trail: renderAuditTrail as unknown as Tool<unknown, unknown>,
   get_decision_breakdown: getDecisionBreakdown as unknown as Tool<unknown, unknown>,
+  get_long_term_projection: getLongTermProjection as unknown as Tool<unknown, unknown>,
   enrich_property: enrichProperty as unknown as Tool<unknown, unknown>,
   compute_analysis: computeAnalysis as unknown as Tool<unknown, unknown>,
   profile_extraction: profileExtraction as unknown as Tool<unknown, unknown>,

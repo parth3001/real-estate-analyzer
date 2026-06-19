@@ -46,6 +46,7 @@ import {
   type ChatStreamEvent,
 } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
+import { AiDisclaimer } from '../AiDisclaimer';
 import {
   upsertThread,
   deriveTitle,
@@ -983,6 +984,11 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
               <SendIcon fontSize="small" />
             </IconButton>
           )}
+        </Box>
+        {/* Task #76 (2026-06-18): AI disclaimer below the input. Mirrors
+            ChatGPT/Claude — sets the floor of expectations every turn. */}
+        <Box sx={{ mt: 1 }}>
+          <AiDisclaimer variant="compact" />
         </Box>
       </Box>
 

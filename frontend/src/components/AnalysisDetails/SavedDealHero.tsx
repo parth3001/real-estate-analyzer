@@ -42,6 +42,7 @@ import {
 } from './savedDealVariants';
 import { CritiqueCard } from './CritiqueCard';
 import { LicenseStatusBadge } from './LicenseStatusBadge';
+import { AiDisclaimer } from '../AiDisclaimer';
 import {
   propertyApi,
   type CritiqueWire,
@@ -417,6 +418,14 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
           download), Email (sends PDF as attachment to the logged-in
           user's email). */}
       <ExportPdfActions dealId={dealId} />
+
+      {/* Task #76 (2026-06-18): Standard educational/AI disclaimer at
+          the foot of the workspace. The workspace is the $4.99
+          destination — explicit "not advice" framing protects both
+          the user and the platform. */}
+      <Box sx={{ mt: 2 }}>
+        <AiDisclaimer variant="standard" />
+      </Box>
     </Box>
   );
 }
