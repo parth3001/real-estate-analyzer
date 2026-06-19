@@ -45,6 +45,10 @@ import { saveToWatchlist } from './save_to_watchlist';
 import { renderAuditTrail } from './render_audit_trail';
 import { getDecisionBreakdown } from './get_decision_breakdown';
 import { getLongTermProjection } from './get_long_term_projection';
+import { getCritiqueForDecision } from './get_critique_for_decision';
+import { getScenarioComparison } from './get_scenario_comparison';
+import { getMarketContext } from './get_market_context';
+import { getLicenseBudget } from './get_license_budget';
 import { enrichProperty } from './enrich_property';
 import { computeAnalysis } from './compute_analysis';
 import { profileExtraction } from './profile_extraction';
@@ -69,6 +73,10 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   render_audit_trail: renderAuditTrail as unknown as Tool<unknown, unknown>,
   get_decision_breakdown: getDecisionBreakdown as unknown as Tool<unknown, unknown>,
   get_long_term_projection: getLongTermProjection as unknown as Tool<unknown, unknown>,
+  get_critique_for_decision: getCritiqueForDecision as unknown as Tool<unknown, unknown>,
+  get_scenario_comparison: getScenarioComparison as unknown as Tool<unknown, unknown>,
+  get_market_context: getMarketContext as unknown as Tool<unknown, unknown>,
+  get_license_budget: getLicenseBudget as unknown as Tool<unknown, unknown>,
   enrich_property: enrichProperty as unknown as Tool<unknown, unknown>,
   compute_analysis: computeAnalysis as unknown as Tool<unknown, unknown>,
   profile_extraction: profileExtraction as unknown as Tool<unknown, unknown>,
