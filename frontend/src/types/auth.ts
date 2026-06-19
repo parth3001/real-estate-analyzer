@@ -75,6 +75,14 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
+  /**
+   * Task #78 (2026-06-18): set when the user's stored termsVersion is
+   * older than the latest material ToS version. Frontend forces a
+   * re-consent modal before allowing access to /app.
+   */
+  requiresReconsent?: boolean;
+  /** The version the user must affirmatively accept. */
+  currentTosVersion?: string;
 }
 
 /**
@@ -114,7 +122,11 @@ export interface AuthContextType {
   error: string | null;
 
   // Actions
-  login: (credentials: LoginCredentials) => Promise<void>;
+  // Task #78 (2026-06-18) — returns the reconsent flag so callers can
+  // route into the modal before navigating.
+  login: (
+    credentials: LoginCredentials
+  ) => Promise<{ requiresReconsent: boolean; currentTosVersion?: string }>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateProfile: (data: ProfileUpdateData) => Promise<void>;

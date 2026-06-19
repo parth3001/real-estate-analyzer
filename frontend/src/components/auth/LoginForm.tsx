@@ -5,6 +5,7 @@ import type { LoginCredentials } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
 import { analytics } from '../../utils/analytics';
+import { ReconsentModal } from './ReconsentModal';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -25,6 +26,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
     password: '',
   });
 
+  // Task #78 (2026-06-18): when login succeeds but the user's
+  // termsVersion is outdated, force the re-consent modal before
+  // navigating to /app.
+  const [reconsentVersion, setReconsentVersion] = useState<string | null>(null);
+
+  const proceedAfterLogin = (): void => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate(redirectTo);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const errors = validateLoginForm(formData);
@@ -33,16 +47,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
 
     try {
-      await login(formData);
+      const result = await login(formData);
 
       // Track successful login
       analytics.trackLoginSuccess();
 
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate(redirectTo);
+      if (result.requiresReconsent) {
+        setReconsentVersion(result.currentTosVersion ?? 'latest');
+        return; // modal will navigate on accept
       }
+
+      proceedAfterLogin();
     } catch (error) {
       console.error('Login failed:', error);
 
@@ -61,16 +76,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
     };
     setFormData(demoCredentials);
     try {
-      await login(demoCredentials);
+      const result = await login(demoCredentials);
 
       // Track successful demo login
       analytics.trackLoginSuccess();
 
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate(redirectTo);
+      if (result.requiresReconsent) {
+        setReconsentVersion(result.currentTosVersion ?? 'latest');
+        return;
       }
+
+      proceedAfterLogin();
     } catch (error) {
       console.error('Demo login failed:', error);
 
@@ -536,6 +552,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </p>
         </div>
       </div>
+      {/* Task #78 (2026-06-18): forced re-consent modal when termsVersion
+          is outdated. Rendered at root of LoginForm so it overlays the
+          form regardless of which submit path triggered it. */}
+      <ReconsentModal
+        open={reconsentVersion !== null}
+        newTosVersion={reconsentVersion ?? ''}
+        onAccepted={proceedAfterLogin}
+      />
     </div>
   );
 };

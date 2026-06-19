@@ -158,14 +158,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Login function
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  // Task #78 (2026-06-18): now returns { requiresReconsent, currentTosVersion }
+  // so LoginForm can route into the re-consent modal before navigating.
+  const login = async (
+    credentials: LoginCredentials
+  ): Promise<{ requiresReconsent: boolean; currentTosVersion?: string }> => {
     try {
       dispatch({ type: 'AUTH_START' });
-      
+
       const response = await authApi.login(credentials);
-      
+
       if (response.status === 200 && response.data.user) {
         dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
+        const data = response.data as { requiresReconsent?: boolean; currentTosVersion?: string };
+        return {
+          requiresReconsent: data.requiresReconsent === true,
+          currentTosVersion: data.currentTosVersion,
+        };
       } else {
         throw new Error(response.message || 'Login failed');
       }

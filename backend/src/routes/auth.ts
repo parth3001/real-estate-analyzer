@@ -17,6 +17,7 @@ import {
   resendVerification,
   forgotPassword,
   resetPassword,
+  reacceptTerms,
   validateRegister,
   validateLogin,
   validatePasswordChange,
@@ -117,6 +118,10 @@ router.put('/profile', authenticateToken, updateProfile);
  * @access  Private
  */
 router.put('/password', authenticateToken, validatePasswordChange, changePassword);
+
+// Task #78 (2026-06-18) — re-accept Terms of Service after material
+// version change. Frontend hits this from the forced re-consent modal.
+router.post('/reaccept-terms', authenticateToken, reacceptTerms);
 
 /**
  * @route   GET /api/auth/dual-mode

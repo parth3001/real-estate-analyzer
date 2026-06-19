@@ -26,6 +26,16 @@ export interface AuthTokens {
     role: string;
     isVerified: boolean;
   };
+  /**
+   * Task #78 (2026-06-18): set when the user's stored termsVersion is
+   * older than the latest MATERIAL ToS version. Frontend forces a
+   * re-consent modal before allowing access to /app. Login still
+   * succeeds (tokens returned) so the user can stay signed in across
+   * the modal interaction.
+   */
+  requiresReconsent?: boolean;
+  /** The version the user must affirmatively accept. */
+  currentTosVersion?: string;
 }
 
 export interface TokenPayload {
@@ -160,6 +170,16 @@ export class AuthService {
       // Generate tokens
       const tokens = this.generateTokens(user);
 
+      // Task #78 (2026-06-18): check ToS version. If the user accepted
+      // an older version and a material change has shipped since,
+      // surface requiresReconsent so the frontend can force the modal.
+      const { CURRENT_TOS_VERSION, requiresReconsent } = await import(
+        '../constants/tosVersions'
+      );
+      const needsReconsent = requiresReconsent(
+        (user as { termsVersion?: string }).termsVersion
+      );
+
       return {
         ...tokens,
         user: {
@@ -169,7 +189,10 @@ export class AuthService {
           lastName: user.lastName,
           role: user.role,
           isVerified: user.isVerified
-        }
+        },
+        ...(needsReconsent
+          ? { requiresReconsent: true, currentTosVersion: CURRENT_TOS_VERSION }
+          : {}),
       };
     } catch (error) {
       logger.error('[AuthService] Login error:', error);

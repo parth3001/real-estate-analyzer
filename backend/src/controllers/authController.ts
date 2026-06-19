@@ -721,3 +721,46 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ error: 'Password reset failed. Please try again.' });
   }
 };
+
+/**
+ * Task #78 (2026-06-18) — Re-accept Terms of Service.
+ *
+ * Existing user logged in, was flagged with requiresReconsent because
+ * their stored termsVersion is older than the latest material version.
+ * Frontend forced them through a modal; they clicked accept; this
+ * endpoint persists the new acceptance to the User record.
+ *
+ * Mirrors the registration capture: termsAcceptedAt + termsVersion +
+ * termsAcceptedIp.
+ */
+export const reacceptTerms = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    const { CURRENT_TOS_VERSION } = await import('../constants/tosVersions');
+    const { User } = await import('../models/User');
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        termsAcceptedAt: new Date(),
+        termsVersion: CURRENT_TOS_VERSION,
+        termsAcceptedIp: ip,
+      },
+    });
+
+    logger.info(
+      `[AuthController] User ${userId} re-accepted Terms v${CURRENT_TOS_VERSION} from IP ${ip}`
+    );
+    res.json({ ok: true, termsVersion: CURRENT_TOS_VERSION });
+  } catch (error) {
+    logger.error('[AuthController] reacceptTerms error:', error);
+    res.status(500).json({ error: 'Failed to record acceptance. Please try again.' });
+  }
+};
