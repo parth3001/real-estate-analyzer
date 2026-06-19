@@ -42,6 +42,7 @@
 
 import { runAgent, type AgentConfig, type AgentRunOutput } from '../runner/agentRunner';
 import { eventsRepository } from '../../repositories/EventsRepository';
+import { logger } from '../../utils/logger';
 import { renderAuditTrail } from '../tools/render_audit_trail';
 import { recallUserContext } from '../tools/recall_user_context';
 import type { ToolContext } from '../tools/types';
@@ -336,11 +337,16 @@ export async function runAdversarialCritic(
     { persona: 'skeptical_cpa', runResult: cpaResult },
   ];
 
-  const critiques = await Promise.all(
+  // Task #63 (2026-06-18): switched from Promise.all to Promise.allSettled
+  // so that one persona's parse failure doesn't drop the other's write.
+  // Previously a JSON-broken CPA output (even after the #56 jsonrepair
+  // fallback) would throw mid-flight, but the FLIPPER's write may have
+  // already committed — leaving the workspace showing one persona of two.
+  // Per-persona isolation fixes the orphan write AND surfaces a clear
+  // log entry for ops when one persona consistently fails.
+  const settled = await Promise.allSettled(
     personas.map(async ({ persona, runResult }) => {
       const structured = parseCritique(runResult.text);
-      // Normalize decisionId to ObjectId for the payload (writer accepts
-      // either form, but CritiquePayload's TS interface is strict).
       const originalDecisionId =
         input.decisionId instanceof Types.ObjectId
           ? input.decisionId
@@ -369,6 +375,23 @@ export async function runAdversarialCritic(
       return { persona, critiqueEventId, structured, runResult };
     })
   );
+
+  const critiques: AdversarialCriticOutput['critiques'] = [];
+  settled.forEach((res, idx) => {
+    const { persona } = personas[idx];
+    if (res.status === 'fulfilled') {
+      critiques.push(res.value);
+    } else {
+      logger.warn(
+        '[adversarialCritic] persona parse/write failed — other persona unaffected',
+        {
+          persona,
+          decisionId: decisionIdHex,
+          error: res.reason instanceof Error ? res.reason.message : String(res.reason),
+        }
+      );
+    }
+  });
 
   return {
     critiques,
