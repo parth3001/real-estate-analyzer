@@ -62,7 +62,30 @@ export function ScenarioCompareTable({
 }: ScenarioCompareTableProps): React.JSX.Element | null {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (scenarios.length <= 1) return null;
+  // Task #73 (2026-06-18): empty-state CTA when there's only the
+  // baseline scenario. Previously rendered null which made the page
+  // look broken — first-time users expect to see the table promised
+  // by the "Compare scenarios" feature. Now the surface explains
+  // what a second scenario is and how to create one via the chat
+  // stress-test → Save as scenario flow (#40).
+  if (scenarios.length === 0) return null;
+  if (scenarios.length === 1) {
+    return (
+      <WorkspaceSection label="Compare scenarios">
+        <Box sx={{ px: 2, py: 3, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 1 }}>
+            You only have the baseline scenario for this property.
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 0 }}>
+            Run a stress test from the chat ("what if rent dropped 10%?")
+            and tap <strong>💾 Save as scenario</strong> on the result —
+            it'll appear here alongside the baseline for side-by-side
+            comparison.
+          </Typography>
+        </Box>
+      </WorkspaceSection>
+    );
+  }
 
   return (
     <WorkspaceSection label="Compare scenarios">

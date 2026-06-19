@@ -47,6 +47,77 @@
 import { Box, Typography, Stack, Divider, Chip } from '@mui/material';
 import { type CritiqueWire } from '../../services/api';
 
+/**
+ * Task #64 (2026-06-18): translate raw critique fieldPath +
+ * suggestedValue into a human-readable label + formatted value with
+ * units. The backend emits these as code-internal paths
+ * (propertyData.monthlyRent → 2350) which leaked into the UI and
+ * made the product look unfinished.
+ *
+ * Add new mappings as the agent surfaces new fields. Unknown paths
+ * fall back to a cleaned-up basename of the path.
+ */
+const FIELD_LABEL_MAP: Record<string, { label: string; format: 'currency' | 'percent' | 'pctPts' | 'string' | 'years' | 'number' }> = {
+  // Property inputs
+  'propertyData.monthlyRent': { label: 'Monthly rent', format: 'currency' },
+  'propertyData.purchasePrice': { label: 'Purchase price', format: 'currency' },
+  'propertyData.downPayment': { label: 'Down payment', format: 'currency' },
+  'propertyData.interestRate': { label: 'Mortgage rate', format: 'percent' },
+  'propertyData.loanTerm': { label: 'Loan term', format: 'years' },
+  'propertyData.propertyTaxRate': { label: 'Property tax rate', format: 'percent' },
+  'propertyData.insuranceRate': { label: 'Insurance rate', format: 'percent' },
+  'propertyData.propertyManagementRate': { label: 'Property mgmt fee', format: 'percent' },
+  'propertyData.maintenanceCost': { label: 'Annual maintenance', format: 'currency' },
+  'propertyData.closingCosts': { label: 'Closing costs', format: 'currency' },
+  // Assumptions
+  'assumptions.vacancyRate': { label: 'Vacancy rate', format: 'percent' },
+  'assumptions.annualRentIncrease': { label: 'Annual rent growth', format: 'percent' },
+  'assumptions.annualPropertyValueIncrease': { label: 'Annual appreciation', format: 'percent' },
+  'assumptions.annualExpenseIncrease': { label: 'Annual expense growth', format: 'percent' },
+  'assumptions.projectionYears': { label: 'Hold period', format: 'years' },
+  'assumptions.sellingCostsPercentage': { label: 'Selling costs', format: 'percent' },
+};
+
+function humanizeCritiqueField(
+  fieldPath: string,
+  value: number | string | boolean
+): { label: string; formattedValue: string } {
+  const entry = FIELD_LABEL_MAP[fieldPath];
+  if (!entry) {
+    // Fallback: convert "foo.bar.bazQux" → "Baz qux"
+    const parts = fieldPath.split('.');
+    const last = parts[parts.length - 1] ?? fieldPath;
+    const spaced = last.replace(/([A-Z])/g, ' $1').toLowerCase();
+    const label = spaced.charAt(0).toUpperCase() + spaced.slice(1);
+    return { label, formattedValue: String(value) };
+  }
+
+  if (typeof value !== 'number') {
+    return { label: entry.label, formattedValue: String(value) };
+  }
+
+  let formattedValue: string;
+  switch (entry.format) {
+    case 'currency':
+      formattedValue = `$${Math.round(value).toLocaleString('en-US')}`;
+      break;
+    case 'percent':
+      formattedValue = `${value.toFixed(value < 1 ? 2 : 1)}%`;
+      break;
+    case 'pctPts':
+      formattedValue = `${value > 0 ? '+' : ''}${value.toFixed(1)}pts`;
+      break;
+    case 'years':
+      formattedValue = `${value} yr`;
+      break;
+    case 'number':
+    case 'string':
+    default:
+      formattedValue = String(value);
+  }
+  return { label: entry.label, formattedValue };
+}
+
 export interface CritiqueCardProps {
   critiques: CritiqueWire[];
   pending: boolean;
@@ -166,8 +237,10 @@ function PersonaColumn({ critique }: { critique: CritiqueWire }) {
       )}
 
       {/* Alternative-assumption suggestions — the HOW-TO-FIX, if any.
-          Compact list. The fieldPath is technical; we surface the
-          reasoning sentence as the main content. */}
+          Compact list. Task #64 (2026-06-18): translate the raw
+          fieldPath (e.g. "propertyData.monthlyRent") into a
+          human label ("Monthly rent") with units on the value.
+          Raw paths in the UI made the product look unfinished. */}
       {critique.alternativeAssumptions.length > 0 && (
         <Box sx={{ mt: 1.5 }}>
           <Typography
@@ -185,27 +258,21 @@ function PersonaColumn({ critique }: { critique: CritiqueWire }) {
             Suggested adjustments
           </Typography>
           <Stack spacing={0.75}>
-            {critique.alternativeAssumptions.map((alt, idx) => (
+            {critique.alternativeAssumptions.map((alt, idx) => {
+              const { label, formattedValue } = humanizeCritiqueField(
+                alt.fieldPath,
+                alt.suggestedValue
+              );
+              return (
               <Box key={`alt-${idx}`}>
                 <Typography
                   variant="body2"
                   sx={{ color: 'text.primary', fontSize: 13, lineHeight: 1.4 }}
                 >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily:
-                        'ui-monospace, SFMono-Regular, Menlo, monospace',
-                      bgcolor: 'action.hover',
-                      px: 0.5,
-                      py: 0.25,
-                      borderRadius: 0.5,
-                      fontSize: 11,
-                    }}
-                  >
-                    {alt.fieldPath}
-                  </Box>{' '}
-                  → {String(alt.suggestedValue)}
+                  <Box component="span" sx={{ fontWeight: 600 }}>
+                    {label}
+                  </Box>
+                  {' '}→ {formattedValue}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -218,7 +285,8 @@ function PersonaColumn({ critique }: { critique: CritiqueWire }) {
                   {alt.reasoning}
                 </Typography>
               </Box>
-            ))}
+              );
+            })}
           </Stack>
         </Box>
       )}

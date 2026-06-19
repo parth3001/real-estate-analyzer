@@ -24,7 +24,8 @@
  */
 
 import { useState } from 'react';
-import { Box, Typography, Collapse } from '@mui/material';
+import { Box, Typography, Collapse, Tooltip } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import type { ScenarioDetailWire, ScenarioComparableWire } from '../../services/api';
 import { WorkspaceSection } from './WorkspaceSection';
 
@@ -81,6 +82,14 @@ interface Row {
   label: string;
   value: string;
   negative?: boolean;
+  /**
+   * Optional explanatory hint — renders an info icon next to the label
+   * that surfaces this text on hover. Used (#72) to disclose
+   * methodology choices that aren't universally followed (e.g., the
+   * engine includes CapEx reserves in OPEX, which compresses NOI vs
+   * Wall Street SFR convention).
+   */
+  hint?: string;
 }
 
 /** True when a numeric value is a real (non-NaN) negative number. */
@@ -164,7 +173,11 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
       negative: true,
     },
     { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
-    { label: 'Operating expenses', value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')) },
+    {
+      label: 'Operating expenses',
+      value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')),
+      hint: 'Includes property tax, insurance, maintenance, mgmt, vacancy, and a CapEx reserve (~5% of rent). Some Wall Street SFR models put CapEx below NOI; we use the more conservative Fannie Mae multifamily convention.',
+    },
     { label: 'Debt service (mortgage)', value: fmtCurrency(nestedNum(ma, 'expenses', 'debt')) },
     {
       label: 'Monthly cash flow',
@@ -175,7 +188,11 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     { label: 'Cap rate', value: fmtPct(num(m, 'capRate')) },
     { label: 'Cash-on-cash', value: fmtPct(num(m, 'cashOnCashReturn')) },
     { label: 'DSCR', value: fmtRatio(num(m, 'dscr')) },
-    { label: 'Annual NOI', value: fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI')) },
+    {
+      label: 'Annual NOI',
+      value: fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI')),
+      hint: 'NOI = effective rent minus operating expenses (incl. CapEx reserve). Pre-debt-service. Same convention as Fannie Mae multifamily underwriting — more conservative than Wall Street SFR which puts CapEx below NOI (and would show a higher number).',
+    },
   ];
 
   const totalCashFlow = num(returns, 'totalCashFlow');
@@ -263,18 +280,32 @@ function Section({
       <SectionHeader title={title} open={open} onToggle={onToggle} />
       <Collapse in={open} unmountOnExit>
         <Box sx={{ px: 2, pb: 1.5 }}>
-          {rows.map(({ label, value, negative }) => (
+          {rows.map(({ label, value, negative, hint }) => (
             <Box
               key={label}
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 py: 0.5,
                 borderTop: '1px solid',
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
+                {hint && (
+                  <Tooltip title={hint} placement="top" arrow enterTouchDelay={0}>
+                    <InfoOutlinedIcon
+                      sx={{
+                        fontSize: 14,
+                        color: 'text.disabled',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
               <Typography
                 sx={{
                   fontSize: 13,
