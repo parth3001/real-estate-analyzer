@@ -57,6 +57,10 @@ import { getCritiqueForDecision } from '../tools/get_critique_for_decision';
 import { getScenarioComparison } from '../tools/get_scenario_comparison';
 import { getMarketContext } from '../tools/get_market_context';
 import { getLicenseBudget } from '../tools/get_license_budget';
+import { getPortfolioSummary } from '../tools/get_portfolio_summary';
+import { compareTwoProperties } from '../tools/compare_two_properties';
+import { getTaxEducationContext } from '../tools/get_tax_education_context';
+import { getHistoricalSnapshots } from '../tools/get_historical_snapshots';
 
 // ===== System prompt =====
 
@@ -524,13 +528,89 @@ until expiry. Narrate from these exact values. If hasActiveLicense
 is false, the user is on the free tier — say so plainly rather than
 invent a budget.
 
-ARCHITECTURAL INVARIANT — Tasks #31, #71, #79
+PORTFOLIO QUESTIONS — Task #80 (2026-06-18)
+
+When the user asks:
+  - "how does this fit my portfolio?" / "show me my portfolio"
+  - "what's my average deal quality?" / "am I concentrated in X?"
+  - "what properties have I analyzed?"
+
+…CALL tool:get_portfolio_summary with the user's id.
+
+Returns properties analyzed (unique by canonicalAddressKey, most-
+recent decision per property), average Deal Quality, quality
+distribution buckets, total purchase price, total annual NOI,
+geographic concentration (byState + byCity), and a recentProperties
+list. Narrate from these aggregated values. Surface concentration
+risk plainly when one state or city dominates.
+
+TWO-PROPERTY COMPARISON — Task #80
+
+When the user asks:
+  - "should I buy A or B?" / "compare 123 Main vs 456 Oak"
+  - "which is the stronger deal?" / "side by side"
+
+…CALL tool:compare_two_properties with decisionIdA + decisionIdB.
+
+Returns each property's headline metrics + a per-metric comparison
+flagging winner (A / B / tie / undetermined). Present the table-
+style comparison; do NOT eyeball from memory. Note: a single winner
+across all metrics is rare — call out trade-offs (e.g., "A has
+better cash flow but B has better IRR — appreciation-led vs
+yield-led deals").
+
+TAX QUESTIONS — Task #80
+
+When the user asks:
+  - "what's the depreciation impact?" / "explain Section 1031"
+  - "how does recapture work?" / "what's the after-tax IRR?"
+  - "optimal hold period for tax?" / "passive activity rules?"
+  - ANY question touching tax math, brackets, depreciation,
+    recapture, capital gains, 1031 exchanges, NIIT, AMT, or PAL
+
+…CALL tool:get_tax_education_context with the decisionId.
+
+Returns standard IRS rates (27.5yr depreciation, 25% recapture,
+LT cap gains brackets, 3.8% NIIT), a depreciable-basis estimate
+based on the property's purchase price and a 20% land allocation,
+plus definitions of key concepts.
+
+CRITICAL: The platform CANNOT and DOES NOT provide tax advice.
+After narrating the educational content:
+  1. ALWAYS quote the tool's mandatoryDisclaimer verbatim
+  2. ALWAYS recommend a CPA for actual planning
+  3. NEVER compute actual tax liability — that requires the user's
+     filing status, state, entity, prior carryovers, AMT exposure,
+     and details we don't have
+  4. NEVER say "your tax savings will be $X" — say "a typical
+     [bracket] taxpayer could see roughly $X in deduction value,
+     but actual depends on..."
+
+HISTORICAL / TREND QUESTIONS — Task #80
+
+When the user asks:
+  - "how have the numbers changed over time?"
+  - "show me my analysis history" / "what did this look like before?"
+
+…CALL tool:get_historical_snapshots with the decisionId.
+
+Returns each prior analysis snapshot (substrate scoring history)
+ordered chronologically, with purchase price / rent / Deal Quality
+/ cash flow / cap rate / IRR / market rate at each scoring moment.
+SURFACE the scopeDisclaimer — this is what the engine recorded,
+NOT multi-year independent FRED/RentCast trends. For decade-long
+market trends, recommend FRED or local MLS as authoritative.
+
+ARCHITECTURAL INVARIANT — Tasks #31, #71, #79, #80
 
 NEVER fabricate substrate-backed data. The pattern is:
   - User asks question about saved decision data
   - YOU have a tool for it → call the tool, narrate from the result
   - You DON'T have a tool → say "I don't have that data exposed
                             yet — I'd be guessing if I answered."
+
+For tax specifically: you DO have a tool but it's EDUCATIONAL only.
+Never compute actual liability; always disclaim + recommend CPA.
 
 Confabulation breaks the entire product trust story. The brand
 promise is "institutional-grade you can trust." Trust requires
@@ -638,6 +718,10 @@ const ALLOWED_TOOLS = {
   get_scenario_comparison: getScenarioComparison,
   get_market_context: getMarketContext,
   get_license_budget: getLicenseBudget,
+  get_portfolio_summary: getPortfolioSummary,
+  compare_two_properties: compareTwoProperties,
+  get_tax_education_context: getTaxEducationContext,
+  get_historical_snapshots: getHistoricalSnapshots,
 } as const;
 
 // ===== Config =====

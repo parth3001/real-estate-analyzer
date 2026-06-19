@@ -49,6 +49,10 @@ import { getCritiqueForDecision } from './get_critique_for_decision';
 import { getScenarioComparison } from './get_scenario_comparison';
 import { getMarketContext } from './get_market_context';
 import { getLicenseBudget } from './get_license_budget';
+import { getPortfolioSummary } from './get_portfolio_summary';
+import { compareTwoProperties } from './compare_two_properties';
+import { getTaxEducationContext } from './get_tax_education_context';
+import { getHistoricalSnapshots } from './get_historical_snapshots';
 import { enrichProperty } from './enrich_property';
 import { computeAnalysis } from './compute_analysis';
 import { profileExtraction } from './profile_extraction';
@@ -77,6 +81,10 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   get_scenario_comparison: getScenarioComparison as unknown as Tool<unknown, unknown>,
   get_market_context: getMarketContext as unknown as Tool<unknown, unknown>,
   get_license_budget: getLicenseBudget as unknown as Tool<unknown, unknown>,
+  get_portfolio_summary: getPortfolioSummary as unknown as Tool<unknown, unknown>,
+  compare_two_properties: compareTwoProperties as unknown as Tool<unknown, unknown>,
+  get_tax_education_context: getTaxEducationContext as unknown as Tool<unknown, unknown>,
+  get_historical_snapshots: getHistoricalSnapshots as unknown as Tool<unknown, unknown>,
   enrich_property: enrichProperty as unknown as Tool<unknown, unknown>,
   compute_analysis: computeAnalysis as unknown as Tool<unknown, unknown>,
   profile_extraction: profileExtraction as unknown as Tool<unknown, unknown>,
