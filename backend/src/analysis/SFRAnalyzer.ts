@@ -375,20 +375,35 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0);
 
-    const cashFlows = [
-      -totalInvestment,
-      ...projections.map(year => year.cashFlow),
-      exitAnalysis.netProceedsFromSale
-    ];
-    
+    // Task #62 (2026-06-18): COMBINE exit proceeds into the LAST
+    // projection year's cash flow rather than appending as a separate
+    // element. The previous shape `[-init, Y1..Y10, sale]` had 12
+    // elements which the IRR solver treats as 11 periods — sale was
+    // being discounted as if it occurred at Y11, ONE YEAR after the
+    // last operating year. That artificially LOWERED the reported IRR
+    // (~85 bps off on a 10-yr hold). Verified on 1837 Walnut Way:
+    // engine reported 8.04%, hand-calculated IRR with correct periods
+    // is ~8.9%. The CoC denominator (down + closing) was correct all
+    // along; the period count was the bug.
+    //
+    // Correct shape: `[-init, Y1..Y9, Y10_ops + sale]` = N+1 elements
+    // for an N-year hold. IRR solver now sees the exit at the right
+    // year and produces a value consistent with the Cash-on-Cash
+    // denominator.
+    const annualCashFlows = projections.map(year => year.cashFlow);
+    if (annualCashFlows.length > 0) {
+      annualCashFlows[annualCashFlows.length - 1] += exitAnalysis.netProceedsFromSale;
+    }
+    const cashFlows = [-totalInvestment, ...annualCashFlows];
+
     // Debug IRR calculation inputs
     debug('==== IRR CALCULATION DEBUG ====');
     debug('Initial Investment:', totalInvestment);
     debug('Annual Cash Flows:', projections.map(year => year.cashFlow));
-    debug('Exit Proceeds:', exitAnalysis.netProceedsFromSale);
+    debug('Exit Proceeds (combined into last year):', exitAnalysis.netProceedsFromSale);
     debug('Complete Cash Flow Array:', cashFlows);
     debug('=============================');
-    
+
     return cashFlows;
   }
 

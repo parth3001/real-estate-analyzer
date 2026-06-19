@@ -1124,11 +1124,17 @@ export class MultiFamilyAnalyzer extends BasePropertyAnalyzer<MultiFamilyData, M
     const exitAnalysis = this.calculateExitAnalysis(projections);
     const totalInvestment = this.data.downPayment + (this.data.closingCosts || 0) + (this.data.capitalInvestments || 0);
 
-    const cashFlows = [
-      -totalInvestment,
-      ...projections.map(year => year.cashFlow),
-      exitAnalysis.netProceedsFromSale
-    ];
+    // Task #62 (2026-06-18): combine exit proceeds into the last
+    // projection year's cash flow rather than appending as a separate
+    // element. Same fix as SFRAnalyzer.getIRRCashFlows — the previous
+    // 12-element shape was treating sale as Y11 on a 10-year hold,
+    // artificially lowering IRR by ~85 bps. See SFR fix for full
+    // derivation.
+    const annualCashFlows = projections.map(year => year.cashFlow);
+    if (annualCashFlows.length > 0) {
+      annualCashFlows[annualCashFlows.length - 1] += exitAnalysis.netProceedsFromSale;
+    }
+    const cashFlows = [-totalInvestment, ...annualCashFlows];
 
     debug('[MF] IRR Cash Flows:', cashFlows);
 
