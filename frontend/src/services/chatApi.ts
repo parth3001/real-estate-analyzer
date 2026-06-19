@@ -395,19 +395,44 @@ export async function* streamChatTurn(
   opts: { signal?: AbortSignal } = {}
 ): AsyncGenerator<ChatStreamEvent, void, void> {
   const url = resolveStreamUrl();
-  const token = tokenUtils.getAccessToken();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'text/event-stream',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(url, {
+  // Task #70 (2026-06-18): the workspace-chip-launches-chat path
+  // intermittently produced "Invalid token" on first try, succeeded
+  // on retry. Root cause: streamChatTurn uses fetch() directly so it
+  // bypasses the axios auth interceptor; if a token refresh races
+  // navigation from workspace → /app, the FIRST fetch can fly with a
+  // stale or absent token. Fix: on a 401, re-read the token from
+  // localStorage (fresh, no closure capture) and retry ONCE. The
+  // user-visible race becomes invisible.
+  const buildHeaders = (): Record<string, string> => {
+    const token = tokenUtils.getAccessToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  };
+
+  let response = await fetch(url, {
     method: 'POST',
-    headers,
+    headers: buildHeaders(),
     body: JSON.stringify(request),
     signal: opts.signal,
   });
+
+  if (response.status === 401) {
+    // One retry with freshly-read token. If the user is genuinely
+    // unauthenticated the retry will fail too and we fall through
+    // to the normal error path.
+    await new Promise((r) => setTimeout(r, 100));
+    response = await fetch(url, {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify(request),
+      signal: opts.signal,
+    });
+  }
 
   if (!response.ok) {
     // Drain the body for diagnostics; backend returns JSON error shapes.

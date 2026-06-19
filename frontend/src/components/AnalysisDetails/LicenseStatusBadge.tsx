@@ -217,6 +217,29 @@ export function LicenseStatusBadge(
   );
   const barColor = budgetBarColor(pctConsumed);
 
+  // Task #81 (2026-06-18): convert "$0.04 of $2.00 used" → user-aligned
+  // depth/quota framing. Surfacing COGS cents creates pricing-perception
+  // problems (user paid $4.99, sees $2 budget, assumes $3 markup).
+  // Convert remaining cents → "deep analyses remaining" at ~25¢/heavy
+  // turn (LLM cost for a substrate-write deep agent loop). Hide entirely
+  // when usage is low (<60%); surface progressively as it approaches the
+  // cap. Same engineering invariant, no behavior change — only the UI
+  // metric reframes from $-of-$ to "depth credits."
+  const CENTS_PER_DEEP_ANALYSIS = 25;
+  const remainingCents = Math.max(
+    0,
+    license.costBudgetCentsStart - license.costSpentCents
+  );
+  const deepAnalysesRemaining = Math.floor(remainingCents / CENTS_PER_DEEP_ANALYSIS);
+  const usageBadge =
+    pctConsumed < 60
+      ? null
+      : pctConsumed < 85
+        ? `~${deepAnalysesRemaining} deep analyses remaining`
+        : pctConsumed < 100
+          ? `Approaching limit · ~${deepAnalysesRemaining} left`
+          : 'Limit reached · re-purchase for fresh access';
+
   return (
     <Box data-testid="license-badge-active">
       <Stack
@@ -241,36 +264,42 @@ export function LicenseStatusBadge(
             fontSize: 12,
           }}
         />
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', fontSize: 12 }}
-        >
-          {formatCents(license.costSpentCents)} of{' '}
-          {formatCents(license.costBudgetCentsStart)} analytical budget used
-        </Typography>
+        {usageBadge && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: pctConsumed >= 85 ? 'error.main' : 'text.secondary',
+              fontSize: 12,
+              fontWeight: pctConsumed >= 85 ? 600 : 400,
+            }}
+          >
+            {usageBadge}
+          </Typography>
+        )}
       </Stack>
-      {/* Budget bar — shows the user how close they are to the COGS cap.
-          Color goes green → amber → orange → red as consumption rises;
-          matches the DealQualityScore gradient so the visual language
-          is consistent across the surface. */}
-      <Box
-        sx={{
-          height: 4,
-          bgcolor: 'action.hover',
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
+      {/* Task #81 (2026-06-18): bar hidden below 60% usage. Surface
+          progressively as the user approaches the cap — same posture as
+          AWS / Stripe quotas: invisible until it matters. */}
+      {pctConsumed >= 60 && (
         <Box
           sx={{
-            width: `${pctConsumed}%`,
-            height: '100%',
-            bgcolor: barColor,
-            transition: 'width 200ms ease, background-color 200ms ease',
+            height: 4,
+            bgcolor: 'action.hover',
+            borderRadius: 2,
+            overflow: 'hidden',
           }}
-          data-testid="license-budget-bar"
-        />
-      </Box>
+        >
+          <Box
+            sx={{
+              width: `${pctConsumed}%`,
+              height: '100%',
+              bgcolor: barColor,
+              transition: 'width 200ms ease, background-color 200ms ease',
+            }}
+            data-testid="license-budget-bar"
+          />
+        </Box>
+      )}
       <Typography
         variant="caption"
         sx={{
