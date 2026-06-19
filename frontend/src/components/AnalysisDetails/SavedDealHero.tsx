@@ -285,10 +285,19 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
     // in every chat-turn request so the backend can apply the
     // per-license cost cap. Pre-T1 deals (no _id) fall through with
     // no licenseId — session + daily caps still apply.
+    //
+    // Task #68 (2026-06-18): when the Deal has a sourceSessionId (chat-
+    // derived, the common 2.0 path), pass it as resumeSessionId so the
+    // chat surface RESUMES the conversation that produced this deal
+    // instead of starting fresh. Investors think of a property as a
+    // conversation across time; starting fresh every visit loses the
+    // earlier framing, stress tests, and accumulated context.
+    const resumeSessionId = (deal as { sourceSessionId?: string }).sourceSessionId;
     navigate('/app', {
       state: {
         initialUserInput: enriched,
         initialDealId: deal._id,
+        ...(resumeSessionId ? { resumeSessionId } : {}),
       },
     });
   };

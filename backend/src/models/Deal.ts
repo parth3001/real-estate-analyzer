@@ -451,6 +451,16 @@ export interface IDeal extends Document {
    * legacy/pre-Task#2 Deals have no value until the backfill (Task #4).
    */
   canonicalAddressKey?: string;
+  /**
+   * Task #68 (2026-06-18): chat sessionId that produced the latest
+   * decision behind this Deal. When the user taps a workspace chip
+   * ("Stress-test at 7%..."), the frontend uses this to RESUME that
+   * thread instead of starting fresh — preserving conversation
+   * continuity. Optional: legacy / wizard-created deals have no
+   * sourceSessionId; chip handler falls back to a new thread with
+   * initialDealId context.
+   */
+  sourceSessionId?: string;
   portfolioId?: mongoose.Schema.Types.ObjectId; // Optional portfolio association
   ownershipPercentage?: number; // For fractional investments (syndications, partnerships)
   propertyName: string;
@@ -1155,6 +1165,14 @@ const DealSchema = new Schema({
     ref: 'DecisionEvent',
     required: false,
     index: true,
+  },
+  /**
+   * Task #68 (2026-06-18): chat sessionId behind the latest decision.
+   * Optional — wizard-created deals don't have one.
+   */
+  sourceSessionId: {
+    type: String,
+    required: false,
   },
   /**
    * Canonical address key for dedup + identity alignment.

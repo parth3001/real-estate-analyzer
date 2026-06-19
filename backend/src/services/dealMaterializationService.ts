@@ -554,12 +554,41 @@ export async function materializeDealFromDecision(
   // Typed as a loose record because SFR-specific fields (monthlyRent,
   // bedrooms, etc.) live on ISFRDeal not IDeal. Mongoose validates the
   // shape at save() time per the discriminator's required-when rules.
+  // Task #68 (2026-06-18): look up the ConversationEvent that produced
+  // this decision so we can persist its sessionId. Workspace chips then
+  // resume that thread instead of starting fresh.
+  //
+  // The relationship: ConversationEvent.payload.relatedEventIds[] holds
+  // the AnalysisEvent + DecisionEvent ids the agent emitted that turn.
+  // We query by decisionEventId membership and take the sessionId of
+  // the most-recent match.
+  let sourceSessionId: string | undefined;
+  try {
+    const { ConversationEventModel } = await import('../models/events/ConversationEvent');
+    const conv = await ConversationEventModel.findOne({
+      'payload.relatedEventIds': decisionEventId,
+    })
+      .sort({ timestamp: -1 })
+      .select('payload.sessionId')
+      .lean<{ payload?: { sessionId?: string } } | null>()
+      .exec();
+    sourceSessionId = conv?.payload?.sessionId;
+  } catch (err) {
+    // Non-fatal — workspace chips fall back to fresh-thread navigation.
+    logger.warn('[dealMaterialization] sourceSessionId lookup failed', {
+      decisionEventId: decisionEventId.toHexString(),
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   const dealFields: Record<string, unknown> = {
     userId: userId as unknown as IDeal['userId'],
     // T1 (2026-05-18): persist the substrate link so the SavedDealHero
     // can fetch critiques + audit trail by DecisionEvent without a
     // userId+address join.
     latestDecisionEventId: decisionEventId,
+    // Task #68 — persisted only when found (chat-derived decisions).
+    ...(sourceSessionId ? { sourceSessionId } : {}),
     propertyName,
     propertyType: property.propertyType,
     propertyAddress: property.propertyAddress,

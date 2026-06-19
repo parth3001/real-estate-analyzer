@@ -42,6 +42,14 @@ interface AppPageLocationState {
    * active DealLicense and apply the per-license cost cap.
    */
   initialDealId?: string;
+  /**
+   * Task #68 (2026-06-18) — when present, ChatOverlay should RESUME
+   * this existing session rather than start a new thread. Forwarded
+   * by SavedDealHero when the Deal has a sourceSessionId (chat-derived
+   * deals). Preserves conversation continuity: prior stress tests,
+   * framing, and accumulated context stay visible.
+   */
+  resumeSessionId?: string;
 }
 
 // Must match ChatOverlay's SESSION_STORAGE_KEY (intentionally duplicated
@@ -64,6 +72,20 @@ export default function AppPage(): React.JSX.Element {
   const location = useLocation();
   const state = (location.state ?? {}) as AppPageLocationState;
   const { user } = useAuth();
+
+  // Task #68 (2026-06-18): if the caller passed a resumeSessionId
+  // (workspace chip → resume source thread), write it into
+  // sessionStorage BEFORE first render so ChatOverlay picks it up as
+  // the active session and loads its history. Without this the chat
+  // surface creates a fresh session and discards the resume hint.
+  // Runs once via useState's initializer so it doesn't fire on every
+  // re-render of the same navigation.
+  const [, /*resumeOnce*/] = useState(() => {
+    if (state.resumeSessionId) {
+      writeActiveSessionId(state.resumeSessionId);
+    }
+    return null;
+  });
 
   // ChatOverlay key — bumping this forces a remount with the
   // newly-active sessionId. Initial value tracks whatever's already in
