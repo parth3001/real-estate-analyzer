@@ -95,17 +95,23 @@ interface SpecEntry {
 }
 
 const SENSITIVITY_SPEC: SpecEntry[] = [
-  // Exit assumptions — the #1 underweighted input (Reddit consensus). Lower
-  // appreciation is the proxy for "exit cap expanded" (no literal exit-cap
-  // input exists; exit is modeled via appreciation + selling costs).
-  { target: 'assumptions', field: 'annualPropertyValueIncrease', label: 'Appreciation', unit: 'percent', mode: 'points', deltas: [0, -1, -2] },
+  // Exit assumptions — the #1 underweighted input. Lower appreciation
+  // is the proxy for "exit cap expanded" (no literal exit-cap input
+  // exists; exit is modeled via appreciation + selling costs). Task
+  // #75 (2026-06-18): added a third tier at −3pts to surface the
+  // 2008-style tail risk specifically. For appreciation-led deals in
+  // path-of-growth submarkets this is THE risk an institutional
+  // underwriter would stress most.
+  { target: 'assumptions', field: 'annualPropertyValueIncrease', label: 'Appreciation', unit: 'percent', mode: 'points', deltas: [0, -1, -2, -3] },
   { target: 'assumptions', field: 'sellingCosts', label: 'Selling costs', unit: 'percent', mode: 'points', deltas: [0, 2, 4] },
   // Vacancy — investors say model 8-12%, not 5%.
   { target: 'assumptions', field: 'vacancyRate', label: 'Vacancy', unit: 'percent', mode: 'points', deltas: [0, 3, 6] },
   // Rent — the income side; confirmation bias inflates it.
   { target: 'propertyData', field: 'monthlyRent', label: 'Rent', unit: 'currency', mode: 'percent', deltas: [0, -5, -10] },
-  // Financing.
-  { target: 'propertyData', field: 'interestRate', label: 'Interest rate', unit: 'percent', mode: 'points', deltas: [0, 0.5, 1] },
+  // Financing. Task #75: added +2pts tier — 2022-style fed-shock
+  // magnitude. +0.5 and +1 alone understate the systemic risk
+  // investors actually carry on floating rate environments.
+  { target: 'propertyData', field: 'interestRate', label: 'Interest rate', unit: 'percent', mode: 'points', deltas: [0, 0.5, 1, 2] },
   // Rehab — "the input you control least after closing" (no-ops if 0).
   { target: 'propertyData', field: 'repairCosts', label: 'Rehab', unit: 'currency', mode: 'percent', deltas: [0, 15, 30] },
 ];
