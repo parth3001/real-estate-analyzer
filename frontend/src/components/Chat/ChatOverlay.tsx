@@ -462,7 +462,26 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
    * + sessionId so the server can resolve the underlying analysis.
    */
   const handleEmailCta = (msg: AssistantMessage): void => {
-    setEmailModalMessage(msg);
+    // Task #83 (2026-06-18): same walk-back logic as handlePortfolioCta
+    // below. When the user clicks Email on a text-only turn (e.g., the
+    // agent's "I can't tell you to buy" follow-up after the analysis),
+    // msg.conversationEventId points to a turn with no deal_score_card —
+    // and the modal correctly errors with "no analysis to email yet."
+    // Walk backward through the thread to find the most-recent turn
+    // that actually produced a deal_score_card; pass THAT to the modal.
+    const msgHasDealCard = (m: AssistantMessage): boolean =>
+      (m.structuredOutputs ?? []).some((so) => so.kind === 'deal_score_card');
+    let targetMsg: AssistantMessage = msg;
+    if (!msgHasDealCard(msg)) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (m.role === 'assistant' && msgHasDealCard(m as AssistantMessage)) {
+          targetMsg = m as AssistantMessage;
+          break;
+        }
+      }
+    }
+    setEmailModalMessage(targetMsg);
   };
 
   /**
