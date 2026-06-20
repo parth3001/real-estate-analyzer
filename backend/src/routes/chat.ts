@@ -890,16 +890,34 @@ router.post(
       });
       res.status(201).json(result);
     } catch (err) {
-      if (
-        err instanceof StressTestNotFoundError ||
-        err instanceof StressTestForbiddenError
-      ) {
-        // Generic 404 for both — never leak existence of another user's
-        // decision (same posture as runStressTest).
+      // Task #85 (2026-06-18): differentiate each failure path in
+      // logs so we can diagnose user-reported "got an error" without
+      // a screenshot. Generic 404 still goes back to the client (no
+      // info leakage about other users' decisions), but the LOG line
+      // tells us which path tripped on the next failed save.
+      if (err instanceof StressTestNotFoundError) {
+        logger.warn('[chat/stress-test/save] PRIOR_DECISION_NOT_FOUND', {
+          userId: req.user.id,
+          priorDecisionId: parsed.data.priorDecisionId,
+        });
+        res.status(404).json({ error: 'Prior decision not found.' });
+        return;
+      }
+      if (err instanceof StressTestForbiddenError) {
+        logger.warn('[chat/stress-test/save] OWNERSHIP_MISMATCH', {
+          userId: req.user.id,
+          priorDecisionId: parsed.data.priorDecisionId,
+          message:
+            'authenticated user does not own the prior decision — likely a ghost→real session merge gap',
+        });
         res.status(404).json({ error: 'Prior decision not found.' });
         return;
       }
       if (err instanceof StressTestIncompleteError) {
+        logger.warn('[chat/stress-test/save] MISSING_ANALYSIS_EVENT', {
+          userId: req.user.id,
+          priorDecisionId: parsed.data.priorDecisionId,
+        });
         res.status(422).json({
           error:
             'The prior decision is missing its linked AnalysisEvent and cannot be re-scored.',
@@ -907,6 +925,11 @@ router.post(
         return;
       }
       if (err instanceof StressTestUnsupportedError) {
+        logger.warn('[chat/stress-test/save] UNSUPPORTED_PROPERTY_TYPE', {
+          userId: req.user.id,
+          priorDecisionId: parsed.data.priorDecisionId,
+          message: err.message,
+        });
         res.status(400).json({ error: err.message });
         return;
       }

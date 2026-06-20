@@ -122,6 +122,7 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
   const [critiques, setCritiques] = useState<CritiqueWire[]>([]);
   const [critiquePending, setCritiquePending] = useState(false);
   const [critiqueLoading, setCritiqueLoading] = useState(false);
+  const [critiqueFromPriorDecision, setCritiqueFromPriorDecision] = useState(false);
   useEffect(() => {
     if (!dealId) return;
     let cancelled = false;
@@ -132,6 +133,7 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
         if (cancelled) return;
         setCritiques(res.data.critiques);
         setCritiquePending(res.data.pending);
+        setCritiqueFromPriorDecision(res.data.fromPriorDecision === true);
       })
       .catch(() => {
         // Silent failure — the section just doesn't render. We don't
@@ -348,6 +350,7 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
       <CritiqueCard
         critiques={critiques}
         pending={critiquePending}
+        fromPriorDecision={critiqueFromPriorDecision}
         loading={critiqueLoading}
       />
 

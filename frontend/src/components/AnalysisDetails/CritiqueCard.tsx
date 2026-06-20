@@ -123,6 +123,14 @@ export interface CritiqueCardProps {
   pending: boolean;
   /** True when the fetch is still in flight. Distinct from `pending`. */
   loading: boolean;
+  /**
+   * Task #87 (2026-06-18): when true, the critique shown is for an
+   * EARLIER decision on this property (the latest decision's critique
+   * is still computing in the background). Surface a small badge so
+   * the user understands they're seeing an honest fallback, not stale
+   * data.
+   */
+  fromPriorDecision?: boolean;
 }
 
 // ===== Helpers =====
@@ -297,7 +305,7 @@ function PersonaColumn({ critique }: { critique: CritiqueWire }) {
 // ===== Main component =====
 
 export function CritiqueCard(props: CritiqueCardProps): React.JSX.Element | null {
-  const { critiques, pending, loading } = props;
+  const { critiques, pending, loading, fromPriorDecision } = props;
 
   // Unavailable state — pre-T1 deal or critique was skipped. Render
   // nothing. The SavedDealHero just won't show the section.
@@ -340,6 +348,23 @@ export function CritiqueCard(props: CritiqueCardProps): React.JSX.Element | null
         >
           Two reviewers argue with the engine — one bull, one bear
         </Typography>
+        {fromPriorDecision && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'warning.main',
+              fontSize: 11,
+              ml: 'auto',
+              border: '1px solid',
+              borderColor: 'warning.main',
+              borderRadius: 1,
+              px: 0.75,
+              py: 0.25,
+            }}
+          >
+            From earlier scenario · latest review computing
+          </Typography>
+        )}
       </Stack>
 
       {(loading || pending) && critiques.length === 0 ? (

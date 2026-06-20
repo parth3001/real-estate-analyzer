@@ -354,7 +354,7 @@ export const propertyApi = {
    */
   getDealCritique: async (
     dealId: string
-  ): Promise<ApiResponse<{ critiques: CritiqueWire[]; pending: boolean }>> => {
+  ): Promise<ApiResponse<{ critiques: CritiqueWire[]; pending: boolean; fromPriorDecision?: boolean }>> => {
     try {
       const response = await api.get(`/deals/${dealId}/critique`);
       return { data: response.data, status: response.status };

@@ -23,6 +23,7 @@ import {
   type ToolContext,
   DEFAULT_READ_RETRY,
 } from './types';
+import { logger } from '../../utils/logger';
 
 // ===== Input schema =====
 
@@ -128,6 +129,16 @@ export const getLicenseBudget: Tool<
       zipCode: propertyAddress.zipCode,
     });
     if (!active) {
+      // Task #89 (2026-06-18): log when no active license is found so
+      // we can distinguish "user genuinely has no license" from "lookup
+      // failed silently" from "address canonicalization mismatch."
+      logger.info('[get_license_budget] no active license for property', {
+        decisionId: decisionId.toHexString(),
+        userId: userId.toString(),
+        addressStreet: propertyAddress.street,
+        addressCity: propertyAddress.city,
+        addressState: propertyAddress.state,
+      });
       return {
         decisionId: decisionId.toHexString(),
         hasActiveLicense: false,
@@ -140,6 +151,11 @@ export const getLicenseBudget: Tool<
         expiresAt: null,
       };
     }
+    logger.info('[get_license_budget] active license found', {
+      decisionId: decisionId.toHexString(),
+      licenseId: active._id.toString(),
+      costBudgetCentsStart: active.costBudgetCentsStart,
+    });
 
     const spent = await getLicenseSpendCents(active._id);
     const start = active.costBudgetCentsStart ?? 0;

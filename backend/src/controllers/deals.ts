@@ -896,9 +896,47 @@ export const getDealCritique = async (
     const { eventsRepositoryReads } = await import(
       '../repositories/EventsRepositoryReads'
     );
-    const critiques = await eventsRepositoryReads.getCritiquesForDecision(
+    let critiques = await eventsRepositoryReads.getCritiquesForDecision(
       decisionId as unknown as string
     );
+
+    // Task #87 (2026-06-18): when the LATEST decision has no critiques
+    // (a new stress scenario was just saved → its critique is still in
+    // the background job queue), fall back to the most-recent critique
+    // for ANY prior decision on this property. The old critique still
+    // has value — disappearing surfaces erode trust on the saved-deal
+    // workspace. The frontend can badge it ("Critique from baseline
+    // analysis — current scenario review is computing").
+    let fromPriorDecision = false;
+    if (critiques.length === 0) {
+      const dealAny = deal as unknown as {
+        canonicalAddressKey?: string;
+        userId?: { toString(): string };
+      };
+      if (dealAny.canonicalAddressKey && dealAny.userId) {
+        const scenarios = await eventsRepositoryReads.getScenariosForDeal(
+          dealAny.userId.toString(),
+          dealAny.canonicalAddressKey
+        );
+        // Walk decisions newest-first looking for ANY with critiques.
+        const sorted = [...scenarios].sort(
+          (a, b) =>
+            new Date(b.decision.timestamp).getTime() -
+            new Date(a.decision.timestamp).getTime()
+        );
+        for (const s of sorted) {
+          if (s.decision._id.toString() === decisionId.toString()) continue;
+          const priorCritiques = await eventsRepositoryReads.getCritiquesForDecision(
+            s.decision._id.toString()
+          );
+          if (priorCritiques.length > 0) {
+            critiques = priorCritiques;
+            fromPriorDecision = true;
+            break;
+          }
+        }
+      }
+    }
 
     // Map to the wire shape the frontend wants — only the payload
     // fields the CritiqueCard renders, plus a created-at for ordering.
@@ -920,6 +958,10 @@ export const getDealCritique = async (
       // by daily cap). Frontend can show "Adversarial review pending…"
       // when this is true and critiques is empty.
       pending: wire.length === 0,
+      // Task #87: when true, the critique shown is for an EARLIER
+      // decision on this property (the latest decision's critique is
+      // computing). Frontend should badge it accordingly.
+      fromPriorDecision,
     });
   } catch (error) {
     logger.error(`Error getting critique for deal ${req.params.id}:`, error);
