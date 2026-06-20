@@ -194,7 +194,7 @@ const HelpPage: React.FC = () => {
                   <Typography color="text.secondary">
                     Get instant insights across multiple tabs:
                     <br />
-                    • Investment Decision (BUY/NEGOTIATE/PASS verdict)
+                    • Underwriting Summary (Deal Quality Score 0–100 with analytical label)
                     <br />
                     • Financial Details (monthly cash flow breakdown)
                     <br />
@@ -248,7 +248,7 @@ const HelpPage: React.FC = () => {
                 Key Features:
               </Typography>
               <Box component="ul" sx={{ pl: 2 }}>
-                <li><Typography><strong>Investment Decision Engine:</strong> Get clear BUY, NEGOTIATE, or PASS verdicts with 0-100 quality scores</Typography></li>
+                <li><Typography><strong>Underwriting Engine:</strong> Deal Quality Score (0–100) with contextual analytical labels — above / meets / requires optimization / below professional standards</Typography></li>
                 <li><Typography><strong>Financial Details:</strong> Complete monthly cash flow breakdown including mortgage, taxes, insurance, and maintenance</Typography></li>
                 <li><Typography><strong>Long-term Analysis:</strong> 10-year projections showing total return, equity buildup, and appreciation</Typography></li>
                 <li><Typography><strong>Tax Intelligence:</strong> Hold period optimization and tax impact calculations</Typography></li>
@@ -373,7 +373,7 @@ const HelpPage: React.FC = () => {
           </AccordionDetails>
         </Accordion>
 
-        {/* Investment Decision Engine */}
+        {/* Underwriting Engine */}
         <Accordion
           expanded={expandedCategory === 'decision-engine'}
           onChange={handleAccordionChange('decision-engine')}
@@ -382,18 +382,19 @@ const HelpPage: React.FC = () => {
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <AssessmentIcon sx={{ color: appleColors.blue[500] }} />
-              <Typography variant="h6" fontWeight={600}>Investment Decision Engine</Typography>
+              <Typography variant="h6" fontWeight={600}>Underwriting Engine</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ pl: 5 }}>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                How We Calculate Your Investment Verdict
+                How the Deal Quality Score is Calculated
               </Typography>
 
               <Typography paragraph color="text.secondary">
-                Our Investment Decision Engine analyzes 50+ data points to give you a clear, actionable verdict:
-                BUY, NEGOTIATE, CAUTION, or PASS.
+                Our Underwriting Engine analyzes 50+ data points and produces a Deal Quality Score
+                (0–100) with a contextual analytical label. It does not tell you whether to buy or
+                pass — that decision is yours.
               </Typography>
 
               <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
@@ -418,31 +419,31 @@ const HelpPage: React.FC = () => {
               </Box>
 
               <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Verdict Categories:
+                Score Bands & Labels:
               </Typography>
               <Box sx={{ pl: 2 }}>
                 <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.green[50] }}>
-                  <Typography fontWeight={600} color={appleColors.green[700]}>BUY (75-100 points)</Typography>
+                  <Typography fontWeight={600} color={appleColors.green[700]}>Above professional standards (80–100)</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Strong investment meeting or exceeding professional standards. Proceed with confidence.
+                    Strong fundamentals across the metrics that matter to institutional underwriters.
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.blue[50] }}>
-                  <Typography fontWeight={600} color={appleColors.blue[700]}>NEGOTIATE (60-74 points)</Typography>
+                  <Typography fontWeight={600} color={appleColors.blue[700]}>Meets professional standards (65–79)</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Decent fundamentals but overpriced. Review the walk-away price and negotiate.
+                    Solid fundamentals; review the walk-away price for negotiation headroom.
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.orange[50] }}>
-                  <Typography fontWeight={600} color={appleColors.orange[700]}>CAUTION (45-59 points)</Typography>
+                  <Typography fontWeight={600} color={appleColors.orange[700]}>Requires optimization (50–64)</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Marginal deal with concerns. Requires significant improvements or price reduction.
+                    Marginal across one or more metrics. Significant improvements or a price reduction would lift the score.
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: appleColors.red[50] }}>
-                  <Typography fontWeight={600} color={appleColors.red[700]}>PASS (0-44 points)</Typography>
+                  <Typography fontWeight={600} color={appleColors.red[700]}>Below professional standards (0–49)</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Poor investment fundamentals. Does not meet minimum professional standards.
+                    Weak fundamentals. The underwriting flags substantial risks.
                   </Typography>
                 </Box>
               </Box>
@@ -450,7 +451,8 @@ const HelpPage: React.FC = () => {
               <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
                 <Typography variant="body2">
                   <strong>Conservative by Design:</strong> Our scoring is intentionally conservative to protect you from
-                  overpaying. A "NEGOTIATE" verdict doesn't mean it's a bad property - it means you should negotiate for a better price.
+                  overpaying. A "Meets professional standards" score doesn't mean the property is the right buy for you —
+                  the decision is always yours.
                 </Typography>
               </Alert>
             </Box>
@@ -559,12 +561,12 @@ const HelpPage: React.FC = () => {
 
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: Can I trust the Investment Decision Engine's verdict?
+                  Q: Can I trust the Underwriting Engine's score?
                 </Typography>
                 <Typography color="text.secondary">
                   A: Our engine uses institutional-grade calculations and is intentionally conservative to protect you from
-                  overpaying. However, it's designed to inform your decision, not make it for you. Always consider local
-                  market conditions, your personal goals, and conduct proper due diligence.
+                  overpaying. It's designed to inform your decision — never to make it for you. Always consider local
+                  market conditions, your personal goals, and conduct proper due diligence with a licensed professional.
                 </Typography>
               </Box>
 

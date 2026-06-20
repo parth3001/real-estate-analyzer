@@ -946,10 +946,10 @@ const SampleAnalysisPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <HomeIcon sx={{ fontSize: 48, color: appleColors.primary[500], mb: 2 }} />
                 <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                  Clear BUY/PASS Verdicts
+                  Honest 0–100 Deal Quality Score
                 </Typography>
                 <Typography variant="body2" sx={{ color: appleColors.gray[600] }}>
-                  No more analysis paralysis. Get instant investment decisions backed by data.
+                  No more analysis paralysis. Get a structured, conservative analytical score on every property.
                 </Typography>
               </Box>
             </Grid>
@@ -1214,10 +1214,10 @@ const SampleAnalysisPage: React.FC = () => {
                 color: appleColors.gray[700]
               }}
             >
-              Beyond basic calculations, we integrate real market data from FRED and RentCast APIs and provide
-              an Investment Decision Engine that scores each property (0-100) with a clear verdict: BUY,
-              NEGOTIATE, or PASS. This transforms you from calculating numbers to making confident investment
-              decisions backed by data.
+              Beyond basic calculations, we integrate real market data from FRED and RentCast APIs and run
+              an Underwriting Engine that scores each property (0–100) with a contextual analytical label
+              ("Above professional standards," "Meets," "Requires optimization," "Below"). The numbers
+              and signals are yours to interpret — we don't make the decision for you.
             </Typography>
           </Box>
 
@@ -1364,9 +1364,9 @@ const SampleAnalysisPage: React.FC = () => {
               >
                 Our calculations use institutional-grade formulas validated by CPAs and real estate
                 professionals. We integrate live market data from FRED (Federal Reserve) and RentCast APIs
-                for accurate rent estimates and economic indicators. The Investment Decision Engine analyzes
-                60+ metrics to provide professional-level guidance that typically requires expensive software
-                or financial advisors.
+                for accurate rent estimates and economic indicators. The Underwriting Engine analyzes
+                60+ metrics to surface the kind of structured analysis typically locked behind expensive
+                software — leaving the decision-making to you.
               </Typography>
             </Box>
           </Box>

@@ -104,7 +104,7 @@ const WhatsNewPage: React.FC = () => {
               'Simplified Property Wizard',
               'Multi-Family Analysis',
               'BRRRR Strategy Analysis',
-              'Investment Decision Engine',
+              'Underwriting Engine',
               'AI-Enhanced Analysis',
               'Portfolio Intelligence',
               'Market Intelligence Integration'
@@ -334,7 +334,7 @@ const WhatsNewPage: React.FC = () => {
               Fixed critical scoring issues and validated all financial calculations against industry standards.
             </Typography>
             <Box component="ul" sx={{ pl: 2, mt: 1, '& li': { mb: 0.5 } }}>
-              <li><Typography variant="body2">Investment Decision Engine accuracy improved to 75-100%</Typography></li>
+              <li><Typography variant="body2">Underwriting Engine accuracy improved to 75–100%</Typography></li>
               <li><Typography variant="body2">Deal Quality score range expanded from 3 to 41 points of differentiation</Typography></li>
               <li><Typography variant="body2">IRR scoring formula corrected (decimal to percentage consistency)</Typography></li>
               <li><Typography variant="body2">Cap rate scoring multiplier fix (proper 0-100 range)</Typography></li>
@@ -348,7 +348,7 @@ const WhatsNewPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="h6" fontWeight={600}>
-                v3.0 - Investment Decision Engine v2.1
+                v3.0 - Underwriting Engine v2.1
               </Typography>
               <Chip label="July 2025" size="small" variant="outlined" />
             </Box>
@@ -356,8 +356,8 @@ const WhatsNewPage: React.FC = () => {
               Complete rebuild of scoring engine with strategy-aware analysis and conservative walk-away pricing.
             </Typography>
             <Box component="ul" sx={{ pl: 2, mt: 1, '& li': { mb: 0.5 } }}>
-              <li><Typography variant="body2">4-tier verdict system: BUY, NEGOTIATE, CAUTION, PASS</Typography></li>
-              <li><Typography variant="body2">0-100 Property Quality Score with transparent methodology</Typography></li>
+              <li><Typography variant="body2">4-tier analytical labels: Above / Meets / Requires optimization / Below professional standards</Typography></li>
+              <li><Typography variant="body2">0–100 Deal Quality Score with transparent methodology</Typography></li>
               <li><Typography variant="body2">Strategy-aware analysis (house hacking, geographic expansion, etc.)</Typography></li>
               <li><Typography variant="body2">Walk-away price calculation prevents overpaying</Typography></li>
               <li><Typography variant="body2">Comprehensive testing: 10/10 realistic scenarios passing</Typography></li>

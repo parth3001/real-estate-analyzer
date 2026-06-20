@@ -281,11 +281,11 @@ export default function AffiliateLandingPage(): React.ReactElement {
                     }}
                   />
                   <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
-                    Investment Decision Engine
+                    Underwriting Engine
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  Clear BUY/NEGOTIATE/PASS verdicts based on YOUR goals. Conservative walk-away prices prevent costly mistakes.
+                  Deal Quality Score (0–100) with contextual analytical labels tuned to YOUR goals. Conservative walk-away prices prevent costly mistakes.
                 </Typography>
               </CardContent>
             </Card>
