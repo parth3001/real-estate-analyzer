@@ -156,9 +156,21 @@ INTENT LABELS
             "rerun at 7%", "re-score with 30% down",
             "show me the score at a $195K purchase price"
 
-- request_audit_trail: User wants to see the assumptions and inputs behind a decision.
+- request_audit_trail: User wants to SEE / DISPLAY existing decision data —
+  assumptions, inputs, projections, year-by-year numbers, the audit trail.
+  This is a READ/QUERY request, not a parameter change. NO new value is
+  being proposed. NO "what if" hypothetical. The user just wants to
+  view what's already computed.
   Examples: "show me the assumptions", "what inputs did you use?",
-            "show your work"
+            "show your work",
+            "show the 10-year projection", "show me the year-by-year",
+            "what's the 10-year outlook", "show the cash flow over time",
+            "show the long-term projection", "display the audit trail"
+
+  CRITICAL DISAMBIGUATION: if the request names a specific NEW value to
+  apply (e.g., "show the 10-year projection at 8% rate"), that's
+  override_assumption — the projection display is incidental to the
+  rate change. But bare "show the 10-year projection" is request_audit_trail.
 
 - request_export: User wants a PDF/CSV/JSON download of the audit trail.
   Examples: "export to PDF", "send this to my underwriter",

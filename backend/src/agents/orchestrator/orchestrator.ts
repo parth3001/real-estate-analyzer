@@ -728,7 +728,14 @@ async function executeAgentRoute(
         extractionTokens = 0; // We don't surface usage on this path — covered by the standalone classifier instead
         break;
       case 'extraction_failed':
-        responseText = out.reason;
+        // Task #84b (#85b follow-up): extractor's `reason` is LLM-written
+        // and leaks internal vocabulary ("perturbation", "baseline
+        // analysis", "stress-test parameter change"). NEVER surface it
+        // verbatim to users. Fixed message instead.
+        responseText =
+          "I couldn't pick up a specific change to test from that — try " +
+          'something like "what if rent dropped to $1,800?" or "what if ' +
+          'interest rates went up to 8%?" and I\'ll re-run the numbers.';
         break;
       case 'unsupported_property_type':
         responseText = out.reason;
@@ -1120,9 +1127,17 @@ export async function* streamTurn(
             };
             break;
           case 'no_prior_decision':
-          case 'extraction_failed':
           case 'unsupported_property_type':
             responseText = out.reason;
+            break;
+          case 'extraction_failed':
+            // Task #84b: see fix at first call site above — extractor's
+            // LLM-written `reason` leaks internal vocabulary, never
+            // surface verbatim.
+            responseText =
+              "I couldn't pick up a specific change to test from that — try " +
+              'something like "what if rent dropped to $1,800?" or "what if ' +
+              'interest rates went up to 8%?" and I\'ll re-run the numbers.';
             break;
         }
 
