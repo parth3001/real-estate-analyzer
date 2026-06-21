@@ -78,6 +78,33 @@ const AlternativeAssumptionStrictShape = z.object({
   reasoning: z.string().min(1),
 });
 type AlternativeAssumption = z.infer<typeof AlternativeAssumptionStrictShape>;
+// Task #93 (2026-06-21): a third shape — partial object where the LLM
+// emitted `fieldPath` (or named the assumption another way) but skipped
+// `suggestedValue` or `reasoning`. Previously this branch made the whole
+// critique drop because no union member matched — so the
+// optimistic_flipper persona vanished from the workspace whenever its
+// 5th alternativeAssumption was a bare {fieldPath: "..."} object. The
+// reasoning text is still salvageable from any string-shaped sibling
+// field the LLM may have used (description, note, value), and we plug
+// in placeholders for the strict fields so the rest of the critique
+// survives instead of being thrown away.
+const AlternativeAssumptionPartialObject = z
+  .object({
+    fieldPath: z.string().min(1).optional(),
+    suggestedValue: z.union([z.number(), z.string(), z.boolean()]).optional(),
+    reasoning: z.string().optional(),
+    // Tolerate common LLM variants that mean "reasoning":
+    description: z.string().optional(),
+    note: z.string().optional(),
+    value: z.union([z.number(), z.string(), z.boolean()]).optional(),
+  })
+  .passthrough()
+  .transform((o): AlternativeAssumption => ({
+    fieldPath: o.fieldPath ?? 'unspecified',
+    suggestedValue: o.suggestedValue ?? o.value ?? '',
+    reasoning: o.reasoning ?? o.description ?? o.note ?? '(no rationale)',
+  }));
+
 const AlternativeAssumptionPermissive = z.union([
   AlternativeAssumptionStrictShape,
   z.string().min(1).transform(
@@ -87,6 +114,7 @@ const AlternativeAssumptionPermissive = z.union([
       reasoning: s,
     })
   ),
+  AlternativeAssumptionPartialObject,
 ]);
 
 const StructuredCritiqueSchema = z.object({

@@ -26,6 +26,7 @@ import {
   type ToolContext,
   DEFAULT_READ_RETRY,
 } from './types';
+import { logger } from '../../utils/logger';
 
 // ===== Input schema =====
 
@@ -134,6 +135,24 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
       ctx.eventsReads.getRecentDecisionsForUser(userId, decisionsLimit),
       ctx.eventsReads.getRecentOverridesForUser(userId, overridesLimit),
     ]);
+
+    // Task #91 (2026-06-21): diagnose the post-signup "I don't see any
+    // recent decisions" agent response. The user JUST saved a deal but
+    // the QA agent claims no recent activity. We need to know if the
+    // recall is genuinely empty (substrate gap) or returning data the
+    // agent then ignores. Log the count + latest decisionId so the
+    // next user report tells us which side of the cut-line we're on.
+    logger.info('[recall_user_context] read complete', {
+      traceId: ctx.traceId,
+      userId: userId.toString(),
+      profileFound: profile !== null,
+      decisionsCount: recentDecisions.length,
+      latestDecisionId:
+        recentDecisions.length > 0
+          ? (recentDecisions[0]._id as { toString(): string }).toString()
+          : null,
+      overridesCount: recentOverrides.length,
+    });
 
     // Output validation — same trust boundary, return side.
     return RecallUserContextOutputSchema.parse({
