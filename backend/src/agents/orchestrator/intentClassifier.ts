@@ -146,15 +146,20 @@ INTENT LABELS
 
 - override_assumption: User wants to change an input assumption AND see
   what the new score would be. This includes stress tests (perturbing one
-  input upward/downward) and "what if" scenarios — they're override
-  requests dressed in different verbs. Always classify as override_assumption
-  when the request names a specific field-and-value to change.
+  input upward/downward), sensitivity analyses, and "what if" scenarios —
+  they're override requests dressed in different verbs. Always classify
+  as override_assumption when the request names a specific field-and-value
+  to change OR when it's a general "stress test / sensitivity / what if"
+  invitation on the active deal (the agent will ask the user for the
+  specific perturbation in its follow-up).
   Examples: "change vacancy to 8%", "use $2800 rent instead",
             "make the cap rate 6%",
             "stress test at 7%", "stress test the mortgage rate at 7%",
             "what if the rate is 7%?", "what if rent were $2,200?",
             "rerun at 7%", "re-score with 30% down",
-            "show me the score at a $195K purchase price"
+            "show me the score at a $195K purchase price",
+            "run a sensitivity analysis", "run a sensitivity analysis on a deal",
+            "stress test this deal", "what's the sensitivity to interest rates?"
 
 - request_audit_trail: User wants to SEE / DISPLAY existing decision data —
   assumptions, inputs, projections, year-by-year numbers, the audit trail.
