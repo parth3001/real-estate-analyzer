@@ -277,7 +277,7 @@ export class BRRRRAnalyzer {
            inputs.brrrr.rehabBudget;
 
     // 🔍 DIAGNOSTIC LOGGING - Debug anonymous vs authenticated input mapping
-    logger.info('🔍 BRRRR Total Investment Calculation:', {
+    logger.debug('🔍 BRRRR Total Investment Calculation:', {
       downPayment: inputs.downPayment,
       closingCosts: inputs.closingCosts,
       rehabBudget: inputs.brrrr.rehabBudget,
@@ -325,7 +325,7 @@ export class BRRRRAnalyzer {
     const months = inputs.brrrr.seasoningPeriod ?? 12;
 
     // 🔍 DIAGNOSTIC LOGGING - Debug seasoning cost inputs
-    logger.info('🔍 BRRRR Seasoning Costs Input Debug:', {
+    logger.debug('🔍 BRRRR Seasoning Costs Input Debug:', {
       purchasePrice: inputs.purchasePrice,
       propertyTaxRate: inputs.propertyTaxRate,
       insuranceRate: inputs.insuranceRate,
@@ -502,7 +502,7 @@ export class BRRRRAnalyzer {
     const infiniteReturn = capitalRecovered >= totalCapitalDeployed;
 
     // 🔍 DIAGNOSTIC LOGGING - Debug anonymous vs authenticated discrepancy (Issue: 11,353% vs 65.81%)
-    logger.info('🔍 BRRRR Capital Recovery Calculation Debug:', {
+    logger.debug('🔍 BRRRR Capital Recovery Calculation Debug:', {
       totalInvestment,
       seasoningNetCashFlow: seasoningCosts.seasoningNetCashFlow,
       totalCapitalDeployed,

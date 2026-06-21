@@ -119,16 +119,19 @@ const calculationRateLimit = rateLimit({
 // Apply general rate limiting to all routes
 app.use(generalRateLimit);
 
-// Add request logging middleware
+// Task #94 (2026-06-21): demoted to logger.debug — previously emitted
+// 7 info lines per POST request, drowning out actual signal during
+// chat-heavy sessions. Express's per-request `method url status time`
+// summary (printed elsewhere) is sufficient at the info level.
 app.use((req, res, next) => {
   if (req.method === 'POST') {
-    logger.info(`=== INCOMING ${req.method} REQUEST ===`);
-    logger.info(`URL: ${req.url}`);
-    logger.info(`Path: ${req.path}`);
-    logger.info(`Body keys: ${Object.keys(req.body || {})}`);
-    logger.info(`Has _isWizardData: ${!!req.body?._isWizardData}`);
-    logger.info(`Has maintenanceReservePercentage: ${!!req.body?.maintenanceReservePercentage}`);
-    logger.info(`=== END REQUEST LOG ===`);
+    logger.debug(`=== INCOMING ${req.method} REQUEST ===`);
+    logger.debug(`URL: ${req.url}`);
+    logger.debug(`Path: ${req.path}`);
+    logger.debug(`Body keys: ${Object.keys(req.body || {})}`);
+    logger.debug(`Has _isWizardData: ${!!req.body?._isWizardData}`);
+    logger.debug(`Has maintenanceReservePercentage: ${!!req.body?.maintenanceReservePercentage}`);
+    logger.debug(`=== END REQUEST LOG ===`);
   }
   next();
 });

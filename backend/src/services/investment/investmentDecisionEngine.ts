@@ -20,11 +20,13 @@ import {
   generateBRRRRBottomLine
 } from './brrrDecisionLogic';
 
-// Debug helper - only logs in development
+// Task #94 (2026-06-21): demote to logger.debug. Previously logged at
+// info level which flooded every chat analysis run with QE DEBUG /
+// STRATEGY WEIGHTS DEBUG / PORTFOLIO FIT DEBUG / ROUNDING DEBUG lines
+// (hundreds per turn) — made backend triage painful. Still visible
+// when LOG_LEVEL=debug; silent at normal info level.
 const debug = (message: string, meta?: any) => {
-  if (process.env.NODE_ENV !== 'production') {
-    logger.info(message, meta);
-  }
+  logger.debug(message, meta);
 };
 import { LeverageOptimizer, LeverageAnalysis } from './leverageOptimizer';
 import { MarketDataResponse } from '../../types/marketData';
@@ -278,7 +280,7 @@ export class InvestmentDecisionEngine {
     // Get market tier classification
     const marketTier = MarketTierService.getMarketTier(city, state);
     
-    logger.info('Phase 2A: Market Intelligence Analysis', {
+    logger.debug('Phase 2A: Market Intelligence Analysis', {
       city,
       state,
       marketTier: marketTier.tier,
@@ -370,7 +372,7 @@ export class InvestmentDecisionEngine {
         overpricedBy
       };
       
-      logger.info('Fair Market Value Analysis', {
+      logger.debug('Fair Market Value Analysis', {
         purchasePrice: propertyData.purchasePrice,
         fairValue: fmvResult.fairValue,
         targetCapRate: fmvResult.targetCapRate,
@@ -447,7 +449,7 @@ export class InvestmentDecisionEngine {
     // Generate strategy alignment insights
     const insights = this.generateStrategyAlignmentInsights(alignment, userStrategy);
     
-    logger.info('Phase 3: Strategy Alignment Analysis Complete', {
+    logger.debug('Phase 3: Strategy Alignment Analysis Complete', {
       userStrategy: userStrategy.investmentStrategy,
       holdPeriod: userStrategy.holdPeriod,
       experienceLevel: userStrategy.experienceLevel,
@@ -737,7 +739,7 @@ export class InvestmentDecisionEngine {
     );
 
     // DEBUG: Log cap rate scoring details for Issue #22/#23 investigation
-    logger.info('Cap Rate Scoring Debug', {
+    logger.debug('Cap Rate Scoring Debug', {
       propertyCapRate: fundamentals.capRate,
       marketMedianCapRate: marketIntelligenceAnalysis.marketMedianCapRate,
       capRateScore,
@@ -855,7 +857,7 @@ export class InvestmentDecisionEngine {
       riskAdjustments
     );
     
-    logger.info('Phase 2B: Property Classification Analysis', {
+    logger.debug('Phase 2B: Property Classification Analysis', {
       propertyClass: classification.propertyClass,
       confidence: classification.confidence,
       riskLevel: classification.riskLevel,
@@ -1001,7 +1003,7 @@ export class InvestmentDecisionEngine {
       Math.min(treasuryBasedPrice, rentBasedCeiling);
     
     // DEBUG: Add detailed logging to trace calculation
-    logger.info('🔍 WALK AWAY PRICE CALCULATION DEBUG:', {
+    logger.debug('🔍 WALK AWAY PRICE CALCULATION DEBUG:', {
       noi,
       monthlyRent,
       marketTier,
@@ -1024,7 +1026,7 @@ export class InvestmentDecisionEngine {
     if (monthlyCashFlow > 500 && capRate > 0.05) {
       // Strong cash flow properties get more flexibility
       const finalPrice = Math.max(baseWalkAway, comparablesCeiling);
-      logger.info('🔍 WALK AWAY PRICE - STRONG CASH FLOW OVERRIDE:', {
+      logger.debug('🔍 WALK AWAY PRICE - STRONG CASH FLOW OVERRIDE:', {
         monthlyCashFlow,
         capRate: capRate.toFixed(2) + '%',
         baseWalkAway: Math.round(baseWalkAway),
@@ -1034,7 +1036,7 @@ export class InvestmentDecisionEngine {
       return finalPrice;
     }
     
-    logger.info('🔍 WALK AWAY PRICE - FINAL RESULT:', {
+    logger.debug('🔍 WALK AWAY PRICE - FINAL RESULT:', {
       monthlyCashFlow,
       capRate: capRate.toFixed(2) + '%',
       meetsStrongCashFlowCriteria: false,
@@ -1581,7 +1583,7 @@ export class InvestmentDecisionEngine {
     skipEnhancements: boolean = false // Skip AI content and sensitivity analysis for recursive calls
   ): Promise<InvestmentDecision> {
     const startTime = Date.now();
-    logger.info('Investment Decision Engine: Starting analysis', {
+    logger.debug('Investment Decision Engine: Starting analysis', {
       propertyPrice: propertyData.purchasePrice,
       userCash: userContext.availableCash,
       experience: userContext.experienceLevel,
@@ -1596,7 +1598,7 @@ export class InvestmentDecisionEngine {
       const investmentStrategy = (propertyData as any).investmentStrategy || 'buy-hold';
 
       // ✅ OBSERVABILITY (Issues #33, #34): Log routing decision for production debugging
-      logger.info('📍 Investment Strategy Routing', {
+      logger.debug('📍 Investment Strategy Routing', {
         investmentStrategy,
         hasStrategyField: !!(propertyData as any).strategy,
         strategyFieldValue: (propertyData as any).strategy,
@@ -1620,7 +1622,7 @@ export class InvestmentDecisionEngine {
       }
 
       // Continue with standard Buy & Hold analysis
-      logger.info('🏠 Buy & Hold Strategy - Routing to Standard Decision Engine');
+      logger.debug('🏠 Buy & Hold Strategy - Routing to Standard Decision Engine');
       // 1. Analyze leverage optimization
       const leverageAnalysis = await this.leverageOptimizer.analyzeOptimalLeverage(
         propertyData, 
@@ -1673,7 +1675,7 @@ export class InvestmentDecisionEngine {
         enhancedUserContext  // Use AI-enhanced context instead of basic userContext
       );
 
-      logger.info('V3.0 Professional Assessment Complete', {
+      logger.debug('V3.0 Professional Assessment Complete', {
         dealQuality: professionalAssessment.dealQuality,
         executionDifficulty: professionalAssessment.executionDifficulty,
         dataReliability: professionalAssessment.dataReliability,
@@ -1819,7 +1821,7 @@ export class InvestmentDecisionEngine {
         analysis
       );
       
-      logger.info('V3.0 Verdict Mapping Applied', {
+      logger.debug('V3.0 Verdict Mapping Applied', {
         dealQuality: `${dealQuality}/100`,
         v3Verdict,
         v3Confidence,
@@ -1881,7 +1883,7 @@ export class InvestmentDecisionEngine {
       };
 
       // Log enhanced goals integration
-      logger.info('Investment Decision Engine: Enhanced goals integrated', {
+      logger.debug('Investment Decision Engine: Enhanced goals integrated', {
         hasEnhancedGoals: !!enhancedGoals,
         exitStrategy: goalContext.exitStrategy,
         portfolioStrategy: goalContext.portfolioStrategy,
@@ -2021,7 +2023,7 @@ export class InvestmentDecisionEngine {
     logger.info('BRRRR Decision Engine: Starting BRRRR-specific analysis');
 
     // 🔍 DIAGNOSTIC LOGGING - Verify this method is being called for anonymous
-    logger.info('🔍 BRRRR Decision Engine Entry Point:', {
+    logger.debug('🔍 BRRRR Decision Engine Entry Point:', {
       purchasePrice: propertyData.purchasePrice,
       downPayment: propertyData.downPayment,
       closingCosts: propertyData.closingCosts,
@@ -2849,7 +2851,7 @@ export class InvestmentDecisionEngine {
     // Get deal quality score from professional assessment (80% algorithmic foundation)
     const dealQuality = professionalAssessment?.dealQuality || 50;
 
-    logger.info('Strategy-aware goal-based reasoning context:', {
+    logger.debug('Strategy-aware goal-based reasoning context:', {
       verdict,
       dealQuality,
       riskTolerance,
@@ -3485,7 +3487,7 @@ export class InvestmentDecisionEngine {
     };
 
     // DEBUG: Log what we're sending to frontend
-    logger.info('🔍 INVESTMENT DECISION - FINAL MESSAGES BEING SENT:', {
+    logger.debug('🔍 INVESTMENT DECISION - FINAL MESSAGES BEING SENT:', {
       verdict: finalResult.verdict,
       confidence: finalResult.confidence,
       primaryReason: finalResult.primaryReason,

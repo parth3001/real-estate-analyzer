@@ -97,7 +97,7 @@ export class LeverageOptimizer {
     availableCash: number
   ): Promise<LeverageAnalysis> {
     const startTime = Date.now();
-    logger.info('Leverage Optimizer: Starting analysis', { 
+    logger.debug('Leverage Optimizer: Starting analysis', { 
       propertyPrice: propertyData.purchasePrice,
       availableCash 
     });
@@ -132,7 +132,7 @@ export class LeverageOptimizer {
       const stressTestResults = this.runStressTests(optimalScenario, propertyData, analysis);
       
       const processingTime = Date.now() - startTime;
-      logger.info('Leverage Optimizer: Analysis complete', {
+      logger.debug('Leverage Optimizer: Analysis complete', {
         processingTime: `${processingTime}ms`,
         optimalLTV: `${100 - optimalScenario.downPaymentPercent}%`,
         currentLTV: `${100 - currentScenario.downPaymentPercent}%`,
