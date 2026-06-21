@@ -362,6 +362,8 @@ export async function claimChatSession(
 export interface SaveStressScenarioResult {
   newDecisionEventId: string;
   newAnalysisEventId: string;
+  /** Task #85b — the workspace route is /analysis/<dealId>, not decisionEventId. */
+  dealId: string | null;
   dealQuality: number;
 }
 

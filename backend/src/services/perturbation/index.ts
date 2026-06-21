@@ -240,6 +240,14 @@ export interface PersistStressScenarioInput {
 export interface PersistStressScenarioOutput {
   newDecisionEventId: string;
   newAnalysisEventId: string;
+  /**
+   * Task #85b (2026-06-18 follow-up): the Deal id is what the
+   * frontend navigates to after save (the workspace route is
+   * /analysis/<dealId>, NOT /analysis/<decisionEventId>). Returning
+   * dealId saves the client an extra lookup and prevents the 404
+   * we hit when navigation conflated the two ids.
+   */
+  dealId: string | null;
   dealQuality: number;
 }
 
@@ -348,10 +356,45 @@ export async function persistStressScenario(
     ctx
   );
 
+  // Task #85b (2026-06-18 follow-up): look up the Deal that score_deal
+  // just materialized — by (userId, canonicalAddressKey) since the
+  // materializer dedups by that key. The Deal's _id is what the
+  // frontend navigates to. Without this, the chip was passing the
+  // decisionEventId as if it were a dealId and the workspace page
+  // 404'd.
+  let dealId: string | null = null;
+  try {
+    const { DealModel } = await import('../../models/Deal');
+    const { buildCanonicalAddressKey } = await import('../../utils/canonicalAddressKey');
+    const addr = (priorPropertyData as { propertyAddress?: { street?: string; city?: string; state?: string; zipCode?: string } }).propertyAddress;
+    if (addr?.street && addr?.city && addr?.state) {
+      const canonicalAddressKey = buildCanonicalAddressKey({
+        street: addr.street,
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zipCode,
+      });
+      const deal = await DealModel.findOne({
+        userId: new Types.ObjectId(input.userId),
+        canonicalAddressKey,
+      })
+        .select('_id')
+        .lean<{ _id: Types.ObjectId } | null>()
+        .exec();
+      dealId = deal?._id?.toString() ?? null;
+    }
+  } catch (err) {
+    logger.warn('persistStressScenario: dealId lookup failed (non-fatal)', {
+      userId: input.userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   logger.info('persistStressScenario: scenario persisted', {
     userId: input.userId,
     priorDecisionId: input.priorDecisionId,
     newDecisionEventId: scoreOutput.decisionEventId.toString(),
+    dealId,
     dealQuality: scoreOutput.dealQuality,
     perturbationCount: input.perturbations.length,
   });
@@ -359,6 +402,7 @@ export async function persistStressScenario(
   return {
     newDecisionEventId: scoreOutput.decisionEventId.toString(),
     newAnalysisEventId: scoreOutput.analysisEventId.toString(),
+    dealId,
     dealQuality: scoreOutput.dealQuality,
   };
 }

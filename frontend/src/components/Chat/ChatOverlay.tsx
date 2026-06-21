@@ -1631,13 +1631,22 @@ function SaveAsScenarioChip({
         userMessage,
       });
       setStatus('saved');
-      // Brief delay so the user sees the success state, then route to the
-      // workspace where the new scenario appears alongside baseline. We
-      // navigate by decisionEventId; the workspace page resolves the
-      // owning Deal and lands on the just-saved scenario via
-      // selectedId = current.
+      // Task #85b (2026-06-21 follow-up): navigate by Deal id, NOT
+      // decisionEventId. The workspace route /analysis/:id resolves
+      // :id as a Deal id (controller fetches by Deal._id) — passing
+      // decisionEventId there 404s on getProperty. Backend now returns
+      // dealId via the materializer lookup; if for any reason it's
+      // null (lookup failed), surface a clear error instead of routing
+      // to a guaranteed 404.
       setTimeout(() => {
-        navigate(`/analysis/${result.newDecisionEventId}`);
+        if (result.dealId) {
+          navigate(`/analysis/${result.dealId}`);
+        } else {
+          setStatus('error');
+          setErrorMsg(
+            'Scenario saved but workspace link unavailable. Open it from Saved Properties.'
+          );
+        }
       }, 700);
     } catch (err) {
       setStatus('error');

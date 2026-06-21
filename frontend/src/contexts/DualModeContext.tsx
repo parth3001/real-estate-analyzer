@@ -112,9 +112,12 @@ export const DualModeProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Save to backend if authenticated
       if (isAuthenticated) {
         try {
-          await api.put('/api/auth/dual-mode', { 
+          // Task #85b: previously `/api/auth/dual-mode` — double-prefixed
+          // because api.baseURL already includes `/api`. Per FRONTEND_API_STANDARDS.md
+          // routes here are bare `/auth/...`.
+          await api.put('/auth/dual-mode', {
             mode: newMode,
-            targetPersona 
+            targetPersona
           });
         } catch (apiError) {
           console.warn('Failed to save mode preference to backend:', apiError);
