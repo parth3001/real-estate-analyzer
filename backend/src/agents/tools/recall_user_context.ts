@@ -124,10 +124,26 @@ export const recallUserContext: Tool<RecallUserContextInput, RecallUserContextOu
     const decisionsLimit = validated.decisionsLimit ?? 10;
     const overridesLimit = validated.overridesLimit ?? 20;
 
-    // userId comes from the ToolContext by default — the orchestrator
-    // owns session identity. The LLM-supplied override is honored only
-    // when explicitly present (rare B2B path).
-    const userId = validated.userId ?? ctx.userId;
+    // Task #91 (2026-06-21): ALWAYS use ctx.userId. Previously we
+    // honored a LLM-supplied `userId` as a "rare B2B path" — but the
+    // LLM, prompted with an optional 24-hex `userId` field, helpfully
+    // supplied the all-zero ObjectId ("000000000000000000000000") as a
+    // placeholder. That value is hex-valid so Zod accepted it, the
+    // `??` fallback never fired, and recall returned 0 decisions —
+    // which the QA agent narrated to the user as "I don't see any
+    // recent decisions in your account history" for a deal they had
+    // just saved seconds before. The LLM has no legitimate reason to
+    // specify the userId; the orchestrator owns session identity. The
+    // input field stays (backwards compatibility for any internal
+    // caller) but the value is now ignored.
+    if (validated.userId !== undefined) {
+      logger.warn('[recall_user_context] ignoring LLM-supplied userId', {
+        traceId: ctx.traceId,
+        llmSuppliedUserId: validated.userId.toString(),
+        ctxUserId: ctx.userId.toString(),
+      });
+    }
+    const userId = ctx.userId;
 
     // Three parallel reads — see events store §8.2 for the recipe.
     const [profile, recentDecisions, recentOverrides] = await Promise.all([
