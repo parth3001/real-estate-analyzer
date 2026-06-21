@@ -18,6 +18,7 @@ import {
   type ToolContext,
   DEFAULT_READ_RETRY,
 } from './types';
+import { logger } from '../../utils/logger';
 
 // ===== Input schema =====
 
@@ -84,7 +85,18 @@ export const getPortfolioSummary: Tool<
     ctx: ToolContext
   ): Promise<GetPortfolioSummaryOutput> {
     const validated = GetPortfolioSummaryInputSchema.parse(input);
-    const userObjectId = new Types.ObjectId(validated.userId);
+    // Task #91 follow-up (2026-06-21): same trap as recall_user_context
+    // (commit 7b7134a). The LLM happily supplies "000000000000000000000000"
+    // as a placeholder for any 24-hex userId field, and the regex accepts
+    // it. Always use ctx.userId; ignore + warn on LLM-supplied value.
+    if (validated.userId !== ctx.userId.toString()) {
+      logger.warn('[get_portfolio_summary] ignoring LLM-supplied userId', {
+        traceId: ctx.traceId,
+        llmSuppliedUserId: validated.userId,
+        ctxUserId: ctx.userId.toString(),
+      });
+    }
+    const userObjectId = ctx.userId;
     const limit = validated.limit ?? 50;
 
     const decisions = await ctx.eventsReads.getRecentDecisionsForUser(
