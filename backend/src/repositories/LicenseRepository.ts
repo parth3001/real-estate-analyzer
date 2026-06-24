@@ -113,9 +113,17 @@ export class LicenseRepository {
     const canonicalKey = buildCanonicalAddressKey(input.propertyAddress);
     const purchasedAt = new Date();
     // Task #7 (2026-05-28): default window is now 180 days (was 30).
-    // computeExpiry's signature default also matches; the explicit ?? here
-    // preserves the override path for paid tiers / promotions.
-    const expiresAt = computeExpiry(purchasedAt, input.windowDays ?? 180);
+    // Task #35 (2026-06-22): env var override DEAL_LICENSE_WINDOW_DAYS lets
+    // ops/QA force a short window (e.g. 0) for testing the expired-state
+    // UX without waiting 180 days. Production leaves it unset → 180.
+    // The explicit input.windowDays ?? still wins so per-tier overrides
+    // (promotions, paid tiers) work as before.
+    const envWindow = process.env.DEAL_LICENSE_WINDOW_DAYS
+      ? Number(process.env.DEAL_LICENSE_WINDOW_DAYS)
+      : undefined;
+    const windowDays =
+      input.windowDays ?? (Number.isFinite(envWindow) ? (envWindow as number) : 180);
+    const expiresAt = computeExpiry(purchasedAt, windowDays);
 
     const payload: DealLicensePayload = {
       userId: input.userId,
@@ -201,11 +209,36 @@ export class LicenseRepository {
     address: PropertyAddressInput
   ): Promise<DealLicenseDocument | null> {
     const canonicalKey = buildCanonicalAddressKey(address);
+    // Task #35 (2026-06-22): also exclude time-expired licenses. Previously
+    // a license with status='active' but expiresAt<now would still be
+    // returned here, which let post-180-day workspaces keep mutating.
+    // Filter by expiresAt > now so the active-license definition is
+    // BOTH status-active AND within the window.
     const doc = await DealLicenseModel.findOne({
       userId,
       canonicalPropertyAddressKey: canonicalKey,
       status: 'active',
+      expiresAt: { $gt: new Date() },
     }).lean();
+    return doc as DealLicenseDocument | null;
+  }
+
+  /**
+   * Task #35 (2026-06-22) — find the most recent license for a property
+   * REGARDLESS of expiry. Lets the GET endpoint surface a status='expired'
+   * UX instead of conflating "no license ever" with "license lapsed."
+   */
+  async findLatestForProperty(
+    userId: Types.ObjectId | string,
+    address: PropertyAddressInput
+  ): Promise<DealLicenseDocument | null> {
+    const canonicalKey = buildCanonicalAddressKey(address);
+    const doc = await DealLicenseModel.findOne({
+      userId,
+      canonicalPropertyAddressKey: canonicalKey,
+    })
+      .sort({ purchasedAt: -1 })
+      .lean();
     return doc as DealLicenseDocument | null;
   }
 

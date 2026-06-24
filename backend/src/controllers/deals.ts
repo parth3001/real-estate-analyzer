@@ -1031,8 +1031,33 @@ export const getDealLicense = async (
       deal.propertyAddress
     );
 
+    // Task #35 (2026-06-22): when no active license, check whether the
+    // user EVER had one for this property. If so, return a distinct
+    // 'expired' (or 'refunded') status so the UI can render a read-only
+    // badge + renewal CTA instead of conflating with free-tier 'none'.
     if (!activeLicense) {
-      res.json({ status: 'none' });
+      const latestLicense = await licenseRepository.findLatestForProperty(
+        userObjectId,
+        deal.propertyAddress
+      );
+      if (!latestLicense) {
+        res.json({ status: 'none' });
+        return;
+      }
+      const isTimeExpired =
+        latestLicense.status === 'active' &&
+        latestLicense.expiresAt instanceof Date &&
+        latestLicense.expiresAt.getTime() <= Date.now();
+      const status: 'expired' | 'refunded' = isTimeExpired
+        ? 'expired'
+        : (latestLicense.status as 'expired' | 'refunded');
+      res.json({
+        status,
+        licenseId: latestLicense._id.toString(),
+        expiresAt: latestLicense.expiresAt,
+        purchasedAt: latestLicense.purchasedAt,
+        pricePaidCents: latestLicense.pricePaidCents,
+      });
       return;
     }
 
