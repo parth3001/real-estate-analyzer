@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #197: Adversarial critic truncating mid-sentence (1024 token cap)
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P1 — Public surface, looks broken
+**Commit**: `021378e`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts` AgentConfig
+**Summary**: Surfaced immediately after #195 — user pasted a full critique copy where both personas' last `alternativeAssumption.reasoning` field ended mid-string ("...maintenance, not" and "...understates the"). Root cause: `maxTokensPerCall: 1024` was sized for an earlier terse critique style; the post-#195 prompt (with ENGINE CONVENTIONS block + personas' detail-rich reasoning style) elicits ~2000+ token JSON outputs. The LLM hit the cap mid-string, the JSON came back malformed, Zod's permissive partial-object branch (added in #135) salvaged what it could but the last reasoning string was the casualty. Fix: bump cap to 4096, comfortably above longest observed critique (~2500 tokens) and safely under Opus's 8192 ceiling. Cost: per-persona max ~$0.04 (was ~$0.02); per-deal critique pair max ~$0.08; still well inside the $2 per-deal COGS budget. Follow-up backstop noted in commit if truncation reappears: cap each reasoning field at ~300 chars in the prompt so the LLM spreads tokens evenly across bullets.
+
+---
+
 ### Issue #196: "Workspace" promoted from internal term to "Deal Workspace" brand
 **Status**: ✅ RESOLVED 2026-06-24
 **Priority**: P2 — Branding / product clarity (no functional change)
