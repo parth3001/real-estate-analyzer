@@ -5,7 +5,16 @@
 
 ---
 
-## ✅ **RESOLVED 2026-06-24 — Conversion friction removal**
+## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
+
+### Issue #194: Tax/strategy chip mis-routed as override in saved workspace
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P1 — User-visible failure on a marketing-promoted chip
+**Commit**: `4807c48`
+**Component**: `backend/src/agents/orchestrator/intentClassifier.ts` + `backend/src/agents/qa/qaAgent.ts`
+**Summary**: Surfaced during #36 walkthrough — same *"What hold period optimizes after-tax IRR?"* chip that worked perfectly on the anonymous teaser hit the canned `extraction_failed` fallback in the auth workspace. Difference: anon had no decision context so classifier picked qa_general; auth workspace had a dealId so classifier interpreted "optimizes" as a change-verb and routed to override_assumption → perturbation extractor failed → fallback message fired. Two-prong fix: (a) expanded qa_general examples with strategy / tax / framework / hold-period questions + a CRITICAL DISAMBIGUATION rule ("optimizes" without a specific value = qa_general, not override); (b) added `get_tax_education_context` to the QA agent's allowed tools so the answer is grounded in real rates + concepts + mandatory disclaimer, not base-model recall.
+
+---
 
 ### Issue #193: Auth CTAs full-page nav broke "Save this deal" flow context
 **Status**: ✅ RESOLVED 2026-06-24
