@@ -3,9 +3,12 @@ import { Box, Button, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { appleColors } from '../../theme/appleDesignSystem';
 import analyzrLogo from '../../assets/analyzr-logo.png';
+import { useAuthModal } from '../../contexts/AuthModalContext';
 
 const StickyHeader: React.FC = () => {
   const navigate = useNavigate();
+  // Issue #193 — inline auth modal instead of full-page nav.
+  const { open: openAuthModal } = useAuthModal();
   const [isSticky, setIsSticky] = useState(false);
 
   useEffect(() => {
@@ -131,9 +134,9 @@ const StickyHeader: React.FC = () => {
               What's New
             </Button>
 
-            {/* Login Link */}
+            {/* Login Link — Issue #193: inline modal instead of route nav */}
             <Button
-              onClick={() => navigate('/login')}
+              onClick={() => openAuthModal({ source: 'sign-in' })}
               sx={{
                 color: appleColors.gray[700],
                 fontSize: { xs: '0.875rem', md: '0.938rem' },
@@ -152,9 +155,9 @@ const StickyHeader: React.FC = () => {
               Login
             </Button>
 
-            {/* Sign Up Button */}
+            {/* Sign Up Button — Issue #193: inline modal */}
             <Button
-              onClick={() => navigate('/register')}
+              onClick={() => openAuthModal({ source: 'sign-in' })}
               variant="outlined"
               sx={{
                 color: appleColors.primary[500],

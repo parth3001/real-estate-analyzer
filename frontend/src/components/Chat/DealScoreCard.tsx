@@ -40,8 +40,8 @@ import {
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { Link as RouterLink } from 'react-router-dom';
 import { bandForScore, tabularNumsSx } from '../../theme/chatTheme';
+import { useAuthModal } from '../../contexts/AuthModalContext';
 
 // ===== Props =====
 
@@ -135,6 +135,9 @@ function formatAddress(addr: DealScoreCardProps['address']): string {
 // ===== Component =====
 
 export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
+  // Issue #193 — open inline auth modal instead of /login route
+  // when the anonymous user taps the lock-card Sign in button.
+  const { open: openAuthModalLocal } = useAuthModal();
   const {
     strategy,
     dealTypeLabel,
@@ -268,9 +271,9 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
                 free for your first deal.
               </Typography>
             </Box>
+            {/* Issue #193 — inline auth modal instead of /login route */}
             <Button
-              component={RouterLink}
-              to="/login"
+              onClick={() => openAuthModalLocal({ source: 'save-deal', ref: 'unlock' })}
               variant="contained"
               size="small"
               sx={{ textTransform: 'none', borderRadius: 2, flexShrink: 0 }}

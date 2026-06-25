@@ -18,6 +18,7 @@ import ProtectedRoute, { GuestRoute } from './components/auth/ProtectedRoute';
 
 // Affiliate Context
 import { AffiliateProvider, useAffiliate } from './contexts/AffiliateContext';
+import { AuthModalProvider } from './contexts/AuthModalContext';
 
 // Auth Context
 import { useAuth } from './contexts/AuthContext';
@@ -149,6 +150,7 @@ function App() {
           <BrowserRouter>
             <AffiliateProvider>
               <AuthProvider>
+                <AuthModalProvider>
                 <PersonaProvider>
                   <DualModeProvider>
                     <Routes>
@@ -289,6 +291,7 @@ function App() {
                     </Routes>
                   </DualModeProvider>
                 </PersonaProvider>
+                </AuthModalProvider>
               </AuthProvider>
             </AffiliateProvider>
           </BrowserRouter>

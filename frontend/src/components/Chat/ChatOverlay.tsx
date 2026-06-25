@@ -46,6 +46,7 @@ import {
   type ChatStreamEvent,
 } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
+import { useAuthModal } from '../../contexts/AuthModalContext';
 import { AiDisclaimer } from '../AiDisclaimer';
 import {
   upsertThread,
@@ -384,6 +385,10 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
     props.placeholder ?? 'Ask about a property, a metric, or paste a listing...';
 
   const navigate = useNavigate();
+  // Issue #193 — open the inline auth modal instead of navigating to
+  // /login. Same backend + magic-link flow; modal preserves the chat
+  // surface so high-intent CTAs (Save this deal) don't lose context.
+  const { open: openAuthModal } = useAuthModal();
 
   // Session identity — persisted in sessionStorage so refresh keeps the
   // same ghost-user identity + rate-limit quota on the backend.
@@ -526,13 +531,15 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
       returnTo: '/app',
       conversationEventId: claimMsg.conversationEventId,
     });
-    const params = new URLSearchParams({
-      returnTo: '/app',
-      ...(claimMsg.conversationEventId
-        ? { pendingConversationId: claimMsg.conversationEventId }
-        : {}),
-    });
-    navigate(`/login?${params.toString()}`);
+    // Issue #193 — open inline auth modal in place of route nav.
+    // pendingChatClaim is already written above; on magic-link verify
+    // the server merges the ghost session into the new user. The
+    // returnTo + pendingConversationId params from before lived on
+    // the /login URL, but the modal flow doesn't need them — the
+    // sessionStorage-stored claim record carries the same intent and
+    // the verify page reads it from there.
+    void claimMsg; // intentionally unused — see comment above
+    openAuthModal({ source: 'save-deal', ref: 'unlock' });
   };
 
   async function send(text: string): Promise<void> {
