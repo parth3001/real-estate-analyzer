@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #195: Adversarial critic confabulated 0% vacancy when engine clearly shows 5%
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P0 — Trust killer (critic discredits our own engine with a verifiably false claim)
+**Commit**: `6c9f573`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts` — BASE_PROMPT_HEADER
+**Summary**: User shared a saved-deal critique whose first bullet claimed the engine "ran a 0% effective vacancy line in Year 1 monthly P&L despite a 5% assumption, masking ~$1,500/yr of expense and inflating DSCR." Cross-checked the Financials view: `Less: Vacancy (5.0%) −$125` is explicitly displayed between gross monthly income and effective income, $1,500/yr deduction reconciles exactly. The math is correct, the display is explicit, the critic was wrong. The critic likely scanned operating-expenses sub-items for a "Vacancy" entry, didn't find one (vacancy is an INCOME REDUCTION per Fannie Mae / Freddie Mac convention, not an OpEx), and concluded the engine was missing it. Sister bug to #84 (scoring agent leaks internal vocab) but inverted — here the critic confabulates a non-existent inconsistency. Fix: added an `ENGINE CONVENTIONS — READ BEFORE CRITIQUING` block to the shared BASE_PROMPT_HEADER explicitly disambiguating vacancy / CapEx / NOI conventions; tells the critic to verify line-item location before claiming missing, and to omit critiques when unsure rather than fabricate. Doesn't touch the other 9 bullets the user explicitly validated as legitimate critique.
+
+---
+
 ### Issue #194: Tax/strategy chip mis-routed as override in saved workspace
 **Status**: ✅ RESOLVED 2026-06-24
 **Priority**: P1 — User-visible failure on a marketing-promoted chip
