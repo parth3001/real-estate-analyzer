@@ -144,6 +144,383 @@ number `[H#nn]` so commits + transcripts stay searchable.
 
 ---
 
+### Issue #141: [H#79] Build four substrate read tools — close confabulation gaps
+**Status**: ✅ RESOLVED 2026-06-18
+**Commit**: `a8e2ea1`
+**Component**: `backend/src/agents/tools/get_decision_breakdown.ts` + `get_long_term_projection.ts` + `get_critique_for_decision.ts` + `get_scenario_comparison.ts`
+**Summary**: Agent was confabulating audit-trail, projection, critique, and scenario answers because there were no substrate-backed read tools for those data shapes. Built four read tools that fetch from the events collection directly. Confabulation rate drops to zero when the right tool exists.
+
+---
+
+### Issue #142: [H#80] Build portfolio / compare / tax / historical / market tools
+**Status**: ✅ RESOLVED 2026-06-18
+**Commit**: `52dbc34`
+**Component**: `backend/src/agents/tools/get_portfolio_summary.ts` + `compare_two_properties.ts` + `get_tax_education_context.ts` + `get_historical_snapshots.ts` + `get_market_context.ts` + `get_license_budget.ts`
+**Summary**: Six additional substrate read tools — round 2 of #79. Tax tool returns rates + concepts + mandatoryDisclaimer but NEVER computes liability (legal safety). License-budget tool answers "how much have I spent on this deal?" from real `CostEvent` data. Total tool count: 14 tools available to dealScoringAgent.
+
+---
+
+### Issue #143: [H#71] Agent confabulates 10-year projection (no get_long_term_projection tool)
+**Status**: ✅ RESOLVED 2026-06-18
+**Commit**: `e7e80a7`
+**Summary**: Without the substrate-backed projection tool, agent fabricated 10-year cash flow / equity / total return numbers. Tool landed as part of the trust/disclaimer commit, replacing every "based on the model inputs" narrative path.
+
+---
+
+### Issue #144: [H#76] AI accuracy + educational disclaimers across all AI-generated surfaces
+**Status**: ✅ RESOLVED 2026-06-18
+**Commit**: `e7e80a7`
+**Summary**: Added "educational, not advice" disclaimers to every AI-narrated turn that touched tax, market predictions, or specific dollar projections. Lint pass: search for AI-narrative endpoints lacking the disclaimer suffix.
+
+---
+
+### Issue #145: [H#77] ToS contradicts 2.0 brand + attorney handoff
+**Status**: ✅ RESOLVED 2026-06-19 (handoff doc); ToS itself still pending external attorney review
+**Commit**: `987ee69`
+**Component**: `docs/TERMS_OF_SERVICE_DRAFT.md` + `docs/ATTORNEY_HANDOFF_PACKAGE.md`
+**Summary**: Authored 22-section ToS rewrite + 6-section attorney engagement package. ToS draft aligns with shipped product (per-deal, no subscription, 180-day window, no investment advice). Attorney review is external — separate item, blocks launch.
+
+---
+
+### Issue #146: [H#78] Re-consent flow on login when ToS version changes
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `7f56b92`
+**Component**: Backend ToS version tracking + frontend `ReconsentModal.tsx`
+**Summary**: When a user logs in and the ToS version they accepted is older than the current material version, they see a re-consent modal and cannot continue until they accept. Material vs. non-material distinction tracked via `TOS_VERSION_HISTORY`.
+
+---
+
+### Issue #147: [H#68] Workspace chips should resume the source chat thread (not start fresh)
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `f80d166`
+**Component**: Workspace chip handlers + `ChatOverlay.tsx` session resumption
+**Summary**: Tapping a workspace chip (e.g. "Open in chat") used to start a brand-new chat session, discarding the prior thread. Now resumes via sourceSessionId captured at materialize time.
+
+---
+
+### Issue #148: [H#75] Stress test missing exit cap rate expansion + numeric projections
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `8e9e9ec`
+**Component**: `backend/src/services/perturbation/` + stress-test narrative generator
+**Summary**: Stress tests didn't model rate expansion or appreciation tail risk. Added tier perturbations for both — short-circuits the "what could go wrong on exit?" question that wasn't answerable before.
+
+---
+
+### Issue #149: [H#63] Skeptical CPA critique missing — only one persona showing
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `51186ec`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts`
+**Summary**: Used `Promise.all` for the two persona calls — one persona failing rejected the whole batch and dropped both. Switched to `Promise.allSettled` so one failing critique doesn't sink the other. Companion to #135 (schema widen) for full robustness.
+
+---
+
+### Issue #150: [H#70] Intermittent "Invalid token" on first chat message after workspace navigation
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `db39509`
+**Component**: `frontend/src/services/chatApi.ts` `streamChatTurn`
+**Summary**: Race condition between workspace → /app navigation and token refresh. The first fetch could fly with stale or absent token, surfaced as "Invalid token" — succeeded on retry. Fix: on 401, re-read token from localStorage (no closure capture) and retry once.
+
+---
+
+### Issue #151: [H#81] Hide $2 COGS budget from workspace UI
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `db39509`
+**Component**: `LicenseStatusBadge.tsx`
+**Summary**: Showing "$0.04 of $2.00 used" leaked the cost-of-goods budget to users who paid $4.99. Reframed as "deep analyses remaining" depth/quota framing. No more pricing-perception mismatch.
+
+---
+
+### Issue #152: [H#72] NOI convention undisclosed (includes CapEx)
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `c8649c0`
+**Component**: Workspace NOI display + tooltip
+**Summary**: Investor convention varies on whether CapEx is in NOI. Engine includes it; users seeing a lower NOI than expected didn't know why. Added tooltip explaining the convention + cross-link to financial breakdown.
+
+---
+
+### Issue #153: [H#73] Empty scenario table on first analysis — silent, looks broken
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `c8649c0`
+**Summary**: When a deal had only the baseline analysis (no stress test scenarios yet), the comparison table showed nothing — looked like a broken render. Added "Run a stress test to populate this view" empty-state CTA.
+
+---
+
+### Issue #154: [H#64] Critique UI exposed internal code paths in suggestion field labels
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `c8649c0`
+**Summary**: Adversarial critique cards showed `fieldPath` values like `assumptions.vacancyRate` directly to users. Mapped internal field paths to human-readable labels.
+
+---
+
+### Issue #155: [H#65] Workspace "Download PDF" output looks bad
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `bbdd0eb` + `1a0745c`
+**Component**: `backend/src/services/pdf/` substrate-native single-page renderer
+**Summary**: Original PDF was the legacy wizard renderer's output — wrong layout, missing fields, ugly. Rebuilt as a substrate-native single-page workspace PDF with correct data paths for walk-away / IRR / debt / invested.
+
+---
+
+### Issue #156: [H#66] "Email PDF to me" from workspace not delivered
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `faf6b0a`
+**Component**: Email service + PDF attach pipeline
+**Summary**: Email-PDF endpoint existed but didn't actually attach or send. Wired Resend integration + PDF generation in a single round-trip.
+
+---
+
+### Issue #157: [H#61] Workspace PDF export + email
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `faf6b0a`
+**Summary**: Net-new feature: export the workspace as a PDF + email it. Foundation for #65 / #66 follow-ups.
+
+---
+
+### Issue #158: [H#62] IRR vs Cash-on-Cash denominator inconsistency
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `2038ef4`
+**Component**: `backend/src/services/financial/financialCalculations.ts` IRR
+**Summary**: IRR was computed with the property sale as Y11 cash flow instead of combining the exit proceeds with Y10 cash flow. Moved Y11 exit into Y10 — IRR moved from 8.04% to 8.89% on the test case, matches institutional convention.
+
+---
+
+### Issue #159: [H#59 + #60] Mobile UX P0 launch blockers + P1 sweep (Sterling audit)
+**Status**: ✅ RESOLVED 2026-06-19
+**Commits**: `9fb58b1` (P0) + `7891fc3` (P1 scroll-lock)
+**Summary**: Sterling mobile-UX audit surfaced P0 launch blockers (drawer scroll-lock missing, viewport overflow on the workspace, etc.). Shipped both rounds before the workspace was usable on phones — 40%+ of traffic per the user-research notes.
+
+---
+
+### Issue #160: [H#58] Three CPA-found bugs — dataReliability, CapEx visibility, vacancy line
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `60ac0ac`
+**Summary**: Tax-Expert persona CPA reviewer found three bugs in the workspace number presentation: dataReliability score not aligning with confidence intervals, CapEx not visible in financial breakdown, vacancy line missing from monthly statement. All fixed.
+
+---
+
+### Issue #161: [H#57] Chat CTA: explain WHY users should save the deal
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `5edfe5c`
+**Component**: `ChatOverlay.tsx` save CTA helper text
+**Summary**: "Save this deal" button alone didn't tell users what they'd get by saving. Added helper text: "💡 Save this deal to view the full year-by-year projection, financials breakdown, and long-term return analysis in a dedicated workspace."
+
+---
+
+### Issue #162: [H#55 + #56] NOI wiring + critique JSON parser
+**Status**: ✅ RESOLVED 2026-06-19
+**Commit**: `5edfe5c` + `933922a`
+**Summary**: (a) Missing `noi` field in fundamentals object in `assessPropertyFundamentals` — NOI shown as 0 everywhere. Fixed wiring. (b) Critique JSON parser broke on jagged LLM JSON; added `jsonrepair` fallback when strict parse fails.
+
+---
+
+### Issue #163: [H#54] Fair value calculation: marketTierService unit error + NOI fallback
+**Status**: ✅ RESOLVED 2026-06-19 (earlier; covered in same general fix)
+**Component**: `backend/src/services/investment/marketTierService.ts:220` + `investmentDecisionEngine.ts:337`
+**Summary**: Fair value calculation was returning $20.5M for a $250K rental — clear unit error. Fixed marketTierService unit conversion + NOI fallback in the engine.
+
+---
+
+### Issue #164: [H#53] Per-row totalReturn — replace dormant buggy field with v1.0 formula evaluated per year
+**Status**: ✅ RESOLVED 2026-06-19
+**Component**: Long-term projection per-row total return
+**Summary**: `totalReturn` per-row in the 10-year projection was a stale field with a wrong formula. Replaced with v1.0 formula evaluated per year — each row now correctly reflects cumulative cash flow + equity buildup at that year.
+
+---
+
+### Issue #165: [H#52] Phase B1 — Loosen analysisShapes Zod to match real analyzer output
+**Status**: ✅ RESOLVED 2026-06-15
+**Component**: `backend/src/models/events/analysisShapes.ts`
+**Summary**: Strict Zod shapes from #42 were rejecting valid analyzer outputs. Loosened to match what the analyzer actually emits — preserved trust boundaries without false rejections.
+
+---
+
+### Issue #166: [H#51] Make score_deal self-sufficient — eliminate LLM tool-output transit for projections
+**Status**: ✅ RESOLVED 2026-06-15
+**Component**: `backend/src/agents/tools/score_deal.ts`
+**Summary**: Previously the LLM had to transit the analyzer output to score_deal — LLM truncation dropped 10-year projection to 2 rows. Made score_deal call the analyzer internally so the projection survives intact. Architectural invariant: tools invoked by an LLM must not accept large structured payloads as input.
+
+---
+
+### Issue #167: [H#48] Pricing page rewrite — strip unbuilt promises
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `2b0c31e`
+**Component**: `frontend/src/pages/PricingPage.tsx`
+**Summary**: Pricing page promised bundles, sensitivity, tax modeling, adversarial bear case — none of which had shipped. Stripped to v1-deliverable claims: $4.99/deal, 180-day window, first analysis free, 11-item value list (down from 15), updated FAQ.
+
+---
+
+### Issue #168: [H#45] Cross-surface reconciliation suite
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `98faf65`
+**Component**: `backend/src/tests/reconciliation/`
+**Summary**: Test harness that asserts chat-card numbers, workspace numbers, PDF numbers, and stress narrative numbers all reconcile against the same substrate. Catches drift across the four surfaces.
+
+---
+
+### Issue #169: [H#46] List-vs-detail data drift on saved-properties page
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `ba1cc15`
+**Component**: `backend/src/services/dealMaterializationService.ts`
+**Summary**: Saved properties list page showed different IRR than the detail page for the same deal. Root cause: materializer wasn't projecting `keyMetrics.irr` onto the Deal record — list page read from Deal, detail page read from substrate. Fixed projection.
+
+---
+
+### Issue #170: [H#43] CapEx default mismatch between headline + projection
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `c156f24`
+**Summary**: Headline financials used one CapEx default, projection used another. Aligned to single source. Cross-surface reconciliation suite (#168) catches this class of bug going forward.
+
+---
+
+### Issue #171: [H#42] Tier 1 follow-up: enforce strict substrate write contracts
+**Status**: ✅ RESOLVED 2026-06-14
+**Summary**: Substrate writes had loose Zod shapes that let silently-malformed projections through. Tightened the strict shapes + updated test fixtures.
+
+---
+
+### Issue #172: [H#41] Substrate→Deal silent-drop bug class (Tier 2)
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `289455f`
+**Summary**: Materializer silently dropped events when projection shape didn't match expectations — read side fixed; Tier 1 (write-side strict contracts) deferred until #166 was in place.
+
+---
+
+### Issue #173: [H#40] Save-as-scenario chip — stress test → substrate Path B
+**Status**: ✅ RESOLVED 2026-06-14
+**Commits**: `0091c60` (backend) + `3e54ab1` (frontend)
+**Summary**: Stress test results existed only in chat narrative; couldn't be saved as a substrate scenario. Added explicit "Save as scenario" chip that persists the stressed inputs as a new DecisionEvent + materializes into the workspace's scenario spine.
+
+---
+
+### Issue #174: [H#44] Cross-view reconciliation suite — ground floor
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `98facc1`
+**Summary**: End-to-end data-fidelity contract test — substrate write → workspace read → expected shape match. Catches the bug class that escaped #41 to production for weeks.
+
+---
+
+### Issue #175: [H#38 + #14] First_free credit on signup + auto-redeem on materialization
+**Status**: ✅ RESOLVED 2026-06-13
+**Commits**: `791caa3` (issue credit) + `981cc3e` (magic-link path) + `518557c` (auto-redeem)
+**Summary**: Freemium flow's "first analysis free" promise: signup issues a `first_free` DealCredit; on first deal materialization, auto-redeem the credit into an actual 180-day license. Wired across both signup paths (email/password + magic-link).
+
+---
+
+### Issue #176: [H#15] Auto-populate purchase price from RentCast on property lookup
+**Status**: ✅ RESOLVED 2026-06-12
+**Component**: Property wizard + RentCast service
+**Summary**: Wizard required user to type purchase price; now auto-populates from RentCast AVM / listing price when available, with manual override.
+
+---
+
+### Issue #177: [H#16] Chat-agent stress-test inversion — recall_user_context malformed userId schema (root cause)
+**Status**: ✅ RESOLVED 2026-06-10
+**Commit**: `ec8cd76`
+**Summary**: Stress test "inversion" bug — a 7% rate increase improving the score instead of hurting it. Root cause: `recall_user_context` userId schema was wrong, agent supplied a malformed value, recall returned empty, agent fabricated baseline numbers. Fixed schema. Companion finding to #133 (which was a recurrence of the same trap pattern after subsequent code changes).
+
+---
+
+### Issue #178: [H#8 + #10] Scenario-scoped deal detail page (the $4.99 workspace)
+**Status**: ✅ RESOLVED 2026-06-09
+**Commits**: `46ab161` + `8fc7d90` + `e6589fb` + `105c24a` + `2e12848`
+**Component**: Workspace page redesign
+**Summary**: The deal detail page used to be a flat comparison table. Rebuilt as a scenario-native Apple-clean workspace: selection-driven hero, scenario spine on the left, sensitivity panel, scenario comparison table, collapsed legacy deep-dive. The $4.99 workspace as users see it today.
+
+---
+
+### Issue #179: [H#17 + #18] Merge redundant scenario tables + populate assumptions accordion
+**Status**: ✅ RESOLVED 2026-06-09
+**Commit**: `20e4092`
+**Summary**: Workspace had two scenario tables (spine + comparison). Deduped to one. "Standard assumptions used" accordion was empty — wired to actual decision payload.
+
+---
+
+### Issue #180: [H#19] Look-and-feel — remove legacy deep-dive + Apple-polish the workspace
+**Status**: ✅ RESOLVED 2026-06-09
+**Summary**: Visual polish pass on the new workspace. Removed the legacy "deep-dive" section (now collapsed by default), tightened typography, restored Apple-style spacing.
+
+---
+
+### Issue #181: [H#7] Change DealLicense duration 30 → 180 days
+**Status**: ✅ RESOLVED 2026-05-28
+**Component**: `LicenseRepository.computeExpiry`
+**Summary**: Per the pricing strategy update, deal license window changed from 30 to 180 days. Plumbed default through repository + updated user-facing copy.
+
+---
+
+### Issue #182: [H#1 + #2 + #3] Substrate materializer redesign
+**Status**: ✅ RESOLVED (foundational)
+**Summary**: (a) Stop storing duplicated score on Deal; set `latestDecisionEventId` only; GET endpoints assemble from event. (b) Materializer dedup uses canonicalAddressKey instead of exact string match. (c) Schema: added canonicalAddressKey + index; kept legacy `investmentDecision` field for load-bearing reasons.
+
+---
+
+### Issue #183: [H#5 + #6] SavedProperties Stage 2 read + end-to-end verification
+**Status**: ✅ RESOLVED
+**Summary**: Fixed SavedProperties.tsx read (Stage 2 MISS) so saved deals showed correct scores. End-to-end test: one property, N scenarios, consistent score everywhere.
+
+---
+
+### Issue #184: [H#11] Walk-away price showing $0 on saved deals
+**Status**: ✅ RESOLVED
+**Summary**: Materializer wasn't projecting walk-away price; saved deals showed $0. Backfilled projection.
+
+---
+
+### Issue #185: [H#13] Stamp canonicalAddressKey on events + scenario fetch + diff engine
+**Status**: ✅ RESOLVED
+**Summary**: Phase 2 foundation: canonicalAddressKey stamped on every event for downstream dedup + scenario fetch + property-identity diff engine.
+
+---
+
+### Issue #186: [H#20] Property-type registry refactor (extensibility seam)
+**Status**: ✅ RESOLVED 2026-06-09
+**Component**: `backend/src/services/propertyType/registry.ts`
+**Summary**: Hardcoded SFR everywhere; refactored to a registry pattern so MF / BRRRR / commercial can plug in without forking the analyzer.
+
+---
+
+### Issue #187: [H#21 + #22 + #23] Prod messaging + anonymous teaser polish + chat thread rename
+**Status**: ✅ RESOLVED 2026-06-09
+**Summary**: (a) Production messaging clarified: SFR live, MF/BRRRR work-in-progress (with agent gate). (b) Anonymous teaser polished — gate became clean signup CTA. (c) Chat thread rename — users can title their own threads.
+
+---
+
+### Issue #188: [H#25 + #26 + #27] Anonymous chat conversion path
+**Status**: ✅ RESOLVED 2026-06-09
+**Commits**: `661c6be` + various
+**Summary**: (a) "Save this deal" CTA on stress-test + post-analysis turns for anonymous users. (b) Verified anonymous→logged-in chat session claim flow works for both signup AND login paths. (c) Walk-away price showing $0 on stress-test results — fixed.
+
+---
+
+### Issue #189: [H#31 + #32] get_decision_breakdown tool + sparse projection diagnostic
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `7ac1a65`
+**Component**: `backend/src/agents/tools/get_decision_breakdown.ts`
+**Summary**: (a) New tool replaces audit-trail confabulation. (b) Diagnostic log for the sparse projection bug — the trail led to #166 (score_deal self-sufficiency).
+
+---
+
+### Issue #190: [H#49] Clean up stale failing tests
+**Status**: ✅ RESOLVED 2026-06-14
+**Commits**: `5072876` + `32891ae`
+**Summary**: Post-materializer refactor (#182), several test suites referenced stale substrate shapes and failed. Repaired + recalibrated the anna-tx-cheaper-price golden test (54 → 50 to match new scoring).
+
+---
+
+### Issue #191: Test-user reset script + email normalization
+**Status**: ✅ RESOLVED 2026-06-13
+**Commits**: `5580989` + `242268e` + `7f9935e`
+**Component**: `backend/scripts/resetTestUser.ts`
+**Summary**: Per-user wipe script that lets a test email be re-used for fresh signups. Bypasses append-only middleware via raw collection. Consistent email normalization (`+tag` stripping) applied across signup + reset. Fixed wrong MagicLinkToken import.
+
+---
+
+### Issue #192: Math contract reconciliation + chat-agent hardening
+**Status**: ✅ RESOLVED 2026-06-14
+**Commit**: `a828a3b`
+**Summary**: Cross-cutting math contract pass — ensured every surface reads the same field from the same source. Chat-agent prompt hardening — reduced LLM creative-license on numeric narration.
+
+---
+
 ### Issue #35 (REOPENED as #140): [Substantial in-session work] Day-181 license expiry → read-only enforcement
 **Status**: ✅ RESOLVED 2026-06-22 to 2026-06-24 (display + enforcement, end-to-end testable)
 **Priority**: P0 — Required for honest pricing posture pre-launch
