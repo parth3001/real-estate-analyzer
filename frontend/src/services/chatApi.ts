@@ -385,7 +385,20 @@ export async function saveStressScenario(input: {
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      const body = err.response?.data as { error?: string } | undefined;
+      const body = err.response?.data as
+        | { error?: string; message?: string; expiresAt?: string }
+        | undefined;
+      // Task #35 (2026-06-22): tag license-expired so the chip can show
+      // a re-license modal instead of a generic error.
+      if (err.response?.status === 403 && body?.error === 'license_expired') {
+        const e = new Error(
+          body.message ??
+            'Your license for this property expired. Re-license to save new scenarios.'
+        ) as Error & { code?: string; expiresAt?: string };
+        e.code = 'license_expired';
+        e.expiresAt = body.expiresAt;
+        throw e;
+      }
       throw new Error(body?.error ?? 'Could not save stress scenario.');
     }
     throw err;
@@ -444,9 +457,9 @@ export async function* streamChatTurn(
     } catch {
       // ignore
     }
-    let parsedError: { error?: string } | null = null;
+    let parsedError: { error?: string; message?: string; expiresAt?: string } | null = null;
     try {
-      parsedError = bodyText ? (JSON.parse(bodyText) as { error?: string }) : null;
+      parsedError = bodyText ? JSON.parse(bodyText) : null;
     } catch {
       // body wasn't JSON
     }
@@ -454,6 +467,18 @@ export async function* streamChatTurn(
       throw new Error(
         parsedError?.error ?? 'Free analysis limit reached for this session.'
       );
+    }
+    // Task #35 (2026-06-22): surface the license-expired 403 with a
+    // distinct error code so ChatOverlay can render a re-license modal
+    // instead of a generic error toast.
+    if (response.status === 403 && parsedError?.error === 'license_expired') {
+      const err = new Error(
+        parsedError.message ??
+          'Your license for this property expired. Re-license to continue analyzing it.'
+      ) as Error & { code?: string; expiresAt?: string };
+      err.code = 'license_expired';
+      err.expiresAt = parsedError.expiresAt;
+      throw err;
     }
     throw new Error(
       parsedError?.error ??

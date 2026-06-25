@@ -658,8 +658,16 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           )
         );
       } else {
-        const errorText =
-          err instanceof Error && err.message
+        // Task #35 (2026-06-22): license-expired errors get a clear,
+        // copy-honest message instead of "Couldn't reach the assistant."
+        // The streamChatTurn promise rejects with `code: 'license_expired'`
+        // (set by chatApi.ts after a 403 from the backend guard).
+        const errAny = err as Error & { code?: string };
+        const isLicenseExpired = errAny?.code === 'license_expired';
+        const errorText = isLicenseExpired
+          ? errAny.message ||
+            'Your license for this property expired. Re-license to continue analyzing it.'
+          : err instanceof Error && err.message
             ? `Couldn't reach the assistant: ${err.message}`
             : "Couldn't reach the assistant. Please try again.";
         setMessages((m) => {

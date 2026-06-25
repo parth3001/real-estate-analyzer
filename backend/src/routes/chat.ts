@@ -171,6 +171,88 @@ async function resolveLicenseIdForChatTurn(opts: {
   }
 }
 
+/**
+ * Task #35 (2026-06-22) — gate NEW writes when the user's license for
+ * the dealId has lapsed.
+ *
+ * Rules:
+ *   - No dealId → not deal-scoped, allow (free-tier path, anon path).
+ *   - dealId resolves to a deal not owned by this user → caller will
+ *     still 404; return 'allow' here and let auth handle it.
+ *   - Active license exists → allow.
+ *   - NO active license BUT historical license exists → expired/refunded.
+ *     Reject with 403 + reason='license_expired' so the frontend shows
+ *     the re-license modal instead of letting the agent burn COGS.
+ *   - No license history (never licensed) → allow (free-tier / anon path
+ *     that hasn't converted yet).
+ *
+ * Reads aren't gated here — workspace GETs (analysis, scenarios,
+ * critique) stay open so the user keeps everything they paid for.
+ * Only mutation-shaped endpoints (chat turn, stress-test/save) call
+ * this guard.
+ */
+type LicenseGuardResult =
+  | { allow: true }
+  | {
+      allow: false;
+      reason: 'license_expired' | 'license_refunded';
+      expiresAt: Date | null;
+    };
+
+async function assertLicenseAllowsMutation(opts: {
+  dealId: string | undefined;
+  userId: Types.ObjectId;
+}): Promise<LicenseGuardResult> {
+  if (!opts.dealId) return { allow: true };
+  try {
+    const deal = await DealModel.findOne({
+      _id: opts.dealId,
+      userId: opts.userId,
+    })
+      .select('propertyAddress')
+      .lean();
+    if (!deal?.propertyAddress) return { allow: true };
+    const active = await licenseRepository.findActiveForProperty(
+      opts.userId,
+      deal.propertyAddress
+    );
+    if (active) return { allow: true };
+    const latest = await licenseRepository.findLatestForProperty(
+      opts.userId,
+      deal.propertyAddress
+    );
+    if (!latest) return { allow: true };
+    const isTimeExpired =
+      latest.status === 'active' &&
+      latest.expiresAt instanceof Date &&
+      latest.expiresAt.getTime() <= Date.now();
+    if (isTimeExpired) {
+      return {
+        allow: false,
+        reason: 'license_expired',
+        expiresAt: latest.expiresAt as Date,
+      };
+    }
+    if (latest.status === 'refunded') {
+      return {
+        allow: false,
+        reason: 'license_refunded',
+        expiresAt: latest.expiresAt as Date | null,
+      };
+    }
+    return { allow: true };
+  } catch (err) {
+    // Same posture as resolveLicenseIdForChatTurn: a lookup error must
+    // NEVER hard-block a chat turn. Log + allow.
+    logger.warn('chat: license guard lookup failed, allowing turn', {
+      dealId: opts.dealId,
+      userId: opts.userId.toHexString(),
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { allow: true };
+  }
+}
+
 // ===== Router =====
 
 const router = Router();
@@ -211,6 +293,32 @@ router.post(
     // Day 9b — resolve dealId → active license (if any). Failure is
     // a no-op; the orchestrator still runs with session + daily caps.
     const turnUserId = new Types.ObjectId(req.user.id);
+
+    // Task #35 (2026-06-22) — block chat mutations when the user's
+    // license on this dealId has lapsed. Reads (workspace GETs) stay
+    // open elsewhere; this only catches NEW agent runs.
+    const turnLicenseGuard = await assertLicenseAllowsMutation({
+      dealId: body.dealId,
+      userId: turnUserId,
+    });
+    if (turnLicenseGuard.allow === false) {
+      logger.info('chat/turn: blocked — license lapsed', {
+        userId: req.user.id,
+        dealId: body.dealId,
+        reason: turnLicenseGuard.reason,
+      });
+      res.status(403).json({
+        error: 'license_expired',
+        reason: turnLicenseGuard.reason,
+        expiresAt: turnLicenseGuard.expiresAt,
+        message:
+          turnLicenseGuard.reason === 'license_expired'
+            ? "Your license for this property expired. Re-license to continue analyzing it."
+            : 'Your license for this property was refunded.',
+      });
+      return;
+    }
+
     const licenseId = await resolveLicenseIdForChatTurn({
       dealId: body.dealId,
       userId: turnUserId,
@@ -370,6 +478,30 @@ router.post(
 
     // Day 9b — resolve dealId → active license (same logic as /turn).
     const streamUserId = new Types.ObjectId(req.user.id);
+
+    // Task #35 — same license-expired guard as /turn.
+    const streamLicenseGuard = await assertLicenseAllowsMutation({
+      dealId: body.dealId,
+      userId: streamUserId,
+    });
+    if (streamLicenseGuard.allow === false) {
+      logger.info('chat/turn/stream: blocked — license lapsed', {
+        userId: req.user.id,
+        dealId: body.dealId,
+        reason: streamLicenseGuard.reason,
+      });
+      res.status(403).json({
+        error: 'license_expired',
+        reason: streamLicenseGuard.reason,
+        expiresAt: streamLicenseGuard.expiresAt,
+        message:
+          streamLicenseGuard.reason === 'license_expired'
+            ? "Your license for this property expired. Re-license to continue analyzing it."
+            : 'Your license for this property was refunded.',
+      });
+      return;
+    }
+
     const streamLicenseId = await resolveLicenseIdForChatTurn({
       dealId: body.dealId,
       userId: streamUserId,
@@ -854,6 +986,39 @@ router.post(
     }
 
     try {
+      // Task #35 (2026-06-22): block save when the underlying deal's
+      // license has lapsed. Resolves priorDecisionId → owning Deal →
+      // existing license guard. Reads (workspace) stay open; this only
+      // gates new substrate writes.
+      const saveUserObjId = new Types.ObjectId(req.user.id);
+      const dealForLicense = await DealModel.findOne({
+        userId: saveUserObjId,
+        latestDecisionEventId: new Types.ObjectId(parsed.data.priorDecisionId),
+      })
+        .select('_id')
+        .lean<{ _id: Types.ObjectId } | null>();
+      const saveLicenseGuard = await assertLicenseAllowsMutation({
+        dealId: dealForLicense?._id?.toString(),
+        userId: saveUserObjId,
+      });
+      if (saveLicenseGuard.allow === false) {
+        logger.info('chat/stress-test/save: blocked — license lapsed', {
+          userId: req.user.id,
+          priorDecisionId: parsed.data.priorDecisionId,
+          reason: saveLicenseGuard.reason,
+        });
+        res.status(403).json({
+          error: 'license_expired',
+          reason: saveLicenseGuard.reason,
+          expiresAt: saveLicenseGuard.expiresAt,
+          message:
+            saveLicenseGuard.reason === 'license_expired'
+              ? "Your license for this property expired. Re-license to save new scenarios."
+              : 'Your license for this property was refunded.',
+        });
+        return;
+      }
+
       // Resolve perturbations: caller-supplied → use directly; else
       // re-extract from the user's stress-test prompt (one extra LLM
       // call, but mirrors what handleStressTest already did so the
