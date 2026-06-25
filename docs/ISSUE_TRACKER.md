@@ -5,6 +5,17 @@
 
 ---
 
+## ✅ **RESOLVED 2026-06-24 — Conversion friction removal**
+
+### Issue #193: Auth CTAs full-page nav broke "Save this deal" flow context
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P1 — Conversion-critical (highest-intent CTA in the funnel)
+**Commit**: `2e387b8`
+**Component**: New `frontend/src/contexts/AuthModalContext.tsx` + `components/auth/AuthModal.tsx`; wired into `Chat/ChatOverlay.tsx`, `Chat/DealScoreCard.tsx`, `SampleAnalysis/StickyHeader.tsx`
+**Summary**: Anonymous CTAs (Sign in / Save this deal / Sign up) all navigated to /login or /register — full route transition during the user's highest-intent moment. Surfaced during #36 free-tier walkthrough when the question came up *"don't we have same page signup or login?"* — we didn't. Shipped an inline magic-link modal that opens in place over the current chat / sample-analysis surface. Same backend (`authApi.requestMagicLink`), same magic-link email flow, same `pendingChatClaim` post-verify deal-claim mechanism — purely a frontend UX swap. Mobile especially benefits: no scroll jump, no keyboard reposition, no lost visual context. `/login` + `/register` routes kept alive for direct links + bookmarks.
+
+---
+
 ## ✅ **RESOLVED — Hardening Pass 2026-06-20 → 2026-06-24**
 
 Backfill from the in-session task list. These were tracked via the harness
