@@ -1,11 +1,62 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-05-17
+**Last Updated**: 2026-06-24
 
 ---
 
-## 🟡 **ACTIVE ISSUES** (2026-05-17)
+## 🟡 **ACTIVE ISSUES** (2026-06-24)
+
+### Issue #124: Anonymous DealScoreCard "NEXT STEP" leaks directive copy
+**Status**: 🔴 Open
+**Priority**: P1 — HIGH (legal liability + violates locked memory rule)
+**Reported**: 2026-06-24
+**Component**: Frontend `components/SampleAnalysis/` or `components/Chat/` DealScoreCard render — wherever the "NEXT STEP" line is generated for anonymous teasers
+**Category**: Public copy / legal compliance
+
+**Description**:
+The anonymous DealScoreCard (seen at `/app` for a non-logged-in user) renders a "NEXT STEP" line with directive action verbs. Example seen on 2026-06-24:
+
+> **NEXT STEP**
+> Negotiate rent increases or reduce purchase price
+
+"Negotiate" and "reduce" are imperative verbs telling the user what to do — directive recommendations to act, not analytical observations. This is the same liability vector as displaying "BUY / PASS / NEGOTIATE" verdicts publicly, which we removed in #82 (purge Investment Decision Engine + verdict copy from public surfaces).
+
+**Locked memory says**:
+> No "verdict" or PASS/BUY in public copy — liability risk; use score number + color + contextual label only.
+
+The locked-memory rule was meant to cover this exact pattern. "Negotiate / reduce" is directive copy regardless of whether the word "PASS" or "BUY" is used.
+
+**Business Impact**:
+- Legal exposure: directive verbs in publicly-visible analyst output can be interpreted as investment advice (Investment Advisers Act 1940 concern, same root as the verdict copy purge).
+- Inconsistent with the analytical-not-prescriptive brand voice that the rest of the surface is built around.
+- Pre-launch — needs to be clean before v1 ships.
+
+**Where the copy comes from**:
+Likely the Investment Decision Engine's `professionalAssessment` payload, which has a "Strong fundamentals with professional potential" or similar narrative field that includes a "NEXT STEP" or "recommendation" output. Check `backend/src/services/investment/investmentDecisionEngine.ts` and any AI-enhanced messaging that renders into a "NEXT STEP" block.
+
+**Proposed Solution**:
+Rewrite directive verbs to analytical observations. Examples:
+
+| Before (directive) | After (analytical) |
+|---|---|
+| "Negotiate rent increases or reduce purchase price" | "Areas to examine: rent assumptions, purchase price" |
+| "Negotiate rent" | "Rent assumption sensitivity" |
+| "Buy below $X" | "Walk-away threshold: $X" |
+| "Wait for rates to drop" | "Rate sensitivity is the dominant factor" |
+
+Two-prong fix:
+1. Backend: audit the engine's "next step" / "primary insight" generators for imperative verbs. Replace with descriptive phrasing.
+2. Frontend: add a static lint pass on the NEXT STEP block — reject strings starting with imperative verbs like "Negotiate", "Reduce", "Buy", "Wait", "Sell", "Pass" before rendering.
+
+Same prevention pattern as #82 + #84 (language hygiene).
+
+**Cross-Reference**:
+- Memory: `feedback_no_verdict_in_public_copy.md`
+- Prior work: Issue #82 (verdict copy purge), Issue #84 (language hygiene)
+- Surfaced by: anonymous-tier walkthrough during #36 verification
+
+---
 
 ### Issue #123: Chat thread doesn't restore on sidebar selection — FIXED (Day 11f, Issue C from test session)
 **Status**: ✅ RESOLVED 2026-05-19
