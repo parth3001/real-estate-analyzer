@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #196: "Workspace" promoted from internal term to "Deal Workspace" brand
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P2 — Branding / product clarity (no functional change)
+**Commit**: `f310bb8`
+**Component**: `frontend/src/pages/AnalysisDetails.tsx` + `Chat/ChatOverlay.tsx` (save-CTA helper) + `pages/PricingPage.tsx` (tier bullet + value-prop) + `components/auth/AuthModal.tsx` (save-deal subhead)
+**Summary**: Until this commit "workspace" was a term we used in chat + code comments + component names but never surfaced to users. Visiting the saved-deal page showed "Back to Saved properties" then the property hero — no name for the place. Branded "Deal Workspace" as a real product name with consistent touchpoints: page eyebrow tag, `<Helmet>` title ("Deal Workspace · 336 Highland Ridge Drive, Wylie, TX"), save-CTA helper, save-deal auth modal subhead, pricing tier bullet, pricing value-prop card. Chose "Deal" over "Property" / "Underwriting" because the unit of value matches the pricing model ($4.99/deal, license per deal, 180-day window per deal); "Workspace" over "Room" because retail investors know Notion/Figma/Linear vocab, not M&A.
+
+---
+
 ### Issue #195: Adversarial critic confabulated 0% vacancy when engine clearly shows 5%
 **Status**: ✅ RESOLVED 2026-06-24
 **Priority**: P0 — Trust killer (critic discredits our own engine with a verifiably false claim)
