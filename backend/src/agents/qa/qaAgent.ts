@@ -37,6 +37,7 @@ import type { Types } from 'mongoose';
 import type { ToolContext } from '../tools/types';
 import { recallUserContext } from '../tools/recall_user_context';
 import { renderAuditTrail } from '../tools/render_audit_trail';
+import { getTaxEducationContext } from '../tools/get_tax_education_context';
 
 const SYSTEM_PROMPT = `You are a Q&A and education agent for a real estate investment platform.
 
@@ -172,6 +173,13 @@ STYLE
 const ALLOWED_TOOLS = {
   recall_user_context: recallUserContext,
   render_audit_trail: renderAuditTrail,
+  // Issue #194 (2026-06-24): give QA the tax framework tool so
+  // "what hold period optimizes after-tax IRR" / "should I 1031?" /
+  // "how does cost segregation work?" can be answered from real
+  // rates + concepts rather than relying on base-model recall. The
+  // tool returns concepts + rates + mandatoryDisclaimer; it NEVER
+  // computes liability — keeps the legal posture safe.
+  get_tax_education_context: getTaxEducationContext,
 } as const;
 
 const AGENT_CONFIG: AgentConfig = {

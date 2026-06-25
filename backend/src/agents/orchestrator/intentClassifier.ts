@@ -140,9 +140,33 @@ INTENT LABELS
   Examples: "why did this score 67?", "why is the deal quality so low?",
             "what's hurting this property's score?"
 
-- qa_general: Educational questions not tied to a specific metric or decision.
+- qa_general: Educational questions about real-estate concepts, strategy,
+  or tax / financing / market frameworks. The user wants to UNDERSTAND
+  a concept or framework — not change a specific input. May or may not
+  reference a specific deal in passing for context.
   Examples: "should I invest in cash flow or appreciation?",
-            "how do I find good deals?", "what markets are hot right now?"
+            "how do I find good deals?", "what markets are hot right now?",
+            "what hold period optimizes after-tax IRR?",
+            "what's the best hold period?",
+            "how does cost segregation work?",
+            "should I use a 1031 exchange?",
+            "when do I owe depreciation recapture?",
+            "what's the tax-optimal exit strategy?",
+            "DSCR vs conventional — which makes sense for me?",
+            "what's the recipe for picking a market?"
+
+  CRITICAL DISAMBIGUATION — strategy questions vs override requests:
+    - Strategy/framework question = qa_general (educational, no specific
+      input value to change). The verb may LOOK actionable ("optimize",
+      "best", "should I") but there's NO specific parameter+value
+      proposed. Example: "what hold period optimizes after-tax IRR?"
+      is asking ABOUT hold period, not changing it.
+    - Specific parameter+value change = override_assumption. Example:
+      "re-score at a 7-year hold period" names the value (7 years).
+
+  When in doubt between qa_general and override_assumption: prefer
+  qa_general. The QA agent can ask clarifying questions; the
+  perturbation extractor cannot — it just refuses.
 
 - override_assumption: User wants to change an input assumption AND see
   what the new score would be. This includes stress tests (perturbing one
