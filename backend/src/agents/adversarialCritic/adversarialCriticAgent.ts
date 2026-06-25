@@ -273,6 +273,15 @@ const ALLOWED_TOOLS = {
   recall_user_context: recallUserContext,
 } as const;
 
+// Issue #197 (2026-06-24): both personas were truncating the final
+// alternativeAssumption's `reasoning` field mid-sentence in production
+// (user-visible: bullets ending "...maintenance, not" and "...understates
+// the"). Root cause: 1024 token cap was sized for terse critiques, but the
+// post-#195 prompt elicits 6-8 detailed bullets + 4-5 alternative
+// assumptions with multi-sentence reasoning — easily 2000+ tokens. Bumped
+// to 4096; safely under Opus's 8192 ceiling, comfortably above the longest
+// observed critique. Cost impact: ~$0.04/critique max (was ~$0.02), still
+// well inside the per-deal license budget.
 const optimisticFlipperConfig: AgentConfig = {
   name: 'adversarial_critic',
   modelTier: 'opus',
@@ -280,7 +289,7 @@ const optimisticFlipperConfig: AgentConfig = {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   allowedTools: ALLOWED_TOOLS as any,
   maxTurns: 4, // typically: render_audit_trail → final JSON
-  maxTokensPerCall: 1024,
+  maxTokensPerCall: 4096,
 };
 
 const skepticalCpaConfig: AgentConfig = {
@@ -290,7 +299,7 @@ const skepticalCpaConfig: AgentConfig = {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   allowedTools: ALLOWED_TOOLS as any,
   maxTurns: 4,
-  maxTokensPerCall: 1024,
+  maxTokensPerCall: 4096,
 };
 
 // ===== Helpers =====
