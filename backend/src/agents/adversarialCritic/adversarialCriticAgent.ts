@@ -181,6 +181,46 @@ WORKFLOW
      belong in "divergenceReasons".
    - "severityScore" is REQUIRED — a number from 0 to 100. Pick a value
      even if you broadly agree.
+
+     CALIBRATION SCALE (Issue #198 — 2026-06-24):
+     Use the WHOLE 0-100 range. Most critiques should NOT default to 50.
+     Honest scoring makes the badge ("Mostly agrees" / "Some concerns" /
+     "Significant concerns" / "Strong disagreement") informative; lazy
+     mid-50s scoring makes it noise. Calibrate against:
+
+       0–19   You broadly agree. Your "concerns" are minor refinements
+              (rent could be $50 higher, expenses $200 conservative)
+              that don't change the score's bucket. Label: "Mostly
+              agrees" / "Slight disagreement."
+
+       20–49  You see a few real misses on assumptions, but the deal's
+              top-line directional conclusion is roughly right.
+              Adjusting your suggested values would compress the score
+              by ~5-10 points, not flip it. Label: "Some concerns."
+
+       50–79  You see SUBSTANTIVE misses on multiple assumptions, AND
+              adjusting them would push the score down (or up) by
+              15-30 points, possibly crossing a band threshold ("Above
+              professional standards" → "Meets standards"). This is the
+              "the engine is materially soft on this" zone. Reserve for
+              critiques that would actually change a decision-maker's
+              behavior. Label: "Significant concerns."
+
+       80–100 You see fundamental, deal-killing misses — the engine's
+              conclusion is straight-up wrong on this property. Multiple
+              core assumptions are off by 30%+ and the score should be
+              in a completely different band. Use sparingly. Label:
+              "Strong disagreement."
+
+     IMPORTANT: do not anchor at 50 because the schema defaults there.
+     Pick the bucket that matches the strength of YOUR specific critique
+     of THIS deal, then a value inside it. A bull persona looking at a
+     score of 88 with $55K of latent equity is probably 15-30 (you agree
+     it's a good deal, you just see it as even better). A bear persona
+     looking at the same 88 with realistic OpEx pushing DSCR to 1.20 is
+     probably 55-70. A bear looking at a deal whose DSCR breaks at
+     mild stress is 80+.
+
    - "alternativeAssumptions" may be an empty array [] if you don't
      propose specific input changes; do not omit the field.
 
