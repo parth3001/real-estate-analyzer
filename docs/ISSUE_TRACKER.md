@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #198: Adversarial critic always lands at "Significant concerns" severity
+**Status**: ✅ RESOLVED 2026-06-24
+**Priority**: P2 — badge is noise, not signal
+**Commit**: `3f0a9fc`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts` BASE_PROMPT_HEADER
+**Summary**: User noticed every critique on every deal showed the same middle-bucket badge ("Significant concerns" / orange / 50-79 range) regardless of how strong the critique was. Two compounding causes: (a) schema default `severityScore: optional().default(50)` lands square in the middle bucket on any omission; (b) the prompt had no calibration scale, so the LLM lazily picked 55-65 every time. A bull persona on an 88-scored deal with $55K of latent equity should sit at 15-30 ("Mostly agrees"); a bear persona on the same deal where OpEx realism compresses DSCR to 1.20 should sit at 55-70. Today both came back at the same 55-65. Fix: added explicit CALIBRATION SCALE block with concrete per-bucket meanings + worked persona-specific examples + "do NOT anchor at 50 because the schema defaults there" instruction. Schema default stays as a safety net for malformed output (the partial-object permissive branch from #135 still catches it) but prompt calibration should mean it rarely fires now. Backstop noted in commit if uniform pills persist: remove `default(50)` so omissions become explicit Zod failures.
+
+---
+
 ### Issue #197: Adversarial critic truncating mid-sentence (1024 token cap)
 **Status**: ✅ RESOLVED 2026-06-24
 **Priority**: P1 — Public surface, looks broken
