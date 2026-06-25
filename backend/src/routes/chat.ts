@@ -441,6 +441,35 @@ router.post(
       return;
     }
 
+    // Task #35 (2026-06-22 fix-forward) — license guard MUST run BEFORE
+    // SSE headers are written. Otherwise the 403 JSON response races
+    // already-flushed text/event-stream headers and Express throws
+    // ERR_HTTP_HEADERS_SENT (the crash from the first deploy of the
+    // mutation gate). Body is already validated above; this is the
+    // earliest safe place to gate.
+    const streamUserId = new Types.ObjectId(req.user.id);
+    const streamLicenseGuard = await assertLicenseAllowsMutation({
+      dealId: body.dealId,
+      userId: streamUserId,
+    });
+    if (streamLicenseGuard.allow === false) {
+      logger.info('chat/turn/stream: blocked — license lapsed', {
+        userId: req.user.id,
+        dealId: body.dealId,
+        reason: streamLicenseGuard.reason,
+      });
+      res.status(403).json({
+        error: 'license_expired',
+        reason: streamLicenseGuard.reason,
+        expiresAt: streamLicenseGuard.expiresAt,
+        message:
+          streamLicenseGuard.reason === 'license_expired'
+            ? "Your license for this property expired. Re-license to continue analyzing it."
+            : 'Your license for this property was refunded.',
+      });
+      return;
+    }
+
     // SSE headers — set BEFORE any data is written. Once the body starts,
     // we can't change them.
     res.status(200);
@@ -477,31 +506,6 @@ router.post(
     };
 
     // Day 9b — resolve dealId → active license (same logic as /turn).
-    const streamUserId = new Types.ObjectId(req.user.id);
-
-    // Task #35 — same license-expired guard as /turn.
-    const streamLicenseGuard = await assertLicenseAllowsMutation({
-      dealId: body.dealId,
-      userId: streamUserId,
-    });
-    if (streamLicenseGuard.allow === false) {
-      logger.info('chat/turn/stream: blocked — license lapsed', {
-        userId: req.user.id,
-        dealId: body.dealId,
-        reason: streamLicenseGuard.reason,
-      });
-      res.status(403).json({
-        error: 'license_expired',
-        reason: streamLicenseGuard.reason,
-        expiresAt: streamLicenseGuard.expiresAt,
-        message:
-          streamLicenseGuard.reason === 'license_expired'
-            ? "Your license for this property expired. Re-license to continue analyzing it."
-            : 'Your license for this property was refunded.',
-      });
-      return;
-    }
-
     const streamLicenseId = await resolveLicenseIdForChatTurn({
       dealId: body.dealId,
       userId: streamUserId,
