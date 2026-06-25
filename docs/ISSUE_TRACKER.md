@@ -5,6 +5,154 @@
 
 ---
 
+## ✅ **RESOLVED — Hardening Pass 2026-06-20 → 2026-06-24**
+
+Backfill from the in-session task list. These were tracked via the harness
+TaskCreate tool during a multi-day hardening pass; recording here so the
+durable record matches what shipped. Cross-references the harness task
+number `[H#nn]` so commits + transcripts stay searchable.
+
+### Issue #125: [H#82] Purge "Investment Decision Engine" + verdict copy from public surfaces
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P0 — Legal liability (Investment Advisers Act 1940 surface)
+**Commit**: `c226661`
+**Component**: Frontend public surfaces — landing page, pricing, sample analysis, score card UI
+**Summary**: Removed every public reference to "Investment Decision Engine" and the verdict vocabulary (BUY / PASS / NEGOTIATE / CAUTION). Backend engine still uses the field internally for calculation routing; only public copy was purged. Locked-memory rule (`feedback_no_verdict_in_public_copy.md`) is the source of truth.
+
+---
+
+### Issue #126: [H#83] Email CTA fails on text-only turn
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1
+**Commit**: `fed9407`
+**Component**: `frontend/src/components/Chat/ChatOverlay.tsx` — `handleEmailCta`
+**Summary**: When the user clicked "Email me this" on a follow-up text-only turn (not a turn with a deal_score_card), the modal errored with "This conversation has no analysis to email yet." Fixed by walking backward through the thread to find the most-recent message with a `deal_score_card` structured output and passing THAT to the modal. Same walk-back pattern as the portfolio CTA.
+
+---
+
+### Issue #127: [H#84] Agent leaks internal field names in user-facing text
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Brand / language hygiene
+**Commit**: `60bc76e`
+**Component**: `backend/src/agents/dealScoring/dealScoringAgent.ts` system prompt
+**Summary**: Promoted the "NEVER mention internal vocabulary" rule from a buried line in the system prompt to a top-tier `LANGUAGE HYGIENE` section right after `YOUR JOB`, tagged "READ FIRST — VIOLATIONS BREAK THE PRODUCT". Added a pre-send self-scan: agent must scan its own response for camelCase/snake_case tokens before emitting and rephrase. Consolidated the directive-verb prohibition (BUY/PASS/recommend) into the same block.
+
+---
+
+### Issue #128: [H#84b] Classifier mis-routes "Show the 10-year projection" + leaks extractor reasoning
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Routing correctness + language hygiene
+**Commit**: `6a8ab2b`
+**Component**: `backend/src/agents/orchestrator/intentClassifier.ts` + `orchestrator.ts`
+**Summary**: Two issues in one bug. (a) Classifier sent "Show the 10-year projection" to override_assumption / run_stress_test instead of request_audit_trail. Added projection-display examples to the audit-trail intent docs + a disambiguation rule (bare "show X" = audit; "show X at Y" = override). (b) When extractor returned empty perturbations, `responseText = out.reason` leaked the LLM-written extractor reasoning (containing "perturbation", "baseline analysis") verbatim to the user. Replaced with a hardcoded user-friendly fallback at both `extraction_failed` call sites.
+
+---
+
+### Issue #129: [H#85] Save scenario from old message → backend error (instrumented)
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Hardening
+**Commit**: `42b29da`
+**Component**: `backend/src/routes/chat.ts` — `/chat/stress-test/save` endpoint
+**Summary**: User reported a save-scenario error on an old message but no diagnostic was captured. Instrumented the save endpoint with distinguishable warnings per failure path (`PRIOR_DECISION_NOT_FOUND`, `OWNERSHIP_MISMATCH` ("authenticated user does not own the prior decision — likely a ghost→real session merge gap"), `MISSING_ANALYSIS_EVENT`, `UNSUPPORTED_PROPERTY_TYPE`). Client-facing error stays generic 404; backend logs tell ops which path tripped.
+
+---
+
+### Issue #130: [H#85b] Save-scenario navigation 404 + dual-mode 404
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P0 — User-visible 404 on save-as-scenario
+**Commit**: `95c1763`
+**Component**: `backend/src/services/perturbation/index.ts` + `frontend/src/components/Chat/ChatOverlay.tsx` + `frontend/src/contexts/DualModeContext.tsx`
+**Summary**: After save-as-scenario, the chip navigated to `/analysis/<newDecisionEventId>` but the workspace route resolves `:id` as a Deal id, not a DecisionEventId — guaranteed 404. Fixed by looking up the Deal that score_deal just materialized (by userId + canonicalAddressKey) and returning `dealId` from the save endpoint; frontend navigates with that. Separately fixed `PUT /api/api/auth/dual-mode 404` — DualModeContext was the only site passing `/api/...` to an axios instance whose baseURL already includes `/api`; corrected to bare `/auth/dual-mode`.
+
+---
+
+### Issue #131: [H#87] Adversarial review + financial details disappear after stress save
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Hardening
+**Commit**: `42b29da`
+**Component**: `backend/src/controllers/deals.ts` — `getDealCritique` + `frontend/src/components/AnalysisDetails/CritiqueCard.tsx`
+**Summary**: After saving a stress-test scenario, the critique section in the workspace disappeared. Root cause: the GET endpoint only fetched critiques for `latestDecisionEventId`, but the new scenario's critique was still pending. Fix: backend falls back to the most-recent prior decision's critiques when the latest has none; returns `fromPriorDecision: true`. Frontend renders an amber-bordered badge "From earlier scenario · latest review computing" so users see honest context instead of an empty section.
+
+---
+
+### Issue #132: [H#89] License budget tool returns nothing (instrumented + root-caused via #91)
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Hardening
+**Commit**: `42b29da` (instrumentation) + `7b7134a` (root cause)
+**Component**: `backend/src/agents/tools/get_license_budget.ts`
+**Summary**: Agent's "how much have I spent?" tool returned empty in user tests. Instrumented with INFO logs around active-license lookup to distinguish "no license" from "canonicalization mismatch" from "tool not called." Root cause turned out to be the same #91 issue: the LLM was supplying `decisionId: "000000000000000000000000"`. Fix landed in `7b7134a`.
+
+---
+
+### Issue #133: [H#91] recall_user_context ignored real userId for LLM-supplied zero ObjectId
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P0 — Trust killer (post-signup "I don't see your saved deal")
+**Commit**: `f47af01` (instrumentation) + `7b7134a` (root fix) + `9e8a244` (portfolio tool same trap)
+**Component**: `backend/src/agents/tools/recall_user_context.ts` + `get_portfolio_summary.ts`
+**Summary**: After a user saved a deal and asked "Why this score?", the agent responded "I don't see any recent decisions in your account history" — for a deal saved seconds earlier. Diagnosed via INFO logging: the tool was running the substrate query with `userId: "000000000000000000000000"` (all-zero ObjectId), not the real authenticated userId. The LLM helpfully supplied the zero ObjectId as a placeholder for the optional `userId` field, and the regex accepted it. The `??` fallback to `ctx.userId` never fired because the LLM-supplied value was truthy. Fix: ALWAYS use `ctx.userId`; warn-log when LLM supplies any userId. Same trap also found and fixed in `get_portfolio_summary`. Downstream-resolved: #86 (workspace chip didn't open chat) and #88 (chat thread looked wiped) were both symptoms of this — substrate was healthy, agent was looking in the wrong place.
+
+---
+
+### Issue #134: [H#92] QA agent self-denies stress test ("separate platform feature")
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Self-denial of own capability + language leak
+**Commit**: `8119d63`
+**Component**: `backend/src/agents/orchestrator/intentClassifier.ts` + `agents/qa/qaAgent.ts`
+**Summary**: Clicking the "Run a sensitivity analysis on a deal" chip classified as `qa_decision` and routed to the QA agent, which then replied "that's a separate platform feature rather than something the Q&A agent handles." Two bugs: (a) wrong intent — sensitivity / stress / what-if all go to override_assumption; added examples to the classifier. (b) Even if QA agent does get a sensitivity request, it must NEVER deny a chat capability or refer to "Q&A agent" / "platform module" / internal architecture. Added a `NEVER SAY YOU CAN'T` block to the QA system prompt + banned-vocabulary list.
+
+---
+
+### Issue #135: [H#93] Adversarial critic dropped optimistic_flipper persona on partial Zod input
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Workspace showed only 1 of 2 critique cards
+**Commit**: `f47af01`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts`
+**Summary**: Backend log surfaced `[adversarialCritic] persona parse/write failed — alternativeAssumptions[4].suggestedValue Required`. LLM emitted a partial object with only `fieldPath`, neither the strict-3-field nor the bare-string union branch matched, whole critique dropped, flipper persona vanished from the workspace. Added a third permissive union branch `AlternativeAssumptionPartialObject` that accepts any object with optional fields (+ tolerant aliases `description`/`note`/`value`) and fills sensible placeholders.
+
+---
+
+### Issue #136: [H#94] Backend log noise floor — engine internals at INFO level
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P2 — Hygiene (makes future bug triage 10x faster)
+**Commit**: `5fa54f7`
+**Component**: `backend/src/services/investment/investmentDecisionEngine.ts` + `brrrAnalyzer.ts` + `leverageOptimizer.ts` + `backend/src/index.ts`
+**Summary**: Every chat analysis flooded the backend log with ~100 lines per turn (walk-away price probe calls the engine 5× for different price points, each emitting QE DEBUG / STRATEGY WEIGHTS DEBUG / PORTFOLIO FIT DEBUG / ROUNDING DEBUG / Phase 2A/2B/3 / Cap Rate Scoring / V3.0 internals / "Investment Decision Engine: Starting analysis" repeated 6+ times). Demoted ~30 internal-calculation INFO logs to DEBUG. KEPT at INFO: `🚨 CRITICAL DEAL KILLER`, `Decision generated` summary, `BRRRR Analysis Complete`, AI Intent Mapping detail (helpful for debugging routing). Backend triage on bug repros now shows ~10 lines of signal per turn instead of ~100.
+
+---
+
+### Issue #137: [H#86] Workspace chip didn't open chat with context — DOWNSTREAM of #133
+**Status**: ✅ RESOLVED 2026-06-21 (via #133)
+**Priority**: P1 — Hardening
+**Component**: Same as #133
+**Summary**: User-reported "clicking on the stress test from saved deal screen is not bringing or opening chat." Held for DevTools data while #133 was diagnosed. After the #133 fix shipped, user verified: "clicking on chip did open chat with context — thats what we proved." No separate fix needed; was a symptom of the agent returning empty data after the workspace round-trip.
+
+---
+
+### Issue #138: [H#88] Chat thread wiped when returning from workspace — DOWNSTREAM of #133
+**Status**: ✅ RESOLVED 2026-06-21 (via #133)
+**Priority**: P1 — Hardening
+**Component**: Same as #133
+**Summary**: User-reported "when i switched back to chat everything is wiped out and no old chats." Held for sessionStorage data while #133 was diagnosed. After the #133 fix shipped, user verified: "i went back to workspace after doing testing on 91 and then came back to chat for same 10 years topci and data was there." Symptoms of the same root cause — agent's "I don't see anything" responses after the workspace round-trip looked like the thread was wiped. Substrate was intact all along.
+
+---
+
+### Issue #139: [H#90] Anonymous CTAs / chips appear to require auth — RESOLVED via #133 + #134
+**Status**: ✅ RESOLVED 2026-06-21
+**Priority**: P1 — Marketing / "see what you'd get" surface
+**Component**: Frontend chat CTAs + classifier
+**Summary**: Anonymous users see CTAs (Save / Email) and follow-up chips (Show 10-year projection, How does this apply to my portfolio, Run sensitivity analysis) that initially appeared to lead to features requiring auth. After #133 (recall ignores LLM-supplied userId) shipped, the recall now correctly finds the ghost user's ephemeral substrate, so chips actually work for anonymous users. After #134 (QA self-denial) shipped, the sensitivity-analysis chip routes correctly. Save remains the explicit conversion gate via `writePendingChatClaim` → login flow. Email CTA already supports anon via Resend. The "see what you'd get" marketing surface is intact: chips produce real teaser answers from the anonymous user's own substrate.
+
+---
+
+### Issue #35 (REOPENED as #140): [Substantial in-session work] Day-181 license expiry → read-only enforcement
+**Status**: ✅ RESOLVED 2026-06-22 to 2026-06-24 (display + enforcement, end-to-end testable)
+**Priority**: P0 — Required for honest pricing posture pre-launch
+**Commits**: `d2f6519` (display + env-var test path) + `08f84b6` (mutation gate) + `7b878c9` (SSE crash fix)
+**Component**: `backend/src/repositories/LicenseRepository.ts` + `controllers/deals.ts` + `routes/chat.ts` + `frontend/src/components/AnalysisDetails/LicenseStatusBadge.tsx`
+**Summary**: Three-part fix making day-181 expiry actually enforce. (1) New env var `DEAL_LICENSE_WINDOW_DAYS` for QA testing (default 180; set 0 for immediate expiry). `findActiveForProperty` now also filters `expiresAt > now` (was status-only). New `findLatestForProperty` finds any license including expired. GET `/license` returns distinct `status: 'expired'` when a user once had a license that's lapsed. (2) New `assertLicenseAllowsMutation` helper wired into `/chat/turn`, `/chat/turn/stream`, and `/chat/stress-test/save` — returns 403 with `error: 'license_expired'`, frontend renders clean user-friendly copy. Reads stay open (workspace, scenarios, critique, PDF, email-PDF). (3) Moved the guard to fire BEFORE SSE headers were flushed (initial deploy crashed with ERR_HTTP_HEADERS_SENT). User verified end-to-end: badge shows, mutations blocked with clean 403 + clean copy, reads work. Deferred to #34 Stripe: renewal CTA, T-30/T-7/T-1 expiry-warning emails, one-click checkout.
+
+---
+
 ## 🟡 **ACTIVE ISSUES** (2026-06-24)
 
 ### Issue #124: Anonymous DealScoreCard "NEXT STEP" leaks directive copy
