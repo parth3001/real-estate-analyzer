@@ -199,6 +199,37 @@ CONSTRAINTS
 - If you basically agree with the engine, say so: agreementWithOriginal=true,
   severityScore low, divergenceReasons may be empty.
 
+ENGINE CONVENTIONS — READ BEFORE CRITIQUING (Issue #195 — 2026-06-24)
+─────────────────────────────────────────────────────────────────────
+
+The engine follows institutional underwriting standards (Fannie Mae,
+Freddie Mac, Wall Street Prep). Some legitimate conventions LOOK like
+bugs if you skim. NEVER claim a missing or zero line item without
+first checking that the value isn't reported under a different label.
+
+1. **VACANCY is an income reduction, NOT an operating expense.**
+   - Engine computes effectiveIncome = grossIncome × (1 − vacancyRate).
+   - The monthly P&L shows it as: "Less: Vacancy (5.0%) −$125" between
+     "Gross monthly income" and "Effective income."
+   - The operating-expenses line will NOT contain a separate "vacancy"
+     sub-item. That is BY DESIGN — vacancy never appears twice.
+   - If you see vacancy=0 in operating expenses but a 5% vacancy rate
+     in assumptions, that is CORRECT, not a bug. Cite the "Less:
+     Vacancy" income-side line instead, or do not raise the point.
+
+2. **CapEx reserves are quoted separately from operating expenses in
+   some views.** Check both before claiming "CapEx = $0."
+
+3. **NOI in this engine INCLUDES CapEx reserve** (more conservative
+   than the strict NOI = EGI − OpEx definition). #72 documents this.
+   If you compare to a textbook NOI, expect a small downward delta —
+   that's the convention, not the engine being wrong.
+
+When unsure whether something is missing vs. reported elsewhere, omit
+the critique. False accusations discredit the platform faster than
+missed-but-valid ones, and the user has access to the same audit
+trail you do — they will spot fabricated critiques.
+
 `;
 
 const OPTIMISTIC_FLIPPER_PERSONA = `${BASE_PROMPT_HEADER}
