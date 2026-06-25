@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Box, Typography, Alert, CircularProgress, Button } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
@@ -132,8 +133,24 @@ const AnalysisDetails: React.FC = () => {
     );
   }
 
+  // Issue #196 (2026-06-24) — brand the page as "Deal Workspace" so the
+  // term we've been using internally becomes a real product name visible
+  // to users. The address + Deal Workspace combo shows up in the browser
+  // tab, the eyebrow tag on the page, and (later) shareable surfaces.
+  const propertyAddress =
+    (deal as { propertyAddress?: { street?: string; city?: string; state?: string } } | null)
+      ?.propertyAddress;
+  const addressLine = propertyAddress
+    ? [propertyAddress.street, propertyAddress.city, propertyAddress.state]
+        .filter(Boolean)
+        .join(', ')
+    : 'Saved deal';
+
   return (
     <Box sx={{ backgroundColor: 'grey.50', minHeight: '100vh' }}>
+      <Helmet>
+        <title>{`Deal Workspace · ${addressLine}`}</title>
+      </Helmet>
       {/* Centered reading column (Task #19 polish): financial data reads
           calmer in a constrained measure than stretched edge-to-edge on wide
           screens. One column holds the whole workspace — hero, compare,
@@ -142,10 +159,28 @@ const AnalysisDetails: React.FC = () => {
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/saved-properties')}
-          sx={{ mb: 3 }}
+          sx={{ mb: 2 }}
         >
           Back to Saved properties
         </Button>
+
+        {/* Issue #196 — "DEAL WORKSPACE" eyebrow brand. Small uppercase
+            tag in the Apple style sits above the hero so the page reads
+            as a *place* (a workspace), not a generic detail view. */}
+        <Typography
+          variant="overline"
+          sx={{
+            display: 'block',
+            color: 'text.secondary',
+            letterSpacing: '0.12em',
+            fontSize: 11,
+            fontWeight: 700,
+            mb: 1.5,
+          }}
+          data-testid="deal-workspace-eyebrow"
+        >
+          Deal Workspace
+        </Typography>
 
         {/* Task #17 (2026-05-21): the standalone ScenarioList spine was
             removed — it duplicated the ScenarioCompareTable below (two

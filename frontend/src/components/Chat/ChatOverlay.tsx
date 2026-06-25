@@ -1580,9 +1580,9 @@ function ChatCardCtas({
         }}
         data-testid="chat-card-save-rationale"
       >
-        💡 Save this deal to view the full year-by-year projection,
-        financials breakdown, and long-term return analysis in a dedicated
-        workspace.
+        💡 Save this deal to open the full year-by-year projection,
+        financials breakdown, and long-term return analysis in your
+        Deal Workspace.
       </Typography>
       <Box
         sx={{

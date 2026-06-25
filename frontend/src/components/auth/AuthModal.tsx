@@ -48,7 +48,7 @@ const SUBHEAD: Record<AuthModalSource, string> = {
   'sign-in':
     "One link gets you in. New here? We'll create your account.",
   'save-deal':
-    'Your first full analysis is free. Sign up with email — no card, no password.',
+    "Your first full analysis is free. We'll open this deal in your Deal Workspace.",
   'email-cta':
     "Enter your email and we'll send the PDF along with a sign-in link.",
   generic:
