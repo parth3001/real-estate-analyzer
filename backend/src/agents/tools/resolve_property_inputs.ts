@@ -242,6 +242,33 @@ export const ResolvePropertyInputsInputSchema = z.object({
   purchasePrice: z.number().positive().finite().optional(),
   propertyType: z.enum(['SFR']), // MF is a separate path — see file header
   /**
+   * Phase 1 BRRRR (Issue #200 — 2026-06-25): investment strategy controls
+   * which decision engine runs. 'buy_hold' (default) uses the standard
+   * SFR Buy & Hold engine; 'brrrr' uses the BRRRRAnalyzer which models
+   * rehab + cash-out refinance + capital recovery. When 'brrrr', the
+   * `brrrr` field below is REQUIRED (rehabBudget + afterRepairValue).
+   * Defaults for refi rate / refi LTV / seasoning are applied if not
+   * supplied.
+   */
+  strategy: z.enum(['buy_hold', 'brrrr']).optional(),
+  /**
+   * Phase 1 BRRRR (Issue #200 — 2026-06-25): BRRRR-specific inputs.
+   * rehabBudget + afterRepairValue are USER-CRITICAL (no sane defaults —
+   * they reflect the specific deal's rehab scope and projected post-rehab
+   * value). refinanceLTV / refinanceInterestRate / seasoningPeriod have
+   * institutional defaults (75% / current+2% / 12mo) and the agent should
+   * disclose them after scoring.
+   */
+  brrrr: z
+    .object({
+      rehabBudget: z.number().positive().finite(),
+      afterRepairValue: z.number().positive().finite(),
+      refinanceLTV: z.number().positive().max(100).optional(),
+      refinanceInterestRate: z.number().positive().finite().optional(),
+      seasoningPeriod: z.number().positive().int().optional(),
+    })
+    .optional(),
+  /**
    * User-corrected field values. Anything here overrides the
    * resolved/defaulted value and is tagged 'user_provided' in the
    * provenance map. Keys are SFRData field names (monthlyRent,
@@ -479,6 +506,22 @@ export const resolvePropertyInputs: Tool<
     const validated = ResolvePropertyInputsInputSchema.parse(input);
     const overrides = validated.userOverrides ?? {};
 
+    // Phase 1 BRRRR (Issue #200): if strategy is 'brrrr' but no brrrr
+    // sub-object was supplied, throw with a clear message the agent can
+    // surface — those values reflect a specific deal's plan and we won't
+    // guess. Agent prompt is wired to ask the user for rehabBudget +
+    // afterRepairValue when strategy is brrrr; this is the runtime
+    // backstop.
+    const strategy = validated.strategy ?? 'buy_hold';
+    if (strategy === 'brrrr' && !validated.brrrr) {
+      throw new Error(
+        'resolve_property_inputs: strategy=brrrr requires the `brrrr` ' +
+          'sub-object with rehabBudget and afterRepairValue. Ask the user ' +
+          "for the rehab cost and after-repair value before retrying — we don't " +
+          'guess these.'
+      );
+    }
+
     // ===== Day 11b — stress-test / re-score branch =====
     //
     // When `priorDecisionId` is set, the caller is running a "change one
@@ -666,6 +709,48 @@ export const resolvePropertyInputs: Tool<
       },
     };
 
+    // Phase 1 BRRRR (Issue #200): when strategy='brrrr', stamp
+    // `investmentStrategy` + the `brrrr` sub-object on propertyData. The
+    // InvestmentDecisionEngine routes on propertyData.investmentStrategy
+    // (engine line 1610: `if (investmentStrategy === 'brrrr')`) and
+    // BRRRRAnalyzer reads from propertyData.brrrr. Defaults for refi
+    // rate / refi LTV / seasoning are applied here — refi rate defaults
+    // to the current mortgage rate + 200bps (typical cash-out spread),
+    // refi LTV to 75% (Fannie/Freddie standard), seasoning to 12 months
+    // (most conservative — many lenders accept 6).
+    if (strategy === 'brrrr') {
+      const brrrrIn = validated.brrrr!; // existence checked above
+      const refinanceLTV = brrrrIn.refinanceLTV ?? 75;
+      const refinanceInterestRate =
+        brrrrIn.refinanceInterestRate ?? Number((interestRate + 2).toFixed(3));
+      const seasoningPeriod = brrrrIn.seasoningPeriod ?? 12;
+
+      // Stamp the routing field. Cast to a wider shape because SFRData
+      // doesn't currently have investmentStrategy in its declared keys
+      // (it's read by the engine via `(propertyData as any)`).
+      (propertyData as unknown as Record<string, unknown>).investmentStrategy = 'brrrr';
+      (propertyData as unknown as Record<string, unknown>).brrrr = {
+        rehabBudget: brrrrIn.rehabBudget,
+        afterRepairValue: brrrrIn.afterRepairValue,
+        refinanceLTV,
+        refinanceInterestRate,
+        seasoningPeriod,
+      };
+
+      provenance.rehabBudget = 'user_provided';
+      provenance.afterRepairValue = 'user_provided';
+      provenance.refinanceLTV =
+        brrrrIn.refinanceLTV !== undefined ? 'user_provided' : 'assumption_default';
+      provenance.refinanceInterestRate =
+        brrrrIn.refinanceInterestRate !== undefined
+          ? 'user_provided'
+          : 'assumption_default';
+      provenance.seasoningPeriod =
+        brrrrIn.seasoningPeriod !== undefined
+          ? 'user_provided'
+          : 'assumption_default';
+    }
+
     // ===== Two-bucket transparency (Marcus Chen's model) =====
     //
     // confirmBeforeScoring: score-critical + likely-wrong. monthlyRent
@@ -702,6 +787,21 @@ export const resolvePropertyInputs: Tool<
       ['squareFootage', squareFootage],
       ['yearBuilt', yearBuilt],
     ];
+    // Phase 1 BRRRR (Issue #200): refi rate / refi LTV / seasoning have
+    // institutional defaults; surface them in the post-score disclosure
+    // so the user knows what assumptions are baked into the BRRRR math.
+    if (strategy === 'brrrr') {
+      const brrrrData = (propertyData as unknown as Record<string, unknown>).brrrr as {
+        refinanceLTV: number;
+        refinanceInterestRate: number;
+        seasoningPeriod: number;
+      };
+      discloseFields.push(
+        ['refinanceLTV', brrrrData.refinanceLTV],
+        ['refinanceInterestRate', brrrrData.refinanceInterestRate],
+        ['seasoningPeriod', brrrrData.seasoningPeriod]
+      );
+    }
     for (const [field, value] of discloseFields) {
       const src = provenance[field];
       // Only disclose what we inferred/defaulted — skip user_provided

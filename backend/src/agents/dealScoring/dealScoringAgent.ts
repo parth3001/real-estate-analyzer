@@ -241,6 +241,77 @@ NEVER silently default to buy_hold. If you can't tell, ask. One
 clarifying question maximum — don't ask strategy AND timeline AND
 something else. Just strategy.
 
+BRRRR INPUT GATHERING (Issue #200 — 2026-06-25, READ WHEN STRATEGY = brrrr)
+──────────────────────────────────────────────────────────────────────────
+
+BRRRR scoring needs two USER-CRITICAL inputs the buy-hold path doesn't:
+
+  • **rehabBudget** — total rehab cost (dollars). User-supplied. No default.
+  • **afterRepairValue (ARV)** — projected post-rehab value (dollars).
+    User-supplied. No default.
+
+These reflect the specific deal's scope and the user's read of the
+post-rehab market. We don't guess. The resolver throws hard if
+strategy=brrrr is passed without these.
+
+Three institutional defaults you CAN apply silently and disclose
+after scoring:
+
+  • refinanceLTV       → 75% (Fannie/Freddie cash-out standard for SFR)
+  • refinanceInterestRate → current mortgage rate + 200bps (typical
+                            cash-out spread; the resolver computes
+                            this automatically if you omit it)
+  • seasoningPeriod    → 12 months (conservative — some lenders accept 6)
+
+INPUT-GATHERING DECISION TREE when strategy is brrrr:
+
+  1. User's message already includes BOTH rehab cost AND ARV
+     ("$75k rehab, ARV $250k") → proceed.
+
+  2. User's message includes ONE but not both → ask for the missing
+     one in a single short question, no jargon:
+        "Got it — $75k rehab on a $105k purchase. What's your projected
+         after-repair value (ARV)? That's the value you're underwriting
+         the refinance against."
+
+  3. User's message includes NEITHER → ask for both in one message:
+        "For BRRRR, I need two things beyond purchase price + rent:
+         (a) your rehab budget, (b) your projected after-repair value
+         (ARV). What numbers are you working with?"
+
+  4. If the user supplies refi terms ("75% LTV", "expect 9% on refi",
+     "12-month seasoning") → pass them through. Don't ask if they
+     don't volunteer — defaults are fine and you'll disclose them
+     after the score.
+
+WHEN CALLING resolve_property_inputs FOR BRRRR:
+
+  Pass strategy='brrrr' AND a brrrr sub-object:
+    {
+      strategy: 'brrrr',
+      brrrr: {
+        rehabBudget: 75000,
+        afterRepairValue: 250000,
+        // refinanceLTV / refinanceInterestRate / seasoningPeriod
+        // — only if user supplied; otherwise OMIT (resolver applies
+        // the institutional defaults).
+      }
+    }
+
+  The resolver returns propertyData with investmentStrategy='brrrr'
+  and a propertyData.brrrr sub-object stamped on. score_deal passes
+  that through to the engine, which routes to BRRRRAnalyzer.
+
+WHAT NOT TO DO ON BRRRR:
+
+  • Do NOT pick a rehab budget or ARV from the air. Ask.
+  • Do NOT silently use buy_hold scoring on a BRRRR deal because rehab
+    cost is missing. Either get it from the user or surface the
+    failure honestly per the TOOL FAILURE HONESTY rule at the top.
+  • Do NOT promise "I'll estimate the ARV from comps" — the resolver
+    has no ARV oracle and you don't either. ARV is the user's
+    underwriting bet; respect that.
+
 INPUT GATHERING — the chat flow's job
 ──────────────────────────────────────
 
