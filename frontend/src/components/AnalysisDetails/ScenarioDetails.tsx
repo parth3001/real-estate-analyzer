@@ -158,6 +158,84 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
       ? (vacancyMonthly / grossMonthly) * 100
       : undefined;
 
+  // Phase 2 BRRRR (Issue #201 — 2026-06-25): when this scenario was
+  // scored as BRRRR, surface the BRRRR-specific plan + derived metrics
+  // ABOVE the standard buy-hold financials. The user paid $4.99 for
+  // a BRRRR analysis; they need to see something BRRRR-specific. The
+  // engine's full brrrAnalyzer output (capitalRecovery sub-object,
+  // postRefi metrics, 70% rule check) isn't yet projected through
+  // substrate (Phase 2.5 work); for now we compute the key derived
+  // metrics inline from data we DO have on the propertyData.
+  const pd = (detail.propertyData ?? {}) as Record<string, unknown>;
+  const isBrrrr =
+    (pd.investmentStrategy as string | undefined) === 'brrrr' &&
+    typeof pd.brrrr === 'object' &&
+    pd.brrrr !== null;
+  const brrrrBlock = isBrrrr ? (pd.brrrr as Record<string, unknown>) : null;
+  let brrrrRows: Row[] = [];
+  if (brrrrBlock) {
+    const rehabBudget = Number(brrrrBlock.rehabBudget) || 0;
+    const arv = Number(brrrrBlock.afterRepairValue) || 0;
+    const refiLTV = Number(brrrrBlock.refinanceLTV) || 75;
+    const refiRate = Number(brrrrBlock.refinanceInterestRate) || 0;
+    const seasoning = Number(brrrrBlock.seasoningPeriod) || 12;
+    const purchasePrice = Number(pd.purchasePrice) || 0;
+    const downPayment = Number(pd.downPayment) || 0;
+    const closingCosts = Number(pd.closingCosts) || 0;
+    // All-in for the 70% rule is purchase + rehab (per the rule's
+    // canonical form). Including closing in "all-in cash" elsewhere
+    // is fine but the rule itself excludes closing.
+    const allInRule70 = purchasePrice + rehabBudget;
+    const allInTotalCash = downPayment + rehabBudget + closingCosts;
+    const refiLoan = arv * (refiLTV / 100);
+    const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
+    const capitalRecoveredAtRefi = Math.max(0, refiLoan - originalLoanBalance);
+    const capitalRemaining = Math.max(0, allInTotalCash - capitalRecoveredAtRefi);
+    const capitalRecoveryPct =
+      allInTotalCash > 0
+        ? Math.min(100, (capitalRecoveredAtRefi / allInTotalCash) * 100)
+        : 0;
+    const meets70Rule = arv > 0 ? allInRule70 <= arv * 0.7 : false;
+    const rule70Threshold = arv * 0.7;
+
+    brrrrRows = [
+      { label: 'Rehab budget', value: fmtCurrency(rehabBudget) },
+      { label: 'After-repair value (ARV)', value: fmtCurrency(arv) },
+      { label: 'Total cash deployed (DP + rehab + closing)', value: fmtCurrency(allInTotalCash) },
+      {
+        label: '70% rule (purchase + rehab ≤ 70% × ARV)',
+        value: arv > 0
+          ? `${fmtCurrency(allInRule70)} vs ${fmtCurrency(rule70Threshold)} — ${meets70Rule ? '✓ meets' : '✗ over'}`
+          : '–',
+        negative: arv > 0 && !meets70Rule,
+        hint: 'Classic BRRRR underwriting filter: keep total acquisition (price + rehab, excluding closing) under 70% of the projected after-repair value. Leaves headroom for refi appraisal slippage + capital recovery.',
+      },
+      { label: 'Refi LTV', value: `${refiLTV.toFixed(0)}%` },
+      {
+        label: 'Refi loan (ARV × LTV)',
+        value: fmtCurrency(refiLoan),
+        hint: 'Estimated cash-out refinance loan amount, assuming the appraiser hits the projected ARV and the lender funds at the modeled LTV.',
+      },
+      { label: 'Estimated refi rate', value: refiRate > 0 ? fmtPct(refiRate) : '–' },
+      { label: 'Seasoning before refi', value: `${seasoning} mo` },
+      {
+        label: 'Capital recovered at refi',
+        value: fmtCurrency(capitalRecoveredAtRefi),
+        hint: 'Refi loan minus the original purchase loan balance — the cash that flows back to you at refinance.',
+      },
+      {
+        label: 'Capital remaining in deal',
+        value: fmtCurrency(capitalRemaining),
+        hint: 'Cash you have left invested AFTER the refi. If this is ~$0 or negative, you have an "infinite return" — every dollar of return is on no remaining capital.',
+      },
+      {
+        label: 'Capital recovery rate',
+        value: `${capitalRecoveryPct.toFixed(1)}%`,
+        hint: 'Capital recovered ÷ total cash deployed. 100% = full BRRRR (capital fully recycled). <100% = partial recovery.',
+      },
+    ];
+  }
+
   const financials: Row[] = [
     // Monthly cash-flow breakdown (was the legacy "Financial Details" tab).
     { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
@@ -218,11 +296,20 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
 
   return (
     <WorkspaceSection label="Details · selected scenario">
+      {brrrrRows.length > 0 && (
+        <Section
+          title="BRRRR plan"
+          open={openSection === 'brrrr'}
+          onToggle={() => setOpenSection((s) => (s === 'brrrr' ? null : 'brrrr'))}
+          rows={brrrrRows}
+        />
+      )}
       <Section
         title="Financials"
           open={openSection === 'financials'}
           onToggle={() => setOpenSection((s) => (s === 'financials' ? null : 'financials'))}
           rows={financials}
+          borderTop={brrrrRows.length > 0}
         />
         <Section
           title="Long-term"
