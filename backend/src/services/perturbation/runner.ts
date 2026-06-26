@@ -113,7 +113,16 @@ function readEngineField(
   def: PerturbableFieldDef
 ): number | undefined {
   const bag = def.container === 'propertyData' ? propertyData : assumptions;
-  const v = bag[def.path];
+  // Issue #203 (2026-06-25): nested-path support for BRRRR fields
+  // (propertyData.brrrr.X). Flat fields omit subPath and continue to
+  // read bag[path] directly.
+  let v: unknown;
+  if (def.subPath) {
+    const sub = bag[def.path] as Record<string, unknown> | undefined;
+    v = sub ? sub[def.subPath] : undefined;
+  } else {
+    v = bag[def.path];
+  }
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 }
 
@@ -129,7 +138,19 @@ function writeEngineField(
   value: number
 ): void {
   const bag = def.container === 'propertyData' ? propertyData : assumptions;
-  bag[def.path] = value;
+  // Issue #203 (2026-06-25): nested-path write for BRRRR sub-fields.
+  // Lazily creates the sub-object if missing so a stress-test on a
+  // legacy buy-hold deal that's being pivoted to BRRRR doesn't NPE.
+  if (def.subPath) {
+    let sub = bag[def.path] as Record<string, unknown> | undefined;
+    if (!sub || typeof sub !== 'object') {
+      sub = {};
+      bag[def.path] = sub;
+    }
+    sub[def.subPath] = value;
+  } else {
+    bag[def.path] = value;
+  }
 }
 
 /**

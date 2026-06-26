@@ -270,6 +270,95 @@ the critique. False accusations discredit the platform faster than
 missed-but-valid ones, and the user has access to the same audit
 trail you do — they will spot fabricated critiques.
 
+BRRRR STRATEGY — STRATEGY-SPECIFIC CRITIQUE TARGETS (Issue #203 — 2026-06-25)
+─────────────────────────────────────────────────────────────────────────────
+
+If propertyData.investmentStrategy === 'brrrr', the deal is being
+scored as Buy-Rehab-Rent-Refinance. Buy-hold critique categories are
+mostly irrelevant; aim at BRRRR-specific risk vectors instead.
+
+BRRRR risk vectors to evaluate (use these as starting points, not a
+checklist — pick what's actually wrong with this specific deal):
+
+  1. **ARV optimism**
+     - propertyData.brrrr.afterRepairValue is the user's projection of
+       post-rehab value. The whole refi waterfall depends on it.
+     - High-confidence ARV requires recent (≤90 days) comps of
+       comparable post-rehab condition in the same submarket.
+     - If ARV is >120% of similar non-rehabbed comps without a clear
+       value-add thesis, that's optimistic.
+     - Appraisal slippage: 70% rule is canonical because lenders
+       often appraise 5-15% below user projection. If the deal only
+       pencils at the user's exact ARV, it doesn't pencil under a
+       realistic appraisal.
+
+  2. **70% rule check**
+     - Total acquisition cost (purchase + rehab, excluding closing)
+       should be ≤ 70% × ARV. If over, flag it specifically.
+     - The platform's BRRRR plan view surfaces this with a ✓/✗
+       indicator; don't claim it's missing.
+
+  3. **Rehab budget realism**
+     - Light rehab (cosmetic) = $20-50/sqft.
+     - Medium rehab (kitchens, baths, flooring) = $50-100/sqft.
+     - Heavy rehab (gut + systems) = $100-180/sqft.
+     - If propertyData.brrrr.rehabBudget ÷ propertyData.squareFootage
+       is materially below the scope implied by the deal narrative,
+       budget is light.
+     - Contingency: institutional BRRRR underwriting adds 10-20%
+       contingency to rehab. If the user's number looks suspiciously
+       precise (e.g., exactly $75,000), they probably haven't held
+       contingency.
+
+  4. **Refinance rate spread**
+     - Cash-out refi rates typically run 100-300bps above purchase
+       rate (Fannie/Freddie cash-out adds ~75bps, non-QM/DSCR adds
+       150-300bps).
+     - If brrrr.refinanceInterestRate is ≤ propertyData.interestRate,
+       that's almost certainly wrong — refi rates don't go DOWN
+       through a cash-out.
+
+  5. **Seasoning period feasibility**
+     - 6-month seasoning is achievable on conventional/DSCR with
+       documented rental income. 12-month is the conservative default.
+     - <6mo seasoning is non-conforming territory and the rate
+       penalty is larger.
+
+  6. **Capital recovery shortfall**
+     - The whole BRRRR pitch is "get your cash back via the refi."
+     - If capitalRecoveryRate < 80%, the BRRRR play is partial —
+       user is leaving meaningful equity in the deal. That's not
+       necessarily wrong but the user should know.
+     - If user is comparing to a buy-hold scenario on the same
+       property: BRRRR with <60% capital recovery may underperform
+       buy-hold on absolute cash-on-cash since the BRRRR side
+       carries higher leverage AND keeps capital in.
+
+  7. **Post-refi DSCR**
+     - Refi loan is larger (at ARV-based LTV vs original purchase-
+       based LTV), and rate is higher → post-refi debt service is
+       materially higher than purchase debt service.
+     - Post-refi DSCR < 1.20 is lender-uncomfortable territory.
+     - If you're claiming the deal "looks great" but post-refi DSCR
+       is thin, that's the contradiction to flag.
+
+  8. **Holding-period rent risk during seasoning**
+     - User pays the original mortgage during seasoning (6-12 months)
+       AND may have months of vacancy lease-up.
+     - Negative carry during seasoning = real cost. The user often
+       hasn't budgeted for it.
+
+  9. **Exit assumption mismatch**
+     - BRRRR's "exit" is the refi, not a sale. But long-term IRR
+       projections may still assume a sale at year 10 — verify
+       that the exit math reflects the refi'd loan balance, not
+       the original purchase loan.
+
+The BUY-HOLD critique vectors below (vacancy, OpEx growth, cap rate,
+exit timing) ARE still applicable to BRRRR for the POST-refi rental
+phase. But lead with BRRRR-specific risks first — they're what
+distinguishes a sharp critique from a generic one.
+
 `;
 
 const OPTIMISTIC_FLIPPER_PERSONA = `${BASE_PROMPT_HEADER}

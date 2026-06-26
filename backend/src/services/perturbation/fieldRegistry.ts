@@ -77,6 +77,13 @@ export interface PerturbableFieldDef {
    * this to write the perturbed value to the right place.
    */
   path: string;
+  /**
+   * Issue #203 (2026-06-25) — for fields nested under a sub-object (BRRRR
+   * fields live at `propertyData.brrrr.X`), set `path: 'brrrr'` and
+   * `subPath: 'X'`. The runner reads/writes `bag[path][subPath]` instead
+   * of `bag[path]`. Backwards-compatible: flat fields omit `subPath`.
+   */
+  subPath?: string;
   /** Unit the engine expects. The runner converts user-units → this. */
   engineUnit: EngineUnit;
   /** Human-readable label for chat narration ("Mortgage rate"). */
@@ -333,6 +340,71 @@ export const SFR_PERTURBABLE_FIELDS: Record<string, PerturbableFieldDef> = {
     label: 'Repair costs',
     description: 'Repair costs in DOLLARS.',
     min: 0,
+  },
+
+  // ===== BRRRR-specific levers (Issue #203 — 2026-06-25) =====
+  // These fields live nested under propertyData.brrrr. The runner reads/
+  // writes them at bag[path][subPath]. Only relevant when the underlying
+  // deal was scored as BRRRR — applying them to a buy-hold deal will
+  // just create the sub-object lazily (no engine-side effect, since the
+  // engine only reads brrrr.* when investmentStrategy === 'brrrr').
+  rehabBudget: {
+    key: 'rehabBudget',
+    container: 'propertyData',
+    path: 'brrrr',
+    subPath: 'rehabBudget',
+    engineUnit: 'dollars',
+    label: 'Rehab budget',
+    description:
+      'BRRRR rehab budget in DOLLARS. The user-supplied projection of total rehab cost. If the user says "rehab at $80k" or "what if rehab costs $90,000?", emit value=80000 (or 90000) unit="dollars".',
+    min: 0,
+  },
+  afterRepairValueBrrrr: {
+    key: 'afterRepairValueBrrrr',
+    container: 'propertyData',
+    path: 'brrrr',
+    subPath: 'afterRepairValue',
+    engineUnit: 'dollars',
+    label: 'After-repair value (ARV)',
+    description:
+      'BRRRR after-repair value (ARV) in DOLLARS. The projected post-rehab appraised value the refinance leverages. If the user says "ARV at $260k" or "what if ARV is $225,000?", emit value=260000 (or 225000) unit="dollars". This is the BRRRR-specific ARV field; do not confuse with `afterRepairValue` which is the legacy top-level path.',
+    min: 0,
+  },
+  refinanceLTV: {
+    key: 'refinanceLTV',
+    container: 'propertyData',
+    path: 'brrrr',
+    subPath: 'refinanceLTV',
+    engineUnit: 'percent',
+    label: 'Refinance LTV',
+    description:
+      'BRRRR cash-out refinance LTV as a PERCENT. Engine expects 75 to mean 75%. Common values: 70 (conservative), 75 (Fannie/Freddie standard), 80 (aggressive DSCR product). If the user says "refi at 70% LTV" or "what if the lender only goes to 70?", emit value=70 unit="percent".',
+    min: 0,
+    max: 95,
+  },
+  refinanceRate: {
+    key: 'refinanceRate',
+    container: 'propertyData',
+    path: 'brrrr',
+    subPath: 'refinanceInterestRate',
+    engineUnit: 'percent',
+    label: 'Refinance interest rate',
+    description:
+      'BRRRR cash-out refinance interest rate as a PERCENT. Engine expects 9.5 to mean 9.5%. Typically 100-300bps above the purchase rate. If the user says "refi at 10%" or "rate at refi goes to 9.25%", emit value=10 (or 9.25) unit="percent".',
+    min: 0,
+    max: 25,
+  },
+  seasoningPeriod: {
+    key: 'seasoningPeriod',
+    container: 'propertyData',
+    path: 'brrrr',
+    subPath: 'seasoningPeriod',
+    engineUnit: 'count',
+    label: 'Seasoning period (months)',
+    description:
+      'BRRRR seasoning period — months between purchase and refi. Integer. Common values: 6 (DSCR friendly), 12 (conservative default). If the user says "what if seasoning is 6 months" or "refi after 9", emit value=6 (or 9) unit="count".',
+    min: 0,
+    max: 36,
   },
 };
 

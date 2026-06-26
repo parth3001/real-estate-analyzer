@@ -86,6 +86,29 @@ export const GetDecisionBreakdownOutputSchema = z.object({
   decisionId: z.string(),
   analysisEventId: z.string(),
 
+  // Issue #203 (2026-06-25) — strategy + BRRRR-specific inputs so the
+  // agent narrating a breakdown knows whether to lead with buy-hold
+  // framing ("monthly cash flow + cap rate") or BRRRR framing ("monthly
+  // cash flow during seasoning + projected refi recovery").
+  strategy: z.enum(['buy_hold', 'brrrr']).optional(),
+  brrrr: z
+    .object({
+      rehabBudget: z.number(),
+      afterRepairValue: z.number(),
+      refinanceLTV: z.number(),
+      refinanceInterestRate: z.number(),
+      seasoningPeriod: z.number(),
+      // Derived for the agent's convenience; matches the BRRRR plan
+      // panel in the workspace (#201).
+      totalCashDeployed: z.number(),
+      refiLoan: z.number(),
+      capitalRecoveredAtRefi: z.number(),
+      capitalRemaining: z.number(),
+      capitalRecoveryPct: z.number(),
+      meets70Rule: z.boolean(),
+    })
+    .optional(),
+
   property: z.object({
     address: PropertyAddressSchema,
     purchasePrice: z.number(),
@@ -244,11 +267,55 @@ export const getDecisionBreakdown: Tool<
 
     const metrics = analysisPayload.metrics ?? {};
 
+    // Issue #203 (2026-06-25) — strategy + BRRRR-specific fields so
+    // the breakdown narration can lead with strategy-appropriate
+    // framing (capital recovery for BRRRR, vs cash-on-cash for
+    // buy-hold). Derived from substrate propertyData.
+    const strategyAny = (propertyData as { investmentStrategy?: unknown })
+      .investmentStrategy;
+    const strategy: 'buy_hold' | 'brrrr' | undefined =
+      strategyAny === 'brrrr' ? 'brrrr' : strategyAny === 'buy_hold' ? 'buy_hold' : undefined;
+    let brrrrOut: GetDecisionBreakdownOutput['brrrr'];
+    if (strategy === 'brrrr') {
+      const brrrrIn = (propertyData as { brrrr?: Record<string, unknown> }).brrrr ?? {};
+      const rehabBudget = num(brrrrIn.rehabBudget);
+      const arv = num(brrrrIn.afterRepairValue);
+      const refinanceLTV = num(brrrrIn.refinanceLTV) || 75;
+      const refinanceInterestRate = num(brrrrIn.refinanceInterestRate);
+      const seasoningPeriod = num(brrrrIn.seasoningPeriod) || 12;
+      const closingCosts = num(propertyData.closingCosts);
+      const totalCashDeployed = downPayment + rehabBudget + closingCosts;
+      const refiLoan = arv * (refinanceLTV / 100);
+      const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
+      const capitalRecoveredAtRefi = Math.max(0, refiLoan - originalLoanBalance);
+      const capitalRemaining = Math.max(0, totalCashDeployed - capitalRecoveredAtRefi);
+      const capitalRecoveryPct =
+        totalCashDeployed > 0
+          ? Math.min(100, (capitalRecoveredAtRefi / totalCashDeployed) * 100)
+          : 0;
+      const meets70Rule = arv > 0 ? purchasePrice + rehabBudget <= arv * 0.7 : false;
+      brrrrOut = {
+        rehabBudget,
+        afterRepairValue: arv,
+        refinanceLTV,
+        refinanceInterestRate,
+        seasoningPeriod,
+        totalCashDeployed,
+        refiLoan,
+        capitalRecoveredAtRefi,
+        capitalRemaining,
+        capitalRecoveryPct,
+        meets70Rule,
+      };
+    }
+
     const out: GetDecisionBreakdownOutput = {
       decisionId: decisionId.toHexString(),
       analysisEventId:
         (bundle.analysis._id as Types.ObjectId)?.toHexString?.() ??
         String(bundle.analysis._id),
+      strategy,
+      brrrr: brrrrOut,
 
       property: {
         address:
