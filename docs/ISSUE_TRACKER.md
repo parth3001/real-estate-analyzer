@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #200 (Phase 1 of BRRRR rebuild): chat agent can collect BRRRR inputs + route through engine
+**Status**: ✅ RESOLVED 2026-06-25 (Phase 1; Phases 2-4 pending)
+**Priority**: P0 — v1 launch blocker per user decision (cold-traffic launch posture)
+**Commit**: `00aef96`
+**Component**: `backend/src/agents/tools/resolve_property_inputs.ts` + `agents/dealScoring/dealScoringAgent.ts`
+**Summary**: User tested chat BRRRR and got an engine error → agent confabulated math (fixed in #199). Root-cause investigation showed the InvestmentDecisionEngine HAS had a BRRRR routing branch all along (engine.ts:1610 → `generateBRRRRDecision` → `BRRRRAnalyzer.analyze`), but the chat path's resolver never stamped `propertyData.investmentStrategy='brrrr'` or `propertyData.brrrr={rehabBudget, afterRepairValue, ...}`. So the engine routed correctly but the analyzer threw on missing required fields. Phase 1 fix: (a) `resolve_property_inputs` schema now accepts `strategy: 'buy_hold' | 'brrrr'` + a `brrrr` sub-object with rehab budget + ARV (required) + refi LTV / refi rate / seasoning (defaults applied if omitted: 75% LTV, current+200bps refi rate, 12mo seasoning); hard-throws if strategy='brrrr' without the brrrr sub-object. (b) Resolver stamps `investmentStrategy='brrrr'` and the brrrr sub-object onto returned propertyData so the engine's existing routing fires. (c) `dealScoringAgent.ts` system prompt has a new "BRRRR INPUT GATHERING" block with explicit decision tree (rehab + ARV both present → proceed; one missing → ask for the other; neither → ask for both) and explicit calling guidance for the resolver. End-to-end chat BRRRR scoring path works. Phases 2-4 (workspace variant, read tools / critic / perturbation, pricing copy) still pending.
+
+---
+
 ### Issue #199: Agent confabulated BRRRR math when score_deal errored
 **Status**: ✅ RESOLVED 2026-06-25 (system prompt fix; runner backstop deferred to v1.1)
 **Priority**: P0 — Trust hemorrhage (would survive into cold-traffic launch)
