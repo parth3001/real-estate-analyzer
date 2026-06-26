@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #201 (Phase 2 of BRRRR rebuild): Deal Workspace renders BRRRR plan + derived metrics
+**Status**: ✅ RESOLVED 2026-06-25 (Phase 2 minimum viable; Phase 2.5 full engine projection deferred)
+**Priority**: P0 — v1 launch blocker (chain with #200, #199, Phase 0 confab guard)
+**Commit**: `bfafee0`
+**Component**: `frontend/src/components/AnalysisDetails/ScenarioDetails.tsx`
+**Summary**: Phase 1 (#200) wired chat → engine for BRRRR. This phase makes the saved-deal workspace render a BRRRR-specific "BRRRR plan" collapsible section above Financials, showing rehab budget + ARV + total cash deployed + 70% rule check + refi LTV + estimated refi loan + estimated refi rate + seasoning + capital recovered at refi + capital remaining + capital recovery %. All computed inline from data already projected through substrate (`propertyData.brrrr` + standard SFR fields) — no backend schema changes, no risk of regression on buy-hold path. Phase 2.5 follow-up will project the engine's full brrrAnalyzer output (capitalRecovery sub-object, postRefiMetrics, exitScenarios, 70% rule check) through substrate so workspace/chat/PDF all read from the same engine-computed fields rather than the frontend's inline derivation. Pre-existing infrastructure that the audit missed: savedDealVariants already had 'sfr_brrrr' variant + caption + factor priorities + chips; materializer already projects investmentStrategy + brrrr fields; Deal schema already supports BRRRR. Only the rendering layer was missing.
+
+---
+
 ### Issue #200 (Phase 1 of BRRRR rebuild): chat agent can collect BRRRR inputs + route through engine
 **Status**: ✅ RESOLVED 2026-06-25 (Phase 1; Phases 2-4 pending)
 **Priority**: P0 — v1 launch blocker per user decision (cold-traffic launch posture)
