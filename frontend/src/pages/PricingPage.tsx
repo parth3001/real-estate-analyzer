@@ -70,8 +70,9 @@ const PricingPage: React.FC = () => {
       title: 'Go deep on one property',
       lines: [
         '28+ professional metrics',
+        'Buy-and-hold AND BRRRR — pivot mid-conversation',
         'Walk-away price + 10-year projection',
-        'Stress tests — rate shocks, vacancy, rent drops',
+        'Stress tests — rate shocks, vacancy, rent drops, refi terms',
         'AI commentary on every score and trade-off',
         'Full audit trail — every input and assumption',
         'Override any assumption, re-score instantly',
@@ -132,8 +133,12 @@ const PricingPage: React.FC = () => {
       answer: 'Yes. After signup, your first property unlock — full depth, 180-day window — is free. No credit card required. We bet that the first analysis is good enough to make $4.99 feel reasonable for the next one.',
     },
     {
+      question: 'Do you handle BRRRR deals?',
+      answer: 'Yes — BRRRR is fully supported. Tell the chat agent "BRRRR with $X rehab, $Y ARV" or just describe the plan ("buying, rehabbing, refinancing"); the agent picks it up implicitly. You\'ll see the standard score plus BRRRR-specific metrics — 70% rule check, capital recovery rate, refi loan, capital remaining in the deal. You can also pivot mid-conversation: start as buy-and-hold, walk the property, switch to BRRRR — both scenarios end up side-by-side in your Deal Workspace, same license.',
+    },
+    {
       question: 'Do you handle multi-family?',
-      answer: 'Today: single-family residential (SFR) buy-and-hold. Multi-family and BRRRR analysis are in active development and will land later this year — they\'ll likely get their own tier reflecting the heavier engine and unit-level inputs.',
+      answer: 'Not yet — multi-family is in active development and will land later this year. It\'ll likely get its own tier reflecting the heavier engine and unit-level inputs. Today the platform handles single-family residential (SFR) buy-and-hold and BRRRR strategies.',
     },
     {
       question: 'I\'m a lender / agent / syndicator. Do you have volume pricing?',
