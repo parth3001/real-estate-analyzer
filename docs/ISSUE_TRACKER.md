@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #202: Strategy pivot — buy_hold ↔ brrrr on same property
+**Status**: ✅ RESOLVED 2026-06-25
+**Priority**: P0 — competitive product feature for the per-deal model
+**Commit**: `f41bf14`
+**Component**: `backend/src/agents/tools/resolve_property_inputs.ts` (priorDecisionId branch extension) + `agents/dealScoring/dealScoringAgent.ts` (STRATEGY PIVOT block in STEP 0)
+**Summary**: Highest-value BRRRR product moment — user analyzes a property as buy-hold, walks it, decides it's actually a BRRRR play, asks the agent to re-score. Both scenarios end up under the same Deal in the workspace scenario spine. User compares side-by-side, picks the strategy with confidence. License is per-property so the pivot doesn't cost the user another $4.99. Wires: resolver's priorDecisionId branch now accepts strategy + brrrr overrides on top of userOverrides (same pattern as stress-test re-score, no re-fetch of external APIs); reverse pivot strips investmentStrategy + brrrr from propertyData so engine routes to buy-hold branch. Agent prompt has a new STRATEGY PIVOT block under STEP 0 with detection signals, combined pivot-confirmation + input-gathering response, and explicit guidance to use priorDecisionId mode. Transforms per-deal pricing model into a "data-driven strategy confidence" product moment.
+
+---
+
 ### Issue #201 (Phase 2 of BRRRR rebuild): Deal Workspace renders BRRRR plan + derived metrics
 **Status**: ✅ RESOLVED 2026-06-25 (Phase 2 minimum viable; Phase 2.5 full engine projection deferred)
 **Priority**: P0 — v1 launch blocker (chain with #200, #199, Phase 0 confab guard)
