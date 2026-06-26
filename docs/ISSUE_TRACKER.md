@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #199: Agent confabulated BRRRR math when score_deal errored
+**Status**: ✅ RESOLVED 2026-06-25 (system prompt fix; runner backstop deferred to v1.1)
+**Priority**: P0 — Trust hemorrhage (would survive into cold-traffic launch)
+**Commit**: `1c51163`
+**Component**: `backend/src/agents/dealScoring/dealScoringAgent.ts` + `agents/qa/qaAgent.ts` system prompts
+**Summary**: User tested chat BRRRR; engine errored (BRRRR not wired through `InvestmentDecisionEngine` per the Phase 0 audit); agent responded by computing the BRRRR math itself from base-model knowledge ("$180K all-in vs $250K ARV = 72% of ARV ... cash-out refi at 75% LTV = $187,500 loan...") and presenting it as if the engine had run. The numbers were approximately right, which is the worst possible outcome — user cannot distinguish engine output from LLM guess. Phase 0 of the Option A (BRRRR rebuild) plan. Added a TOOL FAILURE HONESTY block at the top of both agent prompts: when a tool returns `is_error: true`, surface the failure honestly; never compute the answer from base-model knowledge; never mix engine output and LLM arithmetic in the same message. Backstop noted in commit if the LLM still confabulates: runner-level templated rejection that rejects dollar figures in error-turn outputs (v1.1).
+
+---
+
 ### Issue #198: Adversarial critic always lands at "Significant concerns" severity
 **Status**: ✅ RESOLVED 2026-06-24
 **Priority**: P2 — badge is noise, not signal
