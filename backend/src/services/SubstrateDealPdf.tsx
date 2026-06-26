@@ -51,6 +51,30 @@ export interface SubstrateDealPdfInput {
     totalInvestment?: number;
     monthlyDebtService?: number;
   };
+  /**
+   * Issue #205 (2026-06-25) — BRRRR-specific section. Rendered only when
+   * strategy === 'brrrr'. Caller pre-computes from substrate (engine
+   * output if available, inline derivation otherwise) so the PDF stays
+   * pure-render with no math logic.
+   */
+  brrrr?: {
+    rehabBudget: number;
+    afterRepairValue: number;
+    refinanceLTV: number;
+    refinanceInterestRate?: number;
+    seasoningPeriod: number;
+    totalCashDeployed: number;
+    refiLoan: number;
+    capitalRecoveredAtRefi: number;
+    capitalRemaining: number;
+    capitalRecoveryPct: number;
+    meets70Rule: boolean;
+    rule70Threshold: number;
+    allInRule70: number;
+    postRefiCashFlow?: number;
+    postRefiDscr?: number;
+    infiniteReturn?: boolean;
+  };
 }
 
 // ===== Helpers =====
@@ -246,6 +270,7 @@ export const SubstrateDealPdfDocument: React.FC<{ data: SubstrateDealPdfInput }>
     assumptions,
     projection,
     keyMetrics,
+    brrrr,
   } = data;
 
   const strategyLabel = strategy === 'brrrr' ? 'BRRRR Analysis' : 'Buy & Hold Analysis';
@@ -340,6 +365,94 @@ export const SubstrateDealPdfDocument: React.FC<{ data: SubstrateDealPdfInput }>
                   <Text style={styles.rowLabel}>Total cash invested</Text>
                   <Text style={styles.rowValue}>{fmtUsd(keyMetrics.totalInvestment)}</Text>
                 </View>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Issue #205 (2026-06-25) — BRRRR plan section. Renders only
+            when strategy === 'brrrr' and the brrrr block is populated.
+            Mirrors the Deal Workspace ScenarioDetails BRRRR section so
+            the saved PDF report matches what the user sees in-app. */}
+        {strategy === 'brrrr' && brrrr && (
+          <>
+            <Text style={styles.sectionTitle}>BRRRR plan</Text>
+            <View style={styles.twoCol}>
+              <View style={styles.col}>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Rehab budget</Text>
+                  <Text style={styles.rowValue}>{fmtUsd(brrrr.rehabBudget)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>After-repair value (ARV)</Text>
+                  <Text style={styles.rowValue}>{fmtUsd(brrrr.afterRepairValue)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Total cash deployed</Text>
+                  <Text style={styles.rowValue}>{fmtUsd(brrrr.totalCashDeployed)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>
+                    70% rule ({fmtUsd(brrrr.allInRule70)} vs {fmtUsd(brrrr.rule70Threshold)})
+                  </Text>
+                  <Text style={styles.rowValue}>{brrrr.meets70Rule ? 'meets' : 'over'}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Refi LTV</Text>
+                  <Text style={styles.rowValue}>{brrrr.refinanceLTV.toFixed(0)}%</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Refi loan (ARV × LTV)</Text>
+                  <Text style={styles.rowValue}>{fmtUsd(brrrr.refiLoan)}</Text>
+                </View>
+              </View>
+              <View style={styles.col}>
+                {typeof brrrr.refinanceInterestRate === 'number' && (
+                  <View style={styles.row}>
+                    <Text style={styles.rowLabel}>Estimated refi rate</Text>
+                    <Text style={styles.rowValue}>
+                      {brrrr.refinanceInterestRate.toFixed(2)}%
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Seasoning before refi</Text>
+                  <Text style={styles.rowValue}>{brrrr.seasoningPeriod} mo</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Capital recovered at refi</Text>
+                  <Text style={styles.rowValue}>
+                    {fmtUsd(brrrr.capitalRecoveredAtRefi)}
+                  </Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Capital remaining in deal</Text>
+                  <Text style={styles.rowValue}>{fmtUsd(brrrr.capitalRemaining)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Capital recovery rate</Text>
+                  <Text style={styles.rowValue}>
+                    {brrrr.capitalRecoveryPct.toFixed(1)}%
+                  </Text>
+                </View>
+                {typeof brrrr.postRefiCashFlow === 'number' && (
+                  <View style={styles.row}>
+                    <Text style={styles.rowLabel}>Post-refi monthly cash flow</Text>
+                    <Text style={styles.rowValue}>{fmtUsd(brrrr.postRefiCashFlow)}</Text>
+                  </View>
+                )}
+                {typeof brrrr.postRefiDscr === 'number' && (
+                  <View style={styles.row}>
+                    <Text style={styles.rowLabel}>Post-refi DSCR</Text>
+                    <Text style={styles.rowValue}>{brrrr.postRefiDscr.toFixed(2)}</Text>
+                  </View>
+                )}
+                {brrrr.infiniteReturn && (
+                  <View style={styles.row}>
+                    <Text style={styles.rowLabel}>Infinite return</Text>
+                    <Text style={styles.rowValue}>yes</Text>
+                  </View>
+                )}
               </View>
             </View>
           </>

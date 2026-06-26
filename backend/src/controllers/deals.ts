@@ -2914,6 +2914,77 @@ export const exportDealPdf = async (
       (dealData.analysis as { walkAwayPrice?: number } | undefined)?.walkAwayPrice ??
       0;
 
+    // Issue #205 (2026-06-25) — build the BRRRR section when this deal
+    // was scored as BRRRR. Prefer engine-computed values from
+    // analysis.strategySpecific (Phase 2.5 substrate projection) and
+    // fall back to inline derivation from inputs for back-compat with
+    // pre-#205 saved deals. Same hybrid pattern as ScenarioDetails so
+    // workspace + PDF match.
+    let brrrrSection: Parameters<typeof generateSubstrateDealPdf>[0]['brrrr'];
+    if (strategy === 'brrrr') {
+      const brrrrIn = (dealData as { brrrr?: Record<string, unknown> }).brrrr ?? {};
+      const rehabBudget = Number(brrrrIn.rehabBudget) || 0;
+      const arv = Number(brrrrIn.afterRepairValue) || 0;
+      const refinanceLTV = Number(brrrrIn.refinanceLTV) || 75;
+      const refinanceInterestRate = Number(brrrrIn.refinanceInterestRate) || undefined;
+      const seasoningPeriod = Number(brrrrIn.seasoningPeriod) || 12;
+      const purchasePrice = Number(dealData.purchasePrice) || 0;
+      const downPayment = Number(dealData.downPayment) || 0;
+      const closingCosts = Number(dealData.closingCosts) || 0;
+      const allInRule70 = purchasePrice + rehabBudget;
+      const totalCashDeployed = downPayment + rehabBudget + closingCosts;
+      const ss = (dealData.analysis as { strategySpecific?: Record<string, unknown> })
+        ?.strategySpecific;
+      const ssCR = (ss?.capitalRecovery as Record<string, unknown>) ?? {};
+      const ssPR = (ss?.postRefinanceMetrics as Record<string, unknown>) ?? {};
+      const ssR70 = (ss?.rule70Check as Record<string, unknown>) ?? {};
+      const refiLoan = ssPR.refinanceLoanAmount
+        ? Number(ssPR.refinanceLoanAmount)
+        : arv * (refinanceLTV / 100);
+      const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
+      const capitalRecoveredAtRefi = ssCR.capitalRecovered
+        ? Number(ssCR.capitalRecovered)
+        : Math.max(0, refiLoan - originalLoanBalance);
+      const capitalRemaining = ssCR.capitalRemaining
+        ? Number(ssCR.capitalRemaining)
+        : Math.max(0, totalCashDeployed - capitalRecoveredAtRefi);
+      const capitalRecoveryPct = ssCR.capitalRecoveryRate
+        ? Number(ssCR.capitalRecoveryRate)
+        : totalCashDeployed > 0
+          ? Math.min(100, (capitalRecoveredAtRefi / totalCashDeployed) * 100)
+          : 0;
+      const meets70Rule =
+        ssR70.meets70Rule !== undefined
+          ? Boolean(ssR70.meets70Rule)
+          : arv > 0
+            ? allInRule70 <= arv * 0.7
+            : false;
+      const rule70Threshold = arv * 0.7;
+      const postRefiCashFlow = ssPR.monthlyCashFlow
+        ? Number(ssPR.monthlyCashFlow)
+        : undefined;
+      const postRefiDscr = ssPR.dscr ? Number(ssPR.dscr) : undefined;
+      const infiniteReturn = ssCR.infiniteReturn === true;
+      brrrrSection = {
+        rehabBudget,
+        afterRepairValue: arv,
+        refinanceLTV,
+        refinanceInterestRate,
+        seasoningPeriod,
+        totalCashDeployed,
+        refiLoan,
+        capitalRecoveredAtRefi,
+        capitalRemaining,
+        capitalRecoveryPct,
+        meets70Rule,
+        rule70Threshold,
+        allInRule70,
+        postRefiCashFlow,
+        postRefiDscr,
+        infiniteReturn,
+      };
+    }
+
     const pdfResult = await generateSubstrateDealPdf({
       strategy,
       addressLine: addressString,
@@ -2925,6 +2996,7 @@ export const exportDealPdf = async (
       assumptions,
       projection: projection.length > 0 ? projection : undefined,
       keyMetrics,
+      brrrr: brrrrSection,
     });
     // Suppress unused-import warning for legacy generator path retained
     // for the wizard flow.
