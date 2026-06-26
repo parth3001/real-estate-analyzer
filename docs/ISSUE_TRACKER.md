@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #204 (Phase 4 of BRRRR rebuild): pricing copy reflects shipped BRRRR
+**Status**: ✅ RESOLVED 2026-06-25
+**Priority**: P0 — marketing-side reality check (false advertising risk if missed)
+**Commit**: `f49f577`
+**Component**: `frontend/src/pages/PricingPage.tsx` (tier bullets + FAQ)
+**Summary**: Per-deal tier bullets gained "Buy-and-hold AND BRRRR — pivot mid-conversation" + expanded stress-test list to include "refi terms." Legacy "Do you handle multi-family?" FAQ entry split into two: a new "Do you handle BRRRR deals?" Q with full feature description (implicit detection, BRRRR-specific metrics, mid-conversation pivot, same-license scenarios), and an honest MF deferral pointing to "later this year." Closes the Phase 4 marketing alignment portion of the BRRRR rebuild.
+
+---
+
 ### Issue #203 (Phase 3 of BRRRR rebuild): critic + read tool + perturbation BRRRR support
 **Status**: ✅ RESOLVED 2026-06-25
 **Priority**: P0 — v1 launch blocker (final breadth phase)
