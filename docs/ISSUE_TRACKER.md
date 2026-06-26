@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #203 (Phase 3 of BRRRR rebuild): critic + read tool + perturbation BRRRR support
+**Status**: ✅ RESOLVED 2026-06-25
+**Priority**: P0 — v1 launch blocker (final breadth phase)
+**Commit**: `5fb47c9`
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts` + `agents/tools/get_decision_breakdown.ts` + `services/perturbation/fieldRegistry.ts` + `services/perturbation/runner.ts`
+**Summary**: Three independent BRRRR breadth fixes wrapped in one commit. (1) Adversarial critic prompt got a BRRRR STRATEGY block with 9 strategy-specific risk vectors (ARV optimism, 70% rule, rehab realism, refi spread, seasoning feasibility, capital recovery shortfall, post-refi DSCR, seasoning carry, exit assumption mismatch) so critique quality matches buy-hold parity. (2) `get_decision_breakdown` read tool now surfaces `strategy` + `brrrr` sub-object with the same derived metrics as the workspace BRRRR plan section (#201) — chat narrative and workspace render identical numbers. (3) Perturbation registry got a `subPath` field for nested-path BRRRR fields + 5 new entries (rehabBudget, afterRepairValueBrrrr, refinanceLTV, refinanceRate, seasoningPeriod), so users can stress-test BRRRR-specific parameters from chat. Closes the BRRRR portion of task #29. Phase 4 (pricing copy + eval tests) remaining.
+
+---
+
 ### Issue #202: Strategy pivot — buy_hold ↔ brrrr on same property
 **Status**: ✅ RESOLVED 2026-06-25
 **Priority**: P0 — competitive product feature for the per-deal model
