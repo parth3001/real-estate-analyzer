@@ -451,6 +451,67 @@ async function resolveFromPriorDecision(
     provenance[key] = 'user_provided';
   }
 
+  // Issue #202 (2026-06-25) — STRATEGY PIVOT support on the
+  // prior-decision branch. When the user starts a buy-hold analysis,
+  // walks the property, and decides it's actually a BRRRR play, the
+  // agent passes strategy='brrrr' + the brrrr sub-object as overrides
+  // on top of the prior analysis. We don't re-fetch externals — the
+  // property facts (sqft, year, taxes, insurance, etc.) are property-
+  // attached and unchanged. Only the strategy + BRRRR-specific inputs
+  // change. Same architectural pattern as the stress-test override.
+  //
+  // The reverse pivot (BRRRR → buy-hold) is symmetric: strategy='buy_hold'
+  // removes the investmentStrategy + brrrr block from propertyData so
+  // the engine routes through the standard buy-hold branch.
+  if (input.strategy !== undefined) {
+    if (input.strategy === 'brrrr') {
+      if (!input.brrrr) {
+        throw new Error(
+          'resolve_property_inputs: strategy=brrrr on a pivot requires the `brrrr` ' +
+            'sub-object with rehabBudget and afterRepairValue. Ask the user for the ' +
+            'rehab cost and after-repair value before retrying.'
+        );
+      }
+      // Use the prior interestRate (not a fresh FRED fetch) to compute
+      // the refi rate default — the user's mortgage rate context is
+      // already in the prior analysis, and we want pivot determinism.
+      const priorInterestRate = Number(priorPropertyData.interestRate) || 7;
+      const refinanceLTV = input.brrrr.refinanceLTV ?? 75;
+      const refinanceInterestRate =
+        input.brrrr.refinanceInterestRate ??
+        Number((priorInterestRate + 2).toFixed(3));
+      const seasoningPeriod = input.brrrr.seasoningPeriod ?? 12;
+
+      propertyData.investmentStrategy = 'brrrr';
+      propertyData.brrrr = {
+        rehabBudget: input.brrrr.rehabBudget,
+        afterRepairValue: input.brrrr.afterRepairValue,
+        refinanceLTV,
+        refinanceInterestRate,
+        seasoningPeriod,
+      };
+      provenance.investmentStrategy = 'user_provided';
+      provenance.rehabBudget = 'user_provided';
+      provenance.afterRepairValue = 'user_provided';
+      provenance.refinanceLTV =
+        input.brrrr.refinanceLTV !== undefined ? 'user_provided' : 'assumption_default';
+      provenance.refinanceInterestRate =
+        input.brrrr.refinanceInterestRate !== undefined
+          ? 'user_provided'
+          : 'assumption_default';
+      provenance.seasoningPeriod =
+        input.brrrr.seasoningPeriod !== undefined
+          ? 'user_provided'
+          : 'assumption_default';
+    } else if (input.strategy === 'buy_hold') {
+      // Reverse pivot — strip the BRRRR-specific block so the engine
+      // routes through the standard buy-hold branch.
+      propertyData.investmentStrategy = 'buy_hold';
+      delete propertyData.brrrr;
+      provenance.investmentStrategy = 'user_provided';
+    }
+  }
+
   // Disclose just the OVERRIDES (the only thing that changed this
   // turn). The agent's TRANSPARENCY prompt rules know what to do
   // with this list.
