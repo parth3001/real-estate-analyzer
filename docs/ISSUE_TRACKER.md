@@ -7,6 +7,15 @@
 
 ## ✅ **RESOLVED 2026-06-24 — Conversion friction removal + #36 walkthrough findings**
 
+### Issue #205 (Phase 2.5 + PDF — pulled forward from "v1.1"): engine-computed BRRRR metrics in workspace + PDF
+**Status**: ✅ RESOLVED 2026-06-25
+**Priority**: P0 — user pushback: "we're charging, no v1.1 gates on a strategy we claim to support"
+**Commits**: `35e2b87` (workspace/substrate) + `1a3ccc0` (PDF)
+**Component**: `backend/src/models/events/AnalysisEvent.ts` + `agents/tools/projectToEventPayloads.ts` + `services/dealMaterializationService.ts` + `services/SubstrateDealPdf.tsx` + `controllers/deals.ts` (PDF caller) + `frontend/src/components/AnalysisDetails/ScenarioDetails.tsx`
+**Summary**: Two items I had originally tagged "v1.1 quick-follow" but the user correctly called out as charging-doesn't-permit-gates: (a) the engine's full BRRRRAnalyzer output (capitalRecovery, postRefinanceMetrics, rule70Check, exitScenarios) wasn't projected through substrate — the workspace was showing inline-derived approximations rather than engine-computed numbers; (b) the PDF report was using buy-hold layout on BRRRR deals. Fixed both: AnalysisPayloadSchema now accepts `strategySpecific`; projectToEventPayloads forwards it from engine output; materializer projects to Deal.analysis.strategySpecific; ScenarioDetails prefers engine-computed values with inline-derivation fallback for pre-205 deals; new engine-only rows surface (post-refi monthly cash flow, post-refi DSCR with red <1.20 styling, infinite return flag); PDF gains a "BRRRR plan" section with the same hybrid (engine-prefer / inline-fallback) data path so workspace + PDF read identical numbers. Closes the workspace + PDF parity portion of the BRRRR rebuild.
+
+---
+
 ### Issue #204 (Phase 4 of BRRRR rebuild): pricing copy reflects shipped BRRRR
 **Status**: ✅ RESOLVED 2026-06-25
 **Priority**: P0 — marketing-side reality check (false advertising risk if missed)
