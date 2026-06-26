@@ -285,6 +285,16 @@ export function projectEngineOutputToEventPayloads(
   // at write time. Same value on both so scenario grouping is consistent.
   const canonicalAddressKey = stampCanonicalKey(input.propertyData);
 
+  // Issue #205 (2026-06-25) — forward strategy-specific engine output
+  // through to substrate. For BRRRR, engine.ts:2172 attaches
+  // `decision.strategySpecific = brrrAnalysis` (capitalRecovery,
+  // postRefinanceMetrics, rule70Check, exitScenarios). For buy-hold,
+  // this is absent and the field stays undefined. Workspace + chat +
+  // PDF all read from this same field, so they show engine-computed
+  // numbers instead of inline-derived approximations.
+  const strategySpecific = (input.engineOutput as { strategySpecific?: unknown })
+    .strategySpecific;
+
   const analysisPayload: AnalysisPayload = {
     propertyData: input.propertyData,
     marketData: input.marketData,
@@ -298,6 +308,9 @@ export function projectEngineOutputToEventPayloads(
     engineVersion: input.engineVersion,
     computeTimeMs: input.computeTimeMs,
     canonicalAddressKey,
+    ...(strategySpecific && typeof strategySpecific === 'object'
+      ? { strategySpecific: strategySpecific as Record<string, unknown> }
+      : {}),
   };
 
   const decisionPayloadDraft: Omit<DecisionPayload, 'analysisEventId'> = {

@@ -117,6 +117,18 @@ export const AnalysisPayloadSchema = z.object({
   // from the address on every read. Optional: pre-stamp/legacy events lack
   // it (fetch falls back to recompute for those).
   canonicalAddressKey: z.string().optional(),
+
+  // Issue #205 (2026-06-25) — strategy-specific engine output.
+  // For BRRRR deals, this carries the BRRRRAnalyzer's full output:
+  // capitalRecovery (capitalRecoveryRate, capitalRemaining, infiniteReturn),
+  // postRefinanceMetrics (monthlyCashFlow, cashOnCashReturn, DSCR),
+  // rule70Check (meets70Rule), exitScenarios, etc. Engine writes this
+  // at `decision.strategySpecific = brrrAnalysis` (engine.ts:2172);
+  // score_deal pulls it forward into the AnalysisPayload here, the
+  // materializer projects it to Deal.analysis.strategySpecific, and
+  // the workspace + chat + PDF all read engine-computed BRRRR numbers
+  // instead of inline-derived approximations.
+  strategySpecific: ObjectShapeSchema.optional(),
 });
 
 /**
@@ -176,6 +188,15 @@ export interface AnalysisPayload {
    * write time from propertyData.propertyAddress. Optional for legacy events.
    */
   canonicalAddressKey?: string;
+
+  /**
+   * Issue #205 (2026-06-25) — strategy-specific engine output. For BRRRR
+   * deals, the BRRRRAnalyzer's full output (capitalRecovery, postRefinance
+   * Metrics, rule70Check, exitScenarios). For buy-hold this is undefined.
+   * Engine writes at `decision.strategySpecific`; score_deal forwards it
+   * here; materializer projects to Deal.analysis.strategySpecific.
+   */
+  strategySpecific?: Record<string, unknown>;
 }
 
 // ===== Mongoose discriminator schema =====

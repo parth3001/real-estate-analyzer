@@ -443,6 +443,13 @@ function projectAnalysis(ap: AnalysisPayload): Analysis {
     annualAnalysis,
     longTermAnalysis,
     keyMetrics,
+    // Issue #205 (2026-06-25) — project strategy-specific engine output
+    // through. For BRRRR deals, this carries BRRRRAnalyzer's full output
+    // (capitalRecovery, postRefinanceMetrics, rule70Check, exitScenarios)
+    // so the workspace + chat + PDF all read engine-computed numbers.
+    // Empty/undefined for buy-hold.
+    strategySpecific: (ap as { strategySpecific?: Record<string, unknown> })
+      .strategySpecific,
     // AI insights left empty — substrate doesn't carry the legacy
     // aiInsights shape. The chat surface's reasoningTrail lives on
     // DecisionPayload and surfaces via DealScoreCard, not via Deal.aiInsights.

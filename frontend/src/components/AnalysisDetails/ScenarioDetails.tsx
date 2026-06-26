@@ -158,20 +158,33 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
       ? (vacancyMonthly / grossMonthly) * 100
       : undefined;
 
-  // Phase 2 BRRRR (Issue #201 — 2026-06-25): when this scenario was
-  // scored as BRRRR, surface the BRRRR-specific plan + derived metrics
-  // ABOVE the standard buy-hold financials. The user paid $4.99 for
-  // a BRRRR analysis; they need to see something BRRRR-specific. The
-  // engine's full brrrAnalyzer output (capitalRecovery sub-object,
-  // postRefi metrics, 70% rule check) isn't yet projected through
-  // substrate (Phase 2.5 work); for now we compute the key derived
-  // metrics inline from data we DO have on the propertyData.
+  // Phase 2.5 BRRRR (Issue #205 — 2026-06-25): prefer engine-computed
+  // BRRRR metrics from substrate (detail.strategySpecific) when present;
+  // fall back to inline derivation (Phase 2, #201) for deals saved
+  // before #205 added strategySpecific projection. Both paths produce
+  // the same numbers within rounding, but the engine path also exposes
+  // post-refinance DSCR, exit scenarios, and other deeper fields the
+  // BRRRRAnalyzer computes that we can't derive inline.
   const pd = (detail.propertyData ?? {}) as Record<string, unknown>;
   const isBrrrr =
     (pd.investmentStrategy as string | undefined) === 'brrrr' &&
     typeof pd.brrrr === 'object' &&
     pd.brrrr !== null;
   const brrrrBlock = isBrrrr ? (pd.brrrr as Record<string, unknown>) : null;
+  const strategySpecific = (detail as { strategySpecific?: Record<string, unknown> })
+    .strategySpecific;
+  const engineCapitalRecovery =
+    strategySpecific && typeof strategySpecific.capitalRecovery === 'object'
+      ? (strategySpecific.capitalRecovery as Record<string, unknown>)
+      : null;
+  const enginePostRefi =
+    strategySpecific && typeof strategySpecific.postRefinanceMetrics === 'object'
+      ? (strategySpecific.postRefinanceMetrics as Record<string, unknown>)
+      : null;
+  const engineRule70 =
+    strategySpecific && typeof strategySpecific.rule70Check === 'object'
+      ? (strategySpecific.rule70Check as Record<string, unknown>)
+      : null;
   let brrrrRows: Row[] = [];
   if (brrrrBlock) {
     const rehabBudget = Number(brrrrBlock.rehabBudget) || 0;
@@ -187,16 +200,36 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     // is fine but the rule itself excludes closing.
     const allInRule70 = purchasePrice + rehabBudget;
     const allInTotalCash = downPayment + rehabBudget + closingCosts;
-    const refiLoan = arv * (refiLTV / 100);
+    // Prefer engine-computed values; fall back to inline derivation.
+    const refiLoan = enginePostRefi?.refinanceLoanAmount
+      ? Number(enginePostRefi.refinanceLoanAmount)
+      : arv * (refiLTV / 100);
     const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
-    const capitalRecoveredAtRefi = Math.max(0, refiLoan - originalLoanBalance);
-    const capitalRemaining = Math.max(0, allInTotalCash - capitalRecoveredAtRefi);
-    const capitalRecoveryPct =
-      allInTotalCash > 0
+    const capitalRecoveredAtRefi = engineCapitalRecovery?.capitalRecovered
+      ? Number(engineCapitalRecovery.capitalRecovered)
+      : Math.max(0, refiLoan - originalLoanBalance);
+    const capitalRemaining = engineCapitalRecovery?.capitalRemaining
+      ? Number(engineCapitalRecovery.capitalRemaining)
+      : Math.max(0, allInTotalCash - capitalRecoveredAtRefi);
+    const capitalRecoveryPct = engineCapitalRecovery?.capitalRecoveryRate
+      ? Number(engineCapitalRecovery.capitalRecoveryRate)
+      : allInTotalCash > 0
         ? Math.min(100, (capitalRecoveredAtRefi / allInTotalCash) * 100)
         : 0;
-    const meets70Rule = arv > 0 ? allInRule70 <= arv * 0.7 : false;
+    const meets70Rule =
+      engineRule70?.meets70Rule !== undefined
+        ? Boolean(engineRule70.meets70Rule)
+        : arv > 0
+          ? allInRule70 <= arv * 0.7
+          : false;
     const rule70Threshold = arv * 0.7;
+    const postRefiCashFlow = enginePostRefi?.monthlyCashFlow
+      ? Number(enginePostRefi.monthlyCashFlow)
+      : undefined;
+    const postRefiDscr = enginePostRefi?.dscr
+      ? Number(enginePostRefi.dscr)
+      : undefined;
+    const infiniteReturn = engineCapitalRecovery?.infiniteReturn === true;
 
     brrrrRows = [
       { label: 'Rehab budget', value: fmtCurrency(rehabBudget) },
@@ -234,6 +267,33 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
         hint: 'Capital recovered ÷ total cash deployed. 100% = full BRRRR (capital fully recycled). <100% = partial recovery.',
       },
     ];
+    // Phase 2.5 (Issue #205) — engine-only rows. Show these when the
+    // BRRRRAnalyzer wrote postRefinanceMetrics + capitalRecovery to
+    // substrate. Deals saved before #205 won't have them; the inline-
+    // derived rows above still render meaningfully.
+    if (typeof postRefiCashFlow === 'number') {
+      brrrrRows.push({
+        label: 'Post-refi monthly cash flow',
+        value: fmtCurrency(postRefiCashFlow),
+        negative: isNeg(postRefiCashFlow),
+        hint: 'Monthly cash flow AFTER the cash-out refinance. Refi loan is bigger AND has a higher rate, so post-refi cash flow is usually thinner than the pre-refi rental phase.',
+      });
+    }
+    if (typeof postRefiDscr === 'number') {
+      brrrrRows.push({
+        label: 'Post-refi DSCR',
+        value: fmtRatio(postRefiDscr),
+        negative: postRefiDscr < 1.2,
+        hint: 'Debt service coverage ratio on the cash-out refi loan. <1.20 is lender-uncomfortable territory.',
+      });
+    }
+    if (infiniteReturn) {
+      brrrrRows.push({
+        label: 'Infinite return',
+        value: '✓ yes',
+        hint: 'Capital recovered at refi ≥ total cash deployed. Every dollar of subsequent return is on no remaining capital — that\'s the BRRRR endgame.',
+      });
+    }
   }
 
   const financials: Row[] = [
