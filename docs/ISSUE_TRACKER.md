@@ -10,7 +10,8 @@
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
 
 ### Issue #206: BRRRR score lacks lender-viability floor — un-financeable deals can score "meets standards"
-**Status**: 🔴 Open
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `7a2e826`
 **Priority**: P0 — cold-traffic launch risk
 **Reported**: 2026-06-30
 **Component**: `backend/src/services/investment/brrrAnalyzer.ts` + `investmentDecisionEngine.ts` (BRRRR professional assessment)
@@ -23,7 +24,8 @@ Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $
 **Not touching**: capital recovery methodology (validated), factor scoring for viable deals (validated), buy-hold path (unaffected).
 
 ### Issue #207: `primaryInsight` labels 93% capital recovery as "Low" — contradicts validated EXCELLENT tier
-**Status**: 🔴 Open
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `7a2e826`
 **Priority**: P1 — user-facing factual error
 **Reported**: 2026-06-30
 **Component**: `backend/src/services/investment/brrrAnalyzer.ts` (professional assessment insight generator) OR `backend/src/services/aiEnhancedMessagingService.ts` (whichever templates `primaryInsight`)
@@ -32,7 +34,8 @@ Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $
 **Proposed Solution**: Rewrite the insight template branches to attribute friction to the correct source. Template should read something like: "Negative post-refi cash flow (-$358/mo) despite strong capital recovery (93%). Pass unless rent can be pushed to $2,600+ or purchase renegotiated." Attributes correctly and gives actionable framing.
 
 ### Issue #208: `irrRange` summary shows wrong range (formatter / aggregation bug)
-**Status**: 🔴 Open
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `7a2e826`
 **Priority**: P1 — user-facing display error
 **Reported**: 2026-06-30
 **Component**: `backend/src/services/investment/brrrAnalyzer.ts` (exit-scenarios summary) OR downstream display
