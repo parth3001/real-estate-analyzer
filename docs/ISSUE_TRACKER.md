@@ -1,7 +1,62 @@
 # Issue Tracker
 
 **Project**: Real Estate Analyzer - Full Platform
-**Last Updated**: 2026-06-24
+**Last Updated**: 2026-06-30
+
+---
+
+## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
+
+Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
+
+### Issue #206: BRRRR score lacks lender-viability floor — un-financeable deals can score "meets standards"
+**Status**: 🔴 Open
+**Priority**: P0 — cold-traffic launch risk
+**Reported**: 2026-06-30
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` + `investmentDecisionEngine.ts` (BRRRR professional assessment)
+**Description**: A deal that fails the 70% rule, has negative post-refi cash flow (-$358/mo), and has post-refi DSCR ~0.61 (below any lender's approval threshold of 1.20) currently scores **70/100 "Meets professional standards"**. Engine math is correct per BiggerPockets Method A — the score reflects that capital-recovery mechanics are strong (93%) and exit spread is real. But BRRRR that can't clear a lender refi isn't a BRRRR — it's a stuck property. For 1.0's BP-community users this was acceptable (they'd read the whole report and see the friction warnings). For the 2.0 cold-traffic $4.99/deal user, "meets professional standards" is a dangerous headline on a structurally un-executable deal.
+**Business Impact**: Cold-traffic Reddit users who skim the headline could get into deals that literally can't be financed. Trust hit + refund risk + reputational risk to a paid product.
+**Proposed Solution**: Add a lender-viability score floor to `BRRRRProfessionalAssessment.dealQuality`:
+- If `postRefiDSCR < 1.0`, cap dealQuality at **55** ("Requires optimization") regardless of other factors — the refi step won't happen, so the whole strategy is theoretical.
+- If `postRefiDSCR` in [1.0, 1.20), cap at **65** ("Meets standards with lender-approval risk").
+- If `meets70Rule = false` AND `postRefiCashFlow < 0` AND `postRefiDSCR < 1.20`, cap at **50** (three-of-three friction = below professional standards).
+**Not touching**: capital recovery methodology (validated), factor scoring for viable deals (validated), buy-hold path (unaffected).
+
+### Issue #207: `primaryInsight` labels 93% capital recovery as "Low" — contradicts validated EXCELLENT tier
+**Status**: 🔴 Open
+**Priority**: P1 — user-facing factual error
+**Reported**: 2026-06-30
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` (professional assessment insight generator) OR `backend/src/services/aiEnhancedMessagingService.ts` (whichever templates `primaryInsight`)
+**Description**: Engine returned `primaryInsight: "Weak BRRRR fundamentals: Low capital recovery (93%) or negative cash flow. Pass unless deal improves significantly."` The validated capital-recovery tier definition (`brrrr-uat-validation-all-fixes.test.ts:178-183`) explicitly puts 85–100% in the **EXCELLENT** rating band. Calling 93% "low" is factually wrong and confuses the user. Likely root cause: the insight template's "or"-branch fires when EITHER capital recovery is low OR cash flow is negative — but the copy attributes both to "low capital recovery" instead of correctly attributing the friction to negative cash flow.
+**Business Impact**: User-facing factual contradiction erodes trust in the tool. If we say 93% is "low," a user who knows better assumes we don't know what we're talking about.
+**Proposed Solution**: Rewrite the insight template branches to attribute friction to the correct source. Template should read something like: "Negative post-refi cash flow (-$358/mo) despite strong capital recovery (93%). Pass unless rent can be pushed to $2,600+ or purchase renegotiated." Attributes correctly and gives actionable framing.
+
+### Issue #208: `irrRange` summary shows wrong range (formatter / aggregation bug)
+**Status**: 🔴 Open
+**Priority**: P1 — user-facing display error
+**Reported**: 2026-06-30
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` (exit-scenarios summary) OR downstream display
+**Description**: Backend log at 9:17:37 PM shows `BRRRR Exit Scenarios Calculated { scenariosCount: 5, exitYears: [3,5,7,10,15], irrRange: "-0.1% - 0.1%" }` — but the actual IRR calculations in the same run produced -7.99%, -1.24%, +1.71%, +3.87%, +5.43%. Displayed range is off by ~100x, suggests a decimal-vs-percent bug in the min/max aggregation step (raw IRR values in decimal 0.0543 shown as "0.1%" instead of "5.4%").
+**Business Impact**: Users see garbage exit-scenario summary; anyone comparing to their own spreadsheet will spot the discrepancy immediately.
+**Proposed Solution**: Locate the `irrRange` formatter; multiply by 100 before rendering as percent, OR standardize on percent-format across all IRR fields (per CLAUDE.md's IRR consistency principle already applied at `investmentDecisionEngine.ts` per #V3.0 calibration work).
+
+### Issue #209: Internal `verdict:"BUY"` on structurally-failed BRRRR (backend calibration, not user-visible)
+**Status**: 🟢 Open — non-blocking
+**Priority**: P3 — internal-only, closed by fixing #206
+**Reported**: 2026-06-30
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` or `generateBRRRRDecision` verdict-assignment logic
+**Description**: Engine assigned `verdict: "BUY"` on the Garland deal (70% rule fail + negative CF + DSCR ~0.61). Per CLAUDE.md architecture principle, verdict is an internal field not displayed to the user — the UI shows only Deal Quality Score. So this is a backend calibration inconsistency, not a user-visible bug. Worth investigating for consistency (verdict + dealQuality + primaryInsight should agree) but not blocking launch. Fixing #206 (score floor) will likely also correct the verdict path if they share the same calibration rule.
+**Business Impact**: None directly (internal field). Downstream: if any future surface starts displaying verdict, this bug will leak.
+**Proposed Solution**: Once #206 is scoped, apply the same `postRefiDSCR < 1.0` floor to the verdict assignment. If dealQuality ≤ 55, verdict should be `PASS` or `CAUTION`, never `BUY`.
+
+### Issue #210: BRRRR capital-recovery calc invoked 6+ times per request (hygiene / possible perf)
+**Status**: 🟢 Open — non-blocking
+**Priority**: P3 — hygiene, not correctness
+**Reported**: 2026-06-30
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` + call sites in `investmentDecisionEngine.ts`
+**Description**: Backend log for a single POST `/api/chat/turn/stream` request shows the `🔍 BRRRR Capital Recovery Calculation Debug` block firing 6+ times, each with slightly different `totalInvestment` inputs ($94,025 then $232,775 then $237,275 then $241,775). Some paths are legitimate — the buy-hold baseline analyzer + BRRRR analyzer + exit-scenarios generator all need capital-recovery-style math from different angles. But the pattern suggests either (a) missing memoization on a pure calculation, or (b) debug logs firing on inner-loop iterations that should only fire once per top-level analysis. Not a correctness bug — all outputs are internally consistent within their own methodology — but noisy logs make future debugging harder and suggest inefficient re-computation.
+**Business Impact**: None user-visible. Perf: unclear — inner calc is fast so likely negligible. Signal cost: high — the redundancy in the debug output was a major distraction tonight and led to an incorrect "totalInvestment inconsistency" bug diagnosis before I read the validation tests.
+**Proposed Solution**: Audit call sites; if calc is pure (same inputs → same output), memoize. If different call sites legitimately need different denominators, consolidate the debug log to fire once at each top-level entry point with a clear label ("[buy-hold baseline]", "[BRRRR primary]", "[exit scenario Y5]") so future readers can tell them apart at a glance.
 
 ---
 
