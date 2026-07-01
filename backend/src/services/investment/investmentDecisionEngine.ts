@@ -2073,8 +2073,12 @@ export class InvestmentDecisionEngine {
           logger.info('BRRRR Exit Scenarios Calculated', {
             scenariosCount: exitScenarios.length,
             exitYears: exitScenarios.map(s => s.year),
+            // Issue #208 (2026-06-30) — calculateIRR returns IRR as a
+            // DECIMAL (0.0543 for 5.43%). Multiply by 100 before formatting
+            // as percent. Prior code showed "-0.1% - 0.1%" on actual range
+            // of -8% to +5%.
             irrRange: exitScenarios.length > 0
-              ? `${Math.min(...exitScenarios.map(s => s.irr)).toFixed(1)}% - ${Math.max(...exitScenarios.map(s => s.irr)).toFixed(1)}%`
+              ? `${(Math.min(...exitScenarios.map(s => s.irr)) * 100).toFixed(1)}% - ${(Math.max(...exitScenarios.map(s => s.irr)) * 100).toFixed(1)}%`
               : 'N/A'
           });
         } catch (error) {
@@ -2236,7 +2240,7 @@ export class InvestmentDecisionEngine {
     const marketStrengthScore = this.getMarketStrengthScore(marketIntelligence) || 70; // Default 70
 
     // Calculate weighted deal quality score
-    const dealQuality = Math.round(
+    let dealQuality = Math.round(
       brrrAnalysis.scores.capitalRecovery * weights.capitalRecovery +
       brrrAnalysis.scores.arvReliability * weights.arvReliability +
       brrrAnalysis.scores.rehabExecution * weights.rehabExecution +
@@ -2245,6 +2249,49 @@ export class InvestmentDecisionEngine {
       refinanceViabilityScore * weights.refinanceViability +
       propertyRiskScore * weights.propertyRisk
     );
+
+    // Issue #206 (2026-06-30) — lender-viability floor.
+    //
+    // The weighted average puts 40% on capitalRecovery and only 5% on
+    // refinanceViability. That's fine for informed BiggerPockets-community
+    // users who read the whole report. It is NOT fine for cold-traffic
+    // $4.99/deal users who may skim the headline "70/100 Meets
+    // professional standards" without noticing the refi is theoretical.
+    //
+    // BRRRR that can't clear a lender refi isn't a BRRRR — it's a stuck
+    // property. Cap the headline score to reflect executability:
+    //
+    //   DSCR < 1.0                      → cap 50 ("Below professional standards")
+    //   DSCR in [1.0, 1.20)             → cap 60 ("Requires optimization")
+    //   Triple-friction (70% fail + neg CF + DSCR < 1.20) → cap 50
+    //
+    // These caps apply to the DISPLAYED score only. Factor-level scores
+    // (capitalRecovery, cashFlow, etc.) remain accurate so the user sees
+    // exactly what's strong and what's not in the breakdown.
+    const dscr = brrrAnalysis.postRefinanceMetrics.postRefiDSCR;
+    const meets70Rule = brrrAnalysis.rule70Check.meets70Rule;
+    const postRefiCashFlow = brrrAnalysis.postRefinanceMetrics.monthlyCashFlow;
+    const scoreBeforeFloor = dealQuality;
+
+    if (dscr < 1.0) {
+      dealQuality = Math.min(dealQuality, 50);
+    } else if (dscr < 1.20) {
+      dealQuality = Math.min(dealQuality, 60);
+    }
+
+    if (!meets70Rule && postRefiCashFlow < 0 && dscr < 1.20) {
+      dealQuality = Math.min(dealQuality, 50);
+    }
+
+    if (dealQuality !== scoreBeforeFloor) {
+      logger.info('BRRRR score capped by lender-viability floor', {
+        scoreBeforeFloor,
+        scoreAfterFloor: dealQuality,
+        postRefiDSCR: dscr,
+        meets70Rule,
+        postRefiCashFlow,
+      });
+    }
 
     // Generate BRRRR-specific insights
     const strengths = generateBRRRRStrengths(brrrAnalysis);
