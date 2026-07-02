@@ -142,13 +142,35 @@ function pickTopFactors(
  */
 function deriveNextStep(decision: DecisionPayload): string {
   const MAX_LEN = 160;
-  const rec = decision.reasoningTrail.strategicRecommendations?.[0];
-  if (rec && rec.trim().length > 0 && rec.length <= MAX_LEN) {
-    return rec.trim();
-  }
   const insight = decision.reasoningTrail.primaryInsight;
-  if (insight && insight.trim().length > 0 && insight.length <= MAX_LEN) {
-    return insight.trim();
+  const rec = decision.reasoningTrail.strategicRecommendations?.[0];
+  const dq = decision.dealQuality ?? 100;
+
+  // Issue #124 (2026-06-30) — score-aware NEXT STEP.
+  //
+  // Prior code always tried `strategicRecommendations[0]` first. On BRRRR
+  // deals that's populated by `generateBRRRRStrengths` (emoji-prefixed
+  // "you have X strength" statements). On a deal scored 50 that still
+  // has 93% capital recovery, the strength "💰 Strong capital recovery"
+  // fires first and lands as the NEXT STEP — leading with silver lining
+  // on a deal the engine just flagged as un-executable.
+  //
+  // Fix: when the deal is below-standards (score < 65), lead with the
+  // honest primaryInsight (which explains the friction). Above-standards
+  // deals keep the prior behavior — strengths ARE actionable when the
+  // deal is working.
+  //
+  // Below-standards: primaryInsight → strengths → generic
+  // Above-standards: strengths → primaryInsight → generic
+  const preferInsight = dq < 65;
+  const first = preferInsight ? insight : rec;
+  const second = preferInsight ? rec : insight;
+
+  if (first && first.trim().length > 0 && first.length <= MAX_LEN) {
+    return first.trim();
+  }
+  if (second && second.trim().length > 0 && second.length <= MAX_LEN) {
+    return second.trim();
   }
   return 'Review the assumptions before making an offer.';
 }
