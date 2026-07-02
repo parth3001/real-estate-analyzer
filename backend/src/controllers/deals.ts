@@ -2933,13 +2933,20 @@ export const exportDealPdf = async (
       const closingCosts = Number(dealData.closingCosts) || 0;
       const allInRule70 = purchasePrice + rehabBudget;
       const totalCashDeployed = downPayment + rehabBudget + closingCosts;
+      // Issue #212 (2026-06-30) — engine field-name mapping. Same bug
+      // that plagued ScenarioDetails: prior code read
+      // `ssPR.refinanceLoanAmount` (undefined — engine writes it on
+      // `refinanceResults.newLoanAmount`) and `ssPR.dscr` (undefined —
+      // engine writes `postRefiDSCR`). Both silently fell back to
+      // inline math. Fixed to read the real engine field names.
       const ss = (dealData.analysis as { strategySpecific?: Record<string, unknown> })
         ?.strategySpecific;
       const ssCR = (ss?.capitalRecovery as Record<string, unknown>) ?? {};
       const ssPR = (ss?.postRefinanceMetrics as Record<string, unknown>) ?? {};
       const ssR70 = (ss?.rule70Check as Record<string, unknown>) ?? {};
-      const refiLoan = ssPR.refinanceLoanAmount
-        ? Number(ssPR.refinanceLoanAmount)
+      const ssRefi = (ss?.refinanceResults as Record<string, unknown>) ?? {};
+      const refiLoan = ssRefi.newLoanAmount
+        ? Number(ssRefi.newLoanAmount)
         : arv * (refinanceLTV / 100);
       const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
       const capitalRecoveredAtRefi = ssCR.capitalRecovered
@@ -2963,7 +2970,9 @@ export const exportDealPdf = async (
       const postRefiCashFlow = ssPR.monthlyCashFlow
         ? Number(ssPR.monthlyCashFlow)
         : undefined;
-      const postRefiDscr = ssPR.dscr ? Number(ssPR.dscr) : undefined;
+      const postRefiDscr = ssPR.postRefiDSCR
+        ? Number(ssPR.postRefiDSCR)
+        : undefined;
       const infiniteReturn = ssCR.infiniteReturn === true;
       brrrrSection = {
         rehabBudget,

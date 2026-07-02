@@ -364,6 +364,18 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
           hint: 'Cash flow AFTER the refi closes at month 12. This is what you live with for the 10-year hold. Negative = the property bleeds cash every month.',
         },
         {
+          // Cap rate (BRRRR) uses ARV as denominator, not purchase price.
+          // ARV reflects the post-rehab market value the property actually
+          // produces income against. Purchase-price-based cap rate would
+          // be artificially inflated because BRRRR pays a distressed price.
+          label: 'Cap rate (BRRRR, ARV-based)',
+          value:
+            Number(brrrrBlock?.afterRepairValue) > 0
+              ? fmtPct((Number(enginePostRefi.annualNOI) / Number(brrrrBlock!.afterRepairValue)) * 100)
+              : '–',
+          hint: 'Annual post-refi NOI ÷ ARV. ARV is the correct denominator for BRRRR — purchase price is what you paid pre-rehab, ARV is what the property is worth as an income-producing asset.',
+        },
+        {
           label: 'Cash-on-cash (post-refi)',
           value: fmtPct(Number(enginePostRefi.cashOnCashReturn)),
           hint: 'Annual post-refi cash flow ÷ capital remaining in deal after refi. Different denominator than buy-hold cash-on-cash — a BRRRR-specific view.',
