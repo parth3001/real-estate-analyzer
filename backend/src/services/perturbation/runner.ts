@@ -592,6 +592,10 @@ export async function runStressTest(
   );
 
   // ===== 4. Score baseline (re-run for same-version comparability) =====
+  logger.info('runStressTest DEBUG: pre-baseline propertyData.brrrr', {
+    brrrr: (priorPropertyData as { brrrr?: unknown }).brrrr,
+    interestRate: (priorPropertyData as { interestRate?: number }).interestRate,
+  });
   const baselineSnapshot = await scoreOnce(
     priorPropertyData,
     priorAssumptions,
@@ -609,6 +613,13 @@ export async function runStressTest(
     priorAssumptions as unknown as Record<string, unknown>,
     request.perturbations
   );
+
+  logger.info('runStressTest DEBUG: post-perturbation stressedPropertyData.brrrr', {
+    brrrr: (stressedPropertyData as { brrrr?: unknown }).brrrr,
+    interestRate: (stressedPropertyData as { interestRate?: number }).interestRate,
+    priorBrrrr: (priorPropertyData as { brrrr?: unknown }).brrrr,
+    deltas,
+  });
 
   const stressedSnapshot = await scoreOnce(
     stressedPropertyData,
