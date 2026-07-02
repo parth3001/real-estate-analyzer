@@ -735,6 +735,13 @@ number `[H#nn]` so commits + transcripts stay searchable.
 ## 🟡 **ACTIVE ISSUES** (2026-06-24)
 
 ### Issue #124: Anonymous DealScoreCard "NEXT STEP" leaks directive copy
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `f99ac1d`
+**Resolution**: `deriveNextStep` in `dealScoreCardProjection.ts` was always preferring `strategicRecommendations[0]` (populated by `generateBRRRRStrengths` — emoji-prefixed strength statements) over `primaryInsight`. On low-scored BRRRR deals this surfaced "💰 Strong capital recovery: 93%" as the NEXT STEP even though the engine had flagged the deal as un-executable. Made score-aware: below-standards deals (dq < 65) lead with primaryInsight; above-standards deals keep prior behavior. Test 1 Garland deal will now show the honest "Negative post-refi cash flow..." message.
+
+---
+
+### Issue #124 (ORIGINAL entry — preserved for context)
 **Status**: 🔴 Open
 **Priority**: P1 — HIGH (legal liability + violates locked memory rule)
 **Reported**: 2026-06-24
