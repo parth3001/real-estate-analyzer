@@ -174,35 +174,45 @@ export function generateBRRRRBottomLine(brrrAnalysis: BRRRRAnalysis): string {
   const recoveryRate = brrrAnalysis.capitalRecovery.capitalRecoveryRate;
   const cashFlow = brrrAnalysis.postRefinanceMetrics.monthlyCashFlow;
 
+  // Issue #V (2026-07-02) — no directive language in public copy per
+  // locked project memory ("No 'verdict' or PASS/BUY in public copy —
+  // liability risk"). Prior copy used "Execute immediately.",
+  // "Pass unless...", "Negotiate improvements." All are directives
+  // that carry recommendation liability. Rewritten as analytical
+  // descriptions of the deal state — user reads the numbers and the
+  // description, forms their own conclusion.
+  //
+  // Capital-recovery tiers (validated at
+  // brrrr-uat-validation-all-fixes.test.ts:178-183):
+  // 85-100 EXCELLENT, 60-85 GOOD, 40-60 FAIR, <40 POOR.
+
   if (brrrAnalysis.capitalRecovery.infiniteReturn && cashFlow > 0) {
-    return `Exceptional BRRRR deal: ${recoveryRate.toFixed(0)}% capital recovered with positive cash flow. Execute immediately.`;
+    return `Full BRRRR execution: ${recoveryRate.toFixed(0)}% capital recovered at refi with positive post-refi cash flow of $${cashFlow.toFixed(0)}/mo.`;
   }
 
   if (recoveryRate >= 80 && cashFlow > 100) {
-    return `Strong BRRRR opportunity: High capital recovery (${recoveryRate.toFixed(0)}%) and solid post-refi cash flow ($${cashFlow.toFixed(0)}/mo).`;
+    return `Strong BRRRR fundamentals: high capital recovery (${recoveryRate.toFixed(0)}%) paired with meaningful post-refi cash flow ($${cashFlow.toFixed(0)}/mo).`;
   }
 
   if (recoveryRate >= 60 && cashFlow >= 0) {
-    return `Acceptable BRRRR deal: Moderate capital recovery (${recoveryRate.toFixed(0)}%) with break-even cash flow. Negotiate improvements.`;
+    return `Moderate BRRRR structure: ${recoveryRate.toFixed(0)}% capital recovery with near-break-even cash flow.`;
   }
 
   // Issue #207 (2026-06-30) — the previous single `||` branch attributed
   // friction to "low capital recovery" even when the trigger was actually
   // negative cash flow. Split into three explicit branches so the message
-  // matches the actual driver. Capital-recovery tiers (validated at
-  // brrrr-uat-validation-all-fixes.test.ts:178-183): 85-100 EXCELLENT,
-  // 60-85 GOOD, 40-60 FAIR, <40 POOR.
+  // matches the actual driver.
   if (recoveryRate < 40 && cashFlow < -100) {
-    return `Weak BRRRR fundamentals: Only ${recoveryRate.toFixed(0)}% capital recovery AND negative post-refi cash flow (-$${Math.abs(cashFlow).toFixed(0)}/mo). Structural pass unless purchase price drops meaningfully.`;
+    return `Weak BRRRR fundamentals: ${recoveryRate.toFixed(0)}% capital recovery AND negative post-refi cash flow (-$${Math.abs(cashFlow).toFixed(0)}/mo). Both dimensions of the strategy are under-performing at these inputs.`;
   }
 
   if (recoveryRate < 40) {
-    return `Low capital recovery: Only ${recoveryRate.toFixed(0)}% recovered at refi (target 60%+). Structural weakness — pass unless purchase price drops or ARV assumption firms.`;
+    return `Low capital recovery: ${recoveryRate.toFixed(0)}% recovered at refi against a target of 60%+. The BRRRR mechanics leave most capital tied up in the deal at these inputs.`;
   }
 
   if (cashFlow < -100) {
-    return `Negative post-refi cash flow (-$${Math.abs(cashFlow).toFixed(0)}/mo) despite ${recoveryRate.toFixed(0)}% capital recovery. The refi structure works, but ongoing rent won't cover post-refi debt service. Pass unless rent can be pushed higher or purchase price renegotiated.`;
+    return `Negative post-refi cash flow (-$${Math.abs(cashFlow).toFixed(0)}/mo) despite ${recoveryRate.toFixed(0)}% capital recovery. The refi structure works, but ongoing rent doesn't cover post-refi debt service at these inputs.`;
   }
 
-  return `Mixed BRRRR metrics: ${recoveryRate.toFixed(0)}% recovery, $${cashFlow.toFixed(0)}/mo cash flow. Requires careful evaluation.`;
+  return `Mixed BRRRR metrics: ${recoveryRate.toFixed(0)}% recovery, $${cashFlow.toFixed(0)}/mo cash flow.`;
 }

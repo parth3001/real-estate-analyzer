@@ -1940,8 +1940,13 @@ export class InvestmentDecisionEngine {
       if ((verdict.verdict === 'PASS' || verdict.verdict === 'CAUTION') && bhDq >= 65) {
         bhViolations.push(`BH-2: verdict=${verdict.verdict} but dealQuality=${bhDq} (should be <65 for PASS/CAUTION)`);
       }
-      if (bhInsight.includes('pass unless') && bhDq >= 65) {
-        bhViolations.push(`BH-3: primaryInsight recommends "pass" but dealQuality=${bhDq} ≥ 65 (score-vs-insight mismatch)`);
+      // BH-3: buy-hold primaryInsight for a low-scoring deal shouldn't
+      // lead with strengths. Prior check was on "pass unless" — removed
+      // after the no-directive-copy rule stripped that language.
+      const bhBelowMarkers = ['at these inputs', 'weak fundamentals', 'negative cash flow', 'low return'];
+      const bhInsightIsBelowStandards = bhBelowMarkers.some(m => bhInsight.includes(m));
+      if (bhInsightIsBelowStandards && bhDq >= 65) {
+        bhViolations.push(`BH-3: primaryInsight uses below-standards language but dealQuality=${bhDq} ≥ 65 (score-vs-insight mismatch)`);
       }
       if (bhViolations.length > 0) {
         logger.warn('Buy-hold engine output — invariant violations detected', {
@@ -2185,8 +2190,16 @@ export class InvestmentDecisionEngine {
       if (dscr < 1.0 && dq > 55) {
         invViolations.push(`INV-4: postRefiDSCR=${dscr.toFixed(2)} < 1.0 but dealQuality=${dq} > 55 (score floor #206 should have applied)`);
       }
-      if (insight.includes('pass unless') && dq >= 65) {
-        invViolations.push(`INV-5: primaryInsight recommends "pass" but dealQuality=${dq} ≥ 65 (score-vs-insight mismatch)`);
+      // INV-5: primaryInsight for a low-scoring deal should describe
+      // structural weakness ("at these inputs", "under-performing",
+      // "Weak", "Low", "Negative"). If dq ≥ 65 but the insight uses
+      // these below-standards markers, the copy is stale. Prior check
+      // used "pass unless" — removed after the no-directive-copy rule
+      // stripped that language.
+      const belowStandardsMarkers = ['at these inputs', 'weak brrrr', 'low capital recovery', 'negative post-refi'];
+      const insightIsBelowStandards = belowStandardsMarkers.some(m => insight.includes(m));
+      if (insightIsBelowStandards && dq >= 65) {
+        invViolations.push(`INV-5: primaryInsight uses below-standards language but dealQuality=${dq} ≥ 65 (score-vs-insight mismatch)`);
       }
       if (!Number.isFinite(crRate) || crRate < 0 || crRate > 200) {
         invViolations.push(`INV-6: capitalRecoveryRate=${crRate} outside expected 0-200% range`);
