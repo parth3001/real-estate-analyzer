@@ -143,22 +143,59 @@ function renderResultForLlm(
   lines.push('USER MESSAGE:');
   lines.push(`  "${userMessage}"`);
   lines.push('');
+  // Issue #219 (2026-07-02) — strategy-aware layout. On a BRRRR deal,
+  // the narrator was being fed buy-hold cash flow / DSCR / IRR values
+  // and confabulating that the refi was "years away" to explain why
+  // nothing changed. Now the composer emits BRRRR-specific values
+  // (post-refi cash flow, post-refi DSCR, BRRRR exit IRR, capital
+  // recovery rate) when the snapshot carries them, and the system
+  // prompt tells the narrator this is a BRRRR analysis.
+  const isBrrrr = result.baseline.strategy === 'brrrr' && !!result.baseline.brrrr;
+
+  lines.push(
+    isBrrrr
+      ? 'STRATEGY: BRRRR (buy → rehab → rent → refinance → repeat). Report POST-REFI operating metrics — that is what the investor lives with for the hold period. Do NOT report the pre-refi acquisition-loan cash flow as "the deal\'s cash flow."'
+      : 'STRATEGY: Buy-and-hold. Report the standard operational metrics.'
+  );
+  lines.push('');
   lines.push('BASELINE (before perturbation):');
   lines.push(`  Deal score: ${result.baseline.dealQuality}/100 (${result.baseline.qualityLabel})`);
-  lines.push(`  Monthly cash flow: ${fmtDollars(result.baseline.monthlyCashFlow)}`);
-  lines.push(`  DSCR: ${result.baseline.dscr.toFixed(2)}`);
-  lines.push(`  Cap rate: ${result.baseline.capRate.toFixed(2)}%`);
-  lines.push(`  Cash-on-cash: ${result.baseline.cashOnCashReturn.toFixed(2)}%`);
-  lines.push(`  IRR (10-yr): ${(result.baseline.irr * 100).toFixed(2)}%`);
+  if (isBrrrr && result.baseline.brrrr) {
+    lines.push(`  Post-refi monthly cash flow: ${fmtDollars(result.baseline.brrrr.postRefiCashFlow)}`);
+    lines.push(`  Post-refi DSCR: ${result.baseline.brrrr.postRefiDSCR.toFixed(2)}`);
+    lines.push(`  Post-refi cash-on-cash: ${result.baseline.brrrr.postRefiCoC.toFixed(2)}%`);
+    lines.push(`  Capital recovery rate: ${result.baseline.brrrr.capitalRecoveryRate.toFixed(1)}%`);
+    lines.push(`  Capital recovered at refi: ${fmtDollars(result.baseline.brrrr.capitalRecovered)}`);
+    lines.push(`  Capital remaining in deal: ${fmtDollars(result.baseline.brrrr.capitalRemaining)}`);
+    lines.push(`  70% rule met: ${result.baseline.brrrr.meets70Rule ? 'yes' : 'no'}`);
+    lines.push(`  BRRRR exit IRR (at hold-period year): ${(result.baseline.brrrr.brrrrExitIrr * 100).toFixed(2)}%`);
+  } else {
+    lines.push(`  Monthly cash flow: ${fmtDollars(result.baseline.monthlyCashFlow)}`);
+    lines.push(`  DSCR: ${result.baseline.dscr.toFixed(2)}`);
+    lines.push(`  Cap rate: ${result.baseline.capRate.toFixed(2)}%`);
+    lines.push(`  Cash-on-cash: ${result.baseline.cashOnCashReturn.toFixed(2)}%`);
+    lines.push(`  IRR (10-yr): ${(result.baseline.irr * 100).toFixed(2)}%`);
+  }
   lines.push(`  Walk-away price: ${fmtDollars(result.baseline.walkAwayPrice)}`);
   lines.push('');
   lines.push('STRESSED (after perturbation):');
   lines.push(`  Deal score: ${result.stressed.dealQuality}/100 (${result.stressed.qualityLabel})`);
-  lines.push(`  Monthly cash flow: ${fmtDollars(result.stressed.monthlyCashFlow)}`);
-  lines.push(`  DSCR: ${result.stressed.dscr.toFixed(2)}`);
-  lines.push(`  Cap rate: ${result.stressed.capRate.toFixed(2)}%`);
-  lines.push(`  Cash-on-cash: ${result.stressed.cashOnCashReturn.toFixed(2)}%`);
-  lines.push(`  IRR (10-yr): ${(result.stressed.irr * 100).toFixed(2)}%`);
+  if (isBrrrr && result.stressed.brrrr) {
+    lines.push(`  Post-refi monthly cash flow: ${fmtDollars(result.stressed.brrrr.postRefiCashFlow)}`);
+    lines.push(`  Post-refi DSCR: ${result.stressed.brrrr.postRefiDSCR.toFixed(2)}`);
+    lines.push(`  Post-refi cash-on-cash: ${result.stressed.brrrr.postRefiCoC.toFixed(2)}%`);
+    lines.push(`  Capital recovery rate: ${result.stressed.brrrr.capitalRecoveryRate.toFixed(1)}%`);
+    lines.push(`  Capital recovered at refi: ${fmtDollars(result.stressed.brrrr.capitalRecovered)}`);
+    lines.push(`  Capital remaining in deal: ${fmtDollars(result.stressed.brrrr.capitalRemaining)}`);
+    lines.push(`  70% rule met: ${result.stressed.brrrr.meets70Rule ? 'yes' : 'no'}`);
+    lines.push(`  BRRRR exit IRR (at hold-period year): ${(result.stressed.brrrr.brrrrExitIrr * 100).toFixed(2)}%`);
+  } else {
+    lines.push(`  Monthly cash flow: ${fmtDollars(result.stressed.monthlyCashFlow)}`);
+    lines.push(`  DSCR: ${result.stressed.dscr.toFixed(2)}`);
+    lines.push(`  Cap rate: ${result.stressed.capRate.toFixed(2)}%`);
+    lines.push(`  Cash-on-cash: ${result.stressed.cashOnCashReturn.toFixed(2)}%`);
+    lines.push(`  IRR (10-yr): ${(result.stressed.irr * 100).toFixed(2)}%`);
+  }
   lines.push(`  Walk-away price: ${fmtDollars(result.stressed.walkAwayPrice)}`);
   lines.push('');
   lines.push('PER-FIELD DELTAS:');

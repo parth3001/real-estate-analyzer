@@ -146,6 +146,26 @@ export interface ScenarioSnapshot {
   dscr: number;
   walkAwayPrice: number;
   irr: number;
+
+  // Issue #219 (2026-07-02) — the stress-test snapshot was buy-hold-only.
+  // On a BRRRR deal, perturbing refinanceRate produced "no change" in the
+  // reported metrics because the narrator only saw buy-hold values (cash
+  // flow, DSCR, IRR from the acquisition loan). Adding strategy field
+  // + BRRRR-specific metrics so the narrator can report the actual
+  // affected values. Fields are optional so buy-hold snapshots stay
+  // backward-compatible.
+  strategy?: 'buy_hold' | 'brrrr';
+  brrrr?: {
+    postRefiCashFlow: number;
+    postRefiDSCR: number;
+    postRefiCoC: number;
+    capitalRecoveryRate: number;
+    capitalRecovered: number;
+    capitalRemaining: number;
+    meets70Rule: boolean;
+    /** BRRRR exit-scenario IRR at hold-period-year (e.g., Y10). Different from buy-hold IRR. */
+    brrrrExitIrr: number;
+  };
 }
 
 /** Per-field before/after for what changed. */

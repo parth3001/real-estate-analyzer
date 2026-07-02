@@ -431,6 +431,47 @@ async function scoreOnce(
     analysis as unknown as Record<string, unknown>
   );
 
+  // Issue #219 (2026-07-02) — surface BRRRR-specific metrics when the
+  // engine produced them. Without this, the stress-test narrator on a
+  // BRRRR deal only saw buy-hold values (monthlyCashFlow from acquisition
+  // loan, DSCR 1.41 from the same loan, IRR 20.71% baseline). Perturbing
+  // the refi rate produced "no change" because the narrator couldn't see
+  // any BRRRR values to change. Now the engine's decision.strategySpecific
+  // (populated by generateBRRRRDecision at investmentDecisionEngine.ts:
+  // 2267) is unpacked into the snapshot.
+  const ss = (decision as unknown as { strategySpecific?: {
+    capitalRecovery?: {
+      capitalRecoveryRate?: number;
+      capitalRecovered?: number;
+      capitalRemaining?: number;
+    };
+    postRefinanceMetrics?: {
+      monthlyCashFlow?: number;
+      postRefiDSCR?: number;
+      cashOnCashReturn?: number;
+    };
+    rule70Check?: { meets70Rule?: boolean };
+    exitScenarios?: Array<{ year: number; irr: number }>;
+  } }).strategySpecific;
+
+  const strategy = (propertyData as unknown as { investmentStrategy?: string })
+    .investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+
+  const projectionYears = (assumptions as { projectionYears?: number })
+    .projectionYears ?? 10;
+
+  // Pick the exit scenario closest to the deal's hold period. Standard
+  // scenarios: [3, 5, 7, 10, 15]. On a 10-year hold this returns Y10 IRR.
+  const brrrrExitIrr = ss?.exitScenarios && ss.exitScenarios.length > 0
+    ? (() => {
+        const best = ss.exitScenarios!.reduce((a, b) =>
+          Math.abs(a.year - projectionYears) <= Math.abs(b.year - projectionYears)
+            ? a : b
+        );
+        return best.irr;
+      })()
+    : 0;
+
   return {
     dealQuality: pa.dealQuality,
     qualityLabel: deriveQualityLabel(pa.dealQuality),
@@ -449,6 +490,21 @@ async function scoreOnce(
     dscr: m.dscr ?? 0,
     walkAwayPrice,
     irr: m.irr ?? 0,
+    strategy,
+    ...(ss && strategy === 'brrrr'
+      ? {
+          brrrr: {
+            postRefiCashFlow: ss.postRefinanceMetrics?.monthlyCashFlow ?? 0,
+            postRefiDSCR: ss.postRefinanceMetrics?.postRefiDSCR ?? 0,
+            postRefiCoC: ss.postRefinanceMetrics?.cashOnCashReturn ?? 0,
+            capitalRecoveryRate: ss.capitalRecovery?.capitalRecoveryRate ?? 0,
+            capitalRecovered: ss.capitalRecovery?.capitalRecovered ?? 0,
+            capitalRemaining: ss.capitalRecovery?.capitalRemaining ?? 0,
+            meets70Rule: ss.rule70Check?.meets70Rule ?? false,
+            brrrrExitIrr,
+          },
+        }
+      : {}),
   };
 }
 
