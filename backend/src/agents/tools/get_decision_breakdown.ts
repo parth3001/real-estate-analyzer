@@ -235,6 +235,13 @@ export const getDecisionBreakdown: Tool<
         };
         cashFlow?: number;
       };
+      // Issue #211 follow-on (2026-06-30) — engine's BRRRR output
+      // projected through substrate (#205). Prefer these values over
+      // inline standard-method math so the tool matches chat narrative
+      // (which reads engine output directly). Without this, an agent
+      // asking "why 50/100?" got a different capital recovery number
+      // than the initial analysis showed.
+      strategySpecific?: Record<string, unknown>;
     };
     const propertyData = analysisPayload.propertyData ?? {};
     const monthly = analysisPayload.monthlyAnalysis ?? {};
@@ -285,15 +292,35 @@ export const getDecisionBreakdown: Tool<
       const seasoningPeriod = num(brrrrIn.seasoningPeriod) || 12;
       const closingCosts = num(propertyData.closingCosts);
       const totalCashDeployed = downPayment + rehabBudget + closingCosts;
-      const refiLoan = arv * (refinanceLTV / 100);
+
+      // Prefer engine-computed values from strategySpecific (Method A,
+      // matches chat narrative). Fall back to inline standard-method
+      // math if strategySpecific isn't present (legacy deals pre-#205).
+      const ss = analysisPayload.strategySpecific ?? {};
+      const ssCR = (ss.capitalRecovery as Record<string, unknown>) ?? {};
+      const ssRefi = (ss.refinanceResults as Record<string, unknown>) ?? {};
+      const ssR70 = (ss.rule70Check as Record<string, unknown>) ?? {};
+      const refiLoan = ssRefi.newLoanAmount
+        ? Number(ssRefi.newLoanAmount)
+        : arv * (refinanceLTV / 100);
       const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
-      const capitalRecoveredAtRefi = Math.max(0, refiLoan - originalLoanBalance);
-      const capitalRemaining = Math.max(0, totalCashDeployed - capitalRecoveredAtRefi);
-      const capitalRecoveryPct =
-        totalCashDeployed > 0
+      const capitalRecoveredAtRefi = ssCR.capitalRecovered
+        ? Number(ssCR.capitalRecovered)
+        : Math.max(0, refiLoan - originalLoanBalance);
+      const capitalRemaining = ssCR.capitalRemaining
+        ? Number(ssCR.capitalRemaining)
+        : Math.max(0, totalCashDeployed - capitalRecoveredAtRefi);
+      const capitalRecoveryPct = ssCR.capitalRecoveryRate
+        ? Number(ssCR.capitalRecoveryRate)
+        : totalCashDeployed > 0
           ? Math.min(100, (capitalRecoveredAtRefi / totalCashDeployed) * 100)
           : 0;
-      const meets70Rule = arv > 0 ? purchasePrice + rehabBudget <= arv * 0.7 : false;
+      const meets70Rule =
+        ssR70.meets70Rule !== undefined
+          ? Boolean(ssR70.meets70Rule)
+          : arv > 0
+            ? purchasePrice + rehabBudget <= arv * 0.7
+            : false;
       brrrrOut = {
         rehabBudget,
         afterRepairValue: arv,
