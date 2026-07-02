@@ -623,6 +623,26 @@ export async function runStressTest(
     baselineScore: baselineSnapshot.dealQuality,
     stressedScore: stressedSnapshot.dealQuality,
     warningCount: warnings.length,
+    // Issue #219 debug (2026-07-02): are baseline vs stressed actually
+    // different? If they're identical, either the perturbation didn't
+    // apply OR scoreOnce is somehow producing cached results.
+    perturbationsApplied: request.perturbations.map(p => ({
+      field: p.field,
+      value: p.value,
+      unit: p.unit,
+      op: p.operation,
+    })),
+    baselineBrrrr: baselineSnapshot.brrrr,
+    stressedBrrrr: stressedSnapshot.brrrr,
+    baselineBuyHold: {
+      cashFlow: baselineSnapshot.monthlyCashFlow,
+      dscr: baselineSnapshot.dscr,
+    },
+    stressedBuyHold: {
+      cashFlow: stressedSnapshot.monthlyCashFlow,
+      dscr: stressedSnapshot.dscr,
+    },
+    stressedStrategy: stressedSnapshot.strategy,
   });
 
   return {
