@@ -464,9 +464,11 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
         },
         {
           label: 'IRR (BRRRR exit)',
-          // engine's ExitScenario.irr is a DECIMAL (0.0543 for 5.43%)
-          // — same convention as calculateIRR. Multiply by 100 for %.
-          value: fmtIrr(Number(brrrExit.irr) * 100),
+          // engine's ExitScenario.irr is a DECIMAL (0.0387 for 3.87%).
+          // fmtIrr() already does `v * 100`. Pass the decimal directly
+          // — the prior `Number(brrrExit.irr) * 100` was double-multiplying,
+          // showing 386.76% instead of 3.87%.
+          value: fmtIrr(brrrExit.irr),
           hint: 'IRR on the BRRRR structure — includes the refi cash-out at Y1, ongoing post-refi cash flow (may be negative), and net sale proceeds at exit. Buy-hold IRR on the same property would be different (and usually higher) but doesn\'t reflect the BRRRR strategy the user is actually running.',
         },
         {
