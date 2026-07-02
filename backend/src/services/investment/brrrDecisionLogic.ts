@@ -24,8 +24,22 @@ export function calculatePostRefiCashFlowScore(brrrAnalysis: BRRRRAnalysis): num
   if (monthlyCashFlow >= 100) return 75;  // Good ($100-200/month)
   if (monthlyCashFlow >= 50) return 60;   // Acceptable ($50-100/month)
   if (monthlyCashFlow >= 0) return 40;    // Break-even (0-50/month)
-  if (monthlyCashFlow >= -100) return 20; // Small negative (-100 to 0)
-  return 0; // Significant negative cash flow
+
+  // Issue #74 (2026-06-30) — smoother gradient below zero. Prior code
+  // collapsed everything below -$100/mo to score 0, losing signal on
+  // stress scenarios. A deal losing $101/mo scored the same as a deal
+  // losing $10,000/mo, making it impossible to distinguish "small
+  // negotiation gap" from "structurally broken." Now:
+  //   -100 to 0    → 20 (small negative, likely fixable with rent bump)
+  //   -300 to -100 → 15 (moderate — negotiate price or accept holding cost)
+  //   -600 to -300 → 10 (large — deal has real structural friction)
+  //   -1000 to -600 → 5 (severe — walk away in most markets)
+  //   < -1000      → 0 (catastrophic — never build a portfolio this way)
+  if (monthlyCashFlow >= -100) return 20;
+  if (monthlyCashFlow >= -300) return 15;
+  if (monthlyCashFlow >= -600) return 10;
+  if (monthlyCashFlow >= -1000) return 5;
+  return 0;
 }
 
 /**
