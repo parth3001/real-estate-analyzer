@@ -105,6 +105,18 @@ export type HandleStressTestOutput =
       reason: string;
     }
   | {
+      kind: 'strategy_pivot_requested';
+      /**
+       * Issue #221 (2026-07-02) — the classifier routed a strategy-change
+       * request ("what does this look like as buy-and-hold?") to this
+       * service. Extractor's LLM correctly recognized it and said so in
+       * its reasoning. This kind lets us surface a helpful user-facing
+       * message instead of the generic "I couldn't pick up a specific
+       * change" fallback that a real perturbation failure produces.
+       */
+      reason: string;
+    }
+  | {
       kind: 'unsupported_property_type';
       /** Layer 3 said "MF not supported yet" etc. */
       reason: string;
@@ -163,6 +175,25 @@ export async function handleStressTest(
       userId: input.userId,
       reasoning: extraction.reasoning,
     });
+
+    // Issue #221 (2026-07-02) — detect strategy-pivot mis-routing.
+    // Extractor's LLM often correctly identifies "this is a scenario/
+    // strategy switch, not a field perturbation" in its reasoning.
+    // Surface that as a distinct result kind so the orchestrator can
+    // reply helpfully instead of the generic "I couldn't pick up" text.
+    //
+    // Keyword detection is intentionally simple — false positives here
+    // only produce a slightly different fallback message; false
+    // negatives fall through to the existing extraction_failed path.
+    const r = extraction.reasoning.toLowerCase();
+    const looksLikePivot =
+      (r.includes('scenario') || r.includes('strategy')) &&
+      (r.includes('switch') || r.includes('pivot') || r.includes('mode') ||
+        r.includes('buy-and-hold') || r.includes('buy and hold') ||
+        r.includes('brrrr'));
+    if (looksLikePivot) {
+      return { kind: 'strategy_pivot_requested', reason: extraction.reasoning };
+    }
     return { kind: 'extraction_failed', reason: extraction.reasoning };
   }
 

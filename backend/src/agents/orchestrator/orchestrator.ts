@@ -737,6 +737,19 @@ async function executeAgentRoute(
           'something like "what if rent dropped to $1,800?" or "what if ' +
           'interest rates went up to 8%?" and I\'ll re-run the numbers.';
         break;
+      case 'strategy_pivot_requested':
+        // Issue #221 (2026-07-02) — classifier mis-routed a strategy
+        // pivot to the stress-test service. Extractor correctly
+        // diagnosed the mismatch. Give the user actionable phrasing
+        // that will route through the deal-scoring agent's pivot flow
+        // (#202) instead of the perturbation runner.
+        responseText =
+          "That's a strategy change (BRRRR ↔ buy-and-hold), not a stress " +
+          'test on a specific input. To run this, ask something like ' +
+          '"Re-analyze this property as buy-and-hold" or "Score this deal ' +
+          'as a straight rental" — I\'ll route it through the analysis flow ' +
+          'and you\'ll get both scenarios side by side on the same property.';
+        break;
       case 'unsupported_property_type':
         responseText = out.reason;
         break;
