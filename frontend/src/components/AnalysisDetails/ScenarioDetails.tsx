@@ -417,25 +417,100 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
       ];
 
   const totalCashFlow = num(returns, 'totalCashFlow');
-  const longTerm: Row[] = [
-    {
-      label: 'Hold period',
-      value: typeof lt.projectionYears === 'number' ? `${lt.projectionYears} yr` : '–',
-    },
-    { label: 'IRR', value: fmtIrr(num(returns, 'irr')) },
-    // Total cash flow over the hold — NEGATIVE for a money-bleeding deal,
-    // exactly as it should be. Read straight from the (correct) substrate
-    // returns; the legacy tab displayed $0 here due to a field-map bug.
-    {
-      label: 'Total cash flow',
-      value: fmtCurrency(totalCashFlow),
-      negative: isNeg(totalCashFlow),
-    },
-    { label: 'Total appreciation', value: fmtCurrency(num(returns, 'totalAppreciation')) },
-    { label: 'Total return', value: fmtCurrency(num(returns, 'totalReturn')) },
-    { label: 'Projected sale price', value: fmtCurrency(num(exit, 'projectedSalePrice')) },
-    { label: 'Net proceeds at exit', value: fmtCurrency(num(exit, 'netProceedsFromSale')) },
-  ];
+
+  // Issue #211 Step 2 (2026-06-30) — strategy-aware Long-term view.
+  //
+  // For BRRRR: read from strategySpecific.exitScenarios (BRRRRAnalyzer's
+  // exit-scenario calculator, which correctly accounts for the refi cash-
+  // out at Y1 + negative post-refi cash flow through the hold + sale
+  // proceeds at exit). Match the hold period to the closest exit scenario
+  // year (standard scenarios: [3, 5, 7, 10, 15]).
+  //
+  // Buy-hold path unchanged — reads from returns/exit from
+  // longTermAnalysis.projections (SFRAnalyzer).
+  const engineExitScenarios =
+    strategySpecific && Array.isArray(strategySpecific.exitScenarios)
+      ? (strategySpecific.exitScenarios as Array<Record<string, unknown>>)
+      : null;
+  const holdPeriod = typeof lt.projectionYears === 'number' ? lt.projectionYears : 10;
+  // Pick the exit scenario closest to the hold period (typically exact
+  // match at Y10; fall back to closest available).
+  const brrrExit =
+    engineExitScenarios && engineExitScenarios.length > 0
+      ? engineExitScenarios.reduce((best, cur) => {
+          const bestDist = Math.abs(Number(best.year) - holdPeriod);
+          const curDist = Math.abs(Number(cur.year) - holdPeriod);
+          return curDist < bestDist ? cur : best;
+        }, engineExitScenarios[0])
+      : null;
+
+  const longTerm: Row[] = isBrrrr && brrrExit
+    ? [
+        {
+          label: 'Hold period',
+          value: `${Number(brrrExit.year)} yr`,
+        },
+        {
+          label: 'IRR (BRRRR exit)',
+          // engine's ExitScenario.irr is a DECIMAL (0.0543 for 5.43%)
+          // — same convention as calculateIRR. Multiply by 100 for %.
+          value: fmtIrr(Number(brrrExit.irr) * 100),
+          hint: 'IRR on the BRRRR structure — includes the refi cash-out at Y1, ongoing post-refi cash flow (may be negative), and net sale proceeds at exit. Buy-hold IRR on the same property would be different (and usually higher) but doesn\'t reflect the BRRRR strategy the user is actually running.',
+        },
+        {
+          label: 'Cumulative cash flow',
+          value: fmtCurrency(Number((brrrExit.breakdown as Record<string, unknown>).cumulativeCashFlow)),
+          negative: isNeg(Number((brrrExit.breakdown as Record<string, unknown>).cumulativeCashFlow)),
+          hint: 'Sum of post-refi monthly cash flows from Y1 through exit. Negative if the property bleeds cash every month (like the Test 1 Garland deal).',
+        },
+        {
+          label: 'Capital recovered at refi',
+          value: fmtCurrency(Number((brrrExit.breakdown as Record<string, unknown>).capitalRecovered)),
+          hint: 'Cash pulled at the Y1 refi. Counted as return OF capital, not return ON capital.',
+        },
+        {
+          label: 'Appreciation over hold',
+          value: fmtCurrency(Number((brrrExit.breakdown as Record<string, unknown>).appreciation)),
+        },
+        {
+          label: 'Principal paid down',
+          value: fmtCurrency(Number((brrrExit.breakdown as Record<string, unknown>).principalPaid)),
+        },
+        {
+          label: 'Total profit',
+          value: fmtCurrency(Number(brrrExit.totalProfit)),
+          negative: isNeg(Number(brrrExit.totalProfit)),
+        },
+        {
+          label: 'Total return %',
+          value: `${Number(brrrExit.totalReturn).toFixed(1)}%`,
+        },
+        {
+          label: 'Projected sale price',
+          value: fmtCurrency(Number(brrrExit.salePrice)),
+        },
+        {
+          label: 'Net proceeds at exit',
+          value: fmtCurrency(Number(brrrExit.netProceeds)),
+        },
+      ]
+    : [
+        // Buy-hold path — unchanged.
+        {
+          label: 'Hold period',
+          value: typeof lt.projectionYears === 'number' ? `${lt.projectionYears} yr` : '–',
+        },
+        { label: 'IRR', value: fmtIrr(num(returns, 'irr')) },
+        {
+          label: 'Total cash flow',
+          value: fmtCurrency(totalCashFlow),
+          negative: isNeg(totalCashFlow),
+        },
+        { label: 'Total appreciation', value: fmtCurrency(num(returns, 'totalAppreciation')) },
+        { label: 'Total return', value: fmtCurrency(num(returns, 'totalReturn')) },
+        { label: 'Projected sale price', value: fmtCurrency(num(exit, 'projectedSalePrice')) },
+        { label: 'Net proceeds at exit', value: fmtCurrency(num(exit, 'netProceedsFromSale')) },
+      ];
 
   return (
     <WorkspaceSection label="Details · selected scenario">
@@ -461,7 +536,24 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
           rows={longTerm}
           borderTop
         />
-        {projections.length > 0 && (
+        {/* Issue #211 Step 3 (2026-06-30) — strategy-aware projection.
+            BRRRR deals show engine-computed exit scenarios (years 3/5/7/10/15
+            with post-refi cumulative cash flow, sale price, net proceeds,
+            profit, IRR). Buy-hold deals show the year-by-year projection
+            from longTermAnalysis.projections. On a BRRRR deal, the buy-hold
+            year-by-year would misleadingly show acquisition-loan operational
+            economics (positive cash flow, growing equity as if the acquisition
+            loan pays down normally) instead of the post-refi picture the
+            investor actually lives with. */}
+        {isBrrrr && engineExitScenarios && engineExitScenarios.length > 0 ? (
+          <BrrrrExitScenariosSection
+            open={openSection === 'projection'}
+            onToggle={() =>
+              setOpenSection((s) => (s === 'projection' ? null : 'projection'))
+            }
+            scenarios={engineExitScenarios}
+          />
+        ) : projections.length > 0 ? (
           <ProjectionSection
             open={openSection === 'projection'}
             onToggle={() =>
@@ -469,7 +561,7 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
             }
             projections={projections}
           />
-        )}
+        ) : null}
         {hasMarket && (
           <Section
             title="Market"
@@ -646,6 +738,126 @@ function ProjectionSection({
                   </Box>
                 );
               })}
+            </Box>
+          </Box>
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
+
+/**
+ * Issue #211 Step 3 (2026-06-30) — BRRRR exit scenarios table.
+ *
+ * Renders the engine's exit-scenario array (BRRRRAnalyzer.calculateExitScenarios)
+ * as a small 5-row table at years [3, 5, 7, 10, 15]. Each row shows what
+ * happens if you sell at that exit year — cumulative post-refi cash flow,
+ * sale price, net proceeds after selling costs + mortgage payoff, total
+ * profit including capital recovered at refi, and IRR.
+ *
+ * Replaces the buy-hold year-by-year projection on BRRRR deals. The buy-hold
+ * projection would misleadingly show acquisition-loan operational economics
+ * (positive cash flow, growing equity as if the acquisition loan pays down
+ * normally) instead of the post-refi picture the investor actually lives
+ * with for 10+ years.
+ */
+function BrrrrExitScenariosSection({
+  open,
+  onToggle,
+  scenarios,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  scenarios: Array<Record<string, unknown>>;
+}): React.JSX.Element {
+  const cols: Array<{ key: string; label: string; extract: (s: Record<string, unknown>) => number }> = [
+    {
+      key: 'cumulativeCashFlow',
+      label: 'Cash flow (cum)',
+      extract: (s) => Number((s.breakdown as Record<string, unknown>).cumulativeCashFlow),
+    },
+    { key: 'salePrice', label: 'Sale price', extract: (s) => Number(s.salePrice) },
+    { key: 'netProceeds', label: 'Net proceeds', extract: (s) => Number(s.netProceeds) },
+    { key: 'totalProfit', label: 'Total profit', extract: (s) => Number(s.totalProfit) },
+    {
+      key: 'irr',
+      // engine's ExitScenario.irr is a DECIMAL (0.0543 for 5.43%) —
+      // multiply by 100 for display, same fix as #208.
+      label: 'IRR',
+      extract: (s) => Number(s.irr) * 100,
+    },
+  ];
+
+  return (
+    <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+      <SectionHeader title="Exit scenarios (BRRRR)" open={open} onToggle={onToggle} />
+      <Collapse in={open} unmountOnExit>
+        <Box sx={{ px: 2, pb: 2, overflowX: 'auto' }}>
+          <Box
+            component="table"
+            sx={{
+              borderCollapse: 'collapse',
+              width: '100%',
+              minWidth: 520,
+              '& th, & td': {
+                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
+                textAlign: 'right',
+                py: 0.75,
+                px: 1,
+                whiteSpace: 'nowrap',
+                borderTop: '1px solid',
+                borderColor: 'grey.100',
+              },
+              '& th': {
+                color: 'text.secondary',
+                fontWeight: 600,
+                position: 'sticky',
+                top: 0,
+              },
+              '& th:first-of-type, & td:first-of-type': {
+                textAlign: 'left',
+                position: 'sticky',
+                left: 0,
+                bgcolor: 'background.paper',
+                fontWeight: 600,
+              },
+            }}
+          >
+            <Box component="thead">
+              <Box component="tr">
+                <Box component="th">Exit year</Box>
+                {cols.map((c) => (
+                  <Box component="th" key={c.key}>
+                    {c.label}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Box component="tbody">
+              {scenarios.map((s, i) => (
+                <Box component="tr" key={(s.year as number) ?? i}>
+                  <Box component="td">Y{(s.year as number) ?? i + 1}</Box>
+                  {cols.map((c) => {
+                    const val = c.extract(s);
+                    return (
+                      <Box
+                        component="td"
+                        key={c.key}
+                        sx={{
+                          color:
+                            (c.key === 'cumulativeCashFlow' || c.key === 'totalProfit' || c.key === 'irr') &&
+                            val < 0
+                              ? 'error.main'
+                              : 'text.primary',
+                        }}
+                      >
+                        {c.key === 'irr' ? `${val.toFixed(2)}%` : fmtCurrency(val)}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
             </Box>
           </Box>
         </Box>

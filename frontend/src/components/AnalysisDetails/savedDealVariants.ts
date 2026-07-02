@@ -177,13 +177,21 @@ const VARIANT_FACTORS: Record<SavedDealVariant, VariantFactor[]> = {
     { label: 'Market strength', scoreField: 'marketStrengthScore' },
   ],
   sfr_brrrr: [
-    // BRRRR de-emphasizes Cash Flow (pre-refi cash flow is often
-    // negative; that's normal). IRR + market strength + debt structure
-    // are the right at-a-glance signals until we add a dedicated
-    // capitalRecoveryScore field to the engine.
-    { label: 'IRR (post-refi)', scoreField: 'irrScore' },
+    // Issue #213 (2026-06-30) — Prior config used `irrScore` for the
+    // top factor, labeled "IRR (post-refi)". The engine INTENTIONALLY
+    // sets irrScore=0 for BRRRR (see investmentDecisionEngine.ts:2265
+    // "irrScore: 0, // Not applicable for BRRRR"). Rendering 0/100
+    // for an intentionally-unset metric was deeply misleading — read
+    // to users as "your deal has zero IRR" (catastrophic) instead of
+    // "IRR isn't the BRRRR framework's primary metric."
+    //
+    // Swap to `exitStrategyScore` which the BRRRR engine populates
+    // with `brrrAnalysis.scores.capitalRecovery` (see
+    // investmentDecisionEngine.ts:2268). That's the RIGHT top-of-funnel
+    // BRRRR signal — capital recovery IS the BRRRR thesis.
+    { label: 'Capital recovery', scoreField: 'exitStrategyScore' },
     { label: 'Market strength', scoreField: 'marketStrengthScore' },
-    { label: 'Debt structure', scoreField: 'debtStructureScore' },
+    { label: 'Debt structure (refi viability)', scoreField: 'debtStructureScore' },
   ],
   sfr_house_hack: [
     { label: 'Cash flow (offset)', scoreField: 'cashFlowScore' },

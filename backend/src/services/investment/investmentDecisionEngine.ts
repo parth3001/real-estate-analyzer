@@ -2112,6 +2112,62 @@ export class InvestmentDecisionEngine {
       // 3. Determine verdict based on deal quality
       const verdict = this.determineBRRRRVerdict(professionalAssessment.dealQuality);
 
+      // Issue #211 Step 6 (2026-06-30) — invariant assertions on the
+      // engine output. Catches internal contradictions that would
+      // otherwise ship silently to the workspace / chat / PDF. Logs
+      // loud (WARN level) but doesn't throw — production stays live,
+      // dev/staging see the noise. Each violation is a scoring-logic
+      // bug that needs fixing.
+      //
+      // Invariants:
+      //   1. verdict in {PASS, CAUTION} iff dealQuality < 65
+      //   2. verdict=BUY requires dealQuality >= 65
+      //   3. If postRefiDSCR < 1.0, verdict cannot be BUY
+      //   4. If postRefiDSCR < 1.0, dealQuality cannot exceed 55
+      //      (should have been floored by #206; assertion catches
+      //       regressions)
+      //   5. primaryInsight containing "Pass" implies dealQuality < 65
+      //   6. capitalRecoveryRate should be a valid percentage (0-200)
+      //
+      // These are the assertions that would have caught tonight's
+      // Test 1 bugs at development time instead of shipping to
+      // production for weeks.
+      const invViolations: string[] = [];
+      const dq = professionalAssessment.dealQuality;
+      const dscr = brrrAnalysis.postRefinanceMetrics.postRefiDSCR;
+      const insight = professionalAssessment.primaryInsight.toLowerCase();
+      const crRate = brrrAnalysis.capitalRecovery.capitalRecoveryRate;
+
+      if (verdict.verdict === 'BUY' && dq < 65) {
+        invViolations.push(`INV-1: verdict=BUY but dealQuality=${dq} (must be ≥65 for BUY)`);
+      }
+      if ((verdict.verdict === 'PASS' || verdict.verdict === 'CAUTION') && dq >= 65) {
+        invViolations.push(`INV-2: verdict=${verdict.verdict} but dealQuality=${dq} (should be <65 for PASS/CAUTION)`);
+      }
+      if (verdict.verdict === 'BUY' && dscr < 1.0) {
+        invViolations.push(`INV-3: verdict=BUY but postRefiDSCR=${dscr.toFixed(2)} (refi is un-financeable)`);
+      }
+      if (dscr < 1.0 && dq > 55) {
+        invViolations.push(`INV-4: postRefiDSCR=${dscr.toFixed(2)} < 1.0 but dealQuality=${dq} > 55 (score floor #206 should have applied)`);
+      }
+      if (insight.includes('pass unless') && dq >= 65) {
+        invViolations.push(`INV-5: primaryInsight recommends "pass" but dealQuality=${dq} ≥ 65 (score-vs-insight mismatch)`);
+      }
+      if (!Number.isFinite(crRate) || crRate < 0 || crRate > 200) {
+        invViolations.push(`INV-6: capitalRecoveryRate=${crRate} outside expected 0-200% range`);
+      }
+
+      if (invViolations.length > 0) {
+        logger.warn('BRRRR engine output — invariant violations detected', {
+          violations: invViolations,
+          dealQuality: dq,
+          verdict: verdict.verdict,
+          postRefiDSCR: dscr,
+          capitalRecoveryRate: crRate,
+          primaryInsight: professionalAssessment.primaryInsight,
+        });
+      }
+
       // 4. Build investment decision (simplified for Phase 1.2)
       const decision: InvestmentDecision = {
         verdict: verdict.verdict,
