@@ -324,16 +324,11 @@ export class BRRRRAnalyzer {
     // ✅ ISSUE #53 FIX: Use ?? operator to preserve zero values
     const months = inputs.brrrr.seasoningPeriod ?? 12;
 
-    // 🔍 DIAGNOSTIC LOGGING - Debug seasoning cost inputs
-    logger.debug('🔍 BRRRR Seasoning Costs Input Debug:', {
-      purchasePrice: inputs.purchasePrice,
-      propertyTaxRate: inputs.propertyTaxRate,
-      insuranceRate: inputs.insuranceRate,
-      maintenanceCost: inputs.maintenanceCost,
-      monthlyRent: inputs.monthlyRent,
-      propertyManagementRate: inputs.propertyManagementRate,
-      seasoningPeriod: months
-    });
+    // Issue #210 (2026-06-30) — removed diagnostic log that fired 6-8x
+    // per analysis (base case + each sensitivity/exit scenario). The
+    // original bug it was added to diagnose (11,353% vs 65.81%
+    // discrepancy) has been fixed. Same information is captured in
+    // the single "BRRRR Analysis Complete" log line at the end.
 
     // Calculate monthly holding expenses
     const loanAmount = inputs.purchasePrice - inputs.downPayment;
@@ -501,18 +496,11 @@ export class BRRRRAnalyzer {
     const capitalRecoveryRate = (capitalRecovered / totalCapitalDeployed) * 100;
     const infiniteReturn = capitalRecovered >= totalCapitalDeployed;
 
-    // 🔍 DIAGNOSTIC LOGGING - Debug anonymous vs authenticated discrepancy (Issue: 11,353% vs 65.81%)
-    logger.debug('🔍 BRRRR Capital Recovery Calculation Debug:', {
-      totalInvestment,
-      seasoningNetCashFlow: seasoningCosts.seasoningNetCashFlow,
-      totalCapitalDeployed,
-      capitalRecovered,
-      capitalRemaining,
-      capitalRecoveryRate: capitalRecoveryRate.toFixed(2) + '%',
-      infiniteReturn,
-      // Detailed breakdown for diagnosis:
-      calculation: `(${capitalRecovered.toFixed(2)} / ${totalCapitalDeployed.toFixed(2)}) * 100 = ${capitalRecoveryRate.toFixed(2)}%`
-    });
+    // Issue #210 (2026-06-30) — removed diagnostic log that fired 6-8x
+    // per analysis (base case + each sensitivity/exit scenario). The
+    // original bug it was added to diagnose (11,353% vs 65.81%
+    // discrepancy) has been fixed. Same information is captured in
+    // the "BRRRR Analysis Complete" log line at the end (single-fire).
 
     return {
       totalCapitalDeployed,
@@ -617,8 +605,12 @@ export class BRRRRAnalyzer {
       monthlyCapEx = (inputs.monthlyRent * 5) / 100; // DEFAULT 5% of rent
     }
 
-    // Issue #63 fix - Diagnostic logging for CapEx source verification
-    logger.info('BRRRR Operating Expenses - CapEx Calculation:', {
+    // Issue #63 fix - Diagnostic logging for CapEx source verification.
+    // Issue #210 (2026-06-30) — demoted from info → debug since this
+    // fires ~6x per BRRRR analysis (base case + sensitivity scenarios
+    // + exit scenarios) and clutters production logs. Debug level
+    // keeps it available when tracing a specific issue.
+    logger.debug('BRRRR Operating Expenses - CapEx Calculation:', {
       monthlyCapExSource: inputs.monthlyCapEx !== undefined && inputs.monthlyCapEx !== null
         ? 'user-provided'
         : inputs.capExReserveFixed !== undefined
