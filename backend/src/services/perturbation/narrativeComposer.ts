@@ -198,9 +198,40 @@ function renderResultForLlm(
   }
   lines.push(`  Walk-away price: ${fmtDollars(result.stressed.walkAwayPrice)}`);
   lines.push('');
+  // Issue #219 (2026-07-02) — detect NO-OP perturbations so the narrator
+  // doesn't confabulate a "stays at" narrative when the user asked to
+  // change a value that was ALREADY at the requested value in the
+  // baseline. Common causes: user expects baseline was X, but substrate
+  // stored Y = user's stressed value; earlier stress test saved into
+  // substrate; user typo. Narrator must acknowledge no change and
+  // explain honestly rather than pretend a change was tested.
+  const noOpDeltas = result.deltas.filter(d => d.baselineValue === d.stressedValue);
+  const hasAnyChange = result.deltas.some(d => d.baselineValue !== d.stressedValue);
+
   lines.push('PER-FIELD DELTAS:');
   for (const d of result.deltas) {
     lines.push(`  ${formatDelta(d)}`);
+  }
+
+  if (noOpDeltas.length > 0) {
+    lines.push('');
+    lines.push('IMPORTANT — NO-OP DETECTED:');
+    lines.push(
+      `  The following field(s) were requested but the baseline value was ALREADY at the requested value, so nothing actually changed:`
+    );
+    for (const d of noOpDeltas) {
+      const unit = d.engineUnit === 'percent' ? '%'
+        : d.engineUnit === 'dollars' ? ' (dollars)'
+        : d.engineUnit === 'years' ? ' yr'
+        : '';
+      lines.push(`  - ${d.label}: baseline was already ${d.baselineValue}${unit}. No change tested.`);
+    }
+    if (!hasAnyChange) {
+      lines.push('');
+      lines.push(
+        `  BECAUSE NO INPUT ACTUALLY CHANGED, every downstream metric (score, cash flow, DSCR, IRR) is identical between baseline and stressed. Report this HONESTLY — say something like "Your baseline already has [field] at [value], so this perturbation didn't test a new scenario. To see the impact of a different value, try [suggest a materially different value like 6% or 12%]." Do NOT report identical numbers as if they demonstrate the deal's sensitivity to the field.`
+      );
+    }
   }
   if (result.warnings.length > 0) {
     lines.push('');

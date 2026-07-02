@@ -592,10 +592,6 @@ export async function runStressTest(
   );
 
   // ===== 4. Score baseline (re-run for same-version comparability) =====
-  logger.info('runStressTest DEBUG: pre-baseline propertyData.brrrr', {
-    brrrr: (priorPropertyData as { brrrr?: unknown }).brrrr,
-    interestRate: (priorPropertyData as { interestRate?: number }).interestRate,
-  });
   const baselineSnapshot = await scoreOnce(
     priorPropertyData,
     priorAssumptions,
@@ -614,13 +610,6 @@ export async function runStressTest(
     request.perturbations
   );
 
-  logger.info('runStressTest DEBUG: post-perturbation stressedPropertyData.brrrr', {
-    brrrr: (stressedPropertyData as { brrrr?: unknown }).brrrr,
-    interestRate: (stressedPropertyData as { interestRate?: number }).interestRate,
-    priorBrrrr: (priorPropertyData as { brrrr?: unknown }).brrrr,
-    deltas,
-  });
-
   const stressedSnapshot = await scoreOnce(
     stressedPropertyData,
     stressedAssumptions,
@@ -634,26 +623,18 @@ export async function runStressTest(
     baselineScore: baselineSnapshot.dealQuality,
     stressedScore: stressedSnapshot.dealQuality,
     warningCount: warnings.length,
-    // Issue #219 debug (2026-07-02): are baseline vs stressed actually
-    // different? If they're identical, either the perturbation didn't
-    // apply OR scoreOnce is somehow producing cached results.
-    perturbationsApplied: request.perturbations.map(p => ({
-      field: p.field,
-      value: p.value,
-      unit: p.unit,
-      op: p.operation,
-    })),
-    baselineBrrrr: baselineSnapshot.brrrr,
-    stressedBrrrr: stressedSnapshot.brrrr,
-    baselineBuyHold: {
-      cashFlow: baselineSnapshot.monthlyCashFlow,
-      dscr: baselineSnapshot.dscr,
-    },
-    stressedBuyHold: {
-      cashFlow: stressedSnapshot.monthlyCashFlow,
-      dscr: stressedSnapshot.dscr,
-    },
-    stressedStrategy: stressedSnapshot.strategy,
+    strategy: stressedSnapshot.strategy,
+    // Issue #219 (2026-07-02) — log when a perturbation was a NO-OP
+    // (baseline == stressed). Common when user asks "what if X = 10?"
+    // but substrate already has 10. Narrator now handles this case
+    // explicitly.
+    noOpPerturbations: (() => {
+      const noOps: string[] = [];
+      for (const d of deltas) {
+        if (d.baselineValue === d.stressedValue) noOps.push(d.field);
+      }
+      return noOps;
+    })(),
   });
 
   return {
