@@ -755,6 +755,17 @@ export const getDealScenarioDetail = async (
       monthlyAnalysis: ap?.monthlyAnalysis,
       longTermAnalysis: ap?.longTermAnalysis,
       metrics: ap?.metrics,
+      // Issue #211 root cause (2026-07-02) — strategySpecific was being
+      // written to the AnalysisEvent (per #205 Phase 2.5) AND projected to
+      // Deal.analysis.strategySpecific by the materializer, but this
+      // endpoint (which the workspace actually calls at scenario-detail
+      // load time) was never including it in its response payload.
+      // Result: last night's frontend fixes for Financials / Long-term /
+      // ExitScenarios / BRRRR-plan-section-field-names all fell through
+      // to buy-hold fallbacks because their strategySpecific reads were
+      // always undefined on the wire. Adding this ONE line makes all six
+      // frontend consumers work end-to-end.
+      strategySpecific: (ap as { strategySpecific?: Record<string, unknown> } | undefined)?.strategySpecific,
       // Task #19 (2026-05-21): market snapshot frozen at analysis time —
       // powers the workspace Market + Comparables sections that replace the
       // legacy Market Analysis / Comparables tabs. This is a point-in-time
