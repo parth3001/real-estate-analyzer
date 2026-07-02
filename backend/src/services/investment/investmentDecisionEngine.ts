@@ -1917,6 +1917,41 @@ export class InvestmentDecisionEngine {
         }
       }
 
+      // Issue #211 Step 6 extension (2026-06-30) — invariant assertions
+      // for the BUY-HOLD path (BRRRR path has its own set at line 2115).
+      // Catches internal contradictions before they ship. Logs WARN
+      // (doesn't throw) so production stays live.
+      //
+      //   BH-1: verdict=BUY requires dealQuality ≥ 65
+      //   BH-2: verdict in {PASS, CAUTION} requires dealQuality < 65
+      //   BH-3: primaryInsight containing "pass" implies dealQuality < 65
+      //
+      // Same invariants as BRRRR but scoped to fields available in the
+      // buy-hold path (no post-refi DSCR here, so INV-3/INV-4 don't
+      // apply). If a future engine change re-introduces the
+      // verdict/dealQuality/insight mismatch we hit tonight (#206/#207),
+      // these fail loud instead of silent.
+      const bhViolations: string[] = [];
+      const bhDq = taxEnhancedAssessment.dealQuality;
+      const bhInsight = (taxEnhancedAssessment.primaryInsight ?? '').toLowerCase();
+      if (verdict.verdict === 'BUY' && bhDq < 65) {
+        bhViolations.push(`BH-1: verdict=BUY but dealQuality=${bhDq} (must be ≥65 for BUY)`);
+      }
+      if ((verdict.verdict === 'PASS' || verdict.verdict === 'CAUTION') && bhDq >= 65) {
+        bhViolations.push(`BH-2: verdict=${verdict.verdict} but dealQuality=${bhDq} (should be <65 for PASS/CAUTION)`);
+      }
+      if (bhInsight.includes('pass unless') && bhDq >= 65) {
+        bhViolations.push(`BH-3: primaryInsight recommends "pass" but dealQuality=${bhDq} ≥ 65 (score-vs-insight mismatch)`);
+      }
+      if (bhViolations.length > 0) {
+        logger.warn('Buy-hold engine output — invariant violations detected', {
+          violations: bhViolations,
+          dealQuality: bhDq,
+          verdict: verdict.verdict,
+          primaryInsight: taxEnhancedAssessment.primaryInsight,
+        });
+      }
+
       const decision: InvestmentDecision = {
         verdict: verdict.verdict,
         confidence: verdict.confidence, // LEGACY - maintained for backwards compatibility
