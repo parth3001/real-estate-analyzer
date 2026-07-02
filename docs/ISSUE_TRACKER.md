@@ -5,6 +5,31 @@
 
 ---
 
+## ✅ **RESOLVED 2026-06-30 (evening) — Workspace BRRRR strategy-awareness (Test 1 continued)**
+
+### Issue #211: Workspace Financials + Long-term + Year-by-year showed BUY-HOLD numbers on a BRRRR deal
+**Status**: ✅ RESOLVED 2026-06-30
+**Commits**: `3554ce1` (Step 1 Financials + #212 field-name mapping) + `ab4b350` (Steps 2-6)
+**Priority**: P0 — v1 launch blocker (paying user seeing contradictory numbers on same page)
+**Component**: `frontend/src/components/AnalysisDetails/ScenarioDetails.tsx` + `savedDealVariants.ts` + `backend/src/services/investment/investmentDecisionEngine.ts`
+**Summary**: The workspace's Financials, Long-term, and Year-by-year sections were hard-coded to read from `monthlyAnalysis` and `longTermAnalysis.projections` regardless of investment strategy — so on a BRRRR deal they showed acquisition-loan operational picture (positive cash flow, DSCR 1.40) instead of the post-refi picture the investor actually lives with (-$358/mo, DSCR 0.61). Contradicted both the chat narrative and the workspace BRRRR plan section on the same page. Architectural root cause: strategy is a first-class DATA concept (Deal.investmentStrategy enum + polymorphic strategySpecific field + indexes) but was not a first-class RENDER concept. Fixed by teaching the 3 read components to consult `deal.investmentStrategy` and read from `strategySpecific.{postRefinanceMetrics, exitScenarios, refinanceResults}` when strategy is BRRRR. New `BrrrrExitScenariosSection` component replaces the year-by-year projection on BRRRR deals. Also added 6 invariant assertions on engine output (verdict/dealQuality/DSCR/insight cross-field consistency) as a governance layer to catch internal contradictions before they ship.
+
+### Issue #212: Phase 2.5 (#205) had wrong field-name mapping between engine output and ScenarioDetails reader
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `3554ce1`
+**Priority**: P1 — root cause of chat-vs-workspace discrepancy (93% vs 83.8% capital recovery on same deal)
+**Component**: `frontend/src/components/AnalysisDetails/ScenarioDetails.tsx`
+**Summary**: Phase 2.5 (#205) correctly wrote `strategySpecific` through the substrate but the reader looked for fields on the wrong sub-objects. Prior code read `enginePostRefi.refinanceLoanAmount` (undefined — field lives at `refinanceResults.newLoanAmount`) and `enginePostRefi.dscr` (undefined — engine writes `postRefiDSCR`). Reader always fell back to inline math, producing 83.8% capital recovery in workspace vs 93% in chat (Method A). Fixed by extracting a new `engineRefinance` block for `refinanceResults` and correcting `postRefiDSCR` name. Closes the field-name portion of #205 follow-up work.
+
+### Issue #213: "IRR (post-refi) 0/100" factor bar was misleading on BRRRR deals
+**Status**: ✅ RESOLVED 2026-06-30
+**Commit**: `ab4b350`
+**Priority**: P2 — UX polish, made deals look scarier than they are
+**Component**: `frontend/src/components/AnalysisDetails/savedDealVariants.ts`
+**Summary**: BRRRR variant top factor pointed at `irrScore`, which the engine intentionally sets to 0 for BRRRR (comment in investmentDecisionEngine.ts:2265: "Not applicable for BRRRR"). Rendering 0/100 for an intentionally-unset metric read to users as "your deal has zero IRR" (catastrophic) instead of "IRR isn't the BRRRR framework's primary metric." Swapped to `exitStrategyScore` which the BRRRR engine populates with the capital recovery score — the actual BRRRR primary signal. Label changed from "IRR (post-refi)" to "Capital recovery." Also renamed "Debt structure" → "Debt structure (refi viability)" for clarity since that factor score IS the refinance viability score in BRRRR context.
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
