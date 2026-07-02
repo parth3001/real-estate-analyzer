@@ -185,6 +185,15 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     strategySpecific && typeof strategySpecific.rule70Check === 'object'
       ? (strategySpecific.rule70Check as Record<string, unknown>)
       : null;
+  // Issue #212 (2026-06-30) — refi loan lives on refinanceResults, not
+  // postRefinanceMetrics. Prior reader looked for
+  // enginePostRefi.refinanceLoanAmount which was always undefined,
+  // silently falling back to inline math (ARV × LTV). That was one of
+  // the sources of the chat-vs-workspace 93% vs 83.8% discrepancy.
+  const engineRefinance =
+    strategySpecific && typeof strategySpecific.refinanceResults === 'object'
+      ? (strategySpecific.refinanceResults as Record<string, unknown>)
+      : null;
   let brrrrRows: Row[] = [];
   if (brrrrBlock) {
     const rehabBudget = Number(brrrrBlock.rehabBudget) || 0;
@@ -200,9 +209,21 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     // is fine but the rule itself excludes closing.
     const allInRule70 = purchasePrice + rehabBudget;
     const allInTotalCash = downPayment + rehabBudget + closingCosts;
-    // Prefer engine-computed values; fall back to inline derivation.
-    const refiLoan = enginePostRefi?.refinanceLoanAmount
-      ? Number(enginePostRefi.refinanceLoanAmount)
+    // Issue #212 (2026-06-30) — engine field-name mapping (was wrong in #205
+    // Phase 2.5 which introduced the substrate projection). Engine's
+    // BRRRRAnalysis shape (see backend/src/services/investment/brrrAnalyzer.ts):
+    //   strategySpecific.refinanceResults.newLoanAmount   ← was reading "refinanceLoanAmount"
+    //   strategySpecific.capitalRecovery.capitalRecovered
+    //   strategySpecific.capitalRecovery.capitalRemaining
+    //   strategySpecific.capitalRecovery.capitalRecoveryRate
+    //   strategySpecific.capitalRecovery.infiniteReturn
+    //   strategySpecific.postRefinanceMetrics.monthlyCashFlow
+    //   strategySpecific.postRefinanceMetrics.postRefiDSCR ← was reading "dscr"
+    // Prior code read the wrong names, always fell back to inline math,
+    // which produced 83.8% recovery in the workspace vs 93% (Method A)
+    // in the chat narrative — same deal, two answers.
+    const refiLoan = engineRefinance?.newLoanAmount
+      ? Number(engineRefinance.newLoanAmount)
       : arv * (refiLTV / 100);
     const originalLoanBalance = Math.max(0, purchasePrice - downPayment);
     const capitalRecoveredAtRefi = engineCapitalRecovery?.capitalRecovered
@@ -226,8 +247,8 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     const postRefiCashFlow = enginePostRefi?.monthlyCashFlow
       ? Number(enginePostRefi.monthlyCashFlow)
       : undefined;
-    const postRefiDscr = enginePostRefi?.dscr
-      ? Number(enginePostRefi.dscr)
+    const postRefiDscr = enginePostRefi?.postRefiDSCR
+      ? Number(enginePostRefi.postRefiDSCR)
       : undefined;
     const infiniteReturn = engineCapitalRecovery?.infiniteReturn === true;
 
@@ -296,42 +317,104 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
     }
   }
 
-  const financials: Row[] = [
-    // Monthly cash-flow breakdown (was the legacy "Financial Details" tab).
-    { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
-    {
-      label:
-        typeof vacancyRate === 'number'
-          ? `Less: Vacancy (${vacancyRate.toFixed(1)}%)`
-          : 'Less: Vacancy',
-      value:
-        typeof vacancyMonthly === 'number'
-          ? `−${fmtCurrency(vacancyMonthly)}`
-          : '–',
-      negative: true,
-    },
-    { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
-    {
-      label: 'Operating expenses',
-      value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')),
-      hint: 'Includes property tax, insurance, maintenance, mgmt, vacancy, and a CapEx reserve (~5% of rent). Some Wall Street SFR models put CapEx below NOI; we use the more conservative Fannie Mae multifamily convention.',
-    },
-    { label: 'Debt service (mortgage)', value: fmtCurrency(nestedNum(ma, 'expenses', 'debt')) },
-    {
-      label: 'Monthly cash flow',
-      value: fmtCurrency(monthlyCashFlow),
-      negative: isNeg(monthlyCashFlow),
-    },
-    // Headline return metrics.
-    { label: 'Cap rate', value: fmtPct(num(m, 'capRate')) },
-    { label: 'Cash-on-cash', value: fmtPct(num(m, 'cashOnCashReturn')) },
-    { label: 'DSCR', value: fmtRatio(num(m, 'dscr')) },
-    {
-      label: 'Annual NOI',
-      value: fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI')),
-      hint: 'NOI = effective rent minus operating expenses (incl. CapEx reserve). Pre-debt-service. Same convention as Fannie Mae multifamily underwriting — more conservative than Wall Street SFR which puts CapEx below NOI (and would show a higher number).',
-    },
-  ];
+  // Issue #211 (2026-06-30) — strategy-aware Financials.
+  //
+  // For BUY-HOLD deals: show acquisition-loan operational picture from
+  // monthlyAnalysis (rent, opex, acquisition debt, cash flow, DSCR).
+  //
+  // For BRRRR deals: show POST-REFI operational picture from
+  // strategySpecific.postRefinanceMetrics. That's what the investor
+  // actually lives with for 10 years after the refi closes at month 12
+  // — showing the acquisition-loan cash flow (nice + positive $353/mo)
+  // hid the fact that the post-refi loan is bigger AND higher-rate,
+  // producing negative cash flow (-$358/mo) and unlendable DSCR (0.61)
+  // on the Test 1 Garland deal.
+  //
+  // Reads from the same `enginePostRefi` block used by the BRRRR plan
+  // section above so the two sections agree on every metric.
+  const financials: Row[] = isBrrrr && enginePostRefi
+    ? [
+        { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
+        {
+          label:
+            typeof vacancyRate === 'number'
+              ? `Less: Vacancy (${vacancyRate.toFixed(1)}%)`
+              : 'Less: Vacancy',
+          value:
+            typeof vacancyMonthly === 'number'
+              ? `−${fmtCurrency(vacancyMonthly)}`
+              : '–',
+          negative: true,
+        },
+        { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
+        {
+          label: 'Operating expenses',
+          value: fmtCurrency(Number(enginePostRefi.monthlyOperatingExpenses)),
+          hint: 'Post-refi operating expenses — property tax, insurance, maintenance, mgmt, CapEx reserve. Same shape as buy-hold OpEx.',
+        },
+        {
+          label: 'Debt service (post-refi mortgage)',
+          value: fmtCurrency(Number(enginePostRefi.newMonthlyPayment)),
+          hint: 'Monthly P&I on the cash-out refi loan (ARV × refi LTV), amortized at the refi rate. Higher than the acquisition loan payment because the loan is bigger AND the rate is higher (200bps spread on cash-out DSCR products).',
+        },
+        {
+          label: 'Monthly cash flow (post-refi)',
+          value: fmtCurrency(Number(enginePostRefi.monthlyCashFlow)),
+          negative: isNeg(Number(enginePostRefi.monthlyCashFlow)),
+          hint: 'Cash flow AFTER the refi closes at month 12. This is what you live with for the 10-year hold. Negative = the property bleeds cash every month.',
+        },
+        {
+          label: 'Cash-on-cash (post-refi)',
+          value: fmtPct(Number(enginePostRefi.cashOnCashReturn)),
+          hint: 'Annual post-refi cash flow ÷ capital remaining in deal after refi. Different denominator than buy-hold cash-on-cash — a BRRRR-specific view.',
+        },
+        {
+          label: 'DSCR (post-refi)',
+          value: fmtRatio(Number(enginePostRefi.postRefiDSCR)),
+          negative: Number(enginePostRefi.postRefiDSCR) < 1.2,
+          hint: 'Debt service coverage ratio on the refi loan. Lenders typically require ≥1.20 for cash-out refi approval. <1.0 means the deal literally cannot be refinanced — the whole BRRRR strategy is theoretical.',
+        },
+        {
+          label: 'Annual NOI (post-refi)',
+          value: fmtCurrency(Number(enginePostRefi.annualNOI)),
+          hint: 'Post-refi NOI = effective annual rent − operating expenses. Pre-debt-service.',
+        },
+      ]
+    : [
+        // Buy-hold path — unchanged.
+        { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
+        {
+          label:
+            typeof vacancyRate === 'number'
+              ? `Less: Vacancy (${vacancyRate.toFixed(1)}%)`
+              : 'Less: Vacancy',
+          value:
+            typeof vacancyMonthly === 'number'
+              ? `−${fmtCurrency(vacancyMonthly)}`
+              : '–',
+          negative: true,
+        },
+        { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
+        {
+          label: 'Operating expenses',
+          value: fmtCurrency(nestedNum(ma, 'expenses', 'operating')),
+          hint: 'Includes property tax, insurance, maintenance, mgmt, vacancy, and a CapEx reserve (~5% of rent). Some Wall Street SFR models put CapEx below NOI; we use the more conservative Fannie Mae multifamily convention.',
+        },
+        { label: 'Debt service (mortgage)', value: fmtCurrency(nestedNum(ma, 'expenses', 'debt')) },
+        {
+          label: 'Monthly cash flow',
+          value: fmtCurrency(monthlyCashFlow),
+          negative: isNeg(monthlyCashFlow),
+        },
+        { label: 'Cap rate', value: fmtPct(num(m, 'capRate')) },
+        { label: 'Cash-on-cash', value: fmtPct(num(m, 'cashOnCashReturn')) },
+        { label: 'DSCR', value: fmtRatio(num(m, 'dscr')) },
+        {
+          label: 'Annual NOI',
+          value: fmtCurrency(num(m, 'noi') ?? num(m, 'annualNOI')),
+          hint: 'NOI = effective rent minus operating expenses (incl. CapEx reserve). Pre-debt-service. Same convention as Fannie Mae multifamily underwriting — more conservative than Wall Street SFR which puts CapEx below NOI (and would show a higher number).',
+        },
+      ];
 
   const totalCashFlow = num(returns, 'totalCashFlow');
   const longTerm: Row[] = [
