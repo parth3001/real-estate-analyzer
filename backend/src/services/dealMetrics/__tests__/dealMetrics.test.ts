@@ -287,6 +287,208 @@ describe('rent_for_target_dscr', () => {
   });
 });
 
+// ===== Price for positive cash flow (buy-hold + house-hack only) =====
+
+describe('price_for_positive_cash_flow', () => {
+  it('computes Charlotte buy-hold price for break-even cash flow', () => {
+    // effRent = 2300 × 0.95 = 2185
+    // maxDebt = 2185 − 850 − 0 = 1335
+    // r = 6.43/100/12 = 0.005358...
+    // n = 360
+    // factor ≈ 0.006267
+    // maxLoan ≈ 1335 / 0.006267 ≈ 213,022
+    // price = 213,022 + 62,500 = 275,522 (approx)
+    const result = computeMetric(
+      'price_for_positive_cash_flow',
+      charlotteBuyHoldDeal()
+    );
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.result).toBeGreaterThan(270000);
+    expect(result.result).toBeLessThan(285000);
+  });
+
+  it('honors targetCashFlow param — higher target = lower price', () => {
+    const breakEven = computeMetric(
+      'price_for_positive_cash_flow',
+      charlotteBuyHoldDeal()
+    );
+    const withCushion = computeMetric(
+      'price_for_positive_cash_flow',
+      charlotteBuyHoldDeal(),
+      { targetCashFlow: 200 }
+    );
+    if (breakEven.kind !== 'success' || withCushion.kind !== 'success') {
+      throw new Error('expected success');
+    }
+    // Requiring $200/mo cushion means you can pay LESS.
+    expect(withCushion.result).toBeLessThan(breakEven.result);
+  });
+
+  it('refuses BRRRR (post-refi cash flow is invariant to purchase price)', () => {
+    const result = computeMetric(
+      'price_for_positive_cash_flow',
+      garlandBrrrrDeal()
+    );
+    expect(result.kind).toBe('unsupported_strategy');
+  });
+
+  it('errors when rent cannot cover OpEx even at $0 debt service', () => {
+    const deal = charlotteBuyHoldDeal();
+    deal.monthlyRent = 500; // way below opex 850
+    const result = computeMetric('price_for_positive_cash_flow', deal);
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.reason).toMatch(/OpEx|Op-?Ex|rent/i);
+  });
+});
+
+// ===== ARV for full capital recovery (BRRRR only) =====
+
+describe('arv_for_full_capital_recovery', () => {
+  it('computes ARV needed for 100% recovery on Garland BRRRR', () => {
+    // totalCapitalDeployed = 46250 + 45000 + 2775 = 94025
+    // acquisitionLoan = 185000 − 46250 = 138750
+    // refiLTV = 0.75
+    // ARV = (94025 + 138750) / 0.75 = 310,367 (approx)
+    const result = computeMetric(
+      'arv_for_full_capital_recovery',
+      garlandBrrrrDeal()
+    );
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.result).toBeCloseTo(310366.67, 1);
+    expect(result.unit).toBe('dollars');
+  });
+
+  it('refuses buy-hold', () => {
+    const result = computeMetric(
+      'arv_for_full_capital_recovery',
+      charlotteBuyHoldDeal()
+    );
+    expect(result.kind).toBe('unsupported_strategy');
+  });
+
+  it('rejects invalid LTV', () => {
+    const deal = garlandBrrrrDeal();
+    deal.brrrr!.refinanceLTV = 0;
+    const result = computeMetric('arv_for_full_capital_recovery', deal);
+    expect(result.kind).toBe('error');
+  });
+});
+
+// ===== Break-even occupancy =====
+
+describe('break_even_occupancy', () => {
+  it('computes buy-hold break-even occupancy for Charlotte', () => {
+    // (850 + 1177) / 2300 = 88.13%
+    const result = computeMetric(
+      'break_even_occupancy',
+      charlotteBuyHoldDeal()
+    );
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.result).toBeCloseTo(88.13, 1);
+    expect(result.unit).toBe('percent');
+  });
+
+  it('BRRRR uses POST-REFI debt service, not acquisition', () => {
+    // Garland: (887 + 1662) / 2200 = 115.86% — DEAL CANNOT BREAK EVEN
+    const result = computeMetric('break_even_occupancy', garlandBrrrrDeal());
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.reason).toMatch(/cannot break even/i);
+  });
+
+  it('surfaces the strategy used in inputs (audit)', () => {
+    const result = computeMetric(
+      'break_even_occupancy',
+      charlotteBuyHoldDeal()
+    );
+    if (result.kind !== 'success') throw new Error('expected success');
+    expect(result.inputsUsed.strategy).toBe('buy_hold');
+    expect(result.inputsUsed.monthlyDebtService).toBe(1177);
+  });
+});
+
+// ===== Capital recovered at LTV (BRRRR only) =====
+
+describe('capital_recovered_at_ltv', () => {
+  it('computes capital recovered at 75% LTV on Garland', () => {
+    // refiLoan = 290000 × 0.75 = 217500
+    // acqLoan = 185000 − 46250 = 138750
+    // recovered = 217500 − 138750 = 78750
+    const result = computeMetric('capital_recovered_at_ltv', garlandBrrrrDeal(), {
+      ltv: 75,
+    });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.result).toBeCloseTo(78750, 2);
+  });
+
+  it('computes capital recovered at conservative 65% LTV', () => {
+    // 290000 × 0.65 = 188500
+    // 188500 − 138750 = 49750
+    const result = computeMetric('capital_recovered_at_ltv', garlandBrrrrDeal(), {
+      ltv: 65,
+    });
+    if (result.kind !== 'success') throw new Error('expected success');
+    expect(result.result).toBeCloseTo(49750, 2);
+  });
+
+  it('may return negative if refi loan < acquisition balance', () => {
+    // At very low LTV, refi loan may not cover the acquisition loan.
+    // 290000 × 0.40 = 116000, acqLoan = 138750, diff = -22750
+    const result = computeMetric('capital_recovered_at_ltv', garlandBrrrrDeal(), {
+      ltv: 40,
+    });
+    if (result.kind !== 'success') throw new Error('expected success');
+    expect(result.result).toBeLessThan(0);
+  });
+
+  it('refuses buy-hold', () => {
+    const result = computeMetric(
+      'capital_recovered_at_ltv',
+      charlotteBuyHoldDeal(),
+      { ltv: 75 }
+    );
+    expect(result.kind).toBe('unsupported_strategy');
+  });
+});
+
+// ===== Annual cash flow =====
+
+describe('annual_cash_flow', () => {
+  it('computes Charlotte buy-hold annual cash flow', () => {
+    // effRent = 2300 × 0.95 = 2185
+    // monthlyCF = 2185 − 850 − 1177 = 158
+    // annual = 1896
+    const result = computeMetric('annual_cash_flow', charlotteBuyHoldDeal());
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.result).toBeCloseTo(1896, 0);
+    expect(result.unit).toBe('dollars_per_year');
+    expect(result.formatted).toContain('$1,896');
+  });
+
+  it('BRRRR uses POST-REFI cash flow (negative for Garland)', () => {
+    // effRent = 2200 × 0.95 = 2090
+    // monthlyCF = 2090 − 887 − 1662 = -459
+    // annual = -5508
+    const result = computeMetric('annual_cash_flow', garlandBrrrrDeal());
+    if (result.kind !== 'success') throw new Error('expected success');
+    expect(result.result).toBeCloseTo(-5508, 0);
+    expect(result.formatted).toContain('-$5,508');
+  });
+
+  it('surfaces strategy in provenance', () => {
+    const result = computeMetric('annual_cash_flow', garlandBrrrrDeal());
+    if (result.kind !== 'success') throw new Error('expected success');
+    expect(result.inputsUsed.strategy).toBe('brrrr');
+    expect(result.inputsUsed.monthlyDebtService).toBe(1662);
+  });
+});
+
 // ===== Runner-level error paths =====
 
 describe('runner error paths', () => {
@@ -297,6 +499,11 @@ describe('runner error paths', () => {
     expect(result.availableMetrics).toContain('seventy_rule_ceiling');
     expect(result.availableMetrics).toContain('price_for_target_cap_rate');
     expect(result.availableMetrics).toContain('rent_for_target_dscr');
+    expect(result.availableMetrics).toContain('price_for_positive_cash_flow');
+    expect(result.availableMetrics).toContain('arv_for_full_capital_recovery');
+    expect(result.availableMetrics).toContain('break_even_occupancy');
+    expect(result.availableMetrics).toContain('capital_recovered_at_ltv');
+    expect(result.availableMetrics).toContain('annual_cash_flow');
   });
 });
 

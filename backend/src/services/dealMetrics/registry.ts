@@ -14,12 +14,22 @@ import type { MetricDef } from './types';
 import { sevenTyRuleCeiling } from './formulas/seventy_rule_ceiling';
 import { priceForTargetCapRate } from './formulas/price_for_target_cap_rate';
 import { rentForTargetDSCR } from './formulas/rent_for_target_dscr';
+import { priceForPositiveCashFlow } from './formulas/price_for_positive_cash_flow';
+import { arvForFullCapitalRecovery } from './formulas/arv_for_full_capital_recovery';
+import { breakEvenOccupancy } from './formulas/break_even_occupancy';
+import { capitalRecoveredAtLtv } from './formulas/capital_recovered_at_ltv';
+import { annualCashFlow } from './formulas/annual_cash_flow';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formulas: MetricDef<any>[] = [
   sevenTyRuleCeiling,
   priceForTargetCapRate,
   rentForTargetDSCR,
+  priceForPositiveCashFlow,
+  arvForFullCapitalRecovery,
+  breakEvenOccupancy,
+  capitalRecoveredAtLtv,
+  annualCashFlow,
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

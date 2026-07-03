@@ -180,6 +180,50 @@ function pickInputsUsed(
         monthlyOperatingExpenses: deal.computed.monthlyOperatingExpenses,
         vacancyRate: deal.vacancyRate,
       };
+    case 'price_for_positive_cash_flow':
+      return {
+        monthlyRent: deal.monthlyRent,
+        vacancyRate: deal.vacancyRate,
+        monthlyOperatingExpenses: deal.computed.monthlyOperatingExpenses,
+        interestRate: deal.interestRate,
+        loanTerm: deal.loanTerm,
+        downPayment: deal.downPayment,
+      };
+    case 'arv_for_full_capital_recovery':
+      return {
+        downPayment: deal.downPayment,
+        rehabBudget: deal.brrrr?.rehabBudget ?? 0,
+        closingCosts: deal.closingCosts,
+        purchasePrice: deal.purchasePrice,
+        refinanceLTV: deal.brrrr?.refinanceLTV ?? 0,
+      };
+    case 'break_even_occupancy':
+      return {
+        strategy: deal.strategy,
+        monthlyRent: deal.monthlyRent,
+        monthlyOperatingExpenses: deal.computed.monthlyOperatingExpenses,
+        monthlyDebtService:
+          deal.strategy === 'brrrr'
+            ? (deal.computed.postRefiMonthlyDebtService ?? 0)
+            : deal.computed.monthlyDebtService,
+      };
+    case 'capital_recovered_at_ltv':
+      return {
+        afterRepairValue: deal.brrrr?.afterRepairValue ?? 0,
+        purchasePrice: deal.purchasePrice,
+        downPayment: deal.downPayment,
+      };
+    case 'annual_cash_flow':
+      return {
+        strategy: deal.strategy,
+        monthlyRent: deal.monthlyRent,
+        vacancyRate: deal.vacancyRate,
+        monthlyOperatingExpenses: deal.computed.monthlyOperatingExpenses,
+        monthlyDebtService:
+          deal.strategy === 'brrrr'
+            ? (deal.computed.postRefiMonthlyDebtService ?? 0)
+            : deal.computed.monthlyDebtService,
+      };
     default:
       return {};
   }
