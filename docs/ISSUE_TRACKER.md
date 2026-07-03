@@ -30,6 +30,90 @@
 
 ---
 
+## 🔴 **OPEN — Test 2 findings (BRRRR Business Expert prompts, 2026-07-02)**
+
+Test 2 ran 8 Business Expert prompts against the Garland BRRRR deal on the saved workspace. Engine + analysis paths performed excellently (6/8 passes with sharp, seasoned-investor-quality responses, no confabulation, proper disclaimers). Two hard failures both traced to the same root: the intent classifier's `override_assumption` bucket catches non-perturbation requests (calculation questions, strategy pivots) and routes them to the stress-test service, which then dead-ends on "no perturbation found."
+
+### Issue #215: Classifier mis-routes calculation questions as stress tests
+**Status**: 🔴 Open
+**Priority**: P1 — user-visible dead-end on legitimate arithmetic questions
+**Reported**: 2026-07-02 during Test 2 A1
+**Component**: `backend/src/agents/orchestrator/intentClassifier.ts` → `service:stress_test` path
+**Description**: User asked *"At what purchase price would this deal pass the 70% rule?"* — a simple algebra question (0.70 × $290k − $45k rehab = $158k). Classifier routed as `intent: override_assumption, target: service:stress_test`. Extractor returned 0 perturbations. Orchestrator surfaced the generic *"I couldn't pick up a specific change to test — try 'what if rent dropped to $1,800?'"* fallback.
+**Business Impact**: Any BRRRR investor's second thought after "70% rule violated by $27k" is *"what's the target price?"* — trivial algebra. If the tool can't answer that, the whole 70% rule flag becomes advice without recourse. Reduces trust.
+**Proposed Solution**: See #221 — same root cause. Fix is a classifier taxonomy expansion: add `qa_general` (Q&A / calculation) and `strategy_pivot` intents to shrink `override_assumption` to what it actually is (a field-level stress test).
+
+### Issue #216: Agent narrates buy-hold IRR as "the deal's IRR" on BRRRR deals
+**Status**: 🔴 Open
+**Priority**: P2 — silver-lining trap in narrative layer
+**Reported**: 2026-07-02 during Test 2 A1 follow-up ("Show me the capital-recovery timeline")
+**Component**: `backend/src/agents/tools/get_decision_breakdown.ts` narration; possibly also the `qa_general` agent prompt
+**Description**: Agent's capital-recovery timeline response quoted *"the deal's overall projected 10-year IRR (inclusive of operations) is 20.7% — driven heavily by appreciation and equity build-up"*. That's the BUY-HOLD baseline IRR (SFRAnalyzer). The actual BRRRR exit IRR at Y10 is 3.9% (per the exit scenarios table shown in the same response). Same misattribution the Optimistic Flipper made.
+**Business Impact**: User reads "93% capital recovery + 10-year IRR of 20.7%" and thinks they have a home-run BRRRR. Reality is 3.9% BRRRR IRR — 5x lower. Exact silver-lining trap we've been fighting.
+**Proposed Solution**: `get_decision_breakdown` tool output was extended for BRRRR in prior work, but the agent's narrative still treats `metrics.irr` (buy-hold baseline) as "the deal's IRR". Add strategy-aware narration in the agent's Q&A prompt: on BRRRR deals, "the deal's IRR" should refer to `strategySpecific.exitScenarios[N].irr` at hold-period year, not `metrics.irr`.
+
+### Issue #217: JWT token expires within ~90 seconds mid-conversation
+**Status**: 🔴 Open — recurring
+**Priority**: P1 — trust-critical UX bug on paid product
+**Reported**: 2026-07-02 during Test 2 A2 (and multiple later occurrences)
+**Component**: `backend/src/services/authService.ts` (token TTL) + frontend refresh logic
+**Description**: Multiple times during Test 2, mid-conversation user messages returned 401 Invalid JWT after ~90 seconds of activity. Logs show `[Auth] Invalid JWT token` and `POST /api/chat/turn/stream 401`. Frontend refresh works after reload but the mid-turn failure loses the user's typed message.
+**Business Impact**: Cold-traffic paying user typing a follow-up question after a longer pause gets rejected. On a $4.99/deal product, losing work mid-conversation is trust-critical. Prior fix (#70) may have regressed.
+**Proposed Solution**: (a) audit token TTL — if genuinely <2 min, extend to 30+ min; (b) implement transparent refresh so mid-turn 401 triggers auto-refresh + retry instead of surfacing to the user.
+
+### Issue #218: Chat thread wiped on browser refresh (auth-failure cascade)
+**Status**: 🔴 Open
+**Priority**: P0 — user-visible data loss (thought-work loss)
+**Reported**: 2026-07-02
+**Component**: Frontend session router + chat session persistence
+**Description**: JWT expired → user refreshed browser → chat session router picked up a DIFFERENT (anonymous ghost) session instead of the authenticated one that had the full history. Prior turns invisible. Related to but distinct from #88 (workspace→chat navigation loss).
+**Business Impact**: User loses conversation context on paid product. Combined with #217 forms a fragile session persistence class — auth interruption of any kind cascades into apparent history loss.
+**Proposed Solution**: On refresh, session router must prefer authenticated session with matching userId; only fall back to ghost session if no authenticated session exists. Anonymous ghost should be discarded once user authenticates, not kept as a shadow.
+
+### Issue #219: Stress-test narrator was blind to BRRRR metrics
+**Status**: ✅ RESOLVED 2026-07-02
+**Commits**: `317c512` (main fix) + `2f4c238` (debug) + `81ba74a` (debug) + `1b471a5` (no-op handling)
+**Priority**: P0 — stress tests on BRRRR deals produced buy-hold narrative + confabulated timeline
+**Summary**: Perturbation runner's `ScenarioSnapshot` only extracted buy-hold metrics from the engine output. BRRRR fields on `decision.strategySpecific` (postRefinanceMetrics, capitalRecovery, rule70Check, exitScenarios) were discarded before reaching the narrator. Layer 4 LLM correctly obeyed its "cite only structured input" rule but the input was buy-hold-only, so it reported buy-hold cash flow / DSCR / IRR as "the deal's" and confabulated a "refi doesn't close until year 5" story to explain why nothing changed. Fixed by (a) adding `strategy` + `brrrr` sub-object to `ScenarioSnapshot`, (b) unpacking `decision.strategySpecific` in `scoreOnce`, (c) making the narrator's structured input strategy-aware with an explicit "STRATEGY: BRRRR" preface. Also added no-op detection: when `baselineValue === stressedValue` for a perturbation, narrator explicitly reports the user's baseline was already at the requested value instead of pretending the deal is insensitive to the field.
+
+### Issue #220: BRRRR exit scenario IRR uses buy-hold cash flows for hold period
+**Status**: 🟢 Open — non-blocking methodology
+**Priority**: P2 — internally consistent but understates BRRRR impact
+**Reported**: 2026-07-02 during Test 2 B1 validation
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts:calculateExitScenarios`
+**Description**: Perturbing refi rate from 8.43% → 6% produced meaningful post-refi cash flow improvement (-$595 → +$9/mo) but zero change in BRRRR exit IRR (both scenarios showed 3.90% at Y10). Root cause: exit scenario cash flows use `analysis.longTermAnalysis.projections` (SFRAnalyzer buy-hold projections), not post-refi cash flows. Refi rate perturbations therefore don't propagate to exit IRR. ARV perturbations DO propagate because ARV directly affects the final sale-year cash flow in the IRR calc.
+**Business Impact**: Understates refi-rate sensitivity in the exit-scenario view. User comparing 6% vs 10% refi rates sees identical exit IRRs and may conclude rate doesn't matter for returns. Consistent with the workspace exit-scenario table, so cross-surface reconciliation still holds — but methodologically the "BRRRR exit IRR" is a hybrid.
+**Proposed Solution**: Post-launch — recompute exit-scenario cash flows using post-refi debt service after month 12 (seasoning transition). Requires threading the refi payment into the projection model. Not launch-blocking because numbers are consistent everywhere they're shown.
+
+### Issue #221: Classifier mis-routes strategy pivot requests as stress tests
+**Status**: 🟡 In Progress — band-aid shipped in `d775156`, real fix pending
+**Priority**: P1 — user cannot access working pivot flow via chat
+**Reported**: 2026-07-02 during Test 2 D1
+**Component**: `backend/src/agents/orchestrator/intentClassifier.ts` (root cause) + `services/perturbation/index.ts` (band-aid interception)
+**Description**: User asked *"What does this same property look like as a plain buy-and-hold — no refi, hold as rental with the original financing?"* — classic strategy pivot per #202. Classifier routed as `intent: override_assumption, target: service:stress_test`. Extractor's LLM correctly diagnosed the mismatch in its `reasoning` field: *"This is a strategic question about analysis mode/scenario type... scenario switching is handled upstream by the orchestrator."* But that diagnosis was thrown away by the perturbation service, which returned `extraction_failed` → orchestrator surfaced generic fallback.
+**Band-aid shipped**: New `strategy_pivot_requested` result kind in `handleStressTest`, detected by keyword-matching the extractor's reasoning. Orchestrator maps to actionable copy telling the user to phrase it as "Re-analyze as buy-and-hold" which should route via `analyze_property` intent. However, the classifier ALSO routes the "Re-analyze" phrasing to `override_assumption` in some cases, so the band-aid is circular for some prompts.
+**Real fix required**: Expand classifier taxonomy — add explicit `qa_general` (calculation / Q&A) and `strategy_pivot` intents to shrink `override_assumption` to actual field perturbations. Currently ~30% of stress-test-routed messages are actually questions or pivots. Same root cause as #215.
+
+### Issue #222: Rapid-fire user messages silently dropped during agent processing
+**Status**: 🔴 Open
+**Priority**: P1 — silent data loss (user thought-work lost)
+**Reported**: 2026-07-02 during Test 2 D1 follow-up
+**Component**: Frontend chat message queue + backend chat.turn.stream handler
+**Description**: User sent 3 messages in rapid succession (typed + clicked chip). Chat frontend rendered all three as blue bubbles but agent responded ONLY to message #3. Messages #1 and #2 were silently discarded — no response, no error, no indication they weren't processed.
+**Business Impact**: User has no idea their earlier messages were dropped. Assumes agent chose to answer only the latest question. In a paid-product testing/analysis context this is opaque and frustrating.
+**Proposed Solution**: (a) frontend should either block "send" while a turn is generating OR (b) queue messages and process them in order once the current turn completes. Silent drop is not an acceptable design.
+
+### Issue #223: Agent treats saved deals as "portfolio" without checking a real Portfolio object exists
+**Status**: 🔴 Open
+**Priority**: P1 — false-structure narration reduces trust
+**Reported**: 2026-07-02 during Test 2 (C2 → portfolio chip follow-up)
+**Component**: `backend/src/agents/tools/recall_user_context.ts` OR agent's portfolio Q&A prompt
+**Description**: User clicked *"How would this apply to my portfolio?"* chip. Agent responded referencing "The BRRRR deal (1234 Oak St, Garland TX)" and "novice experience level and moderate risk tolerance on file" and framed the response as *"portfolio-level concern"*. But user hasn't built a portfolio — has only saved individual deal analyses. Agent conflated "saved deals" with "Portfolio" (per PRODUCT_CONTEXT.md, distinct concepts: Portfolio is a goal-based structure user explicitly creates).
+**Business Impact**: User reasonably expects "my portfolio" to mean the Portfolio they'd have to build. Getting a portfolio-framed response without having built one reads as *"the system is making up structure I didn't create"* — trust hit on paid product.
+**Proposed Solution**: `recall_user_context` should distinguish `savedDeals` vs `portfolioContext`. Agent's portfolio Q&A path must check `Portfolio.exists(userId)` before framing a response as portfolio-aware. If no Portfolio exists, honest response: *"You have N saved analyses but haven't built a portfolio strategy yet. If you want portfolio-level analysis, we can set that up — otherwise I can compare these deals directly."*
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
