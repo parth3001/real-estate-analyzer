@@ -1,0 +1,49 @@
+/**
+ * dealMetrics/registry.ts — Issue #226 (2026-07-03).
+ *
+ * The formula registry. Add a new formula by importing it and adding
+ * it to `formulas`. That's the only file that changes when we grow
+ * the coverage.
+ *
+ * Registry is intentionally hand-maintained (not auto-discovered)
+ * so new formulas are code-reviewed deliberately and the LLM-facing
+ * catalogue stays curated.
+ */
+
+import type { MetricDef } from './types';
+import { sevenTyRuleCeiling } from './formulas/seventy_rule_ceiling';
+import { priceForTargetCapRate } from './formulas/price_for_target_cap_rate';
+import { rentForTargetDSCR } from './formulas/rent_for_target_dscr';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formulas: MetricDef<any>[] = [
+  sevenTyRuleCeiling,
+  priceForTargetCapRate,
+  rentForTargetDSCR,
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const byKey: Map<string, MetricDef<any>> = new Map(
+  formulas.map((f) => [f.key, f])
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getFormula(key: string): MetricDef<any> | undefined {
+  return byKey.get(key);
+}
+
+export function listMetricKeys(): string[] {
+  return formulas.map((f) => f.key);
+}
+
+/**
+ * List all metrics that apply to a given strategy — used to help the
+ * LLM see the menu when it's picking a formula.
+ */
+export function listMetricsForStrategy(
+  strategy: 'buy_hold' | 'brrrr' | 'house_hack'
+): Array<{ key: string; label: string; description: string }> {
+  return formulas
+    .filter((f) => f.supportedStrategies.includes(strategy))
+    .map((f) => ({ key: f.key, label: f.label, description: f.description }));
+}
