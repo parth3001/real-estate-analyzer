@@ -13,6 +13,7 @@
 
 import mongoose, { Types } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { z } from 'zod';
 import { runAgent } from '../agentRunner';
 import {
   setAnthropicAdapter,
@@ -327,6 +328,124 @@ describe('agentRunner (W5)', () => {
       expect(observedUserMessage).toContain('Context');
       expect(observedUserMessage).toContain('"pro"');
       expect(observedUserMessage).toContain('hello');
+    });
+  });
+
+  // ===== Numeric traceability (Issue #226 Session 4b) =====
+
+  describe('numeric traceability', () => {
+    /**
+     * Fixture tool that returns a deterministic numeric result. We use
+     * this instead of a real tool so the test is hermetic.
+     */
+    const echoInputSchema = z.object({ n: z.number() });
+    const echoOutputSchema = z.object({
+      result: z.number(),
+      formatted: z.string(),
+    });
+    type EchoIn = z.infer<typeof echoInputSchema>;
+    type EchoOut = z.infer<typeof echoOutputSchema>;
+    const echoNumberTool: Tool<EchoIn, EchoOut> = {
+      name: 'echo_number',
+      description: 'echo a number back',
+      inputSchema: echoInputSchema,
+      outputSchema: echoOutputSchema,
+      invokeLLM: false,
+      sideEffects: [],
+      retrySemantics: { maxAttempts: 1, backoff: 'none', baseMs: 0 },
+      async execute(input) {
+        return { result: input.n, formatted: `$${input.n.toLocaleString()}` };
+      },
+    };
+
+    it('WARN mode: flags untraceable numbers without changing text', async () => {
+      // Model responds with a number that is NOT in the tool return.
+      setAnthropicAdapter(
+        scriptedAdapter([
+          toolUseBlock('echo_number', { n: 158000 }),
+          textBlock('The 70% rule ceiling is $253,815.'),
+        ])
+      );
+      const result = await runAgent(
+        {
+          name: 'qa',
+          modelTier: 'sonnet',
+          systemPrompt: '',
+          allowedTools: { echo_number: echoNumberTool as unknown as Tool<unknown, unknown> },
+          numericTraceability: { mode: 'warn' },
+        },
+        { userInput: 'q' },
+        ctxFor('trace-warn')
+      );
+      expect(result.text).toBe('The 70% rule ceiling is $253,815.'); // unchanged
+      expect(result.traceabilityFailedClosed).toBe(false);
+      expect(result.traceabilityReport).toBeDefined();
+      expect(result.traceabilityReport!.violations.length).toBe(1);
+      expect(result.traceabilityReport!.violations[0].candidate.value).toBe(253815);
+    });
+
+    it('WARN mode: passes clean when the number DOES trace to a tool', async () => {
+      setAnthropicAdapter(
+        scriptedAdapter([
+          toolUseBlock('echo_number', { n: 158000 }),
+          textBlock('The 70% rule ceiling is $158,000.'),
+        ])
+      );
+      const result = await runAgent(
+        {
+          name: 'qa',
+          modelTier: 'sonnet',
+          systemPrompt: '',
+          allowedTools: { echo_number: echoNumberTool as unknown as Tool<unknown, unknown> },
+          numericTraceability: { mode: 'warn' },
+        },
+        { userInput: 'q' },
+        ctxFor('trace-warn-clean')
+      );
+      expect(result.text).toBe('The 70% rule ceiling is $158,000.');
+      expect(result.traceabilityReport!.violations.length).toBe(0);
+    });
+
+    it('FAIL_CLOSED mode: replaces text when confabulation detected', async () => {
+      setAnthropicAdapter(
+        scriptedAdapter([
+          toolUseBlock('echo_number', { n: 158000 }),
+          textBlock('The 70% rule ceiling is $253,815.'),
+        ])
+      );
+      const result = await runAgent(
+        {
+          name: 'qa',
+          modelTier: 'sonnet',
+          systemPrompt: '',
+          allowedTools: { echo_number: echoNumberTool as unknown as Tool<unknown, unknown> },
+          numericTraceability: { mode: 'fail_closed' },
+        },
+        { userInput: 'q' },
+        ctxFor('trace-failclosed')
+      );
+      expect(result.traceabilityFailedClosed).toBe(true);
+      expect(result.text).not.toContain('$253,815');
+      expect(result.text.length).toBeGreaterThan(0);
+    });
+
+    it('does not run traceability when disabled (backward compat)', async () => {
+      setAnthropicAdapter(
+        scriptedAdapter([textBlock('The answer is $253,815.')])
+      );
+      const result = await runAgent(
+        {
+          name: 'qa',
+          modelTier: 'sonnet',
+          systemPrompt: '',
+          allowedTools: {},
+        },
+        { userInput: 'q' },
+        ctxFor('trace-off')
+      );
+      expect(result.traceabilityReport).toBeUndefined();
+      expect(result.traceabilityFailedClosed).toBeFalsy();
+      expect(result.text).toBe('The answer is $253,815.');
     });
   });
 });

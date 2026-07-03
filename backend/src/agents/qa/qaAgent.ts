@@ -299,6 +299,12 @@ const AGENT_CONFIG: AgentConfig = {
   // Most Q&A turns are 1-2 iterations (zero or one tool call + final text).
   maxTurns: 4,
   maxTokensPerCall: 1024,
+  // Issue #226 Session 4b: cross-reference every deal-specific number
+  // in the final response against tool return values. 'warn' mode logs
+  // violations for telemetry without changing user-facing text — safe
+  // to ship broadly. Once we have a few days of clean signal we'll
+  // flip to 'fail_closed' for the non-streaming path.
+  numericTraceability: { mode: 'warn' },
 };
 
 export interface QaRunInput {

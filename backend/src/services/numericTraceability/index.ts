@@ -156,11 +156,15 @@ const NUMERIC_PATTERNS: Array<{
 ];
 
 /**
- * Hedge phrases that mark a number as Category 2 (market range) or
- * Category 3 (reference fact). These numbers don't need tool
- * provenance because they're not deal-specific claims.
+ * ATTRIBUTION HEDGES — the sentence attributes the number to a source
+ * or frames it as illustrative. Scanned in a WIDE backward window so
+ * phrases like "IRS depreciation is 27.5 years" hedge the "27.5"
+ * even when the marker sits at the start of the sentence.
+ *
+ * These are safe wide because attribution phrases don't normally leak
+ * into unrelated deal-specific numbers.
  */
-const HEDGE_MARKERS = [
+const ATTRIBUTION_HEDGES = [
   // Category 2 — market ranges / illustrative
   'typically',
   'usually',
@@ -183,9 +187,6 @@ const HEDGE_MARKERS = [
   'lender minimum',
   'standard',
   'convention',
-  'the rule',
-  '27.5 year',
-  '27.5-year',
   'recapture',
   'depreciation',
   'fannie',
@@ -193,12 +194,55 @@ const HEDGE_MARKERS = [
   'hud',
 ];
 
-const HEDGE_WINDOW = 120; // chars before the candidate to scan for hedges
+/**
+ * CONCEPT-NAME HEDGES — the number is part of a fixed idiomatic
+ * concept name where the token IMMEDIATELY adjacent (or nearly so)
+ * to the number tells you it's a rule reference, not a deal-specific
+ * claim.
+ *
+ * Scanned in a TIGHT symmetric window (~15 chars). Wider windows let
+ * legitimate deal-specific numbers in the same sentence as a rule
+ * reference get spuriously hedged — e.g., "The 70% rule ceiling is
+ * $253,815" should NOT hedge $253,815 just because "70% rule" appears
+ * earlier in the sentence.
+ */
+const CONCEPT_NAME_HEDGES = [
+  'the rule',
+  '% rule', // "70% rule", "50% rule", "1% rule"
+  '/30 rule',
+  '/70 rule',
+  '27.5 year',
+  '27.5-year',
+];
 
-function detectHedge(text: string, position: number): boolean {
-  const start = Math.max(0, position - HEDGE_WINDOW);
-  const window = text.slice(start, position).toLowerCase();
-  return HEDGE_MARKERS.some((marker) => window.includes(marker));
+const ATTRIBUTION_WINDOW_BEFORE = 120;
+const CONCEPT_WINDOW_AFTER = 8;
+
+function detectHedge(
+  text: string,
+  position: number,
+  matchLength: number
+): boolean {
+  const lower = text.toLowerCase();
+
+  // Attribution hedges: check the backward window only.
+  const attribBefore = Math.max(0, position - ATTRIBUTION_WINDOW_BEFORE);
+  const attribWindow = lower.slice(attribBefore, position);
+  if (ATTRIBUTION_HEDGES.some((m) => attribWindow.includes(m))) return true;
+
+  // Concept-name hedges: FORWARD-ONLY 8-char window. The concept
+  // token must immediately follow the number ("70% rule",
+  // "27.5-year period"). Backward scan would let a rule reference
+  // earlier in the sentence hedge every downstream deal-specific
+  // number in the same sentence.
+  const conceptEnd = Math.min(
+    text.length,
+    position + matchLength + CONCEPT_WINDOW_AFTER
+  );
+  const conceptWindow = lower.slice(position, conceptEnd);
+  if (CONCEPT_NAME_HEDGES.some((m) => conceptWindow.includes(m))) return true;
+
+  return false;
 }
 
 export function extractNumericCandidates(text: string): NumericCandidate[] {
@@ -227,7 +271,7 @@ export function extractNumericCandidates(text: string): NumericCandidate[] {
       const contextStart = Math.max(0, start - 30);
       const contextEnd = Math.min(text.length, end + 30);
       const context = text.slice(contextStart, contextEnd);
-      const isHedged = detectHedge(text, start);
+      const isHedged = detectHedge(text, start, end - start);
 
       found.push({
         raw: raw.trim(),

@@ -47,6 +47,11 @@ import { costEventRepository } from '../../repositories/CostEventRepository';
 import { computeAnthropicCostCents } from '../../utils/anthropicPricing';
 import type { ModelTier, Tool, ToolContext } from '../tools/types';
 import { logger } from '../../utils/logger';
+import {
+  validateNumericTraceability,
+  type ToolReturn,
+  type TraceabilityReport,
+} from '../../services/numericTraceability';
 
 // ===== Agent configuration =====
 
@@ -72,6 +77,28 @@ export interface AgentConfig {
    * and matches the per-turn ceiling agreed in the cost-discipline call).
    */
   maxTokensPerCall?: number;
+  /**
+   * Post-generation numeric-traceability check (Issue #226 Session 4b).
+   *
+   * When enabled, the runner scans the agent's final text for numeric
+   * literals ($X, X%, DSCR X) and cross-references each against the
+   * turn's tool return values. Untraceable numbers become violations.
+   *
+   * Modes:
+   *   - 'warn'        — log the violations, attach report to
+   *                     AgentRunOutput.traceabilityReport, return the
+   *                     LLM's text as-is. Safe to enable everywhere.
+   *   - 'fail_closed' — replace finalText with a graceful fail-closed
+   *                     message when violations are found. Non-streaming
+   *                     only (streaming can't unring the bell).
+   *
+   * The 'retry with correction' mode is deliberately not shipped in v1
+   * — it doubles LLM cost per confabulation and the fail-closed message
+   * is honest signal that the tool set didn't cover the question.
+   */
+  numericTraceability?: {
+    mode: 'warn' | 'fail_closed';
+  };
 }
 
 // ===== Input / output =====
@@ -129,6 +156,20 @@ export interface AgentRunOutput {
   hadMaxTurnsHit: boolean;
   /** Number of API call iterations this run made. */
   iterations: number;
+  /**
+   * Numeric-traceability audit for this run (Issue #226 Session 4b).
+   * Present only when AgentConfig.numericTraceability was set. In
+   * 'warn' mode this is informational; in 'fail_closed' mode a
+   * violations.length > 0 report also caused finalText to be
+   * replaced with a graceful failure message.
+   */
+  traceabilityReport?: TraceabilityReport;
+  /**
+   * True iff traceability ran in 'fail_closed' mode and violations
+   * were found — i.e., the returned `text` is the fail-closed
+   * message, not what the LLM originally emitted.
+   */
+  traceabilityFailedClosed?: boolean;
 }
 
 // ===== Helpers =====
@@ -222,6 +263,13 @@ export async function runAgent(
   const toolCallsExecuted: AgentToolCallTrace[] = [];
   const relatedEventIds: Types.ObjectId[] = [];
   const costEventIds: Types.ObjectId[] = [];
+  /**
+   * Raw tool return objects, in call order. Used ONLY by the
+   * numeric-traceability post-generation validator (Issue #226 Session
+   * 4b). Kept separate from toolCallsExecuted (which stores hashes for
+   * substrate) because traceability needs the actual numeric values.
+   */
+  const traceableToolReturns: ToolReturn[] = [];
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let totalCachedTokens = 0;
@@ -329,6 +377,7 @@ export async function runAgent(
           durationMs,
         });
         relatedEventIds.push(...extractToolEventIds(block.name, result));
+        traceableToolReturns.push({ toolName: block.name, output: result });
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
@@ -380,6 +429,34 @@ export async function runAgent(
     });
   }
 
+  // Numeric traceability post-check (Issue #226 Session 4b).
+  // Scan the final text for numeric literals that DON'T trace to any
+  // tool return. In 'warn' mode we just report; in 'fail_closed' mode
+  // we replace the text with a graceful failure message.
+  let traceabilityReport: TraceabilityReport | undefined;
+  let traceabilityFailedClosed = false;
+  if (config.numericTraceability && finalText) {
+    traceabilityReport = validateNumericTraceability(
+      finalText,
+      traceableToolReturns
+    );
+    if (traceabilityReport.violations.length > 0) {
+      logger.warn('agentRunner: numeric traceability violations', {
+        agent: config.name,
+        traceId: ctx.traceId,
+        mode: config.numericTraceability.mode,
+        violationCount: traceabilityReport.violations.length,
+        violations: traceabilityReport.violations
+          .slice(0, 8)
+          .map((v) => ({ raw: v.candidate.raw, ctx: v.candidate.context })),
+      });
+      if (config.numericTraceability.mode === 'fail_closed') {
+        finalText = FAIL_CLOSED_MESSAGE;
+        traceabilityFailedClosed = true;
+      }
+    }
+  }
+
   return {
     text: finalText,
     toolCallsExecuted,
@@ -394,8 +471,23 @@ export async function runAgent(
     modelUsed,
     hadMaxTurnsHit,
     iterations,
+    traceabilityReport,
+    traceabilityFailedClosed,
   };
 }
+
+/**
+ * User-facing message when the traceability validator refuses the
+ * LLM's answer. Kept generic — the specific untraceable value would
+ * confuse users. The point is honesty about what the tool set can
+ * and can't cover.
+ */
+const FAIL_CLOSED_MESSAGE =
+  "I couldn't produce a reliable answer for that question with the " +
+  "data I have — the specific number would have required a formula " +
+  "my registered tools don't cover yet. Try rephrasing (e.g. 'what " +
+  "would the cash flow be at 5% vacancy?') or ask about a metric " +
+  "that's on the deal's analysis (rent, opex, DSCR, cap rate, IRR).";
 
 // ===== Streaming variant (W6-S3) =====
 
@@ -473,6 +565,7 @@ export async function* runAgentStream(
   const toolCallsExecuted: AgentToolCallTrace[] = [];
   const relatedEventIds: Types.ObjectId[] = [];
   const costEventIds: Types.ObjectId[] = [];
+  const traceableToolReturns: ToolReturn[] = [];
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let totalCachedTokens = 0;
@@ -645,6 +738,7 @@ export async function* runAgentStream(
           durationMs,
         };
         relatedEventIds.push(...extractToolEventIds(block.name, result));
+        traceableToolReturns.push({ toolName: block.name, output: result });
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
@@ -694,6 +788,29 @@ export async function* runAgentStream(
     });
   }
 
+  // Numeric traceability post-check (Issue #226 Session 4b).
+  // Streaming can only run in 'warn' mode — tokens have already been
+  // emitted, so fail_closed would let the browser show text that the
+  // agent then overwrites. Callers wanting fail_closed must use the
+  // non-streaming runAgent() path.
+  let traceabilityReport: TraceabilityReport | undefined;
+  if (config.numericTraceability && finalText) {
+    traceabilityReport = validateNumericTraceability(
+      finalText,
+      traceableToolReturns
+    );
+    if (traceabilityReport.violations.length > 0) {
+      logger.warn('agentRunner.runAgentStream: numeric traceability violations', {
+        agent: config.name,
+        traceId: ctx.traceId,
+        violationCount: traceabilityReport.violations.length,
+        violations: traceabilityReport.violations
+          .slice(0, 8)
+          .map((v) => ({ raw: v.candidate.raw, ctx: v.candidate.context })),
+      });
+    }
+  }
+
   yield {
     type: 'final',
     output: {
@@ -710,6 +827,8 @@ export async function* runAgentStream(
       modelUsed,
       hadMaxTurnsHit,
       iterations,
+      traceabilityReport,
+      traceabilityFailedClosed: false,
     },
   };
 }
