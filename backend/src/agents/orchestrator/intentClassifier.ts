@@ -155,12 +155,49 @@ INTENT LABELS
             "DSCR vs conventional — which makes sense for me?",
             "what's the recipe for picking a market?"
 
+  ALSO qa_general — "solve for X" / calculation questions (Issue #215):
+  User asks the SYSTEM to compute a value that would satisfy a
+  constraint or produce a target metric. No proposed value — user is
+  asking WHAT VALUE would produce a specific outcome. This is an
+  algebra/derivation question, not a stress test.
+    Examples:
+      "at what purchase price would this deal pass the 70% rule?"
+      "what rent do I need to hit a 1.0 DSCR?"
+      "at what refi rate does the deal break even?"
+      "what ARV would make capital recovery 100%?"
+      "what's the max I can pay to still meet cap rate 8%?"
+      "if I want 1.20 DSCR, what does rent need to be?"
+    Signal: the user asks FOR a value, not FROM a value.
+
+  ALSO qa_general — strategy comparison / "how would X look as Y" (Issue #221):
+  User asks to see or reason about a different STRATEGY entirely
+  (BRRRR ↔ buy-and-hold ↔ house-hack). This is scenario-level, not
+  field-level. If it turns into a full re-analysis, the deal-scoring
+  agent will handle it — the classifier just needs to NOT route
+  strategy switches to the perturbation service (which only handles
+  field changes and dead-ends).
+    Examples:
+      "what does this look like as buy-and-hold instead?"
+      "re-analyze this property as a rental with no refi"
+      "compare BRRRR vs plain buy-and-hold on this deal"
+      "how would this deal work if I just held it long-term?"
+      "what if I skipped the refi entirely?"
+    Signal: strategy name (BRRRR, buy-and-hold, rental, hold long-term,
+    refi vs no refi) appears WITHOUT a specific numeric field change.
+
   CRITICAL DISAMBIGUATION — strategy questions vs override requests:
     - Strategy/framework question = qa_general (educational, no specific
       input value to change). The verb may LOOK actionable ("optimize",
       "best", "should I") but there's NO specific parameter+value
       proposed. Example: "what hold period optimizes after-tax IRR?"
       is asking ABOUT hold period, not changing it.
+    - "Solve for X" question = qa_general (asks FOR a value, not
+      FROM a value). Example: "at what price does 70% rule pass?"
+      is asking WHICH price meets the rule, not testing a specific price.
+    - Strategy comparison / mode switch = qa_general (scenario-level,
+      not field-level). Example: "what does this look like as
+      buy-and-hold?" is asking about a different strategy, not
+      perturbing a field.
     - Specific parameter+value change = override_assumption. Example:
       "re-score at a 7-year hold period" names the value (7 years).
 
