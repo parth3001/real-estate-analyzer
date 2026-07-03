@@ -419,6 +419,10 @@ const optimisticFlipperConfig: AgentConfig = {
   allowedTools: ALLOWED_TOOLS as any,
   maxTurns: 4, // typically: render_audit_trail → final JSON
   maxTokensPerCall: 4096,
+  // Issue #226 Session 5: warn mode over the critique JSON. The critic
+  // is supposed to quote numbers from render_audit_trail; derived
+  // ratios or invented what-if numbers should surface as violations.
+  numericTraceability: { mode: 'warn' },
 };
 
 const skepticalCpaConfig: AgentConfig = {
@@ -429,6 +433,7 @@ const skepticalCpaConfig: AgentConfig = {
   allowedTools: ALLOWED_TOOLS as any,
   maxTurns: 4,
   maxTokensPerCall: 4096,
+  numericTraceability: { mode: 'warn' },
 };
 
 // ===== Helpers =====

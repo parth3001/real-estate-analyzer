@@ -61,6 +61,7 @@ import { getPortfolioSummary } from '../tools/get_portfolio_summary';
 import { compareTwoProperties } from '../tools/compare_two_properties';
 import { getTaxEducationContext } from '../tools/get_tax_education_context';
 import { getHistoricalSnapshots } from '../tools/get_historical_snapshots';
+import { computeDealMetric } from '../tools/compute_deal_metric';
 
 // ===== System prompt =====
 
@@ -147,6 +148,37 @@ where the engine errored and the agent "helpfully" produced its own
 math will (correctly) conclude the platform fabricates analysis when
 its tools fail. That conclusion ends the trust relationship. Avoid
 it categorically.
+
+DETERMINISTIC NUMBERS (Issue #226 — 2026-07-03, HIGHEST PRIORITY)
+────────────────────────────────────────────────────────────────
+
+Every dollar, percent, ratio, DSCR, IRR, cap rate, or count you cite
+about the deal must originate as a return field from a tool call in
+this turn — score_deal, compute_analysis, get_decision_breakdown, or
+compute_deal_metric. You do NOT compute them yourself. Not for
+sanity checks. Not for "just to give a ballpark." Not for the
+Follow-Up section.
+
+If the user asks a solve-for or threshold question the initial
+score doesn't already answer ("at what price would this clear the
+70% rule?", "what rent would push DSCR to 1.25?"), call
+compute_deal_metric with the decisionId + a registered formula key.
+Registered formulas (subset):
+  seventy_rule_ceiling, price_for_target_cap_rate,
+  rent_for_target_dscr, price_for_positive_cash_flow,
+  arv_for_full_capital_recovery, break_even_occupancy,
+  capital_recovered_at_ltv, annual_cash_flow
+
+If the tool returns 'unknown_metric' it will hand you the curated
+menu of formulas that apply to THIS deal's strategy. Pick from it, or
+gracefully exit ("I can't compute that reliably yet — here's what I
+can show you.").
+
+Verbatim cite the 'formatted' string a tool returned — do not re-
+format, do not round differently. Category 2 market ranges
+("typically rents $2,400-$2,550 in this market") and Category 3
+reference facts ("IRS depreciation is 27.5 years") are fine as
+long as they're clearly framed as such.
 
 STEP -1 — PROPERTY TYPE (DETECT BEFORE STEP 0)
 ───────────────────────────────────────────────
@@ -1042,6 +1074,12 @@ const ALLOWED_TOOLS = {
   compare_two_properties: compareTwoProperties,
   get_tax_education_context: getTaxEducationContext,
   get_historical_snapshots: getHistoricalSnapshots,
+  // Issue #226 Session 5 (2026-07-03): dealScoring agent needs the
+  // same solve-for / threshold access QA has — during initial analysis
+  // narrative the LLM is tempted to derive "at what price would this
+  // meet the 70% rule?" style numbers on its own. Registered formulas
+  // must be its only route.
+  compute_deal_metric: computeDealMetric,
 } as const;
 
 // ===== Config =====
@@ -1056,6 +1094,11 @@ const AGENT_CONFIG: AgentConfig = {
   // tolerate one retry or one extra exploratory call.
   maxTurns: 8,
   maxTokensPerCall: 2048,
+  // Issue #226 Session 5: warn-mode traceability on the initial
+  // analysis narrative. Numbers here come from score_deal /
+  // compute_analysis returns — if the LLM emits anything untraceable
+  // we log it and (soon) flip to fail_closed.
+  numericTraceability: { mode: 'warn' },
 };
 
 // ===== Public interface =====
