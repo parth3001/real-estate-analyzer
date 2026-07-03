@@ -58,6 +58,7 @@ import { computeAnalysis } from './compute_analysis';
 import { profileExtraction } from './profile_extraction';
 import { exportAuditPdf } from './export_audit_pdf';
 import { resolvePropertyInputs } from './resolve_property_inputs';
+import { computeDealMetric } from './compute_deal_metric';
 
 /**
  * The wave-1 tool registry. Keys are the global tool names (stable
@@ -90,6 +91,7 @@ export const toolRegistry: Record<string, Tool<unknown, unknown>> = {
   profile_extraction: profileExtraction as unknown as Tool<unknown, unknown>,
   export_audit_pdf: exportAuditPdf as unknown as Tool<unknown, unknown>,
   resolve_property_inputs: resolvePropertyInputs as unknown as Tool<unknown, unknown>,
+  compute_deal_metric: computeDealMetric as unknown as Tool<unknown, unknown>,
 };
 
 /**
