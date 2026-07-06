@@ -114,6 +114,79 @@ Test 2 ran 8 Business Expert prompts against the Garland BRRRR deal on the saved
 
 ---
 
+## 🔴 **OPEN — E2E FLOW audit findings (2026-07-06)**
+
+Live E2E test run of the 2.0 chat flow after Session 5's `compute_deal_metric` + `numericTraceability` work landed. Two properties tested:
+- **2200 Elm St, McKinney TX 75070** — buy-hold, $250K purchase, $2,100 rent, 6.5% rate
+- **1837 Walnut Way, Anna TX 75409** — BRRRR, $185K/$45K/$290K, 8% refi
+
+Flows executed: FLOW 1 (buy-hold initial), FLOW 2 (BRRRR initial), FLOW 3 prompts 1-3 (compute_deal_metric routing for 70% rule / rent-for-DSCR / ARV-for-recovery), FLOW 4 (confabulation trap graceful exit), FLOW 6 prompts A-C (stress-test regressions + calculation vs stress classification), FLOW 7 (cross-surface reconciliation on both workspaces). Rate-units regression from Session 5 was caught + fixed live via `dc9104c` before the audit continued. Voice regression on low-scoring deals caught + fixed via `86a75a3`.
+
+### Issue #224: BRRRR workspace shows vacancy in breakdown but uses gross rent in cash-flow line
+**Status**: 🔴 Open
+**Priority**: P1 — trust break, math doesn't reconcile on-screen
+**Reported**: 2026-07-06 during FLOW 7
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts` (post-refi cash-flow calc)
+**Description**: BRRRR workspace's financial details table displays `Gross monthly income $2,400 / Less: Vacancy (5.0%) −$120 / Effective income $2,280 / Operating expenses $901 / Debt service (post-refi) $1,672 / Monthly cash flow (post-refi) -$173`. The math doesn't add up on-screen: $2,280 − $901 − $1,672 = **−$293**, not −$173. The −$173 figure only reconciles if the calc uses **gross rent $2,400** without applying vacancy: $2,400 − $901 − $1,672 = −$173 ✓. So the workspace *displays* vacancy as deducted but the cash-flow line uses gross rent. Verified on-screen inconsistency.
+**Cross-check**: Buy-hold workspace (same test session, 2200 Elm St) applies vacancy consistently — `$1,995 − $1,113 − $1,185 = -$303` ✓ exact. Bug is BRRRR-specific.
+**Business Impact**: Skeptical CPA reading the transcript sees the vacancy line and the cash-flow line contradict each other. Load-bearing trust break on a paid product. Also causes the chat's `annual_cash_flow` formula (which applies vacancy correctly) to disagree with the workspace headline number — three different monthly cash-flow figures for the same deal (`-$97`, `-$173`, `-$284`) surfaced in the same session.
+**Proposed Solution**: Align BRRRR analyzer's post-refi cash-flow calc to buy-hold engine's convention: `effectiveRent × (1 − vacancyRate) − monthlyOpEx − monthlyDebtService`. Buy-hold code path in `SFRAnalyzer.ts` is the reference implementation.
+
+### Issue #225: Workspace auto-selects stress-test scenario without disclosure
+**Status**: 🔴 Open
+**Priority**: P1 — user thinks they're seeing baseline
+**Reported**: 2026-07-06 during FLOW 7
+**Component**: Workspace deal-detail page load logic + `apply_override` scenario persistence
+**Description**: On BRRRR workspace load for 1837 Walnut Way, the default "selected scenario" was the 8.5% refi-rate stress test from a prior chat turn (`Refi rate ↑ latest`), NOT the baseline. Financial details showed refi rate 8.5%, cash flow −$173/mo, DSCR 0.71 — all stress-test values. User had NOT explicitly saved this scenario; it appears to have been auto-persisted when the stress test ran and then set as the default view. Same symptom in chat: `compute_deal_metric` reading the most-recent `decisionEventId` picked up the stressed context, so `annual_cash_flow` returned the stressed answer without labeling it.
+**Business Impact**: User loads their saved deal and sees numbers that don't match what they analyzed. No visual indicator of which scenario is displayed. Silent context switch = trust break. Also propagates to any `compute_deal_metric` call that reads the "current" decision.
+**Proposed Solution**: (a) Don't auto-persist stress-test scenarios — require explicit "Save as scenario" click (related to #40); OR (b) Workspace always defaults to baseline `decisionEventId` on first load with prominent scenario selector for others; OR (c) Both — default baseline + explicit save required for scenarios. Recommend (c) for cleanest UX + trust posture.
+
+### Issue #226: Deterministic-numbers architecture — compute_deal_metric registry + numericTraceability validator
+**Status**: ✅ RESOLVED 2026-07-03 (Sessions 1-5), 🟡 Follow-ups in #227
+**Commits**: `defcebb`, `13625dd`, `ce5b6c1`, `1610484`, `f85c4a8`, `9ee3990`, `dc9104c`, `cadd67e`, `0f1531e`
+**Priority**: P0 — institutional-grade claim depends on this
+**Reported**: 2026-07-02 during Test 2 A1 (LLM confabulated `$253,815` on a deal actually priced at $185,000)
+**Component**: `backend/src/services/dealMetrics/*` (formula registry), `backend/src/services/numericTraceability/*` (post-generation validator), `backend/src/agents/tools/compute_deal_metric.ts` (LLM-facing tool), `backend/src/agents/{qa,dealScoring,adversarialCritic}` (agent wiring)
+**Description**: The 2.0 brand promise is *"institutional-grade deterministic analysis"*. Test 2 A1 surfaced the LLM inventing deal-specific numbers ($253,815 purchase price on a $185K deal) in the response body — pure fabrication. Every dollar/percent/ratio the LLM cites about a deal must originate from a tool call, not from its own reasoning. Prompt discipline alone gives us "usually deterministic"; that's not the institutional claim. Load-bearing architecture work: (a) formula registry pattern (8 formulas, strategy-aware dispatch: `seventy_rule_ceiling`, `price_for_target_cap_rate`, `rent_for_target_dscr`, `price_for_positive_cash_flow`, `arv_for_full_capital_recovery`, `break_even_occupancy`, `capital_recovered_at_ltv`, `annual_cash_flow`); (b) `compute_deal_metric` tool the LLM invokes to derive any solve-for/threshold answer; (c) `numericTraceability` post-generation validator that cross-references every numeric literal in the LLM's final text against tool return values — untraceable numbers become logged violations; (d) prompt-level DETERMINISTIC NUMBERS rule in QA agent + fallback rules on dealScoring/adversarialCritic.
+**Business Impact**: Difference between our platform and BiggerPockets calculators. Without this, the LLM will occasionally confabulate confidently-wrong numbers and users will act on them. Trust hemorrhage on a paid product.
+**Resolution**: Live E2E FLOW 4 (confabulation trap) proved the graceful exit works — LLM correctly refused to invent a "5-year total return at 6.5% cap exit" number and offered menu alternatives. FLOW 3 prompts 1-3 proved the tool routing works for `seventy_rule_ceiling`, `rent_for_target_dscr` (with param menu — see #93 fix), and `arv_for_full_capital_recovery`. Validator caught legitimate confabulations (`$165K`, `$170K` "negotiated price" invention) in warn mode.
+**Follow-ups**: See #227 for Business Expert polish items.
+
+### Issue #227: Business Expert polish bundle from E2E FLOW audit
+**Status**: 🔴 Open — bundle of 6 items
+**Priority**: P2 — quality polish, not trust-breaking individually
+**Reported**: 2026-07-06 during FLOW 1-6
+**Component**: multiple
+**Description**: Six items surfaced during Business Expert-lens audit of chat + workspace outputs:
+1. **FLOW 1**: LLM narrative said `"20% down ($62,500)"` but $62,500 = 25% of $250K. Engine used the default 25% down (per `resolve_property_inputs.DEFAULTS.downPaymentRatio: 0.25`). LLM stated user's intent while engine used default — internal inconsistency between narrative and computation.
+2. **FLOW 2**: Post-refi property tax stays on $185K purchase basis. Texas (where Anna TX sits) reassesses annually at ARV. Understates post-refi tax by ~$160/mo. Related to #58 tax disclosure.
+3. **FLOW 2**: Post-refi DSCR reconciles only with a hidden ~$200/mo CapEx reserve in the denominator. Convention not disclosed in "assumptions used" list. Skeptical CPA has to reverse-engineer.
+4. **FLOW 3**: `arv_for_full_capital_recovery` formula uses `(down + rehab + closing + initial loan) / LTV` — ignores refi closing costs (~$4,350) and seasoning-period amortization (~$1,150). Realistic ARV needed is ~$316K, formula returns $310,367.
+5. **FLOW 6A**: Exit IRR reported unchanged at 4.77% under 8.5% rate stress test — higher hold-period debt service should compress IRR at least slightly. Either engine caches exit IRR or doesn't recompute under stress-test.
+6. **Voice**: Additional phrases to add to LANGUAGE HYGIENE banned list from audit — `"worth negotiating"`, `"real lever"`, `"counterintuitive part"`, `"stronger comps could close the gap"`, `"how you lose deals to smarter capital"`, `"flips monthly cash flow positive"`, `"deal killers"`, `"significant"` — all advisory framing that slipped past the current guardrail.
+**Business Impact**: Each item is a small trust erosion. Cumulative effect is significant for a paid product. Business Expert sign-off on math validity holds, but presentation needs tightening.
+**Proposed Solution**: Batch as a polish sweep. Priority order within the bundle: (2) and (3) are Skeptical CPA-visible disclosures — fix first; (6) is a prompt tweak — fix second; (1), (4), (5) are engine-side calc improvements — batch third.
+
+### Issue #228: Adversarial critic uses "BUY" verdict language — violates public-copy rule
+**Status**: 🔴 Open
+**Priority**: P1 — direct violation of locked-memory rule (liability risk)
+**Reported**: 2026-07-06 during FLOW 7 (BRRRR workspace critique review)
+**Component**: `backend/src/agents/adversarialCritic/adversarialCriticAgent.ts` (OPTIMISTIC_FLIPPER_PERSONA + SKEPTICAL_CPA_PERSONA prompts)
+**Description**: Optimistic Flipper critique on 1837 Walnut Way BRRRR closed with *"at $185K purchase with a defensible $315K ARV, this is a BUY, not a walk-away candidate."* CLAUDE.md's locked-memory rule: no verdict / PASS / BUY in public copy — liability risk. Directive verdicts banned. #82 fixed this on the main agent surfaces but the adversarialCritic persona prompts were not updated. Same critic used softer voice on the buy-hold deal (no direct BUY verdict) but had advisory framing like *"how you lose deals to smarter capital"*, *"pushing rent to market"* — same class of violation.
+**Business Impact**: Legal position committed to via #82 + memory. Publishing "BUY" text on a paid product is a directly-actionable liability. Also breaks brand promise of neutral analytical framing.
+**Proposed Solution**: Extend the LANGUAGE HYGIENE + ANALYTICAL VOICE guardrails that were added to `dealScoringAgent.ts` today (commit `86a75a3`) to both OPTIMISTIC_FLIPPER_PERSONA and SKEPTICAL_CPA_PERSONA. Same banned-phrase list, same worked-example pattern. Test with the same fixture BRRRR + buy-hold deals afterward.
+
+### Issue #229: Buy-hold engine invariant BH-2 fires on DSCR<1.0 auto-override path
+**Status**: 🔴 Open
+**Priority**: P3 — not user-visible (frontend hides verdict per #82) but wrong signal
+**Reported**: 2026-07-06 during FLOW 1 backend log review
+**Component**: `backend/src/services/investment/investmentDecisionEngine.ts` (buy-hold invariant assertions + CRITICAL DEAL KILLER AUTO-PASS override)
+**Description**: During FLOW 1 buy-hold analysis of 2200 Elm St, backend log repeatedly warned: `Buy-hold engine output — invariant violations detected: BH-2: verdict=PASS but dealQuality=70 (should be <65 for PASS/CAUTION)`. Root cause: the `🚨 CRITICAL DEAL KILLER AUTO-PASS TRIGGERED` logic overrides verdict to PASS when DSCR<1.0 (correct per #206 lender-viability floor), but the BH-2 invariant asserts PASS requires `dealQuality < 65` (also correct in the normal scoring path). Both correct individually; conflict on the auto-override path.
+**Business Impact**: Log noise + false invariant signal. Not user-visible because frontend hides verdict entirely per #82. But the assertion is asking the wrong question about the wrong deal state.
+**Proposed Solution**: (a) Update BH-2 invariant to exempt the auto-override case: `assert (verdict === 'PASS' && !autoOverridden) → dealQuality < 65`; OR (b) Drop dealQuality when auto-override fires so it's <65 to reflect the "unfinanceable" status; OR (c) Split the verdict field so auto-override is its own explicit path. Option (a) is minimum-change; (c) is cleanest.
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
