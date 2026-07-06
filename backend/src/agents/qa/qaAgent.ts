@@ -297,7 +297,12 @@ const AGENT_CONFIG: AgentConfig = {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   allowedTools: ALLOWED_TOOLS as any,
   // Most Q&A turns are 1-2 iterations (zero or one tool call + final text).
-  maxTurns: 4,
+  // Bumped from 4 to 8 (2026-07-06) — Session 5 added compute_deal_metric
+  // which follows a registry-lookup pattern: LLM may probe with a
+  // wrong metric key first, get the curated menu back, then retry with
+  // the correct key. Observed: rent-for-DSCR question hit the old cap
+  // after 3 compute_deal_metric calls with no final text emitted.
+  maxTurns: 8,
   maxTokensPerCall: 1024,
   // Issue #226 Session 4b: cross-reference every deal-specific number
   // in the final response against tool return values. 'warn' mode logs
