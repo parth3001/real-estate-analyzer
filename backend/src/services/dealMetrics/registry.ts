@@ -49,11 +49,36 @@ export function listMetricKeys(): string[] {
 /**
  * List all metrics that apply to a given strategy — used to help the
  * LLM see the menu when it's picking a formula.
+ *
+ * IMPORTANT (2026-07-06): each menu entry INCLUDES the parameters
+ * spec so the LLM knows exactly what to pass. Prior to this, the
+ * LLM saw {key, label, description} and had to guess parameter
+ * names — observed: 3 back-to-back rent_for_target_dscr calls all
+ * missing the targetDSCR param, agent hit maxTurns and produced no
+ * final text.
  */
 export function listMetricsForStrategy(
   strategy: 'buy_hold' | 'brrrr' | 'house_hack'
-): Array<{ key: string; label: string; description: string }> {
+): Array<{
+  key: string;
+  label: string;
+  description: string;
+  parameters: Array<{ name: string; unit: string; description: string; required: boolean; defaultValue?: number | string | boolean }>;
+}> {
   return formulas
     .filter((f) => f.supportedStrategies.includes(strategy))
-    .map((f) => ({ key: f.key, label: f.label, description: f.description }));
+    .map((f) => ({
+      key: f.key,
+      label: f.label,
+      description: f.description,
+      parameters: f.parameters
+        ? Object.entries(f.parameters).map(([name, spec]) => ({
+            name,
+            unit: spec.unit,
+            description: spec.description,
+            required: spec.defaultValue === undefined,
+            defaultValue: spec.defaultValue,
+          }))
+        : [],
+    }));
 }

@@ -116,12 +116,27 @@ const UnsupportedStrategyResultSchema = z.object({
 const UnknownMetricResultSchema = z.object({
   kind: z.literal('unknown_metric'),
   metric: z.string(),
-  /** Metrics that DO apply to this deal's strategy (curated menu). */
+  /**
+   * Metrics that DO apply to this deal's strategy (curated menu).
+   * Each entry includes its parameters spec so the LLM can pick the
+   * right formula AND know what to pass in the retry call.
+   */
   availableMetricsForThisDeal: z.array(
     z.object({
       key: z.string(),
       label: z.string(),
       description: z.string(),
+      parameters: z.array(
+        z.object({
+          name: z.string(),
+          unit: z.string(),
+          description: z.string(),
+          required: z.boolean(),
+          defaultValue: z
+            .union([z.number(), z.string(), z.boolean()])
+            .optional(),
+        })
+      ),
     })
   ),
 });
