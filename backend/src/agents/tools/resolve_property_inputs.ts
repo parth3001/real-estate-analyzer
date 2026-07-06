@@ -178,6 +178,80 @@ export function resetPropertyResolverAdapter(): void {
   currentResolverAdapter = defaultPropertyResolverAdapter;
 }
 
+// ===== Unit-convention defense (2026-07-06) =====
+
+/**
+ * Rate fields the engine expects as PERCENTAGES (e.g., 6.5 for 6.5%,
+ * 2 for 2%, 0.5 for 0.5%). The LLM occasionally sends decimals
+ * (0.065, 0.02) after re-reading the prompt more literally under
+ * attention shift from an upstream section. When that happens the
+ * engine treats 0.065 as 0.065% and produces analyses that are ~100×
+ * too optimistic.
+ *
+ * We coerce here rather than reject, because rejecting would fail
+ * the analysis entirely — the user's stated intent ("6.5% rate") is
+ * unambiguous even when the encoding is wrong. Coercion + a loud
+ * warning preserves UX while flagging the drift for repair.
+ *
+ * SAFE THRESHOLDS:
+ *   interestRate            valid 1.0-15.0% → any value < 1.0 is a decimal miscoded
+ *   propertyTaxRate         valid 0.3-5.0%  → any value < 0.3 is a decimal miscoded
+ *                                             (Hawaii is 0.28%, floor a hair above)
+ *   insuranceRate           valid 0.2-2.0%  → any value < 0.2 is likely a decimal
+ *                                             miscoded (0.5% typical)
+ *   propertyManagementRate  valid 5-15%     → any value < 1 is a decimal miscoded
+ *   vacancyRate             valid 2-15%     → any value < 1 is a decimal miscoded
+ *   refinanceInterestRate   valid 1-15%     → any value < 1 is a decimal miscoded
+ *   refinanceLTV            valid 60-100    → any value < 1 is a decimal miscoded
+ *
+ * Anything under the guard threshold gets multiplied by 100 and
+ * logged so we can trace where the drift is coming from.
+ */
+const PERCENTAGE_FIELDS_GUARDS: Record<
+  string,
+  { minValid: number; label: string }
+> = {
+  interestRate: { minValid: 1.0, label: '% (e.g., 6.5 for 6.5%)' },
+  propertyTaxRate: { minValid: 0.3, label: '% (e.g., 2 for 2%)' },
+  insuranceRate: { minValid: 0.2, label: '% (e.g., 0.5 for 0.5%)' },
+  propertyManagementRate: { minValid: 1.0, label: '% (e.g., 8 for 8%)' },
+  vacancyRate: { minValid: 1.0, label: '% (e.g., 5 for 5%)' },
+  refinanceInterestRate: { minValid: 1.0, label: '% (e.g., 7.5 for 7.5%)' },
+  refinanceLTV: { minValid: 1.0, label: '% (e.g., 75 for 75%)' },
+};
+
+/**
+ * Coerce likely-decimal rate values into percentages with a loud
+ * warning. Mutates the input object in place. Returns the number of
+ * coercions applied so callers can decide whether to log at the run
+ * level too.
+ */
+function coerceRatePercentagesAndWarn(
+  overrides: Record<string, unknown>,
+  source: string,
+  traceId: string
+): number {
+  let coercions = 0;
+  for (const [field, guard] of Object.entries(PERCENTAGE_FIELDS_GUARDS)) {
+    const raw = overrides[field];
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) continue;
+    if (raw > 0 && raw < guard.minValid) {
+      const corrected = raw * 100;
+      logger.warn('resolve_property_inputs: coerced likely-decimal rate to percentage', {
+        field,
+        source,
+        traceId,
+        received: raw,
+        corrected,
+        expectedUnit: guard.label,
+      });
+      overrides[field] = corrected;
+      coercions++;
+    }
+  }
+  return coercions;
+}
+
 // ===== Defaults =====
 
 /**
@@ -404,7 +478,12 @@ async function resolveFromPriorDecision(
       'resolve_property_inputs: resolveFromPriorDecision called without priorDecisionId'
     );
   }
-  const overrides = input.userOverrides ?? {};
+  const overrides: Record<string, number> = { ...(input.userOverrides ?? {}) };
+  coerceRatePercentagesAndWarn(
+    overrides as unknown as Record<string, unknown>,
+    'stress-test override',
+    ctx.traceId
+  );
 
   const bundle = await ctx.eventsReads.getAuditTrail(input.priorDecisionId);
   if (!bundle.analysis) {
@@ -565,7 +644,16 @@ export const resolvePropertyInputs: Tool<
     ctx: ToolContext
   ): Promise<ResolvePropertyInputsOutput> {
     const validated = ResolvePropertyInputsInputSchema.parse(input);
-    const overrides = validated.userOverrides ?? {};
+    const overrides: Record<string, number> = {
+      ...(validated.userOverrides ?? {}),
+    };
+    // Unit-convention guard: if the LLM slipped and sent a rate as a
+    // decimal (0.065 instead of 6.5), coerce here + warn loudly.
+    coerceRatePercentagesAndWarn(
+      overrides as unknown as Record<string, unknown>,
+      'initial resolution override',
+      ctx.traceId
+    );
 
     // Phase 1 BRRRR (Issue #200): if strategy is 'brrrr' but no brrrr
     // sub-object was supplied, throw with a clear message the agent can

@@ -630,8 +630,36 @@ EXACT order. Do not skip steps. Do not substitute tools.
         purchasePrice: <from prior>,
         propertyType: "SFR",
         priorDecisionId: "<recentDecisions[0]._id>",
-        userOverrides: { interestRate: 0.07 }   // ← the ONE change
+        userOverrides: { interestRate: 7 }   // ← the ONE change
       })
+
+  *** RATE UNITS — CRITICAL, DO NOT GET WRONG ***
+    All rate fields in resolve_property_inputs.userOverrides AND
+    score_deal.propertyData are PERCENTAGES (integer or float number,
+    NOT decimal). If the user says "6.5% rate", pass 6.5 — NOT 0.065.
+    If the user says "2% property tax", pass 2 — NOT 0.02. If the user
+    says "$1,800/year insurance on a $250K property", compute the rate:
+    1800 / 250000 * 100 = 0.72 — pass 0.72 (not 0.0072).
+
+    Fields that follow the percentage convention:
+      interestRate            (e.g., 6.5 for 6.5%)
+      propertyTaxRate         (e.g., 2 for 2%)
+      insuranceRate           (e.g., 0.5 for 0.5%)
+      propertyManagementRate  (e.g., 8 for 8%)
+      vacancyRate             (e.g., 5 for 5%)
+      refinanceInterestRate   (e.g., 7.5 for 7.5%)
+      refinanceLTV            (e.g., 75 for 75%)
+
+    Fields that are RAW DOLLARS (not rates):
+      purchasePrice, downPayment, monthlyRent, closingCosts,
+      maintenanceCost (ANNUAL dollars, not a rate),
+      rehabBudget, afterRepairValue
+
+    If you send a rate as a decimal (e.g., 0.065), the engine will
+    apply it as if it were 0.065%, producing analyses that are ~100×
+    too optimistic. This has happened before. The engine is correct;
+    your unit conversion is the risk. Double-check before every
+    tool call.
 
     When priorDecisionId is set, confirmBeforeScoring is always empty
     (the user already saw + accepted these inputs last turn). Skip the
