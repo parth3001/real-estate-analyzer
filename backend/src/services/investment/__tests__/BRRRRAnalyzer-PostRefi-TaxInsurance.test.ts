@@ -93,20 +93,28 @@ describe('BRRRRAnalyzer - Post-Refinance Tax & Insurance ARV Calculation', () =>
       // Cash flow should be lower due to higher tax (ARV-based)
       const postRefiCashFlow = analysis.postRefinanceMetrics.monthlyCashFlow;
 
-      // Manual calculation to verify:
+      // Manual calculation to verify (Issue #224 fix, 2026-07-06):
       // Monthly Rent: $1,800
       // New Mortgage Payment: ~$945 (75% LTV on $180K = $135K loan @ 7.5% for 30 years)
       // Property Tax: $270 (ARV-based - CORRECTED)
       // Insurance: $90 (ARV-based - CORRECTED)
       // Maintenance: $100
-      // Management: $180 (10% of $1,800)
-      // Vacancy: $144 (8% of $1,800)
+      // Management: $180 (10% of $1,800, above-the-line per Issue #67)
+      // Vacancy: $144 (8% of $1,800, above-the-line per Fannie Mae methodology)
+      // CapEx: $90 (5% default per Issue #55 fix)
+      // Turnover costs: ~$50 (Issue #51 fix, prepFees + realtor + vacancy allowance)
       // Utilities: $0
-      // Total Expenses: $945 + $270 + $90 + $100 + $180 + $144 = $1,729
-      // Cash Flow: $1,800 - $1,729 = $71/month
+      // Total Expenses: $945 + $270 + $90 + $100 + $180 + $144 + $90 + $50 ≈ $1,869
+      // Cash Flow: $1,800 - $1,869 ≈ −$70/month
+      //
+      // PRE-#224 (buggy): cashFlow used gross rent (excluded vacancy AND
+      // management from the deduction), producing an inflated +$255/mo that
+      // masked the true DSCR<1.0 severity. Post-#224 the cashFlow uses EGI
+      // (rent − vacancy − management) consistent with buy-hold analyzer +
+      // institutional standard.
 
-      expect(postRefiCashFlow).toBeLessThan(200);  // Should be low due to ARV tax increase
-      expect(postRefiCashFlow).toBeGreaterThan(0);  // But still positive
+      expect(postRefiCashFlow).toBeLessThan(50);   // ARV-based tax + institutional cash-flow convention
+      expect(postRefiCashFlow).toBeGreaterThan(-200); // But not wildly negative
     });
 
     test('should show significant tax increase for high-appreciation BRRRR deals', async () => {
@@ -302,12 +310,17 @@ describe('BRRRRAnalyzer - Post-Refinance Tax & Insurance ARV Calculation', () =>
 
       expect(analysis.postRefinanceMetrics.monthlyCashFlow).toBeDefined();
 
-      // Validate that cash flow is realistic (accounting for ARV tax/insurance)
+      // Validate that cash flow is realistic (accounting for ARV tax/insurance
+      // AND institutional cash-flow convention per Issue #224 fix — EGI
+      // deducts vacancy and management above the line).
       const cashFlow = analysis.postRefinanceMetrics.monthlyCashFlow;
 
-      // With correct ARV-based calculations, cash flow should be positive but modest
-      expect(cashFlow).toBeGreaterThan(0);   // Still cash flows (good deal)
-      expect(cashFlow).toBeLessThan(300);     // But not inflated by incorrect tax/insurance
+      // Under the corrected convention, this leveraged BRRRR with modest
+      // rent-to-ARV ratio cash-flows negative post-refi. Pre-#224 the
+      // buggy formula produced a phantom positive because it omitted
+      // vacancy + management from the cash-flow calc.
+      expect(cashFlow).toBeLessThan(100);   // ARV-based expenses + institutional CF convention
+      expect(cashFlow).toBeGreaterThan(-300); // But bounded — the deal isn't wildly broken
     });
 
     test('should validate cash-on-cash return accounts for ARV tax/insurance increase', async () => {

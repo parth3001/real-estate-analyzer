@@ -687,7 +687,17 @@ export class BRRRRAnalyzer {
                                       monthlyHOA + monthlyUtilities +
                                       monthlyTurnoverCosts;
 
-    const monthlyCashFlow = inputs.monthlyRent - newMonthlyPayment - monthlyOperatingExpenses;
+    // Compute EGI once — used for both cash flow and NOI (Issue #224 fix, 2026-07-06).
+    // Prior to this fix, cashFlow used GROSS rent while NOI used EGI, producing
+    // an on-screen inconsistency in the workspace: the display showed
+    // "Less: Vacancy -$120 / Effective income $2,280" but the "Monthly cash flow"
+    // line reported the WITHOUT-vacancy number ($2,400 - opex - debt). Buy-hold
+    // analyzer applies vacancy consistently — this aligns BRRRR to that reference.
+    // Industry Standard: EGI deducts vacancy + management "above the line"
+    // (Fannie Mae / Issue #67), so cash flow computed from EGI captures both.
+    const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy - monthlyManagement;
+
+    const monthlyCashFlow = effectiveGrossIncome - newMonthlyPayment - monthlyOperatingExpenses;
     const annualCashFlow = monthlyCashFlow * 12;
 
     // Cash-on-cash on REMAINING capital (if any)
@@ -696,7 +706,6 @@ export class BRRRRAnalyzer {
       : null; // Infinite return scenario - let frontend display ∞%
 
     // NOI and DSCR (Industry Standard: EGI deducts vacancy + management "above the line")
-    const effectiveGrossIncome = inputs.monthlyRent - monthlyVacancy - monthlyManagement;
     // P1 FIX (2026-01-12): Simplified NOI formula (vacancy no longer in operating expenses)
     const annualNOI = (effectiveGrossIncome - monthlyOperatingExpenses) * 12;
     const annualDebtService = newMonthlyPayment * 12;
