@@ -1776,7 +1776,15 @@ export class InvestmentDecisionEngine {
       const combinedCriticalFailure = monthlyCashFlow < 0 && dscr < 1.25;
 
       // AUTO-PASS: If any critical deal killer exists, override score-based verdict
-      if (criticalDSCRFailure || severeNegativeCashFlow || impossibleBreakEven || combinedCriticalFailure) {
+      // Issue #229 (2026-07-06): track whether the override fired so the
+      // BH-2 invariant assertion below can exempt this path. Without the
+      // marker, a good-fundamentals deal (dealQuality>=65) with DSCR<1.0
+      // triggers auto-override to PASS, then trips BH-2 which asserts
+      // PASS requires <65. Both are correct in their normal path; only
+      // conflict on the auto-override branch.
+      const autoOverrideTriggered =
+        criticalDSCRFailure || severeNegativeCashFlow || impossibleBreakEven || combinedCriticalFailure;
+      if (autoOverrideTriggered) {
         v3Verdict = 'PASS';
         const failures = [];
         if (criticalDSCRFailure) failures.push(`DSCR ${dscr.toFixed(2)} < 1.0 (unlendable)`);
@@ -1937,7 +1945,18 @@ export class InvestmentDecisionEngine {
       if (verdict.verdict === 'BUY' && bhDq < 65) {
         bhViolations.push(`BH-1: verdict=BUY but dealQuality=${bhDq} (must be ≥65 for BUY)`);
       }
-      if ((verdict.verdict === 'PASS' || verdict.verdict === 'CAUTION') && bhDq >= 65) {
+      // BH-2: PASS/CAUTION should mean dealQuality<65 in the NORMAL scoring
+      // path. On the auto-override branch (DSCR<1.0 lender-viability floor,
+      // break-even>100%, severe negative cash flow), verdict=PASS is forced
+      // regardless of composite score to reflect that the deal is
+      // structurally unlendable/unexecutable — a good composite from strong
+      // market + exit factors doesn't mean the refi will close. Exempting
+      // auto-override here per #229 (2026-07-06).
+      if (
+        (verdict.verdict === 'PASS' || verdict.verdict === 'CAUTION') &&
+        bhDq >= 65 &&
+        !autoOverrideTriggered
+      ) {
         bhViolations.push(`BH-2: verdict=${verdict.verdict} but dealQuality=${bhDq} (should be <65 for PASS/CAUTION)`);
       }
       // BH-3: buy-hold primaryInsight for a low-scoring deal shouldn't
