@@ -364,7 +364,19 @@ export class SFRAnalyzer extends BasePropertyAnalyzer<SFRData, SFRMetrics> {
       // ✅ NEW: SFR-specific operating expenses (Jan 2026 - Josh's feature)
       hoa: Math.round((this.data.monthlyHOA || 0) * 100) / 100,
       landlordUtilities: Math.round((this.data.monthlyUtilities || 0) * 100) / 100,
-      sfrCapEx: Math.round((this.data.monthlyCapEx || 0) * 100) / 100
+      // Issue #102 (2026-07-06): if the user didn't explicitly set
+      // monthlyCapEx, apply the same 5%-of-rent default that
+      // SFRCalculationEngine.calculateOperatingExpenses uses when
+      // rolling opex up (Issue #55 convention). Prior behavior was
+      // sfrCapEx=0 in the breakdown while OpEx TOTAL already included
+      // a default 5% CapEx — total was right, drill-down was missing
+      // the CapEx line, which the Skeptical CPA critic flagged as
+      // "no true CapEx sinking fund." Now the breakdown ties to
+      // total on a Class B post-2007 SFR.
+      sfrCapEx:
+        this.data.monthlyCapEx !== undefined && this.data.monthlyCapEx !== null
+          ? Math.round(this.data.monthlyCapEx * 100) / 100
+          : Math.round((grossIncome / 12) * 0.05 * 100) / 100
     };
 
     return breakdown;
