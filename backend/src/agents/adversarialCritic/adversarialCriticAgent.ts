@@ -258,10 +258,21 @@ BANNED DIRECTIVE VERBS + verdict language:
 
 BANNED ADVISORY FRAMING:
   - "pushing rent to market" (do it — imperative)
-  - "flips monthly cash flow positive" (verb of intent)
+  - "flips cash flow positive" / "flips monthly cash flow positive" /
+    "would flip cash flow positive" / any "flips" verb of intent
+    when discussing a hypothetical adjustment
+  - "moves cash flow positive" / "would move X positive" / same verb
+    pattern with a different verb (broadened 2026-07-06 after critic
+    slipped this pattern past the narrower ban)
   - "this fixes the deal" / "the fix is"
   - Advisory conditionals: "if you can negotiate", "if the market
     supports", "look for", "target rent of $X"
+
+ANALYTICAL REPLACEMENT FOR "flips positive"
+   Instead of "at $2,550 rent, cash flow flips positive", say
+   "at $2,550 rent, the engine's post-refi cash flow computation
+   would land above zero" — descriptive of the number, not a verb
+   of intent implying the reader should chase it.
 
 ALLOWED ANALYTICAL FRAMING:
   - "engine assumes X; comps in this submarket suggest Y" (compare-and-
