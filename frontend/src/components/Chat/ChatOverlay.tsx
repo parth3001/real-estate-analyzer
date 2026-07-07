@@ -1222,6 +1222,34 @@ function MessageBubble({
           userMessage?: string;
         };
         if (!payload?.priorDecisionId || !payload?.userMessage) return null;
+
+        // Issue #105 fix (2026-07-07): defensive check — some backend
+        // stress-test error paths (e.g., ARV percentage rejected, see #104)
+        // still emit stress_save_intent even though the stress test itself
+        // failed and there's no meaningful scenario to save. Clicking Save
+        // in that state would persist an error-state as a "scenario",
+        // which is nonsensical and would surface in the workspace's
+        // Compare Scenarios table as an unlabeled row.
+        //
+        // Trace to root-cause the backend emission is post-launch work
+        // (would need to reproduce and instrument the extract → narrate
+        // pipeline). Frontend defensive filter here catches the failure
+        // narratives by their leading phrase: the LLM narrator uses
+        // consistent copy for these failure paths ("The stress test
+        // couldn't run", "couldn't complete", "unable to run").
+        const text = message.text ?? '';
+        const failureMarkers = [
+          "stress test couldn't run",
+          "couldn't complete the stress",
+          'unable to run the stress',
+          'please resubmit with',
+          'resubmit with the dollar',
+        ];
+        const isFailure = failureMarkers.some((m) =>
+          text.toLowerCase().includes(m.toLowerCase())
+        );
+        if (isFailure) return null;
+
         return (
           <Box sx={{ alignSelf: 'flex-start', mt: 0.5 }}>
             <SaveAsScenarioChip
