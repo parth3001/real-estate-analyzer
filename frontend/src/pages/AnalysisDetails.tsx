@@ -299,8 +299,21 @@ const AnalysisDetails: React.FC = () => {
             <SensitivityPanel dealId={id} decisionEventId={selectedId} />
           )}
           {/* Task #8 — per-scenario depth (financials + long-term), replacing
-              the scenario-dependent legacy tabs. Re-points on selection. */}
-          <ScenarioDetails detail={selectedDetail} />
+              the scenario-dependent legacy tabs. Re-points on selection.
+              Issue #95 / #225 follow-up (2026-07-07): pass the current
+              scenario name so the Details header reads "Details · Baseline"
+              or "Details · Monthly rent ↑" — user always knows WHICH
+              scenario the numbers below belong to. */}
+          <ScenarioDetails
+            detail={selectedDetail}
+            scenarioName={(() => {
+              const sel = scenarios.find((r) => r.decisionEventId === selectedId);
+              if (!sel) return undefined;
+              if (sel.isBaseline) return 'Baseline';
+              const parts = sel.deltas.slice(0, 2).map((d) => `${d.label} ${d.direction === 'up' ? '↑' : d.direction === 'down' ? '↓' : '·'}`);
+              return parts.join(' · ') || 'Scenario';
+            })()}
+          />
         </Box>
 
         {/* Task #19 (2026-05-21): the legacy SFR 11-tab deep-dive (AnalysisResults)

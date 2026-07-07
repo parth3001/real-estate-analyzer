@@ -31,6 +31,15 @@ import { WorkspaceSection } from './WorkspaceSection';
 
 export interface ScenarioDetailsProps {
   detail: ScenarioDetailWire | null;
+  /**
+   * Human-readable name of the currently-selected scenario, e.g.
+   * "Baseline" or "Monthly rent ↑". Rendered in the Details section
+   * header so the user can always see WHICH scenario the numbers
+   * below belong to. Optional for backward compat — falls back to
+   * generic "selected scenario" phrasing when omitted.
+   * (Issue #95 / #225 follow-up, 2026-07-07)
+   */
+  scenarioName?: string;
 }
 
 const fmtCurrency = (v: unknown): string =>
@@ -96,7 +105,7 @@ interface Row {
 const isNeg = (v: unknown): boolean =>
   typeof v === 'number' && !Number.isNaN(v) && v < 0;
 
-export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Element | null {
+export function ScenarioDetails({ detail, scenarioName }: ScenarioDetailsProps): React.JSX.Element | null {
   const [openSection, setOpenSection] = useState<string | null>('financials');
 
   if (!detail) return null;
@@ -562,8 +571,12 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
         { label: 'Net proceeds at exit', value: fmtCurrency(num(exit, 'netProceedsFromSale')) },
       ];
 
+  const detailsLabel = scenarioName
+    ? `Details · ${scenarioName}`
+    : 'Details · selected scenario';
+
   return (
-    <WorkspaceSection label="Details · selected scenario">
+    <WorkspaceSection label={detailsLabel}>
       {brrrrRows.length > 0 && (
         <Section
           title="BRRRR plan"
