@@ -4,11 +4,16 @@ import { Helmet } from 'react-helmet-async';
 import { Box, Typography, Alert, CircularProgress, Button } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { propertyApi } from '../services/api';
-import type { ScenarioComparisonRowWire, ScenarioDetailWire } from '../services/api';
+import type {
+  ScenarioComparisonRowWire,
+  ScenarioDetailWire,
+  CritiqueWire,
+} from '../services/api';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
 import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
 import { ScenarioDetails } from '../components/AnalysisDetails/ScenarioDetails';
+import { CritiqueCard } from '../components/AnalysisDetails/CritiqueCard';
 
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +27,41 @@ const AnalysisDetails: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Full analysis for the selected scenario — drives the scenario-aware hero.
   const [selectedDetail, setSelectedDetail] = useState<ScenarioDetailWire | null>(null);
+
+  // Adversarial critique — hoisted from SavedDealHero (2026-07-07) so the
+  // critique panel can render AFTER ScenarioDetails per the "numbers
+  // first, criticism second" reorder. Same fetch shape as the old
+  // location; consumers see identical loading + pending semantics.
+  const [critiques, setCritiques] = useState<CritiqueWire[]>([]);
+  const [critiquePending, setCritiquePending] = useState(false);
+  const [critiqueLoading, setCritiqueLoading] = useState(false);
+  const [critiqueFromPriorDecision, setCritiqueFromPriorDecision] = useState(false);
+  const dealIdForCritique = (deal as { _id?: string } | null)?._id;
+  useEffect(() => {
+    if (!dealIdForCritique) return;
+    let cancelled = false;
+    setCritiqueLoading(true);
+    propertyApi
+      .getDealCritique(dealIdForCritique)
+      .then((res) => {
+        if (cancelled) return;
+        setCritiques(res.data.critiques);
+        setCritiquePending(res.data.pending);
+        setCritiqueFromPriorDecision(res.data.fromPriorDecision === true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCritiques([]);
+          setCritiquePending(false);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCritiqueLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dealIdForCritique]);
 
   useEffect(() => {
     if (!id) {
@@ -314,6 +354,23 @@ const AnalysisDetails: React.FC = () => {
               return parts.join(' · ') || 'Scenario';
             })()}
           />
+
+          {/* Adversarial critique — MOVED (2026-07-07) from inside
+              SavedDealHero to AFTER ScenarioDetails. User feedback:
+              numbers should come before commentary. Institutional
+              convention: metrics first, then the critique that
+              contests them. Sits at the bottom of the workspace as
+              the "second opinion" the user reads AFTER they've
+              absorbed the deal. Component returns null when nothing
+              to show (pre-T1 deal / critique skipped). */}
+          <Box sx={{ mt: 3 }}>
+            <CritiqueCard
+              critiques={critiques}
+              pending={critiquePending}
+              fromPriorDecision={critiqueFromPriorDecision}
+              loading={critiqueLoading}
+            />
+          </Box>
         </Box>
 
         {/* Task #19 (2026-05-21): the legacy SFR 11-tab deep-dive (AnalysisResults)

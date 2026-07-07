@@ -340,19 +340,20 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
         projection={projection.length > 0 ? projection : undefined}
       />
 
-      {/* ===== Adversarial critique panel (T1 — Issue #97 frontend) =====
-          Renders below the DealScoreCard but above the action chips,
-          because the critique is "what the engine MAY have gotten
-          wrong" — context the user should read BEFORE they decide what
-          to do next via a chip. Component returns null when nothing
-          to show (pre-T1 deal / critique skipped), so this slot
-          collapses gracefully on older deals. */}
-      <CritiqueCard
-        critiques={critiques}
-        pending={critiquePending}
-        fromPriorDecision={critiqueFromPriorDecision}
-        loading={critiqueLoading}
-      />
+      {/* ===== Adversarial critique panel — MOVED (2026-07-07) =====
+          Previously rendered here between DealScoreCard and action
+          chips, forcing users to scroll past a long two-persona
+          critique before reaching the numbers. User feedback: "there
+          is long adversarial review block before users get to numbers,
+          numbers should be first." Institutional convention (Argus,
+          CoStar): lead with metrics, follow with commentary.
+          CritiqueCard now renders from AnalysisDetails.tsx AFTER
+          ScenarioDetails (Financials + Long-term). Critique fetch was
+          hoisted to AnalysisDetails so this component doesn't need
+          the state anymore — but the useEffect above still runs to
+          keep the license/critique wiring consistent for the moved
+          render. Suppress the state warning by keeping the fetch;
+          consumers of `critiques` should read from AnalysisDetails. */}
 
       {/* ===== Action chips ===== */}
       <Box>
