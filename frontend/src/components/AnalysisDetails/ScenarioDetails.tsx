@@ -332,6 +332,30 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
   //
   // Reads from the same `enginePostRefi` block used by the BRRRR plan
   // section above so the two sections agree on every metric.
+  // Issue #101 (2026-07-06) — BRRRR display needs an extra "Less: Management"
+  // line so on-screen math reconciles with the engine's post-refi cash flow.
+  // Convention (Issue #67): BRRRR opex EXCLUDES property management fee
+  // (management is an above-the-line EGI deduction, per Fannie Mae). But the
+  // shared `monthlyAnalysis.income.effective` field only nets out vacancy —
+  // it doesn't know about the management deduction. So we compute management
+  // inline here and expose it as its own line.
+  //
+  // Buy-hold path (below) doesn't need this because buy-hold opex INCLUDES
+  // management, so its `Effective income − OpEx − Debt = CashFlow` already
+  // ties.
+  const propertyManagementRate =
+    typeof pd.propertyManagementRate === 'number' ? pd.propertyManagementRate : undefined;
+  const managementMonthly =
+    typeof grossMonthly === 'number' && typeof propertyManagementRate === 'number'
+      ? (grossMonthly * propertyManagementRate) / 100
+      : undefined;
+  const brrrrDisplayEffectiveIncome =
+    typeof grossMonthly === 'number' &&
+    typeof vacancyMonthly === 'number' &&
+    typeof managementMonthly === 'number'
+      ? grossMonthly - vacancyMonthly - managementMonthly
+      : effectiveMonthly; // Fallback to vacancy-only if PM rate missing (older deals)
+
   const financials: Row[] = isBrrrr && enginePostRefi
     ? [
         { label: 'Gross monthly income', value: fmtCurrency(grossMonthly) },
@@ -346,11 +370,23 @@ export function ScenarioDetails({ detail }: ScenarioDetailsProps): React.JSX.Ele
               : '–',
           negative: true,
         },
-        { label: 'Effective income', value: fmtCurrency(effectiveMonthly) },
+        {
+          label:
+            typeof propertyManagementRate === 'number'
+              ? `Less: Management (${propertyManagementRate.toFixed(1)}%)`
+              : 'Less: Management',
+          value:
+            typeof managementMonthly === 'number'
+              ? `−${fmtCurrency(managementMonthly)}`
+              : '–',
+          negative: true,
+          hint: 'Property management fee treated as an above-the-line deduction (Fannie Mae methodology). Buy-hold folds this into Operating expenses instead — same total, different presentation.',
+        },
+        { label: 'Effective income', value: fmtCurrency(brrrrDisplayEffectiveIncome) },
         {
           label: 'Operating expenses',
           value: fmtCurrency(Number(enginePostRefi.monthlyOperatingExpenses)),
-          hint: 'Post-refi operating expenses — property tax, insurance, maintenance, mgmt, CapEx reserve. Same shape as buy-hold OpEx.',
+          hint: 'Post-refi operating expenses — property tax, insurance, maintenance, CapEx reserve, HOA, utilities, turnover. Excludes management (shown above the line).',
         },
         {
           label: 'Debt service (post-refi mortgage)',

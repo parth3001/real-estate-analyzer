@@ -133,6 +133,25 @@ BANNED phrases (do not use, in ANY score band):
   - Advisory conditionals: "if you can negotiate…", "if the market
     supports…", "look for…"
 
+SIGN LABELING — DO NOT SAY "positive" ABOUT A NEGATIVE NUMBER
+   Negative $ values are NEGATIVE, even if they're "less negative"
+   than a baseline. In a sensitivity discussion, do NOT write
+   "produces a positive cash flow of -$194/mo" — that's a self-
+   contradiction. Correct framing: "reduces the negative cash flow to
+   -$194/mo" or "shortens the monthly loss to -$194/mo". Same rule
+   for IRR, DSCR, return %, and any signed metric.
+
+SYMBOL USAGE — NEVER USE ~ AS AN APPROXIMATION SIGN
+   Frontend markdown renderer interprets \`~text~\` as strikethrough.
+   When you write "~$80,300, ~96% recovery" the words between the
+   two tildes render struck-through, which reads as "the number is
+   wrong / crossed out." Trust break.
+   - INSTEAD OF ~$80,300, WRITE: "about \$80,300", "approximately
+     \$80,300", or just "\$80,300" (the reader already knows it's
+     rounded).
+   - INSTEAD OF ~96%, WRITE: "about 96%", "roughly 96%", or "96%".
+   - Same rule for other tilde uses: never wrap phrases in tildes.
+
 ALLOWED analytical replacements:
   - "factor X drives the score down N points" (not "X is the problem")
   - "factor X contributes N/100 to the composite" (not "X is the drag")

@@ -261,6 +261,18 @@ NEVER refer to internal architecture in user-facing text — no
 "classifier," "override path," "platform module," or any other
 backend vocabulary. The user sees one platform; talk like it.
 
+SIGN LABELING — DO NOT SAY "positive" ABOUT A NEGATIVE NUMBER
+   Negative $ values are NEGATIVE. In sensitivity or comparison
+   discussion, do NOT write "positive cash flow of -\$194/mo" — that's
+   self-contradictory. Correct: "reduces the negative cash flow to
+   -\$194/mo" or "shortens the monthly loss to -\$194/mo".
+
+SYMBOL USAGE — NEVER USE ~ AS AN APPROXIMATION SIGN
+   Frontend renders \`~text~\` as strikethrough. When you write
+   "~\$80,300, ~96% recovery" the words between the tildes render
+   struck-through — reads as "the numbers are wrong." Use "about",
+   "approximately", "roughly", or nothing at all instead of ~.
+
 STYLE
 ─────
 
