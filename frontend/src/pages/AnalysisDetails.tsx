@@ -69,9 +69,21 @@ const AnalysisDetails: React.FC = () => {
           const sc = await propertyApi.getScenarioComparison(id!);
           const rows = sc.data?.scenarios ?? [];
           setScenarios(rows);
-          // Default selection = the current/latest scenario (latest-wins).
-          const current = rows.find((r) => r.isCurrent) ?? rows[rows.length - 1];
-          setSelectedId(current?.decisionEventId ?? null);
+          // Issue #95 / #225 fix (2026-07-07) — DEFAULT TO BASELINE, not
+          // to the latest saved scenario. Prior behavior ("latest-wins")
+          // silently switched the user's view to their most recently saved
+          // stress-test scenario, so a returning user opened their saved
+          // deal and saw stressed numbers where they expected baseline —
+          // a trust break on a paid product. Baseline is the deal as
+          // originally analyzed and is the ONLY view that answers
+          // "what is this deal?" User-created scenarios are explored via
+          // explicit clicks in the Compare scenarios table.
+          //
+          // Fallback chain if isBaseline flag is missing on any row
+          // (older deals pre-flag): first row in the list (spine order
+          // is oldest → newest, so first = baseline).
+          const baseline = rows.find((r) => r.isBaseline) ?? rows[0];
+          setSelectedId(baseline?.decisionEventId ?? null);
         } catch (scenarioErr) {
           console.warn('Scenario comparison unavailable:', scenarioErr);
           setScenarios([]);
@@ -198,6 +210,67 @@ const AnalysisDetails: React.FC = () => {
             tabs were removed (Task #19). Polymorphic across SFR Buy-Hold /
             BRRRR / House Hack / Multi-Family per the variant config in
             ../components/AnalysisDetails/savedDealVariants.ts. */}
+        {/* Issue #95 / #225 fix (2026-07-07) — "Viewing scenario" badge.
+            When the user is looking at a non-baseline scenario, we make
+            that state IMPOSSIBLE TO MISS. Users seeing stressed numbers
+            without knowing they're in a scenario is exactly the trust
+            break the "default to baseline" fix protects against; this
+            badge is the second layer of that protection — it also lets
+            the user return to baseline with one click. */}
+        {(() => {
+          const baseline = scenarios.find((r) => r.isBaseline) ?? scenarios[0];
+          const selected = scenarios.find((r) => r.decisionEventId === selectedId);
+          const viewingScenario =
+            selected && baseline && selected.decisionEventId !== baseline.decisionEventId;
+          if (!viewingScenario) return null;
+          const scenarioName = selected!.isBaseline
+            ? 'Baseline'
+            : (selected!.deltas.slice(0, 2).map((d) => `${d.label} ${d.direction === 'up' ? '↑' : d.direction === 'down' ? '↓' : '·'}`).join(' · ') || 'Scenario');
+          return (
+            <Box
+              sx={{
+                mb: 2,
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2,
+                bgcolor: 'rgba(255, 149, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'rgba(255, 149, 0, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+              role="status"
+              aria-live="polite"
+              data-testid="viewing-scenario-badge"
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 600, color: '#B25000' }}>
+                  You&apos;re viewing a scenario, not the baseline
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+                  · {scenarioName}
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                onClick={() => setSelectedId(baseline!.decisionEventId)}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: '#B25000',
+                  fontSize: 13,
+                  '&:hover': { bgcolor: 'rgba(255, 149, 0, 0.14)' },
+                }}
+              >
+                ← Back to Baseline
+              </Button>
+            </Box>
+          );
+        })()}
+
         <SavedDealHero
           deal={deal}
           selectedScenario={

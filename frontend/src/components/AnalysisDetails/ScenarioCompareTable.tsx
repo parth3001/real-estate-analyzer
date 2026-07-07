@@ -159,9 +159,38 @@ export function ScenarioCompareTable({
                     }}
                   >
                     {rowLabel(row)}
-                    {row.isCurrent && (
-                      <Typography component="span" sx={{ fontSize: 11, color: 'primary.main', fontWeight: 600, ml: 1 }}>
-                        latest
+                    {/* Issue #95 / #225 fix (2026-07-07) — the "latest"
+                        badge previously read as prescriptive ("view this
+                        one") in prominent blue. It's descriptive info
+                        (most recently saved), so we show it in secondary
+                        grey. Baseline row also carries an explicit
+                        "Baseline" chip since it's now the default view
+                        and the user should recognize what they're seeing. */}
+                    {row.isBaseline && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontSize: 10,
+                          color: 'text.secondary',
+                          fontWeight: 600,
+                          ml: 1,
+                          px: 0.8,
+                          py: 0.2,
+                          borderRadius: 0.75,
+                          bgcolor: 'grey.100',
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Default
+                      </Typography>
+                    )}
+                    {row.isCurrent && !row.isBaseline && (
+                      <Typography
+                        component="span"
+                        sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 500, ml: 1 }}
+                      >
+                        · most recent
                       </Typography>
                     )}
                   </Typography>
