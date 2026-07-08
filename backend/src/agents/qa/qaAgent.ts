@@ -267,6 +267,21 @@ SIGN LABELING — DO NOT SAY "positive" ABOUT A NEGATIVE NUMBER
    self-contradictory. Correct: "reduces the negative cash flow to
    -\$194/mo" or "shortens the monthly loss to -\$194/mo".
 
+BANNED "flips positive" family — verb-of-intent framing
+   Do NOT write:
+     - "flips cash flow positive" / "flip the cash flow positive"
+     - "moves cash flow positive" / "would move X positive"
+     - "would flip X positive"
+   These are advisory verbs — they push the reader toward a specific
+   action. INSTEAD say: "the engine's cash flow computation would land
+   above zero at that input" — descriptive of the number, no verb of
+   intent.
+
+BANNED diagnostic-tone phrases (from #228 residual patch)
+   Do NOT write "the core issue is", "the core problem is", "kill the
+   deal", "the deal still needs optimization", "needs optimization",
+   advisory conditionals like "you might explore whether…".
+
 SYMBOL USAGE — NEVER USE ~ AS AN APPROXIMATION SIGN
    Frontend renders \`~text~\` as strikethrough. When you write
    "~\$80,300, ~96% recovery" the words between the tildes render
