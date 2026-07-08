@@ -1123,14 +1123,23 @@ const InvestmentDecisionHero: React.FC<InvestmentDecisionHeroProps> = ({
                   
                   <Grid container spacing={2} sx={{ mb: 4 }}>
                     {[
-                      { name: 'Cash Flow', weight: 35, score: Math.round(investmentDecision.professionalAssessment.cashFlowScore || 0), color: appleColors.green[600] },
-                      { name: 'IRR', weight: 25, score: Math.round(investmentDecision.professionalAssessment.irrScore || 0), color: appleColors.blue[600] },
-                      { name: 'Market Strength', weight: 15, score: Math.round(investmentDecision.professionalAssessment.marketStrengthScore || 0), color: appleColors.blue[700] },
-                      { name: 'Debt Structure', weight: 10, score: Math.round(investmentDecision.professionalAssessment.debtStructureScore || 0), color: appleColors.orange[600] },
-                      { name: 'Exit Strategy', weight: 10, score: Math.round(investmentDecision.professionalAssessment.exitStrategyScore || 0), color: appleColors.orange[500] },
-                      { name: 'Cap Rate', weight: 3, score: Math.round(investmentDecision.professionalAssessment.capRateScore || 0), color: appleColors.red[600] },
-                      { name: 'Property Risk', weight: 2, score: Math.round(investmentDecision.professionalAssessment.propertyRiskScore || 0), color: appleColors.gray[600] }
-                    ].map((factor) => (
+                      { name: 'Cash Flow', weight: 35, rawScore: investmentDecision.professionalAssessment.cashFlowScore, color: appleColors.green[600] },
+                      { name: 'IRR', weight: 25, rawScore: investmentDecision.professionalAssessment.irrScore, color: appleColors.blue[600] },
+                      { name: 'Market Strength', weight: 15, rawScore: investmentDecision.professionalAssessment.marketStrengthScore, color: appleColors.blue[700] },
+                      { name: 'Debt Structure', weight: 10, rawScore: investmentDecision.professionalAssessment.debtStructureScore, color: appleColors.orange[600] },
+                      { name: 'Exit Strategy', weight: 10, rawScore: investmentDecision.professionalAssessment.exitStrategyScore, color: appleColors.orange[500] },
+                      { name: 'Cap Rate', weight: 3, rawScore: investmentDecision.professionalAssessment.capRateScore, color: appleColors.red[600] },
+                      { name: 'Property Risk', weight: 2, rawScore: investmentDecision.professionalAssessment.propertyRiskScore, color: appleColors.gray[600] }
+                    ]
+                      // Issues #232 + #233 (2026-07-07): hide factors whose
+                      // score is NaN/null — the engine deliberately emits
+                      // non-finite for factors its framework doesn't score
+                      // for the current strategy (e.g., IRR + Cap Rate on
+                      // BRRRR). Showing 0/100 for an unscored factor reads
+                      // as "your deal has zero IRR" (catastrophic misread).
+                      .filter((f) => Number.isFinite(f.rawScore))
+                      .map((f) => ({ ...f, score: Math.round(f.rawScore) }))
+                      .map((factor) => (
                       <Grid size={{ xs: 12, sm: 6, md: 4 }} key={factor.name}>
                         <Box sx={{ p: 2, backgroundColor: appleColors.gray[50], borderRadius: '8px' }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>

@@ -1076,6 +1076,19 @@ covering:
     qualityLabel (e.g., "Meets professional standards")
   - The two or three highest-signal factor scores from the
     professionalAssessment (cashFlow, IRR, debt structure, etc.)
+  - ⚠️ NEVER cite a factor score whose value is null in the JSON.
+    The engine deliberately omits (as null) any factor its
+    framework does not score for the current strategy. For
+    BRRRR: irrScore and capRateScore are null because the
+    BRRRR framework's primary factors are capital recovery,
+    refi viability, and post-refi cash flow — IRR and cap rate
+    are not the load-bearing metrics for this strategy. Saying
+    "IRR: 0/100" or "Cap Rate: 0/100" for a BRRRR deal is
+    factually wrong AND misleads users about deals that may
+    have strong exit-scenario IRRs (13%+ in the reference
+    Cleveland test). Enumerate only factor scores that are
+    finite numbers. If a null score belongs in the top-3 by
+    weight, skip it and pick the next finite factor.
   - The walk-away price from marketPosition
   - One concrete next-step recommendation from reasoningTrail
 

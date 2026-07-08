@@ -2428,11 +2428,21 @@ export class InvestmentDecisionEngine {
 
       // Factor breakdown
       cashFlowScore: postRefiCashFlowScore,
-      irrScore: 0, // Not applicable for BRRRR (focus is capital recovery, not IRR)
+      // Issues #232 + #233 (2026-07-07): emit NaN for factors the BRRRR
+      // framework intentionally doesn't score, NOT 0. Prior code emitted
+      // literal 0, which downstream displays and LLM narrators surfaced
+      // as "IRR: 0/100" — read to users as "your deal has zero IRR"
+      // (catastrophic misread — this test property has 13% IRR at
+      // Y5-Y10 exit). NaN is filtered by `Number.isFinite()` in the
+      // top-factor picker (dealScoreCardProjection.ts:127) and
+      // serializes to `null` in JSON so LLM prompts can treat it as
+      // "not applicable" instead of "scored zero." Capital recovery
+      // (exitStrategyScore) is the BRRRR primary — see #213 rationale.
+      irrScore: NaN,
       marketStrengthScore,
       debtStructureScore: refinanceViabilityScore,
       exitStrategyScore: brrrAnalysis.scores.capitalRecovery, // Capital recovery is the exit
-      capRateScore: 0, // Not primary metric for BRRRR
+      capRateScore: NaN,
       propertyRiskScore,
 
       // Professional recommendations
