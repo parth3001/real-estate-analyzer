@@ -488,9 +488,16 @@ export class BRRRRAnalyzer {
      */
     const totalCapitalDeployed = totalInvestment - seasoningCosts.seasoningNetCashFlow;
 
-    // Use gross cash-out proceeds (industry standard)
-    // Refinance closing costs are paid from loan proceeds, not additional out-of-pocket capital
-    const capitalRecovered = refinanceResults.cashOutProceeds;
+    // BRRRR-2 fix (2026-07-07): Capital recovered = NET cash out (after refi
+    // closing costs), not gross. Prior justification "closing costs are paid
+    // from loan proceeds, not out-of-pocket" is wrong from the investor's
+    // perspective: whether the closing is netted from proceeds or rolled into
+    // the loan, the investor's cash-in-hand IS reduced by that amount. Every
+    // BRRRR calculator (BiggerPockets, DealCheck) uses net cash out for
+    // capital recovered. Using gross also compounded the #103 non-monotonic
+    // sensitivity because refi closing scales linearly with ARV but capital
+    // deployed doesn't.
+    const capitalRecovered = refinanceResults.netCashOut;
     const capitalRemaining = Math.max(0, totalCapitalDeployed - capitalRecovered);
 
     const capitalRecoveryRate = (capitalRecovered / totalCapitalDeployed) * 100;
@@ -880,8 +887,14 @@ export class BRRRRAnalyzer {
       }
     };
 
-    // Recalculate key metrics
-    const totalInvestment = inputs.purchasePrice + inputs.closingCosts + rehabBudget;
+    // Issue #234 fix (2026-07-07, root cause of #103): use the canonical
+    // calculateTotalInvestment() which returns downPayment + closingCosts +
+    // rehab (leveraged cash-in). Prior code used `purchasePrice + closingCosts
+    // + rehab` — that's the FULL price with no financing, a completely
+    // different number ($60K vs $12K on the reference test). The mismatch
+    // made sensitivity capital-recovery rates disagree with the base-case
+    // rate for the same ARV and produced #103's non-monotonic curve.
+    const totalInvestment = this.calculateTotalInvestment(scenarioInputs);
     const seasoningCosts = this.calculateSeasoningCosts(scenarioInputs);
     const refinanceResults = this.calculateRefinance(scenarioInputs);
     const capitalRecovery = this.calculateCapitalRecovery(

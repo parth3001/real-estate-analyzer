@@ -187,6 +187,88 @@ Flows executed: FLOW 1 (buy-hold initial), FLOW 2 (BRRRR initial), FLOW 3 prompt
 
 ---
 
+## 🔴 **OPEN — BRRRR Business Expert audit (2026-07-07)**
+
+Full Business Expert-lens audit of BRRRR strategy end-to-end, driven by launch positioning ("BRRRR is part of the $4.99 value prop, marketing already claims institutional-grade formulas"). Test property: 4235 W 149th St, Cleveland OH — $60K purchase, $35K rehab, $150K ARV, 6-mo seasoning, refi 75% LTV @ 7.75%. Combined code audit + live chat output validation surfaced 8 findings; 5 are launch-blockers, 3 are polish. Numbers a BRRRR investor would eyeball don't reconcile on-screen.
+
+### Issue #230: BRRRR capital recovery rate uses gross cash-out, contradicts displayed net cash-out
+**Status**: 🔴 Open
+**Priority**: P0 — launch-blocker, math visibly doesn't reconcile
+**Reported**: 2026-07-07 during BRRRR audit (4235 W 149th St)
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts:493` (`calculateCapitalRecovery`)
+**Description**: `capitalRecovered = refinanceResults.cashOutProceeds` (GROSS, before refi closing costs). But the displayed "Net Cash-Out" line uses `netCashOut = cashOutProceeds − refinanceClosingCosts`. Empirical: engine reports Net Cash-Out $61,905 AND Capital Recovery Rate 152% on Total Cash Deployed $47,900. Actual $61,905 / $47,900 = 129%, not 152%. 152% only reconciles if the numerator is $64,718 (gross) and denominator ~$42,582 (deployed − seasoning profit). Original justification "closing costs are paid from loan proceeds, not out-of-pocket" is wrong from the investor's perspective — whether netted from proceeds or rolled into the loan, the investor's cash-in-hand IS reduced by the closing amount. BiggerPockets, DealCheck, and every mainstream BRRRR calculator use NET cash out for capital recovered.
+**Business Impact**: Any BRRRR investor doing back-of-napkin verification will see the recovery rate doesn't match the net cash-out shown in the same table and lose trust. Directly undermines "institutional-grade formulas" marketing claim on the landing page. Also compounds #103 (non-monotonic sensitivity) because refi closing scales linearly with ARV but capital deployed doesn't.
+**Proposed Solution**: Line 493: `const capitalRecovered = refinanceResults.netCashOut;`. Update comment. Verify capitalRecoveryRate, capitalRemaining, and infiniteReturn all follow the corrected numerator. Add regression test.
+
+### Issue #231: BRRRR default closing costs $900 unrealistic — inflates capital recovery
+**Status**: 🔴 Open
+**Priority**: P0 — launch-blocker, silently overstates recovery rate
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: `resolve_property_inputs` DEFAULTS (or wherever BRRRR closing-costs default lives) + wizard/controller mapping
+**Description**: On a $60K purchase, engine defaulted closing costs to $900 (flagged in "Standard Defaults Applied" LLM narrative). Real BRRRR closing on a $60K purchase runs $2,500–$4,000 (2-4% of purchase + lender fees). $900 understates capital deployed by ~$2K → inflates capital recovery rate. Combined with #230, our test's real recovery rate is closer to ~135%, not the reported 152%.
+**Business Impact**: Deals look ~15% better than reality on the capital-recovery-primary BRRRR metric. Users make offers based on inflated numbers.
+**Proposed Solution**: Change closing costs default from a flat number to a percentage of purchase price (2-3% recommended, BiggerPockets standard). Document the default in the "assumptions used" list so the Skeptical CPA can see it. Also expose in the wizard as an editable input rather than a hidden default.
+
+### Issue #232: BRRRR IRR score = 0/100 while displayed IRR = 13%
+**Status**: 🔴 Open
+**Priority**: P0 — launch-blocker, factor scorecard contradicts displayed metric
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: `backend/src/services/investment/investmentDecisionEngine.ts` (IRR scoring for BRRRR) + `savedDealVariants.ts` variant factor
+**Description**: BRRRR narrative reports IRR of 13.0%–13.3% across 3/5/7/10-year holds. Simultaneously the composite scorecard shows `IRR: 0/100`. A 13% IRR should score around 70–80. The scored IRR is measuring something different from the displayed IRR (likely post-refi cash-on-cash annualized without exit, or defaulted to 0 for BRRRR per an intentional-but-misleading policy). Note: #213 previously swapped BRRRR variant's top factor from `irrScore` (intentionally 0) to `exitStrategyScore` because IRR is intentionally not applicable to BRRRR at the primary level — but the composite scorecard still exposes IRR = 0/100 to users.
+**Business Impact**: Users read "13% IRR / IRR score 0" and lose trust instantly. Contradicts the "same institutional metrics" marketing promise (a 13% IRR should not score 0). Either the scoring is broken or the display shouldn't show IRR at all for BRRRR.
+**Proposed Solution**: (a) Score IRR on BRRRR against the exit-scenario IRR at the user's hold period (`strategySpecific.exitScenarios[N].irr`), not on `metrics.irr` (buy-hold baseline) or `postRefiCoC`; OR (b) hide the IRR row from the composite scorecard entirely on BRRRR deals — matching the #213 approach. Recommend (a) — investors want IRR context on BRRRR.
+
+### Issue #233: BRRRR cap rate score = 0/100 while deal has 15% cap rate
+**Status**: 🔴 Open
+**Priority**: P0 — launch-blocker, factor scorecard contradicts underlying math
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: `backend/src/services/investment/investmentDecisionEngine.ts` (cap rate scoring for BRRRR)
+**Description**: Test property: NOI ≈ $9,036/yr per engine's own math. Purchase $60K → cap rate = 15% (exceptional). On ARV $150K → cap rate = 6% (mid-range, still respectable). Engine scores cap rate 0/100. Either the denominator is wrong (some weird debt-inclusive base), the threshold gates are wrong, or the score is defaulted to 0 for BRRRR the same way IRR is (#232). Same pattern as #232: user sees an implied ~15% cap rate and a factor score of 0 — no way to reconcile.
+**Business Impact**: Cap rate is the second-most-cited BRRRR metric after DSCR. Scoring it 0/100 on a real 15% cap rate deal directly contradicts the "same institutional metrics" claim. Undermines composite score credibility.
+**Proposed Solution**: Verify the denominator — should be NOI / (purchase price OR ARV, whichever the engine consistently uses across strategies). Also check if there's a BRRRR-intentional-zero for cap rate; if so, hide the row like #232.
+
+### Issue #234: BRRRR sensitivity uses purchasePrice not downPayment for totalInvestment (root cause of #103)
+**Status**: 🔴 Open
+**Priority**: P0 — launch-blocker, root cause of open #103 non-monotonic sensitivity
+**Reported**: 2026-07-07 during BRRRR code audit
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts:884` (`calculateScenario` helper)
+**Description**: `calculateScenario()` at line 884 computes:
+```
+const totalInvestment = inputs.purchasePrice + inputs.closingCosts + rehabBudget;
+```
+But the canonical `calculateTotalInvestment()` at line 275 uses `downPayment + closingCosts + rehabBudget` (leveraged cash-in). The scenario helper uses `purchasePrice` (full price with no financing) instead. On our reference test: $60K vs $12K — a $48K delta. That makes sensitivity capital-recovery rates disagree with the base-case rate for the same ARV, AND causes the non-monotonic curve documented in #103.
+**Business Impact**: #103 has been open for weeks. Marketing claims "stress-test any variable" — but the stress test currently produces mathematically inconsistent output. Launch-blocker for the "BRRRR-specific metrics under stress" pitch.
+**Proposed Solution**: Line 884: `const totalInvestment = this.calculateTotalInvestment(scenarioInputs);` (call the canonical helper). Verify #103's non-monotonic behavior disappears after fix.
+
+### Issue #235: BRRRR narrative lauds capital recovery without flagging refi-approval risk on sub-1.0 DSCR
+**Status**: 🔴 Open
+**Priority**: P1 — narrative fails to flag the load-bearing risk
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: `backend/src/services/investment/brrrDecisionLogic.ts` (`generateBRRRRStrengths`, `generateBRRRRBottomLine`) + QA agent narrative
+**Description**: On our test property, post-refi DSCR = 0.93 — below the 1.0 floor required by most conventional cash-out refinance programs. Meaning: **the refi likely won't close**. If refi doesn't close, capital recovery = $0 and the entire BRRRR thesis collapses. Yet the LLM narrative calls the deal "structurally sound BRRRR capital-recycling play", "genuinely strong capital recovery structure", "excellent capital recovery structure" without leading with the refi-approval risk. Same class of silver-lining trap as #216 (buy-hold IRR quoted on BRRRR deal) — narrative rewards a metric that only matters if a load-bearing prerequisite holds.
+**Business Impact**: A BRRRR investor reading "100% capital recovery, 152% rate" thinks they have a home run. Actually the recovery is a theoretical projection contingent on refi approval that won't happen at DSCR 0.93. Trust break when they submit the deal to their lender and get rejected. Also violates "honest analysis / frequent low scores on bad deals is the moat" per CLAUDE.md PRODUCT_CONTEXT.md.
+**Proposed Solution**: In `brrrDecisionLogic.ts` bottom-line generator: when `postRefiDSCR < 1.0`, lead with refi-viability risk BEFORE any capital recovery framing — "This deal's capital recovery math only works if the refi closes. At post-refi DSCR 0.93, conventional cash-out programs typically decline — the entire BRRRR structure is contingent on finding a portfolio lender willing to underwrite sub-1.0 DSCR." Add to `generateBRRRRConcerns` with high priority.
+
+### Issue #236: BRRRR walk-away price shows buy-hold ARV-to-NOI, not "min ARV for capital recovery"
+**Status**: 🔴 Open
+**Priority**: P1 — wrong metric shown on the strategy that needs the ARV variant
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: Workspace hero + LLM narrative surfacing walk-away
+**Description**: BRRRR workspace surfaces walk-away price = $186,062 (the buy-hold ARV-to-NOI threshold). LLM caught the mismatch and hedged: *"this is the ARV-to-NOI threshold, not a purchase price signal per se for a BRRRR deal"*. For BRRRR, the meaningful walk-away is "**minimum ARV for full capital recovery**" — the formula already exists at `backend/src/services/dealMetrics/formulas/arv_for_full_capital_recovery.ts` per BRRRR code audit but is not surfaced as the workspace's walk-away.
+**Business Impact**: BRRRR investors underwrite against ARV, not purchase price. Showing a buy-hold walk-away and captioning it "not really applicable" is worse than not showing it. Also inconsistent with the "one product, honest math" positioning.
+**Proposed Solution**: On BRRRR deals, replace walk-away price with "Minimum ARV for full capital recovery" using the existing `arv_for_full_capital_recovery` formula. Update label to reflect the metric. Consider showing both if space allows: min ARV for full recovery + min ARV for lender-viability DSCR ≥1.0.
+
+### Issue #237: BRRRR seasoning cash flow assumes tenant paying from month 0 (ignores rehab period)
+**Status**: 🔴 Open
+**Priority**: P2 — overstates seasoning CF, minor on short rehabs, material on long ones
+**Reported**: 2026-07-07 during BRRRR audit
+**Component**: `backend/src/services/investment/brrrAnalyzer.ts:373` (`calculateSeasoningCosts`)
+**Description**: `grossRentalIncome = inputs.monthlyRent * months` assumes tenant paying rent for the entire seasoning period. Real BRRRR: 1-3 months of rehab with the property empty and NO rent, THEN tenant moves in for the remainder of seasoning. Overstates seasoning cash flow by (rehab months × rent). On our test: $1,600 rent × 2-month rehab = $3,200 overstatement → reported seasoning CF +$5,318 is really +$2,118. Feeds into `totalCapitalDeployed = totalInvestment − seasoningNetCashFlow` at line 489, so also inflates the capital recovery rate denominator.
+**Business Impact**: Small individually ($3K on our test). Compounds with #230 and #231 to make the overall capital recovery picture materially rosier than reality. On slower rehabs (6+ months) becomes the dominant overstatement.
+**Proposed Solution**: Add `rehabDurationMonths` input (default 2 mo for SFR). Compute `grossRentalIncome = inputs.monthlyRent × max(0, months − rehabDurationMonths)`. Document in "assumptions used". Optional: also model rehab-period holding costs (mortgage + tax + insurance still due while empty — currently included since seasoning already counts full holding costs).
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
