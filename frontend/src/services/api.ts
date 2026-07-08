@@ -370,10 +370,26 @@ export const propertyApi = {
    * field-agnostic diff vs the baseline. Backs the scenario list + compare.
    */
   getScenarioComparison: async (
-    dealId: string
-  ): Promise<ApiResponse<{ scenarios: ScenarioComparisonRowWire[] }>> => {
+    dealId: string,
+    /**
+     * Issue #109 (2026-07-07) — optional strategy override. When set,
+     * backend filters the spine to this strategy instead of the deal's
+     * own strategy. Used by the sibling-strategy callout so users can
+     * flip between BRRRR and buy-hold views of the same property.
+     */
+    strategy?: string
+  ): Promise<
+    ApiResponse<{
+      scenarios: ScenarioComparisonRowWire[];
+      currentStrategy?: string | null;
+      siblingStrategies?: string[];
+    }>
+  > => {
     try {
-      const response = await api.get(`/deals/${dealId}/scenario-comparison`);
+      const url = strategy
+        ? `/deals/${dealId}/scenario-comparison?strategy=${encodeURIComponent(strategy)}`
+        : `/deals/${dealId}/scenario-comparison`;
+      const response = await api.get(url);
       return { data: response.data, status: response.status };
     } catch (error) {
       console.error('Error fetching scenario comparison:', error);

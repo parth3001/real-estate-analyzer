@@ -622,7 +622,7 @@ export const getDealScenarioComparison = async (
       canonicalAddressKey
     );
     if (allBundles.length === 0) {
-      res.json({ scenarios: [] });
+      res.json({ scenarios: [], siblingStrategies: [] });
       return;
     }
 
@@ -658,20 +658,47 @@ export const getDealScenarioComparison = async (
       string,
       unknown
     >;
-    const currentStrategy = (latestPd.investmentStrategy as string | undefined);
+    const dealStrategy = (latestPd.investmentStrategy as string | undefined);
+
+    // Normalize strategy comparison — some paths write 'buy-hold' (hyphen),
+    // others 'buy_hold' (underscore). Same for 'house-hack' / 'house_hack'.
+    // Treat these as equivalent throughout this handler.
+    const normalizeStrategy = (s: unknown): string | undefined =>
+      typeof s === 'string' ? s.replace(/-/g, '_') : undefined;
+
+    // Issue #109 (2026-07-07, #108 follow-up) — SIBLING STRATEGY DISCOVERY.
+    // The user can force a different strategy view via ?strategy=... query
+    // param. Used by the workspace's "You've also analyzed this property
+    // as X" callout so users can compare strategies at the same address
+    // (e.g., decide whether BRRRR or buy-hold is right for a listing).
+    // Falls back to the deal's own latest strategy when the query param
+    // is absent or malformed.
+    const strategyQueryParam =
+      typeof req.query.strategy === 'string' ? req.query.strategy : undefined;
+    const currentStrategy = normalizeStrategy(strategyQueryParam) ?? dealStrategy;
+
+    // Collect all distinct strategies present at this address so the
+    // frontend can render "View as X" links for any that aren't the
+    // current view. Preserves the user's ability to compare strategies
+    // that #108 otherwise made invisible.
+    const distinctStrategies = new Set<string>();
+    for (const b of allBundles) {
+      const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
+      const s = normalizeStrategy(pd.investmentStrategy);
+      if (s) distinctStrategies.add(s);
+    }
+    const siblingStrategies = [...distinctStrategies]
+      .filter((s) => s !== normalizeStrategy(currentStrategy))
+      .sort();
+
     const bundles = currentStrategy
       ? allBundles.filter((b) => {
           const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
-          // Normalize strategy comparison — some paths write 'buy-hold'
-          // (hyphen), others 'buy_hold' (underscore). Same for 'house-hack'
-          // / 'house_hack'. Treat these as equivalent.
-          const normalizeStrategy = (s: unknown): string | undefined =>
-            typeof s === 'string' ? s.replace(/-/g, '_') : undefined;
           return normalizeStrategy(pd.investmentStrategy) === normalizeStrategy(currentStrategy);
         })
       : allBundles;
     if (bundles.length === 0) {
-      res.json({ scenarios: [] });
+      res.json({ scenarios: [], siblingStrategies });
       return;
     }
 
@@ -731,7 +758,14 @@ export const getDealScenarioComparison = async (
       };
     });
 
-    res.json({ scenarios });
+    // Issue #109 (2026-07-07) — siblingStrategies + currentStrategy on
+    // response so the workspace can render the "You've also analyzed
+    // this property as X — View →" callout when other strategies exist.
+    res.json({
+      scenarios,
+      currentStrategy: currentStrategy ?? null,
+      siblingStrategies,
+    });
   } catch (error) {
     logger.error(`Error getting scenario comparison for deal ${req.params.id}:`, error);
     res.status(500).json({

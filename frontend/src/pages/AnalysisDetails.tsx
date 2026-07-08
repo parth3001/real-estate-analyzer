@@ -25,6 +25,13 @@ const AnalysisDetails: React.FC = () => {
   // `selectedId` (default = latest/current) drives the rest of the page.
   const [scenarios, setScenarios] = useState<ScenarioComparisonRowWire[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Issue #109 (2026-07-07) — strategy view state. When the workspace loads,
+  // the spine defaults to the deal's own strategy (currentStrategy=null).
+  // When the user clicks a sibling-strategy callout, we swap in that
+  // strategy string and re-fetch the scenario spine filtered to it.
+  const [strategyView, setStrategyView] = useState<string | null>(null);
+  const [siblingStrategies, setSiblingStrategies] = useState<string[]>([]);
+  const [activeStrategy, setActiveStrategy] = useState<string | null>(null);
   // Full analysis for the selected scenario — drives the scenario-aware hero.
   const [selectedDetail, setSelectedDetail] = useState<ScenarioDetailWire | null>(null);
 
@@ -71,7 +78,12 @@ const AnalysisDetails: React.FC = () => {
     }
 
     loadDeal();
-  }, [id]);
+    // Re-run when strategyView flips (user clicked a sibling-strategy
+    // callout) so the spine + selected scenario re-hydrate under the
+    // new strategy filter. eslint-disable is intentional — we want
+    // strategyView as a dep but loadDeal isn't stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, strategyView]);
 
   // Task #8: when the selected scenario changes, lazy-load its full analysis
   // for the scenario-aware hero (and, later, the Details sections). Default
@@ -106,9 +118,11 @@ const AnalysisDetails: React.FC = () => {
         // a single-scenario deal or pre-stamp events just yield a short or
         // empty list, and ScenarioList renders nothing for ≤1 scenario.
         try {
-          const sc = await propertyApi.getScenarioComparison(id!);
+          const sc = await propertyApi.getScenarioComparison(id!, strategyView ?? undefined);
           const rows = sc.data?.scenarios ?? [];
           setScenarios(rows);
+          setSiblingStrategies(sc.data?.siblingStrategies ?? []);
+          setActiveStrategy(sc.data?.currentStrategy ?? null);
           // Issue #95 / #225 fix (2026-07-07) — DEFAULT TO BASELINE, not
           // to the latest saved scenario. Prior behavior ("latest-wins")
           // silently switched the user's view to their most recently saved
@@ -250,6 +264,80 @@ const AnalysisDetails: React.FC = () => {
             tabs were removed (Task #19). Polymorphic across SFR Buy-Hold /
             BRRRR / House Hack / Multi-Family per the variant config in
             ../components/AnalysisDetails/savedDealVariants.ts. */}
+        {/* Issue #109 (2026-07-07, #108 follow-up) — Sibling-strategy callout.
+            When the user has analyzed the same property under a different
+            strategy (e.g., started with BRRRR, then re-analyzed as buy-hold),
+            #108 isolates each into its own spine — clean, but hides the
+            other strategy from view. This callout restores discoverability:
+            shows which other strategies exist at this address and lets the
+            user swap between them with one click. Renders above the score
+            hero because "am I looking at the right strategy?" is a load-
+            bearing question that has to be answered before the numbers
+            below are trustworthy. */}
+        {siblingStrategies.length > 0 && (() => {
+          const prettify = (s: string): string =>
+            ({
+              buy_hold: 'Buy & Hold',
+              brrrr: 'BRRRR',
+              house_hack: 'House Hack',
+            } as const)[s as 'buy_hold' | 'brrrr' | 'house_hack'] ?? s.replace(/_/g, ' ');
+          const currentLabel = activeStrategy ? prettify(activeStrategy) : 'this strategy';
+          return (
+            <Box
+              sx={{
+                mb: 2,
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2,
+                bgcolor: 'rgba(0, 122, 255, 0.06)',
+                border: '1px solid',
+                borderColor: 'rgba(0, 122, 255, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+              data-testid="sibling-strategy-callout"
+            >
+              <Box>
+                <Typography sx={{ fontSize: 14, color: 'text.primary', fontWeight: 600 }}>
+                  Viewing: {currentLabel}
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+                  You&apos;ve also analyzed this property as{' '}
+                  {siblingStrategies.map((s, i) => (
+                    <React.Fragment key={s}>
+                      {i > 0 && (i === siblingStrategies.length - 1 ? ' and ' : ', ')}
+                      <strong>{prettify(s)}</strong>
+                    </React.Fragment>
+                  ))}
+                  .
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {siblingStrategies.map((s) => (
+                  <Button
+                    key={s}
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setStrategyView(s)}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      borderColor: 'rgba(0, 122, 255, 0.5)',
+                      color: 'primary.main',
+                    }}
+                  >
+                    View as {prettify(s)} →
+                  </Button>
+                ))}
+              </Box>
+            </Box>
+          );
+        })()}
+
         {/* Issue #95 / #225 fix (2026-07-07) — "Viewing scenario" badge.
             When the user is looking at a non-baseline scenario, we make
             that state IMPOSSIBLE TO MISS. Users seeing stressed numbers
