@@ -695,71 +695,79 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
     }
   }
 
-  // Auto-submit initialUserInput on first mount (hero-embed entry path)
-  useEffect(() => {
-    if (props.initialUserInput && !initialSentRef.current) {
-      initialSentRef.current = true;
-      void send(props.initialUserInput);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Day 11f (Issue C) — restore prior conversation on mount.
+  // #88 — Restore prior conversation on mount, THEN auto-send initialUserInput.
   //
-  // When the user selects a thread in the sidebar OR returns to /app
-  // after auth, ChatOverlay remounts with a sessionId that already has
-  // turns in substrate. Pre-Day-11f we ignored that history and showed
-  // the empty welcome state — broke the chat-first IA promise.
+  // Pre-#88 the history-load skipped whenever `initialUserInput` was set —
+  // that assumed initialUserInput only came from the LandingPage hero
+  // (fresh session, no prior history). But workspace chips ALSO pass
+  // initialUserInput AND target the source thread (has prior history). The
+  // skip guard wiped the visible thread every time the user tapped a
+  // workspace chip.
   //
-  // Logic:
-  //   - Skip if `initialUserInput` is set — that path auto-sends turn 1,
-  //     no prior history to restore (this is the LandingPage hero entry).
-  //   - Skip if we've already loaded for this sessionId in this
-  //     component lifecycle (initialSentRef doubles as the guard).
-  //   - Otherwise fetch via loadChatHistory, project to ThreadMessage
-  //     shape, replace the empty messages array.
-  //
-  // Fetch is silent-fail by design — failure means empty state, not
-  // an error bubble. The user can still send a new message.
+  // New flow:
+  //   1. On mount, ALWAYS fetch history for the current sessionId (silent
+  //      fail on error).
+  //   2. When it resolves, restore any turns and mark `historyReady`.
+  //   3. `initialUserInput` waits for historyReady before firing — so the
+  //      chip's new turn appends to the restored thread instead of racing
+  //      it and getting clobbered.
+  //   4. Fresh sessions (empty history) still work: history-load returns
+  //      [], historyReady flips true, initialUserInput sends normally.
+  const [historyReady, setHistoryReady] = useState(false);
   const historyLoadedRef = useRef(false);
   useEffect(() => {
-    if (props.initialUserInput) return; // hero-embed entry; skip history
     if (historyLoadedRef.current) return;
     if (!sessionId) return;
     historyLoadedRef.current = true;
     let cancelled = false;
     void (async () => {
-      const history = await loadChatHistory(sessionId);
-      if (cancelled || history.length === 0) return;
-      // Project to ThreadMessage shape. Each history entry becomes
-      // one ThreadMessage. Assistant entries are NOT marked
-      // `streaming: true` — they're already-complete prior turns.
-      const restored: ThreadMessage[] = history.map((h, idx) => {
-        if (h.role === 'user') {
+      let history: Awaited<ReturnType<typeof loadChatHistory>> = [];
+      try {
+        history = await loadChatHistory(sessionId);
+      } catch {
+        history = [];
+      }
+      if (cancelled) return;
+      if (history.length > 0) {
+        const restored: ThreadMessage[] = history.map((h, idx) => {
+          if (h.role === 'user') {
+            return {
+              id: `restored-user-${h.turnNumber}-${idx}`,
+              role: 'user',
+              text: h.text,
+              turnNumber: h.turnNumber,
+            };
+          }
           return {
-            id: `restored-user-${h.turnNumber}-${idx}`,
-            role: 'user',
+            id: `restored-assistant-${h.turnNumber}-${idx}`,
+            role: 'assistant',
             text: h.text,
             turnNumber: h.turnNumber,
+            streaming: false,
+            traceId: h.traceId,
+            conversationEventId: h.conversationEventId,
           };
-        }
-        return {
-          id: `restored-assistant-${h.turnNumber}-${idx}`,
-          role: 'assistant',
-          text: h.text,
-          turnNumber: h.turnNumber,
-          streaming: false,
-          traceId: h.traceId,
-          conversationEventId: h.conversationEventId,
-        };
-      });
-      setMessages(restored);
+        });
+        setMessages(restored);
+      }
+      setHistoryReady(true);
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  // Auto-submit initialUserInput — gated on historyReady so the chip's
+  // new turn appends to the restored thread instead of racing it.
+  useEffect(() => {
+    if (!historyReady) return;
+    if (props.initialUserInput && !initialSentRef.current) {
+      initialSentRef.current = true;
+      void send(props.initialUserInput);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyReady]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
