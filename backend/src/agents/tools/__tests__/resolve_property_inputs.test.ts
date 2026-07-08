@@ -135,7 +135,9 @@ describe('tool:resolve_property_inputs (W5-Phase1)', () => {
       expect(pd.downPayment).toBe(425000 * 0.25); // 25%
       expect(pd.loanTerm).toBe(30);
       expect(pd.propertyManagementRate).toBe(8);
-      expect(pd.closingCosts).toBeCloseTo(425000 * 0.015);
+      // Issue #231 (2026-07-07): default is max(price × 2%, $2,500 floor).
+      // On $425K purchase, 2% dominates → $8,500.
+      expect(pd.closingCosts).toBeCloseTo(Math.max(425000 * 0.02, 2500));
       expect(pd.maintenanceCost).toBeCloseTo(425000 * 0.01);
       expect(pd.insuranceRate).toBe(0.5);
       expect(pd.propertyAddress).toEqual(ADDRESS);

@@ -270,8 +270,20 @@ const DEFAULTS = {
   maintenanceRatio: 0.01,
   /** 8% of rent — typical third-party PM fee. */
   propertyMgmtRatePct: 8,
-  /** 1.5% of purchase price — typical buyer closing costs. */
-  closingCostsRatio: 0.015,
+  /**
+   * Buyer closing costs — 2% of purchase price with a $2,500 floor
+   * (Issue #231, 2026-07-07). Prior default was a flat 1.5% ratio,
+   * which returned $900 on a $60K BRRRR purchase — half the real
+   * market cost. Lender fees, title, inspection, and appraisal are
+   * largely FIXED cost floors, not percentage-scaled, so the true
+   * distribution has both a percentage AND a floor. Real BRRRR
+   * closing on a $60K purchase runs $2,500–$4,000; buy-hold on
+   * a $250K purchase runs $5,000. `max(price * ratio, floor)`
+   * captures both. Bumping ratio from 1.5% → 2% also brings the
+   * higher end of the range in line with BiggerPockets guidance.
+   */
+  closingCostsRatio: 0.02,
+  closingCostsFloor: 2500,
   /** Fallback mortgage rate if FRED is unavailable (current-ish market). */
   fallbackMortgageRate: 7.0,
   /** Fallback tax rate if the tax service is unavailable (matches its own default). */
@@ -829,7 +841,10 @@ export const resolvePropertyInputs: Tool<
 
     const closingCosts =
       overrides.closingCosts ??
-      resolvedPurchasePrice * DEFAULTS.closingCostsRatio;
+      Math.max(
+        resolvedPurchasePrice * DEFAULTS.closingCostsRatio,
+        DEFAULTS.closingCostsFloor,
+      );
     provenance.closingCosts =
       overrides.closingCosts !== undefined ? 'user_provided' : 'assumption_default';
 
