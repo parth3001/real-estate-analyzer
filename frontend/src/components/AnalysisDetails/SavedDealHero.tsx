@@ -357,6 +357,44 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
 
       {/* ===== Action chips ===== */}
       <Box>
+        {/* Issue #86 fix (2026-07-07) — "Start chat about this property"
+            button. Prior workspace only offered pre-filled chips as chat
+            entry points. Users kept hitting cases where they wanted to
+            ask their OWN question (or re-analyze under a different
+            strategy, or paste a specific stress-test dollar amount).
+            Their only workaround was to go to "New chat" in the sidebar,
+            which loses the property context. This button opens chat
+            with the deal context loaded (backend applies license + cost
+            caps to this deal) but does NOT auto-submit anything —
+            input box is empty and focused for the user to type. */}
+        <Button
+          onClick={() => {
+            const resumeSessionId = (deal as { sourceSessionId?: string }).sourceSessionId;
+            navigate('/app', {
+              state: {
+                initialDealId: deal._id,
+                ...(resumeSessionId ? { resumeSessionId } : {}),
+                // No initialUserInput — user types their own question.
+              },
+            });
+          }}
+          variant="contained"
+          disableElevation
+          sx={{
+            mb: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: 14,
+            px: 2.5,
+            py: 1,
+            borderRadius: '999px',
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' },
+          }}
+          data-testid="start-chat-button"
+        >
+          💬 Ask about this property
+        </Button>
         <Typography
           variant="caption"
           sx={{
@@ -369,7 +407,7 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
             mb: 1,
           }}
         >
-          Continue in chat
+          Or start from a suggestion
         </Typography>
         <Stack
           direction="row"
