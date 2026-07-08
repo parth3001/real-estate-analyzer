@@ -87,6 +87,30 @@ export function SensitivityPanel({
             bgcolor: 'background.paper',
           }}
         >
+          {/* #74 — Floor-active hint. When DSCR is below the lender-viability
+              threshold, the engine floors the composite at 50; stress that
+              doesn't lift DSCR above 1.0 stays clamped. Without this hint,
+              users read "everything is 50" as "sensitivity is broken." */}
+          {isFloorActive(report) && (
+            <Box
+              sx={{
+                px: 2,
+                py: 1.25,
+                bgcolor: '#FFF4E5',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography sx={{ fontSize: 12, color: '#8A5300', lineHeight: 1.4 }}>
+                <strong>Scores are at the lender-viability floor (50).</strong> DSCR
+                is under 1.0, so most stress scenarios can&apos;t make the score go
+                lower — the deal is already in unlendable territory. To see
+                meaningful sensitivity, first move the baseline (lower the offer
+                or raise rent) so DSCR clears 1.0.
+              </Typography>
+            </Box>
+          )}
+
           {/* The stacked "realistic downside" — the headline */}
           {report.stackedDownside && (
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -143,6 +167,28 @@ export function SensitivityPanel({
       )}
     </WorkspaceSection>
   );
+}
+
+/**
+ * #74 — Detect when the composite score is clamped at the lender-viability
+ * floor (50) for every point in the report. When true, sensitivity looks
+ * "muted" (every stress = 50) which reads as broken. We only flag the case
+ * where the FLOOR is clearly the cause — base is at 50 AND nothing moves off it.
+ */
+function isFloorActive(report: SensitivityReportWire): boolean {
+  if (!report.supported) return false;
+  const FLOOR = 50;
+  const round = (n?: number): number => (typeof n === 'number' ? Math.round(n) : 0);
+  if (round(report.baseDealQuality) !== FLOOR) return false;
+  if (report.stackedDownside && round(report.stackedDownside.dealQuality) !== FLOOR) {
+    return false;
+  }
+  for (const v of report.variables ?? []) {
+    for (const pt of v.points) {
+      if (round(pt.dealQuality) !== FLOOR) return false;
+    }
+  }
+  return true;
 }
 
 function ScoreNum({ value, big }: { value?: number; big?: boolean }): React.JSX.Element {
