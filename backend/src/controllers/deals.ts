@@ -617,10 +617,59 @@ export const getDealScenarioComparison = async (
       return;
     }
 
-    const bundles = await eventsRepositoryReads.getScenariosForDeal(
+    const allBundles = await eventsRepositoryReads.getScenariosForDeal(
       userId,
       canonicalAddressKey
     );
+    if (allBundles.length === 0) {
+      res.json({ scenarios: [] });
+      return;
+    }
+
+    // Issue #108 fix (2026-07-07) — SPINE PER STRATEGY.
+    //
+    // Prior behavior: the spine was keyed on canonicalAddressKey alone,
+    // so re-analyzing the same property under a DIFFERENT strategy
+    // (BRRRR → buy-hold) grouped all decisions into one spine. The
+    // buy-hold analysis then showed up as a nonsensical multi-field
+    // "scenario" of the BRRRR baseline ("Interest rate ↑ · Insurance
+    // rate ↑ · +5"), and the workspace opened on whichever strategy's
+    // baseline was oldest, regardless of what the user just analyzed.
+    //
+    // Strategy is fundamental to a deal (not a scenario perturbation).
+    // A BRRRR at 1837 Walnut Way and a buy-hold at 1837 Walnut Way
+    // are two different deals with two different baselines. They
+    // should each have their own spine.
+    //
+    // Fix: filter bundles by investmentStrategy of the CURRENT deal
+    // (from the deal's latest AnalysisEvent). Bundles from other
+    // strategies stay in substrate but don't appear in this workspace
+    // view. Same property can now have parallel BRRRR + buy-hold
+    // workspaces without cross-contamination.
+    //
+    // Fallback: if we can't determine the current strategy (older
+    // events without the field), fall through to the old behavior
+    // (all bundles) — no regressions on pre-flag data.
+    const latestDecisionId = dealAny.latestDecisionEventId?.toString();
+    const latestBundle = allBundles.find(
+      (b) => b.decision._id.toString() === latestDecisionId
+    ) ?? allBundles[allBundles.length - 1];
+    const latestPd = (latestBundle?.analysis?.payload?.propertyData ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const currentStrategy = (latestPd.investmentStrategy as string | undefined);
+    const bundles = currentStrategy
+      ? allBundles.filter((b) => {
+          const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
+          // Normalize strategy comparison — some paths write 'buy-hold'
+          // (hyphen), others 'buy_hold' (underscore). Same for 'house-hack'
+          // / 'house_hack'. Treat these as equivalent.
+          const normalizeStrategy = (s: unknown): string | undefined =>
+            typeof s === 'string' ? s.replace(/-/g, '_') : undefined;
+          return normalizeStrategy(pd.investmentStrategy) === normalizeStrategy(currentStrategy);
+        })
+      : allBundles;
     if (bundles.length === 0) {
       res.json({ scenarios: [] });
       return;
