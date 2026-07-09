@@ -459,26 +459,37 @@ describe('capital_recovered_at_ltv', () => {
 // ===== Annual cash flow =====
 
 describe('annual_cash_flow', () => {
+  // Issue #242 (2026-07-08): formula now uses Fannie Mae EGI convention
+  // (rent − vacancy − management above the line), matching SFRAnalyzer +
+  // BRRRRAnalyzer. Prior test expectations were tied to the old broken
+  // convention where management was silently missed — that convention
+  // produced the +$1,942/yr vs decision-record -$1,836/yr discrepancy
+  // that surfaced as #242. Updated expected values reflect the corrected
+  // math and match what the DecisionEvent's monthlyCashFlow would report.
   it('computes Charlotte buy-hold annual cash flow', () => {
-    // effRent = 2300 × 0.95 = 2185
-    // monthlyCF = 2185 − 850 − 1177 = 158
-    // annual = 1896
+    // vacancy = 2300 × 0.05 = 115
+    // management = 2300 × 0.08 = 184
+    // EGI = 2300 − 115 − 184 = 2001
+    // monthlyCF = 2001 − 850 − 1177 = -26
+    // annual = -312
     const result = computeMetric('annual_cash_flow', charlotteBuyHoldDeal());
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
-    expect(result.result).toBeCloseTo(1896, 0);
+    expect(result.result).toBeCloseTo(-312, 0);
     expect(result.unit).toBe('dollars_per_year');
-    expect(result.formatted).toContain('$1,896');
+    expect(result.formatted).toContain('-$312');
   });
 
   it('BRRRR uses POST-REFI cash flow (negative for Garland)', () => {
-    // effRent = 2200 × 0.95 = 2090
-    // monthlyCF = 2090 − 887 − 1662 = -459
-    // annual = -5508
+    // vacancy = 2200 × 0.05 = 110
+    // management = 2200 × 0.08 = 176
+    // EGI = 2200 − 110 − 176 = 1914
+    // monthlyCF = 1914 − 887 − 1662 = -635
+    // annual = -7620
     const result = computeMetric('annual_cash_flow', garlandBrrrrDeal());
     if (result.kind !== 'success') throw new Error('expected success');
-    expect(result.result).toBeCloseTo(-5508, 0);
-    expect(result.formatted).toContain('-$5,508');
+    expect(result.result).toBeCloseTo(-7620, 0);
+    expect(result.formatted).toContain('-$7,620');
   });
 
   it('surfaces strategy in provenance', () => {

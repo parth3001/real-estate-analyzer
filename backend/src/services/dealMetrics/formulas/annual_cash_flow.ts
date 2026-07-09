@@ -3,9 +3,16 @@
  *
  * Answers: "what's this deal's annual cash flow?"
  *
- * Method:
- *   annualCashFlow = 12 × (effectiveRent − monthlyOpEx − monthlyDebtService)
- *   where effectiveRent = rent × (1 − vacancy)
+ * Method (Fannie Mae / GAAP EGI convention — Issue #67, #224, #242):
+ *   effectiveGrossIncome = rent − vacancy − propertyManagement
+ *   annualCashFlow = 12 × (EGI − monthlyOpEx − monthlyDebtService)
+ *
+ * Prior version used `effectiveRent = rent × (1 − vacancy)` and missed
+ * the management deduction. That's the same "above-the-line" split the
+ * analyzer uses — deducting management from revenue, NOT bundling it
+ * into opex. Missing it here caused #242 (annual_cash_flow returned
+ * +$1,942/yr while the DecisionEvent showed −$1,836/yr for the same
+ * BRRRR deal — a sign flip investors reasonably called out).
  *
  * Strategy-aware:
  *   - buy_hold / house_hack: acquisition-loan debt service
@@ -39,7 +46,14 @@ export const annualCashFlow: MetricDef<Record<string, never>> = {
         `annual_cash_flow: vacancy must be [0, 1); got ${deal.vacancyRate}%`
       );
     }
-    const effectiveRent = deal.monthlyRent * (1 - vacancy);
+    // Fannie Mae EGI convention: vacancy AND management above the line.
+    // Matches SFRAnalyzer + BRRRRAnalyzer conventions (Issue #67 / #224).
+    // Management rate is stored as a percent (e.g. 8 = 8%), not a decimal.
+    const managementRate = deal.propertyManagementRate / 100;
+    const monthlyManagement = deal.monthlyRent * managementRate;
+    const monthlyVacancy = deal.monthlyRent * vacancy;
+    const effectiveGrossIncome =
+      deal.monthlyRent - monthlyVacancy - monthlyManagement;
     const monthlyOpEx = deal.computed.monthlyOperatingExpenses;
 
     const monthlyDebtService =
@@ -57,7 +71,8 @@ export const annualCashFlow: MetricDef<Record<string, never>> = {
       );
     }
 
-    const monthlyCashFlow = effectiveRent - monthlyOpEx - monthlyDebtService;
+    const monthlyCashFlow =
+      effectiveGrossIncome - monthlyOpEx - monthlyDebtService;
     return monthlyCashFlow * 12;
   },
 };

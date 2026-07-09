@@ -290,7 +290,23 @@ function buildDealSnapshot(payload: unknown): DealSnapshot {
           }
         : undefined,
     computed: {
-      monthlyOperatingExpenses: num(monthlyExpenses.operating),
+      // Issue #242 fix (2026-07-08, Architect): single source of truth for
+      // "current-state" opex per strategy. BRRRR consumers care about the
+      // POST-refi opex (ARV-based tax + insurance, turnover on, CapEx as
+      // separate line) that lives for 10+ years; using the pre-refi opex
+      // paired with post-refi debt service pairs apples with oranges and
+      // produced #242's sign-flip. The analyzer already writes both values
+      // to substrate at
+      // `strategySpecific.postRefinanceMetrics.monthlyOperatingExpenses` —
+      // read it directly for BRRRR, keep the pre-refi value for buy-hold /
+      // house_hack whose debt service doesn't shift over the hold period.
+      monthlyOperatingExpenses:
+        strategy === 'brrrr'
+          ? num(
+              postRefinanceMetrics.monthlyOperatingExpenses ??
+                monthlyExpenses.operating
+            )
+          : num(monthlyExpenses.operating),
       monthlyDebtService: num(monthlyExpenses.debt),
       annualNOI: num(metrics.noi ?? metrics.annualNOI),
       walkAwayPrice: num(
