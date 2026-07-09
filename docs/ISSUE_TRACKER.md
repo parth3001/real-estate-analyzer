@@ -328,6 +328,20 @@ The line-item breakdown in Run 3 shows Maintenance = **$320/mo** (would be $80 a
 **Proposed Regression Test**: user analyzes a property → save chip visible → user refreshes → save chip still visible → click save → workspace opens without the anon modal (compound test with #240).
 **Related**: #88 (chat history restore for auto-send), #240 (Save-deal anon modal), #218 (chat wipe on refresh via auth cascade). Together they form the "chat persistence on paid product" theme that needs a dedicated hardening pass before launch.
 
+### Issue #242: BRRRR annual_cash_flow formula returns wrong sign vs. decision-record cash flow
+**Status**: 🔴 Open — likely #94 regression on BRRRR (buy-hold fix didn't extend)
+**Priority**: P0 — direct contradiction between two engine outputs on same deal, LLM surfaces it verbatim
+**Reported**: 2026-07-08 during #86 verification via "Ask about this property" button (Cleveland 4235 W 149th St BRRRR)
+**Component**: `backend/src/services/dealMetrics/formulas/annual_cash_flow.ts` (or wherever BRRRR branch of the formula lives) + investmentDecisionEngine BRRRR path
+**Description**: LLM's own words in a live Q&A response: *"The annual figure from the tool is $1,942/yr — but that's inconsistent with the -$153/mo in the decision record, which means the engine's primary scoring used the more conservative figure. Always trust the scored decision's surfaced number: -$153/month post-refi."* Same deal, same metric, two contradictory values from two engine code paths:
+- Decision record (materialized DecisionEvent from investmentDecisionEngine → BRRRRAnalyzer.calculatePostRefinanceMetrics): monthlyCashFlow **-$153/mo** = **-$1,836/yr**
+- `annual_cash_flow` formula tool (compute_deal_metric registry): **+$1,942/yr**
+That's a ~$3,780/yr swing AND a **sign flip** — one path shows the deal bleeding, the other shows it profitable. Almost exactly the class fixed in #94 (2026-07-06 "Vacancy-in-cash-flow convention mismatch — engine metric vs annual_cash_flow formula"). Either #94's fix was buy-hold-only and never reached the BRRRR post-refi branch, or #94 regressed.
+**Business Impact**: LLM's coping strategy — *"always trust the scored decision's surfaced number"* — is a bandage. Any user who invokes compute_deal_metric directly (via "What's the annual cash flow?" chip) gets the WRONG number. The deterministic-numbers architecture (#226) depends on formula tools being the source of truth; if two source-of-truth paths disagree, the whole trust argument collapses. Also a direct violation of the on-screen reconciliation policy that drove #224 / #101.
+**Suspected root cause**: `annual_cash_flow` formula for BRRRR likely uses the PRE-refi P&I ($335/mo → +CF) instead of the POST-refi P&I ($806/mo → -CF), or uses pre-refi mortgage against post-refi vacancy convention — same category of unit mixup that #94 fixed for buy-hold.
+**Proposed Solution**: (a) Add a BRRRR case to the `annual_cash_flow` formula that reads `strategySpecific.postRefinanceMetrics.monthlyCashFlow` (or its annualized equivalent) — one source of truth for the annualized figure, matching what the DecisionEvent already stores. (b) Regression test: compute_deal_metric annual_cash_flow on a BRRRR deal must equal decision.strategySpecific.postRefinanceMetrics.monthlyCashFlow × 12 to within $1. (c) Extend numericTraceability validator to flag ANY case where two formula outputs disagree on the same metric for the same deal.
+**Related**: #94 (buy-hold vacancy convention — this is the BRRRR variant), #238 (opex vs CF math contradiction), #239 (DSCR drift across runs). Together #238-#239-#242 are the BRRRR post-refi opex/CF consistency cluster.
+
 ---
 
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
