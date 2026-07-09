@@ -43,10 +43,12 @@ import {
   streamChatTurn,
   loadChatHistory,
   saveStressScenario,
+  claimChatSession,
   type ChatStreamEvent,
 } from '../../services/chatApi';
 import { writePendingChatClaim } from '../../services/pendingChatClaim';
 import { useAuthModal } from '../../contexts/AuthModalContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { AiDisclaimer } from '../AiDisclaimer';
 import {
   upsertThread,
@@ -389,6 +391,11 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   // /login. Same backend + magic-link flow; modal preserves the chat
   // surface so high-intent CTAs (Save this deal) don't lose context.
   const { open: openAuthModal } = useAuthModal();
+  // Issue #240 — Save handler branches on authenticated identity.
+  // Before, the CTA ALWAYS opened the anon magic-link modal, so already
+  // logged-in users saw a "Send sign-in link" wall on Save. Reading
+  // useAuth().user lets us take the direct claim + navigate path.
+  const { user: authUser } = useAuth();
 
   // Session identity — persisted in sessionStorage so refresh keeps the
   // same ghost-user identity + rate-limit quota on the backend.
@@ -525,6 +532,30 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
           break;
         }
       }
+    }
+    // Issue #240 (2026-07-08) — authenticated users must NOT see the
+    // anon magic-link modal. When useAuth().user is set, run the same
+    // claim server-side (idempotent — no-op if already claimed) and
+    // navigate straight to Saved Properties so the user sees the deal
+    // they just saved. Only fall through to the anon modal for genuinely
+    // anonymous callers (user === null). Prior code always opened the
+    // modal regardless of auth state — that's the class of bug where a
+    // fresh-login user with a pre-existing anonymous sessionStorage
+    // sessionId got treated as anonymous forever.
+    if (authUser) {
+      // Fire-and-forget claim: merges any ghost session events onto
+      // the real user. Idempotent by design (backend returns
+      // { merged: false } if there's nothing to merge). Non-blocking
+      // so navigation stays snappy; we log on failure but proceed —
+      // events are queryable under the ghost until a future claim.
+      claimChatSession(sessionId).catch((err) => {
+        console.warn('[ChatOverlay] authenticated claim failed', err);
+      });
+      // Navigate to Saved Properties. The user's just-materialized deal
+      // shows up at the top. Post-launch we can add a direct-to-workspace
+      // path once we plumb the dealId onto the deal_score_card payload.
+      navigate('/saved-properties');
+      return;
     }
     writePendingChatClaim({
       sessionId,
