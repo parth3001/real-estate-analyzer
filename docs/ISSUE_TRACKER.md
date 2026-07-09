@@ -269,6 +269,41 @@ But the canonical `calculateTotalInvestment()` at line 275 uses `downPayment + c
 
 ---
 
+## 🔴 **OPEN — BRRRR fix-verification findings (2026-07-08)**
+
+Business Expert verification run of the #230–#234 fixes on the same Cleveland test property (4235 W 149th St, $60K / $35K / $150K ARV). Three of five P0 fixes verified working; two new bugs surfaced during the fresh-run pass that were masked by the earlier bugs.
+
+### Issue #238: BRRRR post-refi opex line contradicts cash-flow math in chat + workspace
+**Status**: 🔴 Open
+**Priority**: P0 — visible math contradiction on paid product
+**Reported**: 2026-07-08 during #231 verification run
+**Component**: LLM narrative in dealScoring agent + possibly the workspace ScenarioDetails post-refi section (`brrrAnalyzer.ts` post-refi opex vs. the values the LLM surfaces)
+**Description**: Fresh BRRRR run on the reference Cleveland test surfaced a self-contradicting table. Chat narrative reported:
+```
+Effective Rent          $1,520.00
+Total Operating Expenses  -$712.17
+New Mortgage P&I (post-refi) -$805.96
+Net Cash Flow (post-refi)   -$393.13/mo
+```
+But $1,520 − $712 − $806 = **+$2**, not −$393. Back-solving the −$393 CF: opex must be ~$1,107, not the $712 shown. So either the opex line item value is wrong, the CF value is wrong, or the LLM is showing the PRE-refi opex table but labeling it post-refi. Same table also appears in the workspace post-refi display per the field-name mapping fixed in #212. Same class as #224 (workspace shows vacancy in breakdown but uses gross rent in CF line) — display and computation disagree.
+**Business Impact**: Skeptical CPA reading the workspace or chat transcript sees the numbers don't add up. Direct trust break — the exact math-doesn't-reconcile pattern the 2.0 rewrite was supposed to eliminate. Also creates confusion around whether the surfaced −$393 CF and 0.51 DSCR are load-bearing or a display artifact.
+**Proposed Solution**: (a) Verify whether the LLM is quoting the pre-refi opex block while narrating the post-refi CF. If so, fix the dealScoring prompt to explicitly surface `postRefinanceMetrics.monthlyOperatingExpenses` (which is ARV-based tax/insurance + full opex — should be ~$1,100/mo on this test) rather than reusing the pre-refi breakdown. (b) Add a numericTraceability rule that flags CF-vs-opex-vs-P&I sum mismatches in the LLM's rendered table. (c) On the workspace, ensure the post-refi Financials block reads `strategySpecific.postRefinanceMetrics.monthlyOperatingExpenses`, NOT the pre-refi analyzer opex.
+
+### Issue #239: BRRRR post-refi DSCR + cash flow drift across runs on identical inputs
+**Status**: 🔴 Open
+**Priority**: P0 — non-determinism on an "institutional-grade" claim
+**Reported**: 2026-07-08 during #230-#234 verification
+**Component**: Suspected: opex resolution path (`resolve_property_inputs.ts` maintenance/CapEx interpretation) OR post-refi metrics assembly in `brrrAnalyzer.ts:518-753`
+**Description**: Three consecutive runs of the SAME chat prompt (`Analyze 4235 W 149th St … maintenance 5%, capex 5%`) on the same account produced three materially different post-refi DSCR values:
+- Run 1 (post-#230 landed, but analysis pulled from cache): DSCR **0.93**, CF **−$53/mo**
+- Run 2 (partially cached): DSCR **0.81**, CF **−$153/mo**
+- Run 3 (forced fresh, "no cached data"): DSCR **0.51**, CF **−$393/mo**
+The line-item breakdown in Run 3 shows Maintenance = **$320/mo** (would be $80 at 5% of rent). Back-computed: $320 = 20% of $1,600 rent = 5% maintenance + 5% CapEx + 5% ??? + 5% ??? bundled — or the analyzer interpreted "5%" as % of ARV rather than % of rent, or as annualized differently. CapEx line shows **$0.00** despite user specifying 5%, matching the same "silent bundling" pattern flagged in #58/#102.
+**Business Impact**: Non-deterministic BRRRR analysis on identical inputs is the deepest possible trust break — every claim about "institutional-grade math" collapses if the same inputs produce different DSCRs. Also breaks reproducibility of any customer-support conversation ("what did the app show me last week?"). Compounds with #238 because the drifting opex is what makes the CF numbers not reconcile.
+**Proposed Solution**: (a) Locate every place `maintenanceCost` and `capExReserveRate`/`capExReserveFixed`/`monthlyCapEx` can be resolved from user input; document the intended unit (annual $ / monthly $ / % of rent / % of ARV) at each hop. (b) Add a canonical `resolveOpexInputs()` function that converts free-form percentages ("5%") to consistent annual $ values with an explicit basis (rent OR ARV OR purchase — one basis, not per-invocation choice). (c) Ensure CapEx is a separate line item on both pre- and post-refi breakdowns — never silently bundled into maintenance (#58/#102 policy extended to chat narrative). (d) Add a regression test: same inputs run 3 times → identical DSCR to 2 decimal places.
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
