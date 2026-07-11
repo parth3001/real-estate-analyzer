@@ -1097,7 +1097,8 @@ The pipeline enforces four persona gates in sequence, with optional supplementar
 
 ### Base pipeline (always runs)
 
-1. **Architect** designs the fix (no code) — reads issue + referenced files + architect persona checklist + system principles, produces a design doc with concrete files/changes/invariants/non-goals.
+0. **Pre-flight** current-state audit — read-only Explore agent maps what already exists in the codebase around the issue: existing normalizers/projectors/patterns to reuse, related tests establishing conventions, recent commits touching referenced files, related open issues that must coordinate, load-bearing gotchas. Runs ONCE per invocation (state doesn't change during design iterations). Prevents Architect from designing against stale docs.
+1. **Architect** designs the fix (no code) — reads issue + pre-flight report + referenced files + architect persona checklist + system principles, produces a design doc with concrete files/changes/invariants/non-goals.
 2. **Engineer** implements EXACTLY per design — no scope creep, runs tsc + jest, commits.
 3. **QE Engineer** adversarially validates — biases toward FAIL. Any violation of a persona rule or architectural principle without an explicit non-goal = automatic fail.
 4. **Business Expert** hard VETO — technically correct but business-wrong = reject. Owns trust guardrails (P5-P8).

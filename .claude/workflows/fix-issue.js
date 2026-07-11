@@ -45,10 +45,9 @@
 
 export const meta = {
   name: 'fix-issue',
-  description:
-    '4-persona pipeline for issue fixes: Architect → Engineer → QE → Business Expert. ' +
-    'BE has veto. Up to 3 iterations then escalates to user.',
+  description: '5-phase pipeline: Pre-flight audit → Architect → Engineer → QE → Business Expert. Pre-flight maps current-state so Architect designs against reality, not stale docs. BE has veto. Up to 3 iterations then escalates.',
   phases: [
+    { title: 'Pre-flight · current-state audit' },
     { title: 'Architect · design' },
     { title: 'Engineer · implement' },
     { title: 'QE · validate' },
@@ -57,6 +56,99 @@ export const meta = {
 }
 
 // ==================== SCHEMAS (structured tool outputs) ====================
+
+const PREFLIGHT_SCHEMA = {
+  type: 'object',
+  required: [
+    'summary',
+    'existingPatterns',
+    'relatedTests',
+    'recentActivity',
+    'relatedIssues',
+    'gotchas',
+  ],
+  properties: {
+    summary: {
+      type: 'string',
+      description: '3-5 sentence description of the current state around the issue',
+    },
+    existingPatterns: {
+      type: 'array',
+      description:
+        'Similar patterns, normalizers, helpers, or projectors already in the code that Architect should reuse rather than reimplement',
+      items: {
+        type: 'object',
+        required: ['path', 'description', 'reuseAdvice'],
+        properties: {
+          path: { type: 'string' },
+          description: { type: 'string' },
+          reuseAdvice: {
+            type: 'string',
+            description: 'How Architect should relate the new design to this existing pattern (reuse / extend / replace / ignore)',
+          },
+        },
+      },
+    },
+    relatedTests: {
+      type: 'array',
+      description:
+        'Existing tests that establish conventions (fixtures, mocks, structure) Engineer should match',
+      items: {
+        type: 'object',
+        required: ['path', 'convention'],
+        properties: {
+          path: { type: 'string' },
+          convention: {
+            type: 'string',
+            description: 'What pattern/convention this test demonstrates',
+          },
+        },
+      },
+    },
+    recentActivity: {
+      type: 'array',
+      description:
+        'Commits in the last 30 days touching the files referenced by the issue',
+      items: {
+        type: 'object',
+        required: ['sha', 'message', 'filesTouched'],
+        properties: {
+          sha: { type: 'string' },
+          message: { type: 'string' },
+          filesTouched: { type: 'array', items: { type: 'string' } },
+          relevance: {
+            type: 'string',
+            description: 'How this commit relates to the current issue',
+          },
+        },
+      },
+    },
+    relatedIssues: {
+      type: 'array',
+      description:
+        'Other filed issues in ISSUE_TRACKER.md that touch overlapping code',
+      items: {
+        type: 'object',
+        required: ['number', 'title', 'howItRelates'],
+        properties: {
+          number: { type: 'string', description: 'e.g. "#250"' },
+          title: { type: 'string' },
+          howItRelates: {
+            type: 'string',
+            description:
+              'Overlap in files / concepts / design decisions that should be coordinated',
+          },
+        },
+      },
+    },
+    gotchas: {
+      type: 'array',
+      description:
+        'Things Architect must NOT miss: load-bearing conventions, existing invariants, tests that could break, migration hazards',
+      items: { type: 'string' },
+    },
+  },
+}
 
 const DESIGN_SCHEMA = {
   type: 'object',
@@ -217,7 +309,45 @@ const BE_SCHEMA = {
 
 // ==================== PROMPTS ====================
 
-function architectPrompt(issueNumber, iteration, feedback) {
+function preflightPrompt(issueNumber) {
+  return `You are a read-only research agent. Your job is to map the CURRENT-STATE of the reanalyzr-2.0 codebase around issue ${issueNumber} so the Architect designs against reality, not stale docs.
+
+Steps:
+
+1. Read the issue.
+   Run: grep -A 40 "^### Issue ${issueNumber}:" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
+   Note the Component + Description + Proposed Solution sections.
+
+2. For every file / concept the issue mentions, find EXISTING PATTERNS.
+   For each file:line in the Component section, read ±30 lines of context.
+   Then grep the wider codebase for similar patterns already in use:
+     - If the issue is about a normalizer / enum / adapter, grep for other normalizers (e.g., "canonicalAddressKey", "normalizeStrategy", "resolveDealIdentity")
+     - If the issue is about a projector / view / read boundary, grep for existing projectors
+     - If the issue is about a wire-shape / Zod schema, grep for existing schema conventions
+   Report each existing pattern with a reuseAdvice: reuse / extend / replace / ignore.
+
+3. Find RELATED TESTS.
+   For each file the fix will likely touch, find at least one adjacent test that Engineer should mirror for conventions. Grep for test file names matching the file being modified (e.g., resolve_property_inputs.ts → resolve_property_inputs.test.ts). Report path + convention (mongodb-memory-server pattern, fixture pattern, mock style, etc.).
+
+4. Check RECENT ACTIVITY.
+   For each file the issue references, run: git log --oneline --since="30 days ago" -- <file>
+   Report each commit's SHA + message + files-touched + relevance to the current issue. If a recent commit already partially addressed the concern OR made it worse, flag it.
+
+5. Find RELATED ISSUES.
+   grep the tracker for issues that touch overlapping files or concepts:
+     Run: grep -E "^### Issue #[0-9]+" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
+     Then grep specific issue bodies for the file paths + key terms from ${issueNumber}
+   Report at most 6 most-relevant open issues with howItRelates (overlap category: same files / same concepts / same design decision that must coordinate).
+
+6. Identify GOTCHAS.
+   Read CLAUDE.md's "Core Architectural Principles" section quickly. Read /docs/ARCHITECTURE_PRINCIPLES.md. What load-bearing conventions must the fix respect that aren't obvious from the issue alone? Examples: existing schema versioning, migration paths for legacy events, test conventions, edge cases that historically caused regressions.
+
+Do NOT design the fix. Do NOT propose changes. This is pure current-state mapping.
+
+Return via PREFLIGHT_SCHEMA. Length target: 600-1200 words in the JSON payload. Be specific — Architect will pattern-match on your exact citations.`
+}
+
+function architectPrompt(issueNumber, iteration, feedback, preflight) {
   const iterationBlock = iteration === 1 ? '' : `
 
 ⚠️  This is iteration ${iteration}. Previous iteration failed.
@@ -236,20 +366,34 @@ Step 1 — Read YOUR persona checklist AND the system principles.
   Then read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL — system-level principles P1-P25.
   Every design decision must be defensible against BOTH lists.
 
-Step 2 — Read the issue.
+Step 2 — Absorb the pre-flight audit.
+  The pre-flight agent has already surveyed the current-state of the codebase around this issue. READ IT CAREFULLY before designing anything. Especially:
+    - existingPatterns[] — DO NOT reimplement patterns that already exist. Extend or reuse per each item's reuseAdvice.
+    - relatedTests[] — mirror these conventions in what you tell Engineer to build
+    - recentActivity[] — recent commits may have changed the picture since the issue was filed
+    - relatedIssues[] — flag any design decision that MUST coordinate with those issues (as non-goals or design invariants)
+    - gotchas[] — every one must be addressed or listed as a non-goal
+  If the pre-flight surfaces a pattern that fully addresses the issue already, your design might just be "wire consumers to the existing pattern" — no new abstractions.
+
+Pre-flight audit:
+${JSON.stringify(preflight, null, 2)}
+
+Step 3 — Read the issue.
   Run: grep -A 30 "^### Issue ${issueNumber}:" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
   Read the full entry including its "Component", "Description", "Business Impact", "Proposed Solution", and "Related" sections.
 
-Step 3 — Read the code.
+Step 4 — Read the code.
   For every file:line-range mentioned in Component + Description, read that file (at least ±20 lines around the referenced line).
+  For every existingPattern the pre-flight identified, read that pattern's file so you understand its shape.
   Read related callers/consumers if the issue is about drift or wire-shape.
 
-Step 4 — Design the fix.
+Step 5 — Design the fix.
   Verify the design against every APPLICABLE principle in ARCHITECTURE_PRINCIPLES.md. Cite the principle numbers in your reasoning (e.g., "per P1 Single Source of Truth, this consolidates the three computation sites into one projector call").
   For any principle you consciously chose NOT to apply, list it as a non-goal WITH REASONING.
   Do not scope-creep — the fix must match the issue.
+  Coordinate with pre-flight relatedIssues[] — if your design touches code #N will also touch, note the coordination boundary as an invariant or non-goal.
 
-Return via the DESIGN_SCHEMA structured output. Be specific: filesToChange must name files that exist and describe changes concretely. Invariants must be testable assertions. NonGoals must call out what an over-eager engineer might otherwise attempt AND every principle intentionally skipped.
+Return via the DESIGN_SCHEMA structured output. Be specific: filesToChange must name files that exist and describe changes concretely. Invariants must be testable assertions. NonGoals must call out what an over-eager engineer might otherwise attempt AND every principle intentionally skipped AND every pre-flight gotcha you consciously deferred.
 ${iterationBlock}
 Do NOT modify code. Design only.`
 }
@@ -528,6 +672,30 @@ if (supplementaryPersonas.length > 0) {
   log(`Supplementary personas: ${supplementaryPersonas.map((p) => SUPPLEMENTARY_PERSONAS[p].label).join(', ')}`)
 }
 
+// ===== Phase 0 — Pre-flight (runs ONCE, before the iteration loop) =====
+// The pre-flight audit maps current-state of the codebase around the issue so
+// Architect designs against reality, not stale docs. Runs once per pipeline
+// invocation because current-state doesn't change during design iterations.
+// Read-only Explore agent — fast, cheap, thorough.
+phase('Pre-flight · current-state audit')
+const preflight = await agent(preflightPrompt(normalizedIssue), {
+  label: 'preflight',
+  schema: PREFLIGHT_SCHEMA,
+  agentType: 'Explore',
+})
+
+if (!preflight) {
+  log('Pre-flight returned null. Aborting.')
+  return {
+    status: 'ESCALATE_TO_USER',
+    reason: 'Pre-flight audit failed to produce a current-state map',
+  }
+}
+
+log(
+  `Pre-flight complete: ${preflight.existingPatterns?.length ?? 0} existing patterns, ${preflight.relatedIssues?.length ?? 0} related issues, ${preflight.gotchas?.length ?? 0} gotchas flagged`
+)
+
 let iteration = 1
 let design = null
 let impl = null
@@ -541,7 +709,7 @@ while (iteration <= MAX_ITERATIONS) {
 
   // Phase 1 — Architect
   phase('Architect · design')
-  design = await agent(architectPrompt(normalizedIssue, iteration, feedback), {
+  design = await agent(architectPrompt(normalizedIssue, iteration, feedback, preflight), {
     label: `architect${iteration > 1 ? ` (iter ${iteration})` : ''}`,
     schema: DESIGN_SCHEMA,
     agentType: 'general-purpose',
@@ -707,6 +875,7 @@ while (iteration <= MAX_ITERATIONS) {
     iterationsUsed: iteration,
     supplementaryPersonas,
     commitSha: impl.commitSha,
+    preflight,
     design,
     impl,
     qeReport,
