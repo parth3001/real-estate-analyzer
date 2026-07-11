@@ -344,6 +344,112 @@ That's a ~$3,780/yr swing AND a **sign flip** — one path shows the deal bleedi
 
 ---
 
+## 🔴 **OPEN — Codebase-wide drift audit (2026-07-08 night)**
+
+After #242 surfaced, three parallel Explore agents did a codebase-wide drift audit. Result: 4 distinct architectural problems, not 1. The FinancialsView projector solves ONE class. The rest need their own architectural pieces. User greenlit Option 1 — full 8-13 day architectural pass covering all 4 categories. Findings filed as #243–#256 below. Each is a launch-blocker component of Task #50.
+
+### Issue #243: Strategy enum triple-inconsistency across layers
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Identity (Cat C)
+**Component**: `frontend/src/types/property.ts`, `backend/src/models/events/DecisionEvent.ts:50`, `backend/src/agents/tools/compute_deal_metric.ts:89`
+**Description**: "Strategy" has THREE vocabularies across layers:
+- Frontend types: `'buy-hold' | 'house-hack' | 'brrrr'` (kebab investment TYPE)
+- Backend DecisionEvent schema: `'cashflow' | 'appreciation' | 'balanced'` (investment PHILOSOPHY — completely different word set)
+- Backend compute_deal_metric tool: `'buy_hold' | 'brrrr' | 'house_hack'` (snake investment TYPE)
+No normalization site. When DecisionEvent.investmentStrategy is written, is it a type or a philosophy? Depends on caller.
+**Business Impact**: Every consumer reading DecisionEvent.investmentStrategy may be interpreting garbage. Substrate queries by strategy unreliable.
+**Proposed Solution**: One canonical enum (recommend snake `'buy_hold' | 'brrrr' | 'house_hack'`). Adapters at boundaries. Split philosophy into a separate field or deprecate.
+
+### Issue #244: Insurance rate default divergence — frontend 0.7% vs backend 0.5%
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Assumption defaults (Cat B)
+**Component**: `frontend/src/constants/sfrPropertyDefaults.ts:89` (0.7%) vs `backend/src/agents/tools/resolve_property_inputs.ts:268` (0.5%)
+**Description**: Same property. Chat-flow uses 0.5% insurance rate; wizard uses 0.7%. On $300K property: $600/yr insurance-expense swing → different NOI → different CF → different Deal Quality Score.
+**Business Impact**: User screenshots two analyses of the same property (chat vs wizard) and sees contradictory scores. Directly breaks "institutional-grade deterministic analysis" claim.
+**Proposed Solution**: AssumptionResolver (Cat-B arch piece). Single source of truth for input defaults, consumed by every entry point.
+
+### Issue #245: Interest rate + appreciation default divergences (compound impact)
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Assumption defaults (Cat B)
+**Component**:
+- Interest fallback: frontend 6.5% (`sfrPropertyDefaults.ts:84`) vs backend 7.0% (`resolve_property_inputs.ts:288`) — 50bp
+- Appreciation: frontend 3.0% (`sfrPropertyDefaults.ts:34`) vs backend 3.5% (`resolve_property_inputs.ts:303`) — 50bp
+**Description**: Same class as #244 but compounds across projections. 50bp rate on $200K loan ≈ $65/mo P&I diff. 50bp appreciation over 10 years ≈ 5%+ property-value delta → direct hit to IRR + total return.
+**Business Impact**: Same "screenshots don't match" trust break, magnified in 10-year projections.
+**Proposed Solution**: Same as #244 (AssumptionResolver).
+
+### Issue #246: Maintenance default THREE-path drift
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Assumption defaults (Cat B)
+**Component**: `frontend/src/constants/sfrPropertyDefaults.ts:98` ($0), `backend/src/agents/tools/resolve_property_inputs.ts:270` (1% of purchase), `backend/src/analysis/SFRAnalyzer.ts:376-379` (5% of rent), `frontend/src/utils/mfDataAdapter.ts:296` ($100/unit/mo for MF)
+**Description**: Same input, FOUR different defaults per code path. On $60K/$1,600-rent test: $0, $600/yr, $960/yr, or $100/mo. Ratios: infinite / 1x / 1.6x / varies. Directly drives NOI + CF divergence. Same fabric as #58/#102/#239 CapEx-bundling class.
+**Business Impact**: Maintenance off by 60-100% depending on entry point.
+**Proposed Solution**: Same as #244. Recommended canonical default: 5% of rent (institutional convention).
+
+### Issue #247: Property tax + insurance basis doesn't switch to ARV post-refi
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Convention (Cat B) + Analyzer logic
+**Component**: `backend/src/analysis/SFRAnalyzer.ts:346` (projection loop), `backend/src/services/investment/brrrAnalyzer.ts:565-566` (correctly recomputes at ARV for post-refi metrics)
+**Description**: `brrrAnalyzer.calculatePostRefinanceMetrics` DOES recompute tax + insurance at ARV — but only for the post-refi metrics snapshot. The 10-year projection loop in `SFRAnalyzer.ts:346` applies `propertyTaxRate` to `purchasePrice` throughout. Post-refi opex projection uses stale (pre-appreciation) basis. Actual Cuyahoga / Texas / similar counties reassess on transfer + rehab permits within 6-12 months.
+**Business Impact**: 10-year opex projection systematically low for BRRRR. NOI + CF + IRR all overstated. Upgrading from #227 item 2 (was P2 polish).
+**Proposed Solution**: Analyzer projection loop needs strategy-aware basis: pre-refi = purchase, post-refi = ARV × reassessment factor.
+
+### Issue #248: CLAUDE.md rounding rule violated in SFRAnalyzer intermediate math
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Convention (Cat B)
+**Component**: `backend/src/analysis/SFRAnalyzer.ts:346-349` (tax/insurance/maintenance/mgmt), `:376-379` (sfrCapEx)
+**Description**: CLAUDE.md "Financial Precision Principle" explicitly bans intermediate rounding in analyzer code. `SFRAnalyzer.getExpenseBreakdown` uses `Math.round(x * 100) / 100` — rounded values then feed into annual projections. Precision loss compounds. Direct violation of stated architectural principle.
+**Business Impact**: Sub-cent errors compound across 10-year projections → "annual is $12 off from monthly × 12" reconciliation bugs.
+**Proposed Solution**: Remove all Math.round in analyzer paths. ESLint rule blocking Math.round/toFixed/Math.floor inside `backend/src/analysis/` + `backend/src/services/investment/`.
+
+### Issue #249: Closing costs + yearBuilt fallback divergence (polish class of #244)
+**Status**: 🔴 Open · **Priority**: P1 · **Category**: Assumption defaults (Cat B)
+**Component**: Closing costs — frontend `sfrPropertyDefaults.ts:122` (2.5% flat) vs backend `resolve_property_inputs.ts:285-286` (max(2%, $2,500) post-#231). yearBuilt — frontend `currentYear − 20` (dynamic) vs backend hardcoded `1990`.
+**Description**: Same class as #244 but lower severity. Closing costs mostly collapse for deals ≥$150K. yearBuilt currently 16-year divergence (2026 − 20 = 2006 vs 1990); grows every year.
+**Proposed Solution**: Same as #244 (AssumptionResolver).
+
+### Issue #250: dealId vs canonicalAddressKey query boundary mismatch
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Identity (Cat C)
+**Component**: `frontend/src/components/SFRAnalysis/ScenarioManager.tsx:40+` (dealId), `backend/src/repositories/EventsRepositoryReads.ts:80` (canonicalAddressKey)
+**Description**: Frontend passes Deal._id ObjectId; backend expects canonicalAddressKey string. Silent empty result on mismatch. Legacy Deals (pre-#13 stamping) lack canonicalAddressKey entirely — their scenarios become invisible even though they exist in substrate.
+**Business Impact**: Users see empty scenario list on saved deals that DO have scenarios. Silent-drop bug class.
+**Proposed Solution**: `resolveDealIdentity(input): {dealId, canonicalAddressKey}` — accepts either, returns both. All read paths use it.
+
+### Issue #251: Chat identity state machine ambiguous across sessionId + useAuth + JWT ghost flag
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Identity (Cat C)
+**Component**: `frontend/src/pages/AppPage.tsx:58` (sessionId only), `frontend/src/components/Chat/ChatOverlay.tsx:246,398+` (mixed), `backend/src/middleware/chatIdentity.ts:56-74` (`req.user.anonymous` flag), `frontend/src/components/auth/AuthModal.tsx`
+**Description**: THREE identity signals (sessionStorage sessionId, useAuth().user, backend req.user.anonymous). No consumer checks all three. Root cause umbrella for #240/#241/#218/#217.
+**Business Impact**: Any state transition (login, logout, session expiry, tab reopen) can produce a wrong answer at any consumer.
+**Proposed Solution**: Canonical `useIdentity()` hook returning derived state (`'anonymous' | 'anonymous_with_ghost' | 'authenticated' | 'authenticated_claiming'`). Consumers branch on state, not raw signals.
+
+### Issue #252: Projection field name drift — `projections` vs `yearlyProjections`
+**Status**: 🔴 Open · **Priority**: P0 · **Category**: Wire-shape (Cat D)
+**Component**: `backend/src/services/dealMaterializationService.ts:~200`, `backend/src/models/events/analysisShapes.ts:19` (self-documented in the code)
+**Description**: analysisShapes.ts:19 explicitly comments: "the cast's expected field NAMES had drifted from what the analyzer actually emits — substrate stores `projections`, cast read `yearlyProjections` — undefined every time." Fixed for new writes; legacy records still affected.
+**Business Impact**: Historical saved deals show empty year-by-year table on workspace. Related to #32.
+**Proposed Solution**: Zod schema at read boundary that rejects or repairs mismatched field names. Backfill migration for legacy records.
+
+### Issue #253: BRRRR field-name drift — `newMonthlyPayment` vs `postRefiMonthlyDebtService`
+**Status**: 🔴 Open · **Priority**: P1 · **Category**: Wire-shape (Cat D)
+**Component**: `frontend/src/types/brrrr.ts` (`newMonthlyPayment`), `backend/src/services/dealMetrics/types.ts` (`postRefiMonthlyDebtService`), `backend/src/services/dealMetrics/formulas/break_even_occupancy.ts:44`
+**Description**: Same value, two different names, two different consumers. No adapter. Same class as #242.
+**Proposed Solution**: Single wire-shape schema; both consumers read via Zod parse.
+
+### Issue #254: LLM prose vs formatted-string enforcement is documentation-only, not runtime
+**Status**: 🔴 Open · **Priority**: P1 · **Category**: Wire-shape (Cat D)
+**Component**: `backend/src/agents/tools/compute_deal_metric.ts:97` (returns `formatted`), `backend/src/agents/qa/qaAgent.ts:198-200` (prompt-only enforcement)
+**Description**: Tools return `formatted` strings (`"$1,942/yr"`); LLM instructed via prompt to cite verbatim. No runtime check that prose contains the formatted value. LLM could narrate "about $1,900" — undetectable.
+**Business Impact**: Deterministic-numbers claim (#226) is aspirational, not enforced.
+**Proposed Solution**: numericTraceability post-check requiring every tool-return numeric literal appears in the final message (or ≤$1 delta).
+
+### Issue #255: Frontend prop types have no runtime validation against API responses
+**Status**: 🔴 Open · **Priority**: P2 · **Category**: Wire-shape (Cat D)
+**Component**: All AnalysisDetails/*.tsx, `frontend/src/types/pipeline.ts`, `frontend/src/services/api.ts`
+**Description**: Frontend components declare TS types but never validate API responses. Optional chaining fails silently to blank rendering. Backend renames = silent frontend break.
+**Proposed Solution**: Runtime Zod schemas at every fetch boundary in api.ts. Failing schemas throw → error boundary.
+
+### Issue #256: Tolerant read-side event parsing masks silent field drops on legacy events
+**Status**: 🔴 Open · **Priority**: P2 · **Category**: Wire-shape (Cat D)
+**Component**: `backend/src/services/dealMaterializationService.ts:~102`, `backend/src/models/events/analysisShapes.ts:87-96`
+**Description**: `safeParseShape` at read boundary tolerantly parses legacy events. Silent drops when fields missing. Complicit with #252.
+**Proposed Solution**: When safeParseShape drops a field, log at WARN + counter. Threshold → backfill migration.
+
+---
+
 ## 🔴 **OPEN — Test 1 findings (BRRRR smoke test, 2026-06-30)**
 
 Live Test 1 run: Garland TX BRRRR (purchase $185k, rehab $45k, ARV $290k, rent $2,200). Engine returned score 70/100 "meets professional standards" on a deal that fails 70% rule + has negative post-refi cash flow + DSCR ~0.61 (unlendable). Investigation confirmed engine math is correct per validated BiggerPockets Method A (see `brrrr-uat-validation-all-fixes.test.ts:166`) — but the surface message and score aren't safe for cold-traffic paying users.
