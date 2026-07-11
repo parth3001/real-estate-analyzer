@@ -203,8 +203,10 @@ Revise the design. If the failure was in DESIGN, produce a fundamentally differe
 
 Task: design a fix for issue ${issueNumber}.
 
-Step 1 — Read the authoritative principles checklist.
-  Read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL before starting the design. This is your checklist. Every design decision must be defensible against P1-P25.
+Step 1 — Read YOUR persona checklist AND the system principles.
+  Read /Users/parthpatel/real-estate-analyzer/docs/personas/architect.md IN FULL — this is your persona rulebook (ARCH-1 through ARCH-19).
+  Then read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL — system-level principles P1-P25.
+  Every design decision must be defensible against BOTH lists.
 
 Step 2 — Read the issue.
   Run: grep -A 30 "^### Issue ${issueNumber}:" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
@@ -226,6 +228,9 @@ Do NOT modify code. Design only.`
 
 function engineerPrompt(issueNumber, design) {
   return `You are the Senior Full-Stack Engineer defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md — 15 years, React/Node.js, financial calculations.
+
+Step 1 — Read YOUR persona checklist.
+  Read /Users/parthpatel/real-estate-analyzer/docs/personas/engineer.md IN FULL — ENG-1 through ENG-21 are your rules. Also skim /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md for the system principles you must uphold in implementation (especially P2 Financial Precision, P22 no auto-server, P23 no git add -A).
 
 Task: implement the Architect's design for issue ${issueNumber}.
 
@@ -255,6 +260,10 @@ Return via IMPL_SCHEMA. Include the commit SHA (from git log --oneline -1). Set 
 
 function qePrompt(issueNumber, design, impl) {
   return `You are the Senior QE Engineer defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md — 20 years, financial testing, Amazon AWS + Zillow.
+
+Step 1 — Read YOUR persona checklist AND system principles.
+  Read /Users/parthpatel/real-estate-analyzer/docs/personas/qe-engineer.md IN FULL — QE-1 through QE-15 are your rules.
+  Then read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL — you validate against every applicable principle P1-P25.
 
 Task: adversarially validate Engineer's fix for issue ${issueNumber}. Your job is to FIND GAPS, not to sign off.
 
@@ -287,6 +296,10 @@ Return via QE_SCHEMA.`
 
 function bePrompt(issueNumber, design, impl, qeReport) {
   return `You are the Business Expert defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md — 20-year real estate investor, $10M+ AUM, 35+ properties, invested at every scale from single SFR to commercial.
+
+Step 1 — Read YOUR persona checklist AND your owned principles.
+  Read /Users/parthpatel/real-estate-analyzer/docs/personas/business-expert.md IN FULL — BE-1 through BE-11 are your rules.
+  Read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md sections II (Trust & Determinism). You own P5-P8 — Deterministic Numbers, Language Hygiene, Honest Analysis is the Moat, Score-only Display.
 
 Task: final signoff on the fix for issue ${issueNumber}. QE has passed the technical check. Your job is to VETO if the fix is technically correct but business-wrong.
 

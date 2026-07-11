@@ -1057,14 +1057,35 @@ Fix doesn't work after 2 attempts?
 
 ---
 
-## 📐 **AUTHORITATIVE PRINCIPLES CHECKLIST**
+## 📐 **AUTHORITATIVE PRINCIPLES CHECKLISTS**
 
-Every architectural decision — during the `fix-issue` pipeline or otherwise — is checked against **`/docs/ARCHITECTURE_PRINCIPLES.md`**. 25 numbered principles, each with a rule / rationale / violation example / enforcement mechanism. The Architect persona reads this file BEFORE designing, the QE persona validates against it, the Business Expert owns principles P5-P8 (trust guardrails).
+Every architectural decision — during the `fix-issue` pipeline or otherwise — is checked against two layers:
 
-Read the checklist end-to-end:
+### 1. System-level principles (P1-P25)
 → **[docs/ARCHITECTURE_PRINCIPLES.md](docs/ARCHITECTURE_PRINCIPLES.md)**
 
-Non-goals are legitimate — but they must be EXPLICIT. A design that violates a principle without calling it out as a non-goal fails QE.
+25 numbered principles: single source of truth, financial precision, deterministic numbers, language hygiene, wire contracts, read-path discipline, failure modes, process, development discipline. Each has rule / rationale / violation example / enforcement.
+
+### 2. Persona-specific rules (per-role checklists)
+→ **[docs/personas/](docs/personas/)**
+
+Every persona defined in this file has its own numbered rule list, extracted directly from the persona's definition below. Total: **233 rules across 9 personas**, all with CLAUDE.md source-line citations.
+
+| Persona | Rules | File |
+|---|---|---|
+| Architect | 19 | [architect.md](docs/personas/architect.md) |
+| Engineer | 21 | [engineer.md](docs/personas/engineer.md) |
+| QE Engineer | 15 | [qe-engineer.md](docs/personas/qe-engineer.md) |
+| Business Expert | 11 | [business-expert.md](docs/personas/business-expert.md) |
+| UX Designer | 23 | [ux-designer.md](docs/personas/ux-designer.md) |
+| Tax Expert | 14 | [tax-expert.md](docs/personas/tax-expert.md) |
+| Marketing Expert | 29 | [marketing-expert.md](docs/personas/marketing-expert.md) |
+| Strategic Product Advisor | 45 | [strategic-product-advisor.md](docs/personas/strategic-product-advisor.md) |
+| Mobile Developer | 56 | [mobile-developer.md](docs/personas/mobile-developer.md) |
+
+Non-goals are legitimate — but they must be EXPLICIT. A design that violates a principle or a persona rule without calling it out as a non-goal fails QE.
+
+**These files are downstream of CLAUDE.md.** If a rule needs to change, edit the persona definition in this file first, then re-extract to the persona checklist. See [docs/personas/README.md](docs/personas/README.md) for extraction discipline.
 
 ---
 
