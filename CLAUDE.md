@@ -1057,6 +1057,37 @@ Fix doesn't work after 2 attempts?
 
 ---
 
+## 🛡️ **MANDATORY: `fix-issue` PIPELINE FOR TASK #50 WORK**
+
+**As of 2026-07-08, all issues #243–#256 and any future issue tied to Task #50 (v1.1 architectural sprint) MUST go through the `fix-issue` workflow. No ad-hoc fixes.**
+
+The pipeline enforces four persona gates in sequence:
+
+1. **Architect** designs the fix (no code) — reads the issue from `docs/ISSUE_TRACKER.md`, reads referenced files, produces a design doc with concrete files/changes/invariants/non-goals.
+2. **Engineer** implements EXACTLY per design — no scope creep, no refactoring, runs tsc + jest, commits with structured message.
+3. **QE Engineer** adversarially validates — must find that the fix addresses the SPECIFIC failure mode, regression tests exist, no existing invariants broken. Biases toward FAIL.
+4. **Business Expert** has hard VETO — even if QE passes, BE can reject if the fix is technically correct but business-wrong. Signoff required for the fix to ship.
+
+**Failure loop:** any gate failure sends work back to Architect (who decides whether to revise the design or tighten the spec so Engineer can't misinterpret). Up to **3 iterations** — after that, the workflow stops and surfaces to the user.
+
+**How to invoke:**
+```
+Workflow({ name: 'fix-issue', args: '#243' })
+```
+
+Workflow file: [.claude/workflows/fix-issue.js](.claude/workflows/fix-issue.js)
+
+**Why this rule exists:** during the 2026-07-08 session, ad-hoc fixes shipped that surfaced as regressions of previously-fixed bugs (see #94 → #242, #58 → #102 → #239). The codebase-wide drift audit found four architectural drift classes hiding under those tactical patches. The fix-issue pipeline ensures every remaining Task #50 issue is designed by the right persona, implemented per design, validated adversarially, and signed off by the domain lens BEFORE it reaches paying users.
+
+**Applies to:**
+- ✅ #243–#256 (all filed drift findings)
+- ✅ Any new issue filed under Task #50's arch sprint
+- ✅ Any issue tagged P0 launch-blocker
+- ❌ Not required for docs-only / typo-only PRs
+- ❌ Not required for pre-#242 issues that already shipped tonight
+
+---
+
 ## ⚠️ **CRITICAL RULE FOR ALL PERSONAS: DATA VALIDATION REQUIRED**
 
 **ALL personas (Marketing Expert, Strategic Product Advisor, QE Engineer, Architect, Engineer, Business Expert, UX Designer, Tax Expert, Mobile Developer) MUST follow this rule:**
