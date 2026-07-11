@@ -312,39 +312,58 @@ const BE_SCHEMA = {
 function preflightPrompt(issueNumber) {
   return `You are a read-only research agent. Your job is to map the CURRENT-STATE of the reanalyzr-2.0 codebase around issue ${issueNumber} so the Architect designs against reality, not stale docs.
 
+**Search breadth: VERY THOROUGH.** Cast a wide net across multiple locations and naming variations. Coverage matters more than speed.
+
 Steps:
 
 1. Read the issue.
    Run: grep -A 40 "^### Issue ${issueNumber}:" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
    Note the Component + Description + Proposed Solution sections.
 
-2. For every file / concept the issue mentions, find EXISTING PATTERNS.
+2. For every file / concept the issue mentions, find EXISTING PATTERNS — SYNONYM ENUMERATION REQUIRED.
    For each file:line in the Component section, read ±30 lines of context.
-   Then grep the wider codebase for similar patterns already in use:
-     - If the issue is about a normalizer / enum / adapter, grep for other normalizers (e.g., "canonicalAddressKey", "normalizeStrategy", "resolveDealIdentity")
-     - If the issue is about a projector / view / read boundary, grep for existing projectors
-     - If the issue is about a wire-shape / Zod schema, grep for existing schema conventions
-   Report each existing pattern with a reuseAdvice: reuse / extend / replace / ignore.
+   Then for EACH concept in the issue, enumerate 3-5 naming variants and grep EACH variant. Examples:
+     - Normalizer/enum concept: grep normalize · convert · map · adapter · resolve · sanitize · canonicalize
+     - Projector/view/read boundary: grep project · view · read · derive · assemble · compose · select
+     - Wire-shape/schema: grep Schema · Shape · Wire · Payload · Envelope · Zod
+     - Identity/session: grep resolve · normalize · derive · getIdentity · useIdentity
+     - Any acronyms or abbreviations that could substitute (e.g. CF/cashFlow, EGI/effectiveGrossIncome)
+   grep patterns like: \`rg -l "normalize|convert|map|adapter|resolve" backend/src/\` — cast wide, filter down.
 
-3. Find RELATED TESTS.
-   For each file the fix will likely touch, find at least one adjacent test that Engineer should mirror for conventions. Grep for test file names matching the file being modified (e.g., resolve_property_inputs.ts → resolve_property_inputs.test.ts). Report path + convention (mongodb-memory-server pattern, fixture pattern, mock style, etc.).
+3. FOLLOW IMPORTS ONE LEVEL DEEP.
+   For each file you find containing a relevant pattern, read its imports AND its exports. If the file exports a helper/normalizer/projector, grep for consumers of that export across the codebase. Include those consumers in existingPatterns[] even if they don't match your initial keyword — they define the CURRENT read surface.
+   This catches "concept without matching keyword" — a component that USES strategy comparison without using "strategy" in its identifier names.
 
-4. Check RECENT ACTIVITY.
+4. Find RELATED TESTS.
+   For each file the fix will likely touch, find at least one adjacent test that Engineer should mirror for conventions. Grep for test file names matching the file being modified (e.g., resolve_property_inputs.ts → resolve_property_inputs.test.ts). Also grep for tests that mention the CONCEPT even if not in a matching filename. Report path + convention (mongodb-memory-server pattern, fixture pattern, mock style, etc.).
+
+5. Check RECENT ACTIVITY.
    For each file the issue references, run: git log --oneline --since="30 days ago" -- <file>
-   Report each commit's SHA + message + files-touched + relevance to the current issue. If a recent commit already partially addressed the concern OR made it worse, flag it.
+   ALSO run: git log --oneline --since="30 days ago" --all | head -50 — check the last 50 commits across all branches for anything that mentions the issue's concepts. Recent commits may reference the file by import chain, not direct edit.
+   Report each commit's SHA + message + files-touched + relevance to the current issue. If a recent commit already partially addressed the concern OR made it worse, flag it prominently.
 
-5. Find RELATED ISSUES.
+6. Find RELATED ISSUES.
    grep the tracker for issues that touch overlapping files or concepts:
      Run: grep -E "^### Issue #[0-9]+" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
-     Then grep specific issue bodies for the file paths + key terms from ${issueNumber}
+     Then for each candidate issue, grep the issue body for the file paths + key concept terms from ${issueNumber}
    Report at most 6 most-relevant open issues with howItRelates (overlap category: same files / same concepts / same design decision that must coordinate).
 
-6. Identify GOTCHAS.
-   Read CLAUDE.md's "Core Architectural Principles" section quickly. Read /docs/ARCHITECTURE_PRINCIPLES.md. What load-bearing conventions must the fix respect that aren't obvious from the issue alone? Examples: existing schema versioning, migration paths for legacy events, test conventions, edge cases that historically caused regressions.
+7. Identify GOTCHAS — LOAD-BEARING CONVENTIONS.
+   Read CLAUDE.md's "Core Architectural Principles" section. Read /docs/ARCHITECTURE_PRINCIPLES.md. Identify:
+     - Zod schema versioning at write boundaries (any migration hazard for the fix?)
+     - Materializer contract (does the fix affect materialized Deal state?)
+     - Substrate append-only rules (any risk the fix mutates historical events?)
+     - Test fixtures that many tests depend on (would this fix break unrelated tests?)
+     - Historical regression classes (has a similar-looking fix regressed before? #94→#242 style)
+     - Frontend/backend contract stability (any wire-shape change that breaks in-flight sessions?)
+   List every gotcha specifically. Architect must address each or list it as an explicit non-goal.
+
+8. If any pattern found in step 2 or 3 ALREADY handles this issue's failure mode, flag it in the summary.
+   Sometimes the answer is "no new abstractions needed — wire consumer X to existing helper Y." Save Architect a lot of design work by surfacing this if you see it.
 
 Do NOT design the fix. Do NOT propose changes. This is pure current-state mapping.
 
-Return via PREFLIGHT_SCHEMA. Length target: 600-1200 words in the JSON payload. Be specific — Architect will pattern-match on your exact citations.`
+Return via PREFLIGHT_SCHEMA. Length target: 800-1500 words in the JSON payload. Be specific — Architect will pattern-match on your exact citations.`
 }
 
 function architectPrompt(issueNumber, iteration, feedback, preflight) {
