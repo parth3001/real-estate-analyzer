@@ -1146,6 +1146,21 @@ When invoking the pipeline for new work, include the persona(s) whose domain the
 | Stripe / packaging / GTM / partner deals | `strategic` (+`marketing` if user-facing) |
 | Any combination | list all of them |
 
+### Who picks the personas (Claude's protocol)
+
+**Claude proposes; user confirms.** When the user asks Claude to run the pipeline on an issue (e.g. *"run fix-issue on #260"* or *"kick off the pipeline for the Stripe checkout task"*), Claude MUST:
+
+1. Read the issue entry from `docs/ISSUE_TRACKER.md` (the Component + Description sections)
+2. Apply the heuristic table above — what does the change touch?
+3. Propose the persona set in one sentence with reasoning: *"This touches workspace UI + mobile bundle. I'll run with `['ux', 'mobile']`. Confirm or adjust?"*
+4. Wait for the user's confirm / adjust before invoking the workflow
+
+**User override anytime:** If the user names personas explicitly (*"run fix-issue on #260 with UX reviewer only"*), Claude honors that verbatim — no re-proposal.
+
+**Missed persona escape hatch:** If a reviewer is missed and turns out to matter (e.g. Architect during design flags "this also needed marketing review"), the fix is to re-invoke the pipeline for the same issue with the corrected persona set. The prior iteration's design + BE reports become input feedback for the next Architect pass.
+
+Rationale: Claude has read the issue tracker + heuristic table; user has domain intuition. Combining both catches misses (Claude's suggestion) and honors overrides (user's judgment).
+
 ### Exemptions — pipeline NOT required
 
 Trust the human on these — pipeline overhead > value:
