@@ -1089,34 +1089,78 @@ Non-goals are legitimate — but they must be EXPLICIT. A design that violates a
 
 ---
 
-## 🛡️ **MANDATORY: `fix-issue` PIPELINE FOR TASK #50 WORK**
+## 🛡️ **MANDATORY: `fix-issue` PIPELINE — DEFAULT PROCESS FOR ALL SUBSTANTIVE WORK**
 
-**As of 2026-07-08, all issues #243–#256 and any future issue tied to Task #50 (v1.1 architectural sprint) MUST go through the `fix-issue` workflow. No ad-hoc fixes.**
+**As of 2026-07-08 (expanded), ALL substantive work — features, changes, bug fixes, architecture sprints — MUST go through the `fix-issue` pipeline. Not just Task #50 issues.**
 
-The pipeline enforces four persona gates in sequence:
+The pipeline enforces four persona gates in sequence, with optional supplementary reviewers for domain coverage:
 
-1. **Architect** designs the fix (no code) — reads the issue from `docs/ISSUE_TRACKER.md`, reads referenced files, produces a design doc with concrete files/changes/invariants/non-goals.
-2. **Engineer** implements EXACTLY per design — no scope creep, no refactoring, runs tsc + jest, commits with structured message.
-3. **QE Engineer** adversarially validates — must find that the fix addresses the SPECIFIC failure mode, regression tests exist, no existing invariants broken. Biases toward FAIL.
-4. **Business Expert** has hard VETO — even if QE passes, BE can reject if the fix is technically correct but business-wrong. Signoff required for the fix to ship.
+### Base pipeline (always runs)
 
-**Failure loop:** any gate failure sends work back to Architect (who decides whether to revise the design or tighten the spec so Engineer can't misinterpret). Up to **3 iterations** — after that, the workflow stops and surfaces to the user.
+1. **Architect** designs the fix (no code) — reads issue + referenced files + architect persona checklist + system principles, produces a design doc with concrete files/changes/invariants/non-goals.
+2. **Engineer** implements EXACTLY per design — no scope creep, runs tsc + jest, commits.
+3. **QE Engineer** adversarially validates — biases toward FAIL. Any violation of a persona rule or architectural principle without an explicit non-goal = automatic fail.
+4. **Business Expert** hard VETO — technically correct but business-wrong = reject. Owns trust guardrails (P5-P8).
 
-**How to invoke:**
+### Supplementary reviewers (opt-in per invocation)
+
+Include the personas whose domain the change touches. Each has BLOCKING veto within its domain:
+
+- **`ux`** — any user-facing UI change (workspace / chat / wizard). Reads [ux-designer.md](docs/personas/ux-designer.md).
+- **`mobile`** — mobile-visible changes, bundle-size sensitive changes, Core Web Vitals. Reads [mobile-developer.md](docs/personas/mobile-developer.md). Hard-blocks on MOB-6..14.
+- **`tax`** — depreciation / 1031 / tax narrative / compliance. Reads [tax-expert.md](docs/personas/tax-expert.md). Hard-blocks on TAX-6/7/8.
+- **`marketing`** — landing / pricing / onboarding / conversion. Reads [marketing-expert.md](docs/personas/marketing-expert.md).
+- **`strategic`** — pricing / GTM / AI moat / Track 1/2/3 boundary. Reads [strategic-product-advisor.md](docs/personas/strategic-product-advisor.md). Hard-blocks on STRAT-37/38.
+
+### Failure loop
+
+Any gate failure (QE fail, BE concerns, supplementary reject) sends work back to Architect — who decides whether to revise the design or tighten the spec so Engineer can't misinterpret. Up to **3 iterations** — after that, the workflow surfaces to the user for a decision.
+
+### How to invoke
+
 ```
-Workflow({ name: 'fix-issue', args: '#243' })
+Workflow({ name: 'fix-issue', args: '#243' })                                          // base 4 personas
+Workflow({ name: 'fix-issue', args: { issue: '#280' } })                                // same, structured
+Workflow({ name: 'fix-issue', args: { issue: '#280', personas: ['ux'] } })              // + UX reviewer
+Workflow({ name: 'fix-issue', args: { issue: '#290', personas: ['ux', 'mobile'] } })    // UI + mobile
+Workflow({ name: 'fix-issue', args: { issue: '#34', personas: ['strategic', 'marketing'] } })  // Stripe checkout
 ```
 
 Workflow file: [.claude/workflows/fix-issue.js](.claude/workflows/fix-issue.js)
 
-**Why this rule exists:** during the 2026-07-08 session, ad-hoc fixes shipped that surfaced as regressions of previously-fixed bugs (see #94 → #242, #58 → #102 → #239). The codebase-wide drift audit found four architectural drift classes hiding under those tactical patches. The fix-issue pipeline ensures every remaining Task #50 issue is designed by the right persona, implemented per design, validated adversarially, and signed off by the domain lens BEFORE it reaches paying users.
+### Required per invocation
 
-**Applies to:**
-- ✅ #243–#256 (all filed drift findings)
-- ✅ Any new issue filed under Task #50's arch sprint
-- ✅ Any issue tagged P0 launch-blocker
-- ❌ Not required for docs-only / typo-only PRs
-- ❌ Not required for pre-#242 issues that already shipped tonight
+Every pipeline run **MUST reference an existing entry in `docs/ISSUE_TRACKER.md`**. File the entry first (with Status / Priority / Component / Description / Business Impact / Proposed Solution schema), then invoke the pipeline. Preserves provenance per principle P21.
+
+### Persona-selection heuristic
+
+When invoking the pipeline for new work, include the persona(s) whose domain the change touches:
+
+| Work touches… | Include personas |
+|---|---|
+| Analyzer math / substrate / event schema | (base only) |
+| Workspace / chat / wizard UI | `ux` |
+| Mobile-visible surfaces / bundle changes / offline | `mobile` (+`ux` if UI) |
+| Tax narrative / depreciation / 1031 | `tax` |
+| Landing / pricing page / signup / onboarding | `marketing` (+`ux` if UI) |
+| Stripe / packaging / GTM / partner deals | `strategic` (+`marketing` if user-facing) |
+| Any combination | list all of them |
+
+### Exemptions — pipeline NOT required
+
+Trust the human on these — pipeline overhead > value:
+
+- ❌ Docs-only changes (`*.md`)
+- ❌ Comment-only edits
+- ❌ Typo / single-line copy fixes
+- ❌ Lint / prettier autofixes
+- ❌ Trivial config bumps (unless they change behavior)
+
+**When in doubt, invoke the pipeline.** Overhead is cheap; regression is not.
+
+### Why this rule exists
+
+During the 2026-07-08 session, ad-hoc fixes shipped that surfaced as regressions of previously-fixed bugs (#94 → #242, #58 → #102 → #239). The codebase-wide drift audit found four architectural drift classes hiding under those tactical patches. Making the pipeline the default — not the exception — closes that gap for every future change.
 
 ---
 

@@ -1,18 +1,46 @@
 /**
- * fix-issue.js — 4-persona pipeline for pre-launch issue fixes.
+ * fix-issue.js — Persona-orchestrated pipeline for ALL substantive work.
  *
+ * As of 2026-07-08 this is the default process for features / changes /
+ * bug fixes / arch work. Not just Task #50 issues.
+ *
+ * Base pipeline (always):
  *   Architect (design) → Engineer (code) → QE (validate) → Business Expert (signoff)
  *
- * Loop policy: up to 3 iterations. Any failure loops back to Architect (who
- * decides whether to revise the design or tighten the spec for Engineer).
- * Business Expert has hard veto — even if QE passes, BE can send the fix
- * back for design work.
+ * Supplementary personas (opt-in per invocation via `personas: [...]`):
+ *   ux · mobile · tax · marketing · strategic
  *
- * After 3 failed iterations, workflow stops and surfaces to the user for
- * a decision (revise the issue, drop the fix, or manual intervention).
+ * Each supplementary reviewer runs AFTER Business Expert signoff. Their
+ * verdicts are BLOCKING — a REJECT sends work back to Architect same as
+ * QE/BE. Use supplementary personas when the work touches their domain:
+ *   - ux        : any user-facing UI change (workspace / chat / wizard)
+ *   - mobile    : mobile-visible changes, bundle size, Core Web Vitals
+ *   - tax       : depreciation / 1031 / compliance / tax narrative
+ *   - marketing : landing / pricing / onboarding / conversion surfaces
+ *   - strategic : pricing / GTM / AI moat / Track boundary decisions
  *
- * Invoke: Workflow({ name: 'fix-issue', args: '#243' })
- *   args is the issue number as filed in docs/ISSUE_TRACKER.md.
+ * Loop policy: up to 3 iterations. Any failure loops back to Architect
+ * (who decides whether to revise the design or tighten the spec for
+ * Engineer). Business Expert AND every supplementary persona have hard
+ * veto. After 3 failed iterations, workflow surfaces to the user.
+ *
+ * Invocations:
+ *   Workflow({ name: 'fix-issue', args: '#243' })                              // base 4 personas
+ *   Workflow({ name: 'fix-issue', args: { issue: '#243' } })                   // same, structured
+ *   Workflow({ name: 'fix-issue', args: { issue: '#243', personas: ['ux'] } })  // + UX signoff
+ *   Workflow({ name: 'fix-issue', args: { issue: '#280', personas: ['ux', 'mobile'] } })  // + both
+ *
+ * Requirement: every invocation MUST reference an existing issue entry in
+ * docs/ISSUE_TRACKER.md. File the issue first with the required schema,
+ * then invoke the pipeline. This preserves provenance (principle P21).
+ *
+ * Exemptions (pipeline NOT required):
+ *   - docs-only changes (*.md files)
+ *   - comment-only edits
+ *   - typo fixes / single-line copy tweaks
+ *   - lint/prettier autofixes
+ *
+ * If in doubt, invoke the pipeline. Overhead beats regression.
  */
 
 export const meta = {
@@ -335,21 +363,170 @@ Be strict. This is the last gate before the fix reaches paying users.
 Return via BE_SCHEMA.`
 }
 
+// ==================== SUPPLEMENTARY PERSONAS ====================
+
+const SUPPLEMENTARY_SCHEMA = {
+  type: 'object',
+  required: ['verdict', 'reasoning'],
+  properties: {
+    verdict: { enum: ['SIGNOFF', 'REJECT'] },
+    concerns: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    reasoning: { type: 'string' },
+    domainSpecificFindings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['finding', 'severity'],
+        properties: {
+          finding: { type: 'string' },
+          severity: { enum: ['blocking', 'warning', 'nit'] },
+        },
+      },
+    },
+  },
+}
+
+const SUPPLEMENTARY_PERSONAS = {
+  ux: {
+    label: 'UX Designer',
+    file: 'ux-designer.md',
+    prefix: 'UX',
+    ruleRange: 'UX-1 through UX-23',
+    domain: 'user-facing UI — workspace / chat / wizard / form flows',
+    focus:
+      'Apple design philosophy (UX-1..5), information hierarchy (UX-6..8, UX-15..16), voice discipline including no directive language / no BUY-PASS badges (UX-11, UX-18), accessibility (UX-12, WCAG 2.1 AA), typography including tabular nums for financial data (UX-13..14).',
+  },
+  mobile: {
+    label: 'Mobile Developer (Sterling)',
+    file: 'mobile-developer.md',
+    prefix: 'MOB',
+    ruleRange: 'MOB-1 through MOB-56',
+    domain: 'anything mobile-visible — touch targets, Core Web Vitals, bundle size, offline behavior, property-tour usage',
+    focus:
+      'Touch target minimums (MOB-1, ≥48px), Core Web Vitals budgets (MOB-6..8), REanalyzr-specific perf budgets (MOB-9..11), bundle size limits (MOB-12..14), offline-first capabilities (MOB-24..29), the key mobile questions (MOB-39..45). Hard-block on MOB-6..14 violations regardless of other reviewers.',
+  },
+  tax: {
+    label: 'Tax Expert (CPA)',
+    file: 'tax-expert.md',
+    prefix: 'TAX',
+    ruleRange: 'TAX-1 through TAX-14',
+    domain: 'depreciation, 1031 exchange, hold-period tax, state tax, tax narrative / educational content',
+    focus:
+      'Depreciation accuracy including 27.5-year residential (TAX-13) and 25% recapture (TAX-2), 1031 timing rules (TAX-3), calculation accuracy vs professional software (TAX-5), and compliance disclaimers (TAX-6..8). TAX-6/7/8 violations are hard blockers regardless of other reviewer signoffs.',
+  },
+  marketing: {
+    label: 'Marketing Expert',
+    file: 'marketing-expert.md',
+    prefix: 'MKT',
+    ruleRange: 'MKT-1 through MKT-29',
+    domain: 'landing / pricing / onboarding / conversion / activation surfaces / signup flow / email',
+    focus:
+      'Pricing structure (MKT-1..3), conversion optimization (MKT-4, MKT-6, MKT-8..9), retention benchmarks (MKT-17..20), voice discipline (MKT-25..29). Every claim / metric / benchmark in the fix MUST have a validated source per CLAUDE.md CRITICAL RULE — no invented numbers.',
+  },
+  strategic: {
+    label: 'Strategic Product Advisor (Marcus Chen)',
+    file: 'strategic-product-advisor.md',
+    prefix: 'STRAT',
+    ruleRange: 'STRAT-1 through STRAT-45',
+    domain: 'pricing / packaging / GTM channel / AI moat construction / Track 1/2/3 boundary decisions',
+    focus:
+      'AI product moat (STRAT-18..19, STRAT-43), substrate discipline (STRAT-24), category timing (STRAT-20..21), pricing philosophy (STRAT-6, STRAT-35..36), REanalyzr constraints (STRAT-37..40, STRAT-45). Hard block on STRAT-37 (do not touch released assets) or STRAT-38 violations (Track 1/2/3 boundary).',
+  },
+}
+
+function supplementaryPrompt(personaKey, issueNumber, design, impl, qeReport, beReport) {
+  const p = SUPPLEMENTARY_PERSONAS[personaKey]
+  if (!p) throw new Error(`Unknown supplementary persona: ${personaKey}`)
+
+  return `You are the ${p.label} defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md.
+
+Step 1 — Read YOUR persona checklist.
+  Read /Users/parthpatel/real-estate-analyzer/docs/personas/${p.file} IN FULL. Your rules are ${p.ruleRange}.
+  Also skim /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md for any principle that applies to your domain.
+
+Task: domain review for issue ${issueNumber}. The base pipeline (Architect + Engineer + QE + Business Expert) has already signed off. Your job is to check the fix against YOUR domain (${p.domain}).
+
+Focus: ${p.focus}
+
+Issue: ${issueNumber} — read full entry from /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md via grep.
+
+Architect's design:
+${JSON.stringify(design, null, 2)}
+
+Engineer's implementation:
+${JSON.stringify(impl, null, 2)}
+
+QE Report:
+${JSON.stringify(qeReport, null, 2)}
+
+Business Expert Report:
+${JSON.stringify(beReport, null, 2)}
+
+Read every file in impl.filesModified that touches your domain. Read the commit at impl.commitSha (git show).
+
+Verify:
+  1. Does the implementation uphold every applicable ${p.prefix}-N rule from your persona file?
+  2. For rules Architect did NOT explicitly call out as non-goals — are any violated?
+  3. Are there domain-specific concerns the base pipeline (which focuses on backend correctness + trust guardrails) would miss?
+  4. Any real-world scenarios in your domain that the design didn't consider?
+
+Verdict: SIGNOFF only if all applicable rules hold AND no domain-specific concerns block shipping. Otherwise REJECT.
+
+REJECT sends the design back to Architect with your concerns as feedback. Be strict — your veto is the last defense in your domain.
+
+Return via the SUPPLEMENTARY_SCHEMA structured output.`
+}
+
+// ==================== ARG PARSING ====================
+
+function parseArgs(rawArgs) {
+  if (rawArgs === null || rawArgs === undefined) {
+    throw new Error(
+      'fix-issue requires args. Example: { name: "fix-issue", args: "#243" } or { args: { issue: "#243", personas: ["ux"] } }'
+    )
+  }
+
+  let issue, personas
+  if (typeof rawArgs === 'string') {
+    issue = rawArgs.trim()
+    personas = []
+  } else if (typeof rawArgs === 'object') {
+    issue = String(rawArgs.issue ?? '').trim()
+    personas = Array.isArray(rawArgs.personas) ? rawArgs.personas.map((p) => String(p).toLowerCase().trim()) : []
+  } else {
+    throw new Error(`fix-issue args must be a string or object; got ${typeof rawArgs}`)
+  }
+
+  if (!issue) {
+    throw new Error('fix-issue requires an issue number. See ISSUE_TRACKER.md.')
+  }
+
+  const normalizedIssue = issue.startsWith('#') ? issue : `#${issue}`
+
+  const unknownPersonas = personas.filter((p) => !SUPPLEMENTARY_PERSONAS[p])
+  if (unknownPersonas.length > 0) {
+    throw new Error(
+      `Unknown supplementary personas: ${unknownPersonas.join(', ')}. Valid options: ${Object.keys(SUPPLEMENTARY_PERSONAS).join(', ')}`
+    )
+  }
+
+  return { issue: normalizedIssue, personas }
+}
+
 // ==================== MAIN LOOP ====================
 
 const MAX_ITERATIONS = 3
-const issueNumber = String(args ?? '').trim()
-
-if (!issueNumber) {
-  throw new Error(
-    'fix-issue requires an issue number as args. Example: { name: "fix-issue", args: "#243" }'
-  )
-}
-
-// Normalize: allow "#243" or "243"
-const normalizedIssue = issueNumber.startsWith('#') ? issueNumber : `#${issueNumber}`
+const parsed = parseArgs(args)
+const normalizedIssue = parsed.issue
+const supplementaryPersonas = parsed.personas
 
 log(`Starting fix-issue pipeline for ${normalizedIssue}`)
+if (supplementaryPersonas.length > 0) {
+  log(`Supplementary personas: ${supplementaryPersonas.map((p) => SUPPLEMENTARY_PERSONAS[p].label).join(', ')}`)
+}
 
 let iteration = 1
 let design = null
@@ -464,17 +641,77 @@ while (iteration <= MAX_ITERATIONS) {
     continue
   }
 
-  // All gates passed
+  // ==================== Supplementary personas ====================
+  // Run in sequence after BE signoff. Any REJECT loops back to Architect.
+  // Reports accumulated on the iteration record so Architect (in loop 2+)
+  // has full context on which domain rejected and why.
+  const supplementaryReports = {}
+  let supplementaryRejected = false
+
+  for (const personaKey of supplementaryPersonas) {
+    const p = SUPPLEMENTARY_PERSONAS[personaKey]
+    phase(`${p.label} · signoff`)
+    const report = await agent(
+      supplementaryPrompt(personaKey, normalizedIssue, design, impl, qeReport, beReport),
+      {
+        label: `${personaKey}${iteration > 1 ? ` (iter ${iteration})` : ''}`,
+        schema: SUPPLEMENTARY_SCHEMA,
+        agentType: 'general-purpose',
+      }
+    )
+
+    if (!report) {
+      log(`Iteration ${iteration}: ${p.label} returned null. Aborting.`)
+      return {
+        status: 'ESCALATE_TO_USER',
+        reason: `${p.label} agent failed to produce a report`,
+        iteration,
+        design,
+        impl,
+        qeReport,
+        beReport,
+        supplementaryReports,
+        history,
+      }
+    }
+
+    supplementaryReports[personaKey] = report
+
+    if (report.verdict === 'REJECT') {
+      feedback = `${p.label} REJECTED iteration ${iteration}. Reasoning: ${report.reasoning}. Concerns: ${(report.concerns ?? []).join('; ') || 'see reasoning'}. Blocking findings: ${(report.domainSpecificFindings ?? []).filter((f) => f.severity === 'blocking').map((f) => f.finding).join('; ') || 'see reasoning'}.`
+      history.push({
+        iteration,
+        phase: `${personaKey}-reject`,
+        design,
+        impl,
+        qeReport,
+        beReport,
+        supplementaryReports,
+      })
+      log(`Iteration ${iteration}: ${p.label} REJECTED. Looping back to Architect.`)
+      supplementaryRejected = true
+      break
+    }
+  }
+
+  if (supplementaryRejected) {
+    iteration++
+    continue
+  }
+
+  // All gates passed (base + supplementary)
   log(`✅ Iteration ${iteration}: ALL GATES PASSED. Fix approved. Commit: ${impl.commitSha}`)
   return {
     status: 'APPROVED',
     issue: normalizedIssue,
     iterationsUsed: iteration,
+    supplementaryPersonas,
     commitSha: impl.commitSha,
     design,
     impl,
     qeReport,
     beReport,
+    supplementaryReports,
     history,
   }
 }
