@@ -199,22 +199,27 @@ Previous feedback: ${feedback}
 Revise the design. If the failure was in DESIGN, produce a fundamentally different approach (set rejectPreviousWork: true). If the failure was in IMPLEMENTATION (Engineer misinterpreted), tighten the design spec so misinterpretation is impossible.
 `
 
-  return `You are the Principal Software Architect defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md — 18 years experience, financial services + real estate, "Single Source of Truth" is your core principle.
+  return `You are the Principal Software Architect defined in /Users/parthpatel/real-estate-analyzer/CLAUDE.md — 18 years experience, financial services + real estate.
 
 Task: design a fix for issue ${issueNumber}.
 
-Step 1 — Read the issue.
+Step 1 — Read the authoritative principles checklist.
+  Read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL before starting the design. This is your checklist. Every design decision must be defensible against P1-P25.
+
+Step 2 — Read the issue.
   Run: grep -A 30 "^### Issue ${issueNumber}:" /Users/parthpatel/real-estate-analyzer/docs/ISSUE_TRACKER.md
   Read the full entry including its "Component", "Description", "Business Impact", "Proposed Solution", and "Related" sections.
 
-Step 2 — Read the code.
+Step 3 — Read the code.
   For every file:line-range mentioned in Component + Description, read that file (at least ±20 lines around the referenced line).
   Read related callers/consumers if the issue is about drift or wire-shape.
 
-Step 3 — Design the fix.
-  Respect Single Source of Truth. Respect the Financial Precision Principle (no Math.round in analyzer code). Respect the Data Flow Integrity principle. Do not scope-creep — the fix must match the issue.
+Step 4 — Design the fix.
+  Verify the design against every APPLICABLE principle in ARCHITECTURE_PRINCIPLES.md. Cite the principle numbers in your reasoning (e.g., "per P1 Single Source of Truth, this consolidates the three computation sites into one projector call").
+  For any principle you consciously chose NOT to apply, list it as a non-goal WITH REASONING.
+  Do not scope-creep — the fix must match the issue.
 
-Return via the DESIGN_SCHEMA structured output. Be specific: filesToChange must name files that exist and describe changes concretely. Invariants must be testable assertions. NonGoals must call out what an over-eager engineer might otherwise attempt.
+Return via the DESIGN_SCHEMA structured output. Be specific: filesToChange must name files that exist and describe changes concretely. Invariants must be testable assertions. NonGoals must call out what an over-eager engineer might otherwise attempt AND every principle intentionally skipped.
 ${iterationBlock}
 Do NOT modify code. Design only.`
 }
@@ -263,12 +268,15 @@ ${JSON.stringify(impl, null, 2)}
 
 Read every file in impl.filesModified. Read the commit at impl.commitSha (git show).
 
+Also read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL — you validate against every applicable principle, not just the invariants Architect enumerated.
+
 Verify:
   1. addressesFailureMode: does the code actually prevent the SPECIFIC failure mode described in the issue's Description section? Cite the specific line + explain how it prevents the failure.
   2. regressionTestsPresent: is there a test that would FAIL if this bug returned? Cite the specific test (file + test name). Not just related tests — this exact bug.
   3. invariantsHold: for EACH invariant Architect specified, verify it's actually enforced by the implementation. If it's supposed to be a test, verify the test exists and passes.
   4. brokenInvariants: does the fix break any existing tests or documented invariants? Run cd backend && npx jest --silent + cd frontend && npx tsc --noEmit and check.
-  5. coverageGaps: is there a variant of the failure mode that isn't covered?
+  5. principlesUpheld: for EACH principle P1-P25 that applies to this fix, verify the implementation upholds it. Any violation that Architect did NOT explicitly call out as a non-goal = FAIL. Add violated principles to brokenInvariants with "PRINCIPLE Pn: <name>".
+  6. coverageGaps: is there a variant of the failure mode that isn't covered?
 
 Verdict: PASS only if (addressesFailureMode.answer && regressionTestsPresent.answer && all invariantsHold && brokenInvariants is empty). FAIL otherwise.
 
@@ -287,14 +295,19 @@ Read:
   - Engineer's summary of changes: ${JSON.stringify(impl.summary)}
   - QE's report: ${JSON.stringify(qeReport)}
 
+Also read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md — you own principles P5 (Deterministic Numbers), P6 (Language Hygiene), P7 (Honest Analysis is the Moat), P8 (Score-only display), P25 (Data Validation).
+
 Now simulate what a paying investor sees:
 
   1. Enumerate 2-3 REAL-USER SCENARIOS where this feature/bug matters. For each, describe what the user does and what outcome they see after the fix. Judge whether the outcome is business-correct (not just test-correct).
 
-  2. Check marketing claims:
+  2. Check marketing claims + your owned principles:
+     - P5 Deterministic Numbers: does every number surfaced originate from a tool call?
+     - P6 Language Hygiene: any banned verdict words? Directive advisory language?
+     - P7 Honest Analysis: silver-lining framing on load-bearing failures?
+     - P8 Score display only: any verdict badges, next-step CTAs derived from score?
      - "Institutional-grade deterministic analysis" — does the fix maintain this?
      - "Honest analysis is the moat" — does it produce honest scoring / narratives?
-     - No verdict language (BUY / PASS / SELL) — does the fix respect the language hygiene rules?
 
   3. Would an experienced BRRRR / buy-hold investor spot any lingering issue that the technical fix didn't address?
 

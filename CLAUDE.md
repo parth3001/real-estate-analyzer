@@ -1057,6 +1057,17 @@ Fix doesn't work after 2 attempts?
 
 ---
 
+## 📐 **AUTHORITATIVE PRINCIPLES CHECKLIST**
+
+Every architectural decision — during the `fix-issue` pipeline or otherwise — is checked against **`/docs/ARCHITECTURE_PRINCIPLES.md`**. 25 numbered principles, each with a rule / rationale / violation example / enforcement mechanism. The Architect persona reads this file BEFORE designing, the QE persona validates against it, the Business Expert owns principles P5-P8 (trust guardrails).
+
+Read the checklist end-to-end:
+→ **[docs/ARCHITECTURE_PRINCIPLES.md](docs/ARCHITECTURE_PRINCIPLES.md)**
+
+Non-goals are legitimate — but they must be EXPLICIT. A design that violates a principle without calling it out as a non-goal fails QE.
+
+---
+
 ## 🛡️ **MANDATORY: `fix-issue` PIPELINE FOR TASK #50 WORK**
 
 **As of 2026-07-08, all issues #243–#256 and any future issue tied to Task #50 (v1.1 architectural sprint) MUST go through the `fix-issue` workflow. No ad-hoc fixes.**
