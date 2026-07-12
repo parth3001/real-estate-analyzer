@@ -75,10 +75,10 @@ const PREFLIGHT_SCHEMA = {
     existingPatterns: {
       type: 'array',
       description:
-        'Similar patterns, normalizers, helpers, or projectors already in the code that Architect should reuse rather than reimplement',
+        'Similar patterns, normalizers, helpers, or projectors already in the code that Architect should reuse rather than reimplement. Every entry MUST include its lifecycle (LIVE / LEGACY / DEPRECATED / UNKNOWN) — Architect will refuse to reuse LEGACY / DEPRECATED / UNKNOWN without explicit non-goal reasoning.',
       items: {
         type: 'object',
-        required: ['path', 'description', 'reuseAdvice'],
+        required: ['path', 'description', 'reuseAdvice', 'lifecycle'],
         properties: {
           path: { type: 'string' },
           description: { type: 'string' },
@@ -86,6 +86,27 @@ const PREFLIGHT_SCHEMA = {
             type: 'string',
             description: 'How Architect should relate the new design to this existing pattern (reuse / extend / replace / ignore)',
           },
+          lifecycle: {
+            enum: ['LIVE', 'LEGACY', 'DEPRECATED', 'UNKNOWN'],
+            description: 'From CANONICAL_SURFACES.yaml. UNKNOWN if the file is not in the canonical list — Architect will not reuse without human lifecycle verification.',
+          },
+          canonicalId: {
+            type: 'string',
+            description: 'The id field from CANONICAL_SURFACES.yaml if this pattern is listed; empty string if unlisted',
+          },
+        },
+      },
+    },
+    suspectFilesNotInCanonical: {
+      type: 'array',
+      description:
+        'Files surfaced by the grep pass that are NOT listed in CANONICAL_SURFACES.yaml. These need human lifecycle triage before Architect can safely wire consumers to them.',
+      items: {
+        type: 'object',
+        required: ['path', 'reasonSuspect'],
+        properties: {
+          path: { type: 'string' },
+          reasonSuspect: { type: 'string' },
         },
       },
     },
@@ -314,6 +335,8 @@ function preflightPrompt(issueNumber) {
 
 **Search breadth: VERY THOROUGH.** Cast a wide net across multiple locations and naming variations. Coverage matters more than speed.
 
+**STEP 0 (MANDATORY, RUN FIRST) — Read /Users/parthpatel/real-estate-analyzer/docs/CANONICAL_SURFACES.yaml IN FULL.** This is the authoritative list of LIVE vs LEGACY code. Any file with lifecycle: LEGACY or DEPRECATED must NOT be recommended as an existing pattern to reuse. Any file marked UNKNOWN needs a human review flag. If your grep results surface a file NOT in the canonical list, mark it as suspect in your response — Architect will not wire consumers to unlisted files without explicit lifecycle verification.
+
 Steps:
 
 1. Read the issue.
@@ -385,14 +408,16 @@ Step 1 — Read YOUR persona checklist AND the system principles.
   Then read /Users/parthpatel/real-estate-analyzer/docs/ARCHITECTURE_PRINCIPLES.md IN FULL — system-level principles P1-P25.
   Every design decision must be defensible against BOTH lists.
 
-Step 2 — Absorb the pre-flight audit.
+Step 2 — Absorb the pre-flight audit AND enforce lifecycle discipline.
   The pre-flight agent has already surveyed the current-state of the codebase around this issue. READ IT CAREFULLY before designing anything. Especially:
-    - existingPatterns[] — DO NOT reimplement patterns that already exist. Extend or reuse per each item's reuseAdvice.
+    - existingPatterns[] — DO NOT reimplement patterns that already exist. Extend or reuse per each item's reuseAdvice. **CRITICAL: only reuse patterns with lifecycle === 'LIVE'.** LEGACY / DEPRECATED / UNKNOWN patterns must NEVER be recommended as reuse targets unless you list them as an explicit non-goal with reasoning ("legacy X is intentionally being kept as a fallback for the migration, will be removed in phase N").
+    - suspectFilesNotInCanonical[] — files pre-flight found but that are NOT in the canonical registry. Design MUST NOT wire new consumers to these files. If your design needs to touch one, add it to CANONICAL_SURFACES.yaml as part of the design (list the yaml update in filesToChange with a note "add lifecycle: LIVE entry for file X").
     - relatedTests[] — mirror these conventions in what you tell Engineer to build
     - recentActivity[] — recent commits may have changed the picture since the issue was filed
     - relatedIssues[] — flag any design decision that MUST coordinate with those issues (as non-goals or design invariants)
     - gotchas[] — every one must be addressed or listed as a non-goal
-  If the pre-flight surfaces a pattern that fully addresses the issue already, your design might just be "wire consumers to the existing pattern" — no new abstractions.
+  If the pre-flight surfaces a LIVE pattern that fully addresses the issue already, your design might just be "wire consumers to the existing pattern" — no new abstractions.
+  If your design REPLACES an existing LIVE file with something better, include a cleanup step: (a) update CANONICAL_SURFACES.yaml lifecycle of the old file to LEGACY, (b) list its replaced_by, (c) add a sunset_recommendation date if you don't fully remove it.
 
 Pre-flight audit:
 ${JSON.stringify(preflight, null, 2)}
@@ -435,6 +460,7 @@ Constraints:
   - Add tests as design's invariants require — each invariant becomes at least one test
   - Working directory: /Users/parthpatel/real-estate-analyzer
   - Branch: reanalyzr-2.0 (main is frozen)
+  - ⚠️ LIFECYCLE DISCIPLINE: never add an import from a file marked LEGACY / DEPRECATED / UNKNOWN in /Users/parthpatel/real-estate-analyzer/docs/CANONICAL_SURFACES.yaml. If your work needs to touch such a file, the design MUST have listed it in filesToChange with an explicit lifecycle change instruction. When you add a NEW file or move/refactor an existing one, update CANONICAL_SURFACES.yaml as part of the same commit — add the new file with lifecycle: LIVE (or the appropriate state), and if you replaced something, mark the old file lifecycle: LEGACY with replaced_by pointing at the new one.
 
 Steps:
   1. Make code changes per design
@@ -476,7 +502,8 @@ Verify:
   3. invariantsHold: for EACH invariant Architect specified, verify it's actually enforced by the implementation. If it's supposed to be a test, verify the test exists and passes.
   4. brokenInvariants: does the fix break any existing tests or documented invariants? Run cd backend && npx jest --silent + cd frontend && npx tsc --noEmit and check.
   5. principlesUpheld: for EACH principle P1-P25 that applies to this fix, verify the implementation upholds it. Any violation that Architect did NOT explicitly call out as a non-goal = FAIL. Add violated principles to brokenInvariants with "PRINCIPLE Pn: <name>".
-  6. coverageGaps: is there a variant of the failure mode that isn't covered?
+  6. lifecycleDiscipline: read /Users/parthpatel/real-estate-analyzer/docs/CANONICAL_SURFACES.yaml. For every file Engineer imported into the changes, verify its lifecycle is LIVE (or Architect explicitly documented the non-goal). Any new imports of LEGACY / DEPRECATED / UNKNOWN files without Architect non-goal = FAIL. If Engineer added a NEW file, verify CANONICAL_SURFACES.yaml was updated in the same commit — if not, FAIL.
+  7. coverageGaps: is there a variant of the failure mode that isn't covered?
 
 Verdict: PASS only if (addressesFailureMode.answer && regressionTestsPresent.answer && all invariantsHold && brokenInvariants is empty). FAIL otherwise.
 

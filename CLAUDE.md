@@ -1057,6 +1057,24 @@ Fix doesn't work after 2 attempts?
 
 ---
 
+## 🧭 **LIVE-vs-LEGACY DISCIPLINE — CANONICAL_SURFACES.yaml**
+
+REanalyzr has iterated through multiple architecture versions (Investment Decision Engine v1 → v2 → v3, evolving analyzers + substrate). Dead code from earlier iterations lives alongside current code, and neither grep nor a graph DB automatically distinguishes them. Without explicit labeling, an Architect designing against the codebase can accidentally wire new consumers to legacy patterns, silently reintroducing bugs from earlier iterations.
+
+→ **[docs/CANONICAL_SURFACES.yaml](docs/CANONICAL_SURFACES.yaml)** — authoritative list of load-bearing surfaces with `lifecycle: LIVE | LEGACY | DEPRECATED | UNKNOWN`.
+
+**Discipline enforced by the `fix-issue` pipeline:**
+- Pre-flight reads CANONICAL_SURFACES.yaml FIRST. Any file NOT listed is flagged as suspect.
+- Architect refuses to reuse patterns marked LEGACY / DEPRECATED / UNKNOWN unless explicit non-goal reasoning is provided.
+- Engineer refuses to add imports from LEGACY / DEPRECATED / UNKNOWN files.
+- When Engineer adds a NEW file or moves/refactors an existing one, CANONICAL_SURFACES.yaml MUST be updated in the same commit.
+- When a fix REPLACES an existing LIVE file, the old file's lifecycle updates to LEGACY with `replaced_by` and a `sunset_recommendation` date.
+- QE hard-fails if any of the above are violated.
+
+This is how we prevent V2-legacy code from being mistaken for V3-canonical.
+
+---
+
 ## 📐 **AUTHORITATIVE PRINCIPLES CHECKLISTS**
 
 Every architectural decision — during the `fix-issue` pipeline or otherwise — is checked against two layers:
