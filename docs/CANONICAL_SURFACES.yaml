@@ -1,28 +1,35 @@
 scan_metadata:
   scanned_at: "2026-07-08 (session)"
-  scanner: "Explore agent, first-pass automated draft"
+  scanner: "Explore agent, first-pass automated draft; user-reviewed 2026-07-09"
   files_scanned: 180
   files_categorized: 92
-  unknown_needs_review: 10
+  unknown_needs_review: 1
   summary: >
-    Backend architecture is clearly in mid-migration: substrate + agent-mesh
-    (W1–W6, Sonnet 4.6 / Haiku 4.5 / Opus 4.7) is the LIVE canonical write
-    path (score_deal → projectToEventPayloads → AnalysisEvent+DecisionEvent,
-    then dealMaterializationService projects into legacy Deal). The V3.0
-    InvestmentDecisionEngine + BaseDecisionEngine + MFDecisionEngine + SFR /
-    MultiFamily / BRRRR analyzers are LIVE and the only decision engines
-    present — no V1/V2 files exist alongside them (older iterations were
-    already excised; only inline "// LEGACY" fields remain inside them for
-    backwards compatibility). Frontend is mid-migration from the AppleNavigation
-    shell (LEGACY, still routing /sfr-analysis /mf-analysis /admin) to the
-    AppLayout / NewAppShell chat-first shell (LIVE, routing /app /portfolio
-    /pipeline /saved-properties /profile /settings). MainLayout.tsx and
-    Dashboard.tsx are dead code (not routed). Many .bak / .old / .fix / .tmp
-    files exist under backend/src/controllers/ and backend/src/index.ts.bak
-    — pure LEGACY. openai + predictionEngine + aiService + AIOrchestrator
-    are the pre-substrate GPT-4o-mini analysis pipeline still driving the
-    wizard route; they should be treated as UNKNOWN pending Architect
-    guidance since substrate agents (Anthropic) will supersede them.
+    Backend architecture is in mid-migration: substrate + agent-mesh (W1-W6)
+    is LIVE canonical (score_deal → projectToEventPayloads →
+    AnalysisEvent+DecisionEvent → dealMaterializationService → legacy Deal).
+    V3.0 InvestmentDecisionEngine + BaseDecisionEngine + MFDecisionEngine +
+    SFR/MultiFamily/BRRRR analyzers are LIVE — no V1/V2 files exist
+    alongside them (already excised). Only inline "// LEGACY" markers on
+    individual fields remain.
+    User decisions 2026-07-09 (see LEGACY entries below):
+      - Pre-substrate GPT-4o-mini pipeline (aiService, aiOrchestrator,
+        predictionEngine) → LEGACY. Substrate agents supersede it.
+      - Wizard flow (SFRAnalysis, MFAnalysis pages + wizardRoutes,
+        quickAnalysis, analyzeRoutes) → LEGACY. Retiring in favor of chat.
+      - pdfService (wizard-shape PDF) → LEGACY. SubstrateDealPdf is
+        canonical for chat/substrate deals.
+      - quickCalculationService (real-time /api/quick) → LEGACY. Was a
+        customer-acquisition play; chat now serves that role.
+    Frontend is mid-migration from AppleNavigation shell (LEGACY, still
+    routes /sfr-analysis /mf-analysis /admin) to AppLayout / NewAppShell
+    chat-first shell (LIVE). MainLayout.tsx and Dashboard.tsx are dead
+    code (not routed). ~9 .bak/.old/.fix/.tmp files in backend/src/
+    controllers/ are pure LEGACY.
+    Remaining human review (1): aiEnhancedMessaging + goalExtractionService
+    + openai.ts are GPT-4o-mini-adjacent and marked LIVE because LIVE
+    decision engines still call them. If those calls should be removed
+    with the GPT pipeline sunset, these three cascade to LEGACY too.
 
 canonical_surfaces:
 
@@ -649,17 +656,21 @@ canonical_surfaces:
 
   - id: sfr_analysis_page
     file: frontend/src/pages/SFRAnalysis.tsx
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: frontend_page
-    role: "Legacy wizard for SFR — still routed at /sfr-analysis under AppleNavigation shell per Issue #100"
-    human_review_needed: "Wizard is 'accessible but unlinked' per App.tsx — is this UNKNOWN (in-repo but not part of active IA) or LIVE (still linked from affiliate landing /sfr-analysis CTA)?"
+    role: "Legacy SFR wizard page; retired in favor of chat-native flow (AppPage + ChatOverlay)"
+    replaced_by: app_page
+    sunset_recommendation: "Remove after chat-native flow stabilizes post-launch; keep behind AppleNavigation shell until affiliate landing CTAs migrate"
+    user_decision: "2026-07-09 — wizard flow retiring, chat replaces"
 
   - id: mf_analysis_page
     file: frontend/src/pages/MFAnalysis.tsx
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: frontend_page
-    role: "Legacy wizard for MF — same story as SFR"
-    human_review_needed: "Same review question as sfr_analysis_page"
+    role: "Legacy MF wizard page; retired in favor of chat-native flow"
+    replaced_by: app_page
+    sunset_recommendation: "Remove after chat-native flow supports multi-family end-to-end"
+    user_decision: "2026-07-09 — wizard flow retiring, chat replaces"
 
   - id: saved_properties_page
     file: frontend/src/pages/SavedProperties.tsx
@@ -768,24 +779,30 @@ canonical_surfaces:
 
   - id: ai_service
     file: backend/src/services/aiService.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: ai_service
-    role: "GPT-4o-mini insights + goal analysis; still used by controllers/deals.ts and analyzeRoutes.ts wizard path"
-    human_review_needed: "Is this LIVE for the wizard route only, or LEGACY superseded by anthropic-based agent mesh? Header says 'gpt-4o-mini' and CLAUDE.md flags substrate agents will replace the pre-substrate AI pipeline."
+    role: "GPT-4o-mini insights + goal analysis; consumed by wizard route + controllers/deals.ts"
+    replaced_by: deal_scoring_agent
+    sunset_recommendation: "Remove with wizard flow retirement. Consumers (controllers/deals.ts, analyzeRoutes.ts) must migrate to substrate-agent path or stop calling this."
+    user_decision: "2026-07-09 — GPT-4o-mini pipeline replaced by substrate agents (Anthropic)"
 
   - id: ai_orchestrator
     file: backend/src/services/ai/aiOrchestrator.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: ai_service
     role: "Central coordinator for 4 GPT-4o-mini micro-predictions"
-    human_review_needed: "Same as ai_service — consumed only by aiService.getAIInsights"
+    replaced_by: deal_scoring_agent
+    sunset_recommendation: "Remove with ai_service"
+    user_decision: "2026-07-09"
 
   - id: prediction_engine
     file: backend/src/services/predictionEngine.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: ai_service
     role: "Pre-substrate GPT-4o-mini micro-predictions"
-    human_review_needed: "Only consumer is aiService — same review as above"
+    replaced_by: deal_scoring_agent
+    sunset_recommendation: "Remove with ai_service (only consumer)"
+    user_decision: "2026-07-09"
 
   - id: ai_enhanced_messaging
     file: backend/src/services/aiEnhancedMessaging.ts
@@ -894,10 +911,12 @@ canonical_surfaces:
 
   - id: pdf_service
     file: backend/src/services/pdfService.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: feature_service
     role: "React-PDF wizard-shape analysis PDF"
-    human_review_needed: "SubstrateDealPdf explicitly says pdfService 'expects the wizard's 60+ field shape' — is this now wizard-only, superseded by SubstrateDealPdf for chat/substrate deals?"
+    replaced_by: substrate_deal_pdf
+    sunset_recommendation: "Remove with wizard flow retirement"
+    user_decision: "2026-07-09 — SubstrateDealPdf is canonical; wizard-shape PDF retiring with the wizard"
 
   - id: email_service
     file: backend/src/services/emailService.ts
@@ -911,10 +930,12 @@ canonical_surfaces:
 
   - id: quick_calculation_service
     file: backend/src/services/quickCalculationService.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: feature_service
-    role: "<50ms real-time parameter update endpoint (routes/quickAnalysis.ts)"
-    human_review_needed: "Referenced by wizard-side /api/quick — LIVE if wizard is still live; UNKNOWN if wizard is sunset track"
+    role: "<50ms real-time parameter update endpoint — was a customer-acquisition play"
+    replaced_by: route_chat
+    sunset_recommendation: "Remove with wizard flow retirement"
+    user_decision: "2026-07-09 — chat now serves the customer-acquisition role that /api/quick played"
 
   - id: analytics_service
     file: backend/src/services/analyticsService.ts
@@ -985,22 +1006,28 @@ canonical_surfaces:
 
   - id: route_analyze
     file: backend/src/routes/analyzeRoutes.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: route
     role: "Wizard-side /api/analyze — uses SFRAnalyzer + MultiFamilyAnalyzer + aiService"
-    human_review_needed: "Same review question as ai_service — wizard-only or LEGACY?"
+    replaced_by: route_chat
+    sunset_recommendation: "Remove with wizard flow retirement"
+    user_decision: "2026-07-09"
 
   - id: route_wizard
     file: backend/src/routes/wizardRoutes.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: route
-    human_review_needed: "Wizard status — LIVE or LEGACY?"
+    replaced_by: route_chat
+    sunset_recommendation: "Remove with wizard flow retirement"
+    user_decision: "2026-07-09"
 
   - id: route_quick_analysis
     file: backend/src/routes/quickAnalysis.ts
-    lifecycle: UNKNOWN
+    lifecycle: LEGACY
     category: route
-    human_review_needed: "Wizard-only endpoint"
+    replaced_by: route_chat
+    sunset_recommendation: "Remove with wizard flow retirement"
+    user_decision: "2026-07-09"
 
   - id: route_portfolios
     file: backend/src/routes/portfolios.ts
