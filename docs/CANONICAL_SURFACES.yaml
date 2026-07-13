@@ -1,0 +1,1102 @@
+scan_metadata:
+  scanned_at: "2026-07-08 (session)"
+  scanner: "Explore agent, first-pass automated draft"
+  files_scanned: 180
+  files_categorized: 92
+  unknown_needs_review: 10
+  summary: >
+    Backend architecture is clearly in mid-migration: substrate + agent-mesh
+    (W1–W6, Sonnet 4.6 / Haiku 4.5 / Opus 4.7) is the LIVE canonical write
+    path (score_deal → projectToEventPayloads → AnalysisEvent+DecisionEvent,
+    then dealMaterializationService projects into legacy Deal). The V3.0
+    InvestmentDecisionEngine + BaseDecisionEngine + MFDecisionEngine + SFR /
+    MultiFamily / BRRRR analyzers are LIVE and the only decision engines
+    present — no V1/V2 files exist alongside them (older iterations were
+    already excised; only inline "// LEGACY" fields remain inside them for
+    backwards compatibility). Frontend is mid-migration from the AppleNavigation
+    shell (LEGACY, still routing /sfr-analysis /mf-analysis /admin) to the
+    AppLayout / NewAppShell chat-first shell (LIVE, routing /app /portfolio
+    /pipeline /saved-properties /profile /settings). MainLayout.tsx and
+    Dashboard.tsx are dead code (not routed). Many .bak / .old / .fix / .tmp
+    files exist under backend/src/controllers/ and backend/src/index.ts.bak
+    — pure LEGACY. openai + predictionEngine + aiService + AIOrchestrator
+    are the pre-substrate GPT-4o-mini analysis pipeline still driving the
+    wizard route; they should be treated as UNKNOWN pending Architect
+    guidance since substrate agents (Anthropic) will supersede them.
+
+canonical_surfaces:
+
+  # ============================================================
+  # ANALYZERS — deterministic math over property inputs
+  # ============================================================
+
+  - id: base_property_analyzer
+    file: backend/src/analysis/BasePropertyAnalyzer.ts
+    lifecycle: LIVE
+    version: "3.x"
+    category: analyzer
+    role: "Abstract base class — projections, exit analysis, NOI shared logic; SFRAnalyzer + MultiFamilyAnalyzer extend it"
+    key_exports: ["BasePropertyAnalyzer", "AnalysisAssumptions"]
+
+  - id: sfr_analyzer
+    file: backend/src/analysis/SFRAnalyzer.ts
+    lifecycle: LIVE
+    version: "3.x"
+    category: analyzer
+    role: "SFR buy-hold + house-hack + BRRRR analysis; canonical input to score_deal + scenarioSensitivity"
+    key_exports: ["SFRAnalyzer"]
+
+  - id: multifamily_analyzer
+    file: backend/src/analysis/MultiFamilyAnalyzer.ts
+    lifecycle: LIVE
+    version: "3.x"
+    category: analyzer
+    role: "MF analyzer with per-unit + unitType aggregation; feeds MFDecisionEngine"
+
+  - id: brrrr_analyzer
+    file: backend/src/services/investment/brrrAnalyzer.ts
+    lifecycle: LIVE
+    version: "1.x"
+    category: analyzer
+    role: "BRRRR strategy analyzer — capital recovery, refi metrics, seasoning; consumed by InvestmentDecisionEngine BRRRR path"
+    key_exports: ["BRRRRAnalyzer", "BRRRRAnalysis", "BRRRRInputs"]
+
+  # ============================================================
+  # DECISION ENGINES — verdict + Deal Quality Score
+  # ============================================================
+
+  - id: base_decision_engine
+    file: backend/src/services/investment/BaseDecisionEngine.ts
+    lifecycle: LIVE
+    version: "3.0"
+    category: decision_engine
+    role: "Abstract base — weighted scoring, verdict determination, walk-away price polymorphism"
+    key_exports: ["BaseDecisionEngine", "InvestmentVerdict", "ScoringWeights", "ProfessionalAssessment", "MarketPosition", "InvestmentDecision"]
+
+  - id: investment_decision_engine
+    file: backend/src/services/investment/investmentDecisionEngine.ts
+    lifecycle: LIVE
+    version: "3.0"
+    category: decision_engine
+    role: "SFR + BRRRR canonical decision engine; produces Deal Quality Score 0-100; wrapped by score_deal tool"
+    key_exports: ["InvestmentDecisionEngine", "ProfessionalAssessment", "InvestmentVerdict"]
+
+  - id: mf_decision_engine
+    file: backend/src/services/investment/MFDecisionEngine.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: decision_engine
+    role: "MF-specific decision engine — cap rate 25% weight, DSCR 20% weight, NOI-based walk-away price"
+
+  - id: brrrr_decision_logic
+    file: backend/src/services/investment/brrrDecisionLogic.ts
+    lifecycle: LIVE
+    version: "1.x"
+    category: decision_engine
+    role: "BRRRR-specific scoring helpers used by InvestmentDecisionEngine"
+
+  - id: sensitivity_analysis_service
+    file: backend/src/services/investment/sensitivityAnalysisService.ts
+    lifecycle: LEGACY
+    version: "1.0"
+    category: decision_engine
+    role: "Heuristic (non-analyzer-based) sensitivity used inside InvestmentDecisionEngine.generateBuyHoldDecision"
+    replaced_by: scenario_sensitivity
+    sunset_recommendation: "Retire once scenarioSensitivity powers all consumer surfaces (workspace already migrated)"
+    detection_signals:
+      - "scenarioSensitivity.ts file header explicitly calls this out as legacy: 'that service's recalculateAnalysis() is a heuristic approximation... leaks verdict/PASS/BUY (violates the no-verdict policy). Faked sensitivity defeats the whole point'"
+
+  - id: leverage_optimizer
+    file: backend/src/services/investment/leverageOptimizer.ts
+    lifecycle: LIVE
+    category: decision_engine
+    role: "LTV stress scenarios (0-90%), used by InvestmentDecisionEngine"
+
+  - id: market_tier_service
+    file: backend/src/services/investment/marketTierService.ts
+    lifecycle: LIVE
+    category: decision_engine
+    role: "Tier 1/2/3 market classification"
+
+  - id: property_classification_service
+    file: backend/src/services/investment/propertyClassificationService.ts
+    lifecycle: LIVE
+    category: decision_engine
+    role: "A/B/C property class + risk adjustments"
+
+  - id: strategy_alignment_service
+    file: backend/src/services/investment/strategyAlignmentService.ts
+    lifecycle: LIVE
+    category: decision_engine
+    role: "Strategy vs market/property alignment scoring"
+
+  - id: property_type_registry
+    file: backend/src/services/propertyType/registry.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: decision_engine
+    role: "Task #20 seam — canonical PropertyType alignment, analyzer factory, capability flags"
+    key_exports: ["getPropertyTypeCapabilities", "isSFR", "isMF"]
+
+  # ============================================================
+  # FORMULA REGISTRY — LLM-facing deterministic metric formulas
+  # ============================================================
+
+  - id: deal_metrics_index
+    file: backend/src/services/dealMetrics/index.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: formula_registry
+    role: "Issue #226 — single compute entry point for LLM tool"
+    key_exports: ["computeMetric", "formatMetricValue", "listMetricsForStrategy"]
+
+  - id: deal_metrics_registry
+    file: backend/src/services/dealMetrics/registry.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: deal_metrics_types
+    file: backend/src/services/dealMetrics/types.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_seventy_rule_ceiling
+    file: backend/src/services/dealMetrics/formulas/seventy_rule_ceiling.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_price_for_target_cap_rate
+    file: backend/src/services/dealMetrics/formulas/price_for_target_cap_rate.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_rent_for_target_dscr
+    file: backend/src/services/dealMetrics/formulas/rent_for_target_dscr.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_price_for_positive_cash_flow
+    file: backend/src/services/dealMetrics/formulas/price_for_positive_cash_flow.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_arv_for_full_capital_recovery
+    file: backend/src/services/dealMetrics/formulas/arv_for_full_capital_recovery.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_break_even_occupancy
+    file: backend/src/services/dealMetrics/formulas/break_even_occupancy.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_capital_recovered_at_ltv
+    file: backend/src/services/dealMetrics/formulas/capital_recovered_at_ltv.ts
+    lifecycle: LIVE
+    category: formula_registry
+
+  - id: formula_annual_cash_flow
+    file: backend/src/services/dealMetrics/formulas/annual_cash_flow.ts
+    lifecycle: LIVE
+    category: formula_registry
+    role: "Issue #242 fix — single source of truth across code paths"
+
+  # ============================================================
+  # SUBSTRATE WRITE PATHS
+  # ============================================================
+
+  - id: score_deal_tool
+    file: backend/src/agents/tools/score_deal.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: substrate_write_path
+    role: "LOAD-BEARING. Sanctioned path for agents → Deal Quality Score. Writes AnalysisEvent + DecisionEvent in order. Runs analyzer INSIDE the tool (Task #51 removed compute_analysis from live agent flow)."
+
+  - id: project_to_event_payloads
+    file: backend/src/agents/tools/projectToEventPayloads.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+    role: "Pure mapper — engine output → lean AnalysisPayload + DecisionPayload"
+
+  - id: deal_materialization_service
+    file: backend/src/services/dealMaterializationService.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+    role: "Phase-2 bridge — projects substrate events into legacy Deal doc so /saved-properties + /portfolio + /pipeline continue to render chat-created deals"
+
+  - id: compute_analysis_tool
+    file: backend/src/agents/tools/compute_analysis.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+    role: "Pure-compute wrapper over SFR/MF analyzers; still used by apply_override and future callers"
+
+  - id: apply_override_tool
+    file: backend/src/agents/tools/apply_override.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+    role: "Re-runs scoring after field change; writes AnalysisEvent + DecisionEvent + OverrideEvent"
+
+  - id: save_to_watchlist_tool
+    file: backend/src/agents/tools/save_to_watchlist.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+
+  - id: export_audit_pdf_tool
+    file: backend/src/agents/tools/export_audit_pdf.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+
+  - id: events_repository
+    file: backend/src/repositories/EventsRepository.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+    role: "W1-S3 — write API. Append-only enforced at repo layer + Zod validation + traceId requirement"
+
+  - id: cost_event_repository
+    file: backend/src/repositories/CostEventRepository.ts
+    lifecycle: LIVE
+    category: substrate_write_path
+
+  # ============================================================
+  # SUBSTRATE SCHEMAS
+  # ============================================================
+
+  - id: base_event_model
+    file: backend/src/models/events/BaseEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "W1-S1 — discriminator base; append-only pre-hooks"
+
+  - id: profile_event
+    file: backend/src/models/events/ProfileEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: analysis_event
+    file: backend/src/models/events/AnalysisEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "Heaviest substrate payload — propertyData + marketData + assumptions + metrics + monthly + long-term + walk-away"
+
+  - id: decision_event
+    file: backend/src/models/events/DecisionEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "LOAD-BEARING. Deal Quality Score + breakdown; no verdict field (deliberate)"
+
+  - id: override_event
+    file: backend/src/models/events/OverrideEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "Highest-signal substrate event; calibration-drift ground truth"
+
+  - id: critique_event
+    file: backend/src/models/events/CritiqueEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: conversation_event
+    file: backend/src/models/events/ConversationEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "Highest-volume event; one per chat turn"
+
+  - id: audit_trail_event
+    file: backend/src/models/events/AuditTrailEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: watchlist_event
+    file: backend/src/models/events/WatchlistEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: outcome_event
+    file: backend/src/models/events/OutcomeEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: portfolio_event
+    file: backend/src/models/events/PortfolioEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: pipeline_event
+    file: backend/src/models/events/PipelineEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: analysis_shapes
+    file: backend/src/models/events/analysisShapes.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: cost_event_model
+    file: backend/src/models/cost/CostEvent.ts
+    lifecycle: LIVE
+    category: substrate_schema
+    role: "Operational cost tracking (NOT substrate) — separate collection"
+
+  - id: deal_license_model
+    file: backend/src/models/license/DealLicense.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: deal_credit_model
+    file: backend/src/models/license/DealCredit.ts
+    lifecycle: LIVE
+    category: substrate_schema
+
+  - id: events_repository_reads
+    file: backend/src/repositories/EventsRepositoryReads.ts
+    lifecycle: LIVE
+    category: read_projection
+    role: "W1-S4 — named read recipes; audit-trail + calibration queries"
+
+  # ============================================================
+  # AGENTS
+  # ============================================================
+
+  - id: agent_runner
+    file: backend/src/agents/runner/agentRunner.ts
+    lifecycle: LIVE
+    category: agent
+    role: "W5 shared tool-use loop; emits CostEvent per API call; enforces maxTurns cap"
+
+  - id: deal_scoring_agent
+    file: backend/src/agents/dealScoring/dealScoringAgent.ts
+    lifecycle: LIVE
+    category: agent
+    role: "Sonnet 4.6 — primary user journey: address+price → score"
+
+  - id: qa_agent
+    file: backend/src/agents/qa/qaAgent.ts
+    lifecycle: LIVE
+    category: agent
+    role: "Sonnet 4.6 — qa_metric / qa_decision / qa_general / fallback"
+
+  - id: adversarial_critic_agent
+    file: backend/src/agents/adversarialCritic/adversarialCriticAgent.ts
+    lifecycle: LIVE
+    category: agent
+    role: "Opus 4.7 — 2 personas (optimistic_flipper + skeptical_cpa). Emits CritiqueEvent"
+
+  - id: adversarial_trigger_on_save
+    file: backend/src/agents/adversarialCritic/triggerOnSave.ts
+    lifecycle: LIVE
+    category: agent
+    role: "T1 fire-and-forget critic invocation after materialization"
+
+  - id: orchestrator
+    file: backend/src/agents/orchestrator/orchestrator.ts
+    lifecycle: LIVE
+    category: agent
+    role: "W2-S2 — turn dispatch"
+
+  - id: intent_classifier
+    file: backend/src/agents/orchestrator/intentClassifier.ts
+    lifecycle: LIVE
+    category: agent
+    role: "W2-S0 — Haiku 4.5 intent classification"
+
+  - id: intent_router
+    file: backend/src/agents/orchestrator/router.ts
+    lifecycle: LIVE
+    category: agent
+
+  - id: conversation_context
+    file: backend/src/agents/orchestrator/conversationContext.ts
+    lifecycle: LIVE
+    category: agent
+
+  - id: stream_events
+    file: backend/src/agents/orchestrator/streamEvents.ts
+    lifecycle: LIVE
+    category: agent
+    role: "W6-S3 — SSE wire contract"
+
+  - id: followup_chips
+    file: backend/src/agents/orchestrator/followupChips.ts
+    lifecycle: LIVE
+    category: agent
+
+  - id: cost_guards
+    file: backend/src/agents/runtime/costGuards.ts
+    lifecycle: LIVE
+    category: agent
+    role: "Issue #106 — per-session/per-license/global-daily caps"
+
+  - id: anthropic_adapter
+    file: backend/src/agents/llm/anthropicAdapter.ts
+    lifecycle: LIVE
+    category: agent
+
+  # ============================================================
+  # LLM TOOLS
+  # ============================================================
+
+  - id: tool_registry
+    file: backend/src/agents/tools/registry.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "Single source of truth for tool catalogue"
+
+  - id: tool_types
+    file: backend/src/agents/tools/types.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_recall_user_context
+    file: backend/src/agents/tools/recall_user_context.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_resolve_property_inputs
+    file: backend/src/agents/tools/resolve_property_inputs.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "W5-Phase1 — address+price → complete SFRData with provenance"
+
+  - id: tool_enrich_property
+    file: backend/src/agents/tools/enrich_property.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_render_audit_trail
+    file: backend/src/agents/tools/render_audit_trail.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_decision_breakdown
+    file: backend/src/agents/tools/get_decision_breakdown.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "Task #31 — anti-confabulation breakdown"
+
+  - id: tool_get_long_term_projection
+    file: backend/src/agents/tools/get_long_term_projection.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_critique_for_decision
+    file: backend/src/agents/tools/get_critique_for_decision.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_scenario_comparison
+    file: backend/src/agents/tools/get_scenario_comparison.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_market_context
+    file: backend/src/agents/tools/get_market_context.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_license_budget
+    file: backend/src/agents/tools/get_license_budget.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_portfolio_summary
+    file: backend/src/agents/tools/get_portfolio_summary.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_compare_two_properties
+    file: backend/src/agents/tools/compare_two_properties.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_get_tax_education_context
+    file: backend/src/agents/tools/get_tax_education_context.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "Educational only — no computed tax liability"
+
+  - id: tool_get_historical_snapshots
+    file: backend/src/agents/tools/get_historical_snapshots.ts
+    lifecycle: LIVE
+    category: llm_tool
+
+  - id: tool_profile_extraction
+    file: backend/src/agents/tools/profile_extraction.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "ONLY wave-1 tool that calls an LLM (Haiku 4.5)"
+
+  - id: tool_compute_deal_metric
+    file: backend/src/agents/tools/compute_deal_metric.ts
+    lifecycle: LIVE
+    category: llm_tool
+    role: "Issue #226 — mandatory deterministic-number gate for LLM narration"
+
+  # ============================================================
+  # READ-SIDE PROJECTIONS
+  # ============================================================
+
+  - id: deal_score_card_projection
+    file: backend/src/agents/orchestrator/dealScoreCardProjection.ts
+    lifecycle: LIVE
+    category: read_projection
+    role: "W6-S4 — AnalysisPayload+DecisionPayload → DealScoreCardWireShape"
+
+  # ============================================================
+  # CHAT IDENTITY + AUTH
+  # ============================================================
+
+  - id: chat_identity_middleware
+    file: backend/src/middleware/chatIdentity.ts
+    lifecycle: LIVE
+    category: identity_auth
+    role: "W6-S2.5 — Bearer OR anonymousSessionId → ghost User"
+
+  - id: chat_session_merge_service
+    file: backend/src/services/chatSessionMergeService.ts
+    lifecycle: LIVE
+    category: identity_auth
+    role: "W6-S5 — post-signup claim: reassigns ghost's events to real user"
+
+  - id: auth_middleware
+    file: backend/src/middleware/auth.ts
+    lifecycle: LIVE
+    category: identity_auth
+
+  - id: chat_session_rate_limit
+    file: backend/src/middleware/chatSessionRateLimit.ts
+    lifecycle: LIVE
+    category: identity_auth
+    role: "Caps anon sessions at 10 turns / 24h"
+
+  - id: chat_per_ip_rate_limit
+    file: backend/src/middleware/chatPerIpRateLimit.ts
+    lifecycle: LIVE
+    category: identity_auth
+
+  # ============================================================
+  # FRONTEND — page-level components
+  # ============================================================
+
+  - id: app_page
+    file: frontend/src/pages/AppPage.tsx
+    lifecycle: LIVE
+    version: "2.0"
+    category: frontend_page
+    role: "/app route — chat surface. Post-login home."
+
+  - id: chat_overlay
+    file: frontend/src/components/Chat/ChatOverlay.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "W6 — chat surface shell. Message thread + input; SSE consumer."
+
+  - id: deal_score_card
+    file: frontend/src/components/Chat/DealScoreCard.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "W6-S4 — mirrors DealScoreCardWireShape from orchestrator"
+
+  - id: new_app_shell
+    file: frontend/src/components/layout/NewAppShell.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "Issue #108 — wraps protected non-chat routes in AppLayout"
+
+  - id: app_layout
+    file: frontend/src/components/layout/AppLayout.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "Chat-first shell — sidebar + main pane"
+
+  - id: app_sidebar
+    file: frontend/src/components/layout/AppSidebar.tsx
+    lifecycle: LIVE
+    category: frontend_page
+
+  - id: apple_navigation
+    file: frontend/src/components/layout/AppleNavigation.tsx
+    lifecycle: LEGACY
+    category: frontend_page
+    role: "Legacy protected-route shell. Still routes /sfr-analysis, /mf-analysis, /admin per App.tsx comment: 'LEGACY SHELL. Routes that haven't migrated to the new IA yet.'"
+    replaced_by: new_app_shell
+    sunset_recommendation: "Remove after wizard migrates to chat-first or is deleted"
+    detection_signals:
+      - "App.tsx comment explicitly labels it LEGACY SHELL"
+      - "still used by 4 routes"
+
+  - id: main_layout
+    file: frontend/src/components/layout/MainLayout.tsx
+    lifecycle: LEGACY
+    category: frontend_page
+    role: "Prior top-level layout wrapper; NOT imported anywhere (dead code)"
+    replaced_by: app_layout
+    sunset_recommendation: "Safe to delete — zero live importers"
+
+  - id: dashboard_page
+    file: frontend/src/pages/Dashboard.tsx
+    lifecycle: LEGACY
+    category: frontend_page
+    role: "No longer routed; App.tsx comment: 'Dashboard.tsx is no longer routed... safe to delete once Phase 6 ships.'"
+    replaced_by: app_page
+    sunset_recommendation: "Delete after Phase 6"
+
+  - id: investment_dashboard_component
+    file: frontend/src/components/Dashboard/InvestmentDashboard.tsx
+    lifecycle: LEGACY
+    category: frontend_page
+    role: "Dashboard.tsx's only content; unreachable now that Dashboard.tsx is unrouted"
+    sunset_recommendation: "Delete with Dashboard.tsx"
+
+  - id: sfr_analysis_page
+    file: frontend/src/pages/SFRAnalysis.tsx
+    lifecycle: UNKNOWN
+    category: frontend_page
+    role: "Legacy wizard for SFR — still routed at /sfr-analysis under AppleNavigation shell per Issue #100"
+    human_review_needed: "Wizard is 'accessible but unlinked' per App.tsx — is this UNKNOWN (in-repo but not part of active IA) or LIVE (still linked from affiliate landing /sfr-analysis CTA)?"
+
+  - id: mf_analysis_page
+    file: frontend/src/pages/MFAnalysis.tsx
+    lifecycle: UNKNOWN
+    category: frontend_page
+    role: "Legacy wizard for MF — same story as SFR"
+    human_review_needed: "Same review question as sfr_analysis_page"
+
+  - id: saved_properties_page
+    file: frontend/src/pages/SavedProperties.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "/saved-properties — renders Deal docs materialized by dealMaterializationService"
+
+  - id: analysis_details_page
+    file: frontend/src/pages/AnalysisDetails.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "/analysis/:id — SavedDealHero + ScenarioCompareTable + SensitivityPanel + ScenarioDetails + CritiqueCard"
+
+  - id: portfolio_dashboard_page
+    file: frontend/src/pages/PortfolioDashboard.tsx
+    lifecycle: LIVE
+    category: frontend_page
+
+  - id: pipeline_page
+    file: frontend/src/pages/PipelinePage.tsx
+    lifecycle: LIVE
+    category: frontend_page
+
+  - id: pricing_page
+    file: frontend/src/pages/PricingPage.tsx
+    lifecycle: LIVE
+    version: "2.0"
+    category: frontend_page
+    role: "Rewritten 2026-05-18 Issue #107 — per-property pricing (no monthly subscription)"
+
+  - id: landing_page
+    file: frontend/src/pages/LandingPage.tsx
+    lifecycle: LIVE
+    category: frontend_page
+
+  - id: app_tsx
+    file: frontend/src/App.tsx
+    lifecycle: LIVE
+    category: frontend_page
+    role: "Top-level routing table — canonical source for LIVE vs LEGACY frontend routes"
+
+  # ============================================================
+  # DATA / MARKET INTEL SERVICES
+  # ============================================================
+
+  - id: market_intelligence_service
+    file: backend/src/services/marketIntelligenceService.ts
+    lifecycle: LIVE
+    category: data_service
+    role: "Orchestrates RentCast + FRED + Census; wrapped by enrich_property tool"
+
+  - id: rentcast_service
+    file: backend/src/services/rentcastService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: fred_service
+    file: backend/src/services/fredService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: census_service
+    file: backend/src/services/censusService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: property_data_aggregator
+    file: backend/src/services/propertyDataAggregator.ts
+    lifecycle: LIVE
+    category: data_service
+    role: "Wizard-side property lookup + smart defaults"
+
+  - id: property_enrichment_service
+    file: backend/src/services/propertyEnrichmentService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: property_tax_estimation_service
+    file: backend/src/services/propertyTaxEstimationService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: assessment_ratio_service
+    file: backend/src/services/assessmentRatioService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: tax_calculation_service
+    file: backend/src/services/taxCalculationService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: rent_estimation_service
+    file: backend/src/services/rentEstimationService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  - id: cache_service
+    file: backend/src/services/cacheService.ts
+    lifecycle: LIVE
+    category: data_service
+
+  # ============================================================
+  # AI SERVICES (pre-substrate GPT-4o-mini pipeline)
+  # ============================================================
+
+  - id: ai_service
+    file: backend/src/services/aiService.ts
+    lifecycle: UNKNOWN
+    category: ai_service
+    role: "GPT-4o-mini insights + goal analysis; still used by controllers/deals.ts and analyzeRoutes.ts wizard path"
+    human_review_needed: "Is this LIVE for the wizard route only, or LEGACY superseded by anthropic-based agent mesh? Header says 'gpt-4o-mini' and CLAUDE.md flags substrate agents will replace the pre-substrate AI pipeline."
+
+  - id: ai_orchestrator
+    file: backend/src/services/ai/aiOrchestrator.ts
+    lifecycle: UNKNOWN
+    category: ai_service
+    role: "Central coordinator for 4 GPT-4o-mini micro-predictions"
+    human_review_needed: "Same as ai_service — consumed only by aiService.getAIInsights"
+
+  - id: prediction_engine
+    file: backend/src/services/predictionEngine.ts
+    lifecycle: UNKNOWN
+    category: ai_service
+    role: "Pre-substrate GPT-4o-mini micro-predictions"
+    human_review_needed: "Only consumer is aiService — same review as above"
+
+  - id: ai_enhanced_messaging
+    file: backend/src/services/aiEnhancedMessaging.ts
+    lifecycle: LIVE
+    category: ai_service
+    role: "GPT-4o-mini enhanced content generation (80/20 approach); called by decision engines when skipEnhancements=false"
+
+  - id: goal_extraction_service
+    file: backend/src/services/goalExtractionService.ts
+    lifecycle: LIVE
+    category: ai_service
+    role: "Stage 1 of 2-stage AI pipeline (Issue #78) — sanitization + PII redaction"
+
+  - id: ai_insights_cache_service
+    file: backend/src/services/aiInsightsCacheService.ts
+    lifecycle: LIVE
+    category: ai_service
+
+  - id: openai_client
+    file: backend/src/services/openai.ts
+    lifecycle: LIVE
+    category: ai_service
+    role: "OpenAI client factory"
+
+  # ============================================================
+  # STRESS-TEST / SENSITIVITY / SCENARIO SERVICES
+  # ============================================================
+
+  - id: scenario_sensitivity
+    file: backend/src/services/scenarioSensitivity.ts
+    lifecycle: LIVE
+    category: scenario_service
+    role: "Task #8 — REAL sensitivity via analyzer re-runs; explicitly replaces the heuristic sensitivityAnalysisService"
+    replaces: [sensitivity_analysis_service]
+
+  - id: scenario_diff
+    file: backend/src/services/scenarioDiff.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: perturbation_runner
+    file: backend/src/services/perturbation/runner.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: perturbation_extractor
+    file: backend/src/services/perturbation/extractor.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: perturbation_field_registry
+    file: backend/src/services/perturbation/fieldRegistry.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: perturbation_narrative_composer
+    file: backend/src/services/perturbation/narrativeComposer.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: perturbation_schemas
+    file: backend/src/services/perturbation/schemas.ts
+    lifecycle: LIVE
+    category: scenario_service
+
+  - id: numeric_traceability
+    file: backend/src/services/numericTraceability/index.ts
+    lifecycle: LIVE
+    category: scenario_service
+    role: "Issue #226 — post-generation validation of LLM numeric literals against tool outputs"
+
+  # ============================================================
+  # FEATURE SERVICES
+  # ============================================================
+
+  - id: pipeline_service
+    file: backend/src/services/pipeline/pipelineService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: portfolio_service
+    file: backend/src/services/portfolio/portfolioService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: portfolio_analytics_service
+    file: backend/src/services/portfolio/portfolioAnalyticsService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: portfolio_property_metrics_service
+    file: backend/src/services/portfolio/portfolioPropertyMetricsService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: enhanced_portfolio_ai
+    file: backend/src/services/portfolio/enhancedPortfolioAI.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: substrate_deal_pdf
+    file: backend/src/services/SubstrateDealPdf.tsx
+    lifecycle: LIVE
+    category: feature_service
+    role: "Task #65/#66 — single-page PDF matching chat email summary"
+
+  - id: pdf_service
+    file: backend/src/services/pdfService.ts
+    lifecycle: UNKNOWN
+    category: feature_service
+    role: "React-PDF wizard-shape analysis PDF"
+    human_review_needed: "SubstrateDealPdf explicitly says pdfService 'expects the wizard's 60+ field shape' — is this now wizard-only, superseded by SubstrateDealPdf for chat/substrate deals?"
+
+  - id: email_service
+    file: backend/src/services/emailService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: deal_email_helper
+    file: backend/src/services/dealEmailHelper.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: quick_calculation_service
+    file: backend/src/services/quickCalculationService.ts
+    lifecycle: UNKNOWN
+    category: feature_service
+    role: "<50ms real-time parameter update endpoint (routes/quickAnalysis.ts)"
+    human_review_needed: "Referenced by wizard-side /api/quick — LIVE if wizard is still live; UNKNOWN if wizard is sunset track"
+
+  - id: analytics_service
+    file: backend/src/services/analyticsService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  - id: auth_service
+    file: backend/src/services/authService.ts
+    lifecycle: LIVE
+    category: feature_service
+
+  # ============================================================
+  # DATA MODELS
+  # ============================================================
+
+  - id: deal_model
+    file: backend/src/models/Deal.ts
+    lifecycle: LIVE
+    category: data_model
+    role: "Legacy Deal doc — still primary render source for /saved-properties etc; materializer bridges substrate to it"
+
+  - id: pipeline_deal_model
+    file: backend/src/models/PipelineDeal.ts
+    lifecycle: LIVE
+    category: data_model
+
+  - id: portfolio_model
+    file: backend/src/models/Portfolio.ts
+    lifecycle: LIVE
+    category: data_model
+
+  - id: portfolio_analytics_model
+    file: backend/src/models/PortfolioAnalytics.ts
+    lifecycle: LIVE
+    category: data_model
+
+  - id: portfolio_recommendations_model
+    file: backend/src/models/PortfolioRecommendations.ts
+    lifecycle: LIVE
+    category: data_model
+
+  - id: user_model
+    file: backend/src/models/User.ts
+    lifecycle: LIVE
+    category: data_model
+    role: "Includes ghost-user pattern flag (anonymous: true) per W6-S2.5"
+
+  # ============================================================
+  # ENTRYPOINTS + ROUTES
+  # ============================================================
+
+  - id: backend_entrypoint
+    file: backend/src/index.ts
+    lifecycle: LIVE
+    category: route
+    role: "Express bootstrap. Mounts: /api/auth, /api/admin, /api/deals, /api/chat, /api/analyze, /api/wizard, /api/quick, /api/portfolios, /api/pipeline, /api/command-center, /api/education, /api/contact, /api/feedback, /api/pdf"
+
+  - id: route_chat
+    file: backend/src/routes/chat.ts
+    lifecycle: LIVE
+    category: route
+    role: "POST /api/chat/turn — W6 substrate-native chat surface"
+
+  - id: route_deals
+    file: backend/src/routes/deals.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_analyze
+    file: backend/src/routes/analyzeRoutes.ts
+    lifecycle: UNKNOWN
+    category: route
+    role: "Wizard-side /api/analyze — uses SFRAnalyzer + MultiFamilyAnalyzer + aiService"
+    human_review_needed: "Same review question as ai_service — wizard-only or LEGACY?"
+
+  - id: route_wizard
+    file: backend/src/routes/wizardRoutes.ts
+    lifecycle: UNKNOWN
+    category: route
+    human_review_needed: "Wizard status — LIVE or LEGACY?"
+
+  - id: route_quick_analysis
+    file: backend/src/routes/quickAnalysis.ts
+    lifecycle: UNKNOWN
+    category: route
+    human_review_needed: "Wizard-only endpoint"
+
+  - id: route_portfolios
+    file: backend/src/routes/portfolios.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_pipeline
+    file: backend/src/routes/pipeline.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_pdf
+    file: backend/src/routes/pdf.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_magic_link
+    file: backend/src/routes/magicLink.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_auth
+    file: backend/src/routes/auth.ts
+    lifecycle: LIVE
+    category: route
+
+  - id: route_analysis_joi_schema
+    file: backend/src/routes/analysis.ts
+    lifecycle: LEGACY
+    category: route
+    role: "10-line Joi schema, not imported anywhere"
+    sunset_recommendation: "Safe to delete — no importers"
+
+  # ============================================================
+  # CONFIRMED LEGACY .bak / .old / .fix / .tmp files
+  # ============================================================
+
+  - id: backend_index_bak
+    file: backend/src/index.ts.bak
+    lifecycle: LEGACY
+    category: legacy_backup
+    replaced_by: backend_entrypoint
+    sunset_recommendation: "Delete — pure backup"
+
+  - id: middleware_rate_limiter_bak
+    file: backend/src/middleware/rateLimiter.ts.bak
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete — pure backup"
+
+  - id: controllers_deals_bak
+    file: backend/src/controllers/deals.ts.bak
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete — pure backup (deals.ts is 3151 lines vs 536 in .bak)"
+
+  - id: controllers_deals_old
+    file: backend/src/controllers/deals.ts.old
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: controllers_deals_fix
+    file: backend/src/controllers/deals.ts.fix
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: controllers_deals_new
+    file: backend/src/controllers/deals.ts.new
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: controllers_deals_tmp
+    file: backend/src/controllers/deals.ts.tmp
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: controllers_deal_controller_backup
+    file: backend/src/controllers/dealController.ts.backup
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: controllers_census_bak
+    file: backend/src/controllers/censusController.ts.bak
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+
+  - id: frontend_analysis_results_bak
+    file: frontend/src/components/SFRAnalysis/AnalysisResults.tsx.bak
+    lifecycle: LEGACY
+    category: legacy_backup
+    sunset_recommendation: "Delete"
+</content>
+</invoke>
