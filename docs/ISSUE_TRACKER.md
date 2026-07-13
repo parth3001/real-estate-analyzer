@@ -16597,6 +16597,47 @@ for (let month = 1; month <= 12; month++) {
 
 ---
 
+### Issue #243-followup-a: Substrate migration — rename DecisionEvent.userContext.investmentStrategy → investorPhilosophy
+
+**Status**: 🔴 Open
+**Priority**: P2 (Medium)
+**Reported**: 2026-07-12
+**Component**: Backend / Substrate schema
+**Parent**: #243 (Task #50)
+
+**Description**:
+The DecisionEvent.userContext field named `investmentStrategy` carries persona-context values (`cashflow`/`appreciation`/`balanced`), NOT the investment TYPE (buy_hold/brrrr/house_hack). This name collision is the root of #243. In the #243 refactor, only the TypeScript alias was renamed to `InvestorPhilosophySchema`; the wire values and field NAME remain frozen per append-only substrate (ARCH-10, R-T1).
+
+**Business Impact**:
+Full elimination of the naming collision requires a substrate migration with:
+1. Event replay tooling to rewrite the historical DecisionEvent field
+2. Backward-compatible reader during the migration window
+3. Coordinated schema-version bump
+
+**Proposed Solution**:
+Design a proper substrate rename with the standard append-only-safe replay pattern. Coordinate with the events store versioning cadence.
+
+---
+
+### Issue #243-followup-b: Route `house_hack` through the analyzer (SFR engine has no dedicated branch)
+
+**Status**: 🔴 Open
+**Priority**: P2 (Medium)
+**Reported**: 2026-07-12
+**Component**: Backend / Investment Decision Engine
+**Parent**: #243 (Task #50)
+
+**Description**:
+The #243 refactor made `resolve_property_inputs` accept `house_hack` at the Zod input boundary (was previously rejected). Downstream, the SFR/BRRRR analyzers do not have a dedicated house-hack code path — a submitted `house_hack` currently traverses the standard buy-hold branch.
+
+**Business Impact**:
+User can now submit `house_hack` without data loss, but analytical output is not house-hack-specific (owner-occupant % rent, personal-side deduction, sub-market discipline for the owner-occupied unit).
+
+**Proposed Solution**:
+Requires a product decision: what makes a house-hack analysis different? Then implement a dedicated engine branch analogous to BRRRR routing.
+
+---
+
 ## 📝 **ISSUE TEMPLATE**
 
 ```markdown

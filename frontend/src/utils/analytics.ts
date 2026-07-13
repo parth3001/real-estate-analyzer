@@ -51,18 +51,48 @@ const trackPageView = (pageName: string) => {
 };
 
 /**
- * Calculator tracking
+ * Calculator tracking.
+ *
+ * Issue #243 (2026-07-12): analytics dimensions accept EITHER a
+ * CanonicalStrategy (post-refactor callers) or a LegacyDealStrategy
+ * (wizard callers that still emit kebab). GA dashboards have historical
+ * continuity on the kebab strings, so we project canonical → kebab at
+ * the analytics hop via `toAnalyticsStrategyDimension`. All INTERNAL
+ * code passes canonical; the shim converts at the last hop.
  */
-const trackCalculatorStarted = (strategy: 'brrrr' | 'buy-hold') => {
+import {
+  toAnalyticsStrategyDimension,
+  type CanonicalStrategy,
+  type LegacyDealStrategy,
+} from '../domain/strategy';
+
+type AnalyticsStrategyInput = CanonicalStrategy | LegacyDealStrategy;
+
+function toAnalyticsDimension(strategy: AnalyticsStrategyInput): LegacyDealStrategy {
+  // If already kebab, pass through; if canonical, project.
+  if (
+    strategy === 'buy-hold' ||
+    strategy === 'brrrr' ||
+    strategy === 'house-hack'
+  ) {
+    return strategy;
+  }
+  return toAnalyticsStrategyDimension(strategy);
+}
+
+const trackCalculatorStarted = (strategy: AnalyticsStrategyInput) => {
   trackEvent('calculator_started', {
-    strategy,
+    strategy: toAnalyticsDimension(strategy),
     timestamp: new Date().toISOString(),
   });
 };
 
-const trackCalculatorCompleted = (strategy: 'brrrr' | 'buy-hold', dealScore: number) => {
+const trackCalculatorCompleted = (
+  strategy: AnalyticsStrategyInput,
+  dealScore: number
+) => {
   trackEvent('calculator_completed', {
-    strategy,
+    strategy: toAnalyticsDimension(strategy),
     deal_score: dealScore,
     timestamp: new Date().toISOString(),
   });

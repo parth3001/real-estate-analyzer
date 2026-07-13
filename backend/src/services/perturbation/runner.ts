@@ -41,6 +41,10 @@ import type { SFRData } from '../../types/propertyTypes';
 import type { AnalysisAssumptions } from '../../analysis/BasePropertyAnalyzer';
 import { logger } from '../../utils/logger';
 import {
+  normalizeStrategy,
+  type CanonicalStrategy,
+} from '../../domain/strategy';
+import {
   getFieldDef,
   normalizeToEngineUnit,
   validateEngineValue,
@@ -454,8 +458,14 @@ async function scoreOnce(
     exitScenarios?: Array<{ year: number; irr: number }>;
   } }).strategySpecific;
 
-  const strategy = (propertyData as unknown as { investmentStrategy?: string })
-    .investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+  // Issue #243 (2026-07-12): canonical normalizer + default 'buy_hold'
+  // if unrecognized / missing. Preserves the pre-refactor default for
+  // legacy events (analysis payloads pre-#200 lack the field).
+  const strategy: CanonicalStrategy =
+    normalizeStrategy(
+      (propertyData as unknown as { investmentStrategy?: string })
+        .investmentStrategy
+    ) ?? 'buy_hold';
 
   const projectionYears = (assumptions as { projectionYears?: number })
     .projectionYears ?? 10;

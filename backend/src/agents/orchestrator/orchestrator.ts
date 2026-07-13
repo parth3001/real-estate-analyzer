@@ -48,6 +48,10 @@ import type { ToolContext, Tool } from '../tools/types';
 import { toolRegistry } from '../tools/registry';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
 import { logger } from '../../utils/logger';
+import {
+  normalizeStrategy,
+  type CanonicalStrategy,
+} from '../../domain/strategy';
 import { runDealScoringAgent, runDealScoringAgentStream } from '../dealScoring/dealScoringAgent';
 import { runQaAgent, runQaAgentStream } from '../qa/qaAgent';
 // Task #16 Path B (2026-05-27): the deterministic stress-test pipeline.
@@ -806,11 +810,15 @@ async function buildDealScoreCardEvent(
   // investmentStrategy is an optional extension carried on score_deal's
   // inputs (W5-S2 BRRRR routing). It's preserved on AnalysisEvent.propertyData
   // but not declared on SFRData/MultiFamilyData; defensive read.
+  //
+  // Issue #243 (2026-07-12): route through the canonical normalizer so
+  // `house_hack` propagates to the score card wire shape (was silently
+  // collapsed to 'buy_hold' pre-fix).
   const propertyDataAny = analysisPayload.propertyData as unknown as {
-    investmentStrategy?: 'buy_hold' | 'brrrr';
+    investmentStrategy?: string;
   };
-  const strategy: 'buy_hold' | 'brrrr' =
-    propertyDataAny.investmentStrategy === 'brrrr' ? 'brrrr' : 'buy_hold';
+  const strategy: CanonicalStrategy =
+    normalizeStrategy(propertyDataAny.investmentStrategy) ?? 'buy_hold';
   return projectDealScoreCard(analysisPayload, decisionPayload, strategy);
 }
 

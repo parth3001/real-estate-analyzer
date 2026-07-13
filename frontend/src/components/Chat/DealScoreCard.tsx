@@ -65,10 +65,12 @@ export interface DealScoreCardAssumption {
 
 export interface DealScoreCardProps {
   /** Investment strategy — drives the default caption when dealTypeLabel
-      is not provided. Kept as 'buy_hold' | 'brrrr' for backward compat
-      with chat-flow callers. Use `dealTypeLabel` to override for
-      MF / house-hack / future commercial variants. */
-  strategy: 'buy_hold' | 'brrrr';
+      is not provided. Issue #243 (2026-07-12): widened to CanonicalStrategy
+      so `house_hack` propagates end-to-end (was silently collapsed
+      pre-fix). Coordinated with the backend `dealScoreCardProjection.ts`
+      widening in the same PR. Use `dealTypeLabel` to override for
+      MF / future commercial variants. */
+  strategy: import('../../domain/strategy').CanonicalStrategy;
   /** Optional explicit caption override. When provided, replaces the
       strategy-derived caption ("BUY & HOLD ANALYSIS" / "BRRRR ANALYSIS")
       with whatever string the caller wants. Used by SavedDealHero to
@@ -124,8 +126,24 @@ function formatCurrency(value: number): string {
   return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
-function strategyCaption(strategy: 'buy_hold' | 'brrrr'): string {
-  return strategy === 'brrrr' ? 'BRRRR ANALYSIS' : 'BUY-AND-HOLD ANALYSIS';
+function strategyCaption(
+  strategy: import('../../domain/strategy').CanonicalStrategy
+): string {
+  // Exhaustive switch so a future CanonicalStrategy addition is caught
+  // at compile time (P14) — the `never`-typed default branch surfaces
+  // the missing case in TypeScript before it ever ships.
+  switch (strategy) {
+    case 'brrrr':
+      return 'BRRRR ANALYSIS';
+    case 'buy_hold':
+      return 'BUY-AND-HOLD ANALYSIS';
+    case 'house_hack':
+      return 'HOUSE HACK ANALYSIS';
+    default: {
+      const _exhaustive: never = strategy;
+      return _exhaustive;
+    }
+  }
 }
 
 function formatAddress(addr: DealScoreCardProps['address']): string {

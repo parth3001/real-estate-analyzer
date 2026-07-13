@@ -16,6 +16,7 @@ import type { AnalysisPayload } from '../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../models/events/DecisionEvent';
 import type { SFRData, MultiFamilyData } from '../../types/propertyTypes';
 import type { ProfessionalAssessment } from '../../services/investment/BaseDecisionEngine';
+import type { CanonicalStrategy } from '../../domain/strategy';
 
 // ===== Wire shape =====
 //
@@ -23,7 +24,10 @@ import type { ProfessionalAssessment } from '../../services/investment/BaseDecis
 // Field-by-field parity is enforced by tests in dealScoreCardProjection.test.ts.
 
 export interface DealScoreCardWireShape {
-  strategy: 'buy_hold' | 'brrrr';
+  // Issue #243 (2026-07-12): widened to CanonicalStrategy so `house_hack`
+  // propagates end-to-end. Coordinated with frontend DealScoreCard.tsx
+  // in the same commit (P9 wire-contract coordination).
+  strategy: CanonicalStrategy;
   address: {
     street: string;
     city: string;
@@ -315,8 +319,24 @@ function pickProjectionMilestones(
 export function projectDealScoreCard(
   analysis: AnalysisPayload,
   decision: DecisionPayload,
-  strategy: 'buy_hold' | 'brrrr'
+  strategy: CanonicalStrategy
 ): DealScoreCardWireShape {
+  // P14 exhaustive-never check — force a compile-time error if a future
+  // CanonicalStrategy addition sneaks past. No runtime branch needed
+  // (all downstream code treats every canonical value uniformly here),
+  // but this guards the wire-shape parity contract.
+  ((_: CanonicalStrategy): void => {
+    switch (_) {
+      case 'buy_hold':
+      case 'brrrr':
+      case 'house_hack':
+        return;
+      default: {
+        const _exhaustive: never = _;
+        return _exhaustive;
+      }
+    }
+  })(strategy);
   const property = analysis.propertyData;
   if (!property?.propertyAddress) {
     throw new Error('projectDealScoreCard: analysis.propertyData.propertyAddress is required');

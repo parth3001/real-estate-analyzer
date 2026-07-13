@@ -30,6 +30,7 @@
 import { z } from 'zod';
 import { Schema } from 'mongoose';
 import { BaseEventModel } from './BaseEvent';
+import { normalizeStrategy } from '../../domain/strategy';
 import type {
   SFRData,
   MultiFamilyData,
@@ -80,7 +81,25 @@ const ObjectShapeSchema = z.custom<Record<string, unknown>>(
  */
 export const AnalysisPayloadSchema = z.object({
   // Inputs (snapshot — preserved so any decision can be replayed)
-  propertyData: ObjectShapeSchema,
+  //
+  // Issue #243 (2026-07-12) — WRITE-boundary refinement on
+  // `propertyData.investmentStrategy`. If present, the value MUST
+  // canonicalize via `normalizeStrategy` (kebab / snake / SCREAMING /
+  // spaced all accepted). This enforces the write contract without
+  // fully-typing propertyData (still ObjectShape by design, per
+  // /docs/PRODUCT_2.0_EVENTS_STORE.md §4.2). Historical reads are
+  // unaffected — the refinement only fires on new writes.
+  propertyData: ObjectShapeSchema.refine(
+    (val) => {
+      const strat = (val as Record<string, unknown>).investmentStrategy;
+      if (strat === undefined || strat === null) return true;
+      return normalizeStrategy(strat) !== null;
+    },
+    {
+      message:
+        'propertyData.investmentStrategy must be a canonical strategy (buy_hold | brrrr | house_hack) or a recognized alias',
+    }
+  ),
   marketData: ObjectShapeSchema,
   assumptions: ObjectShapeSchema,
 

@@ -10,6 +10,10 @@
  * - Graceful degradation for legacy data and MF properties
  *
  * Issue #75: Strategy indicators for Saved Properties list
+ * Issue #243 (2026-07-12): rekeyed to CanonicalStrategy per P10. Callers
+ * that pass kebab / SCREAMING / spaced values are normalized on entry
+ * via `normalizeStrategy`. The dead `'fix-and-flip'` entry (wizard
+ * legacy) is removed — it was never part of the canonical enum.
  *
  * @author Principal Software Architect from CLAUDE.md
  * @date January 14, 2026
@@ -19,8 +23,11 @@ import React from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
-import ConstructionIcon from '@mui/icons-material/Construction';
 import { appleColors } from '../theme/appleDesignSystem';
+import {
+  normalizeStrategy,
+  type CanonicalStrategy,
+} from '../domain/strategy';
 
 /**
  * Strategy Icon Configuration Interface
@@ -34,33 +41,31 @@ export interface StrategyIconConfig {
 
 /**
  * Strategy Configuration Object
- * Single source of truth for strategy visual identity
+ * Single source of truth for strategy visual identity.
+ *
+ * Keyed by CanonicalStrategy (snake_case) per P10. TypeScript's
+ * `Record<CanonicalStrategy, StrategyIconConfig>` catches a missing
+ * entry at compile time if the canonical enum grows.
  */
-const STRATEGY_CONFIG: Record<string, StrategyIconConfig> = {
-  'buy-hold': {
+const STRATEGY_CONFIG: Record<CanonicalStrategy, StrategyIconConfig> = {
+  buy_hold: {
     Icon: HomeIcon,
     color: '#FFFFFF',
-    bgColor: appleColors.blue[600],  // #2563EB
-    label: 'Buy & Hold'
+    bgColor: appleColors.blue[600], // #2563EB
+    label: 'Buy & Hold',
   },
-  'brrrr': {
+  brrrr: {
     Icon: AutorenewIcon,
     color: '#FFFFFF',
-    bgColor: '#7b1fa2',  // Purple (matches existing BRRRR tabs)
-    label: 'BRRRR'
+    bgColor: '#7b1fa2', // Purple (matches existing BRRRR tabs)
+    label: 'BRRRR',
   },
-  'house-hack': {
+  house_hack: {
     Icon: LocationCityIcon,
     color: '#FFFFFF',
-    bgColor: appleColors.green[600],  // #059669
-    label: 'House Hacking'
+    bgColor: appleColors.green[600], // #059669
+    label: 'House Hacking',
   },
-  'fix-and-flip': {
-    Icon: ConstructionIcon,
-    color: '#FFFFFF',
-    bgColor: appleColors.orange[600],  // #EA580C
-    label: 'Fix & Flip'
-  }
 };
 
 /**
@@ -94,14 +99,15 @@ const MULTI_FAMILY_ICON: StrategyIconConfig = {
  * 3. SFR without strategy → Default gray home icon (legacy data)
  *
  * @param propertyType - Property type ('SFR' or 'MF')
- * @param strategy - Investment strategy (optional, may be undefined for legacy data)
+ * @param strategy - Investment strategy (any alias — normalized on entry)
  * @returns Icon configuration with Icon component, colors, and label
  *
  * @example
  * ```typescript
+ * // kebab (legacy Deal wire shape) accepted:
  * const iconConfig = getStrategyIconConfig('SFR', 'buy-hold');
- * const Icon = iconConfig.Icon;
- * // Renders: <HomeIcon /> with blue background (#2563EB)
+ * // canonical (post-refactor):
+ * const iconConfig = getStrategyIconConfig('SFR', 'buy_hold');
  * ```
  */
 export const getStrategyIconConfig = (
@@ -113,9 +119,12 @@ export const getStrategyIconConfig = (
     return MULTI_FAMILY_ICON;
   }
 
-  // Case 2: SFR with valid strategy → Return strategy-specific config
-  if (strategy && STRATEGY_CONFIG[strategy]) {
-    return STRATEGY_CONFIG[strategy];
+  // Case 2: SFR with valid strategy → Return strategy-specific config.
+  // Normalize on entry so kebab / SCREAMING / spaced input all lands on
+  // the canonical config key.
+  const canonical = normalizeStrategy(strategy);
+  if (canonical && canonical in STRATEGY_CONFIG) {
+    return STRATEGY_CONFIG[canonical];
   }
 
   // Case 3: SFR without strategy (legacy data) or unknown strategy → Default gray icon
@@ -143,9 +152,8 @@ export const getStrategyLabel = (
  *
  * @returns Array of all strategy configurations
  */
-export const getAllStrategies = (): Array<{ key: string; config: StrategyIconConfig }> => {
-  return Object.entries(STRATEGY_CONFIG).map(([key, config]) => ({
-    key,
-    config
-  }));
+export const getAllStrategies = (): Array<{ key: CanonicalStrategy; config: StrategyIconConfig }> => {
+  return (Object.entries(STRATEGY_CONFIG) as Array<[CanonicalStrategy, StrategyIconConfig]>).map(
+    ([key, config]) => ({ key, config })
+  );
 };

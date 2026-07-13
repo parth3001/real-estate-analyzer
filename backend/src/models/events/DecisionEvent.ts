@@ -47,7 +47,20 @@ const QualityLabelSchema = z.enum([
 const QualityColorSchema = z.enum(['green', 'yellow', 'orange', 'red']);
 
 const RiskToleranceSchema = z.enum(['conservative', 'moderate', 'aggressive']);
-const InvestmentStrategySchema = z.enum(['cashflow', 'appreciation', 'balanced']);
+/**
+ * InvestorPhilosophy — persona-context risk profile (NOT the investment TYPE).
+ *
+ * The investment TYPE — `buy_hold` / `brrrr` / `house_hack` — lives at
+ * `AnalysisEvent.payload.propertyData.investmentStrategy` and is normalized
+ * via `backend/src/domain/strategy/normalizeStrategy`.
+ *
+ * The two fields historically shared the name `investmentStrategy`, which
+ * is the root of #243. The wire values here are FROZEN per append-only
+ * substrate (ARCH-10, R-T1) — only the TypeScript alias is renamed. A
+ * substrate migration to rename the field is filed as a follow-up in
+ * /docs/ISSUE_TRACKER.md.
+ */
+const InvestorPhilosophySchema = z.enum(['cashflow', 'appreciation', 'balanced']);
 const ExperienceLevelSchema = z.enum(['novice', 'intermediate', 'experienced', 'expert']);
 const InvestorTypeSchema = z.enum(['retail', 'pro', 'lender', 'consultancy']);
 const PrimaryGoalSchema = z.enum([
@@ -126,7 +139,7 @@ const CriticalFlagsSchema = z
 const UserContextSchema = z
   .object({
     riskTolerance: RiskToleranceSchema.optional(),
-    investmentStrategy: InvestmentStrategySchema.optional(),
+    investmentStrategy: InvestorPhilosophySchema.optional(),
     experienceLevel: ExperienceLevelSchema.optional(),
     investorType: InvestorTypeSchema.optional(),
     primaryGoal: PrimaryGoalSchema.optional(),

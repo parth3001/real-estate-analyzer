@@ -249,7 +249,11 @@ export interface Analysis {
   validationWarnings?: ValidationWarning[];
   // Phase 1: Investment strategy (backend echoes back user's selected strategy)
   // Used by frontend to determine which metrics to display
-  strategy?: 'buy-hold' | 'house-hack' | 'brrrr';
+  // Issue #243 (2026-07-12): typed via the domain module. Backend
+  // echoes the user's selected strategy in the legacy kebab shape (the
+  // wizard flow's wire convention); post-wizard consumers should
+  // normalize via `normalizeStrategy` from `../domain/strategy`.
+  strategy?: import('../domain/strategy').LegacyDealStrategy;
   sensitivityAnalysis?: {
     bestCase: any;
     worstCase: any;

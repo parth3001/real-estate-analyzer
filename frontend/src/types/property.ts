@@ -64,8 +64,14 @@ export interface SFRPropertyData extends BasePropertyData {
     portfolioName?: string;
     portfolioStrategy?: string;
   };
-  // Phase 1: Universal Simple - Investment strategy selection
-  strategy?: 'buy-hold' | 'house-hack' | 'brrrr';
+  // Phase 1: Universal Simple - Investment strategy selection.
+  //
+  // Issue #243 (2026-07-12): typed via the domain module. Field keeps
+  // the legacy kebab wire shape because the wizard flow (LEGACY per
+  // CANONICAL_SURFACES.yaml, user_decision 2026-07-09) has many consumers
+  // still comparing kebab. Canonical snake is the target for post-wizard
+  // consumers — bridge via `normalizeStrategy` at the read boundary.
+  strategy?: import('../domain/strategy').LegacyDealStrategy;
 
   // Phase 2: BRRRR Strategy Data
   brrrr?: {

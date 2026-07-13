@@ -48,6 +48,10 @@ import {
   listMetricsForStrategy,
   type DealSnapshot,
 } from '../../services/dealMetrics';
+import {
+  CanonicalStrategySchema,
+  normalizeStrategy,
+} from '../../domain/strategy';
 
 // ===== Input schema =====
 
@@ -86,7 +90,9 @@ const InputsUsedSchema = z.record(
   z.union([z.number(), z.string(), z.boolean()])
 );
 
-const StrategySchema = z.enum(['buy_hold', 'brrrr', 'house_hack']);
+// Issue #243 (2026-07-12): canonical strategy schema per P10 — imported
+// from `domain/strategy`. No local enum literal duplication.
+const StrategySchema = CanonicalStrategySchema;
 
 const SuccessResultSchema = z.object({
   kind: z.literal('success'),
@@ -244,14 +250,12 @@ function buildDealSnapshot(payload: unknown): DealSnapshot {
     unknown
   >;
 
-  const rawStrategy =
-    (property.investmentStrategy as string | undefined) ?? 'buy_hold';
+  // Issue #243 (2026-07-12): route the raw property.investmentStrategy
+  // through the canonical normalizer. Preserves the pre-refactor default
+  // of `'buy_hold'` for legacy analysis events (pre-#200) that lack the
+  // field entirely.
   const strategy: DealSnapshot['strategy'] =
-    rawStrategy === 'brrrr'
-      ? 'brrrr'
-      : rawStrategy === 'house-hack' || rawStrategy === 'house_hack'
-        ? 'house_hack'
-        : 'buy_hold';
+    normalizeStrategy(property.investmentStrategy) ?? 'buy_hold';
 
   const brrrrIn = (property.brrrr ?? {}) as Record<string, unknown>;
 

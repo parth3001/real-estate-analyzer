@@ -36,6 +36,10 @@ import {
   type ToolContext,
   DEFAULT_READ_RETRY,
 } from './types';
+import {
+  CanonicalStrategySchema,
+  normalizeStrategy,
+} from '../../domain/strategy';
 
 // ===== Input schema =====
 
@@ -90,7 +94,7 @@ export const GetDecisionBreakdownOutputSchema = z.object({
   // agent narrating a breakdown knows whether to lead with buy-hold
   // framing ("monthly cash flow + cap rate") or BRRRR framing ("monthly
   // cash flow during seasoning + projected refi recovery").
-  strategy: z.enum(['buy_hold', 'brrrr']).optional(),
+  strategy: CanonicalStrategySchema.optional(),
   brrrr: z
     .object({
       rehabBudget: z.number(),
@@ -278,10 +282,15 @@ export const getDecisionBreakdown: Tool<
     // the breakdown narration can lead with strategy-appropriate
     // framing (capital recovery for BRRRR, vs cash-on-cash for
     // buy-hold). Derived from substrate propertyData.
+    //
+    // Issue #243 (2026-07-12) — route through the canonical normalizer.
+    // The output enum accepts all three canonical values; the local
+    // `strategy` variable is `undefined` when the field is missing OR
+    // unrecognized (undefined signals "don't lead with strategy-specific
+    // framing" per pre-refactor behavior).
     const strategyAny = (propertyData as { investmentStrategy?: unknown })
       .investmentStrategy;
-    const strategy: 'buy_hold' | 'brrrr' | undefined =
-      strategyAny === 'brrrr' ? 'brrrr' : strategyAny === 'buy_hold' ? 'buy_hold' : undefined;
+    const strategy = normalizeStrategy(strategyAny) ?? undefined;
     let brrrrOut: GetDecisionBreakdownOutput['brrrr'];
     if (strategy === 'brrrr') {
       const brrrrIn = (propertyData as { brrrr?: Record<string, unknown> }).brrrr ?? {};

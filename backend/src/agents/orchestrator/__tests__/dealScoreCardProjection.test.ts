@@ -371,6 +371,18 @@ describe('projectDealScoreCard', () => {
     expect(buyHold.strategy).toBe('buy_hold');
   });
 
+  // Issue #243 (2026-07-12): the wire shape MUST propagate house_hack
+  // (was previously silently collapsed). Frontend DealScoreCard.tsx
+  // now accepts the same widened union.
+  it('propagates house_hack in the wire shape (Issue #243)', () => {
+    const houseHack = projectDealScoreCard(
+      fakeAnalysis(fakeSFRData()),
+      fakeDecision(),
+      'house_hack'
+    );
+    expect(houseHack.strategy).toBe('house_hack');
+  });
+
   // ===== Issue #112: 10-year projection milestones =====
 
   describe('projection milestone sampling (Issue #112)', () => {

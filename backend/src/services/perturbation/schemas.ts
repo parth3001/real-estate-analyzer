@@ -154,7 +154,11 @@ export interface ScenarioSnapshot {
   // + BRRRR-specific metrics so the narrator can report the actual
   // affected values. Fields are optional so buy-hold snapshots stay
   // backward-compatible.
-  strategy?: 'buy_hold' | 'brrrr';
+  // Issue #243 (2026-07-12): canonical strategy vocabulary per P10.
+  // Widened from the narrow `'buy_hold' | 'brrrr'` so `house_hack`
+  // propagates end-to-end. Downstream narrator branches on the field
+  // through `normalizeStrategy` (no raw string comparisons anywhere).
+  strategy?: import('../../domain/strategy').CanonicalStrategy;
   brrrr?: {
     postRefiCashFlow: number;
     postRefiDSCR: number;

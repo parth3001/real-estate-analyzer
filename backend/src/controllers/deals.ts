@@ -14,6 +14,7 @@ import { diffScenarioInputs, scenarioInputSignature } from '../services/scenario
 import { runScenarioSensitivity } from '../services/scenarioSensitivity';
 import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { logger } from '../utils/logger';
+import { normalizeStrategy } from '../domain/strategy';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Removed unused propertyEnrichmentService imports
 
@@ -658,13 +659,7 @@ export const getDealScenarioComparison = async (
       string,
       unknown
     >;
-    const dealStrategy = (latestPd.investmentStrategy as string | undefined);
-
-    // Normalize strategy comparison — some paths write 'buy-hold' (hyphen),
-    // others 'buy_hold' (underscore). Same for 'house-hack' / 'house_hack'.
-    // Treat these as equivalent throughout this handler.
-    const normalizeStrategy = (s: unknown): string | undefined =>
-      typeof s === 'string' ? s.replace(/-/g, '_') : undefined;
+    const dealStrategy = normalizeStrategy(latestPd.investmentStrategy) ?? undefined;
 
     // Issue #109 (2026-07-07, #108 follow-up) — SIBLING STRATEGY DISCOVERY.
     // The user can force a different strategy view via ?strategy=... query
@@ -673,6 +668,11 @@ export const getDealScenarioComparison = async (
     // (e.g., decide whether BRRRR or buy-hold is right for a listing).
     // Falls back to the deal's own latest strategy when the query param
     // is absent or malformed.
+    //
+    // Issue #243 (2026-07-12) — kebab/SCREAMING/spaced query params all
+    // canonicalize via `normalizeStrategy` (imported from
+    // `domain/strategy`). #108/#109 sibling-strategy semantics are
+    // preserved via the shared normalizer.
     const strategyQueryParam =
       typeof req.query.strategy === 'string' ? req.query.strategy : undefined;
     const currentStrategy = normalizeStrategy(strategyQueryParam) ?? dealStrategy;
@@ -688,13 +688,13 @@ export const getDealScenarioComparison = async (
       if (s) distinctStrategies.add(s);
     }
     const siblingStrategies = [...distinctStrategies]
-      .filter((s) => s !== normalizeStrategy(currentStrategy))
+      .filter((s) => s !== currentStrategy)
       .sort();
 
     const bundles = currentStrategy
       ? allBundles.filter((b) => {
           const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<string, unknown>;
-          return normalizeStrategy(pd.investmentStrategy) === normalizeStrategy(currentStrategy);
+          return normalizeStrategy(pd.investmentStrategy) === currentStrategy;
         })
       : allBundles;
     if (bundles.length === 0) {

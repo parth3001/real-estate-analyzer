@@ -34,6 +34,42 @@ scan_metadata:
 canonical_surfaces:
 
   # ============================================================
+  # DOMAIN — canonical vocabulary modules (Issue #243, 2026-07-12)
+  # ============================================================
+
+  - id: strategy_normalizer
+    file: backend/src/domain/strategy/normalizeStrategy.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "Canonical normalizeStrategy per P10 — single source for translating any strategy alias (kebab / snake / SCREAMING / spaced) to CanonicalStrategy. Rejects DecisionEvent philosophy values explicitly."
+    key_exports: ["normalizeStrategy", "assertCanonicalStrategy"]
+
+  - id: strategy_canonical
+    file: backend/src/domain/strategy/canonicalStrategy.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "CanonicalStrategy type + Zod schema + alias tables. Anchors on services/dealMetrics/types.ts DealStrategy."
+    key_exports: ["CanonicalStrategy", "CanonicalStrategySchema"]
+
+  - id: strategy_legacy_projector
+    file: backend/src/domain/strategy/toLegacyDealStrategy.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "One-directional projector (P12) — CanonicalStrategy → legacy Deal.investmentStrategy kebab. Inverse via normalizeStrategy for read symmetry."
+    key_exports: ["toLegacyDealStrategy", "fromLegacyDealStrategy"]
+
+  - id: strategy_normalizer_frontend
+    file: frontend/src/domain/strategy/normalizeStrategy.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "Frontend mirror of backend normalizeStrategy. Parity enforced via test-suite."
+    key_exports: ["normalizeStrategy", "assertCanonicalStrategy"]
+
+  # ============================================================
   # ANALYZERS — deterministic math over property inputs
   # ============================================================
 
@@ -998,6 +1034,12 @@ canonical_surfaces:
     lifecycle: LIVE
     category: route
     role: "POST /api/chat/turn — W6 substrate-native chat surface"
+
+  - id: controllers_deals
+    file: backend/src/controllers/deals.ts
+    lifecycle: LIVE
+    category: controller
+    role: "Deals controller — analyze, list, detail, scenarios endpoints. Consumers of the substrate materialization + sibling-strategy discovery (#108/#109)."
 
   - id: route_deals
     file: backend/src/routes/deals.ts

@@ -69,6 +69,7 @@ import type {
 import { logger } from '../utils/logger';
 import { fireCritiqueOnSave } from '../agents/adversarialCritic/triggerOnSave';
 import { licenseRepository } from '../repositories/LicenseRepository';
+import { normalizeStrategy, toLegacyDealStrategy } from '../domain/strategy';
 
 // PropertyAddress type used by the auto-redeem helper. Materializer
 // reads it off propertyData.propertyAddress which is already typed via
@@ -465,18 +466,6 @@ function projectAnalysis(ap: AnalysisPayload): Analysis {
   } as Analysis;
 }
 
-/**
- * Strategy normalization. score_deal accepts 'buy_hold' | 'brrrr' (chat
- * convention with underscore). The legacy Deal model uses 'buy-hold' |
- * 'brrrr' | 'house-hack' (hyphenated). We convert.
- */
-function normalizeStrategy(
-  strategy: 'buy_hold' | 'brrrr' | undefined
-): IDeal['investmentStrategy'] {
-  if (strategy === 'brrrr') return 'brrrr';
-  return 'buy-hold';
-}
-
 // ===== Public API =====
 
 /**
@@ -522,9 +511,12 @@ export async function materializeDealFromDecision(
   const decisionPayload = bundle.decision.payload;
   const property = analysisPayload.propertyData;
 
-  // 2. Strategy (defensive read — score_deal's optional extension)
+  // 2. Strategy (defensive read — score_deal's optional extension).
+  // Issue #243 (2026-07-12): route through the canonical normalizer +
+  // legacy projector so `house_hack` no longer silently collapses to
+  // `'buy-hold'` (pre-flight-confirmed bug).
   const propertyDataAny = property as unknown as {
-    investmentStrategy?: 'buy_hold' | 'brrrr';
+    investmentStrategy?: string;
     brrrr?: {
       rehabBudget: number;
       afterRepairValue: number;
@@ -534,7 +526,9 @@ export async function materializeDealFromDecision(
       refinanceInterestRate?: number;
     };
   };
-  const investmentStrategy = normalizeStrategy(propertyDataAny.investmentStrategy);
+  const investmentStrategy: IDeal['investmentStrategy'] = toLegacyDealStrategy(
+    normalizeStrategy(propertyDataAny.investmentStrategy) ?? 'buy_hold'
+  );
 
   // 3. Build the Partial<IDeal> from substrate
   const propertyName = `${property.propertyAddress.street}, ${property.propertyAddress.city}, ${property.propertyAddress.state}`;

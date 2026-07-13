@@ -1,5 +1,6 @@
 import { FinancialCalculations } from '../utils/financialCalculations';
 import type { BasePropertyData } from '../types/propertyTypes';
+import { normalizeStrategy } from '../domain/strategy';
 import type {
   CommonMetrics,
   AnalysisResult,
@@ -201,7 +202,15 @@ export abstract class BasePropertyAnalyzer<T extends BasePropertyData, U extends
     // BRRRR: Always 15 years (supports exit scenarios at 3, 5, 7, 10, 15 years)
     // Buy & Hold / Multi-Family: User input (modeling period / investment horizon)
     // Note: investmentStrategy is added at runtime by deals controller (line 274)
-    const investmentStrategy = (this.data as any).investmentStrategy || 'buy-hold';
+    //
+    // Issue #243 (2026-07-12): route through the canonical normalizer.
+    // Analyzer never sees kebab/SCREAMING/spaced literals — just the
+    // canonical enum. Preserves the pre-refactor fallback of buy_hold
+    // when the field is missing (per invariant #10 — no behavior change
+    // for legacy analysis events).
+    const investmentStrategy = normalizeStrategy(
+      (this.data as { investmentStrategy?: unknown }).investmentStrategy
+    ) ?? 'buy_hold';
     const effectiveProjectionYears = investmentStrategy === 'brrrr'
       ? 15  // BRRRR: Fixed 15 years for multi-scenario analysis
       : this.assumptions.projectionYears;  // Buy & Hold/MF: User's modeling period

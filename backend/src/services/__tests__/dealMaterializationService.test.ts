@@ -75,7 +75,10 @@ async function seedAnalysisAndDecision(opts: {
   userId: Types.ObjectId;
   street?: string;
   purchasePrice?: number;
-  strategy?: 'buy_hold' | 'brrrr';
+  // Widened to include 'house_hack' + arbitrary aliases (Issue #243) so
+  // regression tests can seed legacy/kebab writes and verify the
+  // materializer canonicalizes them correctly.
+  strategy?: string;
   dealQuality?: number;
 }): Promise<{ analysisEventId: Types.ObjectId; decisionEventId: Types.ObjectId }> {
   const property: SFRData = {
@@ -103,7 +106,7 @@ async function seedAnalysisAndDecision(opts: {
   };
   // Defensive extension — see propertyTypes.ts; investmentStrategy isn't
   // on SFRData proper but score_deal accepts it on the runtime shape.
-  (property as unknown as { investmentStrategy?: 'buy_hold' | 'brrrr' }).investmentStrategy =
+  (property as unknown as { investmentStrategy?: string }).investmentStrategy =
     opts.strategy ?? 'buy_hold';
 
   const analysisPayload: AnalysisPayload = {
@@ -324,6 +327,35 @@ describe('dealMaterializationService', () => {
       });
       const result = await materializeDealFromDecision(decisionEventId, userId);
       expect(result.deal?.investmentStrategy).toBe('brrrr');
+    });
+
+    // Issue #243 (2026-07-12) — regression against the silent-drop bug
+    // where `propertyData.investmentStrategy === 'house_hack'` collapsed
+    // to `'buy-hold'` via the old inline ternary. The canonical
+    // normalizer + `toLegacyDealStrategy` project it correctly to
+    // `'house-hack'`.
+    it("Issue #243: house_hack canonical → legacy 'house-hack' (was silently dropped)", async () => {
+      const userId = await createRealUser('house-hack-243@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        strategy: 'house_hack',
+      });
+      const result = await materializeDealFromDecision(decisionEventId, userId);
+      expect(result.deal?.investmentStrategy).toBe('house-hack');
+    });
+
+    // Issue #243 (2026-07-12) — kebab-shaped legacy substrate writes
+    // (pre-refactor) still round-trip correctly through the normalizer.
+    it('Issue #243: kebab-in-substrate house-hack round-trips to house-hack', async () => {
+      const userId = await createRealUser('house-hack-legacy@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        // Simulate a pre-refactor legacy write that persisted the kebab
+        // value directly.
+        strategy: 'house-hack',
+      });
+      const result = await materializeDealFromDecision(decisionEventId, userId);
+      expect(result.deal?.investmentStrategy).toBe('house-hack');
     });
 
     it('derives verdict from dealQuality score-band boundaries', async () => {

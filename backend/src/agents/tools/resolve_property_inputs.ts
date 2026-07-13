@@ -51,6 +51,7 @@ import { marketIntelligenceService } from '../../services/marketIntelligenceServ
 import { rentcastService } from '../../services/rentcastService';
 import { propertyTaxEstimationService } from '../../services/propertyTaxEstimationService';
 import { logger } from '../../utils/logger';
+import { CanonicalStrategySchema } from '../../domain/strategy';
 
 // ===== Provenance taxonomy =====
 
@@ -336,7 +337,13 @@ export const ResolvePropertyInputsInputSchema = z.object({
    * Defaults for refi rate / refi LTV / seasoning are applied if not
    * supplied.
    */
-  strategy: z.enum(['buy_hold', 'brrrr']).optional(),
+  // Issue #243 (2026-07-12): widen the resolver's WRITE-boundary input
+  // schema to the canonical enum ('buy_hold' | 'brrrr' | 'house_hack') so
+  // `house_hack` no longer silently loses data at Zod parse time.
+  // NOTE: analyzer routing for `house_hack` is OUT OF SCOPE for #243 —
+  // the resolver simply becomes accepting; a follow-up issue tracks
+  // the engine branch.
+  strategy: CanonicalStrategySchema.optional(),
   /**
    * Phase 1 BRRRR (Issue #200 — 2026-06-25): BRRRR-specific inputs.
    * rehabBudget + afterRepairValue are USER-CRITICAL (no sane defaults —

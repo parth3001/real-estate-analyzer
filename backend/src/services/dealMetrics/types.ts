@@ -36,6 +36,12 @@
  * makes sense for BRRRR (e.g., 70% rule ceiling) declares
  * `['brrrr']`. A strategy-agnostic formula (e.g., break-even
  * occupancy) declares all three.
+ *
+ * CANONICAL strategy enum for the entire codebase per
+ * `/docs/ARCHITECTURE_PRINCIPLES.md` §P10. Re-exported by
+ * `backend/src/domain/strategy/canonicalStrategy.ts` — new code should
+ * import `CanonicalStrategy` from `domain/strategy` (not this file) so
+ * the anchor location can move without downstream churn.
  */
 export type DealStrategy = 'buy_hold' | 'brrrr' | 'house_hack';
 

@@ -28,6 +28,7 @@
 
 import type { SFRData, BRRRRStrategyData } from '../../../types/propertyTypes';
 import type { AnalysisAssumptions } from '../../../analysis/BasePropertyAnalyzer';
+import { assertCanonicalStrategy } from '../../../domain/strategy';
 
 /**
  * Calibration fixture property data.
@@ -291,3 +292,13 @@ export const CALIBRATION_FIXTURES: CalibrationFixture[] = [
     },
   },
 ];
+
+// Issue #243 (2026-07-12): fail-fast at load time if any fixture drifts
+// to a non-canonical strategy value. Catches drift BEFORE the eval suite
+// runs (per design invariant #10 — fixtures are canonical snake).
+for (const fx of CALIBRATION_FIXTURES) {
+  const strat = fx.inputs.propertyData.investmentStrategy;
+  if (strat !== undefined) {
+    assertCanonicalStrategy(strat);
+  }
+}

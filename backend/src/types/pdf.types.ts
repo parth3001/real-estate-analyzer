@@ -3,7 +3,16 @@
  *
  * Purpose: Centralized type definitions for Feature #14 (Anonymous PDF Email Storage)
  * Created: 2026-03-01
+ *
+ * Issue #243 (2026-07-12): `PdfStrategy` is now defined via the domain
+ * module (`LegacyDealStrategy`) rather than an inline kebab union. The
+ * PDF pipeline retains its legacy kebab wire shape (persisted enums in
+ * SharedAnalysis / AnonymousPdfRequest, and pdfService template
+ * comparisons) — migrating those to canonical snake is deferred as a
+ * follow-up. Any caller with a CanonicalStrategy converts via
+ * `toLegacyDealStrategy` before crossing into this type.
  */
+import type { LegacyDealStrategy } from '../domain/strategy';
 
 // ============================================================
 // PDF Form Data (User Input for PDF Generation)
@@ -16,8 +25,9 @@ export interface PdfFormData {
   monthlyRent: number;
   squareFeet: number;
 
-  // Strategy
-  investmentStrategy: 'brrrr' | 'buy-hold';
+  // Strategy — Issue #243 (2026-07-12): PdfStrategy (canonical). PDF
+  // template converts to legacy kebab at the render boundary.
+  investmentStrategy: PdfStrategy;
 
   // Optional Fields
   projectionYears?: number;
@@ -32,9 +42,13 @@ export interface PdfFormData {
 
 /**
  * Investment Strategy Type
- * Maps to calculator types in the frontend
+ * Maps to calculator types in the frontend.
+ *
+ * Issue #243 (2026-07-12): aliased to CanonicalStrategy. Any consumer
+ * that still needs the legacy kebab shape converts once via
+ * `toLegacyDealStrategy` at the render boundary.
  */
-export type PdfStrategy = 'brrrr' | 'buy-hold';
+export type PdfStrategy = LegacyDealStrategy;
 
 // ============================================================
 // PDF Generation Result
@@ -231,10 +245,14 @@ export function isPdfErrorRetryable(error: PdfError): boolean {
 }
 
 /**
- * Type guard to check if value is a valid PDF strategy
+ * Type guard to check if value is a valid PDF strategy.
+ *
+ * Issue #243 (2026-07-12): accepts CanonicalStrategy values. Callers
+ * with legacy kebab input should normalize first via
+ * `normalizeStrategy` from `../domain/strategy`.
  */
-export function isValidPdfStrategy(value: any): value is PdfStrategy {
-  return value === 'brrrr' || value === 'buy-hold';
+export function isValidPdfStrategy(value: unknown): value is PdfStrategy {
+  return value === 'brrrr' || value === 'buy-hold' || value === 'house-hack';
 }
 
 // ============================================================
