@@ -44,12 +44,12 @@ function main() {
   const backend = hashCases(BACKEND);
   const frontend = hashCases(FRONTEND);
   if (backend.hash === frontend.hash) {
-    console.log('[verify-strategy-parity-fixture] OK — cases table hash matches');
+    console.log('[#243 parity check] OK — cases table hash matches');
     console.log(`  sha256 = ${backend.hash}`);
     process.exit(0);
   }
   console.error(
-    '[verify-strategy-parity-fixture] DRIFT DETECTED — INV-5 (FE/BE parity) violated'
+    '[#243 parity check] DRIFT DETECTED — INV-5 (FE/BE parity) violated'
   );
   console.error(`  backend  = ${BACKEND}`);
   console.error(`    sha256 = ${backend.hash}`);

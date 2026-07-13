@@ -98,6 +98,22 @@ canonical_surfaces:
     category: tooling
     role: "Node script hashing the `cases` array of both parity fixtures. Wired into CI or `pretest` to fail on drift (INV-5)."
 
+  - id: eslint_config_root
+    file: eslint.config.js
+    lifecycle: LIVE
+    version: "1.0"
+    category: tooling
+    since: "2026-07-12"
+    role: "Issue #243 iteration-3 — repo-root ESLint v9 flat config. P10 enforcement moat (via spread of eslint.config.p10.js) + baseline rules. Supersedes .eslintrc.js which was v8 format and stopped working when ESLint upgraded to v9."
+
+  - id: eslint_config_p10
+    file: eslint.config.p10.js
+    lifecycle: LIVE
+    version: "1.0"
+    category: tooling
+    since: "2026-07-12"
+    role: "Issue #243 iteration-3 — P10-only rule layer (single `no-restricted-syntax` rule + whitelist). Consumed by `lint:p10` scripts in backend + frontend so CI enforcement is independent of pre-existing lint debt (issue #258). Spread into `eslint.config.js` (root) and `frontend/eslint.config.js`."
+
   # ============================================================
   # ANALYZERS — deterministic math over property inputs
   # ============================================================

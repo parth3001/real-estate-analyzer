@@ -3,6 +3,7 @@ import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
 import {
   type CanonicalStrategy,
+  type LegacyDealStrategy,
   toLegacyDealStrategy,
   normalizeStrategy,
 } from '../domain/strategy';
@@ -35,9 +36,18 @@ import {
  */
 type AnalyticsStrategyInput = CanonicalStrategy | string | undefined;
 
+/**
+ * Projects any accepted input to the persisted analytics wire (LegacyDealStrategy,
+ * i.e. the kebab shape 'buy-hold' | 'brrrr' | 'house-hack'). Iteration-3
+ * (Issue #243, 2026-07-12): the return type is `LegacyDealStrategy` —
+ * the canonical alias for the persisted-analytics kebab wire, imported
+ * from `domain/strategy`. This replaces the raw kebab union literal that
+ * previously appeared inline here (INV-14 closes literally: zero raw
+ * kebab unions survive in any refactored non-whitelisted file).
+ */
 function projectStrategyForWire(
   raw: AnalyticsStrategyInput
-): 'brrrr' | 'buy-hold' | 'house-hack' | undefined {
+): LegacyDealStrategy | undefined {
   if (raw === undefined) return undefined;
   const canonical = normalizeStrategy(raw);
   if (canonical === null) return undefined;

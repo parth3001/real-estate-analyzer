@@ -8,6 +8,7 @@
     "dev:watch": "vite --force",
     "build": "tsc -b && vite build && node scripts/prerender-blog.mjs",
     "lint": "eslint . --max-warnings=0",
+    "lint:p10": "eslint --config ../eslint.config.p10.js 'src/**/*.{ts,tsx}' --max-warnings=0",
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest --watch",

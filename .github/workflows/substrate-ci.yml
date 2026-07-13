@@ -74,6 +74,13 @@ on:
       - 'backend/package.json'
       - 'backend/tsconfig.json'
       - '.github/workflows/substrate-ci.yml'
+      # Issue #243 iteration-3 (2026-07-12) — P10 enforcement surface.
+      - 'backend/src/domain/strategy/**'
+      - 'backend/src/services/analyticsService.ts'
+      - 'eslint.config.js'
+      - 'eslint.config.p10.js'
+      - 'frontend/eslint.config.js'
+      - 'scripts/verify-strategy-parity-fixture.js'
   pull_request:
     branches: [reanalyzr-2.0]
     paths:
@@ -114,6 +121,13 @@ on:
       - 'backend/package.json'
       - 'backend/tsconfig.json'
       - '.github/workflows/substrate-ci.yml'
+      # Issue #243 iteration-3 (2026-07-12) — P10 enforcement surface.
+      - 'backend/src/domain/strategy/**'
+      - 'backend/src/services/analyticsService.ts'
+      - 'eslint.config.js'
+      - 'eslint.config.p10.js'
+      - 'frontend/eslint.config.js'
+      - 'scripts/verify-strategy-parity-fixture.js'
 
 # Cancel in-progress runs for the same ref when a new commit lands.
 # Saves GH Actions minutes without hiding genuine regressions.
@@ -122,6 +136,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Issue #243 iteration-3 (2026-07-12) — P10 enforcement gate.
+  #
+  # Runs the scoped `lint:p10` script in backend AND frontend. The
+  # scoped config (`eslint.config.p10.js`) contains ONLY the P10
+  # `no-restricted-syntax` rule, so this gate is independent of the
+  # 492 pre-existing frontend errors (issue #258) that would otherwise
+  # mask a new violation under `--max-warnings=0`.
+  #
+  # Second step invokes `scripts/verify-strategy-parity-fixture.js` to
+  # catch drift between the FE + BE parity fixture copies (INV-5). Both
+  # steps must pass; either failure blocks the merge.
+  p10-lint:
+    name: P10 lint + parity-fixture verify (Issue #243)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install root deps (eslint + typescript-eslint + parser)
+        run: npm ci --ignore-scripts
+      - name: Install frontend deps (self-contained lint stack)
+        run: npm ci --ignore-scripts
+        working-directory: frontend
+      - name: Backend lint:p10
+        run: npm run lint:p10
+        working-directory: backend
+      - name: Frontend lint:p10
+        run: npm run lint:p10
+        working-directory: frontend
+      - name: Strategy parity fixture verify (INV-5)
+        run: node scripts/verify-strategy-parity-fixture.js
+
   typecheck:
     name: TypeScript compile
     runs-on: ubuntu-latest

@@ -770,6 +770,131 @@ describe('tool:resolve_property_inputs (W5-Phase1)', () => {
       ).rejects.toThrow(/#257/);
     });
 
+    // Issue #243 iteration-3 (2026-07-12) — coverage gap plug:
+    //   iteration-2 tested the FRESH-input branch of house_hack fail-fast
+    //   but not the `resolveFromPriorDecision` branch (lines ~574-580 in
+    //   the resolver source). This test hits that second codepath so a
+    //   regression that only re-introduces the silent-collapse on the
+    //   pivot flow gets caught. Structured to mirror the fresh-input
+    //   test above for readability.
+    it('prior-decision path: house_hack throws with a message referencing #243 + #257', async () => {
+      // Seed a prior buy_hold AnalysisEvent → DecisionEvent for the same
+      // address; then call the resolver with strategy='house_hack' AND
+      // the priorDecisionId. This routes into `resolveFromPriorDecision`
+      // (the pivot branch), which per INV-8 must throw fast rather than
+      // silently collapse.
+      const property = {
+        propertyType: 'SFR' as const,
+        purchasePrice: 275000,
+        downPayment: 68750,
+        interestRate: 7.0,
+        loanTerm: 30,
+        monthlyRent: 2800,
+        propertyTaxRate: 1.8,
+        insuranceRate: 0.5,
+        maintenanceCost: 2750,
+        propertyManagementRate: 8,
+        squareFootage: 1850,
+        bedrooms: 3,
+        bathrooms: 2,
+        yearBuilt: 2018,
+        closingCosts: 5500,
+        propertyAddress: {
+          street: ADDRESS.street,
+          city: ADDRESS.city,
+          state: ADDRESS.state,
+          zipCode: ADDRESS.zipCode,
+        },
+        // Prior analysis was buy_hold (canonical snake) — the pivot
+        // attempt below flips it to house_hack.
+        investmentStrategy: 'buy_hold',
+      };
+      const assumptions = {
+        projectionYears: 10,
+        annualRentIncrease: 3,
+        annualExpenseIncrease: 2.5,
+        annualPropertyValueIncrease: 3.5,
+        sellingCosts: 6,
+        vacancyRate: 5,
+      };
+
+      // Minimal event payload — the resolver's prior-decision branch
+      // only reads `payload.propertyData` and `payload.assumptions`.
+      const analysisEventId = await eventsRepository.writeAnalysisEvent({
+        traceId: 't-hh-prior',
+        actorType: 'tool:score_deal',
+        userId: new Types.ObjectId(),
+        payload: {
+          propertyData: property as unknown,
+          marketData: { lastUpdated: new Date(), dataSource: ['fallback'] },
+          assumptions,
+          metrics: {},
+          monthlyAnalysis: {},
+          longTermAnalysis: { projections: [] },
+          walkAwayPrice: 250000,
+          enrichmentSource: 'fallback',
+          enrichmentCacheHit: false,
+          engineVersion: 'v3.0',
+          computeTimeMs: 100,
+        } as unknown as Parameters<
+          typeof eventsRepository.writeAnalysisEvent
+        >[0]['payload'],
+      });
+      const decisionEventId = await eventsRepository.writeDecisionEvent({
+        traceId: 't-hh-prior',
+        actorType: 'agent:deal_scoring',
+        userId: new Types.ObjectId(),
+        payload: {
+          analysisEventId,
+          dealQuality: 60,
+          qualityLabel: 'Meets professional standards',
+          qualityColor: 'yellow',
+          professionalAssessment: {} as unknown,
+          marketPosition: {} as unknown,
+          reasoningTrail: {
+            primaryInsight: 'r',
+            strategicRecommendations: [],
+            riskMitigation: [],
+            opportunityMaximization: [],
+            keyRisks: [],
+          },
+          confidence: 80,
+          scoringWeightsUsed: {} as unknown,
+          engineVersion: 'v3.0',
+        } as unknown as Parameters<
+          typeof eventsRepository.writeDecisionEvent
+        >[0]['payload'],
+      });
+
+      // Now attempt the pivot: prior-decision + strategy=house_hack.
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            strategy: 'house_hack',
+            priorDecisionId: decisionEventId.toString(),
+          },
+          ctxFor('house-hack-prior')
+        )
+      ).rejects.toThrow(/house_hack/);
+      // Same tracker cross-reference as the fresh-input case — reader
+      // should land on the parent + follow-up with one click.
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            strategy: 'house_hack',
+            priorDecisionId: decisionEventId.toString(),
+          },
+          ctxFor('house-hack-prior-b')
+        )
+      ).rejects.toThrow(/#257/);
+    });
+
     it('house_hack throw leaves no partial substrate write behind', async () => {
       // The resolver writes NO events by design (invokeLLM: false,
       // sideEffects declare only external_api). The invariant here

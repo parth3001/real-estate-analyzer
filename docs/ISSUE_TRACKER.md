@@ -359,6 +359,9 @@ No normalization site. When DecisionEvent.investmentStrategy is written, is it a
 **Business Impact**: Every consumer reading DecisionEvent.investmentStrategy may be interpreting garbage. Substrate queries by strategy unreliable.
 **Proposed Solution**: One canonical enum (recommend snake `'buy_hold' | 'brrrr' | 'house_hack'`). Adapters at boundaries. Split philosophy into a separate field or deprecate.
 
+**Iteration 3 (2026-07-12) — FINAL CLOSURE**:
+Closed INV-6 (migrated to ESLint v9 flat config + added red-team enforcement test at `backend/src/domain/strategy/__tests__/eslint-p10-enforcement.test.ts` + wired `lint:p10` scripts into `substrate-ci.yml`'s `p10-lint` job) and INV-14 (`backend/src/services/analyticsService.ts:40` raw kebab union → `LegacyDealStrategy` imported from `domain/strategy`). Also closed the two QE-flagged coverage gaps: (a) `resolveFromPriorDecision` path for `strategy: 'house_hack'` now has its own test alongside the fresh-input case; (b) INV-10 (endpoint-layer alias round-trip) now hits the REAL HTTP route via `supertest` in `backend/src/routes/__tests__/scenarios.strategy-alias.test.ts`, no longer re-implementing the filter locally. Migrated `.eslintrc.js` (v8, silently ignored by ESLint 9) → `eslint.config.js` + `eslint.config.p10.js` at repo root; deleted the v8 file. Frontend lint debt of 492 pre-existing errors is scoped to follow-up issue #258 (P3). Iteration 3 is the final closure for #243 — no further iterations planned.
+
 ### Issue #244: Insurance rate default divergence — frontend 0.7% vs backend 0.5%
 **Status**: 🔴 Open · **Priority**: P0 · **Category**: Assumption defaults (Cat B)
 **Component**: `frontend/src/constants/sfrPropertyDefaults.ts:89` (0.7%) vs `backend/src/agents/tools/resolve_property_inputs.ts:268` (0.5%)
@@ -16665,6 +16668,33 @@ Once routing lands, remove the `NotImplementedError` throws in `resolve_property
 - Companion to `#243-followup-b` (same subject, more detail).
 - The resolver's throw message references BOTH slugs so a reader lands on this tracker with one click.
 - Referenced in-code at `backend/src/agents/tools/resolve_property_inputs.ts` (two throw sites, both mentioning `#257`).
+
+---
+
+### Issue #258: Frontend lint debt — 492 pre-existing ESLint errors block full-suite `--max-warnings=0`
+
+**Status**: 🔴 Open
+**Priority**: P3 (Low — cleanup)
+**Reported**: 2026-07-12
+**Component**: `frontend/eslint.config.js`, `frontend/src/**/*.{ts,tsx}`
+**Parent**: #243 iteration-3 (documented in that issue's non-goals)
+
+**Description**:
+`cd frontend && npm run lint` currently exits non-zero on approximately 492 pre-existing ESLint errors unrelated to Issue #243 P10 enforcement (unused vars, missing return types, react-hooks/exhaustive-deps, `any` usage, etc). Issue #243 iteration-3 addressed this by introducing a scoped `lint:p10` script + `eslint.config.p10.js` config that runs ONLY the P10 rule, so P10 enforcement is independent of this debt. Cleaning up the 492 errors is scoped-out of #243 by design.
+
+Iteration-3 also whitelisted a small set of frontend files that contain legitimate P10 violations (SFRAnalysis.tsx, SampleAnalysisPage.tsx, StrategyCard.tsx, AnalysisDetails.tsx + AnalysisDetails/**, types/pipeline.ts) — most of these should eventually be refactored to route through `normalizeStrategy` from `frontend/src/domain/strategy` rather than staying whitelisted forever, especially the non-LEGACY ones (StrategyCard, AnalysisDetails, savedDealVariants).
+
+**Business Impact**:
+Low. The scoped `lint:p10` gate catches P10 regressions in CI (issue #243 iteration-3), so the debt doesn't degrade code quality on the strategy vocabulary front. General lint hygiene degrades slowly and makes onboarding noisier.
+
+**Proposed Solution**:
+Batched cleanup by rule class (typed sweeps):
+1. `@typescript-eslint/no-unused-vars` — probably 100–200 of the 492
+2. `@typescript-eslint/no-explicit-any` — audit + type where cheap, `unknown` where not
+3. `react-hooks/exhaustive-deps` — case-by-case; some are intentional
+4. Prune the iteration-3 additions to the P10 whitelist by refactoring the 4–5 non-LEGACY files to call `normalizeStrategy`.
+
+Once clean, restore `frontend npm run lint` to `--max-warnings=0` in CI (currently only the scoped `lint:p10` gates merges).
 
 ---
 
