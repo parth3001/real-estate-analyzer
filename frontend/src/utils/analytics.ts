@@ -62,22 +62,19 @@ const trackPageView = (pageName: string) => {
  */
 import {
   toAnalyticsStrategyDimension,
+  normalizeStrategy,
   type CanonicalStrategy,
   type LegacyDealStrategy,
 } from '../domain/strategy';
 
-type AnalyticsStrategyInput = CanonicalStrategy | LegacyDealStrategy;
+type AnalyticsStrategyInput = CanonicalStrategy | LegacyDealStrategy | string;
 
 function toAnalyticsDimension(strategy: AnalyticsStrategyInput): LegacyDealStrategy {
-  // If already kebab, pass through; if canonical, project.
-  if (
-    strategy === 'buy-hold' ||
-    strategy === 'brrrr' ||
-    strategy === 'house-hack'
-  ) {
-    return strategy;
-  }
-  return toAnalyticsStrategyDimension(strategy);
+  // Issue #243 (iteration-2): normalize inbound (kebab / canonical / any
+  // alias) → canonical → project to analytics kebab wire via the single
+  // canonical projector. No inline kebab literals here.
+  const canonical = normalizeStrategy(strategy) ?? 'buy_hold';
+  return toAnalyticsStrategyDimension(canonical);
 }
 
 const trackCalculatorStarted = (strategy: AnalyticsStrategyInput) => {
@@ -152,25 +149,34 @@ const trackLoginFailed = (errorMessage: string) => {
 /**
  * PDF request tracking
  */
-const trackPdfRequestInitiated = (strategy: 'brrrr' | 'buy-hold', dealScore?: number) => {
+const trackPdfRequestInitiated = (
+  strategy: AnalyticsStrategyInput,
+  dealScore?: number
+) => {
   trackEvent('pdf_request_initiated', {
-    strategy,
+    strategy: toAnalyticsDimension(strategy),
     deal_score: dealScore,
     timestamp: new Date().toISOString(),
   });
 };
 
-const trackPdfRequestSuccess = (strategy: 'brrrr' | 'buy-hold', dealScore?: number) => {
+const trackPdfRequestSuccess = (
+  strategy: AnalyticsStrategyInput,
+  dealScore?: number
+) => {
   trackEvent('pdf_request_success', {
-    strategy,
+    strategy: toAnalyticsDimension(strategy),
     deal_score: dealScore,
     timestamp: new Date().toISOString(),
   });
 };
 
-const trackPdfRequestFailed = (strategy: 'brrrr' | 'buy-hold', errorType: string) => {
+const trackPdfRequestFailed = (
+  strategy: AnalyticsStrategyInput,
+  errorType: string
+) => {
   trackEvent('pdf_request_failed', {
-    strategy,
+    strategy: toAnalyticsDimension(strategy),
     error_type: errorType,
     timestamp: new Date().toISOString(),
   });

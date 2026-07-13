@@ -728,4 +728,76 @@ describe('tool:resolve_property_inputs (W5-Phase1)', () => {
       ).rejects.toThrow();
     });
   });
+
+  // ===== Issue #243 iteration-2 — house_hack fail-fast (INV-8) =====
+  //
+  // The resolver's input Zod schema accepts the full CanonicalStrategy
+  // enum ('buy_hold' | 'brrrr' | 'house_hack') so the boundary is
+  // symmetric with dealMetrics. But analyzer routing for house_hack is
+  // NOT implemented (see Issue #257). If we accept the enum at Zod
+  // AND stamp `undefined` on the write path, we recreate the exact
+  // silent-drop shape #243 exists to close. So the resolver throws
+  // fast (P17) on house_hack — no partial write, no ambiguity.
+  describe('Issue #243 iteration-2: house_hack fail-fast (INV-8)', () => {
+    beforeEach(() => {
+      setPropertyResolverAdapter(stubAdapter(FULL_EXTERNAL));
+    });
+
+    it('fresh-input path: house_hack throws with a message referencing #243 + #257', async () => {
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            strategy: 'house_hack',
+          },
+          ctxFor('house-hack-fresh')
+        )
+      ).rejects.toThrow(/house_hack/);
+      // Assert message mentions both the parent issue and the
+      // follow-up so a reader lands on the tracker with one click.
+      await expect(
+        resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            strategy: 'house_hack',
+          },
+          ctxFor('house-hack-fresh-b')
+        )
+      ).rejects.toThrow(/#257/);
+    });
+
+    it('house_hack throw leaves no partial substrate write behind', async () => {
+      // The resolver writes NO events by design (invokeLLM: false,
+      // sideEffects declare only external_api). The invariant here
+      // is simply that no partial write leaks out even under the
+      // house_hack throw path — if the resolver ever gains an
+      // event-write side effect, we want THIS test to catch the
+      // regression by re-asserting the sideEffects contract.
+      try {
+        await resolvePropertyInputs.execute(
+          {
+            address: ADDRESS,
+            purchasePrice: 275000,
+            propertyType: 'SFR',
+            strategy: 'house_hack',
+          },
+          ctxFor('house-hack-fresh-c')
+        );
+        throw new Error('expected throw did not happen');
+      } catch (e) {
+        expect((e as Error).message).toMatch(/house_hack/);
+      }
+      // Sanity: the resolver's declared sideEffects list has no
+      // event writes — proves no partial write is possible even
+      // beyond the throw guard.
+      expect(resolvePropertyInputs.sideEffects).toEqual([
+        { type: 'external_api', service: 'rentcast' },
+        { type: 'external_api', service: 'fred' },
+      ]);
+    });
+  });
 });

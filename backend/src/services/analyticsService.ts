@@ -1,6 +1,11 @@
 import { AnalyticsEvent, AnalyticsEventType, EventMetadata } from '../models/Analytics';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
+import {
+  type CanonicalStrategy,
+  toLegacyDealStrategy,
+  normalizeStrategy,
+} from '../domain/strategy';
 
 /**
  * Analytics Service
@@ -13,7 +18,31 @@ import mongoose from 'mongoose';
  * - Async non-blocking writes
  * - Minimal metadata (privacy-focused)
  * - No PII beyond existing User model
+ *
+ * Issue #243 (2026-07-12, iteration-2): analytics WIRE values are
+ * kebab-shaped for historical continuity with existing analytics_events
+ * documents (P4 append-only substrate discipline; pre-flight gotcha #7).
+ * In-code representation is CanonicalStrategy (snake). Cross the boundary
+ * via `toLegacyDealStrategy` on WRITE, `normalizeStrategy` on READ. The
+ * model's Mongoose enum stays kebab (LEGACY_WIRE tier, whitelisted in
+ * `.eslintrc.js`); this service is the one call site that projects.
  */
+
+/**
+ * Accepts either CanonicalStrategy (new callers) or the persisted kebab
+ * wire (legacy callers that read raw from Deal.investmentStrategy). Both
+ * shapes are normalized before persistence so the collection stays clean.
+ */
+type AnalyticsStrategyInput = CanonicalStrategy | string | undefined;
+
+function projectStrategyForWire(
+  raw: AnalyticsStrategyInput
+): 'brrrr' | 'buy-hold' | 'house-hack' | undefined {
+  if (raw === undefined) return undefined;
+  const canonical = normalizeStrategy(raw);
+  if (canonical === null) return undefined;
+  return toLegacyDealStrategy(canonical);
+}
 
 class AnalyticsService {
   /**
@@ -21,19 +50,20 @@ class AnalyticsService {
    * Triggered when user completes property analysis
    */
   async trackCalculatorCompleted(metadata: {
-    strategy: 'brrrr' | 'buy-hold';
+    strategy: AnalyticsStrategyInput;
     dealScore?: number;
     userId?: string;
   }): Promise<void> {
     try {
+      const wireStrategy = projectStrategyForWire(metadata.strategy);
       await this.trackEvent('calculator_completed', {
-        strategy: metadata.strategy,
+        strategy: wireStrategy,
         dealScore: metadata.dealScore,
         isAnonymous: !metadata.userId
       }, metadata.userId);
 
       logger.info('[ANALYTICS] Calculator completed', {
-        strategy: metadata.strategy,
+        strategy: wireStrategy,
         dealScore: metadata.dealScore,
         isAnonymous: !metadata.userId
       });
@@ -48,7 +78,7 @@ class AnalyticsService {
    * Triggered when user completes 4-step property wizard
    */
   async trackWizardCompleted(metadata: {
-    strategy?: 'brrrr' | 'buy-hold';
+    strategy?: AnalyticsStrategyInput;
     dealScore?: number;
     userId?: string;
     userRole?: string;
@@ -60,14 +90,15 @@ class AnalyticsService {
         return;
       }
 
+      const wireStrategy = projectStrategyForWire(metadata.strategy);
       await this.trackEvent('wizard_completed', {
-        strategy: metadata.strategy,
+        strategy: wireStrategy,
         dealScore: metadata.dealScore,
         isAnonymous: !metadata.userId
       }, metadata.userId);
 
       logger.info('[ANALYTICS] Wizard completed', {
-        strategy: metadata.strategy,
+        strategy: wireStrategy,
         dealScore: metadata.dealScore,
         userId: metadata.userId,
         isAnonymous: !metadata.userId
@@ -134,7 +165,7 @@ class AnalyticsService {
    */
   async trackDealAnalyzed(userId: string, metadata: {
     dealId?: string;
-    strategy?: 'brrrr' | 'buy-hold';
+    strategy?: AnalyticsStrategyInput;
     dealScore?: number;
     userRole?: string;
   }): Promise<void> {
@@ -145,16 +176,17 @@ class AnalyticsService {
         return;
       }
 
+      const wireStrategy = projectStrategyForWire(metadata.strategy);
       await this.trackEvent('deal_analyzed', {
         dealId: metadata.dealId,
-        strategy: metadata.strategy,
+        strategy: wireStrategy,
         dealScore: metadata.dealScore
       }, userId);
 
       logger.info('[ANALYTICS] Deal analyzed', {
         userId,
         dealId: metadata.dealId,
-        strategy: metadata.strategy
+        strategy: wireStrategy
       });
     } catch (error) {
       logger.error('[ANALYTICS] Failed to track deal analysis:', error);
@@ -167,7 +199,7 @@ class AnalyticsService {
    */
   async trackDealSaved(userId: string, metadata: {
     dealId: string;
-    strategy?: 'brrrr' | 'buy-hold';
+    strategy?: AnalyticsStrategyInput;
     userRole?: string;
   }): Promise<void> {
     try {
@@ -177,9 +209,10 @@ class AnalyticsService {
         return;
       }
 
+      const wireStrategy = projectStrategyForWire(metadata.strategy);
       await this.trackEvent('deal_saved', {
         dealId: metadata.dealId,
-        strategy: metadata.strategy
+        strategy: wireStrategy
       }, userId);
 
       logger.info('[ANALYTICS] Deal saved', {

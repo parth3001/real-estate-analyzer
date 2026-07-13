@@ -14,6 +14,7 @@ import {
   getNonCanonicalInputCount,
   CanonicalStrategy,
 } from '..';
+import parityFixture from '../__fixtures__/strategyNormalizerCases.json';
 
 describe('normalizeStrategy — Issue #243 canonical strategy', () => {
   beforeEach(() => {
@@ -182,5 +183,30 @@ describe('toLegacyDealStrategy / fromLegacyDealStrategy — Invariant #4', () =>
     expect(fromLegacyDealStrategy('buy-hold')).toBe('buy_hold');
     expect(fromLegacyDealStrategy('house-hack')).toBe('house_hack');
     expect(fromLegacyDealStrategy(undefined)).toBeNull();
+  });
+});
+
+// Iteration-2 (Issue #243, 2026-07-12) — the shared JSON fixture is the
+// canonical parity contract between backend and frontend normalizers. If
+// this suite passes AND the mirror suite at
+// `frontend/src/domain/strategy/__tests__/normalizeStrategy.test.ts`
+// passes with the SAME JSON, INV-5 (FE/BE parity) holds.
+describe('parity fixture (P10, INV-5)', () => {
+  const cases = (parityFixture as {
+    cases: Array<{ raw: unknown; expected: CanonicalStrategy | null }>;
+  }).cases;
+
+  for (const { raw, expected } of cases) {
+    it(`normalize(${JSON.stringify(raw)}) === ${JSON.stringify(expected)}`, () => {
+      expect(normalizeStrategy(raw)).toBe(expected);
+    });
+  }
+
+  it('idempotency across the entire fixture (INV-3)', () => {
+    for (const { raw } of cases) {
+      const first = normalizeStrategy(raw);
+      const second = normalizeStrategy(first);
+      expect(second).toBe(first);
+    }
   });
 });

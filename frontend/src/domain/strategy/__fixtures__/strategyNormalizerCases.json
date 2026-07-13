@@ -1,0 +1,21 @@
+{
+  "$schema_note": "Issue #243 iteration-2 shared parity fixture (FRONTEND COPY). MUST stay byte-identical to backend/src/domain/strategy/__fixtures__/strategyNormalizerCases.json — see scripts/verify-strategy-parity-fixture.js (INV-5 FE/BE parity). Any raw alias added to one normalizer MUST be added here AND to the backend copy, and both suites must pass. Prefer editing the backend copy first and re-running the parity script.",
+  "cases": [
+    { "raw": "buy_hold", "expected": "buy_hold" },
+    { "raw": "brrrr", "expected": "brrrr" },
+    { "raw": "house_hack", "expected": "house_hack" },
+    { "raw": "buy-hold", "expected": "buy_hold" },
+    { "raw": "house-hack", "expected": "house_hack" },
+    { "raw": "BUY_HOLD", "expected": "buy_hold" },
+    { "raw": "BRRRR", "expected": "brrrr" },
+    { "raw": "HOUSE_HACK", "expected": "house_hack" },
+    { "raw": "BRRR", "expected": "brrrr" },
+    { "raw": "Buy & Hold", "expected": "buy_hold" },
+    { "raw": "cashflow", "expected": null },
+    { "raw": "appreciation", "expected": null },
+    { "raw": "balanced", "expected": null },
+    { "raw": "garbage", "expected": null },
+    { "raw": "", "expected": null },
+    { "raw": "Multi-Family", "expected": null }
+  ]
+}

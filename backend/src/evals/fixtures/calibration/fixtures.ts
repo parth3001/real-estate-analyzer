@@ -28,7 +28,7 @@
 
 import type { SFRData, BRRRRStrategyData } from '../../../types/propertyTypes';
 import type { AnalysisAssumptions } from '../../../analysis/BasePropertyAnalyzer';
-import { assertCanonicalStrategy } from '../../../domain/strategy';
+import { assertCanonicalStrategy, type CanonicalStrategy } from '../../../domain/strategy';
 
 /**
  * Calibration fixture property data.
@@ -45,7 +45,12 @@ import { assertCanonicalStrategy } from '../../../domain/strategy';
  *     etc. — required when investmentStrategy is 'brrrr'.
  */
 export type FixturePropertyData = SFRData & {
-  investmentStrategy?: 'buy_hold' | 'brrrr';
+  // Issue #243 (2026-07-12, iteration-2): widen to the full canonical
+  // enum for typechecking parity with dealMetrics + the resolver
+  // input schema. House-hack fixtures aren't run through the resolver
+  // yet (analyzer routing → Issue #257), but the type parity here
+  // prevents drift once that ships.
+  investmentStrategy?: CanonicalStrategy;
   brrrr?: BRRRRStrategyData;
 };
 

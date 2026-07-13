@@ -16638,6 +16638,36 @@ Requires a product decision: what makes a house-hack analysis different? Then im
 
 ---
 
+### Issue #257: `house_hack` strategy routing in SFRAnalyzer / BRRRRAnalyzer (Issue #243 iteration-2 follow-up)
+
+**Status**: 🔴 Open
+**Priority**: P1 (High)
+**Reported**: 2026-07-12
+**Component**: `backend/src/analysis/*`, `backend/src/services/investment/investmentDecisionEngine.ts`
+**Parent**: #243 iteration-2
+
+**Description**:
+The `CanonicalStrategy` enum includes `house_hack` per P10, and `resolve_property_inputs`' Zod input schema accepts it. However, the resolver currently throws a `NotImplementedError` at runtime (INV-8) when `house_hack` reaches its write branch — because the SFR / BRRRR analyzers have no house-hack code path, and silently collapsing to `buy_hold` would recreate the exact silent-drop shape #243 exists to close.
+
+**Business Impact**:
+Users attempting to analyze a house-hack scenario receive an explicit developer-facing error instead of analysis. This is intentional (fail-fast P17) until analyzer routing lands — but blocks the house-hack product path.
+
+**Proposed Solution**:
+Design the analyzer routing so house_hack deals are analyzed against the appropriate expense/vacancy/DSCR conventions:
+- Owner-occupant second unit (personal-side rent treatment)
+- Primary-residence financing (lower down payment, lower rate)
+- Sub-market discipline for the unit the owner lives in
+- Tax treatment of the owner-occupant portion (schedule A vs. E)
+
+Once routing lands, remove the `NotImplementedError` throws in `resolve_property_inputs.ts` (both the fresh-input and prior-decision branches).
+
+**Cross-references**:
+- Companion to `#243-followup-b` (same subject, more detail).
+- The resolver's throw message references BOTH slugs so a reader lands on this tracker with one click.
+- Referenced in-code at `backend/src/agents/tools/resolve_property_inputs.ts` (two throw sites, both mentioning `#257`).
+
+---
+
 ## 📝 **ISSUE TEMPLATE**
 
 ```markdown

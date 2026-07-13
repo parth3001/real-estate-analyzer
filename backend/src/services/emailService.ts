@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { logger } from '../utils/logger';
 import { EmailPdfAttachment } from '../types/pdf.types';
+import { formatStrategyLabel, normalizeStrategy } from '../domain/strategy';
 
 export interface EmailTemplate {
   to: string;
@@ -489,7 +490,7 @@ export class EmailService {
    *
    * @param email - Recipient email address
    * @param attachment - PDF attachment object
-   * @param strategy - Investment strategy ('brrrr' | 'buy-hold')
+   * @param strategy - Investment strategy (CanonicalStrategy: 'brrrr' | 'buy_hold' | 'house_hack') or a recognized alias — normalized inside via `normalizeStrategy`.
    * @param dealQualityScore - Deal Quality Score (0-100)
    * @param propertyAddress - Optional property address for personalization
    */
@@ -561,7 +562,14 @@ export class EmailService {
     propertyAddress?: string,
     analysis?: any
   ): string {
-    const strategyLabel = strategy === 'brrrr' ? 'BRRRR Strategy' : 'Buy & Hold';
+    // Issue #243 (iteration-2): route strategy display through the
+    // single formatStrategyLabel helper. Preserves the historical
+    // "BRRRR Strategy" postfix here (vs. plain "BRRRR") for the
+    // anonymous-pdf template's marketing tone.
+    const canonicalStrategy = normalizeStrategy(strategy) ?? 'buy_hold';
+    const strategyLabelBase = formatStrategyLabel(canonicalStrategy);
+    const strategyLabel =
+      canonicalStrategy === 'brrrr' ? `${strategyLabelBase} Strategy` : strategyLabelBase;
     const scoreColor = dealQualityScore >= 80 ? '#2E7D32' : dealQualityScore >= 65 ? '#E65100' : '#C62828';
     const scoreLabel = dealQualityScore >= 80
       ? 'Above professional standards'
@@ -573,7 +581,7 @@ export class EmailService {
 
     const keyMetrics = analysis?.keyMetrics || {};
     const monthly = analysis?.monthlyAnalysis || {};
-    const isBrrrr = strategy === 'brrrr';
+    const isBrrrr = canonicalStrategy === 'brrrr';
     const strategySpec = analysis?.strategySpecific;
 
     const monthlyCashFlow = isBrrrr && strategySpec?.postRefinanceMetrics?.monthlyCashFlow !== undefined
@@ -669,7 +677,10 @@ export class EmailService {
    * ✨ NEW: Anonymous PDF email template with enhanced UX
    */
   private getAnonymousPdfEmailTemplate(strategy: string, dealQualityScore: number, propertyAddress?: string, analysis?: any): string {
-    const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
+    // Issue #243 (iteration-2): route strategy display through
+    // formatStrategyLabel — the single canonical projector.
+    const canonicalStrategy = normalizeStrategy(strategy) ?? 'buy_hold';
+    const strategyLabel = formatStrategyLabel(canonicalStrategy);
     const scoreLabel = dealQualityScore >= 80
       ? 'Above professional standards'
       : dealQualityScore >= 65
@@ -687,7 +698,7 @@ export class EmailService {
           : '#F44336';
 
     // Detect BRRRR vs Buy & Hold strategy
-    const isBRRRR = strategy === 'brrrr';
+    const isBRRRR = canonicalStrategy === 'brrrr';
 
     // Format metrics from analysis - BRRRR uses post-refinance metrics
     let monthlyCashFlow: string;
@@ -1212,7 +1223,10 @@ export class EmailService {
       keyMetrics,
       ctaUrl,
     } = opts;
-    const strategyLabel = strategy === 'brrrr' ? 'BRRRR' : 'Buy & Hold';
+    // Issue #243 (iteration-2): route strategy display through the
+    // canonical projector. `strategy` here is typed
+    // `'buy_hold' | 'brrrr'`; formatStrategyLabel is the single source.
+    const strategyLabel = formatStrategyLabel(normalizeStrategy(strategy) ?? 'buy_hold');
     const scoreLabel =
       dealQuality >= 80
         ? 'Above professional standards'

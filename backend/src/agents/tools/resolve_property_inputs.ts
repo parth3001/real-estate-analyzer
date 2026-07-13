@@ -51,7 +51,7 @@ import { marketIntelligenceService } from '../../services/marketIntelligenceServ
 import { rentcastService } from '../../services/rentcastService';
 import { propertyTaxEstimationService } from '../../services/propertyTaxEstimationService';
 import { logger } from '../../utils/logger';
-import { CanonicalStrategySchema } from '../../domain/strategy';
+import { CanonicalStrategySchema, normalizeStrategy } from '../../domain/strategy';
 
 // ===== Provenance taxonomy =====
 
@@ -337,12 +337,17 @@ export const ResolvePropertyInputsInputSchema = z.object({
    * Defaults for refi rate / refi LTV / seasoning are applied if not
    * supplied.
    */
-  // Issue #243 (2026-07-12): widen the resolver's WRITE-boundary input
-  // schema to the canonical enum ('buy_hold' | 'brrrr' | 'house_hack') so
-  // `house_hack` no longer silently loses data at Zod parse time.
-  // NOTE: analyzer routing for `house_hack` is OUT OF SCOPE for #243 —
-  // the resolver simply becomes accepting; a follow-up issue tracks
-  // the engine branch.
+  /**
+   * Issue #243 (2026-07-12, iteration-2): accepts the full
+   * CanonicalStrategy enum ('buy_hold' | 'brrrr' | 'house_hack') for
+   * typechecking parity with dealMetrics, but the resolver currently
+   * REJECTS `house_hack` at runtime because analyzer routing is not
+   * implemented — see Issue #257 (follow-up). Accepting the enum at
+   * Zod parse time avoids re-opening the #243 silent-drop shape at
+   * this boundary; the runtime NotImplementedError is a fail-fast
+   * (P17) that surfaces the missing analyzer branch instead of
+   * collapsing to 'buy_hold' silently.
+   */
   strategy: CanonicalStrategySchema.optional(),
   /**
    * Phase 1 BRRRR (Issue #200 — 2026-06-25): BRRRR-specific inputs.
@@ -562,6 +567,18 @@ async function resolveFromPriorDecision(
   // removes the investmentStrategy + brrrr block from propertyData so
   // the engine routes through the standard buy-hold branch.
   if (input.strategy !== undefined) {
+    // Issue #243 (2026-07-12, iteration-2, INV-8) — fail-fast (P17) on
+    // house_hack until analyzer routing lands. Accepting the enum at
+    // the Zod boundary and then stamping undefined here would recreate
+    // the exact silent-drop shape #243 exists to close.
+    if (input.strategy === 'house_hack') {
+      throw new Error(
+        'resolve_property_inputs: house_hack strategy is accepted by the ' +
+          'canonical enum (P10) but analyzer routing is not implemented ' +
+          '(Issue #243 follow-up: #257 / #243-followup-b). Reject ' +
+          'explicitly rather than silently collapsing to buy_hold.'
+      );
+    }
     if (input.strategy === 'brrrr') {
       if (!input.brrrr) {
         throw new Error(
@@ -580,7 +597,12 @@ async function resolveFromPriorDecision(
         Number((priorInterestRate + 2).toFixed(3));
       const seasoningPeriod = input.brrrr.seasoningPeriod ?? 12;
 
-      propertyData.investmentStrategy = 'brrrr';
+      // Issue #243 (iteration-2, INV-9): route strategy writes through
+      // `normalizeStrategy` (no raw literal writes). The input has
+      // already passed CanonicalStrategySchema; the normalizer here is
+      // idempotent and preserves the value while satisfying the grep
+      // invariant.
+      propertyData.investmentStrategy = normalizeStrategy(input.strategy) ?? 'buy_hold';
       propertyData.brrrr = {
         rehabBudget: input.brrrr.rehabBudget,
         afterRepairValue: input.brrrr.afterRepairValue,
@@ -604,7 +626,7 @@ async function resolveFromPriorDecision(
     } else if (input.strategy === 'buy_hold') {
       // Reverse pivot — strip the BRRRR-specific block so the engine
       // routes through the standard buy-hold branch.
-      propertyData.investmentStrategy = 'buy_hold';
+      propertyData.investmentStrategy = normalizeStrategy(input.strategy) ?? 'buy_hold';
       delete propertyData.brrrr;
       provenance.investmentStrategy = 'user_provided';
     }
@@ -681,6 +703,18 @@ export const resolvePropertyInputs: Tool<
     // afterRepairValue when strategy is brrrr; this is the runtime
     // backstop.
     const strategy = validated.strategy ?? 'buy_hold';
+
+    // Issue #243 (2026-07-12, iteration-2, INV-8) — fail-fast (P17) on
+    // house_hack until analyzer routing lands. See prior-decision branch
+    // above for the equivalent guard on pivots.
+    if (strategy === 'house_hack') {
+      throw new Error(
+        'resolve_property_inputs: house_hack strategy is accepted by the ' +
+          'canonical enum (P10) but analyzer routing is not implemented ' +
+          '(Issue #243 follow-up: #257 / #243-followup-b). Reject ' +
+          'explicitly rather than silently collapsing to buy_hold.'
+      );
+    }
     if (strategy === 'brrrr' && !validated.brrrr) {
       throw new Error(
         'resolve_property_inputs: strategy=brrrr requires the `brrrr` ' +
@@ -899,7 +933,13 @@ export const resolvePropertyInputs: Tool<
       // Stamp the routing field. Cast to a wider shape because SFRData
       // doesn't currently have investmentStrategy in its declared keys
       // (it's read by the engine via `(propertyData as any)`).
-      (propertyData as unknown as Record<string, unknown>).investmentStrategy = 'brrrr';
+      //
+      // Issue #243 (iteration-2, INV-9): route strategy writes through
+      // `normalizeStrategy` — no raw literal writes at the resolver
+      // boundary. `strategy` here is already the CanonicalStrategy
+      // enum value from Zod; the normalizer is idempotent.
+      (propertyData as unknown as Record<string, unknown>).investmentStrategy =
+        normalizeStrategy(strategy) ?? 'buy_hold';
       (propertyData as unknown as Record<string, unknown>).brrrr = {
         rehabBudget: brrrrIn.rehabBudget,
         afterRepairValue: brrrrIn.afterRepairValue,

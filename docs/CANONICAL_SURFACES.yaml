@@ -66,8 +66,37 @@ canonical_surfaces:
     lifecycle: LIVE
     version: "1.0"
     category: domain
-    role: "Frontend mirror of backend normalizeStrategy. Parity enforced via test-suite."
+    role: "Frontend mirror of backend normalizeStrategy. Parity enforced via test-suite + shared JSON fixture (scripts/verify-strategy-parity-fixture.js)."
     key_exports: ["normalizeStrategy", "assertCanonicalStrategy"]
+
+  - id: strategy_format_label
+    file: backend/src/domain/strategy/formatStrategyLabel.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "Issue #243 iteration-2 (2026-07-12) — SINGLE canonical display-string projector for strategy values. Inline ternaries elsewhere are forbidden by P10."
+    key_exports: ["formatStrategyLabel"]
+
+  - id: strategy_parity_fixture_backend
+    file: backend/src/domain/strategy/__fixtures__/strategyNormalizerCases.json
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "Issue #243 iteration-2 — shared JSON parity fixture (INV-5 FE/BE parity). Iterated by both backend and frontend normalizeStrategy test suites."
+
+  - id: strategy_parity_fixture_frontend
+    file: frontend/src/domain/strategy/__fixtures__/strategyNormalizerCases.json
+    lifecycle: LIVE
+    version: "1.0"
+    category: domain
+    role: "Frontend byte-copy of the parity fixture. Drift guarded by scripts/verify-strategy-parity-fixture.js (SHA-256 over the `cases` array)."
+
+  - id: strategy_parity_verify_script
+    file: scripts/verify-strategy-parity-fixture.js
+    lifecycle: LIVE
+    version: "1.0"
+    category: tooling
+    role: "Node script hashing the `cases` array of both parity fixtures. Wired into CI or `pretest` to fail on drift (INV-5)."
 
   # ============================================================
   # ANALYZERS — deterministic math over property inputs
@@ -977,6 +1006,13 @@ canonical_surfaces:
     file: backend/src/services/analyticsService.ts
     lifecycle: LIVE
     category: feature_service
+    role: "Issue #243 iteration-2 — in-code CanonicalStrategy; kebab wire via toLegacyDealStrategy at write, normalizeStrategy on read."
+
+  - id: analytics_model
+    file: backend/src/models/Analytics.ts
+    lifecycle: LEGACY_WIRE
+    category: data_model
+    role: "Issue #243 iteration-2 — persisted analytics wire is kebab. Mongoose enum stays kebab (append-only substrate, P4). Whitelisted in .eslintrc.js. TS interface types via LegacyDealStrategy from domain/strategy."
 
   - id: auth_service
     file: backend/src/services/authService.ts
@@ -1039,7 +1075,51 @@ canonical_surfaces:
     file: backend/src/controllers/deals.ts
     lifecycle: LIVE
     category: controller
-    role: "Deals controller — analyze, list, detail, scenarios endpoints. Consumers of the substrate materialization + sibling-strategy discovery (#108/#109)."
+    role: "Deals controller — analyze, list, detail, scenarios endpoints. Consumers of the substrate materialization + sibling-strategy discovery (#108/#109). Issue #243 iteration-2: strategy call sites route through normalizeStrategy + toLegacyDealStrategy; the 3151-line legacy controller is not rewritten here (out of scope)."
+
+  - id: controllers_wizard
+    file: backend/src/controllers/wizardController.ts
+    lifecycle: LEGACY
+    category: controller
+    role: "Wizard-path controller. Normalized in-code for strategy consistency (Issue #243 iteration-2); sunsets with the rest of the wizard flow."
+    sunset_recommendation: "Remove with wizard flow retirement."
+
+  # ============================================================
+  # FRONTEND — legacy wizard types + display helpers
+  # ============================================================
+
+  - id: frontend_types_property
+    file: frontend/src/types/property.ts
+    lifecycle: LEGACY
+    category: type
+    role: "Frontend property types with kebab strategy union. Sunset with wizard. Whitelisted in .eslintrc.js."
+    sunset_recommendation: "Delete with wizard sunset; new components use CanonicalStrategy inline."
+
+  - id: frontend_types_analysis
+    file: frontend/src/types/analysis.ts
+    lifecycle: LEGACY
+    category: type
+    role: "Frontend analysis types with kebab strategy union. Sunset with wizard. Whitelisted in .eslintrc.js."
+    sunset_recommendation: "Delete with wizard sunset."
+
+  - id: frontend_strategy_helpers
+    file: frontend/src/utils/strategyHelpers.ts
+    lifecycle: LIVE
+    category: util
+    role: "Display-side helper — icons/colors/labels keyed by kebab for backward compat. Consumers must normalize before lookup. Whitelisted in .eslintrc.js."
+
+  - id: frontend_analytics
+    file: frontend/src/utils/analytics.ts
+    lifecycle: LIVE
+    category: util
+    role: "GA4 analytics wire is kebab for historical continuity; in-code type is CanonicalStrategy. Projected via toAnalyticsStrategyDimension at the wire hop. Issue #243 iteration-2: no longer whitelisted — all internal kebab literals refactored."
+
+  - id: frontend_sfr_defaults
+    file: frontend/src/constants/sfrPropertyDefaults.ts
+    lifecycle: LEGACY
+    category: util
+    role: "Wizard-LEGACY defaults. Issue #243 iteration-2 refactored the strategy parameter to CanonicalStrategy (normalized inside). Not whitelisted in .eslintrc.js (contrary to iteration-1 outcome)."
+    sunset_recommendation: "Delete with wizard sunset."
 
   - id: route_deals
     file: backend/src/routes/deals.ts

@@ -14,6 +14,7 @@ import { analyticsService } from '../services/analyticsService';
 import { SFRData } from '../types/propertyTypes';
 import { WizardEnhancedSFRData } from '../types/wizardTypes';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { normalizeStrategy } from '../domain/strategy';
 
 // Default insurance rate from STATIC_ANALYSIS_DEFAULTS (0.35% rule)
 // Matches /shared/constants/analysisDefaults.ts:34
@@ -207,9 +208,11 @@ export const analyzePropertyFromWizard = async (req: AuthenticatedRequest, res: 
       vacancyInExpenses: analysis.monthlyAnalysis?.expenses?.breakdown?.vacancy
     });
 
-    // Track wizard completion for analytics dashboard
+    // Track wizard completion for analytics dashboard.
+    // Issue #243 (iteration-2): pass canonical strategy — analyticsService
+    // projects to kebab wire internally.
     analyticsService.trackWizardCompleted({
-      strategy: wizardData.propertyData?.investmentStrategy || 'buy-hold',
+      strategy: normalizeStrategy(wizardData.propertyData?.investmentStrategy) ?? 'buy_hold',
       dealScore: analysis.investmentDecision?.professionalAssessment?.dealQuality,
       userId: req.user?.id,
       userRole: req.user?.role

@@ -9,6 +9,7 @@
  */
 
 import { logger } from '../../utils/logger';
+import { normalizeStrategy } from '../../domain/strategy';
 import { SFRData } from '../../types/propertyTypes';
 import { BRRRRAnalyzer, BRRRRAnalysis, BRRRRInputs } from './brrrAnalyzer';
 import {
@@ -1590,12 +1591,15 @@ export class InvestmentDecisionEngine {
       exitStrategy: propertyData.exitStrategy?.primaryExitStrategy || 'not_specified',
       holdPeriod: propertyData.longTermAssumptions?.projectionYears || 10,
       portfolioStrategy: propertyData.exitStrategy?.portfolioStrategy || 'not_specified',
-      investmentStrategy: (propertyData as any).investmentStrategy || 'buy-hold'
+      investmentStrategy: normalizeStrategy((propertyData as any).investmentStrategy) ?? 'buy_hold'
     });
 
     try {
-      // BRRRR Strategy Routing - Phase 1.2
-      const investmentStrategy = (propertyData as any).investmentStrategy || 'buy-hold';
+      // BRRRR Strategy Routing - Phase 1.2.
+      // Issue #243 (iteration-2): normalize to canonical snake before
+      // branching, and compare against canonical values only.
+      const investmentStrategy =
+        normalizeStrategy((propertyData as any).investmentStrategy) ?? 'buy_hold';
 
       // ✅ OBSERVABILITY (Issues #33, #34): Log routing decision for production debugging
       logger.debug('📍 Investment Strategy Routing', {

@@ -1,4 +1,20 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import type { LegacyDealStrategy } from '../domain/strategy';
+
+/**
+ * Issue #243 (2026-07-12, iteration-2): analytics wire values are
+ * kebab-shaped for historical continuity — the `analytics_events`
+ * collection persists `'brrrr' | 'buy-hold' | 'house-hack'` strings
+ * that the admin dashboard already indexes on. Migrating those
+ * documents is a separate append-only project. In-code, the
+ * `analyticsService.ts` boundary projects CanonicalStrategy →
+ * `LegacyDealStrategy` via `toLegacyDealStrategy` on WRITE and
+ * `normalizeStrategy` on READ. This file's TypeScript interface
+ * therefore references `LegacyDealStrategy` (not raw literal
+ * unions), and the file is whitelisted in `.eslintrc.js` under the
+ * LEGACY_WIRE tier so the Mongoose schema definition can keep the
+ * kebab enum.
+ */
 
 // Event types for platform analytics
 export type AnalyticsEventType =
@@ -11,7 +27,7 @@ export type AnalyticsEventType =
 
 // Event metadata interfaces
 export interface CalculatorMetadata {
-  strategy: 'brrrr' | 'buy-hold';
+  strategy: LegacyDealStrategy;
   dealScore?: number;
   isAnonymous: boolean;
 }
@@ -23,12 +39,12 @@ export interface RegistrationMetadata {
 
 export interface DealMetadata {
   dealId?: string;
-  strategy?: 'brrrr' | 'buy-hold';
+  strategy?: LegacyDealStrategy;
   dealScore?: number;
 }
 
 export interface WizardMetadata {
-  strategy?: 'brrrr' | 'buy-hold';
+  strategy?: LegacyDealStrategy;
   dealScore?: number;
   isAnonymous: boolean;
   propertyAddress?: string; // Full address string for easy querying

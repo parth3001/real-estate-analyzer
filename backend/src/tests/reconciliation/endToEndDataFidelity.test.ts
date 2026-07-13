@@ -43,6 +43,7 @@ import { DealModel as Deal } from '../../models/Deal';
 import { eventsRepository } from '../../repositories/EventsRepository';
 import { eventsRepositoryReads } from '../../repositories/EventsRepositoryReads';
 import { projectDealScoreCard } from '../../agents/orchestrator/dealScoreCardProjection';
+import { normalizeStrategy } from '../../domain/strategy';
 import type { AnalysisPayload } from '../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../models/events/DecisionEvent';
 import type { SFRData } from '../../types/propertyTypes';
@@ -476,6 +477,211 @@ describe('End-to-end data fidelity (Task #44 ground floor)', () => {
       const dealY1 = dealProjections.find((p) => p.year === 1)?.cashFlow;
       const analyzerY1 = analyzerResult.longTermAnalysis.projections[0]?.cashFlow;
       expect(dealY1).toBeCloseTo(analyzerY1, 0);
+    });
+  });
+
+  // ===== Boundary 5: strategy query-string alias round-trip (Issue #243) =====
+  //
+  // INV-10 (Issue #243 iteration-2): `?strategy=` variants must produce
+  // byte-identical filter results at the boundary consumed by
+  // `getDealScenarioComparison`. That endpoint's core is
+  //   `currentStrategy = normalizeStrategy(strategyQueryParam) ?? dealStrategy`
+  // and then filters the bundle list by
+  //   `normalizeStrategy(pd.investmentStrategy) === currentStrategy`.
+  //
+  // We seed the substrate with two DIFFERENT-strategy analyses at the
+  // same address (mirroring #108's setup), then invoke the endpoint's
+  // filter pass with each alias variant and assert the filtered ID
+  // lists are byte-identical.
+  describe('Issue #243: strategy query-string alias round-trip (INV-10)', () => {
+    async function seedTwoStrategies() {
+      const buyHoldProp: SFRData = { ...makeSFRProperty() };
+      const brrrrProp: SFRData = { ...makeSFRProperty() };
+      const assumptions = makeAssumptions();
+      // The scenario-comparison endpoint filters by
+      // DecisionEvent.payload.canonicalAddressKey — the stamped
+      // identity used by every substrate query for this property.
+      // Compute it here so we stamp it on the payloads below.
+      const { buildCanonicalAddressKey } = await import(
+        '../../utils/canonicalAddressKey'
+      );
+      const canonicalAddressKey = buildCanonicalAddressKey({
+        street: buyHoldProp.propertyAddress.street,
+        city: buyHoldProp.propertyAddress.city,
+        state: buyHoldProp.propertyAddress.state,
+        zipCode: buyHoldProp.propertyAddress.zipCode,
+      });
+
+      const buyHoldAnalyzer = new SFRAnalyzer(buyHoldProp, assumptions).analyze();
+      const brrrrAnalyzer = new SFRAnalyzer(brrrrProp, assumptions).analyze();
+
+      const buyHoldPayload = {
+        // Substrate propertyData carries canonical snake per P10.
+        propertyData: { ...buyHoldProp, investmentStrategy: 'buy_hold' } as unknown,
+        marketData: { lastUpdated: new Date(), dataSource: ['fallback'] },
+        assumptions,
+        metrics: buyHoldAnalyzer.keyMetrics,
+        monthlyAnalysis: buyHoldAnalyzer.monthlyAnalysis,
+        longTermAnalysis: buyHoldAnalyzer.longTermAnalysis,
+        walkAwayPrice: 162_485,
+        enrichmentSource: 'fallback',
+        enrichmentCacheHit: false,
+        engineVersion: 'v3.0',
+        computeTimeMs: 100,
+      } as unknown as AnalysisPayload;
+
+      const brrrrPayload = {
+        propertyData: {
+          ...brrrrProp,
+          investmentStrategy: 'brrrr',
+          brrrr: {
+            rehabBudget: 25_000,
+            afterRepairValue: 260_000,
+            refinanceLTV: 75,
+            refinanceInterestRate: 8.5,
+            seasoningPeriod: 12,
+          },
+        } as unknown,
+        marketData: { lastUpdated: new Date(), dataSource: ['fallback'] },
+        assumptions,
+        metrics: brrrrAnalyzer.keyMetrics,
+        monthlyAnalysis: brrrrAnalyzer.monthlyAnalysis,
+        longTermAnalysis: brrrrAnalyzer.longTermAnalysis,
+        walkAwayPrice: 158_000,
+        enrichmentSource: 'fallback',
+        enrichmentCacheHit: false,
+        engineVersion: 'v3.0',
+        computeTimeMs: 100,
+      } as unknown as AnalysisPayload;
+
+      const buyHoldAnalysisId = await eventsRepository.writeAnalysisEvent({
+        traceId: 't-alias-bh',
+        actorType: 'tool:score_deal',
+        userId,
+        payload: buyHoldPayload,
+      });
+      const brrrrAnalysisId = await eventsRepository.writeAnalysisEvent({
+        traceId: 't-alias-br',
+        actorType: 'tool:score_deal',
+        userId,
+        payload: brrrrPayload,
+      });
+
+      const makeDecisionPayload = (analysisEventId: Types.ObjectId): DecisionPayload => ({
+        analysisEventId,
+        // Stamp the canonicalAddressKey so getScenariosForDeal can
+        // find these DecisionEvents by (userId, canonicalAddressKey).
+        canonicalAddressKey,
+        dealQuality: 60,
+        qualityLabel: 'Meets professional standards',
+        qualityColor: 'yellow',
+        professionalAssessment: { dealQuality: 60 } as unknown as DecisionPayload['professionalAssessment'],
+        marketPosition: { walkAwayPrice: 160_000 } as unknown as DecisionPayload['marketPosition'],
+        reasoningTrail: {
+          primaryInsight: 'r',
+          strategicRecommendations: [],
+          riskMitigation: [],
+          opportunityMaximization: [],
+          keyRisks: [],
+        },
+        confidence: 80,
+        scoringWeightsUsed: {} as unknown as DecisionPayload['scoringWeightsUsed'],
+        engineVersion: 'v3.0',
+      });
+
+      const buyHoldDecisionId = await eventsRepository.writeDecisionEvent({
+        traceId: 't-alias-bh',
+        actorType: 'agent:deal_scoring',
+        userId,
+        payload: makeDecisionPayload(buyHoldAnalysisId),
+      });
+      const brrrrDecisionId = await eventsRepository.writeDecisionEvent({
+        traceId: 't-alias-br',
+        actorType: 'agent:deal_scoring',
+        userId,
+        payload: makeDecisionPayload(brrrrAnalysisId),
+      });
+
+      // Materialize both — the second one may bind to a separate Deal
+      // (post-#108 spine-per-strategy) or the same Deal depending on
+      // materializer behavior; the filter test below is agnostic to
+      // that choice because it reasons over ALL bundles at the address.
+      await materializeDealFromDecision(buyHoldDecisionId, userId);
+      await materializeDealFromDecision(brrrrDecisionId, userId);
+
+      const deal = await Deal.findOne({ userId }).lean();
+      expect(deal).not.toBeNull();
+
+      return { deal: deal!, buyHoldDecisionId, brrrrDecisionId };
+    }
+
+    async function filteredBundleIdsForAlias(
+      canonicalKey: string,
+      alias: string
+    ): Promise<string[]> {
+      // Mirror the endpoint's core filter path.
+      const currentStrategy = normalizeStrategy(alias);
+      const allBundles = await eventsRepositoryReads.getScenariosForDeal(
+        userId,
+        canonicalKey
+      );
+      const filtered = currentStrategy
+        ? allBundles.filter((b) => {
+            const pd = (b.analysis?.payload?.propertyData ?? {}) as Record<
+              string,
+              unknown
+            >;
+            return normalizeStrategy(pd.investmentStrategy) === currentStrategy;
+          })
+        : allBundles;
+      return filtered.map((b) => b.decision._id.toString()).sort();
+    }
+
+    it('kebab / snake / SCREAMING / spaced buy_hold aliases return identical bundle sets', async () => {
+      const { deal } = await seedTwoStrategies();
+      const key = (deal as unknown as { canonicalAddressKey: string })
+        .canonicalAddressKey;
+      expect(key).toBeTruthy();
+
+      const aliasesBuyHold = ['buy-hold', 'buy_hold', 'BUY_HOLD', 'Buy & Hold'];
+      const results = await Promise.all(
+        aliasesBuyHold.map((a) => filteredBundleIdsForAlias(key, a))
+      );
+      const first = JSON.stringify(results[0]);
+      for (let i = 1; i < results.length; i++) {
+        expect(JSON.stringify(results[i])).toBe(first);
+      }
+      // At least ONE bundle must survive the filter (the buy_hold scenario).
+      expect(results[0].length).toBeGreaterThan(0);
+    });
+
+    it('BRRRR vs. misspelling BRRR resolve to the same canonical filter', async () => {
+      const { deal } = await seedTwoStrategies();
+      const key = (deal as unknown as { canonicalAddressKey: string })
+        .canonicalAddressKey;
+      const [a, b] = await Promise.all([
+        filteredBundleIdsForAlias(key, 'brrrr'),
+        filteredBundleIdsForAlias(key, 'BRRR'),
+      ]);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+      expect(a.length).toBeGreaterThan(0);
+    });
+
+    it('philosophy value (cashflow) does NOT silently return the buy_hold sibling', async () => {
+      const { deal } = await seedTwoStrategies();
+      const key = (deal as unknown as { canonicalAddressKey: string })
+        .canonicalAddressKey;
+      // With no dealStrategy fallback in this isolated helper, `cashflow`
+      // normalizes to null → the filter is bypassed and ALL bundles are
+      // returned (matches the endpoint's fallback semantics). The
+      // critical invariant is that the philosophy value did NOT
+      // masquerade as a buy_hold hit.
+      const bundleIds = await filteredBundleIdsForAlias(key, 'cashflow');
+      // Expectation: the caller receives a well-formed set (2 bundles,
+      // both strategies) rather than the silent single-strategy
+      // collapse that would have happened if 'cashflow' were treated as
+      // a strategy value.
+      expect(bundleIds.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

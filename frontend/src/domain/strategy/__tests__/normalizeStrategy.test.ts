@@ -8,7 +8,9 @@ import {
   normalizeStrategy,
   assertCanonicalStrategy,
   toLegacyDealStrategy,
+  type CanonicalStrategy,
 } from '..';
+import parityFixture from '../__fixtures__/strategyNormalizerCases.json';
 
 describe('frontend normalizeStrategy — parity with backend', () => {
   it('canonicalizes kebab', () => {
@@ -67,5 +69,32 @@ describe('frontend normalizeStrategy — parity with backend', () => {
   it('assertCanonicalStrategy throws on unknown, respects defaultTo', () => {
     expect(() => assertCanonicalStrategy('nope')).toThrow();
     expect(assertCanonicalStrategy('nope', { defaultTo: 'buy_hold' })).toBe('buy_hold');
+  });
+});
+
+// Iteration-2 (Issue #243, 2026-07-12, INV-5 FE/BE parity) — this
+// suite iterates the SAME shared JSON fixture as
+// `backend/src/domain/strategy/__tests__/normalizeStrategy.test.ts`.
+// If backend AND frontend both pass, the two normalizers are provably
+// aligned on the canonical vocabulary + alias table. Drift between
+// the two JSON copies is guarded by
+// `scripts/verify-strategy-parity-fixture.js`.
+describe('parity fixture (P10, INV-5)', () => {
+  const cases = (parityFixture as {
+    cases: Array<{ raw: unknown; expected: CanonicalStrategy | null }>;
+  }).cases;
+
+  for (const { raw, expected } of cases) {
+    it(`normalize(${JSON.stringify(raw)}) === ${JSON.stringify(expected)}`, () => {
+      expect(normalizeStrategy(raw)).toBe(expected);
+    });
+  }
+
+  it('idempotency across the entire fixture', () => {
+    for (const { raw } of cases) {
+      const first = normalizeStrategy(raw);
+      const second = normalizeStrategy(first);
+      expect(second).toBe(first);
+    }
   });
 });

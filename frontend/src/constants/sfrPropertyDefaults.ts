@@ -9,6 +9,7 @@
  */
 
 import type { EnhancedGoalContext } from '../components/SFRAnalysis/GoalsStrategyStep';
+import { normalizeStrategy, type CanonicalStrategy } from '../domain/strategy';
 
 // Address defaults
 export const DEFAULT_PROPERTY_ADDRESS = {
@@ -42,9 +43,19 @@ export const DEFAULT_LONG_TERM_ASSUMPTIONS = {
  * Get strategy-aware tenant turnover defaults
  * BRRRR: $0 (property vacant during rehab, no turnover in short hold period)
  * Buy & Hold / House Hack: Industry standard ($500 + 0.5 months)
+ *
+ * Issue #243 (2026-07-12, iteration-2): the `strategy` parameter now
+ * takes CanonicalStrategy ('buy_hold' | 'brrrr' | 'house_hack'). Callers
+ * on the wizard-LEGACY path that still receive kebab from prior state
+ * must normalize before calling (via `normalizeStrategy`).
  */
-export const getTenantTurnoverDefaults = (strategy?: 'buy-hold' | 'house-hack' | 'brrrr') => {
-  if (strategy === 'brrrr') {
+export const getTenantTurnoverDefaults = (
+  strategy?: CanonicalStrategy | string | null
+) => {
+  // Normalize any inbound kebab / SCREAMING / spaced value to canonical
+  // snake, then compare only against canonical values internally.
+  const canonical = normalizeStrategy(strategy);
+  if (canonical === 'brrrr') {
     return {
       prepFees: 0,
       realtorCommission: 0

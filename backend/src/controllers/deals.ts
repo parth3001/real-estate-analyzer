@@ -14,7 +14,12 @@ import { diffScenarioInputs, scenarioInputSignature } from '../services/scenario
 import { runScenarioSensitivity } from '../services/scenarioSensitivity';
 import { buildCanonicalAddressKey } from '../utils/canonicalAddressKey';
 import { logger } from '../utils/logger';
-import { normalizeStrategy } from '../domain/strategy';
+import {
+  normalizeStrategy,
+  toLegacyDealStrategy,
+  fromLegacyDealStrategy,
+  assertCanonicalStrategy,
+} from '../domain/strategy';
 import { AnalysisAssumptions } from '../analysis/BasePropertyAnalyzer';
 // Removed unused propertyEnrichmentService imports
 
@@ -214,7 +219,14 @@ const convertWizardData = (dealData: any): any => {
 
       // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
       // Multi-Family properties can also use BRRRR strategy (future support)
-      investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+      // Issue #243 (iteration-2): route through normalizeStrategy; write the
+      // legacy kebab wire via toLegacyDealStrategy (Deal.investmentStrategy
+      // is kebab-typed).
+      investmentStrategy: toLegacyDealStrategy(
+        normalizeStrategy(dealData.strategy) ??
+          normalizeStrategy(dealData.investmentStrategy) ??
+          'buy_hold'
+      ),
 
       // Feature #9: Explicitly preserve propertyVisuals field (Google Maps Integration)
       propertyVisuals: dealData.propertyVisuals || null,
@@ -320,7 +332,13 @@ const convertWizardData = (dealData: any): any => {
     // ✅ CRITICAL FIX (Issues #33, #34): Map frontend 'strategy' to backend 'investmentStrategy'
     // Frontend sends 'strategy' field (property.ts:57), backend expects 'investmentStrategy' (investmentDecisionEngine.ts:1569)
     // Without this mapping, BRRRR properties incorrectly route to Buy & Hold logic
-    investmentStrategy: dealData.strategy || dealData.investmentStrategy || 'buy-hold',
+    // Issue #243 (iteration-2): normalize incoming vocabulary → canonical
+    // snake → project to legacy kebab wire (Deal.investmentStrategy).
+    investmentStrategy: toLegacyDealStrategy(
+      normalizeStrategy(dealData.strategy) ??
+        normalizeStrategy(dealData.investmentStrategy) ??
+        'buy_hold'
+    ),
 
     longTermAssumptions: {
       ...dealData.longTermAssumptions,
@@ -2344,10 +2362,16 @@ export const getSampleAnalysis = async (req: Request, res: Response): Promise<vo
     // Support both propertyType and strategy query parameters
     // Examples: ?propertyType=mf | ?propertyType=sfr&strategy=brrrr | ?strategy=brrrr (backward compatible)
     const propertyType = req.query.propertyType as string || 'sfr';
-    const strategy = req.query.strategy as string || 'buy-hold';
+    // Issue #243 (iteration-2): normalize the strategy query param → canonical
+    // snake for in-code use. Downstream the value is projected to a URL slug
+    // (kebab) via `toLegacyDealStrategy` to look up SAMPLE_DEALS.
+    const strategy = normalizeStrategy(req.query.strategy) ?? 'buy_hold';
 
-    // Sample property IDs by property type and strategy
+    // Sample property IDs by property type and strategy. The keys are URL
+    // slugs (kebab), NOT strategy enum values — they persist in shared
+    // marketing links and are external contracts.
     const SAMPLE_DEALS = {
+      // eslint-disable-next-line no-restricted-syntax -- URL slug lookup, not strategy value
       'sfr-buy-hold': '6934e9689d4a338e22720233', // Charlotte property - Buy & Hold
       'sfr-brrrr': '69540f21b1d42cdaf0cc3d20',    // Dallas property - BRRRR
       'mf': '696c31694bf2c626338f31a4'            // Multi-Family property
@@ -2359,8 +2383,11 @@ export const getSampleAnalysis = async (req: Request, res: Response): Promise<vo
     if (propertyType === 'mf') {
       sampleDealId = SAMPLE_DEALS['mf'];
     } else {
-      // SFR - use strategy to determine property
-      const key = `sfr-${strategy}` as keyof typeof SAMPLE_DEALS;
+      // SFR - use strategy to determine property.
+      // The URL slug is kebab (`sfr-buy-hold`), so project canonical →
+      // legacy kebab via `toLegacyDealStrategy` before constructing the key.
+      const legacyStrategy = toLegacyDealStrategy(strategy);
+      const key = `sfr-${legacyStrategy}` as keyof typeof SAMPLE_DEALS;
       sampleDealId = SAMPLE_DEALS[key] || SAMPLE_DEALS['sfr-buy-hold'];
     }
 
@@ -2666,6 +2693,15 @@ export const analyzeAnonymous = async (req: Request, res: Response) => {
 
     // CRITICAL FIX: Add strategy field for frontend conditional rendering
     // Frontend checks analysis.strategy === 'brrrr' to determine which metrics to display
+    //
+    // Issue #243 (iteration-2): `dealData.investmentStrategy` is legacy
+    // kebab per Deal.ts. We assert it canonicalizes (dropping into
+    // 'buy_hold' if not), then keep the kebab wire so downstream frontend
+    // components that still read kebab continue to work.
+    assertCanonicalStrategy(
+      fromLegacyDealStrategy(dealData.investmentStrategy),
+      { defaultTo: 'buy_hold' }
+    );
     (analysis as any).strategy = dealData.investmentStrategy; // 'brrrr' | 'buy-hold'
 
     // ENHANCEMENT: Add Investment Decision Engine for Deal Quality Score
@@ -2764,9 +2800,11 @@ export const analyzeAnonymous = async (req: Request, res: Response) => {
       timestamp: new Date().toISOString()
     });
 
-    // Track calculator completion for analytics dashboard
+    // Track calculator completion for analytics dashboard.
+    // Issue #243 (iteration-2): analyticsService accepts CanonicalStrategy
+    // and projects to kebab wire internally; pass canonical here.
     analyticsService.trackCalculatorCompleted({
-      strategy: dealData.investmentStrategy || 'buy-hold',
+      strategy: normalizeStrategy(dealData.investmentStrategy) ?? 'buy_hold',
       dealScore: analysis.investmentDecision?.professionalAssessment?.dealQuality,
       userId: undefined // Anonymous user
     });

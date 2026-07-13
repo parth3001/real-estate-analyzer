@@ -24,3 +24,4 @@ export {
   fromLegacyDealStrategy,
 } from './toLegacyDealStrategy';
 export type { LegacyDealStrategy } from './toLegacyDealStrategy';
+export { formatStrategyLabel } from './formatStrategyLabel';

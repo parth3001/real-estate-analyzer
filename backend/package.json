@@ -10,6 +10,7 @@
     "postinstall": "npm run build",
     "reset-admin": "ts-node src/scripts/resetAdminPassword.ts",
     "test": "jest",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "validate-docs": "npx ts-node scripts/validate-docs.ts",
     "test:docs": "jest tests/integration/documentation-consistency.test.ts",
     "test:integration": "jest --testPathPattern=integration",

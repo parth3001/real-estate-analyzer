@@ -1,0 +1,21 @@
+{
+  "$schema_note": "Issue #243 iteration-2 shared parity fixture. Both backend/src/domain/strategy/__tests__/normalizeStrategy.test.ts AND frontend/src/domain/strategy/__tests__/normalizeStrategy.test.ts import this JSON and iterate its cases. Any raw alias added to one normalizer MUST be added here with its expected canonical output, and both suites must pass — INV-5 (FE/BE parity) is the invariant. Keep at least 16 cases covering: canonical snake (3), kebab (3), SCREAMING (3), spaced (1), misspelled (1: BRRR), philosophy-rejection (3), unknown (1), empty (1), non-strategy spaced (1: Multi-Family).",
+  "cases": [
+    { "raw": "buy_hold", "expected": "buy_hold" },
+    { "raw": "brrrr", "expected": "brrrr" },
+    { "raw": "house_hack", "expected": "house_hack" },
+    { "raw": "buy-hold", "expected": "buy_hold" },
+    { "raw": "house-hack", "expected": "house_hack" },
+    { "raw": "BUY_HOLD", "expected": "buy_hold" },
+    { "raw": "BRRRR", "expected": "brrrr" },
+    { "raw": "HOUSE_HACK", "expected": "house_hack" },
+    { "raw": "BRRR", "expected": "brrrr" },
+    { "raw": "Buy & Hold", "expected": "buy_hold" },
+    { "raw": "cashflow", "expected": null },
+    { "raw": "appreciation", "expected": null },
+    { "raw": "balanced", "expected": null },
+    { "raw": "garbage", "expected": null },
+    { "raw": "", "expected": null },
+    { "raw": "Multi-Family", "expected": null }
+  ]
+}
