@@ -7,12 +7,12 @@
  */
 
 import {
-  CanonicalStrategy,
   KEBAB_STRATEGY_ALIASES,
   SNAKE_STRATEGY_ALIASES,
   SCREAMING_STRATEGY_ALIASES,
   SPACED_STRATEGY_ALIASES,
 } from './canonicalStrategy';
+import type { CanonicalStrategy } from './canonicalStrategy';
 
 const PHILOSOPHY_VALUES = new Set<string>(['cashflow', 'appreciation', 'balanced']);
 
