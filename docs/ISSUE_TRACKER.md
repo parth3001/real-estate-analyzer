@@ -385,12 +385,13 @@ Closed INV-6 (migrated to ESLint v9 flat config + added red-team enforcement tes
 **Business Impact**: Maintenance off by 60-100% depending on entry point.
 **Proposed Solution**: Same as #244. Recommended canonical default: 5% of rent (institutional convention).
 
-### Issue #247: Property tax + insurance basis doesn't switch to ARV post-refi
-**Status**: 🔴 Open · **Priority**: P0 · **Category**: Convention (Cat B) + Analyzer logic
-**Component**: `backend/src/analysis/SFRAnalyzer.ts:346` (projection loop), `backend/src/services/investment/brrrAnalyzer.ts:565-566` (correctly recomputes at ARV for post-refi metrics)
-**Description**: `brrrAnalyzer.calculatePostRefinanceMetrics` DOES recompute tax + insurance at ARV — but only for the post-refi metrics snapshot. The 10-year projection loop in `SFRAnalyzer.ts:346` applies `propertyTaxRate` to `purchasePrice` throughout. Post-refi opex projection uses stale (pre-appreciation) basis. Actual Cuyahoga / Texas / similar counties reassess on transfer + rehab permits within 6-12 months.
-**Business Impact**: 10-year opex projection systematically low for BRRRR. NOI + CF + IRR all overstated. Upgrading from #227 item 2 (was P2 polish).
-**Proposed Solution**: Analyzer projection loop needs strategy-aware basis: pre-refi = purchase, post-refi = ARV × reassessment factor.
+### Issue #247: Property tax + insurance basis doesn't switch to ARV in projection loop (post-refi snapshot IS correct)
+**Status**: 🟡 Open — SCOPE REFINED 2026-07-13 · **Priority**: P1 (downgraded from P0) · **Category**: Convention (Cat B) + Analyzer logic
+**Component**: `backend/src/analysis/SFRAnalyzer.ts:346` (projection loop) — the ONLY affected surface. `backend/src/services/investment/brrrAnalyzer.ts:565-566` post-refi metrics snapshot already uses ARV correctly.
+**Description**: `brrrAnalyzer.calculatePostRefinanceMetrics` DOES recompute tax + insurance at ARV for the post-refi metrics snapshot (verified 2026-07-13: reference test showed monthly tax ≈ $195 = 1.56% × $150K ARV / 12, NOT $78 = 1.56% × $60K purchase / 12). What's still broken is the 10-year projection loop in `SFRAnalyzer.ts:346` which applies `propertyTaxRate` to `purchasePrice` for all 10 projection years. This means the "snapshot NOI" the workspace shows is correct, but the "10-year cumulative CF / IRR / exit numbers" understate opex over the hold period.
+**Business Impact**: DOWNGRADED. Workspace headline numbers (post-refi CF, DSCR, cap rate, NOI) are correct. Only the multi-year exit-scenario projections silently understate expenses. Impact is on IRR + total return + exit-year net-proceeds calculations. Actual Cuyahoga / Texas counties reassess on transfer + rehab permits within 6-12 months.
+**Verification 2026-07-13**: Live BRRRR analysis of 4235 W 149th St, Cleveland ($60K/$35K/$150K ARV) showed post-refi opex $442/mo which back-solves to tax $195/mo = ARV basis (correct). Confirmed the snapshot path is fixed. Only the projection loop needs updating.
+**Proposed Solution**: `SFRAnalyzer.getExpenseBreakdown` in the year-by-year projection loop needs strategy-aware basis: pre-refi years = purchase price, post-refi years = ARV × reassessment factor (1.0 for immediate, ramp for phased reassessment jurisdictions). Ballpark $30-50/mo impact on 10-year cumulative CF, meaningful for IRR precision.
 
 ### Issue #248: CLAUDE.md rounding rule violated in SFRAnalyzer intermediate math
 **Status**: 🔴 Open · **Priority**: P0 · **Category**: Convention (Cat B)
