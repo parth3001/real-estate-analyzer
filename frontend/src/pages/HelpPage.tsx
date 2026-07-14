@@ -733,7 +733,7 @@ const HelpPage: React.FC = () => {
         <Typography color="text.secondary" paragraph>
           We're here to help you succeed in your real estate investing journey.
         </Typography>
-        <Link href="mailto:support@analyzr.com" underline="none">
+        <Link href="mailto:support@reanalyzr.com" underline="none">
           <Typography color="primary" fontWeight={600}>
             Contact Support
           </Typography>
