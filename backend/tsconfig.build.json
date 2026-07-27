@@ -12,7 +12,8 @@
     "resolveJsonModule": true,
     "declaration": true,
     "allowJs": true,
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react"
   },
   "include": ["src/**/*"],
   "exclude": [
