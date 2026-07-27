@@ -121,11 +121,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = tokenUtils.getAccessToken();
         const userData = tokenUtils.getUserData();
-        
+
         if (token && userData) {
           // Validate token by fetching profile
           const response = await authApi.getProfile();
-          
+
           if (response.status === 200 && response.data.user) {
             dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
           } else {

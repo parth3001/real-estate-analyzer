@@ -229,9 +229,14 @@ export type ChatStreamEvent =
  * resolver. The trailing `/chat/turn/stream` is added here.
  */
 function resolveStreamUrl(): string {
+  // 2026-07-27: use || not ?? — an empty-string VITE_API_URL (from a
+  // .env line like `VITE_API_URL=`) previously passed through the ??
+  // fallback chain and produced `/chat/turn/stream` without the /api
+  // prefix, which 404'd against the Vite dev server. `||` treats
+  // empty string as absent, which is what we want.
   const base =
-    (import.meta.env.VITE_API_URL as string | undefined) ??
-    (import.meta.env.REACT_APP_API_URL as string | undefined) ??
+    (import.meta.env.VITE_API_URL as string | undefined) ||
+    (import.meta.env.REACT_APP_API_URL as string | undefined) ||
     '/api';
   // axios appends '/chat/turn' as path; we mirror with the stream suffix.
   return `${base.replace(/\/$/, '')}/chat/turn/stream`;
