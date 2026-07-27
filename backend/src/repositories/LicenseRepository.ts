@@ -52,6 +52,7 @@ import {
   buildCanonicalAddressKey,
   type PropertyAddressInput,
 } from '../utils/canonicalAddressKey';
+import { DealModel } from '../models/Deal';
 
 // ===== Inputs =====
 
@@ -163,6 +164,12 @@ export class LicenseRepository {
       pricePaidCents: input.pricePaidCents,
       address: canonicalKey,
     });
+    // Task #112 / Model #6 (2026-07-19): no counter reset needed.
+    // Model #6 gates chat via ConversationEvents-after-DecisionEvent
+    // count + license state at check-time; issuing a license here
+    // means the next chat turn's cap check finds an active license
+    // and returns allow:true naturally. Self-healing, no state to
+    // manually clear. (See routes/chat.ts computeChatCapAfterLastScore.)
     return license._id as Types.ObjectId;
   }
 

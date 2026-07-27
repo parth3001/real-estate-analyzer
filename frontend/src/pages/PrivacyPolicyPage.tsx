@@ -112,10 +112,6 @@ const PrivacyPolicyPage: React.FC = () => {
           you interact with REanalyzr, such as pages visited, time spent, clicks, scroll depth, and
           interactions with forms and buttons. See section 5 for details on the analytics tools we use.</p>
 
-          <p style={getTextStyle()}><strong>Affiliate referral codes.</strong> If you arrive via an
-          affiliate partner site, we record the affiliate code so we can attribute the referral. This
-          is associated with your account at signup.</p>
-
           <p style={getTextStyle()}><strong>Technical data.</strong> Like most web services, our servers
           automatically log basic technical information including IP address, browser type, device type,
           and timestamps for security and reliability purposes.</p>

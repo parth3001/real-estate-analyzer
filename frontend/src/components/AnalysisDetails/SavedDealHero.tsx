@@ -355,7 +355,13 @@ export function SavedDealHero(props: SavedDealHeroProps): React.JSX.Element {
           render. Suppress the state warning by keeping the fetch;
           consumers of `critiques` should read from AnalysisDetails. */}
 
-      {/* ===== Action chips ===== */}
+      {/* ===== Action chips =====
+          Under Model #4 (pay-for-persistence, 2026-07-18), SavedDealHero
+          only renders for licensed workspaces. The workspace-open gate
+          in AnalysisDetails redirects unlicensed deal IDs to the D2
+          unlock landing, so we don't need per-section license gating
+          inside this component. Chat, chips, and PDF are always visible
+          when this component renders. */}
       <Box>
         {/* Issue #86 fix (2026-07-07) — "Start chat about this property"
             button. Prior workspace only offered pre-filled chips as chat

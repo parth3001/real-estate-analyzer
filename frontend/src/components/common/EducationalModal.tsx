@@ -14,8 +14,9 @@ import { appleColors, appleBorderRadius, appleShadows, appleSpacing } from '../.
 /**
  * Educational Modal Component
  *
- * Apple Design System-compliant modal for embedding partner educational videos
- * Supports subdomain multi-tenancy (theficouple.reanalyzr.com, etc.)
+ * Apple Design System-compliant modal for embedding educational videos.
+ * (Originally supported partner subdomain multi-tenancy; that path was
+ * retired with the affiliate program in Task #132.)
  *
  * Design Principles:
  * - Clarity: Clean video presentation with minimal distraction

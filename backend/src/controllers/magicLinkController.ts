@@ -243,6 +243,12 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
           merged: boolean;
           eventsMerged: number;
           returnTo: string;
+          // Task #116: sessionId is returned so the verify page can
+          // hydrate sessionStorage in the new tab BEFORE navigating to
+          // /app. Otherwise ChatOverlay generates a fresh sessionId,
+          // loads an empty thread, and the user sees "chat wiped"
+          // even though the backend merge succeeded.
+          sessionId: string;
         }
       | undefined;
     if (tokenDoc.pendingChatSessionId) {
@@ -255,6 +261,7 @@ export const verifyMagicLink = async (req: Request, res: Response): Promise<void
           merged: result.merged,
           eventsMerged: result.eventsMerged,
           returnTo: '/app',
+          sessionId: tokenDoc.pendingChatSessionId,
         };
         logger.info('[MagicLink] chat session claim completed', {
           email,

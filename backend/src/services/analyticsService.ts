@@ -125,7 +125,6 @@ class AnalyticsService {
    */
   async trackUserRegistered(userId: string, metadata?: {
     source?: string;
-    affiliateCode?: string;
   }, userRole?: string): Promise<void> {
     try {
       // Skip tracking for admin users
@@ -135,14 +134,12 @@ class AnalyticsService {
       }
 
       await this.trackEvent('user_registered', {
-        source: metadata?.source || 'direct',
-        affiliateCode: metadata?.affiliateCode
+        source: metadata?.source || 'direct'
       }, userId);
 
       logger.info('[ANALYTICS] User registered', {
         userId,
-        source: metadata?.source,
-        affiliateCode: metadata?.affiliateCode
+        source: metadata?.source
       });
     } catch (error) {
       logger.error('[ANALYTICS] Failed to track user registration:', error);

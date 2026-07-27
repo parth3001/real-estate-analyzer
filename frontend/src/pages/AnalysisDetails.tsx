@@ -8,12 +8,16 @@ import type {
   ScenarioComparisonRowWire,
   ScenarioDetailWire,
   CritiqueWire,
+  LicenseStatusWire,
 } from '../services/api';
 import { SavedDealHero } from '../components/AnalysisDetails/SavedDealHero';
 import { ScenarioCompareTable } from '../components/AnalysisDetails/ScenarioCompareTable';
 import { SensitivityPanel } from '../components/AnalysisDetails/SensitivityPanel';
 import { ScenarioDetails } from '../components/AnalysisDetails/ScenarioDetails';
 import { CritiqueCard } from '../components/AnalysisDetails/CritiqueCard';
+import { LS_KEY_PENDING_DEAL_ID } from './CheckoutReturnPage';
+import { useAuth } from '../contexts/AuthContext';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 const AnalysisDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +48,73 @@ const AnalysisDetails: React.FC = () => {
   const [critiqueLoading, setCritiqueLoading] = useState(false);
   const [critiqueFromPriorDecision, setCritiqueFromPriorDecision] = useState(false);
   const dealIdForCritique = (deal as { _id?: string } | null)?._id;
+
+  // Task #34 (2026-07-14) — license state lifted UP to this page so
+  // both the SavedDealHero score card AND the sibling sections
+  // (ScenarioCompareTable, SensitivityPanel, ScenarioDetails,
+  // CritiqueCard) gate against the SAME source of truth. Prior
+  // arrangement had SavedDealHero fetching independently, which meant
+  // its own gating was possible but the sibling sections had no way
+  // to know about the license — they always rendered, leaking the
+  // paid-tier depth to unlicensed users. See PaywallCTA render below.
+  const [license, setLicense] = useState<LicenseStatusWire | null | undefined>(undefined);
+  const dealIdForLicense = (deal as { _id?: string } | null)?._id;
+  useEffect(() => {
+    if (!dealIdForLicense) return;
+    let cancelled = false;
+    propertyApi
+      .getDealLicense(dealIdForLicense)
+      .then((res) => {
+        if (!cancelled) setLicense(res.data);
+      })
+      .catch(() => {
+        // Silent failure — treat as "no license" for gating purposes.
+        // A license-endpoint outage should NOT leak paid content to
+        // an unlicensed user; better to overshow the paywall than
+        // undershow it. Console logs in api.ts are sufficient for
+        // ops debugging.
+        if (!cancelled) setLicense({ status: 'none' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dealIdForLicense]);
+  const hasActiveLicense = license?.status === 'active';
+  // Model #4 (2026-07-18) — unlicensed dealIDs render the D2 unlock
+  // landing (minimal address + score + Stripe redirect CTA) instead
+  // of a paywalled preview workspace. licenseResolved gates the
+  // switch: during the fetch we show a loading state, once resolved
+  // we route to either the full workspace or the D2 landing.
+  const licenseResolved = license !== undefined;
+
+  // Task #34 — Stripe Payment Link redirect. Uses `client_reference_id`
+  // to correlate the eventual checkout.session.completed webhook with
+  // this deal; backend derives userId + propertyAddress from the deal
+  // and issues a DealLicense scoped to canonicalAddressKey. Email is
+  // pre-filled from the logged-in user so Stripe Link recognizes them.
+  const { user } = useAuth();
+  const paymentLinkBase = import.meta.env.VITE_STRIPE_PAYMENT_LINK as
+    | string
+    | undefined;
+  const handleUnlock = React.useCallback((): void => {
+    if (!paymentLinkBase || !dealIdForLicense) return;
+    // Save the pending dealId sentinel BEFORE redirect. CheckoutReturnPage
+    // reads this to know which workspace to navigate back to once the
+    // webhook confirms the license. See CheckoutReturnPage header for
+    // the full outbound → return flow.
+    try {
+      localStorage.setItem(LS_KEY_PENDING_DEAL_ID, dealIdForLicense);
+    } catch {
+      // Best-effort: private-window / storage-full users still get a
+      // working paywall — CheckoutReturnPage's 'no-sentinel' state
+      // routes them to Saved Properties instead of a specific deal.
+    }
+    const params = new URLSearchParams();
+    params.set('client_reference_id', dealIdForLicense);
+    if (user?.email) params.set('prefilled_email', user.email);
+    window.location.href = `${paymentLinkBase}?${params.toString()}`;
+  }, [paymentLinkBase, dealIdForLicense, user?.email]);
+  const unlockHandler = paymentLinkBase && dealIdForLicense ? handleUnlock : undefined;
   useEffect(() => {
     if (!dealIdForCritique) return;
     let cancelled = false;
@@ -166,10 +237,10 @@ const AnalysisDetails: React.FC = () => {
       <Box sx={{ p: 4 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/saved-properties')}
           sx={{ mb: 3 }}
         >
-          Back to Dashboard
+          Back to Saved Properties
         </Button>
         <Alert severity="error" sx={{ mb: 3 }}>
           <Typography variant="h6">Failed to Load Analysis</Typography>
@@ -187,10 +258,10 @@ const AnalysisDetails: React.FC = () => {
       <Box sx={{ p: 4 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/saved-properties')}
           sx={{ mb: 3 }}
         >
-          Back to Dashboard
+          Back to Saved Properties
         </Button>
         <Alert severity="warning">
           Analysis not found
@@ -399,6 +470,77 @@ const AnalysisDetails: React.FC = () => {
           );
         })()}
 
+        {/* Model #4 (2026-07-18) — D2 unlock landing.
+            Rendered INSTEAD of the workspace when the license is
+            confirmed inactive. Shows address + score + Unlock CTA.
+            Minimal by design — just enough to remind the user what
+            this deal is, then let them decide to pay or leave. */}
+        {licenseResolved && !hasActiveLicense && (
+          <Box
+            sx={{
+              mt: 4,
+              mb: 3,
+              p: { xs: 3, md: 4 },
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              textAlign: 'center',
+            }}
+            data-testid="deal-unlock-landing"
+          >
+            <LockOutlinedIcon
+              sx={{ fontSize: 40, color: 'text.secondary', mb: 2 }}
+            />
+            <Typography
+              component="h2"
+              sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, mb: 1 }}
+            >
+              Unlock this deal
+            </Typography>
+            <Typography sx={{ fontSize: 15, color: 'text.secondary', mb: 3 }}>
+              {deal.propertyAddress?.street}
+              {deal.propertyAddress?.city && `, ${deal.propertyAddress.city}`}
+              {deal.propertyAddress?.state && `, ${deal.propertyAddress.state}`}
+            </Typography>
+            <Typography
+              sx={{ fontSize: 14, color: 'text.secondary', mb: 3, lineHeight: 1.5 }}
+            >
+              Get the full workspace — walk-away price, 10-year projection,
+              stress tests, unlimited chat, scenario comparison, adversarial
+              critique, and PDF export. One-time $4.99, 180-day editing window.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={unlockHandler}
+              disabled={!unlockHandler}
+              sx={{
+                minHeight: 48,
+                textTransform: 'none',
+                borderRadius: 2,
+                fontWeight: 600,
+                fontSize: 16,
+                px: 3,
+              }}
+              data-testid="deal-unlock-button"
+            >
+              Unlock · $4.99
+            </Button>
+            {!unlockHandler && (
+              <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 1.5 }}>
+                Payment integration launching soon
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {/* Licensed workspace — the full deal-working surface.
+            Only renders when license is resolved AND active. Under
+            Model #4 there is no "unlicensed workspace" surface; the
+            D2 landing above handles that case. */}
+        {hasActiveLicense && (
+        <>
         <SavedDealHero
           deal={deal}
           selectedScenario={
@@ -488,18 +630,31 @@ const AnalysisDetails: React.FC = () => {
               textAlign: 'center',
             }}
           >
+            {/* Task #120 (2026-07-26): MF is WIP (Task #21). The legacy
+                /mf-analysis wizard is unlinked from the v2.0 IA. For now
+                surface a "chat about this property" CTA instead of the
+                dead-end wizard link. Full MF workspace lands with the
+                MF stress-test pipeline (Task #30). */}
             <Typography sx={{ fontSize: 15, color: 'text.secondary', mb: 2 }}>
               Detailed multi-family analysis — unit mix, per-unit metrics,
-              GRM, BEO, debt yield — lives in the full MF view.
+              GRM, BEO, debt yield — is in progress. In the meantime, chat
+              with the AI about this property to explore any specific metric.
             </Typography>
             <Button
               variant="contained"
-              onClick={() => navigate(`/mf-analysis?id=${deal._id}`)}
+              onClick={() => {
+                if (typeof sessionStorage !== 'undefined') {
+                  sessionStorage.removeItem('reanalyzr.chat.sessionId');
+                }
+                navigate('/app');
+              }}
               sx={{ textTransform: 'none', borderRadius: 2 }}
             >
-              View detailed MF analysis →
+              Chat about this property →
             </Button>
           </Box>
+        )}
+        </>
         )}
       </Box>
     </Box>

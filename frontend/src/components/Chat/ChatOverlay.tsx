@@ -21,7 +21,7 @@
  *   - 44pt minimum touch targets on the send + any interactive elements.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -36,6 +36,7 @@ import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import LockIcon from '@mui/icons-material/LockOutlined';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { chatTheme } from '../../theme/chatTheme';
@@ -50,6 +51,7 @@ import { writePendingChatClaim } from '../../services/pendingChatClaim';
 import { useAuthModal } from '../../contexts/AuthModalContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDisclaimer } from '../AiDisclaimer';
+import { LS_KEY_PENDING_DEAL_ID } from '../../pages/CheckoutReturnPage';
 import {
   upsertThread,
   deriveTitle,
@@ -124,6 +126,14 @@ interface AssistantMessage {
    * rendered as pill buttons below the bubble.
    */
   suggestedFollowups?: string[];
+  /**
+   * Task #112 / Model #6 (2026-07-19) — heads-up text shown under the
+   * bubble when this was the LAST FREE turn before the paywall.
+   * Emitted by the backend `paywall_warning` SSE event AFTER the
+   * agent's response completes. Marketing rec: telegraph the wall
+   * so the next-turn paywall doesn't feel like a surprise.
+   */
+  paywallWarning?: string;
 }
 
 interface ErrorMessage {
@@ -132,7 +142,19 @@ interface ErrorMessage {
   text: string;
 }
 
-type ThreadMessage = UserMessage | AssistantMessage | ErrorMessage;
+// Task #112 / Model #5 (2026-07-18) — inline paywall bubble shown when
+// the backend chat gate returns 402 (`chat_cap_reached`). Carries the
+// dealId so the Unlock button can redirect to Stripe with the correct
+// client_reference_id. Rendered in the chat thread like an error, but
+// with a primary CTA button + $4.99 framing.
+interface PaywallMessage {
+  id: string;
+  role: 'paywall';
+  text: string;
+  dealId?: string;
+}
+
+type ThreadMessage = UserMessage | AssistantMessage | ErrorMessage | PaywallMessage;
 
 // ===== Props =====
 
@@ -361,6 +383,19 @@ function applyStreamEvent(
     );
     return;
   }
+  // Task #112 / Model #6 (2026-07-19) — attach the warning text to the
+  // just-completed assistant message. Backend emits this event AFTER
+  // the response stream when the current turn was the last free one.
+  if (event.type === 'paywall_warning') {
+    setMessages((m) =>
+      m.map((msg) =>
+        msg.id === assistantId && msg.role === 'assistant'
+          ? { ...msg, paywallWarning: event.message }
+          : msg
+      )
+    );
+    return;
+  }
   // tool_call: noop for now (W6-S4 reserves the channel; UX hint pill
   // can mount on it later without protocol changes).
 }
@@ -404,6 +439,22 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [turnNumber, setTurnNumber] = useState(1);
+
+  // Task #122 (2026-07-26): "prefill" hook — a caller (e.g., the pipeline
+  // "Run Full Analysis" button) can stash a draft message in sessionStorage
+  // under `reanalyzr.chat.prefill` before navigating to /app. On mount,
+  // we hydrate the composer with that text and clear the key (one-shot).
+  // We deliberately DO NOT auto-send — user reviews and hits send. This
+  // preserves the single-chat experience without hijacking the user's
+  // agency at the very moment they arrive.
+  useEffect(() => {
+    if (typeof sessionStorage === 'undefined') return;
+    const prefill = sessionStorage.getItem('reanalyzr.chat.prefill');
+    if (prefill) {
+      setDraft(prefill);
+      sessionStorage.removeItem('reanalyzr.chat.prefill');
+    }
+  }, []);
 
   // Phase 3+4, Day 5 — read threadStore for the empty-state chip
   // personalization. Subscribe so chips re-derive if a new thread
@@ -573,6 +624,30 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
     openAuthModal({ source: 'save-deal', ref: 'unlock' });
   };
 
+  // Task #112 / Model #5 (2026-07-18) — Stripe Payment Link redirect
+  // fired from an inline paywall bubble in the thread. Same shape as
+  // AnalysisDetails' D2 landing handleUnlock: save dealId sentinel to
+  // localStorage BEFORE the redirect so CheckoutReturnPage can route
+  // back to the correct workspace after the webhook fires. Guarded by
+  // env var + dealId so callers with either missing get undefined.
+  const paymentLinkBase = import.meta.env.VITE_STRIPE_PAYMENT_LINK as
+    | string
+    | undefined;
+  const handlePaywallUnlock = useCallback((dealId: string): void => {
+    if (!paymentLinkBase) return;
+    try {
+      localStorage.setItem(LS_KEY_PENDING_DEAL_ID, dealId);
+    } catch {
+      // Best-effort — CheckoutReturnPage's 'no-sentinel' fallback
+      // routes storage-denied users to Saved Properties.
+    }
+    const params = new URLSearchParams();
+    params.set('client_reference_id', dealId);
+    if (authUser?.email) params.set('prefilled_email', authUser.email);
+    window.location.href = `${paymentLinkBase}?${params.toString()}`;
+  }, [paymentLinkBase, authUser?.email]);
+  const paywallUnlockHandler = paymentLinkBase ? handlePaywallUnlock : undefined;
+
   async function send(text: string): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed || isSending) return;
@@ -698,27 +773,47 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
       } else {
         // Task #35 (2026-06-22): license-expired errors get a clear,
         // copy-honest message instead of "Couldn't reach the assistant."
-        // The streamChatTurn promise rejects with `code: 'license_expired'`
-        // (set by chatApi.ts after a 403 from the backend guard).
-        const errAny = err as Error & { code?: string };
+        // Task #112 / Model #6 (2026-07-19): chat_cap_reached routes to
+        // a PaywallMessage (Stripe redirect) for signed-in users;
+        // chat_cap_reached_signup opens the auth modal (anonymous flow).
+        const errAny = err as Error & { code?: string; dealId?: string };
         const isLicenseExpired = errAny?.code === 'license_expired';
-        const errorText = isLicenseExpired
-          ? errAny.message ||
-            'Your license for this property expired. Re-license to continue analyzing it.'
-          : err instanceof Error && err.message
-            ? `Couldn't reach the assistant: ${err.message}`
-            : "Couldn't reach the assistant. Please try again.";
-        setMessages((m) => {
-          const errorMsg: ErrorMessage = {
-            id: newId(),
-            role: 'error',
-            text: errorText,
-          };
-          // Replace the empty streaming bubble with the error bubble.
-          return m
-            .filter((msg) => msg.id !== assistantId)
-            .concat(errorMsg);
-        });
+        const isChatCapReached = errAny?.code === 'chat_cap_reached';
+        const isChatCapReachedSignup = errAny?.code === 'chat_cap_reached_signup';
+        if (isChatCapReachedSignup) {
+          // Anonymous user hit the cap — open the auth modal directly
+          // instead of rendering an unlock CTA. Remove the empty
+          // streaming bubble so the modal is the only visible action.
+          setMessages((m) => m.filter((msg) => msg.id !== assistantId));
+          openAuthModal({ source: 'save-deal', ref: 'unlock' });
+        } else {
+          setMessages((m) => {
+            const withoutStreamingBubble = m.filter((msg) => msg.id !== assistantId);
+            if (isChatCapReached) {
+              const paywallMsg: PaywallMessage = {
+                id: newId(),
+                role: 'paywall',
+                text:
+                  errAny.message ||
+                  "You've explored this deal in a few questions. Unlock the full workspace + unlimited chat for $4.99 (180-day access).",
+                dealId: errAny.dealId,
+              };
+              return withoutStreamingBubble.concat(paywallMsg);
+            }
+            const errorText = isLicenseExpired
+              ? errAny.message ||
+                'Your license for this property expired. Re-license to continue analyzing it.'
+              : err instanceof Error && err.message
+                ? `Couldn't reach the assistant: ${err.message}`
+                : "Couldn't reach the assistant. Please try again.";
+            const errorMsg: ErrorMessage = {
+              id: newId(),
+              role: 'error',
+              text: errorText,
+            };
+            return withoutStreamingBubble.concat(errorMsg);
+          });
+        }
       }
     } finally {
       abortControllerRef.current = null;
@@ -943,6 +1038,7 @@ export function ChatOverlay(props: ChatOverlayProps): React.JSX.Element {
                   onPortfolioCta={handlePortfolioCta}
                   onChipTap={handleChipTap}
                   showInlineSaveDealCta={showInlineSaveDealCta}
+                  onPaywallUnlock={paywallUnlockHandler}
                 />
               );
             });
@@ -1109,6 +1205,16 @@ interface MessageBubbleProps {
    * without duplicating the existing CTA under DealScoreCards.
    */
   showInlineSaveDealCta?: boolean;
+  /**
+   * Task #112 / Model #5 (2026-07-18) — invoked when the user clicks
+   * "Unlock · $4.99" on a paywall bubble. ChatOverlay wires this to
+   * the same Stripe Payment Link redirect the D2 landing uses
+   * (client_reference_id + prefilled_email + LS_KEY_PENDING_DEAL_ID
+   * sentinel). Called with the paywall's dealId. Undefined when the
+   * env var VITE_STRIPE_PAYMENT_LINK is unset — in that case the
+   * button renders disabled with a fallback caption.
+   */
+  onPaywallUnlock?: (dealId: string) => void;
 }
 
 function MessageBubble({
@@ -1118,6 +1224,7 @@ function MessageBubble({
   onPortfolioCta,
   onChipTap,
   showInlineSaveDealCta,
+  onPaywallUnlock,
 }: MessageBubbleProps): React.JSX.Element {
   if (message.role === 'error') {
     return (
@@ -1136,6 +1243,63 @@ function MessageBubble({
         data-testid="chat-message-error"
       >
         {message.text}
+      </Box>
+    );
+  }
+  // Task #112 / Model #5 (2026-07-18) — inline paywall bubble. Same
+  // shape as the D2 landing on AnalysisDetails but stripped down for
+  // the chat surface: message + Unlock button, no icon or hero text.
+  // Button disabled fallback matches D2's "Payment integration
+  // launching soon" state when the Payment Link env var is unset.
+  if (message.role === 'paywall') {
+    const canUnlock =
+      typeof onPaywallUnlock === 'function' && typeof message.dealId === 'string';
+    return (
+      <Box
+        sx={{
+          alignSelf: 'flex-start',
+          maxWidth: '85%',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+          px: 2.5,
+          py: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+        role="region"
+        aria-label="Unlock deal"
+        data-testid="chat-message-paywall"
+      >
+        <Typography sx={{ fontSize: 14, lineHeight: 1.5, color: 'text.primary' }}>
+          {message.text}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            size="medium"
+            disabled={!canUnlock}
+            onClick={() => {
+              if (canUnlock && message.dealId) onPaywallUnlock!(message.dealId);
+            }}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 2,
+              fontWeight: 600,
+              minHeight: 40,
+            }}
+            data-testid="chat-message-paywall-unlock"
+          >
+            Unlock · $4.99
+          </Button>
+          {!canUnlock && (
+            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+              Payment integration launching soon
+            </Typography>
+          )}
+        </Box>
       </Box>
     );
   }
@@ -1198,6 +1362,36 @@ function MessageBubble({
           )}
         </Box>
       )}
+
+      {/* Model #6 (2026-07-19): "last free question" warning under the
+          assistant bubble. Emitted as an SSE paywall_warning event when
+          count == cap - 1 (turn 3 of 3). Turn 4 becomes a PaywallMessage. */}
+      {message.role === 'assistant' &&
+        message.paywallWarning &&
+        message.paywallWarning.length > 0 && (
+          <Box
+            sx={{
+              alignSelf: 'flex-start',
+              maxWidth: '85%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 1.5,
+              py: 0.75,
+              borderRadius: 2,
+              bgcolor: 'warning.50',
+              border: 1,
+              borderColor: 'warning.200',
+              color: 'warning.900',
+              fontSize: 12.5,
+              lineHeight: 1.4,
+            }}
+            data-testid="chat-paywall-warning"
+          >
+            <LockIcon sx={{ fontSize: 14 }} />
+            <span>{message.paywallWarning}</span>
+          </Box>
+        )}
 
       {/* Structured outputs render BELOW the text bubble, full-width-ish */}
       {message.role === 'assistant' &&

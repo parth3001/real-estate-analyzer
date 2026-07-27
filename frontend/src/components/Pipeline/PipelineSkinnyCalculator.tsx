@@ -332,51 +332,48 @@ export const PipelineSkinnyCalculator: React.FC<PipelineSkinnyCalculatorProps> =
     if (results && onAnalysisComplete) {
       onAnalysisComplete(results);
     }
-    
-    // If deal is already analyzed, check if we can load the full analysis
+
+    // Task #122 (2026-07-26): v2.0 single-experience routing. Completed
+    // deals open in the workspace; new-analysis requests seed the chat
+    // composer with the deal's numbers so the user can review and hit
+    // send. No fork into the legacy /sfr-analysis wizard.
+
+    // COMPLETED deal → workspace (unlocked or paywall — handled there)
     if (deal.analysisStatus === 'COMPLETE' && deal.analysisId) {
-      console.log('🎯 Deal has analysisId, navigating directly:', deal.analysisId);
-      
-      // ARCHITECTURAL FIX: Skip the fetch verification
-      // The SFRAnalysis page will handle loading the data using the same
-      // loadDealData() function that saved properties use
-      // This ensures consistency - both paths use the same data loading mechanism
-      navigate(`/sfr-analysis?id=${deal.analysisId}`);
+      navigate(`/analysis/${deal.analysisId}`);
       onClose();
       return;
     }
-    
-    // For new analysis, prepare data for pre-population
-    console.log('🚀 Pipeline Deal Data being saved to sessionStorage:');
-    console.log('Deal:', deal);
-    console.log('Inputs:', inputs);
-    console.log('Results:', results);
-    
-    const pipelineData = {
-      dealId: deal._id,
-      propertyAddress: deal.address,
-      purchasePrice: deal.askingPrice,
-      propertyDetails: deal.propertyDetails,
-      quickMetrics: results,
-      // Include skinny calculator inputs for proper pre-population
-      monthlyRent: inputs.monthlyRent,
-      downPayment: inputs.downPayment,
-      interestRate: inputs.interestRate,
-      loanTermYears: inputs.loanTermYears,
-      monthlyExpenses: inputs.monthlyExpenses,
-      source: 'pipeline'
-    };
-    
-    console.log('📦 Final pipeline data object:', pipelineData);
-    
-    // Navigate to SFR analysis with pipeline deal pre-filled
-    sessionStorage.setItem('pipelineDealData', JSON.stringify(pipelineData));
-    
-    console.log('✅ Data saved to sessionStorage, navigating to /sfr-analysis');
-    
-    // Navigate to SFR analysis page
-    navigate('/sfr-analysis');
-    onClose(); // Close the modal
+
+    // NEW analysis → chat, prefilled with the pipeline deal's data.
+    // The chat overlay reads `reanalyzr.chat.prefill` on mount and
+    // hydrates the composer with this text (see ChatOverlay Task #122).
+    const purchasePrice = deal.askingPrice ?? 0;
+    const downPct =
+      purchasePrice > 0 && inputs.downPayment > 0
+        ? Math.round((inputs.downPayment / purchasePrice) * 100)
+        : undefined;
+    const lines: string[] = [
+      `Analyze ${deal.address ?? 'this property'} as a buy-and-hold rental.`,
+      '',
+      `Purchase price: $${purchasePrice.toLocaleString()}`,
+    ];
+    if (downPct != null) lines.push(`Down payment: ${downPct}%`);
+    if (inputs.interestRate > 0) lines.push(`Interest rate: ${inputs.interestRate}%`);
+    if (inputs.loanTermYears > 0) lines.push(`Loan term: ${inputs.loanTermYears} years`);
+    if (inputs.monthlyRent > 0)
+      lines.push(`Estimated rent: $${inputs.monthlyRent.toLocaleString()}/month`);
+    if (inputs.monthlyExpenses > 0)
+      lines.push(`Monthly operating expenses: $${inputs.monthlyExpenses.toLocaleString()}`);
+    lines.push('', 'Score this deal and give me the full analysis.');
+
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('reanalyzr.chat.prefill', lines.join('\n'));
+      // Fresh sessionId so this lands on a new thread, not the last one.
+      sessionStorage.removeItem('reanalyzr.chat.sessionId');
+    }
+    navigate('/app');
+    onClose();
   };
 
   const handleClose = () => {
@@ -581,7 +578,7 @@ export const PipelineSkinnyCalculator: React.FC<PipelineSkinnyCalculatorProps> =
                         Professional Deal Scoring
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Get a 0-100 deal quality score with BUY/NEGOTIATE/PASS verdict
+                        Get a 0-100 deal quality score with a full metric breakdown
                       </Typography>
                     </Box>
                     
@@ -594,27 +591,10 @@ export const PipelineSkinnyCalculator: React.FC<PipelineSkinnyCalculatorProps> =
                         Get Deal Score
                       </Button>
                     ) : results.canScore && deal.analysisStatus !== 'COMPLETE' ? (
-                      <Tooltip title="Professional scoring requires 60+ data points from full property analysis">
+                      <Tooltip title="Chat with the AI to run a full-metric analysis on this deal">
                         <Button
                           variant="outlined"
-                          onClick={() => {
-                            // Navigate to SFR analysis with pipeline deal pre-filled
-                            // Store deal data in sessionStorage to pre-populate the form
-                            sessionStorage.setItem('pipelineDealData', JSON.stringify({
-                              dealId: deal._id,
-                              propertyAddress: deal.address,
-                              purchasePrice: deal.askingPrice,
-                              monthlyRent: inputs.monthlyRent,
-                              monthlyExpenses: inputs.monthlyExpenses,
-                              downPayment: inputs.downPayment,
-                              interestRate: inputs.interestRate,
-                              loanTermYears: inputs.loanTermYears
-                            }));
-                            
-                            // Close the modal and navigate to SFR analysis
-                            handleClose();
-                            navigate('/sfr-analysis');
-                          }}
+                          onClick={handleDealScoring}
                           sx={{ borderRadius: 2 }}
                         >
                           Run Full Analysis for Scoring

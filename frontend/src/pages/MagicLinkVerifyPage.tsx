@@ -80,6 +80,19 @@ const MagicLinkVerifyPage: React.FC = () => {
         // works ACROSS browsers/devices because the binding lives on
         // the token, not in client storage.
         if (res.data.claimedChat?.returnTo) {
+          // Task #116: hydrate this tab's sessionStorage with the
+          // claimed sessionId BEFORE navigating. Magic links open in
+          // a new tab where sessionStorage is empty; without this,
+          // ChatOverlay would resolve a fresh sessionId and load an
+          // empty thread — the user would see "chat wiped" even
+          // though the backend merge succeeded and events are live
+          // under the real user for the ORIGINAL sessionId.
+          if (res.data.claimedChat.sessionId && typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(
+              'reanalyzr.chat.sessionId',
+              res.data.claimedChat.sessionId
+            );
+          }
           // Best-effort cleanup of the legacy localStorage fallback
           // so it can't conflict with a future flow.
           clearPendingChatClaim();
@@ -100,6 +113,14 @@ const MagicLinkVerifyPage: React.FC = () => {
             // Log + continue; the deals stay queryable under the ghost
             // until a future claim or cleanup job.
             console.warn('[MagicLinkVerify] chat session claim failed', claimErr);
+          }
+          // Task #116: same rationale as the server-bound path —
+          // hydrate sessionStorage so ChatOverlay resumes the thread.
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(
+              'reanalyzr.chat.sessionId',
+              pending.sessionId
+            );
           }
           clearPendingChatClaim();
           setTimeout(() => navigate(pending.returnTo), 300);

@@ -16,15 +16,16 @@ import { PersonaProvider } from './contexts/PersonaContext';
 import { DualModeProvider } from './contexts/DualModeContext';
 import ProtectedRoute, { GuestRoute } from './components/auth/ProtectedRoute';
 
-// Affiliate Context
-import { AffiliateProvider, useAffiliate } from './contexts/AffiliateContext';
+// Task #132 (2026-07-26) — theficouple / Josh Lupo affiliate partnership
+// ended. AffiliateProvider + AffiliateContext + AffiliateLandingPage +
+// affiliate detection + affiliate header badge fully removed. If a new
+// affiliate program launches later, we'll re-introduce the pattern
+// deliberately with a design tuned to the new partner.
 import { AuthModalProvider } from './contexts/AuthModalContext';
 
 // Auth Context
 import { useAuth } from './contexts/AuthContext';
 
-// Lazy load affiliate landing page (code splitting)
-const AffiliateLandingPage = React.lazy(() => import('./pages/AffiliateLandingPage'));
 
 // Pages
 // Dashboard.tsx is no longer routed (Phase 3+4 — /dashboard Navigate-redirects
@@ -50,6 +51,7 @@ import SettingsPage from './pages/SettingsPage';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AnalysisDetails from './pages/AnalysisDetails';
+import CheckoutReturnPage from './pages/CheckoutReturnPage';
 import BlogListPage from './pages/BlogListPage';
 import BlogPostPage from './pages/BlogPostPage';
 import BRRRRCalculatorPage from './pages/BRRRRCalculatorPage';
@@ -109,9 +111,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Conditional Home Route Selector (Affiliate vs Main Site)
+// Home route selector — chat-first for logged-in, landing for anon.
 const HomeRouteSelector: React.FC = () => {
-  const { isAffiliateSite } = useAffiliate();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -129,15 +130,6 @@ const HomeRouteSelector: React.FC = () => {
     return <Box sx={{ p: 4, textAlign: 'center' }}>Redirecting...</Box>;
   }
 
-  // Not logged in - show affiliate landing or calculator landing page
-  if (isAffiliateSite) {
-    return (
-      <React.Suspense fallback={<Box sx={{ p: 4, textAlign: 'center' }}>Loading...</Box>}>
-        <AffiliateLandingPage />
-      </React.Suspense>
-    );
-  }
-
   return <LandingPage />;
 };
 
@@ -148,7 +140,6 @@ function App() {
         <ThemeProvider theme={appleTheme}>
           <CssBaseline />
           <BrowserRouter>
-            <AffiliateProvider>
               <AuthProvider>
                 <AuthModalProvider>
                 <PersonaProvider>
@@ -200,9 +191,15 @@ function App() {
               <Route path="/whats-new" element={<WhatsNewPage />} />
 
               {/* Public Calculator Routes - No authentication required */}
-              <Route path="/calculator" element={<UniversalCalculator />} />
-              <Route path="/calculator/brrrr" element={<UniversalCalculator />} />
-              <Route path="/calculator/buy-hold" element={<UniversalCalculator />} />
+              {/* Task #126 (2026-07-26) — direct calculator routes now
+                  redirect to /app. These had no SEO wrapper (no meta,
+                  no canonical, no schema) so no acquisition equity is
+                  lost. The SEO-invested pages (BRRRR / CapRate /
+                  RentalProperty) keep their URLs and render chat-first
+                  content instead of a form widget. */}
+              <Route path="/calculator" element={<Navigate to="/app" replace />} />
+              <Route path="/calculator/brrrr" element={<Navigate to="/app" replace />} />
+              <Route path="/calculator/buy-hold" element={<Navigate to="/app" replace />} />
               <Route path="/brrrr-calculator" element={<BRRRRCalculatorPage />} />
               <Route path="/cap-rate-calculator" element={<CapRateCalculatorPage />} />
               <Route path="/rental-property-calculator" element={<RentalPropertyCalculatorPage />} />
@@ -235,6 +232,12 @@ function App() {
                 {/* Property Management — saved deals + their detail view */}
                 <Route path="/saved-properties" element={<SavedProperties />} />
                 <Route path="/analysis/:id" element={<AnalysisDetails />} />
+                {/* Task #34 (2026-07-14) — Stripe Payment Link success
+                    redirect lands here. Polls the license endpoint until
+                    the webhook has issued, then routes to the unlocked
+                    /analysis/:dealId. Falls back to Saved Properties on
+                    webhook lag or lost sentinel. */}
+                <Route path="/workspace/checkout-return" element={<CheckoutReturnPage />} />
 
                 {/* Portfolio Routes */}
                 <Route path="/portfolio" element={<PortfolioDashboard />} />
@@ -258,6 +261,16 @@ function App() {
                     chat-first nav (Settings is in the AppLayout sidebar) */}
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+
+                {/* Task #125 (2026-07-26) — Contact + Admin migrated from
+                    the legacy AppleNavigation shell into NewAppShell so
+                    users don't hit the "second app" (full 1.0 sidebar
+                    with SFR/MF/Dashboard nav) when they visit these
+                    routes. Admin gets its own dedicated shell someday;
+                    until then it lives under the chat-first sidebar. */}
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/admin/users" element={<AdminUserManagement />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
               </Route>
 
               {/* Protected Routes — LEGACY SHELL (AppleNavigation).
@@ -273,17 +286,12 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* Property Analysis Routes (legacy wizard) */}
+                {/* Property Analysis Routes (legacy wizard) — routes
+                    stay registered per PO decision (keep code alive) but
+                    NOTHING in the v2.0 IA links to them (Task #118). */}
                 <Route path="/sfr-analysis" element={<SFRAnalysis />} />
                 <Route path="/sfr-analysis/:mode" element={<SFRAnalysis />} />
                 <Route path="/mf-analysis" element={<MFAnalysis />} />
-
-                {/* Contact (under auth gate for now) */}
-                <Route path="/contact" element={<ContactPage />} />
-
-                {/* Admin */}
-                <Route path="/admin/users" element={<AdminUserManagement />} />
-                <Route path="/admin/analytics" element={<AdminAnalytics />} />
               </Route>
 
               {/* Catch all - 404 Not Found */}
@@ -293,7 +301,6 @@ function App() {
                 </PersonaProvider>
                 </AuthModalProvider>
               </AuthProvider>
-            </AffiliateProvider>
           </BrowserRouter>
         </ThemeProvider>
       </QueryClientProvider>

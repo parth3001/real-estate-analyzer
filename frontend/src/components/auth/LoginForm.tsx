@@ -5,6 +5,7 @@ import type { LoginCredentials } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
 import { analytics } from '../../utils/analytics';
+import { claimAnonymousChatSessionIfAny } from '../../services/chatApi';
 import { ReconsentModal } from './ReconsentModal';
 
 interface LoginFormProps {
@@ -31,7 +32,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
   // navigating to /app.
   const [reconsentVersion, setReconsentVersion] = useState<string | null>(null);
 
-  const proceedAfterLogin = (): void => {
+  const proceedAfterLogin = async (): Promise<void> => {
+    // Task #113 (2026-07-19): reassign any in-flight anonymous chat
+    // session (ghost user → this real user) BEFORE navigation, so the
+    // deal + full ConversationEvent stream + auto-materialized Deal
+    // row are all visible on the destination page on first fetch.
+    // Idempotent; no-op if this browser never had an anon chat.
+    await claimAnonymousChatSessionIfAny();
     if (onSuccess) {
       onSuccess();
     } else {
@@ -57,7 +64,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         return; // modal will navigate on accept
       }
 
-      proceedAfterLogin();
+      await proceedAfterLogin();
     } catch (error) {
       console.error('Login failed:', error);
 
@@ -86,7 +93,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         return;
       }
 
-      proceedAfterLogin();
+      await proceedAfterLogin();
     } catch (error) {
       console.error('Demo login failed:', error);
 

@@ -247,21 +247,20 @@ export const AddDealModal: React.FC<AddDealModalProps> = ({
                                 Cap Rate: {formatPercent(property.analysis.keyMetrics.capRate)}
                               </Typography>
                             )}
-                            {/* Day 11h Stage 2 (2026-05-19): switched read
-                                from stale `analysis.investmentDecision` to
-                                canonical top-level `investmentDecision`.
-                                NOTE: This chip displays BUY/NEGOTIATE verdict
-                                language which violates the locked-in policy
-                                (no verdict in public copy — liability risk).
-                                Tracked as separate cleanup; not removing here
-                                to keep Stage 2 scoped to the data-path fix. */}
-                            {property.investmentDecision?.verdict && (
+                            {/* Task #123 (2026-07-26): verdict chip
+                                (BUY/NEGOTIATE) replaced with score chip
+                                per public-copy policy — score number +
+                                color communicates signal without directive
+                                framing. Bands per CLAUDE.md: 80+ green ·
+                                65-79 blue · 50-64 orange · <50 red. */}
+                            {typeof property.investmentDecision?.dealQuality === 'number' && (
                               <Chip
-                                label={property.investmentDecision.verdict}
+                                label={`${property.investmentDecision.dealQuality}/100`}
                                 size="small"
                                 color={
-                                  property.investmentDecision.verdict === 'BUY' ? 'success' :
-                                  property.investmentDecision.verdict === 'NEGOTIATE' ? 'warning' : 'default'
+                                  property.investmentDecision.dealQuality >= 80 ? 'success' :
+                                  property.investmentDecision.dealQuality >= 65 ? 'info' :
+                                  property.investmentDecision.dealQuality >= 50 ? 'warning' : 'error'
                                 }
                                 sx={{ fontSize: '0.65rem', height: 18 }}
                               />

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth, useAuthValidation } from '../../contexts/AuthContext';
-import { useAffiliate } from '../../contexts/AffiliateContext';
 import type { RegisterData, AuthFormErrors } from '../../types/auth';
 import analyzrLogo from '../../assets/analyzr-logo.png';
 import { useResponsive } from '../../hooks/useResponsive';
 import { analytics } from '../../utils/analytics';
+import { claimAnonymousChatSessionIfAny } from '../../services/chatApi';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -20,7 +20,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const { register, isLoading, error } = useAuth();
   const { validateRegisterForm } = useAuthValidation();
   const { isMobile, isTablet } = useResponsive();
-  const { affiliateCode } = useAffiliate();
   const [searchParams] = useSearchParams();
   const hasTrackedSignupStart = useRef(false);
 
@@ -57,7 +56,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   // Track signup started on first field change
   const trackSignupStart = () => {
     if (!hasTrackedSignupStart.current) {
-      analytics.trackSignupStarted(affiliateCode ? 'affiliate' : 'direct');
+      analytics.trackSignupStarted('direct');
       hasTrackedSignupStart.current = true;
     }
   };
@@ -89,16 +88,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
 
     try {
-      // Include affiliate code if user came from partner link
-      const registrationData = {
-        ...formData,
-        affiliateCode: affiliateCode || undefined
-      };
-
-      await register(registrationData);
+      await register(formData);
 
       // Track successful signup
-      analytics.trackSignupCompleted(affiliateCode ? 'affiliate' : 'direct');
+      analytics.trackSignupCompleted('direct');
+
+      // Task #113 (2026-07-19): reassign any in-flight anonymous chat
+      // session (ghost user → this real user) BEFORE navigation, so the
+      // deal + full ConversationEvent stream + auto-materialized Deal
+      // row are all visible on the destination page on first fetch.
+      // Idempotent; no-op if this browser never had an anon chat.
+      await claimAnonymousChatSessionIfAny();
 
       if (onSuccess) {
         onSuccess();

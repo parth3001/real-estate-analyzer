@@ -1,746 +1,476 @@
 /**
- * Help & Documentation Page
+ * HelpPage — v2.0 rewrite (Task #128, 2026-07-26)
  *
- * UX Designer Approach (Apple-inspired):
- * - Simple, scannable layout with visual hierarchy
- * - Progressive disclosure - show basics first, details on demand
- * - Clear categorization by user journey
- * - Visual icons for quick scanning
- * - Searchable content (future enhancement)
+ * The v1.0 page taught the Property Wizard as the primary flow. In v2.0
+ * the wizard is retired from user-facing surfaces — analysis happens in
+ * chat. This rewrite is organized around the chat flow, in the voice of
+ * a helpful peer investor. Structure:
  *
- * Content organized by:
- * 1. Getting Started (first-time users)
- * 2. Core Features (most-used features)
- * 3. Advanced Features (power users)
- * 4. FAQs (common questions)
+ *   1. How to describe a deal
+ *   2. What to ask the AI
+ *   3. What the score means
+ *   4. Paying for a deal
+ *   5. Refunds & billing
+ *   6. FAQ (accordion)
+ *
+ * Kept scannable per Apple HIG — short paragraphs, no heavy chrome, no
+ * screenshots (the product moves too fast for screenshots to age well).
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
   Typography,
-  Card,
-  CardContent,
+  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Grid,
-  Chip,
-  Alert,
-  Link
+  Button,
+  Divider,
+  Stack,
 } from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Home as HomeIcon,
-  Apartment as ApartmentIcon,
-  School as SchoolIcon,
-  Lightbulb as LightbulbIcon,
-  Assessment as AssessmentIcon,
-  Business as BusinessIcon,
-  Help as HelpIcon
-} from '@mui/icons-material';
-import { appleColors } from '../theme/appleDesignSystem';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import ReplayOutlinedIcon from '@mui/icons-material/ReplayOutlined';
+
+const SECTION_ID = {
+  describe: 'how-to-describe-a-deal',
+  ask: 'what-to-ask',
+  score: 'what-the-score-means',
+  pay: 'paying-for-a-deal',
+  refunds: 'refunds-billing',
+} as const;
 
 const HelpPage: React.FC = () => {
-  const [expandedCategory, setExpandedCategory] = useState<string>('getting-started');
+  const navigate = useNavigate();
+  const [expandedFaq, setExpandedFaq] = useState<string | false>(false);
 
-  const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedCategory(isExpanded ? panel : '');
+  const openChat = (): void => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('reanalyzr.chat.sessionId');
+    }
+    navigate('/app');
+  };
+
+  const jumpTo = (id: string): void => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Hero Section */}
-      <Box sx={{ mb: 6, textAlign: 'center' }}>
-        <Typography variant="h3" fontWeight={700} gutterBottom>
-          Help & Documentation
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
+      {/* Hero */}
+      <Box sx={{ mb: 5 }}>
+        <Typography
+          component="h1"
+          sx={{
+            fontSize: { xs: '2rem', md: '2.5rem' },
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            mb: 1.5,
+          }}
+        >
+          Help
         </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-          Everything you need to analyze real estate investments like a professional
+        <Typography sx={{ fontSize: 17, color: 'text.secondary', maxWidth: 620 }}>
+          REanalyzr is a chat-first real estate underwriter. Describe a deal
+          in your own words — an address, a listing, or the numbers — and the
+          AI runs a full analysis and answers whatever you ask next.
         </Typography>
       </Box>
 
-      {/* Quick Links */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{
-            cursor: 'pointer',
-            '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-            transition: 'all 0.2s',
-            borderRadius: '16px'
-          }}
-          onClick={() => setExpandedCategory('getting-started')}
+      {/* Quick jump */}
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        flexWrap="wrap"
+        sx={{ mb: 5 }}
+      >
+        {[
+          { id: SECTION_ID.describe, label: 'Describe a deal' },
+          { id: SECTION_ID.ask, label: 'What to ask' },
+          { id: SECTION_ID.score, label: 'The score' },
+          { id: SECTION_ID.pay, label: 'Paying' },
+          { id: SECTION_ID.refunds, label: 'Refunds' },
+        ].map((link) => (
+          <Button
+            key={link.id}
+            size="small"
+            onClick={() => jumpTo(link.id)}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
           >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <SchoolIcon sx={{ fontSize: 40, color: appleColors.primary[500], mb: 1 }} />
-              <Typography variant="h6" fontWeight={600}>Getting Started</Typography>
-              <Typography variant="body2" color="text.secondary">
-                First time? Start here
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{
-            cursor: 'pointer',
-            '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-            transition: 'all 0.2s',
-            borderRadius: '16px'
-          }}
-          onClick={() => setExpandedCategory('sfr-analysis')}
-          >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <HomeIcon sx={{ fontSize: 40, color: appleColors.green[500], mb: 1 }} />
-              <Typography variant="h6" fontWeight={600}>SFR Analysis</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Single-family properties
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{
-            cursor: 'pointer',
-            '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-            transition: 'all 0.2s',
-            borderRadius: '16px'
-          }}
-          onClick={() => setExpandedCategory('mf-analysis')}
-          >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <ApartmentIcon sx={{ fontSize: 40, color: appleColors.purple[500], mb: 1 }} />
-              <Typography variant="h6" fontWeight={600}>
-                Multi-Family
-                <Chip label="New" size="small" color="primary" sx={{ ml: 1, position: 'relative', top: -2 }} />
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Apartments & complexes
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{
-            cursor: 'pointer',
-            '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-            transition: 'all 0.2s',
-            borderRadius: '16px'
-          }}
-          onClick={() => setExpandedCategory('tips')}
-          >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <LightbulbIcon sx={{ fontSize: 40, color: appleColors.orange[500], mb: 1 }} />
-              <Typography variant="h6" fontWeight={600}>Tips & Tricks</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Pro investor secrets
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            {link.label}
+          </Button>
+        ))}
+      </Stack>
 
-      {/* Main Content - Accordion Style */}
-      <Box sx={{ mb: 4 }}>
-        {/* Getting Started */}
-        <Accordion
-          expanded={expandedCategory === 'getting-started'}
-          onChange={handleAccordionChange('getting-started')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <SchoolIcon sx={{ color: appleColors.primary[500] }} />
-              <Typography variant="h6" fontWeight={600}>Getting Started</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Welcome to Analyzr!
-              </Typography>
-              <Typography paragraph color="text.secondary">
-                Analyzr transforms complex real estate analysis into simple, professional insights.
-                Here's how to get started:
-              </Typography>
-
-              <Box component="ol" sx={{ pl: 2 }}>
-                <Box component="li" sx={{ mb: 2 }}>
-                  <Typography fontWeight={600}>Choose Your Property Type</Typography>
-                  <Typography color="text.secondary">
-                    • <strong>Single-Family Rental (SFR)</strong> - Houses, townhomes, condos
-                    <br />
-                    • <strong>Multi-Family (MF)</strong> - Duplexes, apartments, complexes (2-32 units)
-                  </Typography>
-                </Box>
-
-                <Box component="li" sx={{ mb: 2 }}>
-                  <Typography fontWeight={600}>Use the Property Wizard (Recommended)</Typography>
-                  <Typography color="text.secondary">
-                    Our guided wizard walks you through 4 simple steps:
-                    <br />
-                    1. Address (auto-populates data from public records)
-                    <br />
-                    2. Financials (purchase price, loan details)
-                    <br />
-                    3. Rental Info (current rents, market estimates)
-                    <br />
-                    4. Assumptions (growth rates, hold period)
-                  </Typography>
-                </Box>
-
-                <Box component="li" sx={{ mb: 2 }}>
-                  <Typography fontWeight={600}>Review Your Analysis</Typography>
-                  <Typography color="text.secondary">
-                    Get instant insights across multiple tabs:
-                    <br />
-                    • Underwriting Summary (Deal Quality Score 0–100 with analytical label)
-                    <br />
-                    • Financial Details (monthly cash flow breakdown)
-                    <br />
-                    • Long-term Projections (10-year forecasts)
-                    <br />
-                    • Tax Intelligence (hold period optimization)
-                  </Typography>
-                </Box>
-
-                <Box component="li" sx={{ mb: 2 }}>
-                  <Typography fontWeight={600}>Save & Compare</Typography>
-                  <Typography color="text.secondary">
-                    • Save properties for later review
-                    <br />
-                    • Create scenarios with different assumptions
-                    <br />
-                    • Build your portfolio over time
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Pro Tip:</strong> Start with the Property Wizard. It auto-fills market data and guides you step-by-step.
-                  Advanced users can switch to Manual Form for full control.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* SFR Analysis */}
-        <Accordion
-          expanded={expandedCategory === 'sfr-analysis'}
-          onChange={handleAccordionChange('sfr-analysis')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <HomeIcon sx={{ color: appleColors.green[500] }} />
-              <Typography variant="h6" fontWeight={600}>Single-Family Rental (SFR) Analysis</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Analyze Houses, Townhomes & Condos
-              </Typography>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Key Features:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li><Typography><strong>Underwriting Engine:</strong> Deal Quality Score (0–100) with contextual analytical labels — above / meets / requires optimization / below professional standards</Typography></li>
-                <li><Typography><strong>Financial Details:</strong> Complete monthly cash flow breakdown including mortgage, taxes, insurance, and maintenance</Typography></li>
-                <li><Typography><strong>Long-term Analysis:</strong> 10-year projections showing total return, equity buildup, and appreciation</Typography></li>
-                <li><Typography><strong>Tax Intelligence:</strong> Hold period optimization and tax impact calculations</Typography></li>
-                <li><Typography><strong>Interactive Analysis:</strong> Adjust assumptions in real-time to see how they affect returns</Typography></li>
-                <li><Typography><strong>Deal Optimizer:</strong> Find the maximum purchase price that still meets your goals</Typography></li>
-                <li><Typography><strong>Scenario Manager:</strong> Compare multiple scenarios side-by-side</Typography></li>
-              </Box>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Understanding Your Results:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li>
-                  <Typography><strong>Property Quality Score (0-100):</strong> Overall investment quality combining cash flow, appreciation, and risk factors</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Monthly Cash Flow:</strong> Net profit/loss after all expenses including vacancy reserves</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Cap Rate:</strong> Annual return based on net operating income (NOI) divided by purchase price</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Cash-on-Cash Return:</strong> Annual cash flow divided by your initial investment (down payment + closing costs)</Typography>
-                </li>
-                <li>
-                  <Typography><strong>IRR (Internal Rate of Return):</strong> Annualized return including cash flow, appreciation, and tax benefits over the hold period</Typography>
-                </li>
-              </Box>
-
-              <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Best Practice:</strong> Look for properties with positive monthly cash flow AND strong long-term appreciation potential.
-                  A good rule of thumb: 8%+ Cash-on-Cash return and 12%+ IRR.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Multi-Family Analysis */}
-        <Accordion
-          expanded={expandedCategory === 'mf-analysis'}
-          onChange={handleAccordionChange('mf-analysis')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <ApartmentIcon sx={{ color: appleColors.purple[500] }} />
-              <Typography variant="h6" fontWeight={600}>
-                Multi-Family Analysis
-                <Chip label="New in v4.0" size="small" color="primary" sx={{ ml: 1 }} />
-              </Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Analyze Duplexes, Apartments & Complexes (2-32 Units)
-              </Typography>
-
-              <Typography paragraph color="text.secondary">
-                Multi-family properties offer unique advantages: economies of scale, professional financing,
-                and the ability to force appreciation through operational improvements.
-              </Typography>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                MF-Specific Features:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li>
-                  <Typography><strong>Unit Mix Analysis:</strong> Track performance by unit type (1BR, 2BR, 3BR) with individual rent rolls</Typography>
-                </li>
-                <li>
-                  <Typography><strong>NOI Calculation:</strong> Institutional-grade Net Operating Income calculations following Fannie Mae/Freddie Mac standards</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Advanced Metrics:</strong> DSCR, Debt Yield, Break-Even Occupancy, GRM, and per-unit analytics</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Common Area Utilities:</strong> Separate tracking for shared expenses (water, trash, landscaping)</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Commercial Financing:</strong> Support for balloon payments and commercial loan structures</Typography>
-                </li>
-              </Box>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Key Multi-Family Metrics:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li>
-                  <Typography><strong>DSCR (Debt Service Coverage Ratio):</strong> NOI divided by annual debt service. Lenders typically require 1.20x-1.25x minimum</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Cap Rate:</strong> For MF, typical ranges are 4-6% (Class A), 5-7% (Class B), 7-10% (Class C)</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Break-Even Occupancy:</strong> Minimum occupancy needed to cover all expenses. Target: 60-75%</Typography>
-                </li>
-                <li>
-                  <Typography><strong>GRM (Gross Rent Multiplier):</strong> Purchase price divided by annual gross rents. Target: 4-7 for residential MF</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Operating Expense Ratio:</strong> Operating expenses as % of gross income. Typical: 35-45%</Typography>
-                </li>
-              </Box>
-
-              <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>New Investor Tip:</strong> Start with 2-4 unit properties. They qualify for residential financing (easier to get)
-                  but give you experience with multi-family operations. Properties with 5+ units require commercial loans.
-                </Typography>
-              </Alert>
-
-              <Alert severity="warning" sx={{ mt: 2, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Coming Soon:</strong> Interactive Analysis, Deal Optimizer, and Scenario Manager are being adapted for
-                  multi-family properties and will be available in a future update.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Underwriting Engine */}
-        <Accordion
-          expanded={expandedCategory === 'decision-engine'}
-          onChange={handleAccordionChange('decision-engine')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <AssessmentIcon sx={{ color: appleColors.blue[500] }} />
-              <Typography variant="h6" fontWeight={600}>Underwriting Engine</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                How the Deal Quality Score is Calculated
-              </Typography>
-
-              <Typography paragraph color="text.secondary">
-                Our Underwriting Engine analyzes 50+ data points and produces a Deal Quality Score
-                (0–100) with a contextual analytical label. It does not tell you whether to buy or
-                pass — that decision is yours.
-              </Typography>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Scoring Methodology (0-100 Scale):
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li>
-                  <Typography><strong>Cash Flow Quality (30 points):</strong> Monthly cash flow relative to investment and market standards</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Cap Rate Performance (20 points):</strong> Comparing property cap rate to market benchmarks</Typography>
-                </li>
-                <li>
-                  <Typography><strong>IRR Strength (20 points):</strong> Long-term return potential over your hold period</Typography>
-                </li>
-                <li>
-                  <Typography><strong>Cash-on-Cash Return (15 points):</strong> Immediate return on your invested capital</Typography>
-                </li>
-                <li>
-                  <Typography><strong>DSCR Safety (15 points):</strong> Debt coverage and financial stability</Typography>
-                </li>
-              </Box>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Score Bands & Labels:
-              </Typography>
-              <Box sx={{ pl: 2 }}>
-                <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.green[50] }}>
-                  <Typography fontWeight={600} color={appleColors.green[700]}>Above professional standards (80–100)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Strong fundamentals across the metrics that matter to institutional underwriters.
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.blue[50] }}>
-                  <Typography fontWeight={600} color={appleColors.blue[700]}>Meets professional standards (65–79)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Solid fundamentals; review the walk-away price for negotiation headroom.
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 2, p: 2, borderRadius: '12px', backgroundColor: appleColors.orange[50] }}>
-                  <Typography fontWeight={600} color={appleColors.orange[700]}>Requires optimization (50–64)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Marginal across one or more metrics. Significant improvements or a price reduction would lift the score.
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: appleColors.red[50] }}>
-                  <Typography fontWeight={600} color={appleColors.red[700]}>Below professional standards (0–49)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Weak fundamentals. The underwriting flags substantial risks.
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Conservative by Design:</strong> Our scoring is intentionally conservative to protect you from
-                  overpaying. A "Meets professional standards" score doesn't mean the property is the right buy for you —
-                  the decision is always yours.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Portfolio & Pipeline */}
-        <Accordion
-          expanded={expandedCategory === 'portfolio'}
-          onChange={handleAccordionChange('portfolio')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BusinessIcon sx={{ color: appleColors.indigo[500] }} />
-              <Typography variant="h6" fontWeight={600}>Portfolio & Pipeline Tracking</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Organize & Track Your Investments
-              </Typography>
-
-              <Typography paragraph color="text.secondary">
-                Save properties and track them through your investment journey from research to ownership.
-              </Typography>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Saved Deals:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li><Typography>Save any property analysis for future reference</Typography></li>
-                <li><Typography>Add notes and tags to organize your research</Typography></li>
-                <li><Typography>Compare multiple properties side-by-side</Typography></li>
-                <li><Typography>Track changes in property details and market conditions</Typography></li>
-              </Box>
-
-              <Typography variant="body1" fontWeight={600} sx={{ mt: 3, mb: 1 }}>
-                Investment Pipeline:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2 }}>
-                <li><Typography><strong>Researching:</strong> Initial analysis phase</Typography></li>
-                <li><Typography><strong>Active Pursuit:</strong> Making offers or negotiating</Typography></li>
-                <li><Typography><strong>Under Contract:</strong> Due diligence and closing process</Typography></li>
-                <li><Typography><strong>Owned:</strong> Properties in your portfolio</Typography></li>
-                <li><Typography><strong>Passed:</strong> Properties you decided not to pursue</Typography></li>
-              </Box>
-
-              <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Coming Soon:</strong> Portfolio Intelligence will provide aggregate analytics across all your properties,
-                  including total cash flow, equity, diversification analysis, and goal tracking.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* FAQs */}
-        <Accordion
-          expanded={expandedCategory === 'faqs'}
-          onChange={handleAccordionChange('faqs')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <HelpIcon sx={{ color: appleColors.gray[500] }} />
-              <Typography variant="h6" fontWeight={600}>Frequently Asked Questions</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: How accurate are the auto-populated property details?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: We use RentCast API which aggregates data from public records and MLS listings. Accuracy is typically
-                  85-95%, but we recommend verifying critical details like property taxes and rent estimates with local sources.
-                  You can always override any auto-populated field.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: What's the difference between the Property Wizard and Manual Form?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: The Property Wizard guides you through 4 simple steps and auto-fills data from public records to save you time.
-                  The Manual Form gives you full control over every field - ideal for experienced investors or properties with
-                  unique characteristics.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: How is multi-family analysis different from single-family?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Multi-family analysis includes unit mix tracking, DSCR calculations, break-even occupancy, and other
-                  institutional metrics that commercial lenders require. MF properties are valued based on income (NOI),
-                  while SFR properties are primarily valued by comparable sales.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: Can I trust the Underwriting Engine's score?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Our engine uses institutional-grade calculations and is intentionally conservative to protect you from
-                  overpaying. It's designed to inform your decision — never to make it for you. Always consider local
-                  market conditions, your personal goals, and conduct proper due diligence with a licensed professional.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: What assumptions should I use for growth rates?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Conservative investors use 2-3% for both appreciation and rent growth (matching inflation).
-                  Research your specific market - some areas see 5-7% appreciation while others may be flat.
-                  We auto-populate market-based estimates, but you should verify with local data.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: How do I interpret the Tax Intelligence tab?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Tax Intelligence shows the impact of hold period on your after-tax returns. Properties held longer than
-                  1 year qualify for long-term capital gains rates (typically 15-20%) vs short-term rates (ordinary income, up to 37%).
-                  Always consult a CPA for personalized tax advice.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: Can I analyze properties outside the United States?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Currently, our platform is optimized for U.S. properties only. Our data sources (RentCast, FRED, Census)
-                  and tax calculations are U.S.-specific. International support may be added in future updates.
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  Q: How often is market data updated?
-                </Typography>
-                <Typography color="text.secondary">
-                  A: Rent estimates and property data are refreshed monthly. Economic indicators (mortgage rates, inflation)
-                  are updated weekly. You can see the data freshness timestamp in the property wizard.
-                </Typography>
-              </Box>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Tips & Best Practices */}
-        <Accordion
-          expanded={expandedCategory === 'tips'}
-          onChange={handleAccordionChange('tips')}
-          sx={{ borderRadius: '16px !important', mb: 2, '&:before': { display: 'none' } }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <LightbulbIcon sx={{ color: appleColors.orange[500] }} />
-              <Typography variant="h6" fontWeight={600}>Pro Tips & Best Practices</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 5 }}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Lessons from Experienced Investors
-              </Typography>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  1. Always Verify Property Taxes
-                </Typography>
-                <Typography color="text.secondary">
-                  Property tax records can be 1-2 years outdated. Call the county assessor's office for the most current
-                  annual tax amount, especially for recently sold properties which may be reassessed.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  2. Budget Higher for Maintenance Than You Think
-                </Typography>
-                <Typography color="text.secondary">
-                  The "$100/month" rule often underestimates reality. For properties built before 1990, budget $150-200/month.
-                  For multi-family, use $100-150 per unit per month. Major systems (roof, HVAC, water heater) fail unexpectedly.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  3. Don't Forget Capex (Capital Expenditures)
-                </Typography>
-                <Typography color="text.secondary">
-                  Set aside 5-10% of rent for major replacements (roof, HVAC, appliances). A $15,000 roof replacement
-                  can wipe out years of cash flow if you're not prepared.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  4. Vacancy Rate Is Not Optional
-                </Typography>
-                <Typography color="text.secondary">
-                  Even in hot markets, budget 5-8% for vacancy. Turnover costs (cleaning, repairs, advertising) add up.
-                  Properties are rarely occupied 100% of the time.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  5. Run Multiple Scenarios
-                </Typography>
-                <Typography color="text.secondary">
-                  Use the Scenario Manager to model best case, worst case, and realistic case. What if rents don't increase?
-                  What if you have a 3-month vacancy? What if interest rates rise at refinance?
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  6. Location {'>'} Everything Else
-                </Typography>
-                <Typography color="text.secondary">
-                  A mediocre house in a great location will outperform a great house in a mediocre location every time.
-                  Focus on job growth, population growth, and school quality in your target markets.
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  7. Understand Your Exit Strategy Before You Buy
-                </Typography>
-                <Typography color="text.secondary">
-                  Are you holding for cash flow or appreciation? Planning to flip or hold long-term? Your exit strategy
-                  should drive your purchase criteria. The Tax Intelligence tab can help optimize hold periods.
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body1" fontWeight={600} gutterBottom>
-                  8. Build a Local Team
-                </Typography>
-                <Typography color="text.secondary">
-                  Success in real estate requires: a great real estate agent, a responsive lender, a reliable property manager
-                  (if not self-managing), a good contractor, and a CPA familiar with rental property taxation. Build these
-                  relationships before you need them.
-                </Typography>
-              </Box>
-
-              <Alert severity="success" sx={{ mt: 3, borderRadius: '12px' }}>
-                <Typography variant="body2">
-                  <strong>Golden Rule:</strong> Make money when you buy, not when you sell. The purchase price is the single
-                  most important factor in your returns. Don't fall in love with a property - fall in love with the numbers.
-                </Typography>
-              </Alert>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      </Box>
-
-      {/* Footer */}
-      <Box sx={{ mt: 6, p: 3, textAlign: 'center', backgroundColor: appleColors.gray[50], borderRadius: '16px' }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          Still Have Questions?
+      {/* Section: describe */}
+      <Section
+        id={SECTION_ID.describe}
+        icon={<ChatBubbleOutlineIcon />}
+        title="How to describe a deal"
+      >
+        <Typography paragraph>
+          Three ways to start — pick whichever is fastest for what's in front
+          of you:
         </Typography>
-        <Typography color="text.secondary" paragraph>
-          We're here to help you succeed in your real estate investing journey.
+        <List>
+          <ListRow>
+            <strong>Paste a listing.</strong> Zillow, Redfin, MLS —
+            copy the URL or the property card into chat. The AI pulls the
+            address, price, beds/baths, and any rent estimate it can find.
+          </ListRow>
+          <ListRow>
+            <strong>Type an address.</strong> Something like
+            <em> "1837 Walnut Way, Anna TX 75409"</em>. The AI looks up
+            comps, market data, and asks for the numbers it still needs
+            (price, rent estimate, financing).
+          </ListRow>
+          <ListRow>
+            <strong>Describe the numbers.</strong> If you already have a
+            deal in mind, spell it out — purchase price, rent, down
+            payment, interest rate, and the AI takes it from there.
+          </ListRow>
+        </List>
+        <Callout>
+          The more specific you are, the fewer clarifying questions the AI
+          asks. But if you leave a field out, it'll fill in a reasonable
+          default and tell you what it assumed.
+        </Callout>
+      </Section>
+
+      {/* Section: ask */}
+      <Section
+        id={SECTION_ID.ask}
+        icon={<QuestionAnswerOutlinedIcon />}
+        title="What to ask the AI"
+      >
+        <Typography paragraph>
+          After a score comes back, keep going — the AI has the deal in
+          context and can pivot to anything you want to explore.
         </Typography>
-        <Link href="mailto:support@reanalyzr.com" underline="none">
-          <Typography color="primary" fontWeight={600}>
-            Contact Support
-          </Typography>
-        </Link>
+        <List>
+          <ListRow>
+            <strong>Stress test.</strong> "What if interest rates go to
+            8%?" "What if rent drops to $2,200?" The AI re-runs the deal
+            with your change and shows the delta.
+          </ListRow>
+          <ListRow>
+            <strong>Compare to your portfolio.</strong> "How does this
+            fit alongside my Anna property?" Portfolio-aware answers if
+            you've saved deals before.
+          </ListRow>
+          <ListRow>
+            <strong>Walk-away price.</strong> "What's the walk-away price?"
+            The maximum you can pay and still hit a target return.
+          </ListRow>
+          <ListRow>
+            <strong>Explain a metric.</strong> "Why is DSCR so low?"
+            "Break down the 10-year IRR assumptions." The AI shows its work.
+          </ListRow>
+          <ListRow>
+            <strong>Second opinions.</strong> "Give me the skeptical CPA
+            take" or "run the optimistic-flipper view." Multiple personas
+            evaluate the same deal.
+          </ListRow>
+        </List>
+      </Section>
+
+      {/* Section: score */}
+      <Section
+        id={SECTION_ID.score}
+        icon={<AssessmentOutlinedIcon />}
+        title="What the score means"
+      >
+        <Typography paragraph>
+          Every deal gets a <strong>0–100 Deal Quality Score</strong> with a
+          contextual label:
+        </Typography>
+        <List>
+          <ListRow>
+            <ScoreDot color="#16A34A" /> <strong>80–100.</strong> Above
+            professional standards.
+          </ListRow>
+          <ListRow>
+            <ScoreDot color="#2563EB" /> <strong>65–79.</strong> Meets
+            professional standards.
+          </ListRow>
+          <ListRow>
+            <ScoreDot color="#F59E0B" /> <strong>50–64.</strong> Requires
+            optimization to work.
+          </ListRow>
+          <ListRow>
+            <ScoreDot color="#DC2626" /> <strong>0–49.</strong> Below
+            professional standards.
+          </ListRow>
+        </List>
+        <Typography paragraph sx={{ mt: 2 }}>
+          The score is a weighted composite of cash flow, cap rate, IRR,
+          market strength, exit strategy, property risk, and debt
+          structure — each factor is visible and traceable to its inputs.
+          Ask "why is the score X?" and the AI breaks down which factors
+          are pulling it up or down.
+        </Typography>
+        <Callout>
+          The score is analytical, not directive. A 38/100 doesn't mean
+          "don't buy" — it means the numbers as given fall below what
+          institutional underwriters would accept. Your call whether to
+          adjust the deal, walk, or accept the risk.
+        </Callout>
+      </Section>
+
+      {/* Section: pay */}
+      <Section
+        id={SECTION_ID.pay}
+        icon={<PaidOutlinedIcon />}
+        title="Paying for a deal"
+      >
+        <Typography paragraph>
+          Signup is free. Your <strong>first full analysis is included</strong> —
+          the deal you analyze right after creating an account unlocks its
+          full workspace at no cost.
+        </Typography>
+        <Typography paragraph>
+          After that, each new property is <strong>$4.99, one-time</strong> —
+          you get 180 days of unlimited chat on that deal, the full workspace
+          (walk-away price, 10-year projection, scenario comparisons,
+          adversarial critique, PDF export), and re-editing while the window
+          is open.
+        </Typography>
+        <List>
+          <ListRow>
+            <strong>No subscription.</strong> You only pay when you go deep.
+          </ListRow>
+          <ListRow>
+            <strong>No auto-renew.</strong> A $4.99 charge is one deal,
+            180 days. It doesn't recur.
+          </ListRow>
+          <ListRow>
+            <strong>No credit card required</strong> to sign up. Card only
+            enters when you unlock your second deal.
+          </ListRow>
+        </List>
+      </Section>
+
+      {/* Section: refunds */}
+      <Section
+        id={SECTION_ID.refunds}
+        icon={<ReplayOutlinedIcon />}
+        title="Refunds & billing"
+      >
+        <Typography paragraph>
+          If a deal analysis is broken — the numbers don't reconcile, the
+          agent misinterprets the property, the workspace won't load —
+          email <Link href="mailto:support@reanalyzr.com">support@reanalyzr.com</Link>{' '}
+          and we'll refund the $4.99 within one business day. No forms,
+          no phone tree.
+        </Typography>
+        <Typography paragraph>
+          Payment is handled by Stripe. Your card details never touch our
+          servers. Receipts land in your email at the address you signed
+          up with.
+        </Typography>
+      </Section>
+
+      <Divider sx={{ my: 6 }} />
+
+      {/* FAQ */}
+      <Typography
+        component="h2"
+        sx={{
+          fontSize: { xs: '1.5rem', md: '1.75rem' },
+          fontWeight: 700,
+          letterSpacing: '-0.01em',
+          mb: 3,
+        }}
+      >
+        Frequently asked
+      </Typography>
+      {FAQ.map((item) => (
+        <Accordion
+          key={item.q}
+          expanded={expandedFaq === item.q}
+          onChange={(_, expanded) => setExpandedFaq(expanded ? item.q : false)}
+          elevation={0}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: '8px !important',
+            mb: 1.5,
+            '&:before': { display: 'none' },
+          }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography sx={{ fontWeight: 600 }}>{item.q}</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography sx={{ color: 'text.secondary' }}>{item.a}</Typography>
+          </AccordionDetails>
+        </Accordion>
+      ))}
+
+      {/* CTA */}
+      <Box
+        sx={{
+          mt: 6,
+          p: 4,
+          bgcolor: 'primary.50',
+          borderRadius: 3,
+          textAlign: 'center',
+        }}
+      >
+        <Typography sx={{ fontSize: 18, fontWeight: 600, mb: 1 }}>
+          Ready to run a deal?
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', mb: 3 }}>
+          Paste a listing or type an address — the AI takes it from there.
+        </Typography>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={openChat}
+          sx={{ textTransform: 'none', px: 4, borderRadius: 2 }}
+        >
+          Open chat
+        </Button>
       </Box>
     </Container>
   );
 };
+
+// ===== Layout helpers =====
+
+const Section: React.FC<{
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}> = ({ id, icon, title, children }) => (
+  <Paper
+    id={id}
+    elevation={0}
+    sx={{
+      p: { xs: 3, md: 4 },
+      mb: 3,
+      border: '1px solid',
+      borderColor: 'divider',
+      borderRadius: 3,
+      scrollMarginTop: 24,
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+      <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
+      <Typography
+        component="h2"
+        sx={{
+          fontSize: { xs: '1.25rem', md: '1.4rem' },
+          fontWeight: 700,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {title}
+      </Typography>
+    </Box>
+    {children}
+  </Paper>
+);
+
+const List: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box component="ul" sx={{ pl: 3, m: 0, mb: 1 }}>
+    {children}
+  </Box>
+);
+
+const ListRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box component="li" sx={{ mb: 1.25, lineHeight: 1.6, color: 'text.primary' }}>
+    {children}
+  </Box>
+);
+
+const Callout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box
+    sx={{
+      mt: 2,
+      p: 2,
+      bgcolor: 'grey.50',
+      borderLeft: '3px solid',
+      borderColor: 'primary.main',
+      borderRadius: 1,
+      fontSize: 14,
+      color: 'text.secondary',
+      lineHeight: 1.6,
+    }}
+  >
+    {children}
+  </Box>
+);
+
+const ScoreDot: React.FC<{ color: string }> = ({ color }) => (
+  <Box
+    component="span"
+    sx={{
+      display: 'inline-block',
+      width: 10,
+      height: 10,
+      borderRadius: '50%',
+      bgcolor: color,
+      mr: 1,
+      verticalAlign: 'middle',
+    }}
+  />
+);
+
+// External anchor
+const Link: React.FC<{ href: string; children: React.ReactNode }> = ({
+  href,
+  children,
+}) => (
+  <a href={href} style={{ color: '#2563EB', textDecoration: 'none' }}>
+    {children}
+  </a>
+);
+
+// ===== FAQ content =====
+
+const FAQ: Array<{ q: string; a: string }> = [
+  {
+    q: 'Which property types can I analyze?',
+    a: 'Single-family rentals (buy-and-hold) and BRRRR are fully supported today. Multi-family is in progress — you can add MF properties to your portfolio for tracking, but full MF scoring lands in a later release.',
+  },
+  {
+    q: 'Do you use real market data?',
+    a: 'Yes. Mortgage rates come from FRED (Federal Reserve), rent estimates and comps from RentCast, and demographic data from the US Census. All references are visible in the analysis breakdown.',
+  },
+  {
+    q: 'What does the AI actually do vs. the calculator underneath?',
+    a: 'The underwriting math is deterministic — every calculation is done by the same engine every time. The AI handles interpretation, comparison, stress-testing, and answering follow-up questions in plain English. When you ask "why is DSCR so low?", the AI reads the actual numbers and explains them, not making things up.',
+  },
+  {
+    q: 'How is this different from Excel or a calculator app?',
+    a: 'Speed and portfolio context. A full-metric analysis takes about 30 seconds from a listing URL, and follow-up questions are conversational. If you have prior deals saved, the AI compares against them automatically.',
+  },
+  {
+    q: "What if the AI's numbers look wrong?",
+    a: 'Ask "show me the math" or "break down that number" — the AI cites the inputs and formula. If something still looks off, email support@reanalyzr.com with the property and the specific metric; we investigate and refund if there\'s a bug.',
+  },
+  {
+    q: 'Can I export the analysis?',
+    a: 'Yes. Every unlocked workspace has a PDF export with the full analysis, factor breakdown, and 10-year projection — suitable for sharing with a partner, lender, or accountant.',
+  },
+  {
+    q: 'Do you store my chat history?',
+    a: 'Yes, tied to your account. When you sign up after chatting anonymously, your prior chat and any deals you analyzed carry over automatically.',
+  },
+  {
+    q: 'What happens after the 180-day window closes?',
+    a: 'The deal stays in your Saved Properties as read-only. Re-editing the assumptions or running a fresh stress test costs another $4.99 for a new 180-day window on the same property.',
+  },
+];
 
 export default HelpPage;

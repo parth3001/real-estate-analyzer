@@ -32,7 +32,7 @@
  *     dignified, not chatty.
  */
 
-import { useEffect, useState, type ComponentType } from 'react';
+import React, { useEffect, useState, type ComponentType } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -65,6 +65,7 @@ import {
   subscribe,
   type ThreadRecord,
 } from '../../services/threadStore';
+import { listChatThreads } from '../../services/chatApi';
 import { useAuth } from '../../contexts/AuthContext';
 
 export interface AppSidebarProps {
@@ -109,13 +110,61 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  // Subscribe to threadStore changes — re-render the RECENT list when
-  // ChatOverlay upserts mid-stream.
-  const [threads, setThreads] = useState<ThreadRecord[]>(() => getThreads());
+  // Task #117 (2026-07-19): threads come from TWO sources merged:
+  //   - Local (threadStore / localStorage): optimistic write-through so
+  //     mid-turn upserts paint instantly. Also survives when server is
+  //     briefly unreachable.
+  //   - Server (/api/chat/threads): source of truth for cross-device /
+  //     cross-browser sign-in. Fetched on mount + whenever auth user
+  //     changes (login/logout/session-claim). Server rows override local
+  //     rows for the same id — server has the canonical title (post
+  //     substrate reconciliation) and canonical lastActivityAt.
+  const [localThreads, setLocalThreads] = useState<ThreadRecord[]>(() =>
+    getThreads()
+  );
   useEffect(() => {
-    const unsub = subscribe(() => setThreads(getThreads()));
+    const unsub = subscribe(() => setLocalThreads(getThreads()));
     return unsub;
   }, []);
+
+  const [serverThreads, setServerThreads] = useState<ThreadRecord[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    listChatThreads()
+      .then((rows) => {
+        if (cancelled) return;
+        setServerThreads(
+          rows.map((r) => ({
+            id: r.id,
+            title: r.title,
+            lastActivityAt: r.lastActivityAt,
+            dealQualityScore: r.dealQualityScore,
+          }))
+        );
+      })
+      .catch(() => {
+        // Non-fatal — fall back to local-only view. The user still sees
+        // whatever threadStore has; the sidebar just doesn't gain any
+        // cross-browser rows this mount.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Re-fetch when the authenticated user changes (login, logout,
+    // magic-link claim completes). user?.id string change is the
+    // reliable trigger — it flips from undefined → real id post-auth.
+  }, [user?.id]);
+
+  const threads: ThreadRecord[] = React.useMemo(() => {
+    const merged = new Map<string, ThreadRecord>();
+    for (const t of localThreads) merged.set(t.id, t);
+    for (const t of serverThreads) merged.set(t.id, { ...merged.get(t.id), ...t });
+    return Array.from(merged.values()).sort(
+      (a, b) =>
+        new Date(b.lastActivityAt).getTime() -
+        new Date(a.lastActivityAt).getTime()
+    );
+  }, [localThreads, serverThreads]);
 
   // Overflow-menu state — anchors the user-block "..." dropdown that
   // hosts orphaned legacy nav items (Profile, Help, What's New, Contact,

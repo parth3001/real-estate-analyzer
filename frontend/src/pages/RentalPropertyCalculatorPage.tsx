@@ -6,9 +6,10 @@
 
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Box, Container, Typography, Button, Link as MuiLink } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Container, Typography, Button, Link as MuiLink, Paper, Stack } from '@mui/material';
 import Grid from '@mui/system/Grid';
-import { UniversalCalculator } from '../components/Calculator';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import PublicHeader from '../components/common/PublicHeader';
 import { analytics } from '../utils/analytics';
 import { appleColors } from '../theme/appleDesignSystem';
@@ -43,10 +44,18 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
-      name: 'Do I need to create an account to use the calculator?',
+      name: 'Do I need to create an account to analyze a property?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No! Use our rental property calculator instantly without signing up. Anonymous analysis is free and unlimited. Create a free account to save deals, compare properties, and access AI insights.',
+        text: 'No — start chatting anonymously. You get a full analysis and a few follow-up questions before we ask you to sign up. Signing up is free (no credit card), and your first full analysis workspace is included.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is REanalyzr\'s chat different from typing numbers into a form?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'You describe the deal in plain English — paste a listing URL, type an address, or spell out the numbers. The AI runs the same 28-metric institutional underwrite as a form-based calculator, then answers follow-up questions conversationally: stress tests, walk-away price, portfolio comparisons.',
       },
     },
   ],
@@ -64,7 +73,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
         <title>Rental Property Investment Calculator - Free Deal Analysis | REanalyzr</title>
         <meta
           name="description"
-          content="Screen rental deals faster with less guesswork. Analyze properties with a structured workflow, Deal Quality Score, and see how each opportunity fits your investing strategy. Free calculator."
+          content="Chat-first rental property analysis. Paste a listing or type an address — the AI runs a full 28-metric underwrite in about 30 seconds, then answers stress tests and follow-ups conversationally. Free to start."
         />
         <meta
           name="keywords"
@@ -149,8 +158,14 @@ const RentalPropertyCalculatorPage: React.FC = () => {
           />
         </Box>
 
-        {/* Calculator */}
-        <UniversalCalculator />
+        {/* Task #126 (2026-07-26) — chat-first hero replaces the
+            UniversalCalculator widget. Keeps this page's SEO equity
+            (URL, meta, canonical, FAQ schema, H1s tuned to search
+            intent) but funnels the user into the actual product.
+            Anonymous chat cap + signup rules apply as everywhere. */}
+        <ChatFirstHero
+          strategyPrime="Analyze this deal as a buy-and-hold rental. Paste a listing URL or type an address to start."
+        />
 
         {/* Example Analysis CTA */}
         <Box
@@ -439,6 +454,100 @@ const RentalPropertyCalculatorPage: React.FC = () => {
         </Box>
       </Container>
     </>
+  );
+};
+
+// ===== ChatFirstHero (Task #126) =====
+// Replaces the UniversalCalculator widget on public SEO landing pages.
+// Anonymous users can start chatting immediately; the same 3-turn cap +
+// signup wall from Model #6 applies once they get a score.
+const ChatFirstHero: React.FC<{ strategyPrime: string }> = ({ strategyPrime }) => {
+  const navigate = useNavigate();
+  const openChat = (): void => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('reanalyzr.chat.sessionId');
+      // Seed the composer with a strategy-appropriate opener the user
+      // can edit before sending — Option A locked (see PR discussion).
+      sessionStorage.setItem('reanalyzr.chat.prefill', strategyPrime);
+    }
+    navigate('/app');
+  };
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 3, md: 5 },
+        border: '1px solid',
+        borderColor: appleColors.gray[200],
+        borderRadius: 3,
+        bgcolor: '#FFFFFF',
+        textAlign: 'center',
+      }}
+    >
+      <ChatBubbleOutlineIcon
+        sx={{ fontSize: 44, color: appleColors.primary[500], mb: 2 }}
+      />
+      <Typography
+        sx={{ fontSize: { xs: 22, md: 26 }, fontWeight: 700, mb: 1.5 }}
+      >
+        Describe your deal to the AI.
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: { xs: 15, md: 16 },
+          color: appleColors.gray[700],
+          maxWidth: 560,
+          mx: 'auto',
+          mb: 3.5,
+          lineHeight: 1.6,
+        }}
+      >
+        Paste a listing URL, type an address, or spell out the numbers.
+        The AI runs the full 28-metric underwrite in about 30 seconds and
+        answers whatever you ask next — stress tests, walk-away price,
+        portfolio fit.
+      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        justifyContent="center"
+      >
+        <Button
+          variant="contained"
+          size="large"
+          onClick={openChat}
+          startIcon={<ChatBubbleOutlineIcon />}
+          sx={{
+            textTransform: 'none',
+            px: 4,
+            py: 1.5,
+            borderRadius: 2,
+            fontWeight: 600,
+          }}
+        >
+          Start analyzing free
+        </Button>
+        <Button
+          variant="outlined"
+          size="large"
+          href="/sample-analysis"
+          sx={{
+            textTransform: 'none',
+            px: 4,
+            py: 1.5,
+            borderRadius: 2,
+            fontWeight: 600,
+          }}
+        >
+          See how it works
+        </Button>
+      </Stack>
+      <Typography
+        sx={{ fontSize: 13, color: appleColors.gray[500], mt: 3 }}
+      >
+        Free to start · No credit card · First full analysis included
+      </Typography>
+    </Paper>
   );
 };
 

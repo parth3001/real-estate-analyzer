@@ -43,6 +43,8 @@ import {
   type ConversationEventDocument,
 } from '../repositories/EventsRepositoryReads';
 import { ConversationEventModel } from '../models/events/ConversationEvent';
+import { DecisionEventModel } from '../models/events/DecisionEvent';
+import { DealLicenseModel } from '../models/license/DealLicense';
 import { emailService } from '../services/emailService';
 import { logger } from '../utils/logger';
 import { DealModel } from '../models/Deal';
@@ -199,6 +201,198 @@ type LicenseGuardResult =
       expiresAt: Date | null;
     };
 
+// ===== Model #6 chat cap (Task #112, 2026-07-19 — v4) =====
+//
+// "N free chat turns AFTER the FIRST score of the current property
+// in this session." Session + property scoped. Uses only existing
+// substrate (DecisionEvent + ConversationEvent + DealLicense) — no
+// new Deal fields. Runs BEFORE agent execution / SSE headers so a 402
+// response is safe to write.
+//
+// Rules (per Marketing Expert 2026-07-18):
+//   - Pre-score: no cap (address input, agent clarifying questions)
+//   - After the first score for an UNLICENSED property: 3 chat turns
+//     free (turns 1-3), warning on turn 3 (last free), wall on turn 4
+//   - After a score for a LICENSED property: no cap ever
+//   - Anonymous users: same rule, different 402 error code (auth wall)
+//
+// v4 fix (Task #114, 2026-07-19) — the v3 anchor was broken two ways:
+//
+//   (1) It required `routedTo === 'agent:deal_scoring'`. But cached
+//       recall turns (agent:qa surfaces an existing DecisionEvent
+//       without re-scoring) and stress-tests (service:stress_test)
+//       ALSO produce score cards the user sees. The strict routedTo
+//       filter missed them → anchor never found → cap never fired.
+//
+//   (2) `.sort({timestamp: -1})` picked the LATEST score-producing
+//       turn as the anchor. Every stress test wrote a new DecisionEvent
+//       → the anchor moved forward → the counter reset. A user could
+//       chain "what if" scenarios indefinitely without hitting the cap.
+//
+// v4 fix: anchor on the FIRST ConversationEvent whose relatedEventIds
+// contains a DecisionEvent for the CURRENTLY-ACTIVE canonicalAddressKey
+// (the property the most recent score-producing turn surfaced). Any
+// routedTo whose turn attaches a DecisionEvent counts as a "score
+// surface." Subsequent stress tests, recalls, second opinions are
+// chat turns — they don't reset the anchor. Switching properties
+// (Anna → McKinney) starts a new anchor for the new canonicalKey.
+
+const CHAT_TURNS_FREE_AFTER_SCORE = 3;
+
+type ChatCapV2Result =
+  | { allow: true; warning: boolean; dealId?: string; canonicalAddressKey?: string }
+  | {
+      allow: false;
+      dealId: string | undefined;
+      canonicalAddressKey: string;
+      message: string;
+    };
+
+/**
+ * Lean shape of a ConversationEvent row used for anchor resolution.
+ * Only the fields we .select() are typed — payload is deep-narrowed
+ * to the relatedEventIds we walk to DecisionEvents.
+ */
+type ConvWithRelatedIds = {
+  _id: Types.ObjectId;
+  timestamp?: Date;
+  payload?: {
+    agentResponse?: { relatedEventIds?: Types.ObjectId[] };
+  };
+};
+
+async function computeChatCapAfterLastScore(opts: {
+  sessionId: string | undefined;
+  userId: Types.ObjectId;
+}): Promise<ChatCapV2Result> {
+  if (!opts.sessionId) return { allow: true, warning: false };
+  try {
+    // 1. Pull every ConversationEvent in this session whose agent
+    //    response linked to at least one substrate event. This catches
+    //    all score-surface paths (agent:deal_scoring, service:stress_test,
+    //    agent:qa cached-recall) without gating on routedTo. Sorted
+    //    ascending — we need the FIRST occurrence per property.
+    const convs = (await ConversationEventModel.find({
+      userId: opts.userId,
+      'payload.sessionId': opts.sessionId,
+      'payload.agentResponse.relatedEventIds.0': { $exists: true },
+    })
+      .select('timestamp payload.agentResponse.relatedEventIds')
+      .sort({ timestamp: 1 })
+      .lean()) as unknown as ConvWithRelatedIds[];
+
+    if (convs.length === 0) return { allow: true, warning: false };
+
+    // 2. Resolve every referenced substrate id to a DecisionEvent
+    //    (relatedEventIds may include non-decision events; only decision
+    //    events carry canonicalAddressKey). One query for all of them.
+    const allRelatedIds = convs.flatMap(
+      (c) => c.payload?.agentResponse?.relatedEventIds ?? []
+    );
+    if (allRelatedIds.length === 0) return { allow: true, warning: false };
+
+    const decisions = (await DecisionEventModel.find({
+      _id: { $in: allRelatedIds },
+    })
+      .select('_id payload.canonicalAddressKey')
+      .lean()) as unknown as Array<{
+      _id: Types.ObjectId;
+      payload?: { canonicalAddressKey?: string };
+    }>;
+
+    const decisionKeyById = new Map<string, string>();
+    for (const d of decisions) {
+      const key = d.payload?.canonicalAddressKey;
+      if (key) decisionKeyById.set(String(d._id), key);
+    }
+    if (decisionKeyById.size === 0) return { allow: true, warning: false };
+
+    // 3. Annotate each conv with the canonicalAddressKey it surfaced
+    //    (if any). Convs without a decision-typed related id are dropped.
+    const scored: Array<{ conv: ConvWithRelatedIds; canonicalAddressKey: string }> = [];
+    for (const c of convs) {
+      const ids = c.payload?.agentResponse?.relatedEventIds ?? [];
+      for (const id of ids) {
+        const key = decisionKeyById.get(String(id));
+        if (key) {
+          scored.push({ conv: c, canonicalAddressKey: key });
+          break;
+        }
+      }
+    }
+    if (scored.length === 0) return { allow: true, warning: false };
+
+    // 4. The MOST RECENT score-surface identifies the currently-active
+    //    property. If the user switched from Anna → McKinney mid-session,
+    //    McKinney is what they're chatting about now.
+    const currentKey = scored[scored.length - 1].canonicalAddressKey;
+
+    // 5. Anchor = FIRST score-surface for currentKey in this session.
+    //    Stress tests / recalls for the same property don't reset it.
+    const anchor = scored.find((s) => s.canonicalAddressKey === currentKey);
+    if (!anchor) return { allow: true, warning: false };
+
+    // 6. Licensed users: no cap ever.
+    const activeLicense = await DealLicenseModel.findOne({
+      userId: opts.userId,
+      canonicalPropertyAddressKey: currentKey,
+      status: 'active',
+      expiresAt: { $gt: new Date() },
+    }).lean();
+    if (activeLicense) {
+      return { allow: true, warning: false, canonicalAddressKey: currentKey };
+    }
+
+    // 7. Count ConversationEvents in this session STRICTLY AFTER the
+    //    anchor (ConversationEvent is one per turn — see model docs).
+    const anchorTs = anchor.conv.timestamp ?? new Date(0);
+    const count = await ConversationEventModel.countDocuments({
+      userId: opts.userId,
+      'payload.sessionId': opts.sessionId,
+      timestamp: { $gt: anchorTs },
+    });
+
+    // 8. Look up the Deal for currentKey so the paywall response can
+    //    carry client_reference_id for Stripe. Deal may not exist yet
+    //    (user hasn't hit Save) — that's fine, dealId stays undefined.
+    const deal = await DealModel.findOne({
+      userId: opts.userId,
+      canonicalAddressKey: currentKey,
+    })
+      .select('_id')
+      .lean();
+    const dealId = deal ? String(deal._id) : undefined;
+
+    if (count >= CHAT_TURNS_FREE_AFTER_SCORE) {
+      return {
+        allow: false,
+        dealId,
+        canonicalAddressKey: currentKey,
+        message:
+          '180 days of unlimited chat and the full workspace for this property — $4.99, one-time.',
+      };
+    }
+
+    // Warning fires on the LAST free turn (count === cap - 1).
+    // Agent should include a natural heads-up in its response;
+    // frontend also renders a small pill under the assistant bubble.
+    const isLastFree = count === CHAT_TURNS_FREE_AFTER_SCORE - 1;
+    return {
+      allow: true,
+      warning: isLastFree,
+      dealId,
+      canonicalAddressKey: currentKey,
+    };
+  } catch (err) {
+    logger.warn('chat: chat-cap-v4 lookup failed, allowing turn', {
+      sessionId: opts.sessionId,
+      userId: opts.userId.toHexString(),
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { allow: true, warning: false };
+  }
+}
+
 async function assertLicenseAllowsMutation(opts: {
   dealId: string | undefined;
   userId: Types.ObjectId;
@@ -296,7 +490,10 @@ router.post(
 
     // Task #35 (2026-06-22) — block chat mutations when the user's
     // license on this dealId has lapsed. Reads (workspace GETs) stay
-    // open elsewhere; this only catches NEW agent runs.
+    // open elsewhere; this only catches NEW agent runs. Uses body.dealId
+    // directly (workspace-launched chats set it; in-thread continued
+    // chats don't set it but also don't have a lapsed license to
+    // detect — that state only reaches here via a workspace context).
     const turnLicenseGuard = await assertLicenseAllowsMutation({
       dealId: body.dealId,
       userId: turnUserId,
@@ -323,6 +520,40 @@ router.post(
       dealId: body.dealId,
       userId: turnUserId,
     });
+
+    // Task #112 / Model #6 (2026-07-19) — session-scoped chat cap
+    // after score production. Fires for both signed-in AND anonymous
+    // users; the RESPONSE variant differs:
+    //   - signed-in over cap → 402 chat_cap_reached (paywall bubble
+    //     with $4.99 Unlock CTA)
+    //   - anonymous over cap → 402 chat_cap_reached_signup (signup
+    //     wall bubble with Sign in / Sign up CTA)
+    // Same underlying rule ("N free chats after a score"), same
+    // computation, different CTA affordance downstream.
+    let turnPaywallWarning = false;
+    const turnCap = await computeChatCapAfterLastScore({
+      sessionId: body.sessionId,
+      userId: turnUserId,
+    });
+    if (turnCap.allow === false) {
+      const isAnon = req.user.anonymous === true;
+      logger.info('chat/turn: blocked — chat cap after last score', {
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        dealId: turnCap.dealId,
+        canonicalAddressKey: turnCap.canonicalAddressKey,
+        anonymous: isAnon,
+      });
+      res.status(402).json({
+        error: isAnon ? 'chat_cap_reached_signup' : 'chat_cap_reached',
+        dealId: isAnon ? undefined : turnCap.dealId,
+        message: isAnon
+          ? 'Sign up free to save this deal and everything you\'ve asked. No card.'
+          : turnCap.message,
+      });
+      return;
+    }
+    turnPaywallWarning = turnCap.warning;
 
     try {
       const out = await handleTurn({
@@ -448,6 +679,7 @@ router.post(
     // mutation gate). Body is already validated above; this is the
     // earliest safe place to gate.
     const streamUserId = new Types.ObjectId(req.user.id);
+
     const streamLicenseGuard = await assertLicenseAllowsMutation({
       dealId: body.dealId,
       userId: streamUserId,
@@ -469,6 +701,36 @@ router.post(
       });
       return;
     }
+
+    // Task #112 / Model #6 (2026-07-19) — session-scoped chat cap.
+    // MUST run BEFORE SSE headers (same rationale as the license
+    // guard: 402 JSON can't race an already-flushed text/event-stream
+    // response). Fires for signed-in AND anonymous users; the
+    // RESPONSE variant differs (see /turn endpoint comment above).
+    let streamPaywallWarning = false;
+    const streamCap = await computeChatCapAfterLastScore({
+      sessionId: body.sessionId,
+      userId: streamUserId,
+    });
+    if (streamCap.allow === false) {
+      const isAnon = req.user.anonymous === true;
+      logger.info('chat/turn/stream: blocked — chat cap after last score', {
+        userId: req.user.id,
+        sessionId: body.sessionId,
+        dealId: streamCap.dealId,
+        canonicalAddressKey: streamCap.canonicalAddressKey,
+        anonymous: isAnon,
+      });
+      res.status(402).json({
+        error: isAnon ? 'chat_cap_reached_signup' : 'chat_cap_reached',
+        dealId: isAnon ? undefined : streamCap.dealId,
+        message: isAnon
+          ? 'Sign up free to save this deal and everything you\'ve asked. No card.'
+          : streamCap.message,
+      });
+      return;
+    }
+    streamPaywallWarning = streamCap.warning;
 
     // SSE headers — set BEFORE any data is written. Once the body starts,
     // we can't change them.
@@ -506,6 +768,10 @@ router.post(
     };
 
     // Day 9b — resolve dealId → active license (same logic as /turn).
+    // Task #112 / Model #6 (2026-07-19): Moved back to post-SSE
+    // position — the chat-cap gate above no longer needs it (uses
+    // canonicalAddressKey via the substrate directly). streamLicenseId
+    // is still needed downstream for the orchestrator's cost cap.
     const streamLicenseId = await resolveLicenseIdForChatTurn({
       dealId: body.dealId,
       userId: streamUserId,
@@ -533,6 +799,20 @@ router.post(
       for await (const ev of stream) {
         const ok = writeEvent(ev);
         if (!ok) break;
+      }
+
+      // Task #112 / Model #6 (2026-07-19) — if this turn was the
+      // last free one before the paywall (count === cap - 1), emit
+      // a `paywall_warning` event AFTER the agent's response so the
+      // frontend can render a small heads-up under the assistant
+      // message. Marketing rec: reduce paywall shock on the next
+      // turn by telegraphing it now.
+      if (streamPaywallWarning) {
+        writeEvent({
+          type: 'paywall_warning',
+          message:
+            'Heads up — this is your last free question on this deal. The next question unlocks with $4.99.',
+        });
       }
 
       // Activation-funnel telemetry — emitted ONCE per stream attempt.
@@ -933,6 +1213,143 @@ router.get(
         error: err instanceof Error ? err.stack ?? err.message : String(err),
       });
       res.status(500).json({ error: 'Could not load conversation history.' });
+    }
+  }
+);
+
+// ===== Task #117 (2026-07-19): server-side chat thread list =====
+//
+// Replaces the localStorage-only threadStore in the frontend so magic-link
+// sign-in on a different browser/device shows the user's threads. The
+// localStorage store stays as an optimistic write-through cache — mid-turn
+// updates show immediately, then this endpoint provides the source of truth
+// on every mount and post-auth refresh.
+//
+// Query shape: for the authenticated user, aggregate ConversationEvents
+// by sessionId → return one row per thread with title (first user message
+// truncated), lastActivityAt (latest event ts), dealQualityScore (latest
+// DecisionEvent score referenced by any turn in that session). Sorted by
+// lastActivityAt desc, capped at 100 (mirrors client MAX_THREADS).
+//
+// Anonymous users work identically — chatIdentityMiddleware sets req.user
+// to the ghost user; their threads scope to that ghost's cookie-tied id.
+
+const CHAT_THREADS_LIMIT = 100;
+const CHAT_THREAD_TITLE_MAX = 60;
+
+function truncateTitle(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return 'New conversation';
+  if (trimmed.length <= CHAT_THREAD_TITLE_MAX) return trimmed;
+  return trimmed.slice(0, CHAT_THREAD_TITLE_MAX - 1) + '…';
+}
+
+router.get(
+  '/threads',
+  chatIdentityMiddleware,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Identity resolution failed' });
+      return;
+    }
+    if (!Types.ObjectId.isValid(req.user.id)) {
+      res.status(401).json({ error: 'Invalid user id in identity' });
+      return;
+    }
+    const userId = new Types.ObjectId(req.user.id);
+
+    try {
+      // Aggregate ConversationEvents by sessionId. `$first` after ascending
+      // sort grabs the first user message (for title); `$last` grabs the
+      // most recent activity timestamp. `$push` on relatedEventIds gives
+      // an array-of-arrays we flatten downstream to look up the latest
+      // score.
+      const sessions = await ConversationEventModel.aggregate<{
+        _id: string;
+        firstUserText: string | null;
+        lastActivityAt: Date;
+        relatedEventIds: Types.ObjectId[][];
+      }>([
+        {
+          $match: {
+            userId,
+            'payload.sessionId': { $exists: true, $ne: null },
+          },
+        },
+        { $sort: { timestamp: 1 } },
+        {
+          $group: {
+            _id: '$payload.sessionId',
+            firstUserText: { $first: '$payload.userInput.text' },
+            lastActivityAt: { $last: '$timestamp' },
+            relatedEventIds: { $push: '$payload.agentResponse.relatedEventIds' },
+          },
+        },
+        { $sort: { lastActivityAt: -1 } },
+        { $limit: CHAT_THREADS_LIMIT },
+      ]);
+
+      if (sessions.length === 0) {
+        res.json({ threads: [] });
+        return;
+      }
+
+      // One query for every DecisionEvent referenced across all sessions.
+      const allDecisionIds = sessions
+        .flatMap((s) => (s.relatedEventIds ?? []).flat())
+        .filter((id): id is Types.ObjectId => id != null);
+
+      const decisions =
+        allDecisionIds.length > 0
+          ? ((await DecisionEventModel.find({ _id: { $in: allDecisionIds } })
+              .select('_id payload.dealQuality')
+              .lean()) as unknown as Array<{
+              _id: Types.ObjectId;
+              payload?: { dealQuality?: number };
+            }>)
+          : [];
+
+      const decisionScoreById = new Map<string, number>();
+      for (const d of decisions) {
+        const q = d.payload?.dealQuality;
+        if (typeof q === 'number') {
+          decisionScoreById.set(String(d._id), q);
+        }
+      }
+
+      const threads = sessions.map((s) => {
+        // Latest score referenced by ANY turn in this session — walk in
+        // reverse (relatedEventIds pushed in ascending timestamp order,
+        // so the last entry containing a decision id is the most recent).
+        let dealQualityScore: number | undefined;
+        for (const idsPerTurn of [...(s.relatedEventIds ?? [])].reverse()) {
+          for (const id of idsPerTurn ?? []) {
+            const score = decisionScoreById.get(String(id));
+            if (typeof score === 'number') {
+              dealQualityScore = score;
+              break;
+            }
+          }
+          if (dealQualityScore !== undefined) break;
+        }
+        return {
+          id: s._id,
+          title: truncateTitle(s.firstUserText ?? ''),
+          lastActivityAt:
+            s.lastActivityAt instanceof Date
+              ? s.lastActivityAt.toISOString()
+              : new Date(s.lastActivityAt).toISOString(),
+          dealQualityScore,
+        };
+      });
+
+      res.json({ threads });
+    } catch (err) {
+      logger.error('chat/threads: load failed', {
+        userId: req.user.id,
+        error: err instanceof Error ? err.stack ?? err.message : String(err),
+      });
+      res.status(500).json({ error: 'Could not load chat threads.' });
     }
   }
 );

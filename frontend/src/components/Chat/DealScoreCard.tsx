@@ -115,6 +115,12 @@ export interface DealScoreCardProps {
    * assumptions accordion) and renders ONE clean "Sign in to unlock"
    * CTA instead of empty scaffolding. Set explicitly by the backend's
    * gateCardForAnonymous — never inferred from sentinel zeros.
+   *
+   * Model #4 (2026-07-18): reverted from the temporary Task #34
+   * 'unlicensed' variant. Under the new pay-for-persistence model,
+   * signed-in users only ever see this card in a licensed context
+   * (workspace only opens if licensed), so no 'unlicensed' variant
+   * is needed. Anonymous variant unchanged.
    */
   gated?: boolean;
 }
@@ -644,3 +650,4 @@ export function DealScoreCard(props: DealScoreCardProps): React.JSX.Element {
     </Card>
   );
 }
+

@@ -29,6 +29,7 @@ import educationRouter from './routes/education';
 import contactRouter from './routes/contact';
 import feedbackRouter from './routes/feedback';
 import pdfRouter from './routes/pdf';
+import stripeWebhookRouter from './routes/stripeWebhook';
 import { connectToDatabase } from './config/database';
 import { checkModels, checkCollections } from './utils/modelCheck';
 import { ensureAdminUser } from './utils/ensureAdminUser';
@@ -85,10 +86,26 @@ app.use(helmet({
   }
 }));
 
+// Task #34 (2026-07-14) — Stripe webhook mount MUST come before the
+// global express.json() middleware. Stripe signature verification
+// requires the exact raw bytes Stripe sent; a JSON.parse round-trip
+// re-orders keys and breaks the HMAC. The router applies
+// express.raw({type:'application/json'}) inline so req.body is a
+// Buffer inside the handler. See stripeWebhookController INV-1.
+app.use('/api/webhooks/stripe', stripeWebhookRouter);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
 // Rate limiting configuration
+//
+// Dev-mode note (2026-07-19): heavy manual testing on a LAN IP (not
+// 127.0.0.1) blew through 100 req / 15 min routinely — workspace loads
+// alone fire 5-8 parallel GETs, and route churn stacks fast. Skip
+// rate-limiting entirely outside production so dev/QA sessions stay
+// snappy. Prod protection unchanged.
+const isProduction = process.env.NODE_ENV === 'production';
+
 const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per window per IP
@@ -99,7 +116,10 @@ const generalRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for health checks, sample analysis (public SEO page), and internal requests
+    // Non-production: skip entirely (dev + QA + local network testing).
+    if (!isProduction) return true;
+    // Production: skip only for health checks, sample analysis (public
+    // SEO page), and localhost internal requests.
     return req.path === '/api/health' || req.path === '/api/deals/sample-analysis' || req.ip === '127.0.0.1' || req.ip === '::1';
   }
 });
@@ -114,6 +134,7 @@ const calculationRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => !isProduction,
 });
 
 // Apply general rate limiting to all routes

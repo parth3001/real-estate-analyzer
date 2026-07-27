@@ -855,7 +855,7 @@ const LandingPage: React.FC = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center">
             {[
               {
                 eyebrow: 'FREE',
@@ -881,20 +881,12 @@ const LandingPage: React.FC = () => {
                 ],
                 accent: true,
               },
-              {
-                eyebrow: 'BUNDLES',
-                price: '$3.50',
-                priceTail: '/ deal (10-pack)',
-                title: 'Building a pipeline',
-                lines: [
-                  '5-pack — $19.99 ($4.00/deal)',
-                  '10-pack — $34.99 ($3.50/deal)',
-                  '12-month credit expiry',
-                ],
-                accent: false,
-              },
+              // Task #124 (2026-07-26): Bundles tier removed. PricingPage
+              // ships only Free + Per-Deal per Task #48; Landing must match
+              // or user hits trust break clicking Pricing from Landing.
+              // Bundles was aspirational — not built, no fulfillment path.
             ].map((tier) => (
-              <Grid size={{ xs: 12, md: 4 }} key={tier.eyebrow}>
+              <Grid size={{ xs: 12, sm: 6, md: 5 }} key={tier.eyebrow}>
                 <Paper
                   elevation={0}
                   sx={{

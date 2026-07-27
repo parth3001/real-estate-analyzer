@@ -270,7 +270,15 @@ const SavedProperties: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate('/sfr-analysis')}
+            onClick={() => {
+              // Match "+ New chat" behavior in NewAppShell: clear the
+              // persisted sessionId so ChatOverlay mints a fresh one
+              // on mount instead of resuming the last thread.
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('reanalyzr.chat.sessionId');
+              }
+              navigate('/app');
+            }}
           >
             Add New Property
           </Button>
@@ -297,7 +305,15 @@ const SavedProperties: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate('/sfr-analysis')}
+            onClick={() => {
+              // Match "+ New chat" behavior in NewAppShell: clear the
+              // persisted sessionId so ChatOverlay mints a fresh one
+              // on mount instead of resuming the last thread.
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('reanalyzr.chat.sessionId');
+              }
+              navigate('/app');
+            }}
             sx={{ mt: 2 }}
           >
             Analyze New Property

@@ -18,6 +18,7 @@ import {
   Chip
 } from '@mui/material';
 import { Close as CloseIcon, Home, TrendingUp } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { appleColors } from '../../theme/appleDesignSystem';
 import { propertyApi, portfolioApi } from '../../services/api';
 import AddManualPropertyModal from './AddManualPropertyModal';
@@ -43,6 +44,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showManualPropertyModal, setShowManualPropertyModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) {
@@ -181,7 +183,16 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
                 variant="contained"
-                onClick={() => window.location.href = '/sfr-analysis'}
+                onClick={() => {
+                  // Task #119: analysis happens in chat now (v2.0). Clear
+                  // any persisted sessionId so the user lands on a fresh
+                  // thread rather than resuming the last one.
+                  if (typeof sessionStorage !== 'undefined') {
+                    sessionStorage.removeItem('reanalyzr.chat.sessionId');
+                  }
+                  onClose();
+                  navigate('/app');
+                }}
                 sx={{
                   backgroundColor: appleColors.blue[600],
                   '&:hover': { backgroundColor: appleColors.blue[700] }

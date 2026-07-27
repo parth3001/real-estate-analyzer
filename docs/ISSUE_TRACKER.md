@@ -16699,6 +16699,54 @@ Once clean, restore `frontend npm run lint` to `--max-warnings=0` in CI (current
 
 ---
 
+### Issue #259: BRRRR workspace shows income-approach walk-away price, contradicting BRRRR-specific 70% rule signal
+
+**Status**: 🔴 Open
+**Priority**: P2 (Medium)
+**Reported**: 2026-07-18
+**Component**: `frontend/src/components/Chat/DealScoreCard.tsx`, backend BRRRR analyzer walk-away computation
+**Reporter**: End-user test session (BE persona validation, Model #4 acceptance testing)
+
+**Description**:
+
+When a BRRRR deal is analyzed, the workspace's DealScoreCard displays a walk-away price computed via the **income approach** (NOI / market cap rate), which is a buy-and-hold concept. For BRRRR deals, this creates contradictory signals within the same card:
+
+- "Walk-away price $200,523 · Your offer $130,000 · **35% below**" — suggests a great deal
+- "70% rule: $155,000 vs $98,000 — × over" — correctly flags BRRRR failure
+- "Capital recovery 12/100" — bad, reflects real BRRRR failure
+- "NEXT STEP: Low capital recovery: 12% recovered at refi against a target of 60%+" — bad, reflects real BRRRR failure
+
+**Test case (verified 2026-07-18)**: 4235 W 149th St Cleveland OH, listing $130k, rehab $25k, ARV $140k, rent $1,800/mo → Score 53/100, walk-away shown as $200,523. Correct BRRRR walk-away (70% rule): 0.70 × $140k − $25k = **$73,000**. User's $130k offer is actually **$57k OVER** the BRRRR-strategy walk-away ceiling, not $70k under.
+
+**Business Impact**:
+
+User confusion. Cognitive dissonance between "35% below walk-away = great deal" and every other BRRRR-specific signal saying "bad deal." Two failure modes:
+
+1. **Best case:** investor questions the score, decides "the tool is inconsistent, I'll ignore the score card." Undermines trust in the entire product.
+2. **Worst case:** investor acts on the misleading walk-away framing and overpays for BRRRR deals. If they take this to a lender or partner and the deal doesn't pencil, brand damage is severe.
+
+**Pre-existing issue** (predates Task #34 / Model #4 work). Documented as a known TODO in DealScoreCard code comments during earlier session:
+> "For BRRRR we'd ideally show 'ARV vs purchase + rehab' but the DealScoreCard's two-row component is shaped for walk-away. Until we extend the card with a variant-aware comparison row, BRRRR uses the same walk-away framing as buy-hold (the engine still computes a walk-away for BRRRR; it's just not the most-informative metric for that strategy)."
+
+**Proposed Solution**:
+
+Make DealScoreCard's walk-away/offer row variant-aware. Three options:
+
+1. **Replace for BRRRR** — show the 70% rule ceiling instead. Copy: "Max purchase at 70% rule: $73,000 · Your offer $130,000 · 78% over". Cleanest, matches how BRRRR investors think about maximum bid.
+2. **Show both, clearly labeled** — "Income walk-away $200,523 · BRRRR ceiling (70% rule) $73,000". More information but denser; risks the same confusion at reduced volume.
+3. **Hide income walk-away when strategy = BRRRR** — falls back to just showing the offer and delta from ARV. Simple but loses the walk-away discipline entirely.
+
+**Recommend option 1.** Backend already computes the 70% rule check for the assumptions/deal-scoring path — reuse that number. Frontend change is scoped to `DealScoreCard.tsx`'s walk-away section: read strategy from props (already threaded via `strategy` prop), branch the label + value between income-walk-away (buy-hold) and 70% rule ceiling (BRRRR).
+
+Estimated effort: ~2 hours (frontend-only, uses existing backend numbers).
+
+**Cross-references**:
+- Related to DealScoreCard visual system (Task #10, Task #22)
+- Not caused by Task #34 / Model #4 (verified — those changes were rendering-only, didn't touch walk-away calculation or display shape)
+- Similar variant-awareness patterns exist in `savedDealVariants.ts` (caption + factors already vary by strategy) — walk-away should follow the same pattern
+
+---
+
 ## 📝 **ISSUE TEMPLATE**
 
 ```markdown

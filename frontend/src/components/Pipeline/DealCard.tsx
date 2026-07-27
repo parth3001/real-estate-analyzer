@@ -256,20 +256,26 @@ export const DealCard: React.FC<DealCardProps> = ({
                   <Typography variant="caption" sx={{ fontWeight: 600 }}>
                     Analysis Complete
                   </Typography>
-                  {deal.quickMetrics.verdict && (
-                    <Chip 
-                      label={deal.quickMetrics.verdict} 
+                  {/* Task #123 (2026-07-26): score-based chip replaces the
+                      verdict chip (BUY/NEGOTIATE/CAUTION/PASS). Verdict
+                      language is a public-copy liability per project rule;
+                      the score number + color communicates the same signal
+                      without directive framing. Bands per CLAUDE.md:
+                      80+ green · 65-79 blue · 50-64 orange · <50 red. */}
+                  {typeof deal.quickMetrics.dealQuality === 'number' && (
+                    <Chip
+                      label={`${deal.quickMetrics.dealQuality}/100`}
                       size="small"
                       color={
-                        deal.quickMetrics.verdict === 'BUY' ? 'success' :
-                        deal.quickMetrics.verdict === 'NEGOTIATE' ? 'warning' :
-                        deal.quickMetrics.verdict === 'CAUTION' ? 'warning' : 'error'
+                        deal.quickMetrics.dealQuality >= 80 ? 'success' :
+                        deal.quickMetrics.dealQuality >= 65 ? 'info' :
+                        deal.quickMetrics.dealQuality >= 50 ? 'warning' : 'error'
                       }
                       sx={{ fontSize: '0.6rem', height: 16 }}
                     />
                   )}
                 </Box>
-                
+
                 {deal.quickMetrics.dealQuality && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     Deal Quality: {deal.quickMetrics.dealQuality}/100

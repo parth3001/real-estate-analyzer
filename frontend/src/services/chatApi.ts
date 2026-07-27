@@ -117,6 +117,26 @@ export async function sendChatTurn(
       const body = err.response.data as { error?: string } | undefined;
       throw new Error(body?.error ?? 'Free analysis limit reached for this session.');
     }
+    // Task #112 / Model #5 (2026-07-18): 402 chat_cap_reached parity
+    // with the streaming path. sendChatTurn is currently unused by the
+    // live overlay (which streams), but the code path is kept for
+    // headless callers / tests.
+    if (axios.isAxiosError(err) && err.response?.status === 402) {
+      const body = err.response.data as {
+        error?: string;
+        message?: string;
+        dealId?: string;
+      } | undefined;
+      if (body?.error === 'chat_cap_reached') {
+        const cerr = new Error(
+          body.message ??
+            "You've explored this deal in a few messages. Unlock the full workspace + unlimited chat for $4.99 (180-day access)."
+        ) as Error & { code?: string; dealId?: string };
+        cerr.code = 'chat_cap_reached';
+        cerr.dealId = body.dealId;
+        throw cerr;
+      }
+    }
     throw err;
   }
 }
@@ -195,7 +215,13 @@ export type ChatStreamEvent =
       traceId: string;
       conversationEventId?: string;
       partialCostCents: number;
-    };
+    }
+  // Task #112 / Model #6 (2026-07-19) — emitted by /turn/stream AFTER
+  // the agent response completes, when this was the last free turn
+  // before the paywall (count === cap - 1). Frontend renders a
+  // subtle heads-up under the assistant bubble so the user knows the
+  // next question will unlock at $4.99.
+  | { type: 'paywall_warning'; message: string };
 
 /**
  * Resolve the SSE endpoint URL. Mirrors the axios instance's baseURL
@@ -357,6 +383,77 @@ export async function claimChatSession(
   }
 }
 
+/**
+ * Chat session sessionStorage key. Mirrors the constant defined in
+ * ChatOverlay.tsx (SESSION_STORAGE_KEY) so any non-chat surface (auth
+ * forms, magic-link verify, etc.) can look up the current anonymous
+ * sessionId to claim on authentication.
+ */
+const CHAT_SESSION_STORAGE_KEY = 'reanalyzr.chat.sessionId';
+
+// ===== Task #117: server-side chat thread list =====
+
+export interface ChatThreadListItem {
+  id: string;
+  title: string;
+  lastActivityAt: string;
+  dealQualityScore?: number;
+}
+
+/**
+ * Task #117 (2026-07-19): fetch the authenticated (or anonymous ghost)
+ * user's chat threads from the substrate. Replaces the localStorage-only
+ * threadStore as the source of truth so magic-link sign-in on a
+ * different browser/device shows the user's real thread history.
+ *
+ * localStorage is still used as an optimistic write-through cache in
+ * ChatOverlay so mid-turn updates paint immediately without waiting on
+ * a refetch — this endpoint reconciles it on mount and after auth.
+ */
+export async function listChatThreads(): Promise<ChatThreadListItem[]> {
+  try {
+    const { data } = await api.get<{ threads: ChatThreadListItem[] }>(
+      '/chat/threads'
+    );
+    return data.threads;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const body = err.response?.data as { error?: string } | undefined;
+      throw new Error(body?.error ?? 'Could not load chat threads.');
+    }
+    throw err;
+  }
+}
+
+/**
+ * Task #113 (2026-07-19): read the current anonymous chat sessionId from
+ * sessionStorage and, if present, POST /api/chat/claim-session with it.
+ *
+ * Wired into RegisterForm + LoginForm success handlers so a direct
+ * email+password auth flow (including the auth modal opened by
+ * chat_cap_reached_signup at the Model #6 wall) reassigns every ghost
+ * ConversationEvent / DecisionEvent / AnalysisEvent from the ghost user
+ * to the now-authenticated real user AND materializes the ghost's deals
+ * so they show up on /saved-properties.
+ *
+ * Idempotent by design (backend returns { merged: false } when no ghost
+ * exists), so safe to call unconditionally after any auth success. Await
+ * before navigation so the destination page sees fresh state on first
+ * fetch. Failures are swallowed with a warning — the auth flow shouldn't
+ * fail because of a merge issue; events remain queryable under the ghost
+ * until a later claim.
+ */
+export async function claimAnonymousChatSessionIfAny(): Promise<void> {
+  if (typeof sessionStorage === 'undefined') return;
+  const sessionId = sessionStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+  if (!sessionId) return;
+  try {
+    await claimChatSession(sessionId);
+  } catch (err) {
+    console.warn('[auth] claimAnonymousChatSessionIfAny failed', err);
+  }
+}
+
 // ===== Task #40 (2026-06-18): persist stress test as a saved scenario =====
 
 export interface SaveStressScenarioResult {
@@ -479,6 +576,36 @@ export async function* streamChatTurn(
       err.code = 'license_expired';
       err.expiresAt = parsedError.expiresAt;
       throw err;
+    }
+    // Task #112 / Model #6 (2026-07-19): 402 chat_cap_reached (signed-in)
+    // OR chat_cap_reached_signup (anonymous). Both are the same
+    // underlying rule ("N free chats after a score") with different CTA
+    // affordances downstream:
+    //   - signed-in → paywall bubble w/ Stripe redirect
+    //   - anonymous → signup wall bubble w/ auth modal
+    if (response.status === 402) {
+      const perr = parsedError as {
+        error?: string;
+        message?: string;
+        dealId?: string;
+      } | null;
+      if (perr?.error === 'chat_cap_reached') {
+        const err = new Error(
+          perr.message ??
+            "You've explored this deal in a few questions. Unlock the full workspace + unlimited chat for $4.99 (180-day access)."
+        ) as Error & { code?: string; dealId?: string };
+        err.code = 'chat_cap_reached';
+        err.dealId = perr.dealId;
+        throw err;
+      }
+      if (perr?.error === 'chat_cap_reached_signup') {
+        const err = new Error(
+          perr.message ??
+            "You've explored this deal in a few questions. Sign up free to keep chatting."
+        ) as Error & { code?: string };
+        err.code = 'chat_cap_reached_signup';
+        throw err;
+      }
     }
     throw new Error(
       parsedError?.error ??

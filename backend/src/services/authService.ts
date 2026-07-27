@@ -59,8 +59,6 @@ export class AuthService {
       termsAcceptedIp?: string;
       registrationIp?: string;
       registrationUserAgent?: string;
-      affiliateCode?: string | null;
-      affiliateCodeSetAt?: Date;
     }
   ): Promise<AuthTokens> {
     try {
@@ -87,9 +85,9 @@ export class AuthService {
         // Anti-abuse tracking
         registrationIp: metadata?.registrationIp,
         registrationUserAgent: metadata?.registrationUserAgent,
-        // Affiliate tracking
-        affiliateCode: metadata?.affiliateCode,
-        affiliateCodeSetAt: metadata?.affiliateCodeSetAt
+        // Task #132 (2026-07-26): affiliate tracking removed — Josh
+        // Lupo / theficouple partnership ended. User schema retains
+        // affiliateCode/affiliateCodeSetAt fields for historical docs.
       });
 
       const savedUser = await user.save();

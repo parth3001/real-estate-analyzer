@@ -100,19 +100,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       lastName: req.body.lastName
     };
 
-    // TOS acceptance tracking and anti-abuse metadata
+    // TOS acceptance tracking and anti-abuse metadata.
+    // Task #132 (2026-07-26) — affiliate tracking removed (Josh Lupo /
+    // theficouple partnership ended). Existing User docs retain
+    // affiliateCode/affiliateCodeSetAt for historical accounting; new
+    // registrations no longer populate the fields.
     const registrationMetadata = {
       termsAcceptedAt: new Date(),
       termsVersion: '2025-10-30', // Update this when TOS changes
       termsAcceptedIp: req.ip || req.socket.remoteAddress || 'unknown',
       registrationIp: req.ip || req.socket.remoteAddress || 'unknown',
       registrationUserAgent: req.headers['user-agent'] || 'unknown',
-      // Affiliate tracking (e.g., Josh Lupo partnership)
-      affiliateCode: req.body.affiliateCode || null,
-      affiliateCodeSetAt: req.body.affiliateCode ? new Date() : undefined
     };
 
-    logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}${registrationMetadata.affiliateCode ? ` | Affiliate: ${registrationMetadata.affiliateCode}` : ''}`);
+    logger.info(`[AuthController] Registration request for: ${userData.email} from IP: ${registrationMetadata.registrationIp}`);
 
     const result = await authService.register(userData, registrationMetadata);
 
@@ -157,8 +158,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Track user registration for analytics dashboard
     analyticsService.trackUserRegistered(result.user.id, {
-      source: registrationMetadata.affiliateCode ? 'affiliate' : 'direct',
-      affiliateCode: registrationMetadata.affiliateCode || undefined
+      source: 'direct'
     }, result.user.role);
 
     res.status(201).json({

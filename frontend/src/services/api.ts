@@ -1464,6 +1464,10 @@ export const authApi = {
         merged: boolean;
         eventsMerged: number;
         returnTo: string;
+        // Task #116: server returns the claimed sessionId so the
+        // verify page can hydrate sessionStorage (magic-link opens
+        // in a new tab, otherwise ChatOverlay loses the thread).
+        sessionId: string;
       };
     }>
   > => {
