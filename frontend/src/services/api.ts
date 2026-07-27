@@ -67,41 +67,68 @@ api.interceptors.request.use(
 );
 
 // Response interceptor for token refresh
+//
+// Task #134 (2026-07-27): removed the two `window.location.href = '/login'`
+// hard-redirects. They bypassed React Router entirely and destroyed
+// in-flight state — a 401 during CheckoutReturnPage's post-Stripe poll
+// would nuke the tab and drop the user on /login even though payment
+// succeeded and the workspace was already unlocked server-side.
+//
+// New behavior: on 401, we still try the refresh flow; if refresh fails
+// or is unavailable, we clear tokens and reject the promise. AuthContext's
+// initializeAuth already handles the rejection in its catch block by
+// dispatching SET_INITIALIZED (isLoading=false, user=null), and
+// ProtectedRoute then Navigate()s to /login the React-Router way — soft,
+// state-preserving, and it never happens if the failing call was in a
+// non-auth-critical path (e.g., CheckoutReturnPage's poll catches errors
+// silently and keeps polling).
+//
+// Also logs the failing endpoint so we can trace WHY the 401 happens.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       const refreshToken = tokenUtils.getRefreshToken();
       if (refreshToken) {
         try {
           const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
-            refreshToken
+            refreshToken,
           });
-          
+
           const { accessToken, refreshToken: newRefreshToken } = response.data;
           tokenUtils.setAccessToken(accessToken);
           tokenUtils.setRefreshToken(newRefreshToken);
-          
+
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, redirect to login
+          // Refresh failed — clear tokens, let the caller handle it.
+          // AuthContext.initializeAuth's catch block dispatches
+          // SET_INITIALIZED which flips isAuthenticated to false, and
+          // ProtectedRoute Navigate()s to /login softly.
+          console.warn('[api] 401 refresh failed', {
+            url: originalRequest?.url,
+            method: originalRequest?.method,
+          });
           tokenUtils.removeTokens();
-          window.location.href = '/login';
           return Promise.reject(refreshError);
         }
       } else {
-        // No refresh token, redirect to login
+        // No refresh token — clear access token and reject. Same
+        // soft-redirect flow as above.
+        console.warn('[api] 401 no refresh token available', {
+          url: originalRequest?.url,
+          method: originalRequest?.method,
+        });
         tokenUtils.removeTokens();
-        window.location.href = '/login';
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
