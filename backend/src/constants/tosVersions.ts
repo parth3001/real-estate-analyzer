@@ -54,8 +54,13 @@ export const TOS_VERSION_HISTORY: Array<{
       'no subscription, no auto-renewal). Verdict language purged from §12 ' +
       '(Deal Quality Score replaces BUY/NEGOTIATE/PASS). §15 beta framing ' +
       'softened to "actively developed" service-availability disclaimer. ' +
-      'Contact email updated from legal@ to support@. Attorney review still ' +
-      'pending (#77) for arbitration, class-action waiver, CCPA additions.',
+      'Contact email updated from legal@ to support@. Privacy Policy ' +
+      'rewritten to attorney redline in same batch (categories/disclosure/' +
+      'AI processing/retention/sale-share sections restructured; 18+ age ' +
+      'gate; DNT statement corrected; Stripe added; Clarity strict-mask ' +
+      'caveat softened). Attorney review still pending (#77) for full ToS ' +
+      'architectural rewrite — arbitration, class-action waiver, ' +
+      'limitation-of-liability cap, indemnity narrowing, acceptable-use.',
   },
 ];
 

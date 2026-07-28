@@ -72,6 +72,15 @@ const PrivacyPolicyPage: React.FC = () => {
     textDecoration: 'none'
   });
 
+  const getTodoStyle = () => ({
+    backgroundColor: '#fef3c7',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    color: '#78350f',
+    fontStyle: 'italic' as const,
+    fontSize: '0.9em'
+  });
+
   return (
     <div style={getContainerStyle()}>
       <div style={getContentStyle()}>
@@ -83,10 +92,10 @@ const PrivacyPolicyPage: React.FC = () => {
         <section style={getSectionStyle()}>
           <h2 style={getSectionTitleStyle()}>1. Introduction</h2>
           <p style={getTextStyle()}>
-            REanalyzr ("we," "us," or "our") provides a real estate investment analysis platform. This
-            Privacy Policy explains what information we collect when you use REanalyzr, how we use it,
-            who we share it with, and the choices you have. By using REanalyzr you agree to the practices
-            described here.
+            REanalyzr provides a real estate investment analysis platform. This
+            Privacy Policy explains what information we collect when you use
+            REanalyzr, how we use it, who we share it with, and the choices you
+            have. By using REanalyzr you agree to the practices described here.
           </p>
           <p style={getTextStyle()}>
             This policy works alongside our{' '}
@@ -95,155 +104,310 @@ const PrivacyPolicyPage: React.FC = () => {
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>2. Information We Collect</h2>
-          <p style={getTextStyle()}><strong>Account information.</strong> When you sign up we collect
-          your email address (used for magic-link authentication) and any profile details you provide.
-          We do not use passwords.</p>
-
-          <p style={getTextStyle()}><strong>Property analysis inputs.</strong> When you analyze a deal,
-          you provide property details such as address, purchase price, financing terms, rental income
-          estimates, and operating expenses. This data is stored in your account so you can revisit and
-          compare deals over time.</p>
-
-          <p style={getTextStyle()}><strong>Pipeline and portfolio data.</strong> If you save analyses
-          to your pipeline or add properties to your portfolio, that data is stored in your account.</p>
-
-          <p style={getTextStyle()}><strong>Usage analytics.</strong> We collect information about how
-          you interact with REanalyzr, such as pages visited, time spent, clicks, scroll depth, and
-          interactions with forms and buttons. See section 5 for details on the analytics tools we use.</p>
-
-          <p style={getTextStyle()}><strong>Technical data.</strong> Like most web services, our servers
-          automatically log basic technical information including IP address, browser type, device type,
-          and timestamps for security and reliability purposes.</p>
+          <h2 style={getSectionTitleStyle()}>2. Eligibility and Geographic Scope</h2>
+          <p style={getTextStyle()}>
+            REanalyzr is intended for individuals who are at least 18 years old
+            and located in the United States. The Service is not directed to
+            children, and we do not knowingly collect personal information from
+            anyone under 13.
+          </p>
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>3. How We Use Your Information</h2>
+          <h2 style={getSectionTitleStyle()}>3. Categories of Information We Collect</h2>
+          <p style={getTextStyle()}>We may collect the following categories of information:</p>
+
+          <p style={getTextStyle()}>
+            <strong>Account and contact information.</strong> This includes your
+            email address, account identifiers, profile information,
+            authentication events and communications with us.
+          </p>
+
+          <p style={getTextStyle()}>
+            <strong>Property and financial-analysis information.</strong> This
+            includes property addresses, ZIP codes, purchase prices, financing
+            terms, expected rent, operating expenses, renovation assumptions,
+            ownership assumptions, saved analyses, pipeline information and
+            portfolio information.
+          </p>
+
+          <p style={getTextStyle()}>
+            <strong>Generated information and inferences.</strong> We generate
+            calculations, scores, projections, classifications and AI-assisted
+            narrative content based on the information you provide and
+            information obtained from third-party sources.
+          </p>
+
+          <p style={getTextStyle()}>
+            <strong>Payment and transaction information.</strong> Payments are
+            processed by Stripe. We do not ordinarily receive or store your
+            complete payment-card number. We may receive transaction
+            identifiers, payment status, billing country, card type, the last
+            four digits of a payment card and fraud-prevention information.
+          </p>
+
+          <p style={getTextStyle()}>
+            <strong>Device, log and usage information.</strong> We may collect
+            IP address, approximate location derived from IP address, browser
+            and device type, operating system, referring pages, pages viewed,
+            clicks, timestamps, error logs, session information and
+            interactions with the Service.
+          </p>
+
+          <p style={getTextStyle()}>
+            <strong>Cookies and similar technologies.</strong> We and our
+            service providers may use cookies, local storage, pixels, software
+            development kits and similar technologies for authentication,
+            security, preferences, analytics and performance.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>4. How We Use Information</h2>
+          <p style={getTextStyle()}>We use personal information to:</p>
           <ul style={getListStyle()}>
-            <li>Provide deal analysis, pipeline tracking, and portfolio impact features</li>
-            <li>Generate AI-assisted insights about deals you analyze</li>
-            <li>Send transactional emails (magic-link sign-in, account notifications)</li>
-            <li>Improve product quality and diagnose UX issues using aggregated analytics</li>
-            <li>Detect and prevent abuse, fraud, and security incidents</li>
-            <li>Comply with legal obligations</li>
+            <li>create and secure accounts and deliver magic-link authentication;</li>
+            <li>provide calculations, projections, saved analyses, pipeline and portfolio features;</li>
+            <li>obtain property and market information requested by the user;</li>
+            <li>generate AI-assisted content;</li>
+            <li>process payments and refunds;</li>
+            <li>provide customer support and transactional communications;</li>
+            <li>detect fraud, abuse and security incidents;</li>
+            <li>troubleshoot, maintain and improve the Service;</li>
+            <li>understand product usage and performance;</li>
+            <li>comply with legal obligations and enforce our agreements; and</li>
+            <li>create aggregated or de-identified information that does not reasonably identify an individual.</li>
           </ul>
           <p style={getTextStyle()}>
-            We do not sell your personal information. We do not use your property analysis data to
-            train third-party AI models beyond the per-request use described in section 4.
+            We will not attempt to reidentify information that we maintain as
+            de-identified, except to test whether our de-identification
+            processes are effective or as otherwise permitted by law.
           </p>
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>4. Third-Party Services</h2>
+          <h2 style={getSectionTitleStyle()}>5. How We Disclose Information</h2>
           <p style={getTextStyle()}>
-            REanalyzr uses the following third-party services. Each is bound by its own privacy
-            terms. We share only the minimum data required for each service to function.
-          </p>
-
-          <p style={getTextStyle()}><strong>Property and market data:</strong> RentCast (property
-          details, comparable rentals), Federal Reserve Economic Data / FRED (economic indicators),
-          U.S. Census Bureau (demographic data). We send the property address or ZIP code you provide;
-          these services do not receive your account information.</p>
-
-          <p style={getTextStyle()}><strong>AI insights:</strong> OpenAI (GPT-4o-mini). When you
-          request enhanced AI analysis, we send the property analysis data to OpenAI to generate
-          commentary. OpenAI does not use API inputs to train its models per their API data policy.</p>
-
-          <p style={getTextStyle()}><strong>Email delivery:</strong> Resend. Used to send
-          magic-link sign-in emails and transactional notifications.</p>
-
-          <p style={getTextStyle()}><strong>Hosting and storage:</strong> Render (application hosting),
-          MongoDB Atlas (database).</p>
-
-          <p style={getTextStyle()}><strong>Analytics:</strong> See section 5.</p>
-        </section>
-
-        <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>5. Cookies and Tracking</h2>
-          <p style={getTextStyle()}>
-            We use cookies and similar technologies to keep you signed in, remember preferences,
-            and understand how visitors use REanalyzr.
-          </p>
-
-          <p style={getTextStyle()}><strong>Google Analytics 4.</strong> Aggregated event tracking
-          (page views, conversion funnels). Data is anonymized at the IP level. Subject to{' '}
-          <a href="https://policies.google.com/privacy" style={getLinkStyle()} target="_blank" rel="noopener noreferrer">Google's privacy policy</a>.</p>
-
-          <p style={getTextStyle()}><strong>Microsoft Clarity.</strong> Heatmaps, scroll depth, and
-          session replay. We configure Clarity in <em>Strict</em> masking mode, which masks the contents
-          of all form fields and most text by default; only marketing pages (homepage, blog, sample
-          analysis) are unmasked. Property addresses, financial inputs, email addresses, and other
-          sensitive data are not visible in Clarity recordings. Subject to{' '}
-          <a href="https://privacy.microsoft.com/en-us/privacystatement" style={getLinkStyle()} target="_blank" rel="noopener noreferrer">Microsoft's privacy statement</a>.</p>
-
-          <p style={getTextStyle()}>You can opt out of analytics by using browser settings such as
-          "Do Not Track," using a tracker-blocking extension, or disabling JavaScript. The product
-          will continue to function without analytics enabled.</p>
-        </section>
-
-        <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>6. Data Retention</h2>
-          <p style={getTextStyle()}>
-            We retain your account data, analyses, pipeline, and portfolio for as long as your
-            account is active. If you delete your account, we delete or anonymize associated personal
-            data within 30 days, except where retention is required by law (such as financial records
-            or fraud prevention).
-          </p>
-          <p style={getTextStyle()}>
-            Aggregated analytics data (with no individual identifiers) may be retained indefinitely
-            for product analysis.
-          </p>
-        </section>
-
-        <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>7. Your Rights and Choices</h2>
-          <p style={getTextStyle()}>
-            Depending on where you live, you may have the right to access, correct, export, or
-            delete the personal information we hold about you, and to object to or restrict certain
-            processing. To exercise any of these rights, contact us at the address in section 11.
+            We may disclose information to service providers and contractors
+            that help us operate the Service, including:
           </p>
           <ul style={getListStyle()}>
-            <li><strong>Access and correction:</strong> View and edit your account info from your profile page</li>
-            <li><strong>Data export:</strong> Email us to request an export of your saved analyses</li>
-            <li><strong>Account deletion:</strong> Email us to request deletion; we'll process within 30 days</li>
-            <li><strong>Marketing opt-out:</strong> Use the unsubscribe link in any marketing email</li>
+            <li>property and market-data providers, such as RentCast, FRED and the U.S. Census Bureau;</li>
+            <li>artificial-intelligence providers, such as OpenAI;</li>
+            <li>payment processors, such as Stripe;</li>
+            <li>authentication and email-delivery providers, such as Resend;</li>
+            <li>hosting, database and infrastructure providers, such as Render and MongoDB Atlas;</li>
+            <li>analytics and session-measurement providers, such as Google Analytics and Microsoft Clarity;</li>
+            <li>professional advisers, auditors and insurers; and</li>
+            <li>government authorities or other parties when required by law or reasonably necessary to protect rights, safety and security.</li>
           </ul>
-        </section>
-
-        <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>8. Security</h2>
           <p style={getTextStyle()}>
-            We use industry-standard security practices including encryption in transit (HTTPS) and
-            at rest, magic-link authentication (no passwords to leak), access controls, and regular
-            security reviews. No system is perfectly secure, however, and we cannot guarantee absolute
-            security. If we discover a breach affecting your data, we will notify you as required by law.
+            We may also disclose information in connection with a merger,
+            financing, acquisition, reorganization, bankruptcy, sale of assets
+            or similar corporate transaction.
+          </p>
+          <p style={getTextStyle()}>
+            Our service providers may process information in the United States
+            and other locations where they or their subprocessors operate.
           </p>
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>9. Children's Privacy</h2>
+          <h2 style={getSectionTitleStyle()}>6. AI Processing</h2>
           <p style={getTextStyle()}>
-            REanalyzr is not directed at children under 13. We do not knowingly collect personal
-            information from children. If you believe a child has provided us with personal data,
-            contact us and we will delete it.
+            When an AI-assisted feature is used, we may transmit relevant
+            property information, financial assumptions and generated
+            calculations to an artificial-intelligence provider to generate a
+            response. We seek to avoid sending your account email address to
+            the AI provider as part of the analysis prompt.
+          </p>
+          <p style={getTextStyle()}>
+            AI providers may temporarily retain information for security,
+            abuse-prevention or service-operation purposes in accordance with
+            their contractual terms and policies. We do not authorize
+            third-party AI providers to use your property-analysis information
+            to train their generally available models unless we separately
+            disclose that practice and obtain any consent required by law.
+          </p>
+          <p style={getTextStyle()}>
+            Do not submit Social Security numbers, bank-account credentials,
+            payment-card numbers, medical information or other sensitive
+            personal information that is not necessary to analyze a property.
           </p>
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>10. Changes to This Policy</h2>
+          <h2 style={getSectionTitleStyle()}>7. Analytics, Cookies and Session Measurement</h2>
           <p style={getTextStyle()}>
-            We may update this Privacy Policy from time to time. The "Last updated" date at the top
-            reflects the most recent revision. Material changes will be communicated by email or via
-            an in-product notice before they take effect.
+            We use analytics technologies to understand use of the Service and
+            improve performance. Depending on your settings and the page you
+            visit, these technologies may collect device identifiers,
+            IP-derived location, page views, clicks, scrolling, referral
+            information and interaction information.
+          </p>
+          <p style={getTextStyle()}>
+            We use Google Analytics to measure traffic and product usage. We
+            configure our analytics implementation to avoid intentionally
+            sending property addresses, email addresses or financial form
+            contents as analytics event parameters.
+          </p>
+          <p style={getTextStyle()}>
+            We may use Microsoft Clarity for heatmaps and session measurement.
+            We configure masking controls designed to prevent form-field
+            contents and designated application information from appearing in
+            recordings. Masking technology is not infallible, and we limit
+            session measurement on authenticated or sensitive portions of the
+            Service where reasonably practicable.
+          </p>
+          <p style={getTextStyle()}>
+            Our Service does not currently respond to the legacy browser "Do
+            Not Track" signal. Where required by applicable law, we will
+            process supported opt-out preference signals, such as Global
+            Privacy Control, as requests to opt out of applicable sale or
+            sharing activities.
+          </p>
+          <p style={getTextStyle()}>
+            You may control non-essential analytics through{' '}
+            <span style={getTodoStyle()}>[COOKIE SETTINGS LINK — TBD before publish]</span>,
+            supported browser controls or blocking technologies. Blocking
+            required authentication or security technologies may prevent
+            portions of the Service from functioning.
           </p>
         </section>
 
         <section style={getSectionStyle()}>
-          <h2 style={getSectionTitleStyle()}>11. Contact Us</h2>
+          <h2 style={getSectionTitleStyle()}>8. Sale and Sharing of Personal Information</h2>
           <p style={getTextStyle()}>
-            Questions about this Privacy Policy or how we handle your data? Email us at{' '}
-            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>{' '}
-            or use our <Link to="/contact" style={getLinkStyle()}>contact form</Link>.
+            We do not sell personal information for monetary compensation.
+          </p>
+          <p style={getTextStyle()}>
+            We do not knowingly sell or share personal information of
+            individuals under 16.
+          </p>
+          <p style={getTextStyle()}>
+            Certain analytics or advertising technologies may constitute a
+            "sale" or "sharing" under some state privacy laws even when no
+            money is exchanged.{' '}
+            <span style={getTodoStyle()}>
+              [Choose one after technical and contractual review of GA4,
+              Clarity, cookies and vendor contracts: (A) "We do not use
+              personal information for cross-context behavioral advertising
+              and do not sell or share personal information as those terms are
+              defined by the California Consumer Privacy Act." OR (B) provide
+              an accurate description of the analytics/advertising activity
+              and a Do Not Sell or Share mechanism.]
+            </span>
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>9. Data Retention</h2>
+          <p style={getTextStyle()}>
+            We retain information for only as long as reasonably necessary for
+            the purposes described in this Policy, including:
+          </p>
+          <ul style={getListStyle()}>
+            <li>account, saved-property, pipeline and portfolio information while your account remains active;</li>
+            <li>transaction and refund records for the period required for accounting, tax, fraud-prevention and legal purposes;</li>
+            <li>support communications for a reasonable period after the issue is resolved;</li>
+            <li>security and authentication logs for a limited period appropriate to security and fraud prevention; and</li>
+            <li>analytics information according to the retention settings configured with the applicable provider.</li>
+          </ul>
+          <p style={getTextStyle()}>
+            When you request account deletion, we will generally delete or
+            de-identify associated personal information from active systems
+            within 30 days, subject to information we must retain for legal,
+            security, fraud-prevention, dispute-resolution or accounting
+            purposes. Residual copies may remain in encrypted backups until
+            they expire through our ordinary backup cycle. If a backup is
+            restored, we will take reasonable steps to reapply applicable
+            deletion requests.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>10. Security</h2>
+          <p style={getTextStyle()}>
+            We use industry-standard security practices including encryption
+            in transit (HTTPS) and at rest, magic-link authentication (no
+            passwords to leak), access controls, and regular security reviews.
+            No system is perfectly secure, however, and we cannot guarantee
+            absolute security. If we discover a breach affecting your data, we
+            will notify you as required by law.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>11. Privacy Rights</h2>
+          <p style={getTextStyle()}>
+            Depending on your state of residence and whether the applicable
+            law applies to REanalyzr, you may have rights to request access
+            to, correction of, deletion of or a portable copy of certain
+            personal information. You may also have the right to opt out of
+            certain targeted advertising, sale, sharing or profiling
+            activities and to appeal our response to a request.
+          </p>
+          <p style={getTextStyle()}>
+            You may submit a request by emailing{' '}
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>.
+            We may need to verify your identity before completing a request.
+            We will not discriminate against you for exercising a privacy
+            right.
+          </p>
+          <p style={getTextStyle()}>
+            You may use an authorized agent where permitted by law. We may
+            request evidence of the agent's authority and may separately
+            verify your identity.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>12. California Information</h2>
+          <p style={getTextStyle()}>
+            California's "Shine the Light" law may permit California residents
+            to request information concerning certain disclosures of personal
+            information for third parties' direct-marketing purposes. We do
+            not disclose personal information to third parties for their own
+            direct-marketing purposes in the manner covered by that law.
+          </p>
+          <p style={getTextStyle()}>
+            California residents may also have rights under the California
+            Consumer Privacy Act if and when that law applies to REanalyzr.
+            Those rights may include the right to know, correct, delete and
+            obtain a portable copy of personal information, and to opt out of
+            the sale or sharing of personal information. Statutory exceptions
+            may apply.
+          </p>
+          <p style={getTextStyle()}>
+            California law requires us to explain how we respond to browser Do
+            Not Track signals and whether third parties may collect
+            information regarding users' online activities over time and
+            across different services. Please see "Analytics, Cookies and
+            Session Measurement" above.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>13. Changes to This Policy</h2>
+          <p style={getTextStyle()}>
+            We may update this Privacy Policy from time to time. The "Last
+            updated" date at the top reflects the most recent revision.
+            Material changes will be communicated by email or via an
+            in-product notice before they take effect.
+          </p>
+        </section>
+
+        <section style={getSectionStyle()}>
+          <h2 style={getSectionTitleStyle()}>14. Contact</h2>
+          <p style={getTextStyle()}>
+            <span style={getTodoStyle()}>[COMPLETE LEGAL NAME OF DELAWARE LLC — TBD]</span>
+            <br />
+            <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>
+            <br />
+            Email:{' '}
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>
+            <br />
+            Contact form: <Link to="/contact" style={getLinkStyle()}>reanalyzr.com/contact</Link>
           </p>
         </section>
       </div>
