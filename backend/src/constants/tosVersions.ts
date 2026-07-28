@@ -50,17 +50,27 @@ export const TOS_VERSION_HISTORY: Array<{
     version: '2026-07-27',
     material: true,
     summary:
-      'Pricing model rewrite: pay-per-deal ($4.99/property, 180-day window, ' +
-      'no subscription, no auto-renewal). Verdict language purged from §12 ' +
-      '(Deal Quality Score replaces BUY/NEGOTIATE/PASS). §15 beta framing ' +
-      'softened to "actively developed" service-availability disclaimer. ' +
-      'Contact email updated from legal@ to support@. Privacy Policy ' +
-      'rewritten to attorney redline in same batch (categories/disclosure/' +
-      'AI processing/retention/sale-share sections restructured; 18+ age ' +
-      'gate; DNT statement corrected; Stripe added; Clarity strict-mask ' +
-      'caveat softened). Attorney review still pending (#77) for full ToS ' +
-      'architectural rewrite — arbitration, class-action waiver, ' +
-      'limitation-of-liability cap, indemnity narrowing, acceptable-use.',
+      'Full ToS + Privacy Policy rewrite to attorney redline. ToS ' +
+      'architectural rebuild: 28 sections replacing 20 (removed old ' +
+      'website-template §1-9, added SaaS contract structure). New ' +
+      'provisions include binding individual arbitration (AAA Consumer ' +
+      'Rules), class-action and jury-trial waiver, 30-day arbitration ' +
+      'opt-out, small-claims carve-out, informal dispute-resolution ' +
+      'notice period, $100/12-mo-fees liability cap, narrowed ' +
+      'indemnification (third-party claims only, not first-party ' +
+      'consumer losses), acceptable-use section (housing/lending/' +
+      'fair-housing prohibitions), user-content license, feedback ' +
+      'license, suspension and termination with pro-rata refund, ' +
+      'consolidated Deal Quality Score / no-professional-advice / ' +
+      'assumption-of-risk disclaimers. Pricing model already stated as ' +
+      'pay-per-deal ($4.99/property, 180-day window, no subscription, ' +
+      'no auto-renewal). Privacy Policy rewritten in same batch ' +
+      '(categories restructured; 18+ age gate; DNT statement corrected; ' +
+      'Stripe disclosure added; Clarity mask caveat softened; ' +
+      'AI-processing section expanded). Visible amber TODOs remain for ' +
+      'LLC legal name, mailing address, legal notice email, court ' +
+      'venue county, cookie settings link, CCPA sale/share election — ' +
+      'to be resolved with counsel before production deploy.',
   },
 ];
 
