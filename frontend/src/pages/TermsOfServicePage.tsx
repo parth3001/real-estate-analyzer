@@ -436,7 +436,7 @@ const TermsOfServicePage: React.FC = () => {
         <div style={getSectionStyle()}>
           <h2 style={getSectionTitleStyle()}>20. Contact Information</h2>
           <p style={getTextStyle()}>
-            If you have any questions about these Terms of Service, please contact us at legal@reanalyzr.com.
+            If you have any questions about these Terms of Service, please contact us at <a href="mailto:support@reanalyzr.com">support@reanalyzr.com</a>.
           </p>
         </div>
       </div>

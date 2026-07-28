@@ -104,8 +104,8 @@ export function ReconsentModal({
             </MuiLink>
             . If you do not agree, you can decline and your account will be
             locked from further use; contact{' '}
-            <MuiLink href="mailto:legal@reanalyzr.com">
-              legal@reanalyzr.com
+            <MuiLink href="mailto:support@reanalyzr.com">
+              support@reanalyzr.com
             </MuiLink>{' '}
             for data export or deletion.
           </Typography>

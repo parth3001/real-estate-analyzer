@@ -242,7 +242,7 @@ const PrivacyPolicyPage: React.FC = () => {
           <h2 style={getSectionTitleStyle()}>11. Contact Us</h2>
           <p style={getTextStyle()}>
             Questions about this Privacy Policy or how we handle your data? Email us at{' '}
-            <a href="mailto:privacy@reanalyzr.com" style={getLinkStyle()}>privacy@reanalyzr.com</a>{' '}
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>{' '}
             or use our <Link to="/contact" style={getLinkStyle()}>contact form</Link>.
           </p>
         </section>
