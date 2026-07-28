@@ -77,7 +77,7 @@ const PrivacyPolicyPage: React.FC = () => {
       <div style={getContentStyle()}>
         <div style={getHeaderStyle()}>
           <h1 style={getTitleStyle()}>Privacy Policy</h1>
-          <p style={getSubtitleStyle()}>Last updated: April 27, 2026</p>
+          <p style={getSubtitleStyle()}>Last updated: July 27, 2026</p>
         </div>
 
         <section style={getSectionStyle()}>
