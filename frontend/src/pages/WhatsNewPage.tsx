@@ -277,8 +277,8 @@ const WhatsNewPage: React.FC = () => {
           />
           <LegacyRow
             date="August 2025"
-            title="Investment Decision Engine v2.1"
-            body="Deal Quality Score system (0-100 with contextual labels), strategy-aware weighting, professional benchmarks. Now visible whenever you ask the AI to score a deal."
+            title="Deal Quality Score system"
+            body="0-100 score with contextual labels, strategy-aware factor weighting, and professional benchmarks. Now visible whenever you ask the AI to score a deal."
           />
         </Stack>
       </Container>

@@ -366,8 +366,8 @@ const RentalPropertyCalculatorPage: React.FC = () => {
                 description: 'Track your deal pipeline from lead to close. See how each property impacts your portfolio goals. Monitor performance, visualize geographic diversification, and get AI-powered insights on portfolio health.'
               },
               {
-                title: 'Free with Beta Access',
-                description: 'Join during beta and get unlimited property analysis forever. No credit card required. Save deals, compare properties, and access professional-grade rental property calculator tools.'
+                title: 'Start Free, Pay Only When You Go Deep',
+                description: 'Sign up free — no credit card. Your first full analysis is included. After that, $4.99 per deal unlocks 180 days of unlimited chat, walk-away price, 10-year projections, and PDF export.'
               }
             ].map((feature, index) => (
               <Grid size={{ xs: 12, md: 6 }} key={index}>
@@ -406,7 +406,7 @@ const RentalPropertyCalculatorPage: React.FC = () => {
               },
               {
                 q: 'Do I need real estate experience to use this?',
-                a: 'No. REanalyzr is designed for everyone from first-time investors to experienced portfolio builders. Our AI Deal Quality Score (0-100) gives you an instant verdict—this deal is above or below professional standards—so you can make confident decisions in 5 minutes, even if you\'ve never analyzed a property before.'
+                a: 'No. REanalyzr is designed for everyone from first-time investors to experienced portfolio builders. Our AI Deal Quality Score (0-100) gives you an instant read—whether this deal is above or below professional standards—so you can make confident decisions in 5 minutes, even if you\'ve never analyzed a property before.'
               },
               {
                 q: 'How accurate is this BRRRR calculator?',
@@ -425,8 +425,8 @@ const RentalPropertyCalculatorPage: React.FC = () => {
                 a: 'Our real estate calculator computes 25+ metrics including: Cap Rate, Cash-on-Cash Return, IRR, DSCR, NOI, Cash Flow, Total ROI, Payback Period, Gross Rent Multiplier, Operating Expense Ratio, Break-Even Occupancy, and Equity Multiple. Both Buy & Hold and BRRRR calculators include 10-year projections.'
               },
               {
-                q: 'Do I need to create an account to use the calculator?',
-                a: 'No! Use our rental property calculator instantly without signing up. Anonymous analysis is free and unlimited. Create a free account to save deals, compare properties, and access AI insights. Beta users get lifetime free access to all calculator features.'
+                q: 'Do I need to create an account to analyze a property?',
+                a: 'No — start chatting anonymously. You get a full analysis and a few follow-up questions before we ask you to sign up. Signup is free (no credit card), and your first full analysis workspace is included. After that, $4.99 per deal unlocks 180 days of unlimited chat and the full workspace.'
               },
               {
                 q: 'How is this different from Excel spreadsheets?',

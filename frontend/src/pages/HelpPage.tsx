@@ -448,7 +448,7 @@ const FAQ: Array<{ q: string; a: string }> = [
     a: 'Yes. Mortgage rates come from FRED (Federal Reserve), rent estimates and comps from RentCast, and demographic data from the US Census. All references are visible in the analysis breakdown.',
   },
   {
-    q: 'What does the AI actually do vs. the calculator underneath?',
+    q: 'What does the AI actually do vs. the underwriting engine?',
     a: 'The underwriting math is deterministic — every calculation is done by the same engine every time. The AI handles interpretation, comparison, stress-testing, and answering follow-up questions in plain English. When you ask "why is DSCR so low?", the AI reads the actual numbers and explains them, not making things up.',
   },
   {

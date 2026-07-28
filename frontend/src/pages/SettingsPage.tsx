@@ -276,24 +276,28 @@ const SettingsPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Account Danger Zone */}
+      {/* Account Danger Zone — Task #136 (2026-07-27): the previous
+          "Delete Account (Coming Soon)" disabled button was a launch-day
+          trust signal (GDPR-adjacent expectation with no working path).
+          Replaced with a support-mailto until in-app deletion ships. */}
       {user.role !== 'admin' && (
         <Card sx={{ border: '1px solid', borderColor: 'error.main' }}>
           <CardContent>
             <Typography variant="h6" color="error" gutterBottom>
-              Danger Zone
+              Close your account
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              These actions cannot be undone. Please proceed with caution.
+              To close your account and delete all associated data, email us and
+              we'll process the request within one business day.
             </Typography>
             <Button
               variant="outlined"
               color="error"
               startIcon={<DeleteIcon />}
               sx={{ mt: 2 }}
-              disabled
+              href="mailto:support@reanalyzr.com?subject=Account%20closure%20request"
             >
-              Delete Account (Coming Soon)
+              Email support to close account
             </Button>
           </CardContent>
         </Card>

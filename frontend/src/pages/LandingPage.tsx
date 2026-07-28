@@ -1039,7 +1039,7 @@ const LandingPage: React.FC = () => {
             Run a Deal Now →
           </Button>
           <Typography sx={{ mt: 2, fontSize: '0.875rem', color: '#94A3B8' }}>
-            Five minutes from address to score. Free during beta.
+            Five minutes from address to score. First analysis included, then $4.99 per deal.
           </Typography>
         </Container>
       </Box>
