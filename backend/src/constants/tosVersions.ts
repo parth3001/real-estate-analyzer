@@ -21,9 +21,9 @@
  * sharing, or liability").
  */
 
-export const CURRENT_TOS_VERSION = '2025-10-30';
+export const CURRENT_TOS_VERSION = '2026-07-27';
 
-export const CURRENT_PRIVACY_VERSION = '2026-04-27';
+export const CURRENT_PRIVACY_VERSION = '2026-07-27';
 
 /**
  * Material vs non-material flag per ToS version. Used by the login
@@ -46,15 +46,17 @@ export const TOS_VERSION_HISTORY: Array<{
     material: true,
     summary: 'Initial ToS for the 2.0 platform.',
   },
-  // When the attorney-reviewed rewrite ships (post-#77), add it here:
-  // {
-  //   version: '2026-06-30',
-  //   material: true,
-  //   summary:
-  //     'Added arbitration + class action waiver; rewrote subscription ' +
-  //     'section as pay-per-deal; added CCPA section; added AI ' +
-  //     'confabulation acknowledgment.',
-  // },
+  {
+    version: '2026-07-27',
+    material: true,
+    summary:
+      'Pricing model rewrite: pay-per-deal ($4.99/property, 180-day window, ' +
+      'no subscription, no auto-renewal). Verdict language purged from §12 ' +
+      '(Deal Quality Score replaces BUY/NEGOTIATE/PASS). §15 beta framing ' +
+      'softened to "actively developed" service-availability disclaimer. ' +
+      'Contact email updated from legal@ to support@. Attorney review still ' +
+      'pending (#77) for arbitration, class-action waiver, CCPA additions.',
+  },
 ];
 
 /**

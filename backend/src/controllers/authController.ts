@@ -105,9 +105,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // theficouple partnership ended). Existing User docs retain
     // affiliateCode/affiliateCodeSetAt for historical accounting; new
     // registrations no longer populate the fields.
+    const { CURRENT_TOS_VERSION } = await import('../constants/tosVersions');
     const registrationMetadata = {
       termsAcceptedAt: new Date(),
-      termsVersion: '2025-10-30', // Update this when TOS changes
+      termsVersion: CURRENT_TOS_VERSION,
       termsAcceptedIp: req.ip || req.socket.remoteAddress || 'unknown',
       registrationIp: req.ip || req.socket.remoteAddress || 'unknown',
       registrationUserAgent: req.headers['user-agent'] || 'unknown',
