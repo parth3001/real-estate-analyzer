@@ -111,6 +111,31 @@ const StickyHeader: React.FC = () => {
               Pricing
             </Button>
 
+            {/* Blog Link — Task #33 followup (2026-07-27): added here so
+                StickyHeader nav matches PublicHeader (Landing used to be
+                the only page with the Blog link). Same styling as siblings. */}
+            <Button
+              onClick={() => navigate('/blog')}
+              sx={{
+                color: appleColors.gray[700],
+                fontSize: { xs: '0.875rem', md: '0.938rem' },
+                fontWeight: 500,
+                textTransform: 'none',
+                padding: { xs: '6px 12px', md: '8px 16px' },
+                minWidth: 'auto',
+                display: { xs: 'none', sm: 'inline-flex' },
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: appleColors.primary[500],
+                  textDecoration: 'underline',
+                  textDecorationThickness: '1px',
+                  textUnderlineOffset: '4px'
+                }
+              }}
+            >
+              Blog
+            </Button>
+
             {/* What's New Link */}
             <Button
               onClick={() => navigate('/whats-new')}
