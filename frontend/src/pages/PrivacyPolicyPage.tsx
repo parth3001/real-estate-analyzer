@@ -400,7 +400,7 @@ const PrivacyPolicyPage: React.FC = () => {
         <section style={getSectionStyle()}>
           <h2 style={getSectionTitleStyle()}>14. Contact</h2>
           <p style={getTextStyle()}>
-            <span style={getTodoStyle()}>[COMPLETE LEGAL NAME OF DELAWARE LLC — TBD]</span>
+            PVA Ventures LLC
             <br />
             <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>
             <br />

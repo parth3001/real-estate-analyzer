@@ -109,8 +109,8 @@ const TermsOfServicePage: React.FC = () => {
           <p style={getTextStyle()}>
             These Terms of Service ("Terms") are a binding agreement between
             you and{' '}
-            <span style={getTodoStyle()}>[COMPLETE LEGAL NAME OF DELAWARE LLC — TBD]</span>,
-            a Delaware limited liability company doing business as "REanalyzr"
+            PVA Ventures LLC,
+            a Texas limited liability company doing business as "REanalyzr"
             ("REanalyzr," "we," "us," or "our"). They govern your access to
             and use of the REanalyzr website, applications, and related
             services (collectively, the "Service").
@@ -560,7 +560,7 @@ const TermsOfServicePage: React.FC = () => {
           </p>
           <p style={getTextStyle()}>
             Notices to REanalyzr must be sent to{' '}
-            <span style={getTodoStyle()}>[LEGAL NOTICE EMAIL — TBD]</span>{' '}
+            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>{' '}
             and{' '}
             <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>.
             REanalyzr may send a notice to the email address associated with
@@ -646,7 +646,7 @@ const TermsOfServicePage: React.FC = () => {
           <p style={getTextStyle()}>
             You may opt out of the arbitration agreement by sending a written
             notice to{' '}
-            <span style={getTodoStyle()}>[LEGAL NOTICE EMAIL — TBD]</span>{' '}
+            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>{' '}
             within 30 days after the date you first accept these Terms. Your
             notice must include your full name, the email address used for
             your account and an unambiguous statement that you wish to opt
@@ -667,7 +667,7 @@ const TermsOfServicePage: React.FC = () => {
             Subject to the arbitration and small-claims provisions above,
             you and REanalyzr consent to the exclusive jurisdiction and venue
             of the state courts located in{' '}
-            <span style={getTodoStyle()}>[COUNTY, TEXAS — pending confirmation of principal office; attorney draft suggests Collin County]</span>,
+            Collin County, Texas,
             and the United States District Court for the Eastern District of
             Texas. Nothing in this provision deprives a consumer of
             protections that cannot lawfully be waived under the law of the
@@ -758,14 +758,14 @@ const TermsOfServicePage: React.FC = () => {
         <div style={getSectionStyle()}>
           <h2 style={getSectionTitleStyle()}>28. Contact</h2>
           <p style={getTextStyle()}>
-            <span style={getTodoStyle()}>[COMPLETE LEGAL NAME OF DELAWARE LLC — TBD]</span>
+            PVA Ventures LLC
             <br />
             <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>
             <br />
             Support: <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>
             <br />
             Legal notices:{' '}
-            <span style={getTodoStyle()}>[LEGAL NOTICE EMAIL — TBD]</span>
+            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>
             <br />
             Contact form:{' '}
             <Link to="/contact" style={getLinkStyle()}>reanalyzr.com/contact</Link>
