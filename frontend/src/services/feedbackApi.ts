@@ -4,8 +4,12 @@
  */
 
 import axios from 'axios';
+import api from './api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+// NOTE: this module used to build its own base URL from VITE_API_BASE_URL,
+// a var that was set nowhere and fell back to http://localhost:3000 — so in
+// production every feedback submission POSTed to the user's own machine and
+// silently failed. It now uses the shared client like every other service.
 
 export interface FeedbackSubmission {
   usefulnessRating: number;
@@ -31,16 +35,9 @@ export const submitFeedback = async (
   feedback: FeedbackSubmission
 ): Promise<FeedbackResponse> => {
   try {
-    const response = await axios.post<FeedbackResponse>(
-      `${API_BASE_URL}/api/feedback`,
-      feedback,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000, // 10 second timeout
-      }
-    );
+    const response = await api.post<FeedbackResponse>('/feedback', feedback, {
+      timeout: 10000, // 10 second timeout
+    });
 
     return response.data;
   } catch (error) {
@@ -62,8 +59,8 @@ export const submitFeedback = async (
  */
 export const getUserFeedback = async (userId: string): Promise<FeedbackSubmission[]> => {
   try {
-    const response = await axios.get<{ feedback: FeedbackSubmission[] }>(
-      `${API_BASE_URL}/api/feedback/user/${userId}`
+    const response = await api.get<{ feedback: FeedbackSubmission[] }>(
+      `/feedback/user/${userId}`
     );
     return response.data.feedback;
   } catch (error) {

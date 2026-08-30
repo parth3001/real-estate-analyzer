@@ -69,6 +69,11 @@ import type {
 import { logger } from '../utils/logger';
 import { fireCritiqueOnSave } from '../agents/adversarialCritic/triggerOnSave';
 import { licenseRepository } from '../repositories/LicenseRepository';
+import {
+  isBillingEnabled,
+  FREE_BETA_LICENSE_WINDOW_DAYS,
+} from '../config/billing';
+import { LICENSE_CAP_CENTS } from '../agents/runtime/costGuards';
 import { normalizeStrategy, toLegacyDealStrategy } from '../domain/strategy';
 
 // PropertyAddress type used by the auto-redeem helper. Materializer
@@ -684,7 +689,7 @@ export async function materializeDealFromDecision(
     // who analyzed → re-ran → THEN signed up lands here on the update
     // path. The helper is idempotent (skips if an active license
     // already exists), so re-runs of the same deal don't double-burn.
-    fireAutoRedeemFirstFreeCredit({
+    fireAutoLicenseGrant({
       userId,
       propertyAddress: property.propertyAddress,
     });
@@ -712,7 +717,11 @@ export async function materializeDealFromDecision(
   // workspace instead of a teaser. Idempotent — re-materialization of
   // an existing deal won't double-burn. Fire-and-forget; failure is
   // non-fatal and ops-recoverable.
-  fireAutoRedeemFirstFreeCredit({
+  //
+  // Free beta (2026-08-30): when BILLING_ENABLED=false this also grants
+  // a promo license to users who have no credit left — see
+  // fireAutoLicenseGrant and config/billing.ts.
+  fireAutoLicenseGrant({
     userId,
     propertyAddress: property.propertyAddress,
   });
@@ -721,18 +730,36 @@ export async function materializeDealFromDecision(
 
 /**
  * Task #14 (2026-06-17) — first_free auto-redeem.
+ * Free-beta launch (2026-08-30) — promo grant when billing is off.
  *
  * Background-fired from materializeDealFromDecision. Picks the oldest
  * unredeemed credit (FIFO — first_free at signup time, in v1) and
  * burns it down against the just-materialized property. Idempotent:
- * skips if an active license already exists on this property OR if
- * the user has no redeemable credits.
+ * skips if an active license already exists on this property.
+ *
+ * WHEN BILLING IS OFF (BILLING_ENABLED=false)
+ * ───────────────────────────────────────────
+ *
+ *   A user with no credits left would previously fall through here and
+ *   land on the D2 unlock landing with a disabled Stripe button — a
+ *   dead end while Stripe is dark. So during the free beta we mint a
+ *   'promo' credit on the spot and redeem it, giving every analyzed
+ *   property a real (free) license.
+ *
+ *   Going through the credit path rather than calling purchaseLicense
+ *   directly is deliberate: every beta grant carries
+ *   redeemedFromCreditId → sourceType 'promo', so first_free grants,
+ *   beta grants, and real purchases stay distinguishable in the data
+ *   once billing switches back on.
+ *
+ *   Anonymous users never reach here (no userId → no materialized
+ *   deal), so the signup wall is unaffected.
  *
  * Fire-and-forget semantics — the materializer must NEVER block or
  * fail because of license issuance, so this swallows all errors and
  * logs them for ops backfill.
  */
-function fireAutoRedeemFirstFreeCredit(opts: {
+function fireAutoLicenseGrant(opts: {
   userId: Types.ObjectId;
   propertyAddress: PropertyAddress;
 }): void {
@@ -754,25 +781,54 @@ function fireAutoRedeemFirstFreeCredit(opts: {
         return;
       }
 
-      const credits = await licenseRepository.findRedeemableCredits(userId, 1);
+      let credits = await licenseRepository.findRedeemableCredits(userId, 1);
       if (credits.length === 0) {
-        // Common case for users without a signup credit (legacy users,
-        // already-redeemed paid users). Not an error.
-        return;
+        if (isBillingEnabled()) {
+          // Common case for users without a signup credit (legacy users,
+          // already-redeemed paid users). Not an error.
+          return;
+        }
+        // Free beta: mint a promo credit so this property gets a real
+        // (free) license instead of a paywall the user can't clear.
+        const [promoCreditId] = await licenseRepository.issueCredits({
+          userId,
+          sourceType: 'promo',
+          pricePaidCents: 0,
+          count: 1,
+        });
+        credits = await licenseRepository.findRedeemableCredits(userId, 1);
+        if (credits.length === 0) {
+          logger.warn(
+            '[dealMaterialization:autoGrant] promo credit issued but not readable — skipping',
+            {
+              userId: userId.toHexString(),
+              promoCreditId: promoCreditId?.toString(),
+            }
+          );
+          return;
+        }
       }
 
+      const isBetaGrant = credits[0].sourceType === 'promo';
       const { licenseId } = await licenseRepository.redeemCreditForProperty({
         userId,
         creditId: credits[0]._id,
         propertyAddress,
+        // Beta grants get a shorter window than the paid 180 days so
+        // comped access doesn't overhang the paid launch.
+        windowDays: isBetaGrant ? FREE_BETA_LICENSE_WINDOW_DAYS : undefined,
+        // Keep the badge's budget bar honest against the raised
+        // COST_CAP_LICENSE_CENTS we run with during the free beta.
+        costBudgetCentsStart: isBetaGrant ? LICENSE_CAP_CENTS : undefined,
       });
       logger.info(
-        '[dealMaterialization:autoRedeem] first_free credit redeemed',
+        `[dealMaterialization:autoGrant] ${credits[0].sourceType} credit redeemed`,
         {
           userId: userId.toHexString(),
           creditId: credits[0]._id.toString(),
           licenseId: licenseId.toString(),
           sourceType: credits[0].sourceType,
+          betaGrant: isBetaGrant,
         }
       );
     } catch (err) {

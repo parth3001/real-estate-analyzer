@@ -394,6 +394,15 @@ export class LicenseRepository {
     userId: Types.ObjectId | string;
     creditId: Types.ObjectId | string;
     propertyAddress: PropertyAddressInput;
+    /**
+     * Override the license window for this redemption. Free-beta grants
+     * pass a shorter window than the paid 180 days so comped access
+     * doesn't overhang the paid launch. Omitted → purchaseLicense's
+     * usual env/default resolution applies.
+     */
+    windowDays?: number;
+    /** Override the COGS budget shown on the license badge. */
+    costBudgetCentsStart?: number;
   }): Promise<{ licenseId: Types.ObjectId }> {
     // Pre-flight: confirm credit is redeemable.
     const credit = await DealCreditModel.findOne({
@@ -418,6 +427,8 @@ export class LicenseRepository {
       pricePaidCents: credit.pricePaidCents,
       stripePaymentIntentId: credit.stripePaymentIntentId,
       redeemedFromCreditId: credit._id as Types.ObjectId,
+      windowDays: opts.windowDays,
+      costBudgetCentsStart: opts.costBudgetCentsStart,
     });
 
     const flipped = await this.markCreditRedeemed(opts.creditId, licenseId);

@@ -48,6 +48,7 @@
 import { Types } from 'mongoose';
 import { CostEventModel } from '../../models/cost/CostEvent';
 import { logger } from '../../utils/logger';
+import { isBillingEnabled } from '../../config/billing';
 
 // ===== Configuration =====
 //
@@ -235,10 +236,12 @@ export async function assertWithinCaps(input: AssertWithinCapsInput): Promise<vo
       kind: 'session',
       spentCents: sessionSpend,
       capCents: SESSION_CAP_CENTS,
-      userFacingMessage:
-        "You've reached the chat usage limit for this session. " +
-        'Start a new conversation, or pick up a Deal License at /pricing ' +
-        'for unlimited deep-dive analysis.',
+      userFacingMessage: isBillingEnabled()
+        ? "You've reached the chat usage limit for this session. " +
+          'Start a new conversation, or pick up a Deal License at /pricing ' +
+          'for unlimited deep-dive analysis.'
+        : "You've reached the chat usage limit for this session. " +
+          'Start a new conversation to keep going.',
     });
   }
 
@@ -254,10 +257,12 @@ export async function assertWithinCaps(input: AssertWithinCapsInput): Promise<vo
       kind: 'license',
       spentCents: licenseSpend,
       capCents: LICENSE_CAP_CENTS,
-      userFacingMessage:
-        "You've used the full analytical budget for this property. " +
-        'License a new property at /pricing, or open one of your other ' +
-        'saved deals to keep going.',
+      userFacingMessage: isBillingEnabled()
+        ? "You've used the full analytical budget for this property. " +
+          'License a new property at /pricing, or open one of your other ' +
+          'saved deals to keep going.'
+        : "You've used the full analytical budget for this property. " +
+          'Open one of your other saved deals to keep going.',
     });
   }
 

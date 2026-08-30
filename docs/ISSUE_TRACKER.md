@@ -16747,6 +16747,43 @@ Estimated effort: ~2 hours (frontend-only, uses existing backend numbers).
 
 ---
 
+### Issue #260: Free-mode production launch of reanalyzr-2.0
+
+**Status**: 🟢 In Progress
+**Priority**: P0 (Critical) — release blocker
+**Reported**: 2026-08-30
+**Component**: `backend/src/config/billing.ts`, `backend/src/services/dealMaterializationService.ts`, `render.yaml`, frontend API clients, legal pages
+
+**Description**:
+
+`main` has been frozen at production (`13642d7`, June 2025) while ~6 months of work accumulated on `reanalyzr-2.0` — 544 commits, effectively a different application. A *paid* launch is gated on two external dependencies with no known completion date: the LLC's registered-agent paperwork with the state, and counsel's review of the Terms of Service.
+
+Decision: ship 2.0 to production now, free for everyone, with no money changing hands. Billing returns later by flipping one env var.
+
+**Why not just unset the Stripe payment link**: signup mints a `first_free` credit that auto-redeems into a real license, so property #1 works. Property #2 has no license and hits the Model #6 chat cap (402) plus the workspace gate in `AnalysisDetails.tsx`. With no payment link the Unlock button is merely *disabled* — users see the wall with no way past it. Dead end, not a free product.
+
+**Approach — satisfy the paywall, don't bypass it**: when `BILLING_ENABLED=false`, every property a signed-in user analyzes is granted a real `DealLicense` at `pricePaidCents: 0`, issued through the existing promo-credit path. Consequences, all deliberate:
+
+- Zero enforcement points change — licensed users already bypass the chat cap and pass `assertLicenseAllowsMutation`.
+- Zero frontend changes for the gate — `GET /api/deals/:id/license` returns a genuine active license.
+- The signup wall survives for free — anonymous users have no `userId`, so no grant, so the cap fires with `chat_cap_reached_signup` (auth modal, not a payment prompt).
+- Graceful reversal — stop granting and existing licenses run out their 60-day window instead of dying at a cliff.
+- Beta grants stay distinguishable from real sales via `redeemedFromCreditId → sourceType: 'promo'`.
+
+**Business Impact**: unblocks ~6 months of shipped work from an indefinite legal/paperwork wait, without taking money under an unreviewed ToS or a not-yet-final entity. Free access also buys real usage data on the chat-first surface ahead of the paid launch.
+
+**Scope delivered**:
+- §A free-license grant + call-time `isBillingEnabled()` + 60-day beta window + softened cost-cap copy (4 new tests, 20/20 passing)
+- §C deploy blockers: `render.yaml` `${service.url}` interpolation, `/api/api` double-prefix in `RecentAnalysesPanel`, `feedbackApi` localhost fallback, enforced CORS, `/api/health` secret-presence leak, cache headers, blog-prerender route shadowing
+- Two pre-existing TypeScript errors that would have failed the Render build (`SavedDealHero.tsx`, `EmailCtaModal.tsx`) — the frontend has never been typechecked in CI
+- §B legal: amber TODOs removed, CCPA election made accurate via GA4 config, GPC statement corrected
+
+**Accepted risks** (see plan file for the full list): pre-2.0 saved deals may be lost (no dedup backfill), consent remains browsewrap, re-consent path is unreachable and must be fixed before the counsel-reviewed ToS ships, no CI gates `main`.
+
+**Cross-references**: #258 (frontend lint debt), #221 (classifier mis-routing), `docs/PRODUCT_2.0_PROD_MIGRATION.md`
+
+---
+
 ## 📝 **ISSUE TEMPLATE**
 
 ```markdown

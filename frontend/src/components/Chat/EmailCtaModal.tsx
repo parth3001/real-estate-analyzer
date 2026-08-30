@@ -212,7 +212,11 @@ export function EmailCtaModal(props: EmailCtaModalProps): React.JSX.Element {
               type="submit"
               form="email-cta-form"
               variant="contained"
-              disabled={!canSubmit || status.kind === 'sending'}
+              // `canSubmit` already requires status.kind === 'idle', so a
+              // separate 'sending' check is unreachable — and TS 5.5's
+              // inferred type predicates now flag it as a build error.
+              // Sending still disables the button, via !canSubmit.
+              disabled={!canSubmit}
               startIcon={
                 status.kind === 'sending' ? (
                   <CircularProgress size={16} thickness={5} color="inherit" />

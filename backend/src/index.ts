@@ -6,6 +6,7 @@
 import './loadEnv';
 
 import express, { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -65,7 +66,44 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Middleware
-app.use(cors());
+//
+// CORS_ORIGIN is wired from the static site's URL by render.yaml. Until
+// 2026-08-30 it was read only for the /api/health payload and never
+// passed to the cors() middleware, so production accepted credentialed
+// requests from any origin. Now it's enforced: in production the header
+// is required and only the configured origin (plus same-origin/curl
+// requests, which send no Origin header) is allowed. Non-production
+// stays permissive so local dev and the Vite proxy keep working.
+const corsOrigin = process.env.CORS_ORIGIN;
+if (process.env.NODE_ENV === 'production' && corsOrigin) {
+  const allowedOrigins = corsOrigin
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+  app.use(
+    cors({
+      origin(origin, callback) {
+        // No Origin header → same-origin, curl, or a server-to-server
+        // call. Not a browser cross-origin request, so nothing to block.
+        if (!origin) return callback(null, true);
+        const normalized = origin.replace(/\/$/, '');
+        if (allowedOrigins.includes(normalized)) return callback(null, true);
+        logger.warn('CORS: blocked disallowed origin', { origin, allowedOrigins });
+        return callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+    })
+  );
+  logger.info('✅ CORS restricted to configured origins', { allowedOrigins });
+} else {
+  if (process.env.NODE_ENV === 'production') {
+    logger.warn(
+      'CORS_ORIGIN is unset in production — falling back to permissive CORS. ' +
+        'Set CORS_ORIGIN to the frontend URL.'
+    );
+  }
+  app.use(cors());
+}
 
 // Security headers with Helmet.js
 app.use(helmet({
@@ -180,23 +218,42 @@ app.use('/api/contact', contactRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/pdf', pdfRouter);  // PDF routes (has its own rate limiting in pdfRateLimiter middleware)
 
-// Health check endpoint
+// Health check endpoint — also Render's healthCheckPath.
+//
+// This endpoint is UNAUTHENTICATED and publicly reachable. Until
+// 2026-08-30 it echoed which secrets were configured, plus the literal
+// character length of OPENAI_API_KEY — a free reconnaissance surface for
+// anyone probing the host. The config diagnostics are still useful when
+// debugging a local or staging boot, so they're kept OUT of production
+// only.
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ 
+  const payload: Record<string, unknown> = {
     status: 'healthy',
-    env: {
+    uptimeSeconds: Math.round(process.uptime()),
+    // 1 === connected. Surfacing this makes "the app is up but Mongo
+    // isn't" visible without reading logs.
+    dbConnected: mongoose.connection.readyState === 1,
+  };
+
+  if (process.env.NODE_ENV !== 'production') {
+    payload.env = {
       NODE_ENV: process.env.NODE_ENV,
       PORT: process.env.PORT,
       OPENAI_API_KEY_EXISTS: !!process.env.OPENAI_API_KEY,
-      OPENAI_API_KEY_LENGTH: process.env.OPENAI_API_KEY?.length,
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       MONGODB_URI_EXISTS: !!process.env.MONGODB_URI,
       CENSUS_API_KEY_EXISTS: !!process.env.CENSUS_API_KEY,
       RENTCAST_API_KEY_EXISTS: !!process.env.RENTCAST_API_KEY,
       FRED_API_KEY_EXISTS: !!process.env.FRED_API_KEY,
-      JWT_SECRET_EXISTS: !!process.env.JWT_SECRET
-    }
-  });
+      JWT_SECRET_EXISTS: !!process.env.JWT_SECRET,
+      ANTHROPIC_API_KEY_EXISTS: !!process.env.ANTHROPIC_API_KEY,
+      RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+      FRONTEND_URL: process.env.FRONTEND_URL,
+      BILLING_ENABLED: process.env.BILLING_ENABLED ?? 'true (default)',
+    };
+  }
+
+  res.json(payload);
 });
 
 // Error handling middleware

@@ -351,7 +351,12 @@ export const propertyApi = {
    *   mode: 'email'    → server emails the PDF to the authenticated
    *                       user's address; resolves to undefined.
    */
-  exportPdf: async (
+  // Overloaded so the return type follows `mode`: 'download' hands back
+  // the Blob the caller passes to URL.createObjectURL, 'email' resolves
+  // to void. The previous single `Promise<Blob | void>` signature forced
+  // every download call site into a `void` check it couldn't satisfy —
+  // which is what broke the production build (SavedDealHero.tsx:511).
+  exportPdf: (async (
     id: string,
     opts: { mode: 'download' | 'email'; email?: string }
   ): Promise<Blob | void> => {
@@ -363,6 +368,9 @@ export const propertyApi = {
       responseType: 'blob',
     });
     return response.data as Blob;
+  }) as {
+    (id: string, opts: { mode: 'download'; email?: string }): Promise<Blob>;
+    (id: string, opts: { mode: 'email'; email?: string }): Promise<void>;
   },
 
   /**

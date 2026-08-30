@@ -48,7 +48,21 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-B9TCNECM9M');
+      // allow_google_signals:false disables Google Signals — no
+      // cross-device/cross-site advertising features, no remarketing
+      // audiences. restricted_data_processing:true limits Google to
+      // service-provider processing.
+      //
+      // These two flags are what make the Privacy Policy's §8 statement
+      // ("we do not use personal information for cross-context behavioral
+      // advertising, and do not sell or share personal information as
+      // those terms are defined by the CCPA") accurate. Do not remove one
+      // without updating the other.
+      gtag('config', 'G-B9TCNECM9M', {
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+        restricted_data_processing: true
+      });
     </script>
 
     <!-- Structured Data (JSON-LD) -->

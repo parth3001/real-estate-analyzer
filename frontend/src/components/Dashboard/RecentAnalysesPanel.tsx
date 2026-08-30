@@ -20,7 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { AppleButton, AppleCard } from '../ui/AppleComponents';
 import { ConfidenceIndicator } from '../ui/ConfidenceIndicator';
-import axios from 'axios';
+import api from '../../services/api';
 
 // Recent Analyses Interfaces
 interface RecentAnalysis {
@@ -67,13 +67,12 @@ const RecentAnalysesPanel: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/deals/recent?limit=6`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      // Use the shared axios client. It already resolves the API base
+      // URL (VITE_API_URL, which INCLUDES the /api suffix) and attaches
+      // the auth token via its request interceptor. Building the URL by
+      // hand here produced `/api/api/deals/recent` in production, and
+      // read the token from the wrong storage key.
+      const response = await api.get('/deals/recent?limit=6');
 
       if (response.data.success) {
         setRecentAnalyses(response.data.deals || []);

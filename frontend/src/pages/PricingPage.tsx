@@ -191,6 +191,43 @@ const PricingPage: React.FC = () => {
             >
               The platform is free. Get a Deal Quality Score on any property. Save deals to your workspace. Pay $4.99 only when you want the full institutional-grade underwriting.
             </Typography>
+
+            {/* Free-beta notice (2026-08-30).
+                Payments are not switched on yet — the backend runs with
+                BILLING_ENABLED=false, which grants every analyzed property
+                a free license. The pricing below stays visible on purpose:
+                it's what the product will cost, and setting that
+                expectation now avoids a nasty surprise at launch. Remove
+                this block when billing goes live. */}
+            <Box
+              sx={{
+                mt: 4,
+                mx: 'auto',
+                maxWidth: 680,
+                px: { xs: 2.5, md: 3 },
+                py: 2,
+                borderRadius: 2,
+                border: '1px solid #BFDBFE',
+                bgcolor: '#EFF6FF',
+              }}
+              data-testid="free-beta-notice"
+            >
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.9375rem', md: '1rem' },
+                  color: '#1E3A8A',
+                  lineHeight: 1.6,
+                }}
+              >
+                <Box component="span" sx={{ fontWeight: 600 }}>
+                  Free while we're in beta.
+                </Box>{' '}
+                Payments aren't switched on yet, so everything below is
+                currently unlocked at no cost — including the full
+                workspace on every property you analyze. The pricing here is
+                what it will cost once billing goes live.
+              </Typography>
+            </Box>
           </Box>
         </Container>
       </Box>

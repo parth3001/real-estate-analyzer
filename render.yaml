@@ -12,11 +12,20 @@ services:
         value: production
       - key: PORT
         value: 10000
+      # CORS_ORIGIN is now ENFORCED by the cors() middleware (src/index.ts),
+      # not just echoed in /api/health. It must therefore list EVERY origin
+      # the app is served from — `fromService` would yield only the
+      # *.onrender.com URL and lock out the custom domains.
+      #
+      # Set in the dashboard as a comma-separated list, e.g.:
+      #   https://reanalyzr.com,https://www.reanalyzr.com,
+      #   https://theficouple.reanalyzr.com,
+      #   https://real-estate-analyzer-9ise.onrender.com
+      #
+      # If it is left unset the server logs a warning and falls back to
+      # permissive CORS — degraded, but not an outage.
       - key: CORS_ORIGIN
-        fromService:
-          name: real-estate-analyzer-frontend
-          type: static_site
-          property: url
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: MONGODB_URI
@@ -32,15 +41,32 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build && mkdir -p build && cp -r dist/* build/
     publishDir: build
-    envVars:
-      - key: VITE_API_URL
-        value: ${real-estate-analyzer-api.url}/api
+    # VITE_API_URL is deliberately NOT declared here.
+    #
+    # Render blueprints do not interpolate `${service.url}` in a `value:`
+    # — the literal string gets baked into the JS bundle at build time and
+    # every API call fails. `fromService:` (see CORS_ORIGIN above) is the
+    # supported form, but it yields the bare origin and this app needs the
+    # `/api` suffix (services/api.ts uses it as the axios baseURL and every
+    # caller passes bare paths like `/deals`).
+    #
+    # So it is set explicitly in the Render dashboard:
+    #   VITE_API_URL = https://real-estate-analyzer-api.onrender.com/api
     autoDeploy: true
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    # No `routes:` block here on purpose. frontend/public/_redirects owns
+    # routing — it carries the blog prerender rules
+    # (/blog/* -> /blog/:splat/index.html 200) that make
+    # scripts/prerender-blog.mjs worth running, plus the trailing-slash
+    # 301s, and it ends with the SPA catch-all. A blanket rewrite here
+    # would shadow the prerendered HTML and hand Googlebot the SPA shell.
     headers:
-      - path: /*
+      # Only the HTML entry point must never be cached — it's what points
+      # at the current hashed bundle. Vite's /assets/* filenames are
+      # content-hashed and safe to cache hard; a blanket no-store made
+      # every page load re-download the whole bundle.
+      - path: /index.html
         name: Cache-Control
-        value: no-store 
+        value: no-store, must-revalidate
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable 

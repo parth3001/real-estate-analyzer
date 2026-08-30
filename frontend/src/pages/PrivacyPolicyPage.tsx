@@ -261,17 +261,20 @@ const PrivacyPolicyPage: React.FC = () => {
           </p>
           <p style={getTextStyle()}>
             Our Service does not currently respond to the legacy browser "Do
-            Not Track" signal. Where required by applicable law, we will
-            process supported opt-out preference signals, such as Global
-            Privacy Control, as requests to opt out of applicable sale or
-            sharing activities.
+            Not Track" signal, and does not currently detect or process
+            opt-out preference signals such as Global Privacy Control. We do
+            not use personal information for cross-context behavioral
+            advertising, so these signals do not currently change how your
+            information is handled. If that changes, we will update this
+            Policy and implement the required signal handling.
           </p>
           <p style={getTextStyle()}>
-            You may control non-essential analytics through{' '}
-            <span style={getTodoStyle()}>[COOKIE SETTINGS LINK — TBD before publish]</span>,
-            supported browser controls or blocking technologies. Blocking
-            required authentication or security technologies may prevent
-            portions of the Service from functioning.
+            You may control non-essential analytics through your browser's
+            cookie and site-data settings, your browser's private browsing
+            mode, or a tracking-blocking extension. We do not currently offer
+            an in-product cookie settings panel. Blocking required
+            authentication or security technologies may prevent portions of
+            the Service from functioning.
           </p>
         </section>
 
@@ -287,16 +290,12 @@ const PrivacyPolicyPage: React.FC = () => {
           <p style={getTextStyle()}>
             Certain analytics or advertising technologies may constitute a
             "sale" or "sharing" under some state privacy laws even when no
-            money is exchanged.{' '}
-            <span style={getTodoStyle()}>
-              [Choose one after technical and contractual review of GA4,
-              Clarity, cookies and vendor contracts: (A) "We do not use
-              personal information for cross-context behavioral advertising
-              and do not sell or share personal information as those terms are
-              defined by the California Consumer Privacy Act." OR (B) provide
-              an accurate description of the analytics/advertising activity
-              and a Do Not Sell or Share mechanism.]
-            </span>
+            money is exchanged. We use analytics providers as service
+            providers only, with advertising and cross-site personalization
+            features disabled. We do not use personal information for
+            cross-context behavioral advertising, and we do not sell or share
+            personal information as those terms are defined by the California
+            Consumer Privacy Act.
           </p>
         </section>
 

@@ -853,6 +853,33 @@ const LandingPage: React.FC = () => {
             <Typography sx={{ fontSize: '1.0625rem', color: '#4B5563', maxWidth: 640, mx: 'auto' }}>
               The platform is free. You pay when you go deep. No subscription, no auto-renew, no surprise charges.
             </Typography>
+
+            {/* Free-beta notice (2026-08-30) — mirrors the banner on
+                /pricing. Payments aren't live yet; every analyzed
+                property gets a free license. Remove both when billing
+                switches on. */}
+            <Box
+              sx={{
+                mt: 3,
+                mx: 'auto',
+                maxWidth: 640,
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2,
+                border: '1px solid #BFDBFE',
+                bgcolor: '#EFF6FF',
+              }}
+              data-testid="free-beta-notice"
+            >
+              <Typography sx={{ fontSize: '0.9375rem', color: '#1E3A8A', lineHeight: 1.6 }}>
+                <Box component="span" sx={{ fontWeight: 600 }}>
+                  Free while we're in beta.
+                </Box>{' '}
+                Payments aren't switched on yet — every property you analyze
+                is fully unlocked at no cost. The pricing below is what it
+                will cost when they are.
+              </Typography>
+            </Box>
           </Box>
 
           <Grid container spacing={3} justifyContent="center">

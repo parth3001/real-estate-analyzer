@@ -67,12 +67,32 @@ export const TOS_VERSION_HISTORY: Array<{
       'no auto-renewal). Privacy Policy rewritten in same batch ' +
       '(categories restructured; 18+ age gate; DNT statement corrected; ' +
       'Stripe disclosure added; Clarity mask caveat softened; ' +
-      'AI-processing section expanded). Visible amber TODOs remain for ' +
-      'LLC legal name, mailing address, legal notice email, court ' +
-      'venue county, cookie settings link, CCPA sale/share election — ' +
-      'to be resolved with counsel before production deploy.',
+      'AI-processing section expanded).',
   },
 ];
+
+/**
+ * NOT a version entry — deliberately.
+ *
+ * Free-beta launch prep (2026-08-30) resolved the remaining amber TODOs
+ * in the 2026-07-27 documents: LLC legal name, business mailing address,
+ * legal notice email, court venue county, cookie-settings reference, and
+ * the CCPA sale/share election (option A — analytics run as
+ * service-provider processing with Google Signals and ad personalization
+ * disabled; see frontend/index.html). The GPC sentence was corrected from
+ * a forward-looking promise to an accurate statement of current behavior.
+ *
+ * These are placeholder fills and accuracy corrections within the
+ * already-accepted 2026-07-27 terms, not new obligations, so
+ * CURRENT_TOS_VERSION is intentionally NOT bumped.
+ *
+ * The bump comes when counsel's review lands. Before that happens,
+ * requiresReconsent() must actually be reachable — today it is called
+ * only from the password-login path (services/authService.ts), which the
+ * UI no longer routes to since magic link became the sole signup path.
+ * Bumping the version without fixing that would silently reach nobody.
+ * Tracked in the issue tracker as the ToS re-consent plumbing item.
+ */
 
 /**
  * Returns true when the user's termsVersion is older than any material

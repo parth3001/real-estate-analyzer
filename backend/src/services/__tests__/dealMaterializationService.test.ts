@@ -29,6 +29,7 @@ import { User } from '../../models/User';
 import { DealModel as Deal } from '../../models/Deal';
 import { eventsRepository } from '../../repositories/EventsRepository';
 import { licenseRepository } from '../../repositories/LicenseRepository';
+import { DealCreditModel } from '../../models/license/DealCredit';
 import type { AnalysisPayload } from '../../models/events/AnalysisEvent';
 import type { DecisionPayload } from '../../models/events/DecisionEvent';
 import type { SFRData } from '../../types/propertyTypes';
@@ -601,6 +602,140 @@ describe('dealMaterializationService', () => {
 
       const licenses = await licenseRepository.findLicensesForUser(userId);
       expect(licenses).toHaveLength(0);
+    });
+  });
+
+  // Free-beta launch (2026-08-30) — BILLING_ENABLED=false.
+  //
+  // Stripe is dark until the LLC paperwork and the ToS review clear, so
+  // a user with no credits left would otherwise land on the D2 unlock
+  // landing behind a DISABLED pay button. During the beta we mint a
+  // promo credit on the spot instead, so every analyzed property gets a
+  // real (free) license and every downstream gate passes on its own
+  // terms — no paywall bypass anywhere in the codebase.
+  //
+  // isBillingEnabled() reads the env var at call time, so flipping it
+  // in beforeEach is enough — no module-registry reset needed.
+  describe('free beta: BILLING_ENABLED=false grants a promo license', () => {
+    const originalFlag = process.env.BILLING_ENABLED;
+
+    beforeEach(() => {
+      process.env.BILLING_ENABLED = 'false';
+    });
+
+    afterEach(() => {
+      if (originalFlag === undefined) delete process.env.BILLING_ENABLED;
+      else process.env.BILLING_ENABLED = originalFlag;
+    });
+
+    it('mints and redeems a promo credit when the user has no credits left', async () => {
+      const userId = await createRealUser('freebeta-grant@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 415000,
+        strategy: 'buy_hold',
+        dealQuality: 68,
+      });
+
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+
+      const licenses = await licenseRepository.findLicensesForUser(userId, {
+        status: 'active',
+      });
+      expect(licenses).toHaveLength(1);
+      // Free grant — not a purchase, and traceable to a promo credit so
+      // beta comps stay distinguishable from real sales in the data.
+      expect(licenses[0].pricePaidCents).toBe(0);
+      expect(licenses[0].stripePaymentIntentId).toBeUndefined();
+      expect(licenses[0].redeemedFromCreditId).toBeDefined();
+
+      const credit = await DealCreditModel.findById(
+        licenses[0].redeemedFromCreditId
+      ).lean();
+      expect(credit?.sourceType).toBe('promo');
+      expect(credit?.status).toBe('redeemed');
+    });
+
+    it('grants a 60-day window, not the paid 180, so comps do not overhang the paid launch', async () => {
+      const userId = await createRealUser('freebeta-window@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 250000,
+        strategy: 'buy_hold',
+        dealQuality: 55,
+      });
+
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+
+      const [license] = await licenseRepository.findLicensesForUser(userId, {
+        status: 'active',
+      });
+      const windowDays = Math.round(
+        (license.expiresAt.getTime() - license.purchasedAt.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+      expect(windowDays).toBe(60);
+    });
+
+    it('still prefers an existing first_free credit over minting a promo one', async () => {
+      const userId = await createRealUser('freebeta-firstfree@example.com');
+      await licenseRepository.issueCredits({
+        userId,
+        sourceType: 'first_free',
+        pricePaidCents: 0,
+        count: 1,
+      });
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 300000,
+        strategy: 'buy_hold',
+        dealQuality: 71,
+      });
+
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+
+      const [license] = await licenseRepository.findLicensesForUser(userId, {
+        status: 'active',
+      });
+      const credit = await DealCreditModel.findById(
+        license.redeemedFromCreditId
+      ).lean();
+      // The signup credit is consumed first — we don't mint promo
+      // credits on top of entitlements the user already holds.
+      expect(credit?.sourceType).toBe('first_free');
+      const promoCount = await DealCreditModel.countDocuments({
+        userId,
+        sourceType: 'promo',
+      });
+      expect(promoCount).toBe(0);
+    });
+
+    it('stays idempotent — re-materializing an already-licensed property does not mint a second promo credit', async () => {
+      const userId = await createRealUser('freebeta-idempotent@example.com');
+      const { decisionEventId } = await seedAnalysisAndDecision({
+        userId,
+        purchasePrice: 380000,
+        strategy: 'buy_hold',
+        dealQuality: 64,
+      });
+
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+      await materializeDealFromDecision(decisionEventId, userId);
+      await flushImmediate();
+
+      const licenses = await licenseRepository.findLicensesForUser(userId, {
+        status: 'active',
+      });
+      expect(licenses).toHaveLength(1);
+      const promoCount = await DealCreditModel.countDocuments({
+        userId,
+        sourceType: 'promo',
+      });
+      expect(promoCount).toBe(1);
     });
   });
 });

@@ -514,6 +514,14 @@ canonical_surfaces:
     category: agent
     role: "Issue #106 — per-session/per-license/global-daily caps"
 
+  - id: billing_switch
+    file: backend/src/config/billing.ts
+    lifecycle: LIVE
+    version: "1.0"
+    category: config
+    role: "Issue #260 — free-beta billing switch. isBillingEnabled() is read at call time (not module init) so tests can exercise both branches without a module-registry reset. When false, dealMaterializationService grants every analyzed property a free promo license instead of leaving the user at a paywall Stripe cannot clear. Read by dealMaterializationService (grant path) and costGuards (cost-cap copy)."
+    key_exports: ["isBillingEnabled", "FREE_BETA_LICENSE_WINDOW_DAYS"]
+
   - id: anthropic_adapter
     file: backend/src/agents/llm/anthropicAdapter.ts
     lifecycle: LIVE
