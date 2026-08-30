@@ -83,6 +83,10 @@ const TermsOfServicePage: React.FC = () => {
     textDecoration: 'none'
   });
 
+  // Currently unused — all amber placeholders were resolved on 2026-08-30
+  // (Issue #260). Kept because counsel's review of these terms is still
+  // pending and will likely come back with new items to flag. If the
+  // reviewed version ships with none, delete this.
   const getTodoStyle = () => ({
     backgroundColor: '#fef3c7',
     padding: '2px 6px',
@@ -560,9 +564,7 @@ const TermsOfServicePage: React.FC = () => {
           </p>
           <p style={getTextStyle()}>
             Notices to REanalyzr must be sent to{' '}
-            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>{' '}
-            and{' '}
-            <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>.
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>.
             REanalyzr may send a notice to the email address associated with
             your account.
           </p>
@@ -646,7 +648,7 @@ const TermsOfServicePage: React.FC = () => {
           <p style={getTextStyle()}>
             You may opt out of the arbitration agreement by sending a written
             notice to{' '}
-            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>{' '}
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>{' '}
             within 30 days after the date you first accept these Terms. Your
             notice must include your full name, the email address used for
             your account and an unambiguous statement that you wish to opt
@@ -760,12 +762,8 @@ const TermsOfServicePage: React.FC = () => {
           <p style={getTextStyle()}>
             PVA Ventures LLC
             <br />
-            <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>
-            <br />
-            Support: <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>
-            <br />
-            Legal notices:{' '}
-            <a href="mailto:legal@reanalyzr.com" style={getLinkStyle()}>legal@reanalyzr.com</a>
+            Email:{' '}
+            <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>
             <br />
             Contact form:{' '}
             <Link to="/contact" style={getLinkStyle()}>reanalyzr.com/contact</Link>

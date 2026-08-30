@@ -72,6 +72,10 @@ const PrivacyPolicyPage: React.FC = () => {
     textDecoration: 'none'
   });
 
+  // Currently unused — all amber placeholders were resolved on 2026-08-30
+  // (Issue #260). Kept because counsel's review of these terms is still
+  // pending and will likely come back with new items to flag. If the
+  // reviewed version ships with none, delete this.
   const getTodoStyle = () => ({
     backgroundColor: '#fef3c7',
     padding: '2px 6px',
@@ -400,8 +404,6 @@ const PrivacyPolicyPage: React.FC = () => {
           <h2 style={getSectionTitleStyle()}>14. Contact</h2>
           <p style={getTextStyle()}>
             PVA Ventures LLC
-            <br />
-            <span style={getTodoStyle()}>[BUSINESS MAILING ADDRESS — TBD]</span>
             <br />
             Email:{' '}
             <a href="mailto:support@reanalyzr.com" style={getLinkStyle()}>support@reanalyzr.com</a>
