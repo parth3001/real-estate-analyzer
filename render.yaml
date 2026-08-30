@@ -1,3 +1,44 @@
+# ⚠️  NOT THE SOURCE OF TRUTH — Render services are configured in the
+#     DASHBOARD, not from this Blueprint.
+#
+#     Evidence (2026-08-30): this file names the static site
+#     `real-estate-analyzer-frontend`, but production actually serves from
+#     `real-estate-analyzer-9ise.onrender.com` — the random suffix Render
+#     appends to dashboard-created services. The backend's `CORS_ORIGIN`
+#     below also references that non-existent service name via
+#     `fromService:`, which a synced Blueprint would fail to resolve.
+#
+#     Treat everything below as DOCUMENTATION of intended configuration.
+#     Changing it does not change production. Apply changes in the Render
+#     dashboard, then mirror them here so the two don't drift further.
+#
+#     Settings that must be verified in the dashboard, because the values
+#     here are known-wrong or known-inert:
+#
+#       Static site
+#         - Publish directory MUST be `dist` (Vite's default output).
+#           The CRA-era `build` is wrong; frontend/build only exists if
+#           the `cp -r dist/* build/` shim below runs.
+#         - VITE_API_URL must be a literal ending in /api:
+#             https://real-estate-analyzer-api.onrender.com/api
+#           (services/api.ts uses it as the axios baseURL and callers
+#           pass bare paths like `/deals`.)
+#         - Cache-Control: scope no-store to /index.html only. A blanket
+#           /* no-store re-downloads the whole 2.7 MB bundle every load.
+#         - Do NOT add a catch-all rewrite in the dashboard — it shadows
+#           frontend/public/_redirects, which carries the blog prerender
+#           rules (/blog/* -> /blog/:splat/index.html 200).
+#
+#       Backend
+#         - CORS_ORIGIN is now ENFORCED by cors() (src/index.ts), not just
+#           echoed in /api/health. Set it to a comma-separated list of
+#           EVERY origin the app is served from, or the custom domains
+#           get locked out:
+#             https://reanalyzr.com,https://www.reanalyzr.com,
+#             https://theficouple.reanalyzr.com,
+#             https://real-estate-analyzer-9ise.onrender.com
+#         - BILLING_ENABLED=false for the free beta (see Issue #260).
+#
 services:
   - type: web
     name: real-estate-analyzer-api
