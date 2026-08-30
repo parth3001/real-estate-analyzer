@@ -596,7 +596,25 @@ Fix doesn't work after 2 attempts?
 
 ---
 
-### **Affiliate Partnership System - Josh Lupo Integration (December 23, 2025)** 🤝
+### **Affiliate Partnership System - Josh Lupo Integration (December 23, 2025)** ⚰️ DEAD
+
+> ⚠️ **THIS PARTNERSHIP IS DEAD. DO NOT TREAT ANY OF THIS AS LIVE.**
+> Marked 2026-08-30 after it was repeatedly resurfaced as a live surface.
+>
+> `theficouple.reanalyzr.com` is NOT a production surface. Do not include it
+> in CORS allowlists, deploy checklists, env config, smoke tests, or any
+> "which domains does the app serve" reasoning. Do not plan work against it.
+>
+> The code below still exists in the repo (AffiliateContext,
+> AffiliateLandingPage, AffiliateHeaderBadge, affiliateDetector, the
+> `affiliateCode` fields on User). It is dead code pending a removal
+> decision — see the issue tracker. The historical record is kept below for
+> context on what those files do and why they exist, NOT as a statement of
+> current status.
+
+<details>
+<summary>Historical record (December 2025) — partnership no longer active</summary>
+
 
 #### **✅ COMPLETED DELIVERABLES (Full-Stack Implementation)**
 
@@ -745,6 +763,8 @@ Fix doesn't work after 2 attempts?
 **Production Ready**: ✅ Yes - All testing passed, DNS configured, Flodesk integration complete
 
 ---
+
+</details>
 
 ### **Multi-Family Analyzer - Backend Implementation Complete (Stories 1.1-1.6, October 28, 2025)** 🏢
 
